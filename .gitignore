@@ -1,0 +1,12 @@
+# Ignore system files
+.DS_Store
+Thumbs.db
+
+# Ignore local configuration and secrets
+.env
+config.json
+
+# Ignore giant folders you can easily reinstall later
+node_modules/
+env/
+venv/
