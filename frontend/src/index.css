@@ -1,0 +1,162 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #266F71;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #266F71;
+  --color-on-primary-container: #ffffff;
+  --color-secondary: #266F71;
+  --color-on-secondary: #ffffff;
+  --color-accent: #FB8E5D;
+  --color-on-accent: #ffffff;
+  --color-background: #FFFFFF;
+  --color-on-background: #174849;
+  --color-surface: #FFFFFF;
+  --color-on-surface: #174849;
+  --color-surface-variant: #F1F0EC;
+  --color-on-surface-variant: #3f4949;
+  --color-outline: #6f7979;
+  --color-outline-variant: #bec8c8;
+  --color-surface-container: #F1F0EC;
+  --color-surface-container-high: #E9E8E4;
+  --color-surface-container-low: #F5F4EF;
+  --color-tertiary: #174849;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-container: #174849;
+  --color-on-tertiary-container: #ffffff;
+
+  --radius-DEFAULT: 1rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1rem;
+  --radius-full: 9999px;
+
+  --spacing-unit: 8px;
+  --spacing-container-max-width: 1440px;
+  --spacing-margin-desktop: 80px;
+  --spacing-margin-mobile: 20px;
+  --spacing-margin-tablet: 40px;
+  --spacing-gutter: 32px;
+  --spacing-section-gap: 120px;
+
+  --font-headline-lg-mobile: "Manrope", sans-serif;
+  --font-headline-md: "Manrope", sans-serif;
+  --font-body-lg: "Manrope", sans-serif;
+  --font-label-sm: "Inter", sans-serif;
+  --font-headline-lg: "Manrope", sans-serif;
+  --font-display-lg: "Manrope", sans-serif;
+  --font-body-md: "Manrope", sans-serif;
+  --font-label-lg: "Inter", sans-serif;
+  --font-headline-sm: "Manrope", sans-serif;
+}
+
+@utility text-headline-lg-mobile {
+  font-size: 32px; line-height: 1.2; font-weight: 700;
+}
+@utility text-headline-md {
+  font-size: 32px; line-height: 1.3; font-weight: 700;
+}
+@utility text-body-lg {
+  font-size: 18px; line-height: 1.6; font-weight: 400;
+}
+@utility text-label-sm {
+  font-size: 12px; line-height: 1.2; letter-spacing: 0.05em; font-weight: 600;
+}
+@utility text-headline-lg {
+  font-size: 48px; line-height: 1.2; font-weight: 700;
+}
+@utility text-display-lg {
+  font-size: 64px; line-height: 1.1; letter-spacing: -0.02em; font-weight: 800;
+}
+@utility text-body-md {
+  font-size: 16px; line-height: 1.6; font-weight: 400;
+}
+@utility text-label-lg {
+  font-size: 14px; line-height: 1.2; letter-spacing: 0.1em; font-weight: 600;
+}
+@utility text-headline-sm {
+  font-size: 24px; line-height: 1.4; font-weight: 600;
+}
+
+@layer base {
+  body {
+    @apply bg-background text-on-surface font-body-md selection:bg-accent selection:text-on-accent;
+  }
+  
+  *, *::before, *::after {
+    outline: none !important;
+  }
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #F1F0EC;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #266F71;
+  border-radius: 10px;
+}
+
+.premium-btn {
+  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+  border: 1px solid transparent;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.premium-btn::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%);
+  transform: rotate(45deg) translateY(-100%);
+  transition: transform 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.premium-btn:hover::after {
+  transform: rotate(45deg) translateY(100%);
+}
+
+.premium-btn:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 10px 20px -5px rgba(38, 111, 113, 0.3);
+}
+
+.nav-link {
+  position: relative;
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 1px;
+  bottom: -2px;
+  left: 0;
+  background-color: var(--color-primary);
+  transition: width 0.3s ease;
+}
+
+.nav-link:hover::after,
+.nav-link.active::after {
+  width: 100%;
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.reveal.active {
+  opacity: 1;
+  transform: translateY(0);
+}
