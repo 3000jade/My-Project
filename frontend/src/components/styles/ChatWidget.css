@@ -1,0 +1,17 @@
+@reference "tailwindcss";
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s infinite;
+}
+
+@keyframes pulse-glow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(38, 111, 113, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 15px rgba(38, 111, 113, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(38, 111, 113, 0);
+  }
+}
