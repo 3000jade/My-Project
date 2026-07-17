@@ -30,7 +30,10 @@ CP_kerby - Root project directory
 |   |   |   |   +--- ChatWidget.jsx - AI Chat widget feature
 |   |   |   |   +--- Consultation.jsx - Consultation booking section
 |   |   |   |   +--- Hero.jsx - Hero banner section component
-|   |   |   |   \--- Listings.jsx - Signature Collections teaser section for the landing page
+|   |   |   |   +--- LatestProperties.jsx - Dynamic 3-column latest properties grid component
+|   |   |   |   +--- Listings.jsx - Asymmetric Featured Listings mosaic section
+|   |   |   |   +--- SearchBarSection.jsx - Interactive search and filter console component
+|   |   |   |   \--- VideoTours.jsx - Immersive property video tour modal component
 |   |   |   +--- layout - Structural components like headers and footers
 |   |   |   |   +--- Footer.jsx - Global footer component
 |   |   |   |   \--- Navbar.jsx - Global top navigation bar
