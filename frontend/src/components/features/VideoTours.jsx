@@ -6,7 +6,7 @@ export default function VideoTours() {
 
   return (
     <>
-      <section className="mb-stack-xl max-w-container-max mx-auto px-margin-desktop">
+      <section className="max-w-container-max-width mx-auto px-margin-mobile md:px-margin-tablet lg:px-margin-desktop py-section-gap">
         <div className="flex flex-col md:flex-row justify-between items-end mb-stack-lg gap-4">
           <div>
             <h2 className="text-headline-md font-headline-md text-primary font-semibold">
@@ -16,7 +16,7 @@ export default function VideoTours() {
               Experience our most exclusive estates through cinematic virtual walkthroughs.
             </p>
           </div>
-          <button className="text-primary-container hover:text-primary text-label-md font-label-md flex items-center gap-1 transition-colors">
+          <button className="nav-link text-primary-container hover:text-primary text-label-md font-label-md flex items-center gap-1 transition-colors">
             View More Videos <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
           </button>
         </div>
@@ -30,7 +30,7 @@ export default function VideoTours() {
             <motion.div
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
-              className="w-20 h-20 bg-primary-container text-on-primary-container rounded-full flex items-center justify-center shadow-lg"
+              className="w-20 h-20 bg-primary text-on-primary rounded-full flex items-center justify-center shadow-lg"
             >
               <span className="material-symbols-outlined text-[48px] icon-fill">play_arrow</span>
             </motion.div>

@@ -9,10 +9,23 @@ export default function Consultation() {
     transition: { duration: 0.8, ease: [0.4, 0, 0.2, 1] }
   };
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: { staggerChildren: 0.1, delayChildren: 0.2 } 
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 40 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } }
+  };
+
   return (
     <>
       {/* Mission Statement */}
-      <motion.section {...revealProps} className="bg-surface-variant py-section-gap overflow-hidden relative">
+      <motion.section {...revealProps} className="reveal bg-surface-variant py-section-gap overflow-hidden relative">
         <div className="max-w-4xl mx-auto px-margin-mobile text-center relative z-10">
           <h2 className="font-headline-lg text-headline-lg text-tertiary mb-8">
             Redefining Real Estate through Strategic Intelligence
@@ -33,15 +46,21 @@ export default function Consultation() {
       </motion.section>
 
       {/* Specialist Agents */}
-      <motion.section {...revealProps} className="py-section-gap px-margin-desktop max-w-container-max-width mx-auto">
+      <motion.section {...revealProps} className="reveal py-section-gap px-margin-mobile md:px-margin-tablet lg:px-margin-desktop max-w-container-max-width mx-auto">
         <div className="text-center mb-16">
           <span className="font-label-lg text-label-lg text-accent uppercase tracking-widest mb-4 block">
             World Class Advisory
           </span>
           <h2 className="font-headline-lg text-headline-lg text-tertiary">Meet Our Elite Partners</h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-gutter">
-          <div className="text-center group transition-transform duration-500 hover:-translate-y-2">
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.1 }}
+          className="grid grid-cols-1 md:grid-cols-4 gap-gutter"
+        >
+          <motion.div variants={itemVariants} className="text-center group transition-transform duration-500 hover:-translate-y-2">
             <div className="relative w-48 h-48 mx-auto mb-6 rounded-full overflow-hidden border border-surface-container-high p-2 group-hover:border-primary group-hover:shadow-lg transition-all duration-700">
               <img
                 alt="Alexander Sterling"
@@ -53,8 +72,8 @@ export default function Consultation() {
             <p className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mt-1">
               Founding Partner
             </p>
-          </div>
-          <div className="text-center group transition-transform duration-500 hover:-translate-y-2">
+          </motion.div>
+          <motion.div variants={itemVariants} className="text-center group transition-transform duration-500 hover:-translate-y-2">
             <div className="relative w-48 h-48 mx-auto mb-6 rounded-full overflow-hidden border border-surface-container-high p-2 group-hover:border-primary group-hover:shadow-lg transition-all duration-700">
               <img
                 alt="Helena Vance"
@@ -66,8 +85,8 @@ export default function Consultation() {
             <p className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mt-1">
               Head of EMEA
             </p>
-          </div>
-          <div className="text-center group transition-transform duration-500 hover:-translate-y-2">
+          </motion.div>
+          <motion.div variants={itemVariants} className="text-center group transition-transform duration-500 hover:-translate-y-2">
             <div className="relative w-48 h-48 mx-auto mb-6 rounded-full overflow-hidden border border-surface-container-high p-2 group-hover:border-primary group-hover:shadow-lg transition-all duration-700">
               <img
                 alt="Marcus Thorne"
@@ -79,8 +98,8 @@ export default function Consultation() {
             <p className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mt-1">
               Market Analytics Specialist
             </p>
-          </div>
-          <div className="text-center group transition-transform duration-500 hover:-translate-y-2">
+          </motion.div>
+          <motion.div variants={itemVariants} className="text-center group transition-transform duration-500 hover:-translate-y-2">
             <div className="relative w-48 h-48 mx-auto mb-6 rounded-full overflow-hidden border border-surface-container-high p-2 group-hover:border-primary group-hover:shadow-lg transition-all duration-700">
               <img
                 alt="Elena Rossi"
@@ -92,13 +111,13 @@ export default function Consultation() {
             <p className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mt-1">
               Private Client Advisor
             </p>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </motion.section>
 
       {/* Testimonials */}
-      <motion.section {...revealProps} className="bg-surface-variant py-section-gap">
-        <div className="max-w-container-max-width mx-auto px-margin-desktop">
+      <motion.section {...revealProps} className="reveal bg-surface-variant py-section-gap">
+        <div className="max-w-container-max-width mx-auto px-margin-mobile md:px-margin-tablet lg:px-margin-desktop">
           <div className="flex flex-col md:flex-row gap-gutter">
             <div className="md:w-1/3">
               <span className="font-label-lg text-label-lg text-accent uppercase tracking-widest mb-4 block">
@@ -114,8 +133,14 @@ export default function Consultation() {
               </div>
               <p className="font-body-md text-body-md text-on-surface">Verified Satisfaction</p>
             </div>
-            <div className="md:w-2/3 grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="bg-white p-10 shadow-sm rounded-2xl border-l-4 border-primary">
+            <motion.div 
+              variants={containerVariants}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.1 }}
+              className="md:w-2/3 grid grid-cols-1 md:grid-cols-2 gap-8"
+            >
+              <motion.div variants={itemVariants} className="bg-white p-10 shadow-sm rounded-2xl border-l-4 border-primary">
                 <p className="font-body-lg text-body-lg mb-6 text-on-surface">
                   "The market intelligence provided by PropAI allowed us to identify an emerging pocket in Mayfair six
                   months before the market spiked. Truly transformative service."
@@ -124,8 +149,8 @@ export default function Consultation() {
                   Sir Jonathan H.
                 </p>
                 <p className="font-label-sm text-label-sm text-on-surface-variant uppercase">Venture Capitalist</p>
-              </div>
-              <div className="bg-white p-10 shadow-sm rounded-2xl border-l-4 border-primary">
+              </motion.div>
+              <motion.div variants={itemVariants} className="bg-white p-10 shadow-sm rounded-2xl border-l-4 border-primary">
                 <p className="font-body-lg text-body-lg mb-6 text-on-surface">
                   "Discretion is my highest priority. The Private Office handled our acquisition with absolute secrecy
                   and surgical precision. Exceptional."
@@ -134,14 +159,14 @@ export default function Consultation() {
                   Anonymous Client
                 </p>
                 <p className="font-label-sm text-label-sm text-on-surface-variant uppercase">Technology Founder</p>
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
           </div>
         </div>
       </motion.section>
 
       {/* Private Consultation Form */}
-      <motion.section {...revealProps} className="py-section-gap px-margin-desktop max-w-container-max-width mx-auto">
+      <motion.section {...revealProps} className="reveal py-section-gap px-margin-mobile md:px-margin-tablet lg:px-margin-desktop max-w-container-max-width mx-auto">
         <div className="bg-white p-12 md:p-20 shadow-xl rounded-2xl relative overflow-hidden border border-surface-container-high">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-16 relative z-10">
             <div>
@@ -212,7 +237,7 @@ export default function Consultation() {
                   rows="3"
                 ></textarea>
               </div>
-              <button className="w-full bg-accent text-white py-5 font-label-lg text-label-lg uppercase rounded-xl premium-btn hover:bg-accent/90">
+              <button className="w-full py-5 rounded-xl text-label-lg premium-btn animate-pulse-glow bg-accent text-white hover:bg-accent/90">
                 Send Inquiry
               </button>
             </form>

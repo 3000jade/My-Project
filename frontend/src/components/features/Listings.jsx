@@ -2,13 +2,26 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 
 export default function Listings() {
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: { staggerChildren: 0.1, delayChildren: 0.2 } 
+    }
+  };
+
+  const cardVariants = {
+    hidden: { opacity: 0, y: 40 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } }
+  };
+
   return (
     <motion.section
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.15 }}
       transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
-      className="mb-stack-xl max-w-container-max mx-auto px-margin-desktop py-stack-xl"
+      className="max-w-container-max-width mx-auto px-margin-mobile md:px-margin-tablet lg:px-margin-desktop py-section-gap pt-24 md:pt-[160px] reveal"
     >
       <div className="flex justify-between items-end mb-stack-lg">
         <div>
@@ -16,15 +29,22 @@ export default function Listings() {
           <p className="text-body-md text-on-surface-variant mt-1">Exclusive properties selected by our experts.</p>
         </div>
         <Link
-          className="text-primary-container hover:text-primary text-label-md font-label-md flex items-center gap-1 transition-colors"
+          className="nav-link text-primary-container hover:text-primary text-label-md font-label-md flex items-center gap-1 transition-colors"
           to="/properties"
         >
           View all <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
         </Link>
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-gutter">
+      <motion.div 
+        variants={containerVariants}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.1 }}
+        className="grid grid-cols-1 lg:grid-cols-2 gap-gutter"
+      >
         {/* Large Featured Card */}
         <motion.div
+          variants={cardVariants}
           whileHover={{ y: -4, scale: 1.01 }}
           className="group bg-surface-container-lowest rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 flex flex-col border border-outline-variant/20 h-full relative cursor-pointer"
         >
@@ -41,7 +61,7 @@ export default function Listings() {
               <span className="text-title-lg font-title-lg text-primary font-bold">₱185,000,000</span>
             </div>
           </div>
-          <div className="p-6 flex flex-col flex-grow">
+          <div className="p-8 flex flex-col flex-grow">
             <h3 className="text-title-lg font-title-lg text-on-surface mb-2 line-clamp-1 group-hover:text-primary-container transition-colors">
               Ayala Alabang Estate
             </h3>
@@ -67,7 +87,7 @@ export default function Listings() {
                 <span className="text-label-md font-label-md">850 sqm</span>
               </div>
             </div>
-            <button className="w-full bg-primary-container text-on-primary-container rounded-lg py-3 text-label-md font-label-md hover:bg-primary transition-colors">
+            <button className="w-full py-5 rounded-xl text-label-lg premium-btn bg-primary text-on-primary">
               View Details
             </button>
           </div>
@@ -75,6 +95,7 @@ export default function Listings() {
         <div className="flex flex-col gap-gutter">
           {/* Secondary Featured 1 */}
           <motion.div
+            variants={cardVariants}
             whileHover={{ y: -4, scale: 1.01 }}
             className="group bg-surface-container-lowest rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 flex flex-col sm:flex-row border border-outline-variant/20 h-full relative cursor-pointer"
           >
@@ -117,6 +138,7 @@ export default function Listings() {
           </motion.div>
           {/* Secondary Featured 2 */}
           <motion.div
+            variants={cardVariants}
             whileHover={{ y: -4, scale: 1.01 }}
             className="group bg-surface-container-lowest rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 flex flex-col sm:flex-row border border-outline-variant/20 h-full relative cursor-pointer"
           >
@@ -158,7 +180,7 @@ export default function Listings() {
             </div>
           </motion.div>
         </div>
-      </div>
+      </motion.div>
     </motion.section>
   );
 }

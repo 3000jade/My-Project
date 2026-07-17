@@ -5,7 +5,7 @@ export default function LatestProperties({ properties }) {
   const [sortBy, setSortBy] = useState('Newest');
 
   return (
-    <section className="mb-stack-xl max-w-container-max mx-auto px-margin-desktop">
+    <section className="max-w-container-max-width mx-auto px-margin-mobile md:px-margin-tablet lg:px-margin-desktop py-section-gap">
       <div className="flex justify-between items-end mb-stack-lg">
         <div>
           <h2 className="text-headline-md font-headline-md text-primary font-semibold">Latest Properties</h2>
@@ -115,7 +115,7 @@ export default function LatestProperties({ properties }) {
 
       {properties && properties.length > 0 && (
         <div className="flex justify-center mt-stack-xl">
-          <button className="bg-surface-container border border-outline-variant/30 text-primary-container hover:bg-surface-container-high px-8 py-3 rounded-lg font-label-md text-label-md transition-colors flex items-center gap-2">
+          <button className="bg-primary text-on-primary px-8 py-3 rounded-lg text-label-lg premium-btn flex items-center gap-2">
             Load More Properties <span className="material-symbols-outlined text-[20px]">expand_more</span>
           </button>
         </div>

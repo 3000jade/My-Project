@@ -36,7 +36,7 @@ export default function SearchBarSection({ onSearch }) {
 
   return (
     <div className="sticky top-20 z-40 bg-surface/95 backdrop-blur-md border-b border-outline-variant/30 shadow-md py-4">
-      <div className="max-w-container-max mx-auto px-margin-desktop">
+      <div className="max-w-container-max-width mx-auto px-margin-mobile md:px-margin-tablet lg:px-margin-desktop">
         <form
           onSubmit={handleSearch}
           className="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/50 p-2 flex flex-col lg:flex-row gap-2 lg:items-center"
@@ -101,7 +101,7 @@ export default function SearchBarSection({ onSearch }) {
             {/* Search Button */}
             <button
               type="submit"
-              className="bg-primary-container text-on-primary-container hover:bg-primary px-6 py-2 rounded-lg text-label-md font-label-md transition-colors flex items-center justify-center gap-2 min-w-[100px]"
+              className="bg-primary text-on-primary px-8 py-3 rounded-lg text-label-lg premium-btn flex items-center justify-center gap-2 min-w-[100px]"
             >
               Search
             </button>
