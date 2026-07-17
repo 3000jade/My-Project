@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import '../styles/Listings.css';
 
 export default function Listings() {
   return (
@@ -9,112 +8,155 @@ export default function Listings() {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.15 }}
       transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
-      className="py-section-gap px-margin-desktop max-w-container-max-width mx-auto"
+      className="mb-stack-xl max-w-container-max mx-auto px-margin-desktop py-stack-xl"
     >
-      <div className="flex justify-between items-end mb-16">
+      <div className="flex justify-between items-end mb-stack-lg">
         <div>
-          <span className="font-label-lg text-label-lg text-accent uppercase tracking-widest mb-4 block">
-            Curated Selection
-          </span>
-          <h2 className="font-headline-lg text-headline-lg text-tertiary">Signature Collections</h2>
+          <h2 className="text-headline-md font-headline-md text-primary font-semibold">Featured Listings</h2>
+          <p className="text-body-md text-on-surface-variant mt-1">Exclusive properties selected by our experts.</p>
         </div>
         <Link
-          className="font-label-lg text-label-lg text-primary hover:text-accent flex items-center gap-2 transition-all group tracking-widest uppercase"
+          className="text-primary-container hover:text-primary text-label-md font-label-md flex items-center gap-1 transition-colors"
           to="/properties"
         >
-          View All Listings{' '}
-          <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">
-            arrow_forward
-          </span>
+          View all <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
         </Link>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-gutter">
-        {/* Card 1 */}
-        <div className="group cursor-pointer transition-all duration-500 hover:-translate-y-2 hover:shadow-xl hover:shadow-primary/10 rounded-2xl bg-white border border-surface-container-high overflow-hidden">
-          <div className="relative overflow-hidden aspect-[4/5]">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-gutter">
+        {/* Large Featured Card */}
+        <motion.div
+          whileHover={{ y: -4, scale: 1.01 }}
+          className="group bg-surface-container-lowest rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 flex flex-col border border-outline-variant/20 h-full relative cursor-pointer"
+        >
+          <div className="absolute top-4 left-4 z-20 bg-tertiary-container text-white text-label-sm font-label-sm px-3 py-1 rounded-full flex items-center gap-1 shadow-md">
+            <span className="material-symbols-outlined text-[16px] icon-fill">star</span> Featured
+          </div>
+          <div className="relative w-full h-80 overflow-hidden">
             <img
-              alt="The Alpine Sanctuary"
-              className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
-              src="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80"
+              alt="Ayala Alabang Estate"
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_0mFlInVxyIa3OGHF2yXc4OzXAvW4AQV6qyJx41Od3nuC-OYxn7ZEZnamBFYNiPbDAZ3kYCCetTd93h1OGRqSdDwJBObTpzk4QNOJ6V040hH5rT4JO76Rw-0u4XxKad6TkxHs84DbyQyjVtqmr-xu5FLMN3xsf9PyDyhGo5Gn9bG2-JbHr1E7zPockoy8boivwZsKjvAYyETuVQpWL4wjmYJ-5OA5S6TfXCmT6ZXDM3KzXdeu95rq6rFrNoDzQKMwAZXUeVUoyhG7"
             />
-            <div className="absolute top-4 right-4">
-              <span className="bg-accent text-white text-label-sm font-label-sm px-4 py-1 rounded-full uppercase tracking-widest shadow-sm">
-                Just Listed
-              </span>
+            <div className="absolute bottom-4 left-4 z-20 bg-surface/90 backdrop-blur-sm px-4 py-2 rounded-lg shadow-sm">
+              <span className="text-title-lg font-title-lg text-primary font-bold">₱185,000,000</span>
             </div>
           </div>
-          <div className="p-6">
-            <h3 className="font-headline-sm text-headline-sm text-tertiary mb-2 group-hover:text-primary transition-colors">
-              The Alpine Sanctuary
+          <div className="p-6 flex flex-col flex-grow">
+            <h3 className="text-title-lg font-title-lg text-on-surface mb-2 line-clamp-1 group-hover:text-primary-container transition-colors">
+              Ayala Alabang Estate
             </h3>
-            <p className="font-body-md text-body-md text-on-surface-variant mb-4 flex items-center gap-1">
-              <span className="material-symbols-outlined text-[18px] text-primary">location_on</span> Makati City, Philippines
+            <p className="text-body-md text-on-surface-variant flex items-center gap-1 mb-4">
+              <span className="material-symbols-outlined text-[18px] text-outline">location_on</span>
+              Muntinlupa City, Metro Manila
             </p>
-            <div className="flex justify-between items-center pt-6 border-t border-surface-container-high">
-              <span className="font-headline-sm text-headline-sm text-primary font-bold">₱34.5M</span>
-              <button className="bg-accent text-white px-6 py-2 text-label-sm font-label-sm uppercase rounded-lg premium-btn">
-                Inquire
-              </button>
+            <div className="flex items-center gap-4 text-on-surface-variant mt-auto mb-6">
+              <div className="flex items-center gap-1 bg-surface-container px-3 py-1.5 rounded-md">
+                <span className="material-symbols-outlined text-[18px]">bed</span>
+                <span className="text-label-md font-label-md">5</span>
+              </div>
+              <div className="flex items-center gap-1 bg-surface-container px-3 py-1.5 rounded-md">
+                <span className="material-symbols-outlined text-[18px]">shower</span>
+                <span className="text-label-md font-label-md">6</span>
+              </div>
+              <div className="flex items-center gap-1 bg-surface-container px-3 py-1.5 rounded-md">
+                <span className="material-symbols-outlined text-[18px]">directions_car</span>
+                <span className="text-label-md font-label-md">4</span>
+              </div>
+              <div className="flex items-center gap-1 bg-surface-container px-3 py-1.5 rounded-md">
+                <span className="material-symbols-outlined text-[18px]">square_foot</span>
+                <span className="text-label-md font-label-md">850 sqm</span>
+              </div>
             </div>
+            <button className="w-full bg-primary-container text-on-primary-container rounded-lg py-3 text-label-md font-label-md hover:bg-primary transition-colors">
+              View Details
+            </button>
           </div>
-        </div>
-        {/* Card 2 */}
-        <div className="group cursor-pointer transition-all duration-500 hover:-translate-y-2 hover:shadow-xl hover:shadow-primary/10 rounded-2xl bg-white border border-surface-container-high overflow-hidden">
-          <div className="relative overflow-hidden aspect-[4/5]">
-            <img
-              alt="Villa de l'Azur"
-              className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
-              src="https://images.unsplash.com/photo-1613490908592-5d46815a51cf?auto=format&fit=crop&w=800&q=80"
-            />
-            <div className="absolute top-4 right-4">
-              <span className="bg-primary text-white text-label-sm font-label-sm px-4 py-1 rounded-full uppercase tracking-widest shadow-sm">
-                Off-Market
-              </span>
+        </motion.div>
+        <div className="flex flex-col gap-gutter">
+          {/* Secondary Featured 1 */}
+          <motion.div
+            whileHover={{ y: -4, scale: 1.01 }}
+            className="group bg-surface-container-lowest rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 flex flex-col sm:flex-row border border-outline-variant/20 h-full relative cursor-pointer"
+          >
+            <div className="absolute top-4 left-4 z-20 bg-tertiary-container text-white text-label-sm font-label-sm px-3 py-1 rounded-full flex items-center gap-1 shadow-md">
+              <span className="material-symbols-outlined text-[16px] icon-fill">star</span> Featured
             </div>
-          </div>
-          <div className="p-6">
-            <h3 className="font-headline-sm text-headline-sm text-tertiary mb-2 group-hover:text-primary transition-colors">
-              Villa de l'Azur
-            </h3>
-            <p className="font-body-md text-body-md text-on-surface-variant mb-4 flex items-center gap-1">
-              <span className="material-symbols-outlined text-[18px] text-primary">location_on</span> Taguig City, Philippines
-            </p>
-            <div className="flex justify-between items-center pt-6 border-t border-surface-container-high">
-              <span className="font-headline-sm text-headline-sm text-primary font-bold">₱52.0M</span>
-              <button className="bg-accent text-white px-6 py-2 text-label-sm font-label-sm uppercase rounded-lg premium-btn">
-                Inquire
-              </button>
+            <div className="relative w-full sm:w-2/5 h-48 sm:h-auto overflow-hidden">
+              <img
+                alt="The Proscenium Penthouse"
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAETZZp0xAAYpS9Okp6MrMewZf0lPxqNX2MM5gR4tuXfOxGBTtqDP3GXfYvoB46AY1I5k_S2cS69Xxn1Sl8F1eM1yywJoGmCLwJ9pHuuwXXZUoxX4kj0xY3p_OSYIKbBotBYvyGwez5b2uAdTHRwE1o1hK61HuCeTfpBfBYL-35YL_uoLLqGinEC30HlRqV_uN-fBihNNanrJbyXNj1NrH_cvhmFlyWUIuWXnizQWBhTO7_h0Ib3RwYPorg7fDw6V9BLwEZ8syLfVAW"
+              />
             </div>
-          </div>
-        </div>
-        {/* Card 3 */}
-        <div className="group cursor-pointer transition-all duration-500 hover:-translate-y-2 hover:shadow-xl hover:shadow-primary/10 rounded-2xl bg-white border border-surface-container-high overflow-hidden">
-          <div className="relative overflow-hidden aspect-[4/5]">
-            <img
-              alt="The Glass Monolith"
-              className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
-              src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80"
-            />
-            <div className="absolute top-4 right-4">
-              <span className="bg-tertiary text-white text-label-sm font-label-sm px-4 py-1 rounded-full uppercase tracking-widest shadow-sm">
-                Elite Portfolio
-              </span>
+            <div className="p-5 flex flex-col justify-center sm:w-3/5">
+              <div className="mb-2">
+                <span className="text-title-lg font-title-lg text-primary font-bold block">₱85,500,000</span>
+              </div>
+              <h3 className="text-body-lg font-bold text-on-surface mb-1 line-clamp-1 group-hover:text-primary-container transition-colors">
+                The Proscenium Penthouse
+              </h3>
+              <p className="text-body-md text-on-surface-variant flex items-center gap-1 mb-4 text-sm">
+                <span className="material-symbols-outlined text-[16px] text-outline">location_on</span>
+                Rockwell Center, Makati
+              </p>
+              <div className="flex items-center gap-3 text-on-surface-variant mb-4">
+                <div className="flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[16px]">bed</span>
+                  <span className="text-label-sm font-label-sm">3</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[16px]">shower</span>
+                  <span className="text-label-sm font-label-sm">3.5</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[16px]">square_foot</span>
+                  <span className="text-label-sm font-label-sm">280 sqm</span>
+                </div>
+              </div>
             </div>
-          </div>
-          <div className="p-6">
-            <h3 className="font-headline-sm text-headline-sm text-tertiary mb-2 group-hover:text-primary transition-colors">
-              The Glass Monolith
-            </h3>
-            <p className="font-body-md text-body-md text-on-surface-variant mb-4 flex items-center gap-1">
-              <span className="material-symbols-outlined text-[18px] text-primary">location_on</span> Mandaluyong City, Philippines
-            </p>
-            <div className="flex justify-between items-center pt-6 border-t border-surface-container-high">
-              <span className="font-headline-sm text-headline-sm text-primary font-bold">₱28.9M</span>
-              <button className="bg-accent text-white px-6 py-2 text-label-sm font-label-sm uppercase rounded-lg premium-btn">
-                Inquire
-              </button>
+          </motion.div>
+          {/* Secondary Featured 2 */}
+          <motion.div
+            whileHover={{ y: -4, scale: 1.01 }}
+            className="group bg-surface-container-lowest rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 flex flex-col sm:flex-row border border-outline-variant/20 h-full relative cursor-pointer"
+          >
+            <div className="absolute top-4 left-4 z-20 bg-tertiary-container text-white text-label-sm font-label-sm px-3 py-1 rounded-full flex items-center gap-1 shadow-md">
+              <span className="material-symbols-outlined text-[16px] icon-fill">star</span> Featured
             </div>
-          </div>
+            <div className="relative w-full sm:w-2/5 h-48 sm:h-auto overflow-hidden">
+              <img
+                alt="Punta Fuego Cliffside"
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuASSEScTTUaGm-VsQg5FB-Ow6Lt72_tAvqmnKTjOX3d5mhqAQ1-xCmQhfzbbl8w7QO9xLgrR-arLOfn9wLJy1f18grLhstQWKxNhusWo7MdDsGKFJImQtIE3jTQo4rB0BPJFQvxE7nHCkjLpqfLcymeh-T54qLvAkJYCp2q6BxZ9dGaeEwqIFr-_DNyIt5hLGX5Zn813bSieSFUybG3LdVItH7a30CSkgvxYTRDO70qWOFWHc_5DhB4dnxTKjdHkNtaYHDmggqisEth"
+              />
+            </div>
+            <div className="p-5 flex flex-col justify-center sm:w-3/5">
+              <div className="mb-2">
+                <span className="text-title-lg font-title-lg text-primary font-bold block">₱120,000,000</span>
+              </div>
+              <h3 className="text-body-lg font-bold text-on-surface mb-1 line-clamp-1 group-hover:text-primary-container transition-colors">
+                Punta Fuego Cliffside
+              </h3>
+              <p className="text-body-md text-on-surface-variant flex items-center gap-1 mb-4 text-sm">
+                <span className="material-symbols-outlined text-[16px] text-outline">location_on</span>
+                Nasugbu, Batangas
+              </p>
+              <div className="flex items-center gap-3 text-on-surface-variant mb-4">
+                <div className="flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[16px]">bed</span>
+                  <span className="text-label-sm font-label-sm">4</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[16px]">shower</span>
+                  <span className="text-label-sm font-label-sm">5</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[16px]">square_foot</span>
+                  <span className="text-label-sm font-label-sm">650 sqm</span>
+                </div>
+              </div>
+            </div>
+          </motion.div>
         </div>
       </div>
     </motion.section>

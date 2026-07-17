@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+
+<html class="" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block"
+        rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">try {
+            try {
+                tailwind.config = {
+                    darkMode: "class",
+                    theme: {
+                        extend: {
+                            "colors": {
+                                "primary-fixed-dim": "#8ed2d4",
+                                "surface-container-highest": "#e3e2df",
+                                "tertiary-container": "#a44b20",
+                                "secondary": "#386667",
+                                "on-tertiary": "#ffffff",
+                                "on-secondary-fixed": "#002020",
+                                "inverse-on-surface": "#f2f1ed",
+                                "surface-container-lowest": "#ffffff",
+                                "surface-container": "#efeeea",
+                                "on-surface-variant": "#3f4949",
+                                "error": "#ba1a1a",
+                                "secondary-fixed": "#bbebec",
+                                "background": "#faf9f5",
+                                "outline-variant": "#bec8c8",
+                                "on-tertiary-container": "#ffdccf",
+                                "on-error-container": "#93000a",
+                                "error-container": "#ffdad6",
+                                "surface-bright": "#faf9f5",
+                                "surface-container-low": "#f5f4ef",
+                                "on-error": "#ffffff",
+                                "on-primary-fixed-variant": "#004f51",
+                                "tertiary-fixed-dim": "#ffb597",
+                                "inverse-surface": "#30312e",
+                                "primary-fixed": "#a9eff0",
+                                "tertiary-fixed": "#ffdbcd",
+                                "surface-variant": "#e3e2df",
+                                "on-tertiary-fixed-variant": "#7c2e02",
+                                "on-primary-fixed": "#002021",
+                                "primary-container": "#266f71",
+                                "on-background": "#1b1c1a",
+                                "surface-tint": "#1d686a",
+                                "primary": "#005658",
+                                "on-secondary-fixed-variant": "#1e4e4f",
+                                "on-primary-container": "#aaeff1",
+                                "inverse-primary": "#8ed2d4",
+                                "surface-container-high": "#e9e8e4",
+                                "on-primary": "#ffffff",
+                                "tertiary": "#853408",
+                                "secondary-container": "#b8e9e9",
+                                "outline": "#6f7979",
+                                "secondary-fixed-dim": "#a0cfd0",
+                                "on-secondary-container": "#3c6a6b",
+                                "surface-dim": "#dbdad6",
+                                "surface": "#faf9f5",
+                                "on-surface": "#1b1c1a",
+                                "on-tertiary-fixed": "#360f00",
+                                "on-secondary": "#ffffff"
+                            },
+                            "borderRadius": {
+                                "DEFAULT": "0.25rem",
+                                "lg": "0.5rem",
+                                "xl": "0.75rem",
+                                "full": "9999px"
+                            },
+                            "spacing": {
+                                "container-max": "1280px",
+                                "stack-sm": "8px",
+                                "stack-lg": "24px",
+                                "margin-desktop": "40px",
+                                "stack-xs": "4px",
+                                "stack-xl": "48px",
+                                "stack-md": "16px",
+                                "margin-mobile": "16px",
+                                "gutter": "24px"
+                            },
+                            "fontFamily": {
+                                "display-lg-mobile": ["Manrope"],
+                                "headline-md-mobile": ["Manrope"],
+                                "title-lg": ["Manrope"],
+                                "headline-md": ["Manrope"],
+                                "label-sm": ["Manrope"],
+                                "display-lg": ["Manrope"],
+                                "body-lg": ["Manrope"],
+                                "label-md": ["Manrope"],
+                                "body-md": ["Manrope"]
+                            },
+                            "fontSize": {
+                                "display-lg-mobile": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                                "headline-md-mobile": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                                "title-lg": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                                "headline-md": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                                "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "600" }],
+                                "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                                "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                                "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+                                "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }]
+                            }
+                        },
+                    },
+                }
+            } catch (_e) { }
+        } catch (_e) { }</script>
+</head>
+
+<body class="bg-background text-on-surface font-body-md antialiased overflow-x-hidden">
+    <!-- Top Navigation -->
+    <nav
+        class="bg-surface/90 dark:bg-surface-dim/90 backdrop-blur-md full-width top-0 sticky z-50 shadow-sm border-b border-outline-variant/30">
+        <div class="flex justify-between items-center h-20 px-margin-desktop w-full max-w-container-max mx-auto">
+            <div class="flex items-center gap-stack-lg">
+                <div class="hidden md:flex gap-stack-md">
+                    <a class="text-label-md font-label-md text-primary dark:text-primary-fixed-dim border-b-2 border-primary pb-1 transition-all"
+                        href="#">Properties</a>
+                    <a class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors"
+                        href="#">Insights</a>
+                    <a class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors"
+                        href="#">Advisors</a>
+                    <a class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors"
+                        href="#">Concierge</a>
+                    <a class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors"
+                        href="#">About</a>
+                </div>
+            </div>
+            <div class="flex items-center gap-stack-md">
+                <button
+                    class="text-label-md font-label-md text-primary-container border border-primary-container rounded-full px-6 py-2 hover:bg-primary-container/10 transition-colors">Sign
+                    In</button>
+                <button
+                    class="text-label-md font-label-md bg-primary-container text-on-primary-container rounded-full px-6 py-2 hover:bg-primary transition-colors">List
+                    Property</button>
+            </div>
+        </div>
+    </nav>
+    <!-- Hero Section -->
+    <header class="relative w-full h-[60vh] flex items-center justify-center">
+        <div class="absolute inset-0 z-0">
+            <img alt="Luxury modern home at sunset with pool" class="w-full h-full object-cover"
+                src="https://lh3.googleusercontent.com/aida/AP1WRLsyjFnnl-W917UVIXGcIK9xyYtqUnj9La-PdTZjqyEPP4nxS0JMy8D2S8q-pLByiuZDAVlbwPi7_RZ8T4dgzIMuX7xl9SbjGKbed0lnfpOYvAet7VipCweeU3KrwKnjYv7vUO-eDQJOa3usVQMoMUaIssiCcHWgeGxuAr-dBLejTXnN4dL5-ZsfQokNnZ7I_O09OV3b2YEJnTdxceBF2drS5heqXivS_Ywe0Q30IkzWURbw97gmP3VNeBE" />
+            <div class="absolute inset-0 bg-black/40"></div>
+        </div>
+        <div
+            class="relative z-10 w-full max-w-container-max mx-auto px-margin-desktop flex flex-col items-center text-center">
+            <h1 class="text-display-lg-mobile md:text-display-lg text-white font-bold mb-stack-md drop-shadow-lg">The
+                Pinnacle of Philippine Living</h1>
+            <p class="text-body-lg text-white/90 mb-stack-xl max-w-2xl drop-shadow-md">Discover exclusive properties,
+                curated for the modern lifestyle.</p>
+        </div>
+    </header>
+    <!-- Advanced Sticky Filter Bar -->
+    <div class="sticky top-20 z-40 bg-surface/95 backdrop-blur-md border-b border-outline-variant/30 shadow-md py-4">
+        <div class="max-w-container-max mx-auto px-margin-desktop">
+            <div
+                class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/50 p-2 flex flex-col lg:flex-row gap-2 lg:items-center">
+                <!-- Keyword Search -->
+                <div
+                    class="flex-1 flex items-center gap-2 px-4 py-2 bg-surface-container-low rounded-lg border border-transparent focus-within:border-primary-container transition-all">
+                    <span class="material-symbols-outlined text-primary-container">search</span>
+                    <input
+                        class="bg-transparent border-none focus:ring-0 text-body-md w-full placeholder-on-surface-variant/60"
+                        placeholder="Location, Project, or Developer" type="text" />
+                </div>
+                <div class="flex flex-wrap lg:flex-nowrap gap-2 items-center">
+                    <!-- Property Type -->
+                    <div class="relative group min-w-[140px] flex-1 lg:flex-none">
+                        <select
+                            class="appearance-none bg-surface-container-low border border-transparent hover:border-outline-variant rounded-lg px-4 py-2 text-label-md font-label-md text-on-surface-variant w-full focus:ring-1 focus:ring-primary-container cursor-pointer pr-10">
+                            <option value="">Property Type</option>
+                            <option>House</option>
+                            <option>Condo</option>
+                            <option>Lot</option>
+                            <option>Townhouse</option>
+                        </select>
+                        <span
+                            class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-outline text-[20px]">keyboard_arrow_down</span>
+                    </div>
+                    <!-- Price Range -->
+                    <div class="relative group min-w-[160px] flex-1 lg:flex-none">
+                        <select
+                            class="appearance-none bg-surface-container-low border border-transparent hover:border-outline-variant rounded-lg px-4 py-2 text-label-md font-label-md text-on-surface-variant w-full focus:ring-1 focus:ring-primary-container cursor-pointer pr-10">
+                            <option value="">Price Range</option>
+                            <option>₱5M - ₱20M</option>
+                            <option>₱20M - ₱50M</option>
+                            <option>₱50M - ₱100M</option>
+                            <option>₱100M+</option>
+                        </select>
+                        <span
+                            class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-outline text-[20px]">payments</span>
+                    </div>
+                    <div class="h-8 w-[1px] bg-outline-variant hidden lg:block mx-1"></div>
+                    <!-- More Filters -->
+                    <button
+                        class="flex items-center gap-2 px-4 py-2 text-primary-container hover:bg-primary-container/10 rounded-lg text-label-md font-label-md transition-colors whitespace-nowrap">
+                        <span class="material-symbols-outlined text-[20px]">tune</span>
+                        <span class="hidden sm:inline">More Filters</span>
+                    </button>
+                    <!-- Search Button -->
+                    <button
+                        class="bg-primary-container text-on-primary-container hover:bg-primary px-6 py-2 rounded-lg text-label-md font-label-md transition-colors flex items-center justify-center gap-2 min-w-[100px]">
+                        Search
+                    </button>
+                </div>
+            </div>
+            <!-- Filter Quick Tags -->
+            <div class="flex items-center gap-2 mt-3 overflow-x-auto scrollbar-hide pb-1">
+                <span
+                    class="text-label-sm text-on-surface-variant font-semibold mr-2 uppercase tracking-wider">Quick:</span>
+                <button class="px-3 py-1 bg-primary text-on-primary rounded-full text-label-sm">All</button>
+                <button
+                    class="px-3 py-1 bg-surface-container-high text-on-surface-variant hover:bg-secondary-container rounded-full text-label-sm transition-colors border border-outline-variant/30">Metro
+                    Manila</button>
+                <button
+                    class="px-3 py-1 bg-surface-container-high text-on-surface-variant hover:bg-secondary-container rounded-full text-label-sm transition-colors border border-outline-variant/30">Laguna</button>
+                <button
+                    class="px-3 py-1 bg-surface-container-high text-on-surface-variant hover:bg-secondary-container rounded-full text-label-sm transition-colors border border-outline-variant/30">Cebu</button>
+                <button
+                    class="px-3 py-1 bg-surface-container-high text-on-surface-variant hover:bg-secondary-container rounded-full text-label-sm transition-colors border border-outline-variant/30">Pampanga</button>
+                <button
+                    class="px-3 py-1 bg-surface-container-high text-on-surface-variant hover:bg-secondary-container rounded-full text-label-sm transition-colors border border-outline-variant/30">Batangas</button>
+            </div>
+        </div>
+    </div>
+    <main class="max-w-container-max mx-auto px-margin-desktop py-stack-xl">
+        <!-- Featured Properties -->
+        <section class="mb-stack-xl">
+            <div class="flex justify-between items-end mb-stack-lg">
+                <div>
+                    <h2 class="text-headline-md font-headline-md text-primary font-semibold">Featured Listings</h2>
+                    <p class="text-body-md text-on-surface-variant mt-1">Exclusive properties selected by our experts.
+                    </p>
+                </div>
+                <a class="text-primary-container hover:text-primary text-label-md font-label-md flex items-center gap-1 transition-colors"
+                    href="#">
+                    View all <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+                </a>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-gutter">
+                <!-- Large Featured Card -->
+                <div
+                    class="group bg-surface-container-lowest rounded-xl overflow-hidden card-shadow hover:card-hover-shadow transition-all duration-300 transform hover:-translate-y-1 flex flex-col border border-outline-variant/20 h-full relative cursor-pointer">
+                    <div
+                        class="absolute top-4 left-4 z-20 bg-tertiary-container text-white text-label-sm font-label-sm px-3 py-1 rounded-full flex items-center gap-1 shadow-md">
+                        <span class="material-symbols-outlined text-[16px] icon-fill">star</span> Featured
+                    </div>
+                    <div class="relative w-full h-80 overflow-hidden">
+                        <img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            data-alt="A luxurious modern villa interior featuring double-height ceilings, floor-to-ceiling windows overlooking a tropical garden, minimalist contemporary furniture, warm lighting, and light mode aesthetic with teal and orange accents in the decor."
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_0mFlInVxyIa3OGHF2yXc4OzXAvW4AQV6qyJx41Od3nuC-OYxn7ZEZnamBFYNiPbDAZ3kYCCetTd93h1OGRqSdDwJBObTpzk4QNOJ6V040hH5rT4JO76Rw-0u4XxKad6TkxHs84DbyQyjVtqmr-xu5FLMN3xsf9PyDyhGo5Gn9bG2-JbHr1E7zPockoy8boivwZsKjvAYyETuVQpWL4wjmYJ-5OA5S6TfXCmT6ZXDM3KzXdeu95rq6rFrNoDzQKMwAZXUeVUoyhG7" />
+                        <div
+                            class="absolute bottom-4 left-4 z-20 bg-surface/90 backdrop-blur-sm px-4 py-2 rounded-lg shadow-sm">
+                            <span class="text-title-lg font-title-lg text-primary font-bold">₱185,000,000</span>
+                        </div>
+                    </div>
+                    <div class="p-6 flex flex-col flex-grow">
+                        <h3
+                            class="text-title-lg font-title-lg text-on-surface mb-2 line-clamp-1 group-hover:text-primary-container transition-colors">
+                            Ayala Alabang Estate</h3>
+                        <p class="text-body-md text-on-surface-variant flex items-center gap-1 mb-4">
+                            <span class="material-symbols-outlined text-[18px] text-outline">location_on</span>
+                            Muntinlupa City, Metro Manila
+                        </p>
+                        <div class="flex items-center gap-4 text-on-surface-variant mt-auto mb-6">
+                            <div class="flex items-center gap-1 bg-surface-container px-3 py-1.5 rounded-md">
+                                <span class="material-symbols-outlined text-[18px]">bed</span>
+                                <span class="text-label-md font-label-md">5</span>
+                            </div>
+                            <div class="flex items-center gap-1 bg-surface-container px-3 py-1.5 rounded-md">
+                                <span class="material-symbols-outlined text-[18px]">shower</span>
+                                <span class="text-label-md font-label-md">6</span>
+                            </div>
+                            <div class="flex items-center gap-1 bg-surface-container px-3 py-1.5 rounded-md">
+                                <span class="material-symbols-outlined text-[18px]">directions_car</span>
+                                <span class="text-label-md font-label-md">4</span>
+                            </div>
+                            <div class="flex items-center gap-1 bg-surface-container px-3 py-1.5 rounded-md">
+                                <span class="material-symbols-outlined text-[18px]">square_foot</span>
+                                <span class="text-label-md font-label-md">850 sqm</span>
+                            </div>
+                        </div>
+                        <button
+                            class="w-full bg-primary-container text-on-primary-container rounded-lg py-3 text-label-md font-label-md hover:bg-primary transition-colors">View
+                            Details</button>
+                    </div>
+                </div>
+                <div class="flex flex-col gap-gutter">
+                    <!-- Secondary Featured 1 -->
+                    <div
+                        class="group bg-surface-container-lowest rounded-xl overflow-hidden card-shadow hover:card-hover-shadow transition-all duration-300 transform hover:-translate-y-1 flex flex-col sm:flex-row border border-outline-variant/20 h-full relative cursor-pointer">
+                        <div
+                            class="absolute top-4 left-4 z-20 bg-tertiary-container text-white text-label-sm font-label-sm px-3 py-1 rounded-full flex items-center gap-1 shadow-md">
+                            <span class="material-symbols-outlined text-[16px] icon-fill">star</span> Featured
+                        </div>
+                        <div class="relative w-full sm:w-2/5 h-48 sm:h-auto overflow-hidden">
+                            <img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                data-alt="High-end condominium living room with panoramic city views at sunset, elegant contemporary styling, soft ambient lighting, clean lines, and a light color palette with subtle teal tones."
+                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAETZZp0xAAYpS9Okp6MrMewZf0lPxqNX2MM5gR4tuXfOxGBTtqDP3GXfYvoB46AY1I5k_S2cS69Xxn1Sl8F1eM1yywJoGmCLwJ9pHuuwXXZUoxX4kj0xY3p_OSYIKbBotBYvyGwez5b2uAdTHRwE1o1hK61HuCeTfpBfBYL-35YL_uoLLqGinEC30HlRqV_uN-fBihNNanrJbyXNj1NrH_cvhmFlyWUIuWXnizQWBhTO7_h0Ib3RwYPorg7fDw6V9BLwEZ8syLfVAW" />
+                        </div>
+                        <div class="p-5 flex flex-col justify-center sm:w-3/5">
+                            <div class="mb-2">
+                                <span
+                                    class="text-title-lg font-title-lg text-primary font-bold block">₱85,500,000</span>
+                            </div>
+                            <h3
+                                class="text-body-lg font-bold text-on-surface mb-1 line-clamp-1 group-hover:text-primary-container transition-colors">
+                                The Proscenium Penthouse</h3>
+                            <p class="text-body-md text-on-surface-variant flex items-center gap-1 mb-4 text-sm">
+                                <span class="material-symbols-outlined text-[16px] text-outline">location_on</span>
+                                Rockwell Center, Makati
+                            </p>
+                            <div class="flex items-center gap-3 text-on-surface-variant mb-4">
+                                <div class="flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-[16px]">bed</span>
+                                    <span class="text-label-sm font-label-sm">3</span>
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-[16px]">shower</span>
+                                    <span class="text-label-sm font-label-sm">3.5</span>
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-[16px]">square_foot</span>
+                                    <span class="text-label-sm font-label-sm">280 sqm</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Secondary Featured 2 -->
+                    <div
+                        class="group bg-surface-container-lowest rounded-xl overflow-hidden card-shadow hover:card-hover-shadow transition-all duration-300 transform hover:-translate-y-1 flex flex-col sm:flex-row border border-outline-variant/20 h-full relative cursor-pointer">
+                        <div
+                            class="absolute top-4 left-4 z-20 bg-tertiary-container text-white text-label-sm font-label-sm px-3 py-1 rounded-full flex items-center gap-1 shadow-md">
+                            <span class="material-symbols-outlined text-[16px] icon-fill">star</span> Featured
+                        </div>
+                        <div class="relative w-full sm:w-2/5 h-48 sm:h-auto overflow-hidden">
+                            <img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                data-alt="Modern beachfront luxury home exterior, large glass windows reflecting the ocean, infinity pool blending with the horizon, bright daylight setting, clean architectural lines in a minimalist light mode style."
+                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuASSEScTTUaGm-VsQg5FB-Ow6Lt72_tAvqmnKTjOX3d5mhqAQ1-xCmQhfzbbl8w7QO9xLgrR-arLOfn9wLJy1f18grLhstQWKxNhusWo7MdDsGKFJImQtIE3jTQo4rB0BPJFQvxE7nHCkjLpqfLcymeh-T54qLvAkJYCp2q6BxZ9dGaeEwqIFr-_DNyIt5hLGX5Zn813bSieSFUybG3LdVItH7a30CSkgvxYTRDO70qWOFWHc_5DhB4dnxTKjdHkNtaYHDmggqisEth" />
+                        </div>
+                        <div class="p-5 flex flex-col justify-center sm:w-3/5">
+                            <div class="mb-2">
+                                <span
+                                    class="text-title-lg font-title-lg text-primary font-bold block">₱120,000,000</span>
+                            </div>
+                            <h3
+                                class="text-body-lg font-bold text-on-surface mb-1 line-clamp-1 group-hover:text-primary-container transition-colors">
+                                Punta Fuego Cliffside</h3>
+                            <p class="text-body-md text-on-surface-variant flex items-center gap-1 mb-4 text-sm">
+                                <span class="material-symbols-outlined text-[16px] text-outline">location_on</span>
+                                Nasugbu, Batangas
+                            </p>
+                            <div class="flex items-center gap-3 text-on-surface-variant mb-4">
+                                <div class="flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-[16px]">bed</span>
+                                    <span class="text-label-sm font-label-sm">4</span>
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-[16px]">shower</span>
+                                    <span class="text-label-sm font-label-sm">5</span>
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-[16px]">square_foot</span>
+                                    <span class="text-label-sm font-label-sm">650 sqm</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- Immersive Property Tours -->
+        <section class="mb-stack-xl">
+            <div class="flex flex-col md:flex-row justify-between items-end mb-stack-lg gap-4">
+                <div>
+                    <h2 class="text-headline-md font-headline-md text-primary font-semibold">Immersive Property Tours
+                    </h2>
+                    <p class="text-body-md text-on-surface-variant mt-1">Experience our most exclusive estates through
+                        cinematic virtual walkthroughs.</p>
+                </div>
+                <button
+                    class="text-primary-container hover:text-primary text-label-md font-label-md flex items-center gap-1 transition-colors">
+                    View More Videos <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+                </button>
+            </div>
+            <div
+                class="relative group rounded-xl overflow-hidden card-shadow aspect-video bg-surface-container-highest">
+                <img alt="Video tour thumbnail"
+                    class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    src="https://lh3.googleusercontent.com/aida/AP1WRLsyjFnnl-W917UVIXGcIK9xyYtqUnj9La-PdTZjqyEPP4nxS0JMy8D2S8q-pLByiuZDAVlbwPi7_RZ8T4dgzIMuX7xl9SbjGKbed0lnfpOYvAet7VipCweeU3KrwKnjYv7vUO-eDQJOa3usVQMoMUaIssiCcHWgeGxuAr-dBLejTXnN4dL5-ZsfQokNnZ7I_O09OV3b2YEJnTdxceBF2drS5heqXivS_Ywe0Q30IkzWURbw97gmP3VNeBE" />
+                <div
+                    class="absolute inset-0 bg-black/30 flex items-center justify-center transition-opacity group-hover:bg-black/40">
+                    <div
+                        class="w-20 h-20 bg-primary-container text-on-primary-container rounded-full flex items-center justify-center shadow-lg transform transition-transform group-hover:scale-110 cursor-pointer">
+                        <span class="material-symbols-outlined text-[48px] icon-fill">play_arrow</span>
+                    </div>
+                </div>
+                <div class="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
+                    <h3 class="text-title-lg font-title-lg text-white">The Grand Horizon Villa - Cinematic Tour</h3>
+                    <p class="text-body-md text-white/80">4:25 • 4K Ultra HD</p>
+                </div>
+            </div>
+        </section>
+        <!-- Latest Properties -->
+        <section>
+            <div class="flex justify-between items-end mb-stack-lg">
+                <div>
+                    <h2 class="text-headline-md font-headline-md text-primary font-semibold">Latest Properties</h2>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-label-sm text-on-surface-variant">Sort by:</span>
+                    <select
+                        class="bg-surface-container border-none rounded-lg text-label-md font-label-md py-1 pr-8 pl-3 focus:ring-1 focus:ring-primary">
+                        <option>Newest</option>
+                        <option>Price: High to Low</option>
+                        <option>Price: Low to High</option>
+                    </select>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
+                <!-- Card 1 -->
+                <div
+                    class="group bg-surface-container-lowest rounded-xl overflow-hidden card-shadow hover:card-hover-shadow transition-all duration-300 transform hover:-translate-y-1 flex flex-col border border-outline-variant/20 cursor-pointer">
+                    <div class="relative w-full aspect-[4/3] overflow-hidden">
+                        <img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            data-alt="Sleek modern townhouse exterior in a quiet upscale subdivision, manicured landscaping, light grey and white facade with warm wooden accents, shot in bright daylight."
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuDUgrVJzJi8naqNnULiOewy-7RII0QsYxVsJLrA86ghcSKDNHPZTikHWulaKdbNnq00vT8ZPZVBAZlJc1PmTBfhdjew2lua1RsmTYJC686KsheT_kqCIN5-i4HBy92cVInc6t1DCQsaeFPhCwoJZxbHA9x0fwoXvbfjJP80CVDo39WC0WQ--pCUHkXo5s_bT95N78VgmD_0RPCKO1PpwkwPu5nYEQ87JkfwAIJjIwnKSnKTXpvt6it0VUPQSemVuO1KmzPgcq-f-GcC" />
+                        <div
+                            class="absolute top-3 right-3 bg-surface/90 backdrop-blur-sm rounded-full p-2 text-outline-variant hover:text-tertiary-container transition-colors shadow-sm">
+                            <span class="material-symbols-outlined text-[20px]">favorite</span>
+                        </div>
+                        <div
+                            class="absolute bottom-3 left-3 bg-surface/90 backdrop-blur-sm px-3 py-1 rounded-md shadow-sm">
+                            <span class="text-label-md font-label-md font-bold text-primary">New Construction</span>
+                        </div>
+                    </div>
+                    <div class="p-5 flex flex-col flex-grow">
+                        <div class="mb-2">
+                            <span class="text-title-lg font-title-lg text-primary font-bold">₱45,000,000</span>
+                        </div>
+                        <h3
+                            class="text-body-lg font-bold text-on-surface mb-1 line-clamp-1 group-hover:text-primary-container transition-colors">
+                            Forbes Park Modern Townhome</h3>
+                        <p class="text-body-md text-on-surface-variant flex items-center gap-1 mb-4 text-sm">
+                            <span class="material-symbols-outlined text-[16px] text-outline">location_on</span> Makati
+                            City, Metro Manila
+                        </p>
+                        <div
+                            class="grid grid-cols-2 gap-2 text-on-surface-variant mt-auto mb-4 bg-surface-container-low rounded-lg p-3">
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-[18px]">bed</span>
+                                <span class="text-label-sm font-label-sm">3 Beds</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-[18px]">shower</span>
+                                <span class="text-label-sm font-label-sm">3 Baths</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-[18px]">directions_car</span>
+                                <span class="text-label-sm font-label-sm">2 Cars</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-[18px]">square_foot</span>
+                                <span class="text-label-sm font-label-sm">220 sqm</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Card 2 -->
+                <div
+                    class="group bg-surface-container-lowest rounded-xl overflow-hidden card-shadow hover:card-hover-shadow transition-all duration-300 transform hover:-translate-y-1 flex flex-col border border-outline-variant/20 cursor-pointer">
+                    <div class="relative w-full aspect-[4/3] overflow-hidden">
+                        <img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            data-alt="Spacious luxury apartment balcony overlooking a vibrant city skyline at dusk, glass railings, comfortable outdoor seating, modern light mode aesthetic."
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuCBpAYNNzvWEhnAHpY3BQSF94JLoz7Egt1nS330ZThcAisi-D0DOiqxJwmcLj0g4THHZC7B5xy_JfyPweoJk9AE6kCxVSlDcU0CCmHNBiX2wDoALaMOXXALR5usHQg16Y-rAlW_dYXJODG0rXtqXk4rHVuIOG6OC0OZFf-K05Y6ihjUeRavRuonRApg3iYSx366ZdbELvDct_WXBvYeUpcsjda4AkafQkA7m1ZC0V-Jc2kM6a-Rnde2fc6NDGGFz0p41mDGluin975f" />
+                        <div
+                            class="absolute top-3 right-3 bg-surface/90 backdrop-blur-sm rounded-full p-2 text-outline-variant hover:text-tertiary-container transition-colors shadow-sm">
+                            <span class="material-symbols-outlined text-[20px]">favorite</span>
+                        </div>
+                    </div>
+                    <div class="p-5 flex flex-col flex-grow">
+                        <div class="mb-2">
+                            <span class="text-title-lg font-title-lg text-primary font-bold">₱62,000,000</span>
+                        </div>
+                        <h3
+                            class="text-body-lg font-bold text-on-surface mb-1 line-clamp-1 group-hover:text-primary-container transition-colors">
+                            BGC Sky Villa</h3>
+                        <p class="text-body-md text-on-surface-variant flex items-center gap-1 mb-4 text-sm">
+                            <span class="material-symbols-outlined text-[16px] text-outline">location_on</span>
+                            Bonifacio Global City, Taguig
+                        </p>
+                        <div
+                            class="grid grid-cols-2 gap-2 text-on-surface-variant mt-auto mb-4 bg-surface-container-low rounded-lg p-3">
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-[18px]">bed</span>
+                                <span class="text-label-sm font-label-sm">4 Beds</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-[18px]">shower</span>
+                                <span class="text-label-sm font-label-sm">4.5 Baths</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-[18px]">directions_car</span>
+                                <span class="text-label-sm font-label-sm">3 Cars</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-[18px]">square_foot</span>
+                                <span class="text-label-sm font-label-sm">310 sqm</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Card 3 -->
+                <div
+                    class="group bg-surface-container-lowest rounded-xl overflow-hidden card-shadow hover:card-hover-shadow transition-all duration-300 transform hover:-translate-y-1 flex flex-col border border-outline-variant/20 cursor-pointer">
+                    <div class="relative w-full aspect-[4/3] overflow-hidden">
+                        <img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            data-alt="Elegant suburban mansion interior, grand staircase, marble floors, abundant natural light, minimalist furnishings in neutral tones with subtle teal accents."
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuCPXgzXqFrUux0BfZC7KcfWsLQSzE8kkTstfBkYRlj1gI45jl_FfYI__DNPAzNTIMblo9wQEow8QN5WREctdEHS2eIrSL5fZ5MyuFqY9X-eZIpm5m60H0udVWkdrSOn3qwmnI_LTWnN0eYWRsCe54X63lvKiARB39VAkr6mHbwPYzGdqZO8s_bdYxJisiu3txcxSnm9I06GX8mIDBmjk11AHTj_Du-o0LxjwYVU-89D2-Wk7p4-95L9F7BfWD8IIqTBnU_Q4F-fl5Ax" />
+                        <div
+                            class="absolute top-3 right-3 bg-surface/90 backdrop-blur-sm rounded-full p-2 text-outline-variant hover:text-tertiary-container transition-colors shadow-sm">
+                            <span class="material-symbols-outlined text-[20px]">favorite</span>
+                        </div>
+                    </div>
+                    <div class="p-5 flex flex-col flex-grow">
+                        <div class="mb-2">
+                            <span class="text-title-lg font-title-lg text-primary font-bold">₱145,000,000</span>
+                        </div>
+                        <h3
+                            class="text-body-lg font-bold text-on-surface mb-1 line-clamp-1 group-hover:text-primary-container transition-colors">
+                            Corinthian Gardens Estate</h3>
+                        <p class="text-body-md text-on-surface-variant flex items-center gap-1 mb-4 text-sm">
+                            <span class="material-symbols-outlined text-[16px] text-outline">location_on</span> Quezon
+                            City, Metro Manila
+                        </p>
+                        <div
+                            class="grid grid-cols-2 gap-2 text-on-surface-variant mt-auto mb-4 bg-surface-container-low rounded-lg p-3">
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-[18px]">bed</span>
+                                <span class="text-label-sm font-label-sm">6 Beds</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-[18px]">shower</span>
+                                <span class="text-label-sm font-label-sm">7 Baths</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-[18px]">directions_car</span>
+                                <span class="text-label-sm font-label-sm">5 Cars</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-[18px]">square_foot</span>
+                                <span class="text-label-sm font-label-sm">950 sqm</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex justify-center mt-stack-xl">
+                <button
+                    class="bg-surface-container border border-outline-variant/30 text-primary-container hover:bg-surface-container-high px-8 py-3 rounded-lg font-label-md text-label-md transition-colors flex items-center gap-2">
+                    Load More Properties <span class="material-symbols-outlined text-[20px]">expand_more</span>
+                </button>
+            </div>
+        </section>
+    </main>
+    <!-- Footer -->
+    <footer class="bg-surface-container-lowest dark:bg-inverse-surface full-width rounded-t-xl shadow-lg mt-stack-xl">
+        <div
+            class="grid grid-cols-1 md:grid-cols-4 gap-stack-lg px-margin-desktop py-stack-xl max-w-container-max mx-auto">
+            <div class="col-span-1">
+                <h2
+                    class="text-headline-md font-headline-md font-extrabold text-on-surface dark:text-surface-bright mb-4">
+                    Human Shelter Realty</h2>
+                <p class="text-body-md text-on-surface-variant dark:text-outline-variant mb-6">Elevating the standard of
+                    living through curated real estate experiences.</p>
+                <div class="flex gap-4">
+                    <a class="text-primary-container dark:text-primary-fixed opacity-90 hover:opacity-100 transition-opacity"
+                        href="#">
+                        <span class="material-symbols-outlined">public</span>
+                    </a>
+                    <a class="text-primary-container dark:text-primary-fixed opacity-90 hover:opacity-100 transition-opacity"
+                        href="#">
+                        <span class="material-symbols-outlined">mail</span>
+                    </a>
+                </div>
+            </div>
+            <div class="col-span-1">
+                <h3 class="text-title-lg font-title-lg text-primary-container dark:text-primary-fixed mb-4">Properties
+                </h3>
+                <ul class="space-y-3">
+                    <li class=""><a
+                            class="text-body-md text-on-surface-variant dark:text-outline-variant hover:text-primary transition-colors"
+                            href="#">Browse Luxury Homes</a></li>
+                    <li class=""><a
+                            class="text-body-md text-on-surface-variant dark:text-outline-variant hover:text-primary transition-colors"
+                            href="#">Exclusive Neighborhoods</a></li>
+                </ul>
+            </div>
+            <div class="col-span-1">
+                <h3 class="text-title-lg font-title-lg text-primary-container dark:text-primary-fixed mb-4">Services
+                </h3>
+                <ul class="space-y-3">
+                    <li class=""><a
+                            class="text-body-md text-on-surface-variant dark:text-outline-variant hover:text-primary transition-colors"
+                            href="#">Market Insights</a></li>
+                    <li class=""><a
+                            class="text-body-md text-on-surface-variant dark:text-outline-variant hover:text-primary transition-colors"
+                            href="#">Mortgage Advisor</a></li>
+                </ul>
+            </div>
+        </div>
+    </footer>
+</body>
+
+</html>

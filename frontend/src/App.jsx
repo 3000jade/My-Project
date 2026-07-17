@@ -1,21 +1,9 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/layout/Navbar';
-import Hero from './components/features/Hero';
-import Listings from './components/features/Listings';
-import Consultation from './components/features/Consultation';
 import ChatWidget from './components/features/ChatWidget';
 import Footer from './components/layout/Footer';
+import LandingPage from './pages/LandingPage';
 import PropertiesPage from './pages/PropertiesPage';
-
-function HomePage() {
-  return (
-    <>
-      <Hero />
-      <Listings />
-      <Consultation />
-    </>
-  );
-}
 
 export default function App() {
   return (
@@ -24,7 +12,7 @@ export default function App() {
         <Navbar />
         <main className="flex-1">
           <Routes>
-            <Route path="/" element={<HomePage />} />
+            <Route path="/" element={<LandingPage />} />
             <Route path="/properties" element={<PropertiesPage />} />
           </Routes>
         </main>

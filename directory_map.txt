@@ -45,6 +45,7 @@ CP_kerby - Root project directory
 |   |   +--- index.css - Global Tailwind v4 CSS and @theme configurations
 |   |   +--- main.jsx - React application entry point where root is rendered
 |   |   +--- pages - Dedicated route components (Full pages)
+|   |   |   +--- LandingPage.jsx - Standalone Home Landing Page component
 |   |   |   \--- PropertiesPage.jsx - Standalone Interactive Properties Listing Page
 |   |   +--- types - Type definitions
 |   |   \--- utils - Helper functions and utility scripts
