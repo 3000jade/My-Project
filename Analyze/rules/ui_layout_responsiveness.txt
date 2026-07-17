@@ -1,0 +1,29 @@
+==========================================================================
+MEMORY COMMAND: RESPONSIVE LAYOUT & SECTION SPACING SYSTEM
+==========================================================================
+[STRICT DIRECTIVE] You must enforce standard spacing metrics across all pages 
+to eliminate structural collisions. No arbitrary pixel sizes are permitted.
+
+1. STANDARD CONTAINMENT & RESPONSIVE PADDINGS
+   - Absolute Maximum Width: Center all primary page blocks using 'max-w-container-max-width mx-auto' (or 'max-w-container-max mx-auto').
+   - Outer Gutters (Responsive Stepping): 
+     * Desktop (>= 1024px): Horizontal padding must match 'px-margin-desktop' (80px).
+     * Tablet (768px - 1023px): Horizontal padding must match 'md:px-margin-tablet' (40px).
+     * Mobile (< 768px): Horizontal padding must match 'px-margin-mobile' (20px).
+
+2. RESOLVING VERTICAL SPACING COLLISIONS (STRICT SPACING OVERRIDES)
+   - Collision A: Absolute Overlay Cleavage (Top Spacing):
+     * The absolute search console bar in the Hero section floats over succeeding elements.
+     * To prevent layout swallowing, apply a top padding of exactly 'pt-[160px]' to 'Listings.jsx' (scaling down to 'pt-24' on mobile viewports).
+   - Collision B: Section Gaps & Bottom Rhythm (Bottom Spacing):
+     * Sections must never touch background boundaries abruptly.
+     * Eradicate any utility classes like 'py-stack-xl' or 'py-10' on section boundaries.
+     * Use the system variable class: 'py-section-gap' (resolving to '120px' vertical margins via '--spacing-section-gap').
+   - Collision C: Internal Card Margins:
+     * Standardize the interior padding of large asymmetric focus cards (such as the Ayala Alabang Estate card) to 'p-8'. This ensures that any green CTA button never touches the rounded base border.
+
+3. RESPONSIVE GRID CONFIGURATIONS
+   - Asymmetric Grid System (LandingPage): 'Listings.jsx' must maintain a 2-column distribution on desktop (1 large showcase card left, 2 horizontal cards stacked right), collapsing to a 1-column stack ('grid-cols-1') on mobile.
+   - Symmetric Grid System (PropertiesPage): 'LatestProperties' must maintain a strict 3-column layout on desktop ('lg:grid-cols-3'), scaling down to 2 columns on tablet ('md:grid-cols-2'), and 1 column on mobile ('grid-cols-1').
+   - Internal Spacing: All grid lists must utilize the 'gap-gutter' spacing class (32px gutter size).
+==========================================================================

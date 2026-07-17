@@ -1,0 +1,88 @@
+==========================================================================
+MEMORY COMMAND: UNIFIED COMPONENT CONST-ENFORCEMENT — BUTTON SYSTEM
+==========================================================================
+[STRICT DIRECTIVE] Every button component generated, modified, or merged 
+MUST inherit the '.premium-btn' style architecture. You are strictly 
+forbidden from writing flat inline backgrounds, raw un-bezeled hover states, 
+or hardcoded font/text styling on button trees.
+
+1. THE COMPRESSED 3-COLOR MATRIX (INVARIANT COLOR SPACE)
+   Every button must select exactly ONE of these three color systems:
+
+   🔴 SYSTEM A: PRIMARY TEAL (Action, Search, Nav)
+     - Tailwind Classes: 'bg-primary text-on-primary' (mapping to '--color-primary' / #266F71).
+     - Focus Context: Standard page interactions, routing triggers, and secondary CTAs.
+
+   🟠 SYSTEM B: ACCENT CORAL (High-Impact Conversion)
+     - Tailwind Classes: 'bg-accent text-white' (mapping to '--color-accent' / #FB8E5D).
+     - Focus Context: Form submission actions, wishlist highlights, and "Inquire Now" tags.
+     - Animation Hook: Append '.animate-pulse-glow' if the item is a primary page converter.
+
+   ⚪ SYSTEM C: GHOST TRANSPARENT (Contrast/Image Overlays)
+     - Tailwind Classes: 'bg-white/10 backdrop-blur-md border border-white/30 text-white'.
+     - Focus Context: Floating elements sitting directly on top of images or rich backdrops.
+
+2. DYNAMIC GEOMETRIC CLASSIFICATION (PERMISSIBLE SIZE VARIATIONS ONLY)
+   Adjust scale only via the horizontal and vertical layout padding utilities:
+   - SMALL (e.g., Grid Actions): 'px-6 py-2 rounded-lg text-label-sm'.
+   - STANDARD (e.g., Navbar): 'px-8 py-3 rounded-lg text-label-lg'.
+   - LARGE (e.g., Search CTA): 'px-12 py-4 rounded-xl text-label-lg'.
+   - BLOCK (e.g., Full Form): 'w-full py-5 rounded-xl text-label-lg'.
+
+3. STYLESHEET REFACTOR: SIZE-AGNOSTIC DIAGONAL GLASS SWEEP (RIGHT-TO-LEFT)
+   Apply this exact CSS code block to your root CSS declarations. This keeps your exact
+   45-degree box design intact but scales the translation path so it works across any width.
+
+   .premium-btn {
+     position: relative;
+     overflow: hidden;
+     transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+     font-family: var(--font-sans); /* Force universal Inter font alignment */
+     text-transform: uppercase; /* Force universal clean-casing */
+     letter-spacing: 0.05em;
+     cursor: pointer;
+   }
+
+   /* Original .html 45-Degree Angled Box Geometric Design */
+   .premium-btn::after {
+     content: '';
+     position: absolute;
+     top: -50%;
+     left: -50%;
+     width: 200%;
+     height: 200%;
+     background: linear-gradient(
+       to right, 
+       rgba(255, 255, 255, 0) 0%, 
+       rgba(255, 255, 255, 0.3) 50%, 
+       rgba(255, 255, 255, 0) 100%
+     );
+     /* 
+       Keep exact 45deg rotation from HTML. 
+       Start position offset on both axes to safely hide offscreen to the right.
+     */
+     transform: rotate(45deg) translate(60%, -60%);
+     transition: transform 0.65s cubic-bezier(0.19, 1, 0.22, 1);
+     pointer-events: none;
+   }
+
+   /* Hover Dynamics */
+   .premium-btn:hover {
+     transform: translateY(-2px) scale(1.02);
+     box-shadow: 0 10px 20px -5px rgba(38, 111, 113, 0.35); /* Cast primary soft-teal glow */
+   }
+
+   .premium-btn:hover::after {
+     /* 
+       Sweeps dynamically from top-right down to bottom-left (Right-to-Left motion).
+       Dual-axis percentage scaling ensures the sheen clears the full width of any size button.
+     */
+     transform: rotate(45deg) translate(-60%, 60%); 
+   }
+
+   /* Active Click Press Dynamics */
+   .premium-btn:active {
+     transform: translateY(0px) scale(1.0);
+     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+   }
+==========================================================================

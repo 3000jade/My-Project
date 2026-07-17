@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html class="h-full scroll-smooth" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Isolated Premium Filter Component</title>
+
+    <!-- Google Fonts & Material Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1"
+        rel="stylesheet" />
+
+    <!-- Tailwind CSS CDN with forms/container-queries -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
+    <!-- Unified Design Tokens matching new.html exactly -->
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#005658",
+                        "primary-container": "#266f71",
+                        "on-primary-container": "#aaeff1",
+                        "secondary": "#386667",
+                        "secondary-container": "#b8e9e9",
+                        "background": "#faf9f5",
+                        "surface": "#faf9f5",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-low": "#f5f4ef",
+                        "surface-container": "#efeeea",
+                        "surface-container-high": "#e9e8e4",
+                        "on-surface": "#1b1c1a",
+                        "on-surface-variant": "#3f4949",
+                        "outline-variant": "#bec8c8",
+                        "outline": "#6f7979",
+                    },
+                    spacing: {
+                        "container-max": "1280px",
+                        "stack-sm": "8px",
+                        "stack-md": "16px",
+                        "stack-lg": "24px",
+                    },
+                    fontFamily: {
+                        sans: ["Manrope", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom mini-scrollbar for Quick Tags slider */
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            /* IE and Edge */
+            scrollbar-width: none;
+            /* Firefox */
+        }
+
+        /* Smooth scale transition for the Popover dialog card */
+        .popover-transition {
+            transition: opacity 0.15s cubic-bezier(0, 0, 0.2, 1), transform 0.15s cubic-bezier(0, 0, 0.2, 1);
+        }
+    </style>
+</head>
+
+<body
+    class="bg-background text-on-surface font-sans min-h-screen flex flex-col antialiased p-4 md:p-8 justify-center items-center">
+
+    <div class="w-full max-w-4xl space-y-8">
+
+        <!-- Component Header & Isolation Metaphor -->
+        <div class="border-b border-outline-variant/30 pb-4">
+            <span
+                class="text-[10px] uppercase tracking-widest font-extrabold text-primary bg-primary-container/10 px-2.5 py-1 rounded-full">Standalone
+                Sandbox</span>
+            <h1 class="text-xl font-extrabold mt-2 tracking-tight">Decoupled Search & Filter Component</h1>
+            <p class="text-xs text-on-surface-variant mt-1 leading-relaxed">
+                Separated cleanly from the parent static page layouts of <span
+                    class="font-mono bg-surface-container-low px-1.5 py-0.5 rounded text-xs font-semibold">new.html</span>.
+                This isolated structure supports stateful triggers, keyboard inputs, and is ready for modular
+                integration.
+            </p>
+        </div>
+
+        <!-- ================= START OF THE ISOLATED COMPONENT ================= -->
+        <div id="reusable-filter-component"
+            class="w-full bg-surface-container rounded-2xl border border-outline-variant/40 p-4 md:p-6 shadow-md transition-shadow">
+
+            <div
+                class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/50 p-2.5 flex flex-col lg:flex-row gap-2.5 lg:items-center relative">
+
+                <!-- 1. Keyword TextInput Segment -->
+                <div
+                    class="flex-1 flex items-center gap-2 px-4 py-2 bg-surface-container-low rounded-lg border border-transparent focus-within:border-primary-container transition-all">
+                    <span
+                        class="material-symbols-outlined text-primary-container text-[20px] shrink-0 select-none">search</span>
+                    <input id="widget-keyword" oninput="onKeywordChange(this.value)"
+                        class="bg-transparent border-none focus:ring-0 text-sm w-full placeholder-on-surface-variant/50 p-0 text-on-surface font-medium"
+                        placeholder="Location, Project, or Developer" type="text" />
+                    <button id="widget-clear-keyword" onclick="clearKeyword()"
+                        class="hidden text-on-surface-variant/40 hover:text-on-surface transition-colors">
+                        <span class="material-symbols-outlined text-[18px] font-bold">close</span>
+                    </button>
+                </div>
+
+                <!-- Actionable Options Grid -->
+                <div class="flex flex-col sm:flex-row lg:flex-nowrap gap-2 items-center">
+
+                    <!-- 2. Property Type Pick-list Segment -->
+                    <div class="relative min-w-[140px] w-full sm:w-auto">
+                        <select id="widget-type" onchange="onTypeChange(this.value)"
+                            class="appearance-none bg-surface-container-low border border-transparent hover:border-outline-variant rounded-lg px-4 py-2.5 text-xs font-bold text-on-surface-variant w-full focus:ring-1 focus:ring-primary cursor-pointer pr-10">
+                            <option value="">Property Type</option>
+                            <option value="House">House</option>
+                            <option value="Condo">Condo</option>
+                            <option value="Lot">Lot</option>
+                            <option value="Townhouse">Townhouse</option>
+                        </select>
+                        <span
+                            class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-outline text-[18px] select-none">keyboard_arrow_down</span>
+                    </div>
+
+                    <!-- 3. INPUT-BASED Price Popover Segment -->
+                    <div class="relative min-w-[160px] w-full sm:w-auto" id="widget-price-container">
+                        <button onclick="togglePricePopover(event)"
+                            class="flex items-center justify-between bg-surface-container-low border border-transparent hover:border-outline-variant rounded-lg px-4 py-2.5 text-xs font-bold text-on-surface-variant w-full focus:ring-1 focus:ring-primary cursor-pointer text-left h-full">
+                            <span class="flex items-center gap-1.5 truncate">
+                                <span
+                                    class="material-symbols-outlined text-[18px] text-primary shrink-0 select-none">payments</span>
+                                <span id="widget-price-label">Price Range</span>
+                            </span>
+                            <span
+                                class="material-symbols-outlined text-outline text-[18px] shrink-0 select-none">keyboard_arrow_down</span>
+                        </button>
+
+                        <!-- Absolute Floating Input Overlay Card -->
+                        <div id="widget-price-popover"
+                            class="hidden absolute right-0 mt-2 w-72 bg-surface-container-lowest border border-outline-variant/40 rounded-xl shadow-xl p-4 z-50 space-y-4 popover-transition opacity-0 scale-95">
+                            <div class="flex justify-between items-center">
+                                <span
+                                    class="text-[9px] font-extrabold text-on-surface-variant uppercase tracking-wider">Set
+                                    Numeric Price Limits</span>
+                                <span id="widget-popover-display"
+                                    class="text-xs font-extrabold text-primary bg-primary/10 px-2 py-0.5 rounded">Any
+                                    Price</span>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-2">
+                                <div class="space-y-1">
+                                    <label class="text-[9px] text-on-surface-variant/70 font-bold uppercase">Min (₱
+                                        Millions)</label>
+                                    <div class="relative flex items-center">
+                                        <span
+                                            class="absolute left-2.5 text-xs text-on-surface-variant/60 font-semibold select-none">₱</span>
+                                        <input id="widget-min-price" type="number" placeholder="0" min="0"
+                                            oninput="onPriceInputChange()"
+                                            class="w-full bg-surface-container-low border border-outline-variant/30 focus:border-primary focus:ring-1 focus:ring-primary rounded-lg pl-6 pr-6 py-1.5 text-xs font-bold text-on-surface" />
+                                        <span
+                                            class="absolute right-2 text-[10px] text-on-surface-variant/60 font-semibold select-none">M</span>
+                                    </div>
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-[9px] text-on-surface-variant/70 font-bold uppercase">Max (₱
+                                        Millions)</label>
+                                    <div class="relative flex items-center">
+                                        <span
+                                            class="absolute left-2.5 text-xs text-on-surface-variant/60 font-semibold select-none">₱</span>
+                                        <input id="widget-max-price" type="number" placeholder="200" min="0"
+                                            oninput="onPriceInputChange()"
+                                            class="w-full bg-surface-container-low border border-outline-variant/30 focus:border-primary focus:ring-1 focus:ring-primary rounded-lg pl-6 pr-6 py-1.5 text-xs font-bold text-on-surface" />
+                                        <span
+                                            class="absolute right-2 text-[10px] text-on-surface-variant/60 font-semibold select-none">M</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex justify-end gap-1.5 pt-2 border-t border-outline-variant/15">
+                                <button type="button" onclick="clearPriceInputs()"
+                                    class="px-2.5 py-1 text-[10px] font-bold text-secondary hover:bg-secondary-container/20 rounded transition-colors">Clear</button>
+                                <button type="button" onclick="closePricePopover()"
+                                    class="px-3.5 py-1.5 bg-primary text-white text-[10px] font-bold rounded hover:bg-primary-container transition-colors">Done</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Visual Segment Divider -->
+                    <div class="h-8 w-[1px] bg-outline-variant hidden lg:block mx-1"></div>
+
+                    <!-- 4. Global Action/Search Button -->
+                    <button onclick="triggerSearch()"
+                        class="w-full lg:w-auto bg-primary text-white hover:bg-primary-container px-6 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 tracking-wide">
+                        <span class="material-symbols-outlined text-[16px] select-none">search</span> Apply filters
+                    </button>
+                </div>
+            </div>
+
+            <!-- 5. Horizontal Slider Quick Tags Segment -->
+            <div class="flex items-center gap-2 mt-4 overflow-x-auto scrollbar-hide pb-1">
+                <span
+                    class="text-[10px] text-on-surface-variant font-extrabold uppercase tracking-widest mr-2 select-none">Quick:</span>
+                <button id="tag-all" onclick="selectQuickTag('All')"
+                    class="px-3.5 py-1 rounded-full text-xs font-bold border border-primary bg-primary text-white transition-all">All</button>
+                <button id="tag-manila" onclick="selectQuickTag('Metro Manila')"
+                    class="px-3.5 py-1 rounded-full text-xs font-semibold border border-outline-variant/30 bg-surface-container-high text-on-surface-variant hover:bg-secondary-container hover:text-on-surface transition-all whitespace-nowrap">Metro
+                    Manila</button>
+                <button id="tag-laguna" onclick="selectQuickTag('Laguna')"
+                    class="px-3.5 py-1 rounded-full text-xs font-semibold border border-outline-variant/30 bg-surface-container-high text-on-surface-variant hover:bg-secondary-container hover:text-on-surface transition-all whitespace-nowrap">Laguna</button>
+                <button id="tag-cebu" onclick="selectQuickTag('Cebu')"
+                    class="px-3.5 py-1 rounded-full text-xs font-semibold border border-outline-variant/30 bg-surface-container-high text-on-surface-variant hover:bg-secondary-container hover:text-on-surface transition-all whitespace-nowrap">Cebu</button>
+                <button id="tag-pampanga" onclick="selectQuickTag('Pampanga')"
+                    class="px-3.5 py-1 rounded-full text-xs font-semibold border border-outline-variant/30 bg-surface-container-high text-on-surface-variant hover:bg-secondary-container hover:text-on-surface transition-all whitespace-nowrap">Pampanga</button>
+                <button id="tag-batangas" onclick="selectQuickTag('Batangas')"
+                    class="px-3.5 py-1 rounded-full text-xs font-semibold border border-outline-variant/30 bg-surface-container-high text-on-surface-variant hover:bg-secondary-container hover:text-on-surface transition-all whitespace-nowrap">Batangas</button>
+            </div>
+        </div>
+        <!-- ================= END OF THE ISOLATED COMPONENT ================= -->
+
+        <!-- Real-Time State Sandbox Monitor -->
+        <div class="bg-surface-container-low rounded-xl border border-outline-variant/30 p-5 space-y-4">
+            <div class="flex justify-between items-center">
+                <h2
+                    class="text-xs font-extrabold uppercase tracking-wider text-on-surface-variant flex items-center gap-1.5">
+                    <span class="material-symbols-outlined text-[16px] text-primary">terminal</span> State Output
+                    (Sandbox JSON)
+                </h2>
+                <div class="flex gap-2">
+                    <button onclick="resetState()"
+                        class="text-[10px] text-secondary hover:underline font-extrabold">Reset Component</button>
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse my-auto"></span>
+                </div>
+            </div>
+
+            <pre
+                class="bg-surface-container-lowest text-on-surface rounded-lg p-3.5 border border-outline-variant/20 font-mono text-[11px] overflow-x-auto"><code id="widget-state-display">{}</code></pre>
+        </div>
+
+        <!-- Custom Micro-Toast notifications -->
+        <div id="toast-notif"
+            class="fixed bottom-6 right-6 bg-primary text-white px-4 py-2.5 rounded-lg shadow-xl border border-primary-container text-xs font-bold transition-all transform translate-y-16 opacity-0 pointer-events-none flex items-center gap-2">
+            <span class="material-symbols-outlined text-[16px]">info</span>
+            <span id="toast-text">State Modified</span>
+        </div>
+
+    </div>
+
+    <script>
+        // Central, isolated search state model
+        const state = {
+            keyword: "",
+            type: "",
+            minPrice: null,
+            maxPrice: null,
+            quickTag: "All"
+        };
+
+        // Output and label components reference
+        const display = document.getElementById('widget-state-display');
+        const clearKeywordBtn = document.getElementById('widget-clear-keyword');
+
+        function renderState() {
+            display.innerText = JSON.stringify(state, null, 4);
+        }
+
+        // 1. Keyword event handlers
+        function onKeywordChange(val) {
+            state.keyword = val;
+            if (val.trim().length > 0) {
+                clearKeywordBtn.classList.remove('hidden');
+            } else {
+                clearKeywordBtn.classList.add('hidden');
+            }
+            renderState();
+        }
+
+        function clearKeyword() {
+            const input = document.getElementById('widget-keyword');
+            input.value = "";
+            state.keyword = "";
+            clearKeywordBtn.classList.add('hidden');
+            renderState();
+            triggerToast("Keyword cleared");
+        }
+
+        // 2. Property type selector handler
+        function onTypeChange(val) {
+            state.type = val;
+            renderState();
+            triggerToast(`Type filtered: ${val || 'All'}`);
+        }
+
+        // 3. Manual price input handlers & popover
+        function togglePricePopover(event) {
+            event.stopPropagation();
+            const popover = document.getElementById('widget-price-popover');
+            const isHidden = popover.classList.contains('hidden');
+
+            if (isHidden) {
+                popover.classList.remove('hidden');
+                // Force layout recalculation for smooth transition animation
+                popover.offsetHeight;
+                popover.classList.remove('opacity-0', 'scale-95');
+                popover.classList.add('opacity-100', 'scale-100');
+            } else {
+                closePricePopover();
+            }
+        }
+
+        function closePricePopover() {
+            const popover = document.getElementById('widget-price-popover');
+            popover.classList.remove('opacity-100', 'scale-100');
+            popover.classList.add('opacity-0', 'scale-95');
+            setTimeout(() => {
+                popover.classList.add('hidden');
+            }, 150);
+        }
+
+        // Synchronize clicking outside to close pricing card
+        document.addEventListener('click', function (event) {
+            const container = document.getElementById('widget-price-container');
+            const popover = document.getElementById('widget-price-popover');
+            if (container && !container.contains(event.target)) {
+                closePricePopover();
+            }
+        });
+
+        function onPriceInputChange() {
+            const minVal = parseFloat(document.getElementById('widget-min-price').value) || null;
+            const maxVal = parseFloat(document.getElementById('widget-max-price').value) || null;
+
+            state.minPrice = minVal;
+            state.maxPrice = maxVal;
+
+            let buttonLabel = "Price Range";
+            let popoverDisplay = "Any Price";
+
+            if (minVal !== null && maxVal !== null) {
+                buttonLabel = `₱${minVal}M - ₱${maxVal}M`;
+                popoverDisplay = `₱${minVal}M - ₱${maxVal}M`;
+            } else if (minVal !== null) {
+                buttonLabel = `₱${minVal}M+`;
+                popoverDisplay = `₱${minVal}M+`;
+            } else if (maxVal !== null) {
+                buttonLabel = `Max: ₱${maxVal}M`;
+                popoverDisplay = `₱${maxVal}M Max`;
+            }
+
+            document.getElementById('widget-price-label').innerText = buttonLabel;
+            document.getElementById('widget-popover-display').innerText = popoverDisplay;
+
+            renderState();
+        }
+
+        function clearPriceInputs() {
+            document.getElementById('widget-min-price').value = "";
+            document.getElementById('widget-max-price').value = "";
+            onPriceInputChange();
+            triggerToast("Price limits cleared");
+        }
+
+        // 4. Quick tags slider events
+        function selectQuickTag(tagName) {
+            state.quickTag = tagName;
+
+            // Re-apply standard/focused styles to active tags
+            const mappings = {
+                'All': 'tag-all',
+                'Metro Manila': 'tag-manila',
+                'Laguna': 'tag-laguna',
+                'Cebu': 'tag-cebu',
+                'Pampanga': 'tag-pampanga',
+                'Batangas': 'tag-batangas'
+            };
+
+            Object.keys(mappings).forEach(key => {
+                const element = document.getElementById(mappings[key]);
+                if (key === tagName) {
+                    element.className = "px-3.5 py-1 rounded-full text-xs font-bold border border-primary bg-primary text-white transition-all whitespace-nowrap";
+                } else {
+                    element.className = "px-3.5 py-1 rounded-full text-xs font-semibold border border-outline-variant/30 bg-surface-container-high text-on-surface-variant hover:bg-secondary-container hover:text-on-surface transition-all whitespace-nowrap";
+                }
+            });
+
+            renderState();
+            triggerToast(`Area selection: ${tagName}`);
+        }
+
+        // Reset overall state configuration parameters
+        function resetState() {
+            state.keyword = "";
+            state.type = "";
+            state.minPrice = null;
+            state.maxPrice = null;
+            state.quickTag = "All";
+
+            document.getElementById('widget-keyword').value = "";
+            document.getElementById('widget-type').value = "";
+            clearPriceInputs();
+            selectQuickTag("All");
+
+            clearKeywordBtn.classList.add('hidden');
+            renderState();
+            triggerToast("Component reset completed");
+        }
+
+        // Global search executor triggers
+        function triggerSearch() {
+            triggerToast("Filter parameters applied successfully!");
+        }
+
+        // Simple customized toast notifier
+        function triggerToast(message) {
+            const toast = document.getElementById('toast-notif');
+            const text = document.getElementById('toast-text');
+
+            text.innerText = message;
+            toast.classList.remove('translate-y-16', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-16', 'opacity-0');
+                toast.classList.remove('translate-y-0', 'opacity-100');
+            }, 2500);
+        }
+
+        // Run rendering on start
+        window.onload = function () {
+            renderState();
+        }
+    </script>
+</body>
+
+</html>
