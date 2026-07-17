@@ -1,0 +1,52 @@
+CP_kerby - Root project directory
++--- .gitignore - Git ignore rules for the root project
++--- Analyze - Folder containing static HTML mockups and design references
+|   +--- landingpage.html - Static HTML reference for the main landing page
+|   \--- landingpage_animation.html - Static HTML reference for animations
++--- backend - Backend API directory (currently empty/uninitialized)
+|   \--- src - Source folder for future backend code
++--- frontend - Frontend React 19 application directory (Vite + Tailwind v4)
+|   +--- .gitignore - Git ignore rules for the frontend project
+|   +--- eslint.config.js - ESLint configuration for code linting
+|   +--- index.html - Main HTML entry point for the React application
+|   +--- package-lock.json - Auto-generated exact dependency tree
+|   +--- package.json - Frontend dependencies and script definitions
+|   +--- public - Static assets served directly at the root path
+|   |   +--- assest - Static assets folder
+|   |   +--- favicon.svg - Website favicon icon
+|   |   +--- fonts - Custom font files
+|   |   \--- icons.svg - SVG icon definitions
+|   +--- README.md - Documentation for the frontend project
+|   +--- src - Main source code directory for React
+|   |   +--- app - Core app configurations or global state
+|   |   +--- App.css - Global CSS for the App component
+|   |   +--- App.jsx - Root React component and routing setup
+|   |   +--- assets - Images and dynamic assets imported in React components
+|   |   |   +--- hero.png - Hero section background image
+|   |   |   +--- react.svg - React logo asset
+|   |   |   \--- vite.svg - Vite logo asset
+|   |   +--- components - Reusable React components organized by domain
+|   |   |   +--- features - Domain-specific feature components
+|   |   |   |   +--- ChatWidget.jsx - AI Chat widget feature
+|   |   |   |   +--- Consultation.jsx - Consultation booking section
+|   |   |   |   +--- Hero.jsx - Hero banner section component
+|   |   |   |   \--- Listings.jsx - Signature Collections teaser section for the landing page
+|   |   |   +--- layout - Structural components like headers and footers
+|   |   |   |   +--- Footer.jsx - Global footer component
+|   |   |   |   \--- Navbar.jsx - Global top navigation bar
+|   |   |   \--- styles - CSS files for individual components
+|   |   |       +--- ChatWidget.css - Styles for the chat widget
+|   |   |       +--- Consultation.css - Styles for the consultation section
+|   |   |       +--- Footer.css - Styles for the footer
+|   |   |       +--- Hero.css - Styles for the hero section
+|   |   |       +--- Listings.css - Styles for the listings components
+|   |   |       \--- Navbar.css - Styles for the navbar
+|   |   +--- hooks - Custom React hooks directory
+|   |   +--- index.css - Global Tailwind v4 CSS and @theme configurations
+|   |   +--- main.jsx - React application entry point where root is rendered
+|   |   +--- pages - Dedicated route components (Full pages)
+|   |   |   \--- PropertiesPage.jsx - Standalone Interactive Properties Listing Page
+|   |   +--- types - Type definitions
+|   |   \--- utils - Helper functions and utility scripts
+|   \--- vite.config.js - Vite bundler configuration file
+\--- generate_tree.js - Script used to initially generate this directory map

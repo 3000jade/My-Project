@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import '../styles/Listings.css';
 
 export default function Listings() {
@@ -17,15 +18,15 @@ export default function Listings() {
           </span>
           <h2 className="font-headline-lg text-headline-lg text-tertiary">Signature Collections</h2>
         </div>
-        <a
+        <Link
           className="font-label-lg text-label-lg text-primary hover:text-accent flex items-center gap-2 transition-all group tracking-widest uppercase"
-          href="#"
+          to="/properties"
         >
           View All Listings{' '}
           <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">
             arrow_forward
           </span>
-        </a>
+        </Link>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-gutter">
         {/* Card 1 */}

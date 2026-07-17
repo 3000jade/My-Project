@@ -1,5 +1,21 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: 'Manrope';
+  src: url('/fonts/Manrope.woff2') format('woff2');
+  font-weight: 300 800;
+  font-display: swap;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Inter';
+  src: url('/fonts/Inter.woff2') format('woff2');
+  font-weight: 400 700;
+  font-display: swap;
+  font-style: normal;
+}
+
 @theme {
   --color-primary: #266F71;
   --color-on-primary: #ffffff;
@@ -39,15 +55,18 @@
   --spacing-gutter: 32px;
   --spacing-section-gap: 120px;
 
-  --font-headline-lg-mobile: "Manrope", sans-serif;
-  --font-headline-md: "Manrope", sans-serif;
-  --font-body-lg: "Manrope", sans-serif;
-  --font-label-sm: "Inter", sans-serif;
-  --font-headline-lg: "Manrope", sans-serif;
-  --font-display-lg: "Manrope", sans-serif;
-  --font-body-md: "Manrope", sans-serif;
-  --font-label-lg: "Inter", sans-serif;
-  --font-headline-sm: "Manrope", sans-serif;
+  --font-sans: "Inter", sans-serif;
+  --font-display: "Manrope", sans-serif;
+  
+  --font-headline-lg-mobile: var(--font-display);
+  --font-headline-md: var(--font-display);
+  --font-body-lg: var(--font-display);
+  --font-label-sm: var(--font-sans);
+  --font-headline-lg: var(--font-display);
+  --font-display-lg: var(--font-display);
+  --font-body-md: var(--font-display);
+  --font-label-lg: var(--font-sans);
+  --font-headline-sm: var(--font-display);
 }
 
 @utility text-headline-lg-mobile {
@@ -79,6 +98,10 @@
 }
 
 @layer base {
+  html, body, button, input, select, textarea {
+    font-family: var(--font-sans);
+  }
+
   body {
     @apply bg-background text-on-surface font-body-md selection:bg-accent selection:text-on-accent;
   }

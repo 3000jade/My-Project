@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import '../styles/Navbar.css';
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -27,16 +29,21 @@ export default function Navbar() {
           }`}
       >
         <div className="flex items-center gap-2">
-          <span className="font-headline-sm text-headline-sm font-bold tracking-tight text-primary">PropAI</span>
+          <Link to="/" className="font-headline-sm text-headline-sm font-bold tracking-tight text-primary">PropAI</Link>
         </div>
         <div className="hidden md:flex gap-10 items-center">
-          <a className="font-label-lg text-label-lg text-primary nav-link active transition-all" href="#">Home</a>
-          <a
-            className="font-label-lg text-label-lg text-on-surface-variant hover:text-primary nav-link transition-colors duration-300"
-            href="#"
+          <Link 
+            className={`font-label-lg text-label-lg nav-link transition-all ${location.pathname === '/' ? 'text-primary active' : 'text-on-surface-variant hover:text-primary'}`} 
+            to="/"
+          >
+            Home
+          </Link>
+          <Link
+            className={`font-label-lg text-label-lg nav-link transition-colors duration-300 ${location.pathname === '/properties' ? 'text-primary active' : 'text-on-surface-variant hover:text-primary'}`}
+            to="/properties"
           >
             Properties
-          </a>
+          </Link>
           <a
             className="font-label-lg text-label-lg text-on-surface-variant hover:text-primary nav-link transition-colors duration-300"
             href="#"
