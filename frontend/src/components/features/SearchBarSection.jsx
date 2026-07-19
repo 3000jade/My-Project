@@ -36,7 +36,7 @@ export default function SearchBarSection({ onSearch }) {
 
   return (
     <div className="sticky top-20 z-40 bg-surface/95 backdrop-blur-md border-b border-outline-variant/30 shadow-md py-4">
-      <div className="max-w-container-max-width mx-auto px-margin-mobile md:px-margin-tablet lg:px-margin-desktop">
+      <div className="max-w-[1440px] mx-auto px-5 md:px-10 lg:px-20">
         <form
           onSubmit={handleSearch}
           className="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/50 p-2 flex flex-col lg:flex-row gap-2 lg:items-center"
@@ -49,7 +49,7 @@ export default function SearchBarSection({ onSearch }) {
           >
             <span className="material-symbols-outlined text-primary-container">search</span>
             <input
-              className="bg-transparent border-none focus:ring-0 text-body-md w-full placeholder-on-surface-variant/60"
+              className="bg-transparent border-none focus:ring-0 text-sm md:text-base text-gray-500 leading-relaxed font-sans w-full placeholder-gray-400"
               placeholder="Location, Project, or Developer"
               type="text"
               value={keyword}
@@ -62,7 +62,7 @@ export default function SearchBarSection({ onSearch }) {
             {/* Property Type */}
             <div className="relative group min-w-[140px] flex-1 lg:flex-none">
               <select
-                className="appearance-none bg-surface-container-low border border-transparent hover:border-outline-variant rounded-lg px-4 py-2 text-label-md font-label-md text-on-surface-variant w-full focus:ring-1 focus:ring-primary-container cursor-pointer pr-10"
+                className="appearance-none bg-surface-container-low border border-transparent hover:border-outline-variant rounded-lg px-4 py-2 text-[11px] font-bold uppercase tracking-wider text-gray-500 font-sans w-full focus:ring-1 focus:ring-primary-container cursor-pointer pr-10"
                 value={propertyType}
                 onChange={(e) => setPropertyType(e.target.value)}
               >
@@ -77,7 +77,7 @@ export default function SearchBarSection({ onSearch }) {
             {/* Price Range */}
             <div className="relative group min-w-[160px] flex-1 lg:flex-none">
               <select
-                className="appearance-none bg-surface-container-low border border-transparent hover:border-outline-variant rounded-lg px-4 py-2 text-label-md font-label-md text-on-surface-variant w-full focus:ring-1 focus:ring-primary-container cursor-pointer pr-10"
+                className="appearance-none bg-surface-container-low border border-transparent hover:border-outline-variant rounded-lg px-4 py-2 text-[11px] font-bold uppercase tracking-wider text-gray-500 font-sans w-full focus:ring-1 focus:ring-primary-container cursor-pointer pr-10"
                 value={priceRange}
                 onChange={(e) => setPriceRange(e.target.value)}
               >
@@ -93,7 +93,7 @@ export default function SearchBarSection({ onSearch }) {
             {/* More Filters */}
             <button
               type="button"
-              className="flex items-center gap-2 px-4 py-2 text-primary-container hover:bg-primary-container/10 rounded-lg text-label-md font-label-md transition-colors whitespace-nowrap"
+              className="flex items-center gap-2 px-4 py-2 text-primary-container hover:bg-primary-container/10 rounded-lg text-xs font-bold uppercase tracking-widest font-sans transition-colors whitespace-nowrap premium-btn"
             >
               <span className="material-symbols-outlined text-[20px]">tune</span>
               <span className="hidden sm:inline">More Filters</span>
@@ -101,7 +101,7 @@ export default function SearchBarSection({ onSearch }) {
             {/* Search Button */}
             <button
               type="submit"
-              className="bg-primary text-on-primary px-8 py-3 rounded-lg text-label-lg premium-btn flex items-center justify-center gap-2 min-w-[100px]"
+              className="bg-primary text-on-primary px-8 py-3 rounded-lg text-xs font-bold uppercase tracking-widest font-sans premium-btn flex items-center justify-center gap-2 min-w-[100px]"
             >
               Search
             </button>
@@ -109,14 +109,14 @@ export default function SearchBarSection({ onSearch }) {
         </form>
         {/* Filter Quick Tags */}
         <div className="flex items-center gap-2 mt-3 overflow-x-auto scrollbar-hide pb-1">
-          <span className="text-label-sm text-on-surface-variant font-semibold mr-2 uppercase tracking-wider">Quick:</span>
-          <button onClick={() => handleQuickSearch('')} type="button" className="px-3 py-1 bg-primary text-on-primary rounded-full text-label-sm whitespace-nowrap">All</button>
+          <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 font-sans mr-2">Quick:</span>
+          <button onClick={() => handleQuickSearch('')} type="button" className="px-3 py-1 bg-primary text-on-primary rounded-full text-[11px] font-bold uppercase tracking-wider font-sans whitespace-nowrap premium-btn">All</button>
           {['Metro Manila', 'Laguna', 'Cebu', 'Pampanga', 'Batangas'].map(location => (
             <button
               key={location}
               onClick={() => handleQuickSearch(location)}
               type="button"
-              className="px-3 py-1 bg-surface-container-high text-on-surface-variant hover:bg-secondary-container rounded-full text-label-sm transition-colors border border-outline-variant/30 whitespace-nowrap"
+              className="px-3 py-1 bg-surface-container-high text-gray-500 hover:bg-secondary-container rounded-full text-[11px] font-bold uppercase tracking-wider font-sans transition-colors border border-outline-variant/30 whitespace-nowrap premium-btn"
             >
               {location}
             </button>

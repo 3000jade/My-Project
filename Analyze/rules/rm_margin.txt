@@ -1,0 +1,12 @@
+Role: Senior Frontend Engineer
+
+Task: Convert the provided React component into a full-bleed, edge-to-edge layout that completely occupies the left and right margins of the viewport on desktop and ultra-wide screens.
+
+### Design Objectives
+1. Eliminate Desktop Side Margins: Remove all strict max-width constraints (such as `max-w-[1440px]`) and centering utilities (`mx-auto`) from the outer container. Force the outer container to span 100% of the viewport width (`w-full`).
+2. Edge-to-Edge Grid Scaling: Allow the inner grid and content cards to expand and occupy the newly opened horizontal space. Utilize wider column setups (e.g., `lg:grid-cols-3` or custom responsive columns) and open gaps (`gap-8`) so the content looks balanced across the entire screen width.
+3. Safe Boundary Padding: Maintain a clean, fluid safety padding on the outer edge (e.g., `px-4 md:px-10 lg:px-16`) so text content remains readable and does not touch the physical edge of the monitor glass.
+
+### 🛑 Constraints
+- Use only standard Tailwind v4 utility tokens. 
+- Do not use `@apply` or custom theme variables.

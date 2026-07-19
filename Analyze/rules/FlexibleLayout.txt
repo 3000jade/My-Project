@@ -1,0 +1,34 @@
+Role: Senior Frontend Engineer and Tailwind CSS Expert.
+
+Task: Refactor the provided React component to make its layout, spacing, and typography fully responsive, fluidly optimized for all screen sizes (from a 320px mobile viewport up to a 3840px 4K desktop monitor), and styled with an expansive, high-end luxury real estate aesthetic.
+
+### Core Layout & Visual Objectives
+
+1. Luxury Typography Hierarchy:
+   - Upgrade the text scaling to look grand, intentional, and premium. Avoid small, safe typography on desktop viewports.
+   - For primary display headings (e.g., section titles), implement dramatic responsive scaling (e.g., `text-3xl sm:text-4xl md:text-5xl lg:text-6xl`) or CSS fluid clamp syntax (e.g., `text-[clamp(2rem,5vw,4rem)]`).
+   - Upgrade individual card titles (e.g., property names) to an elegant size like `text-xl lg:text-2xl`.
+   - Scale description/body text to a highly readable standard (e.g., `text-sm md:text-lg`) and ensure key text details like pricing stand out boldly (`text-lg md:text-xl font-bold`).
+
+2. Centered & Expansive Containers:
+   - Expand narrow bounds or structural caps that squish content or leave lopsided, empty margins on wide monitors.
+   - Wrap layout blocks using grand, industry-standard maximum widths combined with centering utilities (e.g., `max-w-7xl mx-auto` or an ultra-wide custom cap like `max-w-[1440px] mx-auto`) to ensure perfect visual equilibrium on desktop screens.
+   - Implement fluid edge protection padding (use `px-4 md:px-8`) on outer wrappers to guarantee content never hugs the glass borders of mobile devices.
+
+3. Premium Grids & Breathing Room:
+   - Replace tight, cramped margins and padding with generous vertical breathing room (e.g., utilize section-level padding like `py-24`, `py-32`, or `py-36`) to deliver an editorial, expensive look.
+   - Upgrade inner element paddings (e.g., inside property cards) to open values like `p-6` or `p-8` so layout information never feels crowded.
+   - Ensure layouts adapt dynamically: structures must seamlessly stack into a single column on mobile (`grid-cols-1`) and smoothly scale into multi-column or asymmetric grid layouts on large viewports. Use wide layout gaps (`gap-8` to `gap-12`) to separate card segments cleanly.
+
+4. Overlapping & Collision Prevention:
+   - Audit the component for absolute positioning layout choices (like floating search panels, badges, or overlays) that collide with adjacent text when the viewport is resized or shrunk down.
+   - Resolve layout collisions by making the positioning fully responsive. Switch elements from absolute positioning on desktop to standard document flow on mobile viewports (e.g., `relative md:absolute`). This permits items to wrap and stack naturally under text on small screens instead of freezing on top of it.
+   - Mandate dynamic container sizing (`h-auto`) to fluidly absorb moving elements as viewports shift.
+
+### 🛑 CRITICAL STRICTOR CONSTRAINTS (To Prevent Compiler Crashes)
+- DO NOT invent, hallucinate, or use custom theme utility classes (such as `px-margin-mobile`, `max-w-container-max-width`, or `py-stack-xl`) unless they are explicitly passed as literal values inside arbitrary bracket syntax (e.g., `max-w-[1440px]` or `px-[16px]`).
+- DO NOT use the `@apply` directive in custom CSS stylesheets. Write all utility classes inline inside the React component's `className` string attributes to ensure full compatibility with modern Tailwind v4 compilation architecture.
+- Every outputted utility class must be an authentic, core out-of-the-box Tailwind token (e.g., `p-4`, `gap-6`, `mx-auto`) to completely avoid `onInvalidCandidate` build failures.
+
+### Inputs for Processing
+[frontend]

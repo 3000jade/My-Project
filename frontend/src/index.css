@@ -47,86 +47,21 @@
   --radius-2xl: 1rem;
   --radius-full: 9999px;
 
-  --spacing-unit: 8px;
-  --spacing-container-max-width: 1440px;
-  --spacing-margin-desktop: 80px;
-  --spacing-margin-mobile: 20px;
-  --spacing-margin-tablet: 40px;
-  --spacing-gutter: 32px;
-  --spacing-section-gap: 120px;
+
 
   --font-sans: "Inter", sans-serif;
   --font-display: "Manrope", sans-serif;
 
-  --font-headline-lg-mobile: var(--font-display);
-  --font-headline-md: var(--font-display);
-  --font-body-lg: var(--font-display);
-  --font-label-sm: var(--font-sans);
-  --font-headline-lg: var(--font-display);
-  --font-display-lg: var(--font-display);
-  --font-body-md: var(--font-display);
-  --font-label-lg: var(--font-sans);
-  --font-headline-sm: var(--font-display);
+
 }
 
-@utility text-headline-lg-mobile {
-  font-size: 32px;
-  line-height: 1.2;
-  font-weight: 700;
-}
 
-@utility text-headline-md {
-  font-size: 32px;
-  line-height: 1.3;
-  font-weight: 700;
-}
-
-@utility text-body-lg {
-  font-size: 18px;
-  line-height: 1.6;
-  font-weight: 400;
-}
-
-@utility text-label-sm {
-  font-size: 12px;
-  line-height: 1.2;
-  letter-spacing: 0.05em;
-  font-weight: 600;
-}
-
-@utility text-headline-lg {
-  font-size: 48px;
-  line-height: 1.2;
-  font-weight: 700;
-}
-
-@utility text-display-lg {
-  font-size: 64px;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-  font-weight: 800;
-}
-
-@utility text-body-md {
-  font-size: 16px;
-  line-height: 1.6;
-  font-weight: 400;
-}
-
-@utility text-label-lg {
-  font-size: 14px;
-  line-height: 1.2;
-  letter-spacing: 0.1em;
-  font-weight: 600;
-}
-
-@utility text-headline-sm {
-  font-size: 24px;
-  line-height: 1.4;
-  font-weight: 600;
-}
 
 @layer base {
+  :root {
+    --font-sans: 'Inter', sans-serif;
+    --font-display: 'Manrope', sans-serif;
+  }
 
   html,
   body,
@@ -137,14 +72,18 @@
     font-family: var(--font-sans);
   }
 
-  body {
-    @apply bg-background text-on-surface font-body-md selection:bg-accent selection:text-on-accent;
-  }
+
 
   *,
   *::before,
   *::after {
     outline: none !important;
+  }
+
+  /* Force tracking adjustments on uppercase metadata labels */
+  .uppercase-tracking {
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
 }
 
@@ -171,36 +110,36 @@
   /* Force universal clean-casing */
   letter-spacing: 0.05em;
   cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Exact Original 45-Degree Angled Box Design */
+/* Responsive Button B Sharp Glass Pane Overlay */
 .premium-btn::after {
   content: '';
   position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
+  top: -150%;
+  left: -150%;
+  width: 400%;
+  height: 400%;
   background: linear-gradient(to right,
-      rgba(255, 255, 255, 0) 0%,
-      rgba(255, 255, 255, 0.3) 50%,
-      rgba(255, 255, 255, 0) 100%);
-  /* Kept exact original 45deg rotation, but offset on both axes to scale with button size */
-  transform: rotate(45deg) translate(50%, -50%);
-  transition: transform 0.65s cubic-bezier(0.19, 1, 0.22, 1);
+      rgba(255, 255, 255, 0) 40%,
+      rgba(255, 255, 255, 0.28) 50%,
+      rgba(255, 255, 255, 0) 60%);
+  /* Placement Optimization: Sets absolute 45deg rotation, staged off-screen to the top-right */
+  transform: translate(50%, -50%) rotate(45deg);
+  transition: transform 0.75s cubic-bezier(0.19, 1, 0.22, 1);
   pointer-events: none;
 }
 
-/* Hover Dynamics */
+/* Hover Dynamics (Full-Width Linear Translation) */
 .premium-btn:hover {
   transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 10px 20px -5px rgba(38, 111, 113, 0.35);
-  /* Cast primary soft-teal glow */
+  box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.15);
 }
 
 .premium-btn:hover::after {
-  /* Sweeps diagonally down and to the left (Right-to-Left) across any width */
-  transform: rotate(45deg) translate(-50%, 50%);
+  /* Motion Fix: Sweeps dynamically across both axes from Right-to-Left down to bottom-left */
+  transform: translate(-50%, 50%) rotate(45deg);
 }
 
 /* Active Click Press Dynamics */

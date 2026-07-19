@@ -1,0 +1,56 @@
+==========================================================================
+MEMORY COMMAND: UNIFIED COMPONENT CONST-ENFORCEMENT — TYPOGRAPHY SYSTEM
+==========================================================================
+[STRICT DIRECTIVE] Every text block, header, label, or paragraph generated, 
+modified, or merged MUST inherit this global typographic blueprint. You are 
+strictly forbidden from inserting arbitrary line-heights, raw un-tracked caps, 
+or mixing display stacks into operational body blocks.
+
+1. THE COMPRESSED 2-FAMILY FONT SPACE (INVARIANT FAMILIES)
+   Every typographic element must map to exactly ONE of these two stacks:
+
+   🏢 STACK A: DISPLAY HEADINGS (Manrope)
+     - CSS Definition: 'font-family: var(--font-display);' -> 'Manrope', sans-serif
+     - Weight Range: Bold (700), ExtraBold (800)
+     - Context: Hero hooks, section headings, card titles, and modal callouts.
+
+   ⚙️ STACK B: UI & BODY INTERFACES (Inter)
+     - CSS Definition: 'font-family: var(--font-sans);' -> 'Inter', sans-serif
+     - Weight Range: Regular (400), Medium (500), SemiBold (600)
+     - Context: Buttons, navigation links, text inputs, body copy, and data tables.
+
+2. GLOBAL UTILITY UTILITY HIERARCHY (TAILWIND TOKEN MAPPING)
+   Do not write custom font sizes. Scale exclusively through these designated buckets:
+
+   ■ DISPLAY HIERARCHY (Manrope Only)
+     - h1.hero      -> 'text-4xl md:text-5xl font-extrabold font-display tracking-tight text-tertiary'
+     - h2.section   -> 'text-2xl md:text-3xl font-bold font-display text-tertiary'
+     - h3.card      -> 'text-xl font-bold font-display text-tertiary'
+
+   ■ INTERFACE HIERARCHY (Inter Only)
+     - body.main    -> 'text-sm md:text-base text-gray-500 leading-relaxed font-sans'
+     - label.caps   -> 'text-xs font-bold uppercase tracking-widest text-accent font-sans'
+     - label.sm     -> 'text-[11px] font-bold uppercase tracking-wider text-gray-400 font-sans'
+
+3. STYLESHEET REFACTOR: ROOT INJECTIONS
+   Apply this exact CSS configuration to your global base styles to lock down font rendering:
+
+   @layer base {
+     :root {
+       --font-sans: 'Inter', sans-serif;
+       --font-display: 'Manrope', sans-serif;
+     }
+
+     body {
+       font-family: var(--font-sans);
+       -webkit-font-smoothing: antialiased;
+       -moz-osx-font-smoothing: grayscale;
+     }
+
+     /* Force tracking adjustments on uppercase metadata labels */
+     .uppercase-tracking {
+       text-transform: uppercase;
+       letter-spacing: 0.05em;
+     }
+   }
+==========================================================================

@@ -5,15 +5,15 @@ export default function LatestProperties({ properties }) {
   const [sortBy, setSortBy] = useState('Newest');
 
   return (
-    <section className="max-w-container-max-width mx-auto px-margin-mobile md:px-margin-tablet lg:px-margin-desktop py-section-gap">
+    <section className="max-w-[1440px] mx-auto px-5 md:px-10 lg:px-20 py-24 lg:py-36">
       <div className="flex justify-between items-end mb-stack-lg">
         <div>
-          <h2 className="text-headline-md font-headline-md text-primary font-semibold">Latest Properties</h2>
+          <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold font-display text-tertiary">Latest Properties</h2>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-label-sm text-on-surface-variant">Sort by:</span>
+          <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 font-sans">Sort by:</span>
           <select
-            className="bg-surface-container border-none rounded-lg text-label-md font-label-md py-1 pr-8 pl-3 focus:ring-1 focus:ring-primary"
+            className="bg-surface-container border-none rounded-lg text-[11px] font-bold uppercase tracking-wider text-gray-500 font-sans py-1 pr-8 pl-3 focus:ring-1 focus:ring-primary"
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
           >
@@ -36,7 +36,7 @@ export default function LatestProperties({ properties }) {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.05 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12"
         >
           {properties.map(property => (
             <motion.div
@@ -65,36 +65,36 @@ export default function LatestProperties({ properties }) {
                 </div>
                 {property.badge && (
                   <div className="absolute bottom-3 left-3 bg-surface/90 backdrop-blur-sm px-3 py-1 rounded-md shadow-sm z-10">
-                    <span className="text-label-md font-label-md font-bold text-primary">{property.badge}</span>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-primary font-sans">{property.badge}</span>
                   </div>
                 )}
               </div>
-              <div className="p-5 flex flex-col flex-grow">
+              <div className="p-6 md:p-8 flex flex-col flex-grow">
                 <div className="mb-2">
-                  <span className="text-title-lg font-title-lg text-primary font-bold">{property.price}</span>
+                  <span className="text-xl lg:text-2xl font-bold font-display text-primary">{property.price}</span>
                 </div>
-                <h3 className="text-body-lg font-bold text-on-surface mb-1 line-clamp-1 group-hover:text-primary-container transition-colors">
+                <h3 className="text-xl lg:text-2xl font-bold font-display text-tertiary mb-1 line-clamp-1 group-hover:text-primary-container transition-colors">
                   {property.name}
                 </h3>
-                <p className="text-body-md text-on-surface-variant flex items-center gap-1 mb-4 text-sm">
+                <p className="text-base md:text-lg text-gray-500 leading-relaxed font-sans flex items-center gap-1 mb-4">
                   <span className="material-symbols-outlined text-[16px] text-outline">location_on</span> {property.location}
                 </p>
                 <div className="grid grid-cols-2 gap-2 text-on-surface-variant mt-auto mb-4 bg-surface-container-low rounded-lg p-3">
                   <div className="flex items-center gap-2">
                     <span className="material-symbols-outlined text-[18px]">bed</span>
-                    <span className="text-label-sm font-label-sm">{property.beds} Beds</span>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 font-sans">{property.beds} Beds</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="material-symbols-outlined text-[18px]">shower</span>
-                    <span className="text-label-sm font-label-sm">{property.baths} Baths</span>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 font-sans">{property.baths} Baths</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="material-symbols-outlined text-[18px]">directions_car</span>
-                    <span className="text-label-sm font-label-sm">{property.parking} Cars</span>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 font-sans">{property.parking} Cars</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="material-symbols-outlined text-[18px]">square_foot</span>
-                    <span className="text-label-sm font-label-sm">{property.area}</span>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 font-sans">{property.area}</span>
                   </div>
                 </div>
               </div>
@@ -108,14 +108,14 @@ export default function LatestProperties({ properties }) {
           className="py-24 text-center text-tertiary bg-background rounded-2xl border border-outline-variant/30 shadow-sm"
         >
           <span className="material-symbols-outlined text-6xl opacity-30 mb-4 block">search_off</span>
-          <p className="font-headline-sm text-headline-sm mb-2">No properties found</p>
-          <p className="text-body-md text-on-surface-variant">Try adjusting your filters or search keywords to find what you're looking for.</p>
+          <p className="text-xl font-bold font-display text-tertiary mb-2">No properties found</p>
+          <p className="text-sm md:text-base text-gray-500 leading-relaxed font-sans">Try adjusting your filters or search keywords to find what you're looking for.</p>
         </motion.div>
       )}
 
       {properties && properties.length > 0 && (
         <div className="flex justify-center mt-stack-xl">
-          <button className="bg-primary text-on-primary px-8 py-3 rounded-lg text-label-lg premium-btn flex items-center gap-2">
+          <button className="bg-primary text-on-primary px-8 py-3 rounded-lg text-xs font-bold uppercase tracking-widest font-sans premium-btn flex items-center gap-2">
             Load More Properties <span className="material-symbols-outlined text-[20px]">expand_more</span>
           </button>
         </div>

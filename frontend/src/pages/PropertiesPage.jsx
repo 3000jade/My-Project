@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import '../components/styles/Listings.css';
+
 import SearchBarSection from '../components/features/SearchBarSection';
 import VideoTours from '../components/features/VideoTours';
 import LatestProperties from '../components/features/LatestProperties';
@@ -105,7 +105,7 @@ export default function PropertiesPage() {
       {/* 1. SearchBarSection at the head */}
       <SearchBarSection onSearch={handleSearch} />
 
-      <section className="py-section-gap px-margin-mobile md:px-margin-tablet lg:px-margin-desktop max-w-container-max-width mx-auto">
+      <section className="py-24 lg:py-36 px-5 md:px-10 lg:px-20 max-w-[1440px] mx-auto">
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -113,11 +113,11 @@ export default function PropertiesPage() {
           transition={{ duration: 0.6 }}
           className="mb-12 text-center"
         >
-          <span className="font-label-lg text-label-lg text-accent uppercase tracking-widest mb-4 block">
+          <span className="text-xs font-bold uppercase tracking-widest text-accent font-sans mb-4 block">
             Discover
           </span>
-          <h2 className="font-headline-lg text-headline-lg text-tertiary">Premium Properties</h2>
-          <p className="font-body-md text-body-md text-on-surface-variant mt-4 max-w-2xl mx-auto">
+          <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold font-display text-tertiary">Premium Properties</h2>
+          <p className="text-base md:text-lg lg:text-xl text-gray-500 leading-relaxed font-sans mt-4 max-w-2xl mx-auto">
             Explore our exclusive collection of hand-picked real estate, designed for modern luxury and unparalleled comfort.
           </p>
         </motion.div>
@@ -127,7 +127,7 @@ export default function PropertiesPage() {
       <VideoTours />
 
       {/* 3. Latest Properties Grid */}
-      <div className="py-stack-xl">
+      <div className="py-12">
         <LatestProperties properties={properties} />
       </div>
     </div>

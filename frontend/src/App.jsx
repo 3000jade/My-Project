@@ -8,9 +8,9 @@ import PropertiesPage from './pages/PropertiesPage';
 export default function App() {
   return (
     <Router>
-      <div className="relative flex flex-col min-h-screen pt-[100px]">
+      <div className="">
         <Navbar />
-        <main className="flex-1">
+        <main className="">
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/properties" element={<PropertiesPage />} />

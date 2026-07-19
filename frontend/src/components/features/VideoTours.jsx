@@ -6,17 +6,17 @@ export default function VideoTours() {
 
   return (
     <>
-      <section className="max-w-container-max-width mx-auto px-margin-mobile md:px-margin-tablet lg:px-margin-desktop py-section-gap">
+      <section className="max-w-[1440px] mx-auto px-5 md:px-10 lg:px-20 py-24 lg:py-36">
         <div className="flex flex-col md:flex-row justify-between items-end mb-stack-lg gap-4">
           <div>
-            <h2 className="text-headline-md font-headline-md text-primary font-semibold">
+            <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold font-display text-tertiary">
               Immersive Property Tours
             </h2>
-            <p className="text-body-md text-on-surface-variant mt-1">
+            <p className="text-base md:text-lg lg:text-xl text-gray-500 leading-relaxed font-sans mt-2">
               Experience our most exclusive estates through cinematic virtual walkthroughs.
             </p>
           </div>
-          <button className="nav-link text-primary-container hover:text-primary text-label-md font-label-md flex items-center gap-1 transition-colors">
+          <button className="nav-link text-primary-container hover:text-primary text-xs font-bold uppercase tracking-widest font-sans flex items-center gap-1 transition-colors">
             View More Videos <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
           </button>
         </div>
@@ -36,8 +36,8 @@ export default function VideoTours() {
             </motion.div>
           </div>
           <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
-            <h3 className="text-title-lg font-title-lg text-white">The Grand Horizon Villa - Cinematic Tour</h3>
-            <p className="text-body-md text-white/80">4:25 • 4K Ultra HD</p>
+            <h3 className="text-xl font-bold font-display text-white">The Grand Horizon Villa - Cinematic Tour</h3>
+            <p className="text-base md:text-lg text-white/80 leading-relaxed font-sans">4:25 • 4K Ultra HD</p>
           </div>
         </div>
       </section>
@@ -68,7 +68,7 @@ export default function VideoTours() {
               </button>
               {/* Placeholder for actual video player */}
               <div className="w-full h-full flex items-center justify-center bg-surface-container-highest">
-                <span className="text-on-surface-variant font-label-lg">Video Player Placeholder</span>
+                <span className="text-xs font-bold uppercase tracking-widest text-gray-500 font-sans">Video Player Placeholder</span>
               </div>
             </motion.div>
           </motion.div>

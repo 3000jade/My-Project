@@ -1,29 +1,60 @@
 ==========================================================================
-MEMORY COMMAND: RESPONSIVE LAYOUT & SECTION SPACING SYSTEM
+MEMORY COMMAND: UNIFIED COMPONENT CONST-ENFORCEMENT — LAYOUT & PADDING
 ==========================================================================
-[STRICT DIRECTIVE] You must enforce standard spacing metrics across all pages 
-to eliminate structural collisions. No arbitrary pixel sizes are permitted.
+[STRICT DIRECTIVE] Every view, block, wrapper, card, or interface layer 
+generated, modified, or merged MUST adhere to this structural layout 
+matrix. You are strictly forbidden from writing arbitrary inline margins, 
+un-tokenized container scaling, or inconsistent element padding blocks.
 
-1. STANDARD CONTAINMENT & RESPONSIVE PADDINGS
-   - Absolute Maximum Width: Center all primary page blocks using 'max-w-container-max-width mx-auto' (or 'max-w-container-max mx-auto').
-   - Outer Gutters (Responsive Stepping): 
-     * Desktop (>= 1024px): Horizontal padding must match 'px-margin-desktop' (80px).
-     * Tablet (768px - 1023px): Horizontal padding must match 'md:px-margin-tablet' (40px).
-     * Mobile (< 768px): Horizontal padding must match 'px-margin-mobile' (20px).
+1. THE GLOBAL RESPONSIVE MARGIN MATRIX (VIEWPORT EDGE SPACE)
+   Main structural sections must use tokenized page padding parameters to 
+   guarantee perfectly aligned left/right grid lines down the page tree:
 
-2. RESOLVING VERTICAL SPACING COLLISIONS (STRICT SPACING OVERRIDES)
-   - Collision A: Absolute Overlay Cleavage (Top Spacing):
-     * The absolute search console bar in the Hero section floats over succeeding elements.
-     * To prevent layout swallowing, apply a top padding of exactly 'pt-[160px]' to 'Listings.jsx' (scaling down to 'pt-24' on mobile viewports).
-   - Collision B: Section Gaps & Bottom Rhythm (Bottom Spacing):
-     * Sections must never touch background boundaries abruptly.
-     * Eradicate any utility classes like 'py-stack-xl' or 'py-10' on section boundaries.
-     * Use the system variable class: 'py-section-gap' (resolving to '120px' vertical margins via '--spacing-section-gap').
-   - Collision C: Internal Card Margins:
-     * Standardize the interior padding of large asymmetric focus cards (such as the Ayala Alabang Estate card) to 'p-8'. This ensures that any green CTA button never touches the rounded base border.
+   📱 MOBILE PROJECTION: 'px-margin-mobile'
+     - Target Widths: < 768px
+     - Use Case: Compact viewport gutters for structural touch screens.
 
-3. RESPONSIVE GRID CONFIGURATIONS
-   - Asymmetric Grid System (LandingPage): 'Listings.jsx' must maintain a 2-column distribution on desktop (1 large showcase card left, 2 horizontal cards stacked right), collapsing to a 1-column stack ('grid-cols-1') on mobile.
-   - Symmetric Grid System (PropertiesPage): 'LatestProperties' must maintain a strict 3-column layout on desktop ('lg:grid-cols-3'), scaling down to 2 columns on tablet ('md:grid-cols-2'), and 1 column on mobile ('grid-cols-1').
-   - Internal Spacing: All grid lists must utilize the 'gap-gutter' spacing class (32px gutter size).
+   📟 TABLET PROJECTION: 'md:px-margin-tablet'
+     - Target Widths: 768px to 1024px
+     - Use Case: Mid-range canvas layouts and landing page components.
+
+   🖥️ DESKTOP PROJECTION: 'lg:px-margin-desktop'
+     - Target Widths: > 1024px (Optimized for 1920px display canvassing)
+     - Use Case: Maximized grid alignment containers for luxury displays.
+
+2. COMPONENT SPACING & MICRO-GUTTERS (ELEMENT HIERARCHY)
+   Component boundaries must utilize strict scale blocks to enforce uniform 
+   visual density throughout the application shell:
+
+   ■ PRIMARY SHELLS / COMPONENT OUTLINES
+     - Standard Wrapper Padding: 'p-2' (Used for search bar foundations, 
+       tight grid blocks, and action panels).
+     - Component Max Boundaries: 'max-w-container-max-width mx-auto' or 
+       'max-w-5xl' for nested utility bars.
+
+   ■ USER INTERACTIVE COMPOSITIONS
+     - Field Inputs & Selectors: 'px-4 py-3' (Maintains structural internal 
+       clearance around utility icons and data entries).
+     - Large Control Actions: 'px-12 py-4' (Locked sizing architecture for 
+       premium full-width command keys and hero portfolio buttons).
+
+3. TAILWIND LAYER REFACTOR: CONFIG TOKEN MAPPING
+   Inject these layout dimensions directly into your project configuration 
+   file to establish universal access to structural tracking properties:
+
+   module.exports = {
+     theme: {
+       extend: {
+         padding: {
+           'margin-mobile': '1rem',
+           'margin-tablet': '2.5rem',
+           'margin-desktop': '5rem', /* Generous edge margins for wide layouts */
+         },
+         maxWidth: {
+           /* Updated to support full 1920px scale envelopes */
+           'container-max-width': '1920px',
+         }
+       }
+     }
+   }
 ==========================================================================
