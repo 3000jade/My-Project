@@ -1,0 +1,35 @@
+Backend Infrastructure Setup Complete
+
+Stack: Node.js, Express, TypeScript
+
+Directory Structure:
+backend/
+├── src/
+│   ├── index.ts                 # Main server entry point
+│   ├── config/                  # Configuration files
+│   ├── controllers/
+│   │   └── health.controller.ts # Health check logic
+│   ├── routes/
+│   │   └── health.routes.ts     # API route definitions
+│   └── middlewares/
+│       └── error.middleware.ts  # Global error handler
+├── package.json                 # Dependencies and scripts
+├── tsconfig.json                # TypeScript configuration
+└── .env                         # Environment variables
+
+Scripts Available:
+- npm run dev    : Starts the server in development mode using nodemon.
+- npm run build  : Compiles the TypeScript code into the dist/ directory.
+- npm start      : Runs the compiled server from dist/.
+
+Dependencies Installed:
+- express
+- cors
+- helmet
+- morgan
+- dotenv
+- typescript (dev)
+- ts-node (dev)
+- nodemon (dev)
+
+To run the backend, navigate to this directory and execute `npm run dev`. The health check endpoint is available at `http://localhost:5000/api/health`.

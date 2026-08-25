@@ -1,20 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Manrope:wght@200;300;400;500;600;700;800&display=swap');
 @import "tailwindcss";
-
-@font-face {
-  font-family: 'Manrope';
-  src: url('/fonts/Manrope.woff2') format('woff2');
-  font-weight: 300 800;
-  font-display: swap;
-  font-style: normal;
-}
-
-@font-face {
-  font-family: 'Inter';
-  src: url('/fonts/Inter.woff2') format('woff2');
-  font-weight: 400 700;
-  font-display: swap;
-  font-style: normal;
-}
 
 @theme {
   --color-primary: #266F71;
@@ -40,6 +25,9 @@
   --color-on-tertiary: #ffffff;
   --color-tertiary-container: #174849;
   --color-on-tertiary-container: #ffffff;
+  
+  --color-coral: #E07A5F;
+  --color-on-coral: #ffffff;
 
   --radius-DEFAULT: 1rem;
   --radius-lg: 1rem;
@@ -70,6 +58,7 @@
   select,
   textarea {
     font-family: var(--font-sans);
+    font-size: 18px;
   }
 
 
@@ -105,7 +94,6 @@
   overflow: hidden;
   transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
   font-family: var(--font-sans);
-  /* Force universal Inter font alignment */
   text-transform: uppercase;
   /* Force universal clean-casing */
   letter-spacing: 0.05em;
@@ -177,4 +165,14 @@
 .reveal.active {
   opacity: 1;
   transform: translateY(0);
+}
+
+.property-card-shadow {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+}
+
+.map-bg {
+  background: url('https://api.mapbox.com/styles/v1/mapbox/light-v10/static/121.05,14.58,13,0/800x400?access_token=pk.eyJ1IjoiZXhhbXBsZSIsImEiOiJja2p1MnB4ZHowM3B3MnBvMGp6amR6ZzR6In0.fake_token');
+  background-size: cover;
+  background-position: center;
 }
