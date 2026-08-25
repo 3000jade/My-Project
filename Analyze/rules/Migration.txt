@@ -1,0 +1,201 @@
+🛑 CRITICAL SAFETY RULE FOR THE AGENT (READ THIS FIRST)
+Before writing, modifying, or saving any new code, you must completely read, scan, and analyze all existing HTML and React files currently in the workspace. Identify what parts have already been migrated. You must include these existing files in your planning and apply any new layout, theme, or component updates directly into them or alongside them. DO NOT wipe out, overwrite, or replace previous migration progress.
+
+========================================================================
+MIGRATION BLUEPRINT AND INSTRUCTIONS FOR AI AGENT (REACT + TAILWIND)
+========================================================================
+
+OVERVIEW
+This document serves as the guide for migrating a single-file HTML/CSS webpage into a modern, organized React (JSX) and Tailwind CSS frontend structure. 
+
+========================================================================
+1. FRONTEND & BACKEND FOLDER STRUCTURE (DYNAMIC API ARCHITECTURE)
+========================================================================
+To support a dynamic, full-stack setup where the frontend talks directly to a live database through an API engine, the overall project workspace will be organized using this folder setup:
+
+[root]/
+│
+├── backend/                    # Backend API Server Engine
+│   ├── config/                 # Database configuration and environment variables
+│   ├── controllers/            # Code logic that processes incoming API requests
+│   ├── models/                 # Database structure blueprints
+│   ├── routes/                 # API link endpoints (e.g., /api/v1/properties)
+│   ├── server.js               # Entry point for the backend server
+│   └── package.json            # Backend server dependencies
+│
+├── frontend/                   # Frontend React Interface Layout
+│   ├── public/
+│   │   └── assets/
+│   │       ├── images/         # Graphics and photos
+│   │       └── icons/          # Visual symbols
+│   │
+│   ├── src/
+│   │   ├── api/                # Core API configuration & fetch managers
+│   │   │   └── apiClient.js    # Central engine for making requests to the backend
+│   │   │
+│   │   ├── components/        # Reusable interface pieces
+│   │   │   ├── Header.jsx      # Top navigation component
+│   │   │   ├── Sidebar.jsx     # Side panel component
+│   │   │   ├── Footer.jsx      # Bottom information component
+│   │   │   └── ui/             # Reusable smaller building block components
+│   │   │
+│   │   ├── modules/            # Self-contained feature engines (Logic + UI)
+│   │   │   ├── Auth/           # Login, logout, and user authentication module
+│   │   │   └── ContentFeed/    # Main display or data feed module
+│   │   │
+│   │   ├── pages/              # Full-screen destination templates
+│   │   │   ├── Home.jsx        # Homepage assembler
+│   │   │   └── Dashboard.jsx   # Dashboard assembler
+│   │   │
+│   │   ├── App.jsx             # Main layout coordinator
+│   │   ├── main.jsx            # Entry point for React
+│   │   └── index.css           # Global Tailwind CSS directives
+│   │
+│   ├── tailwind.config.js      # Tailwind theme adjustments
+│   └── package.json            # Frontend workspace dependencies
+
+========================================================================
+2. LAYOUT CONCEPT (JSX BLOCKS)
+========================================================================
+The interface layout is split into structural React components that manage screen space efficiently:
+
+- <Header /> Component:
+  Placed at the top. Manages the branding, site logo, and navigation links. Includes state for mobile menus.
+  
+- <Sidebar /> Component:
+  Placed to the side of the main view. Houses supplementary links, quick controls, or contextual filters.
+  
+- Main Body Area:
+  The dynamic middle area inside App.jsx that holds the primary unique content of the page.
+  
+- <Footer /> Component:
+  Anchored at the bottom. Displays copyright details, secondary navigation, and legal information.
+
+========================================================================
+3. PAGE THEION & TYPOGRAPHY STANDARDS
+========================================================================
+The uniform look is controlled directly via Tailwind CSS styling utilities and configurations:
+
+A. Color Palette (Tailwind Classes)
+- Primary Design: Styled using default or customized color utilities (e.g., bg-blue-900 for dark banners).
+- Secondary Elements: Managed via supporting tones (e.g., bg-gray-100 for background canvases).
+
+B. Font Visibility & Sizing Ladder
+- Base Paragraph Text: Always set to a highly readable standard of 16px (text-base). Text should never drop below 12px (text-xs).
+- Main Titles (H1): 32px to 36px on computer screens (text-3xl to text-4xl), scaling down to 24px (text-2xl) on mobile phones.
+- Section Titles (H2): 24px to 30px on computer screens (text-2xl to text-3xl), scaling down to 20px (text-xl) on mobile phones.
+- Subheadings (H3): 20px to 24px on computer screens (text-xl to text-2xl), scaling down to 18px (text-lg) on mobile phones.
+- Action Items (Buttons/Toggles): 14px to 16px (text-sm to text-base) to ensure text remains easy to tap and read.
+
+C. Text Spacing Rules
+- Line Spacing: Vertical empty space between stacked rows of text must be at least 1.5 times the font size (leading-relaxed or leading-loose) to prevent overlapping.
+- Paragraph Spacing: The gap between text paragraphs must equal 1 full blank line (mb-4 or space-y-4) to avoid dense blocks of words.
+- Scalability: Use relative units (rem, em, percentages) instead of fixed pixels. This allows users with low vision to magnify or stretch text up to 200% via browser settings without breaking the layout design.
+
+========================================================================
+4. JAVASCRIPT ACTIONS & INTERACTION
+========================================================================
+- Event Handling: All webpage interactive elements (button clicks, menu toggles, form entries) use React's built-in JSX event handlers (like onClick and onChange) instead of old-school script tags.
+
+========================================================================
+5. COMPONENT DICTIONARY & GUIDE
+========================================================================
+Migrate old visual code elements into separate, well-managed UI components using these categories:
+
+A. Navigational Components
+- Menus: Buttons that expand or drop down to show links, keeping the header clean.
+- Tabs: Side-by-side clickable labels that switch between different views on the same page.
+- Breadcrumbs: A row of step-by-step text links at the top showing the path to the current page.
+- Pagination: Page numbers at the bottom of lists to let users flip through chunks of data.
+- Accordion: Clickable headings that unfold downward to reveal hidden text blocks safely.
+
+B. Input & Action Components
+- Buttons: Standard clickable blocks used to trigger events or send info.
+- Input Fields: Empty boxes where users can type in names, emails, or notes.
+- Switches/Toggles: Simple slide buttons to instantly turn a setting on or off.
+- Dropdown/Select Box: Buttons that reveal a vertical menu of options to click.
+- Checkbox: Square boxes used to check off one or multiple choices from a list.
+- Radio Button: Round buttons that ensure only one option can be chosen in a group.
+- Sliders: Tracks with handles to adjust numerical values like volumes or price ranges.
+
+C. Display & Media Layout Components
+- Cards: Boxed containers that group an image, header, and paragraph together.
+- Badges: Small colored visual tags indicating status counts or descriptive labels.
+- Tables: Ordered grids made of rows and columns to show complex data sets cleanly.
+- Carousel/Slider: A rotating banner slideshow to display photos or highlighted items.
+- Avatar: Small round profile frames meant to display initials or user photos.
+
+D. Feedback & Status Components
+- Modals: Pop-up overlay boxes that pause interaction until clicked closed.
+- Toast Notifications: Tiny confirmation alerts that slide into screen corners and disappear.
+- Progress Bar: Loading lines that fill up to track how far along a task is.
+- Spinner/Loader: Small spinning graphics to signal that the page is fetching data.
+
+E. Custom & Miscellaneous Components
+- Custom Block Container: Any unique visual layout block, custom graphic wrap, or unclassified section from the original HTML must be isolated into its own file inside the `src/components/ui/` folder.
+- Naming Rule: If an element does not fit standard names (like a card or button), name it clearly based on what it shows (for example: PropertyShowcase.jsx, FeatureBadge.jsx, or InteractivePreview.jsx).
+- Never Combine Unique Elements: Do not leave unique custom HTML sections tangled inside your main page layout. Extract them into independent building blocks so they stay organized.
+
+========================================================================
+6. MODULES VS. PAGES MANAGEMENT
+========================================================================
+To keep the codebase clean, differentiate clearly between functional features and screen targets:
+
+A. The Module Concept (The Features)
+- A Module is an independent, self-contained engine that owns both its visual style and internal code logic.
+- It is plug-and-play: It can be embedded anywhere or completely swapped out without breaking neighboring systems.
+- Example: An "Auth Module" handles usernames, passwords, and security checks completely within its own folder.
+
+B. The Page Concept (The Canvas)
+- A Page acts purely as a structural template, host, or terminal window tied to a specific web link.
+- It gathers the main layout sections (Header, Sidebar, Footer) and maps exactly where different Modules display on the screen.
+- Example: A "Dashboard Page" does not do heavy data work itself; it simply reserves screen spaces to map out a Profile Module and a Notification Module side by side.
+
+========================================================================
+7. SCREEN LAYOUT & DESIGN STANDARDS (RESPONSIVE & PREMIUM LOOK)
+========================================================================
+When building pages and elements, follow these design rules to ensure the website looks clean, high-end, and works beautifully on phones, tablets, and massive desktop screens:
+
+A. Grand Text Hierarchy (Fonts that Scale)
+- Text size must adjust based on the screen size so it never looks too small on large monitors.
+- Big main titles must use responsive scaling to grow dramatically on wide screens.
+- Card titles (like product names) should look elegant and prominent.
+- Important information (like pricing or key highlights) must always stand out boldly.
+
+B. Expansive Centered Containers (Screen Spacing)
+- Content must never look squished or leave awkward empty gaps on ultra-wide screens.
+- Wrap large layout blocks using maximum width rules combined with automatic centering so everything stays perfectly balanced on large viewports.
+- Always add side padding to the edges of the page to ensure text never touches the physical glass borders of a phone screen.
+
+C. Generous Breathing Room (Grids & Gaps)
+- Avoid tight, cramped elements. Use plenty of vertical spacing between sections to give the website an open, clean look.
+- Give the inside of content cards plenty of inner padding so the details never feel crowded.
+- Items must automatically stack into a single column on mobile screens and smoothly expand into side-by-side grids on desktop monitors. Use wide gaps to separate card segments clearly.
+
+D. Collision Prevention (Overlapping Protection)
+- Avoid forcing elements to sit rigidly on top of each other. 
+- If a badge, banner, or panel is floating on desktop, ensure it switches to a standard vertical stack on mobile so it does not cover up adjacent text.
+- Allow container heights to adjust automatically to safely absorb moving text as screen sizes change.
+
+E. Automation Sizing (Fluid Layout Elements)
+- Use elastic scaling limits for font styles. Main headings should rely on bracket restrictions (like font clamp settings) so text size grows continuously with the exact width of the screen.
+- Apply automatic fit sizing rules to grid items. Give rows a minimal box threshold so grid elements cleanly group together on desktops but automatically drop and stack straight down as room runs out on mobile screens without manual column instructions.
+
+F. STRICT RULES TO PREVENT SYSTEM CRASHES
+- DO NOT invent or make up your own custom style names. Use only official, standard out-of-the-box Tailwind CSS classes.
+- If you need a highly specific custom measurement, write it explicitly inside standard brackets (like max-w-[1440px]).
+- Write all design styles directly inside the component style strings. Do not use external custom code sheets to apply them.
+
+========================================================================
+8. MOCK DATA MANAGEMENT
+========================================================================
+To keep layout features separate from live systems, follow these placeholder rules:
+
+A. Independent Placeholder Storage
+- All temporary text, image paths, and raw values must live cleanly in a separate data block. Do not scatter random test strings directly inside structural component templates.
+- Store mock profiles inside an organized format (like a JavaScript array of objects) so they can be instantly swapped or linked to a live database later without altering layout code.
+
+B. Standard Item Labeling
+- Every single mock item must include a unique tracking label (like id: 1) so React can index it safely.
+- Use uniform, descriptive data keys for all parameters (e.g., text values for titles, descriptive routes for graphics, and clean numbers for prices or counters to safely test filtering code).
+

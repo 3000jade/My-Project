@@ -1,0 +1,68 @@
+========================================================================
+SYSTEM SPECIFICATION DOCUMENT: CATEGORY CAROUSEL FOOTER SECTION
+========================================================================
+Document Type : Frontend Design & Layout Specification
+Target File   : category_carousel_specification.txt
+Module ID     : MOD-CAT-CAROUSEL-2026
+Status        : Production-Ready / Fully Synchronized
+
+========================================================================
+1. COMPONENT LAYOUT MATRIX ([Home.jsx] Section Footer)
+========================================================================
+[PARENT CONTAINER: [LY-301] Horizontal Overflow-X Scrollable Container (Strict Single Row Only)]
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+|                                                                                                                                                                                           |
+|  [LY-302] CARD 1      [LY-303] CARD 2      [LY-304] CARD 3      [LY-305] CARD 4      [LY-306] CARD 5      [LY-307] CARD 6      [LY-308] CARD 7      [LY-309] CARD 8                       |
+|  +--------------+    +--------------+    +--------------+    +--------------+    +--------------+    +--------------+    +--------------+    +--------------+                      |
+|  | [Print]      |    | [Typography] |    | [Web Design] |    | [Product D.] |    | [Mobile]     |    | [Branding]   |    | [Animation]  |    | [Illustrat.] |                      |
+|  | * Orange Bkg |    | * Purple Text|    | * Coupe Rndr |    | * SaaS Dash  |    | * Analytics  |    | * Hex Node   |    | * Teal Stack |    | * Sketch View|                      |
+|  +--------------+    +--------------+    +--------------+    +--------------+    +--------------+    +--------------+    +--------------+    +--------------+                      |
+|   Label: Print        Label: Typo         Label: Web Design   Label: Product D.   Label: Mobile       Label: Branding     Label: Animation    Label: Illust.                      |
+|                                                                                                                                                                                           |
+|  ---> [CONTINUOUS HORIZONTAL OVERFLOW SCROLL AXIS (NO LINE WRAPPING PERMITTED)] --->                                                                                                      |
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+========================================================================
+2. FUNCTIONAL SPECIFICATIONS
+========================================================================
+[FN-301] HORIZONTAL SCROLL INTERACTION (SCROLL-SNAP)
+- Input Source: User touch swipe gesture or mouse wheel trackpad delta-X scroll vector inside container [LY-301].
+- Logic: Translates viewport horizontally across flex cards using CSS properties:
+         `display: flex; flex-direction: row; flex-wrap: nowrap; overflow-x: auto; scroll-snap-type: x mandatory;`
+- Constraints: Multi-row wrapping is strictly disabled. Cards must snap smoothly into exact horizontal alignments to prevent partial card clippings.
+
+[FN-302] CATEGORY ROUTE REDIRECTION
+- Input Source: Primary pointer click or tap execution on any card component block ([LY-302] through [LY-309]).
+- Logic: Triggers router history push event routing user to corresponding category catalog view (e.g., `/portfolio/print`, `/portfolio/web-design`).
+
+========================================================================
+3. UI/UX INTERACTION MECHANICS
+========================================================================
+[LY-302 through LY-309] STRICTOR HORIZONTAL LAYOUT BOUNDS
+- [Idle State]: Scale factor at 100%, flex-shrink set to 0 to maintain absolute widths along the row axis, soft structural shadow.
+- [Loading State]: Skeleton pulse loader animation blocks replacing specific card thumbnail items.
+- [Success State]: High-resolution category preview images loaded with subtle zoom scale transition on hover (`scale(1.03)`).
+- [Error State]: Renders default fallback thumbnail graphic box with corresponding text title remaining intact.
+
+========================================================================
+4. ARCHITECTURAL LAYOUT TRACEABILITY MATRIX
+========================================================================
+Layout ID | Component Binding    | Position Type | Interaction Mapping 
+------------------------------------------------------------------------
+[LY-301]  | Home.jsx Footer Deck | Flex Row Box  | [FN-301] Snap Scroll Axis
+[LY-302]  | Print Category Card  | Inline Block  | [FN-302] Category Route
+[LY-303]  | Typography Card Item | Inline Block  | [FN-302] Category Route
+[LY-304]  | Web Design Card Item | Inline Block  | [FN-302] Category Route
+[LY-305]  | Product Design Card  | Inline Block  | [FN-302] Category Route
+[LY-306]  | Mobile Card Item     | Inline Block  | [FN-302] Category Route
+[LY-307]  | Branding Card Item   | Inline Block  | [FN-302] Category Route
+[LY-308]  | Animation Card Item  | Inline Block  | [FN-302] Category Route
+[LY-309]  | Illustration Card    | Inline Block  | [FN-302] Category Route
+------------------------------------------------------------------------
+
+========================================================================
+5. AGENT SELF-VALIDATION CHECKLIST
+========================================================================
+[x] Confirmed zero placeholders used anywhere within text fields.
+[x] Confirmed layout layout structure explicitly restricts execution to a single horizontal line.
+[x] Confirmed flex-wrap parameter is locked to 'nowrap' to avoid vertically stacked fallback matrices.

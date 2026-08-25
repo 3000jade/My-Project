@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+
+<html class="scroll-smooth" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Contact PropAI | Strategic Real Estate Advisory</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <!-- Tailwind Configuration -->
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline": "#6f7979",
+                        "on-primary-fixed": "#002021",
+                        "on-primary-fixed-variant": "#004f51",
+                        "on-error": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-primary-container": "#aaeff1",
+                        "on-tertiary-container": "#ffdccf",
+                        "secondary-fixed": "#bbebec",
+                        "on-primary": "#ffffff",
+                        "on-background": "#1b1c1a",
+                        "secondary": "#386667",
+                        "outline-variant": "#bec8c8",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-container": "#b8e9e9",
+                        "on-surface": "#1b1c1a",
+                        "tertiary-fixed-dim": "#ffb597",
+                        "surface-container-low": "#f5f4ef",
+                        "secondary-fixed-dim": "#a0cfd0",
+                        "primary-fixed": "#a9eff0",
+                        "surface-container": "#efeeea",
+                        "error": "#ba1a1a",
+                        "surface": "#faf9f5",
+                        "on-tertiary-fixed": "#360f00",
+                        "surface-container-high": "#e9e8e4",
+                        "on-secondary-fixed-variant": "#1e4e4f",
+                        "on-secondary": "#ffffff",
+                        "inverse-surface": "#30312e",
+                        "inverse-on-surface": "#f2f1ed",
+                        "background": "#faf9f5",
+                        "on-error-container": "#93000a",
+                        "tertiary": "#853408",
+                        "primary-fixed-dim": "#8ed2d4",
+                        "primary-container": "#266f71",
+                        "on-tertiary": "#ffffff",
+                        "surface-dim": "#dbdad6",
+                        "surface-container-highest": "#e3e2df",
+                        "surface-bright": "#faf9f5",
+                        "on-surface-variant": "#3f4949",
+                        "inverse-primary": "#8ed2d4",
+                        "on-tertiary-fixed-variant": "#7c2e02",
+                        "tertiary-fixed": "#ffdbcd",
+                        "surface-tint": "#1d686a",
+                        "surface-variant": "#e3e2df",
+                        "on-secondary-container": "#3c6a6b",
+                        "tertiary-container": "#a44b20",
+                        "primary": "#005658",
+                        "on-secondary-fixed": "#002020"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "md": "16px",
+                        "container-max": "1280px",
+                        "margin-mobile": "16px",
+                        "sm": "12px",
+                        "base": "8px",
+                        "lg": "24px",
+                        "xs": "4px",
+                        "xl": "40px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Manrope"],
+                        "body-lg": ["Manrope"],
+                        "label-md": ["Inter"],
+                        "display-lg": ["Manrope"],
+                        "headline-lg": ["Manrope"],
+                        "body-md": ["Manrope"],
+                        "title-lg": ["Manrope"],
+                        "label-sm": ["Inter"],
+                        "headline-lg-mobile": ["Manrope"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "title-lg": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "700" }]
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .hero-gradient {
+            background: linear-gradient(135deg, #005658 0%, #1d686a 100%);
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+
+<body class="bg-background text-on-surface font-body-md overflow-x-hidden">
+    <!-- TopNavBar -->
+    <header
+        class="bg-surface/90 backdrop-blur-md border-b border-outline-variant sticky top-0 z-50 shadow-sm h-20 flex items-center">
+        <nav class="flex justify-between items-center w-full px-gutter max-w-container-max mx-auto">
+            <div class="text-headline-md font-headline-md font-bold text-primary">PropAI</div>
+            <div class="hidden md:flex items-center gap-lg">
+                <a class="text-on-surface-variant hover:text-primary transition-colors text-label-md font-label-md"
+                    href="#">Home</a>
+                <a class="text-on-surface-variant hover:text-primary transition-colors text-label-md font-label-md"
+                    href="#">Properties</a>
+                <a class="text-on-surface-variant hover:text-primary transition-colors text-label-md font-label-md"
+                    href="#">Agents</a>
+                <a class="text-on-surface-variant hover:text-primary transition-colors text-label-md font-label-md"
+                    href="#">About</a>
+                <a class="text-primary border-b-2 border-primary pb-1 font-semibold text-label-md font-label-md"
+                    href="#">Contact</a>
+            </div>
+            <div class="flex items-center gap-md">
+                <button
+                    class="hidden md:block text-on-surface-variant hover:text-primary transition-colors text-label-md font-label-md font-semibold">Login</button>
+                <button
+                    class="bg-primary text-on-primary px-lg py-sm rounded-lg font-label-md text-label-md hover:opacity-90 active:scale-95 transition-all">List
+                    Property</button>
+            </div>
+        </nav>
+    </header>
+    <main>
+        <!-- Hero Section -->
+        <section class="relative overflow-hidden pt-xl pb-24 lg:pt-32 lg:pb-40 bg-surface-container-low">
+            <div class="absolute top-0 right-0 w-1/3 h-full opacity-10 pointer-events-none">
+
+            </div>
+            <div class="max-w-container-max mx-auto px-gutter relative z-10">
+                <div class="max-w-3xl">
+                    <span
+                        class="text-tertiary-container bg-tertiary-container/10 px-md py-xs rounded-full text-label-sm font-label-sm uppercase tracking-wider mb-md inline-block">Contact
+                        Advisory</span>
+                    <h1 class="text-display-lg font-display-lg text-primary mb-lg">Contact PropAI</h1>
+                    <p class="text-body-lg font-body-lg text-on-surface-variant leading-relaxed">
+                        Secure your position in the Philippines' most exclusive developments. Our elite strategic
+                        advisory team provides bespoke guidance for discerning institutional investors and private
+                        clients.
+                    </p>
+                </div>
+            </div>
+        </section>
+        <!-- Contact Grid Section -->
+        <section class="-mt-20 relative z-20 pb-xl">
+            <div class="max-w-container-max mx-auto px-gutter">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-lg">
+                    <!-- Left: Inquiry Form -->
+                    <div class="lg:col-span-7 bg-surface p-xl rounded-xl shadow-sm border border-outline-variant">
+                        <h2 class="text-headline-lg font-headline-lg text-primary mb-xl">Direct Inquiry</h2>
+                        <form class="space-y-lg">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-lg">
+                                <div class="space-y-xs">
+                                    <label class="text-label-md font-label-md text-on-surface-variant">Full Name</label>
+                                    <input
+                                        class="w-full px-md py-md bg-surface-container-low border-none rounded-lg focus:ring-2 focus:ring-primary text-body-md font-body-md transition-all"
+                                        placeholder="John Doe" type="text" />
+                                </div>
+                                <div class="space-y-xs">
+                                    <label class="text-label-md font-label-md text-on-surface-variant">Corporate
+                                        Email</label>
+                                    <input
+                                        class="w-full px-md py-md bg-surface-container-low border-none rounded-lg focus:ring-2 focus:ring-primary text-body-md font-body-md transition-all"
+                                        placeholder="john@company.com" type="email" />
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-lg">
+                                <div class="space-y-xs">
+                                    <label class="text-label-md font-label-md text-on-surface-variant">Phone
+                                        Number</label>
+                                    <input
+                                        class="w-full px-md py-md bg-surface-container-low border-none rounded-lg focus:ring-2 focus:ring-primary text-body-md font-body-md transition-all"
+                                        placeholder="+63 900 000 0000" type="tel" />
+                                </div>
+                                <div class="space-y-xs">
+                                    <label class="text-label-md font-label-md text-on-surface-variant">Inquiry
+                                        Type</label>
+                                    <select
+                                        class="w-full px-md py-md bg-surface-container-low border-none rounded-lg focus:ring-2 focus:ring-primary text-body-md font-body-md transition-all">
+                                        <option>Buying</option>
+                                        <option>Selling</option>
+                                        <option>Strategic Advisory</option>
+                                        <option>Partnership</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="space-y-xs">
+                                <label class="text-label-md font-label-md text-on-surface-variant">Message</label>
+                                <textarea
+                                    class="w-full px-md py-md bg-surface-container-low border-none rounded-lg focus:ring-2 focus:ring-primary text-body-md font-body-md transition-all"
+                                    placeholder="Tell us about your requirements..." rows="5"></textarea>
+                            </div>
+                            <button
+                                class="w-full md:w-auto bg-tertiary text-on-tertiary px-xl py-md rounded-lg font-bold text-label-md hover:scale-[1.02] active:scale-[0.98] transition-all shadow-md"
+                                type="submit">
+                                Send Inquiry
+                            </button>
+                        </form>
+                    </div>
+                    <!-- Right: Office Details -->
+                    <div class="lg:col-span-5 space-y-lg">
+                        <div class="bg-primary text-on-primary p-xl rounded-xl shadow-lg relative overflow-hidden">
+                            <div class="relative z-10">
+                                <h3 class="text-title-lg font-title-lg mb-lg">Global Headquarters</h3>
+                                <div class="space-y-md">
+                                    <div class="flex gap-md">
+                                        <span class="material-symbols-outlined text-primary-fixed">location_on</span>
+                                        <p class="text-body-md font-body-md">28th Floor, One Bonifacio High Street, BGC,
+                                            Taguig City, Philippines</p>
+                                    </div>
+                                    <div class="flex gap-md">
+                                        <span class="material-symbols-outlined text-primary-fixed">call</span>
+                                        <p class="text-body-md font-body-md">+63 (2) 8888 0000</p>
+                                    </div>
+                                    <div class="flex gap-md">
+                                        <span class="material-symbols-outlined text-primary-fixed">mail</span>
+                                        <p class="text-body-md font-body-md">concierge@propai.ph</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="absolute -right-20 -bottom-20 opacity-20 transform rotate-12">
+                                <span class="material-symbols-outlined text-[200px]"
+                                    style="font-variation-settings: 'wght' 200">corporate_fare</span>
+                            </div>
+                        </div>
+                        <div class="bg-surface p-xl rounded-xl shadow-sm border border-outline-variant">
+                            <h3 class="text-title-lg font-title-lg text-primary mb-lg">Business Hours</h3>
+                            <div class="space-y-sm divide-y divide-surface-container">
+                                <div class="flex justify-between py-sm">
+                                    <span class="text-on-surface-variant font-label-md text-label-md">Monday -
+                                        Friday</span>
+                                    <span class="text-on-surface font-semibold text-label-md text-label-md">09:00 AM -
+                                        06:00 PM</span>
+                                </div>
+                                <div class="flex justify-between py-sm">
+                                    <span class="text-on-surface-variant font-label-md text-label-md">Saturday</span>
+                                    <span class="text-on-surface font-semibold text-label-md text-label-md">10:00 AM -
+                                        04:00 PM</span>
+                                </div>
+                                <div class="flex justify-between py-sm">
+                                    <span class="text-on-surface-variant font-label-md text-label-md">Sunday</span>
+                                    <span class="text-tertiary font-bold text-label-md text-label-md">By Appointment
+                                        Only</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-secondary-container text-on-secondary-container p-xl rounded-xl shadow-sm">
+                            <h3 class="text-title-lg font-title-lg mb-base">Media Inquiries</h3>
+                            <p class="text-body-md font-body-md mb-md">For press kits and media interview requests
+                                regarding market insights.</p>
+                            <a class="inline-flex items-center gap-xs font-bold text-label-md hover:underline decoration-2"
+                                href="#">
+                                press@propai.ph
+                                <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- Interactive Map Section -->
+        <section class="py-xl">
+            <div class="max-w-container-max mx-auto px-gutter">
+                <div
+                    class="rounded-2xl overflow-hidden shadow-xl h-[450px] relative group border border-outline-variant">
+                    <div class="absolute inset-0 z-0">
+                        <img class="w-full h-full object-cover"
+                            data-alt="A clean, minimalist 3D isometric map of Bonifacio Global City, Manila, rendered in a professional architectural style with soft primary teal highlights for the PropAI headquarters building. The lighting is bright and modern, using the brand's light mode aesthetic with soft shadows and high-end detail."
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuC2c0t7GryXhkDNfhQkb1zYr2Yo4hTc8injRoFZ8_AlUQY5rc6ZPsg9EjY-hXxBMaXvW06ariTkrhqtyNkpkNm6RqY60pgSWpO6P9xYfK1bJB0pP_ZtwP_hnLnY7ypbhEbbrV1IAOjnoRcvybdXUBdMA35TvEEqE_w25pRvT5xuUMCepdMimdSeykXKgWZeMpmjAmjpHc6a1x3p0FAfr9j6dPPPC5krEb1uTalAl5IUNniOJd-tIWDPtGBGRl7Kfwm1eSMfhDOt0g5f" />
+                    </div>
+                    <div class="absolute top-lg left-lg z-10 glass-card p-lg rounded-xl shadow-lg max-w-sm">
+                        <h4 class="text-title-lg font-title-lg text-primary mb-xs">BGC Office</h4>
+                        <p class="text-label-md font-label-md text-on-surface-variant mb-md">One Bonifacio High Street,
+                            Corporate Tower</p>
+                        <button
+                            class="bg-primary text-on-primary w-full py-sm rounded-lg flex items-center justify-center gap-base text-label-md hover:opacity-90 transition-all">
+                            <span class="material-symbols-outlined text-base">directions</span>
+                            Get Directions
+                        </button>
+                    </div>
+                    <div
+                        class="absolute inset-0 bg-primary/5 pointer-events-none group-hover:bg-transparent transition-all duration-500">
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- Secondary CTA Section -->
+        <section class="py-xl bg-surface-container-highest">
+            <div class="max-w-container-max mx-auto px-gutter">
+                <div
+                    class="bg-white rounded-2xl p-xl lg:p-24 shadow-2xl relative overflow-hidden text-center border border-outline-variant">
+                    <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-tertiary to-primary">
+                    </div>
+                    <div class="max-w-2xl mx-auto space-y-lg relative z-10">
+                        <h2 class="text-headline-lg font-headline-lg text-primary">Request a Private Consultation</h2>
+                        <p class="text-body-lg font-body-lg text-on-surface-variant">
+                            Discuss your portfolio strategy with our senior executives in a confidential, one-on-one
+                            environment. Available for institutional investors and high-net-worth individuals.
+                        </p>
+                        <div class="flex flex-col md:flex-row items-center justify-center gap-md pt-md">
+                            <button
+                                class="bg-primary text-on-primary px-xl py-lg rounded-xl font-bold text-title-lg hover:scale-105 active:scale-95 transition-all shadow-xl w-full md:w-auto">
+                                Schedule Private Meeting
+                            </button>
+                            <button
+                                class="text-primary border-2 border-primary px-xl py-lg rounded-xl font-bold text-title-lg hover:bg-primary/5 transition-all w-full md:w-auto">
+                                Download Corporate Profile
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Decorative Background Element -->
+                    <div class="absolute -right-10 -top-10 text-surface-container-low">
+                        <span class="material-symbols-outlined text-[180px]"
+                            style="font-variation-settings: 'wght' 100">calendar_month</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    <!-- Footer -->
+    <footer class="bg-surface-container-lowest border-t border-surface-container-highest">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-xl w-full px-gutter py-xl max-w-container-max mx-auto">
+            <div class="space-y-md">
+                <div class="text-title-lg font-title-lg font-bold text-primary">PropAI</div>
+                <p class="text-on-surface-variant text-body-md font-body-md">Redefining real estate intelligence in the
+                    Philippines through elite data-driven advisory.</p>
+            </div>
+            <div class="space-y-md">
+                <h4 class="text-secondary font-label-md text-label-md uppercase tracking-widest">Platform</h4>
+                <ul class="space-y-sm">
+                    <li><a class="text-on-surface-variant hover:text-tertiary transition-colors text-label-sm font-label-sm underline-offset-4 hover:underline"
+                            href="#">Explore Portfolio</a></li>
+                    <li><a class="text-on-surface-variant hover:text-tertiary transition-colors text-label-sm font-label-sm underline-offset-4 hover:underline"
+                            href="#">Market Analysis</a></li>
+                    <li><a class="text-on-surface-variant hover:text-tertiary transition-colors text-label-sm font-label-sm underline-offset-4 hover:underline"
+                            href="#">Agent Network</a></li>
+                </ul>
+            </div>
+            <div class="space-y-md">
+                <h4 class="text-secondary font-label-md text-label-md uppercase tracking-widest">Company</h4>
+                <ul class="space-y-sm">
+                    <li><a class="text-on-surface-variant hover:text-tertiary transition-colors text-label-sm font-label-sm underline-offset-4 hover:underline"
+                            href="#">Our Story</a></li>
+                    <li><a class="text-on-surface-variant hover:text-tertiary transition-colors text-label-sm font-label-sm underline-offset-4 hover:underline"
+                            href="#">Careers</a></li>
+                    <li><a class="text-primary font-bold text-label-sm font-label-sm underline-offset-4 hover:underline"
+                            href="#">Contact Us</a></li>
+                </ul>
+            </div>
+            <div class="space-y-md">
+                <h4 class="text-secondary font-label-md text-label-md uppercase tracking-widest">Legal</h4>
+                <ul class="space-y-sm">
+                    <li><a class="text-on-surface-variant hover:text-tertiary transition-colors text-label-sm font-label-sm underline-offset-4 hover:underline"
+                            href="#">Privacy Policy</a></li>
+                    <li><a class="text-on-surface-variant hover:text-tertiary transition-colors text-label-sm font-label-sm underline-offset-4 hover:underline"
+                            href="#">Terms of Service</a></li>
+                    <li><a class="text-on-surface-variant hover:text-tertiary transition-colors text-label-sm font-label-sm underline-offset-4 hover:underline"
+                            href="#">Cookie Policy</a></li>
+                </ul>
+            </div>
+        </div>
+        <div
+            class="max-w-container-max mx-auto px-gutter py-md border-t border-surface-container flex flex-col md:flex-row justify-between items-center gap-md">
+            <p class="text-on-surface-variant text-label-sm font-label-sm">© 2024 PropAI Philippines. All rights
+                reserved.</p>
+            <div class="flex gap-lg">
+                <a class="text-on-surface-variant hover:text-primary transition-all" href="#"><span
+                        class="material-symbols-outlined">brand_family</span></a>
+                <a class="text-on-surface-variant hover:text-primary transition-all" href="#"><span
+                        class="material-symbols-outlined">language</span></a>
+            </div>
+        </div>
+    </footer>
+    <script>
+        // Micro-interaction for form focus
+        const inputs = document.querySelectorAll('input, select, textarea');
+        inputs.forEach(input => {
+            input.addEventListener('focus', () => {
+                input.parentElement.querySelector('label').classList.add('text-primary');
+            });
+            input.addEventListener('blur', () => {
+                input.parentElement.querySelector('label').classList.remove('text-primary');
+            });
+        });
+
+        // Form Submission visual feedback
+        document.querySelector('form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<span class="material-symbols-outlined animate-spin">sync</span> Sending...';
+            btn.disabled = true;
+
+            setTimeout(() => {
+                btn.innerHTML = '<span class="material-symbols-outlined">check_circle</span> Sent Successfully';
+                btn.classList.replace('bg-tertiary', 'bg-primary');
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.classList.replace('bg-primary', 'bg-tertiary');
+                    btn.disabled = false;
+                    e.target.reset();
+                }, 3000);
+            }, 1500);
+        });
+    </script>
+</body>
+
+</html>

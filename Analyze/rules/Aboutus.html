@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html class="scroll-smooth" lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap"
+        rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block"
+        rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">try {
+            tailwind.config = {
+                darkMode: "class",
+                theme: {
+                    extend: {
+                        "colors": {
+                            "surface-container-highest": "#e3e2df",
+                            "secondary": "#386667",
+                            "surface-container-high": "#e9e8e4",
+                            "surface": "#faf9f5",
+                            "on-primary-fixed-variant": "#004f51",
+                            "surface-container-lowest": "#ffffff",
+                            "on-error": "#ffffff",
+                            "surface-bright": "#faf9f5",
+                            "on-surface": "#1b1c1a",
+                            "surface-tint": "#1d686a",
+                            "on-primary-fixed": "#002021",
+                            "surface-container-low": "#f5f4ef",
+                            "tertiary-fixed-dim": "#ffb597",
+                            "surface-dim": "#dbdad6",
+                            "on-secondary-container": "#3c6a6b",
+                            "secondary-fixed-dim": "#a0cfd0",
+                            "primary-fixed": "#a9eff0",
+                            "error-container": "#ffdad6",
+                            "error": "#ba1a1a",
+                            "on-background": "#1b1c1a",
+                            "surface-container": "#efeeea",
+                            "on-error-container": "#93000a",
+                            "primary": "#005658",
+                            "primary-fixed-dim": "#8ed2d4",
+                            "background": "#faf9f5",
+                            "primary-container": "#266f71",
+                            "on-secondary-fixed-variant": "#1e4e4f",
+                            "tertiary-container": "#a44b20",
+                            "outline": "#6f7979",
+                            "on-secondary": "#ffffff",
+                            "outline-variant": "#bec8c8",
+                            "on-tertiary-container": "#ffdccf",
+                            "inverse-surface": "#30312e",
+                            "on-tertiary-fixed-variant": "#7c2e02",
+                            "inverse-on-surface": "#f2f1ed",
+                            "on-tertiary-fixed": "#360f00",
+                            "on-tertiary": "#ffffff",
+                            "inverse-primary": "#8ed2d4",
+                            "on-secondary-fixed": "#002020",
+                            "tertiary-fixed": "#ffdbcd",
+                            "secondary-fixed": "#bbebec",
+                            "on-surface-variant": "#3f4949",
+                            "tertiary": "#853408",
+                            "surface-variant": "#e3e2df",
+                            "secondary-container": "#b8e9e9",
+                            "on-primary-container": "#aaeff1",
+                            "on-primary": "#ffffff"
+                        },
+                        "borderRadius": {
+                            "DEFAULT": "0.25rem",
+                            "lg": "0.5rem",
+                            "xl": "0.75rem",
+                            "full": "9999px"
+                        },
+                        "spacing": {
+                            "xl": "40px",
+                            "lg": "24px",
+                            "xs": "4px",
+                            "gutter": "24px",
+                            "container-max": "1280px",
+                            "base": "8px",
+                            "sm": "12px",
+                            "md": "16px",
+                            "margin-mobile": "16px"
+                        },
+                        "fontFamily": {
+                            "headline-lg-mobile": ["manrope"],
+                            "label-md": ["manrope"],
+                            "body-lg": ["manrope"],
+                            "headline-lg": ["manrope"],
+                            "label-sm": ["manrope"],
+                            "body-md": ["manrope"],
+                            "display-lg": ["manrope"],
+                            "title-lg": ["manrope"],
+                            "headline-md": ["manrope"]
+                        },
+                        "fontSize": {
+                            "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                            "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+                            "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                            "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                            "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                            "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                            "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                            "title-lg": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                            "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }]
+                        }
+                    },
+                },
+            }
+        } catch (_e) { }</script>
+</head>
+
+<body
+    class="bg-surface text-on-surface font-body-md selection:bg-primary-fixed-dim selection:text-on-primary-fixed arch-pattern">
+
+    <!-- Navigation -->
+    <header class="fixed top-0 w-full z-50 glass-header border-b border-outline-variant/30 transition-all duration-300">
+        <nav class="flex justify-between items-center px-xl py-5 max-w-container-max mx-auto">
+            <div
+                class="font-title-lg text-title-lg font-extrabold text-primary tracking-tighter flex items-center gap-2">
+                <span class="material-symbols-outlined text-tertiary">architecture</span>
+                EstateElite
+            </div>
+            <div class="hidden md:flex items-center gap-12">
+                <a class="text-on-surface-variant hover:text-primary transition-all font-bold text-label-sm uppercase tracking-[0.2em] relative group"
+                    href="#">
+                    Properties
+                    <span
+                        class="absolute -bottom-1 left-0 w-0 h-0.5 bg-tertiary transition-all group-hover:w-full"></span>
+                </a>
+                <a class="text-on-surface-variant hover:text-primary transition-all font-bold text-label-sm uppercase tracking-[0.2em] relative group"
+                    href="#">
+                    Insights
+                    <span
+                        class="absolute -bottom-1 left-0 w-0 h-0.5 bg-tertiary transition-all group-hover:w-full"></span>
+                </a>
+                <a class="text-on-surface-variant hover:text-primary transition-all font-bold text-label-sm uppercase tracking-[0.2em] relative group"
+                    href="#">
+                    Advisors
+                    <span
+                        class="absolute -bottom-1 left-0 w-0 h-0.5 bg-tertiary transition-all group-hover:w-full"></span>
+                </a>
+                <a class="text-on-surface-variant hover:text-primary transition-all font-bold text-label-sm uppercase tracking-[0.2em] relative group"
+                    href="#">
+                    Concierge
+                    <span
+                        class="absolute -bottom-1 left-0 w-0 h-0.5 bg-tertiary transition-all group-hover:w-full"></span>
+                </a>
+            </div>
+            <button
+                class="bg-primary text-on-primary px-7 py-3 rounded-lg font-bold text-label-sm hover:bg-primary/90 transition-all shadow-md active:scale-95 uppercase tracking-widest border border-primary/20">
+                Get Started
+            </button>
+        </nav>
+    </header>
+
+    <main class="pt-24">
+        <!-- Sophisticated Hero Section -->
+        <section class="relative py-32 lg:py-48 px-xl max-w-container-max mx-auto overflow-hidden">
+            <div class="grid lg:grid-cols-2 gap-24 items-center">
+                <div class="z-10 reveal-on-scroll">
+                    <div class="flex items-center gap-4 mb-8">
+                        <span class="h-px w-12 bg-tertiary"></span>
+                        <span class="text-tertiary font-bold text-label-sm tracking-[0.3em] uppercase">Established
+                            1989</span>
+                    </div>
+                    <h1
+                        class="font-display-lg text-5xl lg:text-7xl text-primary mb-8 leading-[1.1] font-extrabold tracking-tight">
+                        Crafting the Future of <span class="text-tertiary">Philippine</span> Luxury.
+                    </h1>
+                    <p class="font-body-lg text-on-surface-variant max-w-xl mb-12 leading-relaxed text-xl opacity-90">
+                        EstateElite stands as the premier architectural and real estate consultancy in the Philippines.
+                        We are dedicated curators of exceptional living spaces, blending heritage with modern
+                        innovation.
+                    </p>
+                    <div class="flex flex-wrap gap-6">
+                        <button
+                            class="bg-primary text-on-primary px-10 py-4 rounded-xl font-bold hover:bg-primary/90 hover:shadow-xl transition-all text-label-sm tracking-widest uppercase">Our
+                            Heritage</button>
+                        <button
+                            class="text-primary font-bold px-8 py-4 flex items-center gap-3 group hover:bg-surface-container-low rounded-xl transition-all text-label-sm tracking-widest uppercase border border-outline-variant/30">
+                            Global Portfolio
+                            <span
+                                class="material-symbols-outlined group-hover:translate-x-2 transition-transform">arrow_right_alt</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="relative reveal-on-scroll delay-100">
+                    <div
+                        class="rounded-3xl overflow-hidden aspect-[4/5] shadow-2xl bg-surface-container-high relative border-[12px] border-white/50">
+                        <div class="w-full h-full bg-cover bg-center transition-transform duration-1000 hover:scale-110"
+                            data-alt="Modern corporate excellence in a luxury setting"
+                            style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDm3CZzHZRIlWACg2-cllubJnlL97uj0a5kP_KFk1ORg5yHcm8VjBnGwhrFtfGUP_05pB6WbvgAyih6UNwaI8SN-8HQsq03hXvHNOSVnD2_SZTBd3EOdOW8S11q-kYnMuQ3uybW23HI2jEof52geNa6TY6adiiWcB5Z41ITiQ_kcZuxLGjpPBL49k2rztrBilBLhSWwyQjcPbgHdVLMMg08LnqYlFFgRawk5-jKRepxGgZF_bwf6mtLSYxjV_pG95BgoFIVa3UGbSuG')">
+                        </div>
+                        <div class="absolute inset-0 bg-gradient-to-t from-primary/40 to-transparent"></div>
+                    </div>
+                    <div
+                        class="absolute -bottom-10 -left-10 bg-surface/95 p-10 rounded-2xl shadow-2xl border border-outline-variant/30 hidden lg:block backdrop-blur-xl">
+                        <div class="text-tertiary font-display-lg text-6xl mb-2 font-black">35</div>
+                        <div class="text-primary font-bold text-label-sm tracking-[0.15em] uppercase">Years of Legacy
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Narrative Section with Texture -->
+        <section class="py-40 bg-surface-container-low/50 border-y border-outline-variant/20 reveal-on-scroll relative">
+            <div
+                class="absolute inset-0 opacity-[0.04] bg-[url('https://www.transparenttextures.com/patterns/pinstriped-suit.png')]">
+            </div>
+            <div class="px-xl max-w-container-max mx-auto text-center relative z-10">
+                <div class="max-w-4xl mx-auto">
+                    <span class="material-symbols-outlined text-tertiary text-4xl mb-8">format_quote</span>
+                    <h2 class="font-display-lg text-primary mb-12 italic leading-tight text-3xl lg:text-4xl font-bold">
+                        "We don't just facilitate transactions; we steward legacies through uncompromising market
+                        intelligence and architectural vision."
+                    </h2>
+                    <div class="w-24 h-1 bg-gradient-to-r from-transparent via-tertiary to-transparent mx-auto mb-12">
+                    </div>
+                    <p class="text-on-surface-variant font-body-lg max-w-3xl mx-auto text-lg leading-relaxed">
+                        Founded with a singular vision to bridge global luxury standards with Philippine real estate,
+                        EstateElite has grown into the nation's most trusted advisor for high-net-worth individuals and
+                        global investors seeking permanence.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Vision & Mission Details -->
+        <section class="py-40 px-xl max-w-container-max mx-auto">
+            <div class="grid md:grid-cols-2 gap-16 lg:gap-32">
+                <div
+                    class="reveal-on-scroll p-12 rounded-[2.5rem] bg-surface-container-lowest border border-outline-variant/30 shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-500 group">
+                    <div
+                        class="w-16 h-16 rounded-2xl bg-primary/5 flex items-center justify-center mb-10 group-hover:bg-primary transition-colors duration-500">
+                        <span
+                            class="material-symbols-outlined text-primary text-3xl group-hover:text-white transition-colors">visibility</span>
+                    </div>
+                    <h3 class="font-headline-md text-primary mb-8 text-3xl font-bold">Global Standards, <br><span
+                            class="text-tertiary">Local Soul</span></h3>
+                    <p class="text-on-surface-variant font-body-md leading-loose text-lg opacity-80">
+                        To be the undisputed bridge between global luxury standards and Philippine real estate, setting
+                        the benchmark for ethical advisory and bespoke property acquisition across the archipelago. We
+                        honor the heritage of our land while embracing the tech of tomorrow.
+                    </p>
+                </div>
+                <div
+                    class="reveal-on-scroll delay-100 p-12 rounded-[2.5rem] bg-surface-container-lowest border border-outline-variant/30 shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-500 group">
+                    <div
+                        class="w-16 h-16 rounded-2xl bg-tertiary/5 flex items-center justify-center mb-10 group-hover:bg-tertiary transition-colors duration-500">
+                        <span
+                            class="material-symbols-outlined text-tertiary text-3xl group-hover:text-white transition-colors">diamond</span>
+                    </div>
+                    <h3 class="font-headline-md text-primary mb-8 text-3xl font-bold">Empowering <br><span
+                            class="text-tertiary">Legacies</span></h3>
+                    <p class="text-on-surface-variant font-body-md leading-loose text-lg opacity-80">
+                        To empower our clients through uncompromising market intelligence, personalized white-glove
+                        service, and exclusive access to the nation's most prestigious off-market portfolio. Your legacy
+                        is our blueprint for excellence.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Enhanced Timeline -->
+        <section class="py-40 bg-surface-container-low/30 border-y border-outline-variant/20 relative overflow-hidden">
+            <div class="absolute inset-0 arch-pattern opacity-30"></div>
+            <div class="px-xl max-w-container-max mx-auto relative z-10">
+                <div class="text-center mb-32 reveal-on-scroll">
+                    <span class="text-tertiary font-bold text-label-sm tracking-[0.3em] uppercase mb-4 block">Our
+                        Journey</span>
+                    <h2 class="text-primary font-display-lg text-5xl mb-6 font-bold">Milestones of Excellence</h2>
+                    <p class="text-on-surface-variant font-body-md max-w-2xl mx-auto text-lg">Shaping the landscape of
+                        Philippine high-end living through decades of strategic vision.</p>
+                </div>
+
+                <div class="max-w-5xl mx-auto relative">
+                    <!-- Vertical Line -->
+                    <div
+                        class="absolute left-8 md:left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-primary/5 via-primary/40 to-primary/5">
+                    </div>
+
+                    <div class="space-y-32">
+                        <!-- 1989 -->
+                        <div class="relative flex flex-col md:flex-row items-center w-full group reveal-on-scroll">
+                            <div class="hidden md:block w-1/2 pr-20 text-right">
+                                <span
+                                    class="text-tertiary font-display-lg text-4xl font-black opacity-40 group-hover:opacity-100 transition-all">1989</span>
+                            </div>
+                            <div
+                                class="absolute left-8 md:left-1/2 w-6 h-6 bg-surface rounded-full border-4 border-primary transform -translate-x-1/2 group-hover:scale-150 group-hover:bg-tertiary group-hover:border-white transition-all duration-500 z-10 shadow-lg">
+                            </div>
+                            <div class="w-full md:w-1/2 pl-24 md:pl-20">
+                                <div
+                                    class="milestone-card bg-surface-container-lowest p-10 rounded-[2rem] border border-outline-variant/30 shadow-lg group-hover:shadow-2xl transition-all duration-500">
+                                    <span class="md:hidden text-tertiary font-bold block mb-4">1989</span>
+                                    <div class="flex items-center gap-4 mb-6">
+                                        <span
+                                            class="material-symbols-outlined milestone-icon text-primary transition-transform duration-500">foundation</span>
+                                        <h4 class="font-title-lg text-primary text-2xl font-bold">The Foundation</h4>
+                                    </div>
+                                    <p class="text-on-surface-variant font-body-md leading-relaxed text-lg">Established
+                                        in Makati's central business district to provide visionaries with professional,
+                                        data-driven real estate advisory during the city's golden growth era.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2002 -->
+                        <div class="relative flex flex-col md:flex-row items-center w-full group reveal-on-scroll">
+                            <div
+                                class="w-full md:w-1/2 pr-0 md:pr-20 text-left md:text-right pl-24 md:pl-0 order-2 md:order-1">
+                                <div
+                                    class="milestone-card bg-surface-container-lowest p-10 rounded-[2rem] border border-outline-variant/30 shadow-lg group-hover:shadow-2xl transition-all duration-500">
+                                    <span class="md:hidden text-tertiary font-bold block mb-4">2002</span>
+                                    <div class="flex items-center gap-4 md:flex-row-reverse mb-6">
+                                        <span
+                                            class="material-symbols-outlined milestone-icon text-primary transition-transform duration-500">architecture</span>
+                                        <h4 class="font-title-lg text-primary text-2xl font-bold">Strategic Expansion
+                                        </h4>
+                                    </div>
+                                    <p class="text-on-surface-variant font-body-md leading-relaxed text-lg">Pioneered
+                                        early-stage expansion into the Fort Bonifacio Global City district, setting the
+                                        platinum standard for emerging modern business and residential hubs.</p>
+                                </div>
+                            </div>
+                            <div
+                                class="absolute left-8 md:left-1/2 w-6 h-6 bg-surface rounded-full border-4 border-primary transform -translate-x-1/2 group-hover:scale-150 group-hover:bg-tertiary group-hover:border-white transition-all duration-500 z-10 shadow-lg">
+                            </div>
+                            <div class="hidden md:block w-1/2 pl-20 order-1 md:order-2">
+                                <span
+                                    class="text-tertiary font-display-lg text-4xl font-black opacity-40 group-hover:opacity-100 transition-all">2002</span>
+                            </div>
+                        </div>
+
+                        <!-- 2015 -->
+                        <div class="relative flex flex-col md:flex-row items-center w-full group reveal-on-scroll">
+                            <div class="hidden md:block w-1/2 pr-20 text-right">
+                                <span
+                                    class="text-tertiary font-display-lg text-4xl font-black opacity-40 group-hover:opacity-100 transition-all">2015</span>
+                            </div>
+                            <div
+                                class="absolute left-8 md:left-1/2 w-6 h-6 bg-surface rounded-full border-4 border-primary transform -translate-x-1/2 group-hover:scale-150 group-hover:bg-tertiary group-hover:border-white transition-all duration-500 z-10 shadow-lg">
+                            </div>
+                            <div class="w-full md:w-1/2 pl-24 md:pl-20">
+                                <div
+                                    class="milestone-card bg-surface-container-lowest p-10 rounded-[2rem] border border-outline-variant/30 shadow-lg group-hover:shadow-2xl transition-all duration-500">
+                                    <span class="md:hidden text-tertiary font-bold block mb-4">2015</span>
+                                    <div class="flex items-center gap-4 mb-6">
+                                        <span
+                                            class="material-symbols-outlined milestone-icon text-primary transition-transform duration-500">public</span>
+                                        <h4 class="font-title-lg text-primary text-2xl font-bold">Global Alliance</h4>
+                                    </div>
+                                    <p class="text-on-surface-variant font-body-md leading-relaxed text-lg">Secured
+                                        exclusive Philippine partnership with premier global luxury networks, seamlessly
+                                        connecting local architectural treasures to the world's most discerning
+                                        collectors.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2024 -->
+                        <div class="relative flex flex-col md:flex-row items-center w-full group reveal-on-scroll">
+                            <div
+                                class="w-full md:w-1/2 pr-0 md:pr-20 text-left md:text-right pl-24 md:pl-0 order-2 md:order-1">
+                                <div
+                                    class="milestone-card bg-surface-container-lowest p-10 rounded-[2rem] border border-outline-variant/30 shadow-lg group-hover:shadow-2xl transition-all duration-500">
+                                    <span class="md:hidden text-tertiary font-bold block mb-4">2024</span>
+                                    <div class="flex items-center gap-4 md:flex-row-reverse mb-6">
+                                        <span
+                                            class="material-symbols-outlined milestone-icon text-primary transition-transform duration-500">smart_toy</span>
+                                        <h4 class="font-title-lg text-primary text-2xl font-bold">The PropAI Era</h4>
+                                    </div>
+                                    <p class="text-on-surface-variant font-body-md leading-relaxed text-lg">Launching
+                                        the PropAI ecosystem, redefining how our partners discover, manage, and scale
+                                        their property portfolios through predictive market analytics.</p>
+                                </div>
+                            </div>
+                            <div
+                                class="absolute left-8 md:left-1/2 w-6 h-6 bg-surface rounded-full border-4 border-primary transform -translate-x-1/2 group-hover:scale-150 group-hover:bg-tertiary group-hover:border-white transition-all duration-500 z-10 shadow-lg">
+                            </div>
+                            <div class="hidden md:block w-1/2 pl-20 order-1 md:order-2">
+                                <span
+                                    class="text-tertiary font-display-lg text-4xl font-black opacity-40 group-hover:opacity-100 transition-all">2024</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Enhanced Leadership Section -->
+        <section class="py-40 px-xl max-w-container-max mx-auto w-full">
+            <div class="flex flex-col md:flex-row justify-between items-end mb-24 gap-12 reveal-on-scroll">
+                <div class="max-w-2xl">
+                    <span
+                        class="text-tertiary font-bold text-label-sm tracking-[0.3em] uppercase mb-4 block">Leadership</span>
+                    <h2 class="font-display-lg text-primary text-5xl mb-6 font-bold">The Minds Behind the Legacy</h2>
+                    <p class="text-on-surface-variant font-body-md text-lg">Our leadership combines decades of local
+                        heritage with global perspectives to deliver unparalleled advisory excellence.</p>
+                </div>
+                <div class="hidden md:block">
+                    <button
+                        class="text-primary font-bold border-b-2 border-primary pb-2 hover:text-tertiary hover:border-tertiary transition-all flex items-center gap-3 text-label-sm tracking-widest uppercase">
+                        View Full Advisory Board
+                        <span class="material-symbols-outlined text-sm">north_east</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12">
+                <!-- Leader 1 -->
+                <div class="group reveal-on-scroll">
+                    <div
+                        class="aspect-[3/4] rounded-3xl overflow-hidden mb-8 relative grayscale hover:grayscale-0 transition-all duration-700 bg-surface-container-high shadow-lg group-hover:shadow-2xl">
+                        <div class="w-full h-full bg-cover bg-center transition-transform duration-1000 group-hover:scale-110"
+                            data-alt="Antonio Villanueva"
+                            style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCL37IsTXoWI5IEIJv5QHsalUvg5TYvv5F5bHyoxqgQIvQznP07rGtA3IgMW_ZwIlve5Nh-au_lCTFnbMS2GVHvTEQ32KljWhrRsO7PJx2izkTYTBYAeca5ASAMb4FI9icb2gBWhQ0N7_NV3-4O30fZ6RZ00G7n-RlKOtUr1_b1uLl03iVhsr-z4J-fs12WWnQcUpZbMX4Xek719B7eFlqRm8tlFLt2H9NX1lNIwVsDert2PfAOZ5vnllk0XvDtoJBKVQoYYEn3NPqr')">
+                        </div>
+                        <div
+                            class="absolute inset-0 bg-gradient-to-t from-primary/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-8">
+                            <p class="text-white/90 text-sm font-medium leading-relaxed italic">"Architecture is the
+                                silent language of history."</p>
+                        </div>
+                    </div>
+                    <h5 class="font-title-lg text-primary mb-2 text-2xl font-bold">Antonio Villanueva</h5>
+                    <p class="font-bold text-tertiary text-xs tracking-widest uppercase mb-4">Managing Partner &amp;
+                        Lead Architect</p>
+                    <p
+                        class="text-on-surface-variant text-sm leading-relaxed opacity-80 line-clamp-3 group-hover:line-clamp-none transition-all">
+                        Over 30 years experience in urban planning and luxury commercial developments across Southeast
+                        Asia.</p>
+                </div>
+
+                <!-- Leader 2 -->
+                <div class="group reveal-on-scroll delay-100">
+                    <div
+                        class="aspect-[3/4] rounded-3xl overflow-hidden mb-8 relative grayscale hover:grayscale-0 transition-all duration-700 bg-surface-container-high shadow-lg group-hover:shadow-2xl">
+                        <div class="w-full h-full bg-cover bg-center transition-transform duration-1000 group-hover:scale-110"
+                            data-alt="Maria Santos-Lee"
+                            style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCr1LCOax7p58CzE0Dbpi-XRwmwWhQpXYiMcmtQMsKAjs_zb38051OBqW4k0XGJutd14n51Q7nFS20d28KYXkjixNtR3kxafEnaDp6Zb48S4XwUUOv1RolJSzVUCNzcrRDla-xUOthvYlWh27zux5xIm-leRhYVKNHjPLHHL2RGtz4fx97lpwXwhNcNV69pEXK7ManHSsPZk2uU-kOE-DmQMfMC6XrVrAeAxCOGLpBbHnGO9JM-qPvoQKiJcPcEniB6zCt4Tgg2SUQV')">
+                        </div>
+                        <div
+                            class="absolute inset-0 bg-gradient-to-t from-primary/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-8">
+                            <p class="text-white/90 text-sm font-medium leading-relaxed italic">"Trust is the most
+                                valuable square foot in any home."</p>
+                        </div>
+                    </div>
+                    <h5 class="font-title-lg text-primary mb-2 text-2xl font-bold">Maria Santos-Lee</h5>
+                    <p class="font-bold text-tertiary text-xs tracking-widest uppercase mb-4">Head of Strategic Advisory
+                    </p>
+                    <p
+                        class="text-on-surface-variant text-sm leading-relaxed opacity-80 line-clamp-3 group-hover:line-clamp-none transition-all">
+                        Specializes in off-market acquisitions and investment portfolio diversification for global
+                        wealth families.</p>
+                </div>
+
+                <!-- Leader 3 -->
+                <div class="group reveal-on-scroll delay-200">
+                    <div
+                        class="aspect-[3/4] rounded-3xl overflow-hidden mb-8 relative grayscale hover:grayscale-0 transition-all duration-700 bg-surface-container-high shadow-lg group-hover:shadow-2xl">
+                        <div class="w-full h-full bg-cover bg-center transition-transform duration-1000 group-hover:scale-110"
+                            data-alt="Rafael Mercado"
+                            style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCd2RK_pTHgYa9D2DHtZfTO9SEWNdUCWc6b1QPQEzCyrUU-oJy4ncfnx6Lc-qWhBY7YmRgkvRpu0aW3aLH7SGniqYwVlsyZT3VA3w5yGeANnsGoStAES-uq3WZz8MaRp3Tb03VpHx2G6ZhYTNNmvMJKZUTnMLUGdm5ufjsQaQuB2joqbw_xo9bOj7ETPvYN6IOJVnRC06RRB8fivo0RyJSg7gvKd1yc_t5jshzPRLeadfr7URMZQwj1NTG5rJZFCCSbOj1t6nL9pZbS')">
+                        </div>
+                        <div
+                            class="absolute inset-0 bg-gradient-to-t from-primary/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-8">
+                            <p class="text-white/90 text-sm font-medium leading-relaxed italic">"Modern luxury is
+                                defined by efficiency and access."</p>
+                        </div>
+                    </div>
+                    <h5 class="font-title-lg text-primary mb-2 text-2xl font-bold">Rafael Mercado</h5>
+                    <p class="font-bold text-tertiary text-xs tracking-widest uppercase mb-4">VP of Transactions</p>
+                    <p
+                        class="text-on-surface-variant text-sm leading-relaxed opacity-80 line-clamp-3 group-hover:line-clamp-none transition-all">
+                        A pioneer in PropTech integration and high-speed commercial deal closures in the Manila hub.</p>
+                </div>
+
+                <!-- Leader 4 -->
+                <div class="group reveal-on-scroll delay-300">
+                    <div
+                        class="aspect-[3/4] rounded-3xl overflow-hidden mb-8 relative grayscale hover:grayscale-0 transition-all duration-700 bg-surface-container-high shadow-lg group-hover:shadow-2xl">
+                        <div class="w-full h-full bg-cover bg-center transition-transform duration-1000 group-hover:scale-110"
+                            data-alt="Elena de Leon"
+                            style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDaUDsJW_oPv5fuHuVgBtbAha7e4QUpbf0S3x5UTxpZub7m0ggyFcEfaXZxYnryP7LpjTuoVbZQd3aa3gyMA2V3uNZq6oLTQVUwAlmVFAeArnP55Qr_04JetwxHQQgAGkqfnu2cUvaXay9lX4weg6GqSOUYNGFtTwtAm8tM_NQPzs4mpS0NPkzDRFjRTZCuVgTzJACRD5zsV1-pkw8N9BzCVzjLFeOlc77nWOdeYdbMaWV5myVwuPRxVqJipEbxptB0QCROc_Kc-ZHU')">
+                        </div>
+                        <div
+                            class="absolute inset-0 bg-gradient-to-t from-primary/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-8">
+                            <p class="text-white/90 text-sm font-medium leading-relaxed italic">"Every client is a
+                                partner in preserving culture."</p>
+                        </div>
+                    </div>
+                    <h5 class="font-title-lg text-primary mb-2 text-2xl font-bold">Elena de Leon</h5>
+                    <p class="font-bold text-tertiary text-xs tracking-widest uppercase mb-4">Chief Client Officer</p>
+                    <p
+                        class="text-on-surface-variant text-sm leading-relaxed opacity-80 line-clamp-3 group-hover:line-clamp-none transition-all">
+                        Leading the concierge and relations division with a focus on high-fidelity service and lasting
+                        legacy planning.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Improved Immersive CTA -->
+        <section class="py-40 px-xl bg-surface-container-low/30 border-t border-outline-variant/20 reveal-on-scroll">
+            <div class="max-w-container-max mx-auto">
+                <div class="text-center mb-24">
+                    <span
+                        class="text-tertiary font-bold text-label-sm tracking-[0.3em] uppercase mb-4 block">Accolades</span>
+                    <h2 class="text-primary font-display-lg text-5xl mb-6 font-bold">Accolades &amp; Recognition</h2>
+                    <p class="text-on-surface-variant font-body-lg max-w-3xl mx-auto text-lg leading-relaxed">A
+                        testament to our unwavering commitment to excellence in Philippine luxury real estate.</p>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <!-- Award 1 -->
+                    <div
+                        class="bg-surface-container-lowest p-10 rounded-[2rem] border border-outline-variant/30 shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-500 group text-center">
+                        <div
+                            class="w-16 h-16 rounded-full bg-primary/5 flex items-center justify-center mb-8 mx-auto group-hover:bg-primary transition-colors duration-500">
+                            <span
+                                class="material-symbols-outlined text-primary text-3xl group-hover:text-white transition-colors">trophy</span>
+                        </div>
+                        <h4 class="font-title-lg text-primary text-xl font-bold mb-2">Best Luxury Brokerage</h4>
+                        <p class="text-tertiary font-bold text-xs tracking-widest uppercase mb-4">2023</p>
+                        <p class="text-on-surface-variant text-sm opacity-80">Premium Estates International</p>
+                    </div>
+                    <!-- Award 2 -->
+                    <div
+                        class="bg-surface-container-lowest p-10 rounded-[2rem] border border-outline-variant/30 shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-500 group text-center">
+                        <div
+                            class="w-16 h-16 rounded-full bg-tertiary/5 flex items-center justify-center mb-8 mx-auto group-hover:bg-tertiary transition-colors duration-500">
+                            <span
+                                class="material-symbols-outlined text-tertiary text-3xl group-hover:text-white transition-colors">star</span>
+                        </div>
+                        <h4 class="font-title-lg text-primary text-xl font-bold mb-2">Excellence in Design</h4>
+                        <p class="text-tertiary font-bold text-xs tracking-widest uppercase mb-4">2022</p>
+                        <p class="text-on-surface-variant text-sm opacity-80">Real Estate Board PH</p>
+                    </div>
+                    <!-- Award 3 -->
+                    <div
+                        class="bg-surface-container-lowest p-10 rounded-[2rem] border border-outline-variant/30 shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-500 group text-center">
+                        <div
+                            class="w-16 h-16 rounded-full bg-primary/5 flex items-center justify-center mb-8 mx-auto group-hover:bg-primary transition-colors duration-500">
+                            <span
+                                class="material-symbols-outlined text-primary text-3xl group-hover:text-white transition-colors">workspace_premium</span>
+                        </div>
+                        <h4 class="font-title-lg text-primary text-xl font-bold mb-2">Top Advisory Firm</h4>
+                        <p class="text-tertiary font-bold text-xs tracking-widest uppercase mb-4">2021</p>
+                        <p class="text-on-surface-variant text-sm opacity-80">Global Wealth Network</p>
+                    </div>
+                    <!-- Award 4 -->
+                    <div
+                        class="bg-surface-container-lowest p-10 rounded-[2rem] border border-outline-variant/30 shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-500 group text-center">
+                        <div
+                            class="w-16 h-16 rounded-full bg-tertiary/5 flex items-center justify-center mb-8 mx-auto group-hover:bg-tertiary transition-colors duration-500">
+                            <span
+                                class="material-symbols-outlined text-tertiary text-3xl group-hover:text-white transition-colors">military_tech</span>
+                        </div>
+                        <h4 class="font-title-lg text-primary text-xl font-bold mb-2">Heritage Preservation</h4>
+                        <p class="text-tertiary font-bold text-xs tracking-widest uppercase mb-4">2020</p>
+                        <p class="text-on-surface-variant text-sm opacity-80">National Culture Council</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <section class="py-40 px-xl reveal-on-scroll">
+            <div
+                class="max-w-container-max mx-auto bg-primary rounded-[3rem] p-16 lg:p-32 text-center text-on-primary relative overflow-hidden shadow-[0_40px_100px_-20px_rgba(0,86,88,0.4)]">
+                <!-- Architectural Photo Overlay -->
+                <div class="absolute inset-0 opacity-20 mix-blend-overlay">
+                    <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDm3CZzHZRIlWACg2-cllubJnlL97uj0a5kP_KFk1ORg5yHcm8VjBnGwhrFtfGUP_05pB6WbvgAyih6UNwaI8SN-8HQsq03hXvHNOSVnD2_SZTBd3EOdOW8S11q-kYnMuQ3uybW23HI2jEof52geNa6TY6adiiWcB5Z41ITiQ_kcZuxLGjpPBL49k2rztrBilBLhSWwyQjcPbgHdVLMMg08LnqYlFFgRawk5-jKRepxGgZF_bwf6mtLSYxjV_pG95BgoFIVa3UGbSuG"
+                        class="w-full h-full object-cover" alt="Architectural Texture">
+                </div>
+                <!-- Gradient Overlay -->
+                <div class="absolute inset-0 bg-gradient-to-br from-primary via-primary/95 to-primary/80"></div>
+                <!-- Decorative Elements -->
+                <div
+                    class="absolute top-0 right-0 w-96 h-96 bg-tertiary/20 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2">
+                </div>
+                <div
+                    class="absolute bottom-0 left-0 w-96 h-96 bg-secondary/20 rounded-full blur-[120px] translate-y-1/2 -translate-x-1/2">
+                </div>
+
+                <div class="relative z-10 max-w-4xl mx-auto">
+                    <h2 class="font-display-lg text-5xl lg:text-7xl mb-10 font-bold tracking-tight">Secure Your <span
+                            class="text-tertiary-fixed-dim">Legacy.</span></h2>
+                    <p class="font-body-lg text-on-primary/90 mb-16 text-xl leading-relaxed max-w-2xl mx-auto">Connect
+                        with an EstateElite advisor for a private consultation regarding your domestic or international
+                        portfolio. Let us build your future together.</p>
+                    <div class="flex flex-col sm:flex-row justify-center gap-8">
+                        <button
+                            class="bg-surface text-primary px-12 py-5 rounded-xl font-bold hover:bg-surface-container-low hover:shadow-2xl transition-all shadow-lg text-label-sm tracking-[0.2em] uppercase active:scale-95">Request
+                            Consultation</button>
+                        <button
+                            class="border-2 border-on-primary/30 text-on-primary px-12 py-5 rounded-xl font-bold hover:bg-on-primary/10 transition-all text-label-sm tracking-[0.2em] uppercase active:scale-95">Explore
+                            Insights</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Refined Footer -->
+    <footer class="bg-surface-container-low border-t border-outline-variant/30 pt-32 pb-12 w-full">
+        <div class="max-w-container-max mx-auto px-xl grid grid-cols-1 md:grid-cols-12 gap-16 mb-24">
+            <div class="md:col-span-4">
+                <div
+                    class="font-title-lg text-3xl font-black text-primary mb-8 tracking-tighter flex items-center gap-2">
+                    <span class="material-symbols-outlined text-tertiary">architecture</span>
+                    EstateElite
+                </div>
+                <p class="text-on-surface-variant text-base leading-loose mb-10 font-body-md opacity-80">
+                    Defining luxury real estate through heritage, expertise, and unrivaled service since 1989. Our
+                    commitment is to the permanence of your vision.
+                </p>
+                <div class="flex gap-5">
+                    <a class="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-primary hover:bg-primary hover:text-on-primary hover:-translate-y-1 transition-all shadow-sm border border-outline-variant/20"
+                        href="#"><span class="material-symbols-outlined">public</span></a>
+                    <a class="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-primary hover:bg-primary hover:text-on-primary hover:-translate-y-1 transition-all shadow-sm border border-outline-variant/20"
+                        href="#"><span class="material-symbols-outlined">alternate_email</span></a>
+                    <a class="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-primary hover:bg-primary hover:text-on-primary hover:-translate-y-1 transition-all shadow-sm border border-outline-variant/20"
+                        href="#"><span class="material-symbols-outlined">share</span></a>
+                </div>
+            </div>
+            <div class="md:col-span-2">
+                <h6 class="text-primary mb-8 text-xs font-bold tracking-[0.2em] uppercase">Company</h6>
+                <ul class="space-y-5 text-sm font-bold">
+                    <li class=""><a class="text-on-surface-variant hover:text-tertiary transition-colors" href="#">Our
+                            Story</a></li>
+                    <li class=""><a class="text-on-surface-variant hover:text-tertiary transition-colors"
+                            href="#">Advisors</a></li>
+                    <li class=""><a class="text-on-surface-variant hover:text-tertiary transition-colors"
+                            href="#">Careers</a></li>
+                    <li class=""><a class="text-on-surface-variant hover:text-tertiary transition-colors"
+                            href="#">Contact</a></li>
+                </ul>
+            </div>
+            <div class="md:col-span-2">
+                <h6 class="text-primary mb-8 text-xs font-bold tracking-[0.2em] uppercase">Resources</h6>
+                <ul class="space-y-5 text-sm font-bold">
+                    <li class=""><a class="text-on-surface-variant hover:text-tertiary transition-colors"
+                            href="#">Insights</a></li>
+                    <li class=""><a class="text-on-surface-variant hover:text-tertiary transition-colors"
+                            href="#">Market Reports</a></li>
+                    <li class=""><a class="text-on-surface-variant hover:text-tertiary transition-colors" href="#">Legal
+                            FAQ</a></li>
+                    <li class=""><a class="text-on-surface-variant hover:text-tertiary transition-colors" href="#">Press
+                            Kit</a></li>
+                </ul>
+            </div>
+            <div class="md:col-span-4">
+                <h6 class="text-primary mb-8 text-xs font-bold tracking-[0.2em] uppercase">Newsletter</h6>
+                <p class="text-on-surface-variant text-sm mb-8 font-body-md opacity-80 leading-relaxed">Receive curated
+                    property listings and exclusive architectural intelligence directly in your inbox.</p>
+                <div class="flex shadow-sm rounded-xl overflow-hidden border border-outline-variant/30">
+                    <input
+                        class="bg-surface-container-lowest border-0 px-6 py-4 w-full text-sm font-body-md focus:ring-0 focus:outline-none"
+                        placeholder="Enter your email" type="email">
+                    <button
+                        class="bg-primary text-on-primary px-8 hover:bg-primary/90 transition-all flex items-center justify-center active:scale-95"><span
+                            class="material-symbols-outlined">arrow_forward</span></button>
+                </div>
+            </div>
+        </div>
+        <div
+            class="max-w-container-max mx-auto px-xl pt-10 border-t border-outline-variant/30 flex flex-col md:flex-row justify-between items-center gap-6 text-xs text-on-surface-variant font-bold tracking-widest uppercase">
+            <p class="opacity-60">© 2024 EstateElite Real Estate. Crafted in the Philippines.</p>
+            <div class="flex gap-10">
+                <a class="hover:text-primary transition-colors" href="#">Privacy Policy</a>
+                <a class="hover:text-primary transition-colors" href="#">Terms of Service</a>
+                <a class="hover:text-primary transition-colors" href="#">Cookies</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Reveal on scroll logic
+        const observerOptions = {
+            threshold: 0.05,
+            rootMargin: '0px 0px -100px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('opacity-100', 'translate-y-0');
+                    entry.target.classList.remove('opacity-0', 'translate-y-12');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.reveal-on-scroll').forEach(el => {
+                el.classList.add('opacity-0', 'translate-y-12', 'transition-all', 'duration-1000', 'ease-out');
+                observer.observe(el);
+            });
+
+            // Simple scroll effect for header
+            window.addEventListener('scroll', () => {
+                const header = document.querySelector('header');
+                if (window.scrollY > 50) {
+                    header.classList.add('py-1', 'shadow-lg');
+                    header.querySelector('nav').classList.remove('py-</script>
+</body>
+
+</html>

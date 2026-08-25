@@ -1,0 +1,82 @@
+### CRITICAL ENVIRONMENT & ARCHITECTURE CONSTRAINTS
+You are an expert Frontend Architect refactoring code for a high-performance React application. You must strictly adhere to these specific version paradigms. Do not use legacy methods or guess properties:
+- React 19 & Vite 8: Implement standard React 19 paradigms. Avoid legacy ref syntax or deprecated hooks.
+- Tailwind CSS v4: The project uses a CSS-first configuration. Do not generate or assume a 'tailwind.config.js' file exists. Use native v4 utility behaviors.
+- Framer Motion v12: Use for all state-driven layout and item animations.
+- GSAP & @gsap/react: Use the `useGSAP` hook for all scroll-driven snapping animations, ensuring clean memory management.
+
+---
+
+### GLOBAL SECTION & VIEWPORT LAYOUT FORMULA
+To ensure the website functions flawlessly with full-page section snapping and avoids collisions with the sticky header, EVERY single main section component across the app must implement this rigid layout formula:
+1. Screen Boundary Box: Every root section container must be set to exactly `h-screen` or `min-h-screen`.
+2. Header Clearance: To prevent the 100px fixed header from covering up titles, apply a strict top padding utility (`pt-[100px]`) to the root element of every section.
+3. Flex Distribution: Every section must use a flexbox alignment scheme (`flex flex-col justify-between` or `justify-center`) to automatically scale, center, and distribute text, images, and modules perfectly inside the viewport box without causing vertical overflow.
+
+---
+
+### GLOBAL FEATURE: Full-Page Section Snapping via GSAP
+Implement full-page panel snapping across the main landing layout wrapper.
+
+Requirements:
+1. Hook Integration: Use the modern `@gsap/react` `useGSAP` hook and register the GSAP `ScrollTrigger` plugin.
+2. Structure: Rely on the `h-screen` section setup enforced above.
+3. Snap Configuration: Implement GSAP ScrollTrigger to cleanly lock and snap the viewport right onto the closest active vertical section during scrolling. Do not use unoptimized native window scroll listeners or custom scrollTo functions that cause scroll-jank.
+
+---
+
+### TASK 1: Carousel Y-Axis Fit & Data Refactor in 'Hero.jsx'
+Modify the listing section carousel inside `Hero.jsx` to clean up the vertical space scaling bugs and introduce directional sliding animations with side previews.
+
+Requirements:
+1. Structural Height & Padding Fix: Adhere to the Global Viewport Formula (`pt-[100px] h-screen flex flex-col justify-center`). Add clean, consistent margins below the header text to separate it from the carousel slides.
+2. Scale Buffer Margin: Because the active carousel card scales up dramatically, you must apply an explicit vertical margin block (like `my-12` or `my-16`) directly to the inner slider track container. This acts as a spatial buffer so the card has room to expand without hitting the top header text or overflow boundaries.
+3. Aspect-Ratio Fitting: Enforce a clean, responsive aspect ratio utility directly on the slide element (such as `aspect-[16/9]` or `aspect-[21/9]`) so that the entire carousel container dynamically computes a perfect, flush Y-axis height relative to the viewport width.
+4. Carousel Background: The container holding the carousel component must have a solid white background color.
+5. Animation Logic: Use Framer Motion v12 (`AnimatePresence` and directional `custom` prop variants). Set up the slider container layout to execute a "peek" effect, allowing a small portion of both the previous and next images to stay visible on the left and right borders of the screen.
+6. Transition Scaling: When advancing to the next slide, the active center image must seamlessly scale down as it exits, while the incoming image must scale up into view as it gains focus.
+7. Mockup Array: Inlist an explicit array populated with premium placeholder image asset URLs to run the slide showcase loop.
+8. Resetting Timer: Provide navigation arrow buttons to advance manually. The built-in 5-second automatic progression loop must entirely clear and restart its active window timeout whenever a user manually triggers a click interaction.
+
+---
+
+### TASK 2: Card Refactor in 'GalleryCard.jsx'
+Update the branding layout at the bottom left of the `GalleryCard.jsx` card component using native Tailwind v4 classes.
+
+Requirements:
+1. Developer Logo: Subtly increase the width and height dimensions from their current baseline.
+2. Developer Name Text: Set the text weight utility explicitly to bold.
+
+---
+
+### TASK 3: Spacing Compression in 'Footer.jsx'
+Refactor the padding structure of `Footer.jsx` to make it completely flat, tight, and tightly hugging its content layout along the Y-axis.
+
+Requirements:
+1. Remove any outer layout margins entirely from the root wrapper.
+2. Strip out the massive vertical paddings (`pt-24`, `lg:pt-32`, `py-24`, `lg:py-36`).
+3. Replace them with minimal, compact vertical padding utilities (`py-4` or `py-6` max) to dramatically reduce the vertical height footprint of the container grid.
+
+---
+
+### TASK 4: Navigation Bar Enhancements in 'Header.jsx'
+Refactor the `Header.jsx` file to introduce dynamic glassmorphism aesthetics and active state scrolling mechanics.
+
+Requirements:
+1. Margins: Remove all outer margin utilities from the root container element.
+2. Branding: Replace the primitive text "PT" anchor link with an image-based or vector Logo Icon element. Include an explicit `alt` attribute representing the logo name.
+3. Scroll States: 
+   - When the window scroll offset is at the absolute top (`scrolled` state is false), make the header background completely transparent. The navigation buttons must display a glass effect (using translucent backing values and `backdrop-blur`) to remain visible against dynamic background components.
+   - Once the user begins scrolling downward (`scrolled` state becomes true), the core navigation action button must dynamically switch its color theme over to an active **teal** color option.
+4. Component Rules: Ensure you are importing and rendering the custom pre-built `<Button />` UI component rather than standard primitive HTML `<button>` tags.
+
+---
+
+### TASK 5: Structural Spacing Adjustments in 'Home.jsx'
+Update the section layouts within `Home.jsx` to optimize layout breathing room and typography spacing.
+
+Requirements:
+1. Immersive Property Tours Section: Locate the section container handling the cinematic video tours and add substantial vertical padding (`py` utility) to give the canvas video layout more breathing room.
+2. Typography Margins: Locate the headline text region reading "Redefining Real Estate through Strategic Intelligence". Drastically decrease the outer vertical margins around this text container to eliminate large dead-space blocks and compact the sections closer together.
+
+Provide the updated, fully refactored React 19 component structures with clean imports and strict Tailwind v4 utility values.

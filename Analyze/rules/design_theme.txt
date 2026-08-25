@@ -1,0 +1,197 @@
+---
+name: PropTech Core System
+colors:
+surface: '#faf9f5'
+surface-dim: '#dbdad6'
+surface-bright: '#faf9f5'
+surface-container-lowest: '#ffffff'
+surface-container-low: '#f5f4ef'
+surface-container: '#efeeea'
+surface-container-high: '#e9e8e4'
+surface-container-highest: '#e3e2df'
+on-surface: '#1b1c1a'
+on-surface-variant: '#3f4949'
+inverse-surface: '#30312e'
+inverse-on-surface: '#f2f1ed'
+outline: '#6f7979'
+outline-variant: '#bec8c8'
+surface-tint: '#1d686a'
+primary: '#005658'
+on-primary: '#ffffff'
+primary-container: '#266f71'
+on-primary-container: '#aaeff1'
+inverse-primary: '#8ed2d4'
+secondary: '#386667'
+on-secondary: '#ffffff'
+secondary-container: '#b8e9e9'
+on-secondary-container: '#3c6a6b'
+tertiary: '#853408'
+on-tertiary: '#ffffff'
+tertiary-container: '#a44b20'
+on-tertiary-container: '#ffdccf'
+error: '#ba1a1a'
+on-error: '#ffffff'
+error-container: '#ffdad6'
+on-error-container: '#93000a'
+primary-fixed: '#a9eff0'
+primary-fixed-dim: '#8ed2d4'
+on-primary-fixed: '#002021'
+on-primary-fixed-variant: '#004f51'
+secondary-fixed: '#bbebec'
+secondary-fixed-dim: '#a0cfd0'
+on-secondary-fixed: '#002020'
+on-secondary-fixed-variant: '#1e4e4f'
+tertiary-fixed: '#ffdbcd'
+tertiary-fixed-dim: '#ffb597'
+on-tertiary-fixed: '#360f00'
+on-tertiary-fixed-variant: '#7c2e02'
+background: '#faf9f5'
+on-background: '#1b1c1a'
+surface-variant: '#e3e2df'
+typography:
+display-lg:
+fontFamily: manrope
+fontSize: 48px
+fontWeight: '700'
+lineHeight: 56px
+letterSpacing: -0.02em
+headline-lg:
+fontFamily: manrope
+fontSize: 32px
+fontWeight: '700'
+lineHeight: 40px
+letterSpacing: -0.01em
+headline-lg-mobile:
+fontFamily: manrope
+fontSize: 24px
+fontWeight: '700'
+lineHeight: 32px
+headline-md:
+fontFamily: manrope
+fontSize: 24px
+fontWeight: '600'
+lineHeight: 32px
+title-lg:
+fontFamily: manrope
+fontSize: 20px
+fontWeight: '600'
+lineHeight: 28px
+body-lg:
+fontFamily: manrope
+fontSize: 18px
+fontWeight: '400'
+lineHeight: 28px
+body-md:
+fontFamily: manrope
+fontSize: 16px
+fontWeight: '400'
+lineHeight: 24px
+label-md:
+fontFamily: inter
+fontSize: 14px
+fontWeight: '500'
+lineHeight: 20px
+letterSpacing: 0.01em
+label-sm:
+fontFamily: inter
+fontSize: 12px
+fontWeight: '600'
+lineHeight: 16px
+letterSpacing: 0.05em
+rounded:
+sm: 0.25rem
+DEFAULT: 0.5rem
+md: 0.75rem
+lg: 1rem
+xl: 1.5rem
+full: 9999px
+spacing:
+base: 8px
+xs: 4px
+sm: 12px
+md: 16px
+lg: 24px
+xl: 40px
+container-max: 1280px
+gutter: 24px
+margin-mobile: 16px
+---
+
+## Brand & Style
+The design system is engineered for the modern real estate technology sector, focusing on clarity, trust, and
+professional efficiency. The brand personality is grounded yet innovative, bridging the gap between traditional property
+management and forward-thinking digital solutions.
+
+The aesthetic follows a **Modern Minimalism** approach with a focus on high-quality typography and strategic whitespace.
+It avoids the coldness of pure "tech" styles by utilizing warm neutrals and soft shapes, ensuring the UI feels
+approachable for both institutional investors and individual renters. Visual noise is minimized to prioritize data
+density and ease of navigation.
+
+## Colors
+The palette is rooted in a sophisticated "Teal-on-Teal" foundation to establish authority and calm.
+
+- **Primary Teal (#266F71):** Used for primary actions, active navigation states, and brand iconography.
+- **Dark Teal (#174849):** Reserved for high-contrast typography and deep-surfaces like footers or sidebars to provide a
+strong visual anchor.
+- **Accent Orange (#FB8E5D):** A vibrant "Action Orange" used sparingly for high-conversion CTAs, notification badges,
+and interactive hover highlights.
+- **Surface Palette:** Employs a crisp White (#FFFFFF) for primary work surfaces and a warm Light Gray (#F1F0EC) for
+background containment and input fields to reduce eye strain.
+
+## Typography
+This design system utilizes **Manrope** for its modern, geometric construction that maintains excellent readability in
+data-heavy environments. It is used for both headings and body copy to ensure a cohesive, streamlined look.
+
+**Inter** is introduced for labels and small utility text. Its systematic nature and high x-height make it ideal for
+micro-copy, data tables, and form labels where clarity is paramount.
+
+- **Weight Usage:** Use Bold (700) for primary headlines, Semibold (600) for subheaders and navigation items, and
+Regular (400) for all long-form body text.
+- **Scale:** Maintain a strict 8px-based vertical rhythm in line heights to ensure a clean baseline grid.
+
+## Layout & Spacing
+The design system employs a **12-column fluid grid** for desktop and a **4-column grid** for mobile.
+
+- **Desktop (1280px+):** 24px gutters with 40px external margins.
+- **Tablet (768px - 1279px):** 20px gutters with 24px external margins.
+- **Mobile (Up to 767px):** 16px gutters with 16px external margins.
+
+The spacing rhythm is strictly divisible by 8. Use `xl` (40px) for section vertical padding, and `md` (16px) for
+internal card padding to maintain a sense of openness and professional breathing room.
+
+## Elevation & Depth
+Depth is created through **Tonal Layers** supplemented by **Subtle Shadows**.
+
+1. **Level 0 (Base):** Light Gray (#F1F0EC) background for the application canvas.
+2. **Level 1 (Surface):** White (#FFFFFF) cards or containers with a 1px border (#E5E7EB) and no shadow.
+3. **Level 2 (Raised):** White (#FFFFFF) surfaces with a subtle, diffused shadow (0px 4px 12px rgba(23, 72, 73, 0.05)).
+Used for primary interaction cards or floating elements.
+4. **Level 3 (Overlay):** Modals or dropdowns with a stronger shadow (0px 12px 24px rgba(23, 72, 73, 0.12)) to indicate
+high-priority interaction.
+
+Avoid heavy black shadows; instead, use shadows tinted with the Dark Teal (#174849) to keep the depth feeling natural
+and integrated.
+
+## Shapes
+The shape language is defined by "Soft Roundedness." A standard corner radius of **16px (1rem)** is applied to primary
+cards, modal containers, and large buttons. This softens the professional tone, making the software feel modern and
+user-friendly.
+
+- **Small Components:** Checkboxes and small tags use a 4px radius.
+- **Standard Components:** Input fields and standard buttons use an 8px radius.
+- **Feature Components:** Property cards and main containers use the full 16px radius.
+
+## Components
+- **Buttons:**
+- *Primary:* Primary Teal background, White text. 16px vertical padding, 8px corner radius.
+- *CTA:* Accent Orange background, White text. Used exclusively for "Book Now" or "Contact Agent" actions.
+- **Input Fields:** Light Gray (#F1F0EC) fill with no border by default. Transitions to a 2px Primary Teal border on
+focus.
+- **Chips/Badges:** Use a soft version of the Accent Orange (10% opacity) with Dark Teal text for property status (e.g.,
+"Available").
+- **Cards:** White background, 16px corner radius, Level 1 or Level 2 elevation. Property images within cards should
+have a matching 16px top-radius but 0px bottom-radius to sit flush against the card content.
+- **Lists:** Clean rows separated by 1px dividers (#F1F0EC). Use Dark Teal for primary list text and Primary Teal for
+interactive icons within the list.
+- **Data Tables:** Highly legible Manrope/Inter mix. Header row should use Dark Teal background with White text for
+maximum structural distinction.

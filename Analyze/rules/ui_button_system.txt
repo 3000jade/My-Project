@@ -2,36 +2,34 @@
 MEMORY COMMAND: UNIFIED COMPONENT CONST-ENFORCEMENT — BUTTON SYSTEM
 ==========================================================================
 [STRICT DIRECTIVE] Every button component generated, modified, or merged 
-MUST inherit the '.premium-btn' style architecture. You are strictly 
-forbidden from writing flat inline backgrounds, raw un-bezeled hover states, 
-or hardcoded font/text styling on button trees.
+MUST inherit the '.premium-btn' style architecture. The "Sharp Glass Pane" 
+full-width responsive sweep is mandatory across all size and color models.
 
 1. THE COMPRESSED 3-COLOR MATRIX (INVARIANT COLOR SPACE)
    Every button must select exactly ONE of these three color systems:
 
    🔴 SYSTEM A: PRIMARY TEAL (Action, Search, Nav)
      - Tailwind Classes: 'bg-primary text-on-primary' (mapping to '--color-primary' / #266F71).
-     - Focus Context: Standard page interactions, routing triggers, and secondary CTAs.
+     - Context: Standard page interactions and routing triggers.
 
    🟠 SYSTEM B: ACCENT CORAL (High-Impact Conversion)
      - Tailwind Classes: 'bg-accent text-white' (mapping to '--color-accent' / #FB8E5D).
-     - Focus Context: Form submission actions, wishlist highlights, and "Inquire Now" tags.
-     - Animation Hook: Append '.animate-pulse-glow' if the item is a primary page converter.
+     - Context: Conversion triggers, forms, and high-impact action buttons.
 
    ⚪ SYSTEM C: GHOST TRANSPARENT (Contrast/Image Overlays)
      - Tailwind Classes: 'bg-white/10 backdrop-blur-md border border-white/30 text-white'.
-     - Focus Context: Floating elements sitting directly on top of images or rich backdrops.
+     - Context: Floating elements sitting directly over rich visual imagery or backdrops.
 
-2. DYNAMIC GEOMETRIC CLASSIFICATION (PERMISSIBLE SIZE VARIATIONS ONLY)
-   Adjust scale only via the horizontal and vertical layout padding utilities:
+2. DYNAMIC GEOMETRIC CLASSIFICATION (WIDTH-AGNOSTIC PADDING)
+   Adjust button scales strictly using layout padding constraints:
    - SMALL (e.g., Grid Actions): 'px-6 py-2 rounded-lg text-label-sm'.
    - STANDARD (e.g., Navbar): 'px-8 py-3 rounded-lg text-label-lg'.
    - LARGE (e.g., Search CTA): 'px-12 py-4 rounded-xl text-label-lg'.
    - BLOCK (e.g., Full Form): 'w-full py-5 rounded-xl text-label-lg'.
 
-3. STYLESHEET REFACTOR: SIZE-AGNOSTIC DIAGONAL GLASS SWEEP (RIGHT-TO-LEFT)
-   Apply this exact CSS code block to your root CSS declarations. This keeps your exact
-   45-degree box design intact but scales the translation path so it works across any width.
+3. STYLESHEET REFACTOR: SIZE-AGNOSTIC SHARP DIAGONAL SWEEP (BUTTON B)
+   Apply this exact CSS configuration to eliminate corner clipping or pooling.
+   The 400% canvas footprint guarantees the 45-degree edge crosses any layout width.
 
    .premium-btn {
      position: relative;
@@ -41,43 +39,38 @@ or hardcoded font/text styling on button trees.
      text-transform: uppercase; /* Force universal clean-casing */
      letter-spacing: 0.05em;
      cursor: pointer;
+     border: 1px solid rgba(255, 255, 255, 0.1);
    }
 
-   /* Original .html 45-Degree Angled Box Geometric Design */
+   /* Responsive Button B Sharp Glass Pane Overlay */
    .premium-btn::after {
      content: '';
      position: absolute;
-     top: -50%;
-     left: -50%;
-     width: 200%;
-     height: 200%;
+     top: -150%;
+     left: -150%;
+     width: 400%;
+     height: 400%;
      background: linear-gradient(
        to right, 
-       rgba(255, 255, 255, 0) 0%, 
-       rgba(255, 255, 255, 0.3) 50%, 
-       rgba(255, 255, 255, 0) 100%
+       rgba(255, 255, 255, 0) 40%, 
+       rgba(255, 255, 255, 0.28) 50%, 
+       rgba(255, 255, 255, 0) 60-percent
      );
-     /* 
-       Keep exact 45deg rotation from HTML. 
-       Start position offset on both axes to safely hide offscreen to the right.
-     */
-     transform: rotate(45deg) translate(60%, -60%);
-     transition: transform 0.65s cubic-bezier(0.19, 1, 0.22, 1);
+     /* Placement Optimization: Sets absolute 45deg rotation, staged off-screen to the top-right */
+     transform: translate(50%, -50%) rotate(45deg);
+     transition: transform 0.75s cubic-bezier(0.19, 1, 0.22, 1);
      pointer-events: none;
    }
 
-   /* Hover Dynamics */
+   /* Hover Dynamics (Full-Width Linear Translation) */
    .premium-btn:hover {
      transform: translateY(-2px) scale(1.02);
-     box-shadow: 0 10px 20px -5px rgba(38, 111, 113, 0.35); /* Cast primary soft-teal glow */
+     box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.15);
    }
 
    .premium-btn:hover::after {
-     /* 
-       Sweeps dynamically from top-right down to bottom-left (Right-to-Left motion).
-       Dual-axis percentage scaling ensures the sheen clears the full width of any size button.
-     */
-     transform: rotate(45deg) translate(-60%, 60%); 
+     /* Motion Fix: Sweeps dynamically across both axes from Right-to-Left down to bottom-left */
+     transform: translate(-50%, 50%) rotate(45deg); 
    }
 
    /* Active Click Press Dynamics */
