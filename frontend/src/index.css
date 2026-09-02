@@ -29,18 +29,53 @@
   --color-coral: #E07A5F;
   --color-on-coral: #ffffff;
 
+  --color-teal-50: #EAF3F3;
+  --color-teal-100: #D3E6E6;
+  --color-teal-200: #A7CDCD;
+  --color-teal-300: #7BB4B5;
+  --color-teal-400: #4F9B9C;
+  --color-teal-500: #266F71;
+  --color-teal-600: #215F61;
+  --color-teal-700: #1C5051;
+  --color-teal-800: #174849;
+  --color-teal-900: #0F3132;
+
+  --color-darkteal-50: #E9EEEE;
+  --color-darkteal-100: #C9D6D6;
+  --color-darkteal-700: #1C5051;
+  --color-darkteal-800: #174849;
+  --color-darkteal-900: #0E2C2D;
+
+  --color-accent-50: #FFF1EA;
+  --color-accent-100: #FEDFCE;
+  --color-accent-400: #FCA37D;
+  --color-accent-500: #FB8E5D;
+  --color-accent-600: #F0713A;
+  --color-accent-700: #D65E2A;
+
+  --color-surface-50: #F8F7F4;
+  --color-surface-100: #F1F0EC;
+  --color-surface-200: #E4E2DA;
+  --color-surface-300: #D3D0C4;
+
+  --color-ink-200: #CBD1CE;
+  --color-ink-300: #A2ABA8;
+  --color-ink-400: #7C8785;
+  --color-ink-500: #5F6B68;
+  --color-ink-700: #3A4744;
+  --color-ink-900: #16231F;
+
+  --shadow-card: 0 1px 2px 0 rgba(23, 72, 73, 0.06), 0 1px 3px 0 rgba(23, 72, 73, 0.08);
+  --shadow-pop: 0 4px 16px 0 rgba(23, 72, 73, 0.12);
+
   --radius-DEFAULT: 1rem;
   --radius-lg: 1rem;
   --radius-xl: 1rem;
   --radius-2xl: 1rem;
   --radius-full: 9999px;
 
-
-
   --font-sans: "Inter", sans-serif;
   --font-display: "Manrope", sans-serif;
-
-
 }
 
 
@@ -176,3 +211,51 @@
   background-size: cover;
   background-position: center;
 }
+
+/* Agent Portal Animations & Utilities */
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(-8px) translateX(0); }
+  to { opacity: 1; transform: translateY(0) translateX(0); }
+}
+.animate-toast-in {
+  animation: toast-in 0.2s ease-out;
+}
+
+@keyframes drawer-in {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+.animate-drawer-in {
+  animation: drawer-in 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes sidebar-in {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+.animate-sidebar-in {
+  animation: sidebar-in 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-fade-in {
+  animation: fade-in 0.15s ease-out;
+}
+
+@keyframes modal-in {
+  from { opacity: 0; transform: scale(0.97) translateY(4px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.animate-modal-in {
+  animation: modal-in 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

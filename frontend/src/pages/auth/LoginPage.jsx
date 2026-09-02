@@ -1,9 +1,11 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ActionConsole from '../../components/ui/ActionConsole';
 import Button from '../../components/ui/Button';
 import { mockUsers } from '../../utils/mockUsers';
 
 export default function LoginPage() {
+  const navigate = useNavigate();
   const [logs, setLogs] = useState([]);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -23,6 +25,11 @@ export default function LoginPage() {
   const handleLogin = (e) => {
     e.preventDefault();
     handleAction('LOGIN_ATTEMPT', { email }, '/api/auth/login');
+    if (email === mockUsers.agent.email || email.includes('agent')) {
+      setTimeout(() => {
+        navigate('/agent');
+      }, 400);
+    }
   };
 
   const handleDemoLogin = (role) => {
@@ -30,6 +37,11 @@ export default function LoginPage() {
     setEmail(user.email);
     setPassword(user.password);
     handleAction(`DEMO_${role.toUpperCase()}_SELECTED`, { email: user.email }, 'client-side', 'UI');
+    if (role === 'agent') {
+      setTimeout(() => {
+        navigate('/agent');
+      }, 400);
+    }
   };
 
   return (

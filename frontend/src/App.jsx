@@ -1,16 +1,39 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-import Header from './components/Header';
-import ChatWidget from './modules/Chat/ChatWidget';
-import Footer from './components/Footer';
+import { ReactLenis, useLenis } from 'lenis/react';
+
+// Client imports
+import ClientLayout from './components/layouts/ClientLayout';
 import Home from './pages/Home';
 import PropertiesPage from './pages/PropertiesPage';
 import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
-import PropertyDetailModal from './components/ui/PropertyDetailModal';
 import LoginPage from './pages/auth/LoginPage';
-import PageLoader from './components/ui/PageLoader';
-import { ReactLenis, useLenis } from 'lenis/react';
+
+// Agent imports
+import { AgentProvider } from './context/AgentContext';
+import AgentLayout from './components/agent/layout/AgentLayout';
+import Dashboard from './pages/agent/Dashboard';
+import MyProperties from './pages/agent/properties/MyProperties';
+import AddProperty from './pages/agent/properties/AddProperty';
+import PropertyDetails from './pages/agent/properties/PropertyDetails';
+import InquiryManagement from './pages/agent/inquiries/InquiryManagement';
+import Leads from './pages/agent/crm/Leads';
+import LeadDetails from './pages/agent/crm/LeadDetails';
+import Clients from './pages/agent/crm/Clients';
+import FollowUps from './pages/agent/crm/FollowUps';
+import Schedule from './pages/agent/crm/Schedule';
+import CommunicationHistory from './pages/agent/crm/CommunicationHistory';
+import SalesOverview from './pages/agent/sales/SalesOverview';
+import Transactions from './pages/agent/sales/Transactions';
+import SalesReports from './pages/agent/sales/SalesReports';
+import SalesAnalytics from './pages/agent/sales/SalesAnalytics';
+import AIAssistant from './pages/agent/ai/AIAssistant';
+import Notifications from './pages/agent/notifications/Notifications';
+import MyProfile from './pages/agent/profile/MyProfile';
+import Security from './pages/agent/profile/Security';
+import Terms from './pages/agent/profile/Terms';
+import AgentNotFound from './pages/agent/NotFound';
 
 function ScrollToTop() {
   const { pathname, hash } = useLocation();
@@ -77,23 +100,67 @@ export default function App() {
     <ReactLenis root options={{ lerp: 0.08, smoothWheel: true }}>
       <Router>
         <ScrollToTop />
-        <div className={`transition-colors duration-700 min-h-screen ${isDarkTheme ? 'bg-black' : 'bg-white'}`}>
-          <Header isDarkTheme={isDarkTheme} />
-          <main>
-            <Routes>
-              <Route path="/" element={<Home setIsDarkTheme={setIsDarkTheme} />} />
-              <Route path="/properties" element={<PropertiesPage />} />
-              <Route path="/about" element={<AboutPage />} />
-              <Route path="/contact" element={<ContactPage />} />
-              <Route path="/login" element={<LoginPage />} />
-            </Routes>
-          </main>
-          <ChatWidget />
-          <Footer />
-          <PropertyDetailModal />
-          <PageLoader isLoading={isAppLoading} />
-        </div>
+        <Routes>
+          {/* CLIENT-SIDE ROUTES */}
+          <Route
+            element={
+              <ClientLayout
+                isDarkTheme={isDarkTheme}
+                isAppLoading={isAppLoading}
+              />
+            }
+          >
+            <Route path="/" element={<Home setIsDarkTheme={setIsDarkTheme} />} />
+            <Route path="/properties" element={<PropertiesPage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+            <Route path="/login" element={<LoginPage />} />
+          </Route>
+
+          {/* AGENT-SIDE ROUTES */}
+          <Route
+            path="/agent"
+            element={
+              <AgentProvider>
+                <AgentLayout />
+              </AgentProvider>
+            }
+          >
+            <Route index element={<Dashboard />} />
+            <Route path="properties" element={<MyProperties />} />
+            <Route path="properties/add" element={<AddProperty />} />
+            <Route path="properties/:id" element={<PropertyDetails />} />
+            <Route path="properties/:id/edit" element={<AddProperty />} />
+
+            <Route path="inquiries" element={<InquiryManagement />} />
+            <Route path="inquiries/new" element={<InquiryManagement presetStatus="New" />} />
+            <Route path="inquiries/follow-up" element={<InquiryManagement presetStatus="Follow-up" />} />
+            <Route path="inquiries/closed" element={<InquiryManagement presetStatus="Closed" />} />
+
+            <Route path="crm/leads" element={<Leads />} />
+            <Route path="crm/leads/:id" element={<LeadDetails />} />
+            <Route path="crm/clients" element={<Clients />} />
+            <Route path="crm/follow-ups" element={<FollowUps />} />
+            <Route path="crm/schedule" element={<Schedule />} />
+            <Route path="crm/communication-history" element={<CommunicationHistory />} />
+
+            <Route path="sales" element={<SalesOverview />} />
+            <Route path="sales/overview" element={<SalesOverview />} />
+            <Route path="sales/transactions" element={<Transactions />} />
+            <Route path="sales/reports" element={<SalesReports />} />
+            <Route path="sales/analytics" element={<SalesAnalytics />} />
+
+            <Route path="ai-assistant" element={<AIAssistant />} />
+            <Route path="notifications" element={<Notifications />} />
+
+            <Route path="profile" element={<MyProfile />} />
+            <Route path="profile/security" element={<Security />} />
+            <Route path="profile/terms" element={<Terms />} />
+
+            <Route path="*" element={<AgentNotFound />} />
+          </Route>
+        </Routes>
       </Router>
     </ReactLenis>
   );
-}     
+}
