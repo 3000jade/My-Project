@@ -1,9 +1,11 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ActionConsole from '../../components/ui/ActionConsole';
 import Button from '../../components/ui/Button';
 import { mockUsers } from '../../utils/mockUsers';
 
 export default function LoginPage() {
+  const navigate = useNavigate();
   const [logs, setLogs] = useState([]);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -23,6 +25,14 @@ export default function LoginPage() {
   const handleLogin = (e) => {
     e.preventDefault();
     handleAction('LOGIN_ATTEMPT', { email }, '/api/auth/login');
+    const lower = email.toLowerCase();
+    if (lower.includes('agent')) {
+      navigate('/agent/dashboard');
+    } else if (lower.includes('broker') || lower.includes('admin')) {
+      navigate('/broker/dashboard');
+    } else {
+      navigate('/agent/dashboard');
+    }
   };
 
   const handleDemoLogin = (role) => {
