@@ -20,41 +20,41 @@ export default function PageLoader({ isLoading }) {
     // 0. Make container visible first
     gsap.set(logoRef.current, { opacity: 1 });
 
-    // 1. Staggered individual 3D fly-in from big to small
+    // 1. Staggered individual 3D fly-in from big to small (crisp & snappy)
     tl.fromTo([pRef.current, tRef.current, dotRef.current, subtitleRef.current], 
-      { x: "-50vw", y: "-50vh", z: 1000, rotationX: 360, rotationY: 360, rotationZ: 360, scale: 5, opacity: 0 },
-      { x: 0, y: 0, z: 0, rotationX: 0, rotationY: 0, rotationZ: 0, scale: 1, opacity: 1, duration: 1.2, ease: "power4.out", stagger: 0.15 },
-      0.1
+      { x: "-30vw", y: "-30vh", z: 600, rotationX: 180, rotationY: 180, rotationZ: 180, scale: 3, opacity: 0 },
+      { x: 0, y: 0, z: 0, rotationX: 0, rotationY: 0, rotationZ: 0, scale: 1, opacity: 1, duration: 0.6, ease: "power4.out", stagger: 0.08 },
+      0.05
     );
 
-    // 2. Continuous pulse effect on the logo container while loading
+    // 2. Subtle pulse effect on the logo container while loading
     tl.to(logoRef.current, {
-      scale: 1.05,
-      duration: 0.6,
+      scale: 1.04,
+      duration: 0.4,
       yoyo: true,
       repeat: -1,
       ease: "sine.inOut"
-    }, "+=0.1");
+    }, "+=0.05");
 
-    // 2. Animate the loading bar width
+    // 3. Animate the loading bar width (completes at ~1.0s)
     tl.to(barRef.current, {
       width: "100%",
-      duration: 2.2, // fits inside the 3s global loading state
-      ease: "power3.inOut"
-    }, 0.5);
+      duration: 0.85,
+      ease: "power2.out"
+    }, 0.2);
     
-    // 3. Counter animation 0 to 100
+    // 4. Counter animation 0 to 100
     const counter = { value: 0 };
     tl.to(counter, {
       value: 100,
-      duration: 2.2,
-      ease: "power3.inOut",
+      duration: 0.85,
+      ease: "power2.out",
       onUpdate: () => {
         if (textRef.current) {
           textRef.current.innerText = Math.round(counter.value) + "%";
         }
       }
-    }, 0.5);
+    }, 0.2);
     
     return () => tl.kill();
   }, []);
@@ -62,7 +62,7 @@ export default function PageLoader({ isLoading }) {
   return (
     <div 
       ref={containerRef}
-      className={`fixed inset-0 z-[100] flex flex-col items-center justify-center bg-surface transition-transform duration-1000 ease-in-out ${isLoading ? 'translate-y-0' : '-translate-y-full'}`}
+      className={`fixed inset-0 z-[100] flex flex-col items-center justify-center bg-surface transition-transform duration-700 ease-in-out ${isLoading ? 'translate-y-0' : '-translate-y-full'}`}
     >
       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/pinstriped-suit.png')] opacity-[0.03]"></div>
       

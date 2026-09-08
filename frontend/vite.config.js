@@ -8,4 +8,22 @@ export default defineConfig({
     tailwindcss(),
     react(),
   ],
+  optimizeDeps: {
+    include: [
+      'react',
+      'react-dom',
+      'react/jsx-runtime',
+      'react-router-dom',
+      'framer-motion',
+      'gsap',
+      '@gsap/react',
+      'lenis',
+      'lenis/react',
+      '@mantine/core',
+      '@mantine/hooks',
+      '@mantine/carousel',
+      '@tabler/icons-react',
+      '@tanstack/react-virtual',
+    ],
+  },
 })

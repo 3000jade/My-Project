@@ -131,6 +131,9 @@ export default function Header({ isDarkTheme }) {
             <Link className={`text-[11px] font-bold uppercase tracking-widest font-sans nav-link transition-colors duration-700 ${getLinkColor('/contact')}`} to="/contact">
               Contact
             </Link>
+            <Link className={`text-[11px] font-bold uppercase tracking-widest font-sans nav-link transition-colors duration-700 ${getLinkColor('/duplex-3d')}`} to="/duplex-3d">
+              3D Demo
+            </Link>
           </div>
           <div className="flex items-center gap-4">
             <Button variant={isSolidTheme && !isDarkTheme ? "outline" : "secondary"} size="sm" to="/login">

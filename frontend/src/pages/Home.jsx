@@ -333,6 +333,8 @@ export default function Home({ setIsDarkTheme }) {
                 <iframe
                   className="absolute top-1/2 left-1/2 w-[300%] h-[300%] md:w-[150%] md:h-[150%] -translate-x-1/2 -translate-y-1/2 opacity-80 transition-transform duration-[2s] group-hover:scale-105 group-hover:opacity-100 ease-out"
                   src="https://www.youtube.com/embed/ScMzIvxBSi4?autoplay=1&mute=1&controls=0&showinfo=0&rel=0&loop=1&playlist=ScMzIvxBSi4&playsinline=1"
+                  title="Cinematic Tour Ambient Preview"
+                  loading="lazy"
                   allow="autoplay; encrypted-media"
                   frameBorder="0"
                 ></iframe>
@@ -500,10 +502,11 @@ export default function Home({ setIsDarkTheme }) {
                     <label className={`font-sans text-[11px] font-bold uppercase tracking-widest transition-colors ${activeFormInput === 'interest' ? 'text-[#174849]' : 'text-gray-500'}`}>Interest Area</label>
                     <div className="relative">
                        <select 
+                         defaultValue=""
                          onFocus={() => setActiveFormInput('interest')}
                          onBlur={() => setActiveFormInput(null)}
                          className="w-full bg-white rounded-xl border border-transparent focus:border-[#266F71] focus:ring-1 focus:ring-[#266F71] py-4 px-5 transition-all appearance-none text-sm font-sans outline-none shadow-sm text-gray-700">
-                         <option value="" disabled selected>Select an option</option>
+                         <option value="" disabled>Select an option</option>
                          {CONSULTATION_FORM_DATA.interests.map((interest, idx) => (
                            <option key={idx} value={interest}>{interest}</option>
                          ))}
