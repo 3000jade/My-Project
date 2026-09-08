@@ -37,50 +37,49 @@ const noiseTex = generateNoiseTexture(512, 0.15, 4); // Wall bump
 const puddleTex = generateNoiseTexture(512, 0.6, 2); // Driveway roughness variation
 
 // --- High-End PBR Materials ---
-const wallMat = new THREE.MeshPhysicalMaterial({ 
-  color: '#e5e5e5', 
-  roughness: 0.85,
-  metalness: 0.05,
-  bumpMap: noiseTex,
-  bumpScale: 0.002
+const createBuildingMaterials = () => ({
+  wallMat: new THREE.MeshStandardMaterial({ 
+    color: '#e5e5e5', 
+    roughness: 0.85,
+    metalness: 0.05,
+    bumpMap: noiseTex,
+    bumpScale: 0.002
+  }),
+  darkWallMat: new THREE.MeshStandardMaterial({ 
+    color: '#2a2a2a', 
+    roughness: 0.9,
+    bumpMap: noiseTex,
+    bumpScale: 0.005
+  }),
+  glassMat: new THREE.MeshPhysicalMaterial({
+    color: '#d4ecf9',
+    metalness: 0.1,
+    roughness: 0.05,
+    transparent: true,
+    opacity: 0.4,
+    clearcoat: 1,
+    clearcoatRoughness: 0.1
+  }),
+  woodMat: new THREE.MeshStandardMaterial({ 
+    color: '#8b5a2b', 
+    roughness: 0.6,
+    metalness: 0.1,
+    bumpMap: noiseTex,
+    bumpScale: 0.01
+  }),
+  roofMat: new THREE.MeshStandardMaterial({ 
+    color: '#1a1a1a', 
+    roughness: 0.7,
+    bumpMap: noiseTex,
+    bumpScale: 0.01
+  })
 });
-const darkWallMat = new THREE.MeshPhysicalMaterial({ 
-  color: '#2a2a2a', 
-  roughness: 0.9,
-  bumpMap: noiseTex,
-  bumpScale: 0.005
-});
-const glassMat = new THREE.MeshPhysicalMaterial({
-  color: '#ffffff',
-  metalness: 0.1,
-  roughness: 0.05,
-  transmission: 0.95, // Glass physical transmission
-  transparent: true,
-  opacity: 1,
-  ior: 1.52,
-  thickness: 0.8,
-  clearcoat: 1,
-  clearcoatRoughness: 0.1
-});
-const woodMat = new THREE.MeshPhysicalMaterial({ 
-  color: '#8b5a2b', 
-  roughness: 0.6,
-  metalness: 0.1,
-  bumpMap: noiseTex,
-  bumpScale: 0.01,
-  clearcoat: 0.2
-});
-const roofMat = new THREE.MeshPhysicalMaterial({ 
-  color: '#1a1a1a', 
-  roughness: 0.7,
-  bumpMap: noiseTex,
-  bumpScale: 0.01
-});
-const driveMat = new THREE.MeshPhysicalMaterial({
+
+const driveMat = new THREE.MeshStandardMaterial({
   color: '#333333',
-  roughness: 0.3, // Lower base roughness for wet look
+  roughness: 0.35,
   roughnessMap: puddleTex,
-  metalness: 0.2,
+  metalness: 0.15
 });
 
 // --- Components ---
@@ -98,11 +97,13 @@ function DustParticles() {
   }, []);
   
   const pointsRef = useRef();
+  const timeRef = useRef(0);
   
-  useFrame(({ clock }) => {
+  useFrame((_, delta) => {
+    timeRef.current += delta;
     if(pointsRef.current) {
-      pointsRef.current.rotation.y = clock.getElapsedTime() * 0.01;
-      pointsRef.current.position.y = Math.sin(clock.getElapsedTime() * 0.1) * 0.2;
+      pointsRef.current.rotation.y = timeRef.current * 0.01;
+      pointsRef.current.position.y = Math.sin(timeRef.current * 0.1) * 0.2;
     }
   });
 
@@ -118,11 +119,12 @@ function DustParticles() {
 
 function BuildingUnit({ position, isRight, opacity, exploded, name, isNight }) {
   const group = useRef();
+  const materials = useMemo(() => createBuildingMaterials(), []);
 
   useFrame(() => {
     if (group.current) {
       group.current.traverse((child) => {
-        if (child.isMesh && child.material && child.material !== glassMat) {
+        if (child.isMesh && child.material && child.material !== materials.glassMat) {
           child.material.transparent = true;
           child.material.opacity = THREE.MathUtils.lerp(child.material.opacity, opacity, 0.1);
         }
@@ -140,28 +142,28 @@ function BuildingUnit({ position, isRight, opacity, exploded, name, isNight }) {
       <pointLight position={[0, 6, 2]} intensity={isNight && exploded ? 2 : (isNight ? 0.5 : 0)} color="#ffb86c" distance={10} />
 
       {/* Ground Floor */}
-      <mesh position={[0, 1.5, 0]} castShadow receiveShadow material={wallMat}>
+      <mesh position={[0, 1.5, 0]} castShadow receiveShadow material={materials.wallMat}>
         <boxGeometry args={[6, 3, 8]} />
       </mesh>
       
       {/* Front Glass Window */}
-      <mesh position={[0, 1.5, 4.05]} material={glassMat}>
+      <mesh position={[0, 1.5, 4.05]} material={materials.glassMat}>
         <planeGeometry args={[5, 2.5]} />
       </mesh>
 
       {/* Second Floor (Explodable) */}
       <group position={[0, explodeY, 0]}>
-        <mesh position={[0, 4.5, 0]} castShadow receiveShadow material={wallMat}>
+        <mesh position={[0, 4.5, 0]} castShadow receiveShadow material={materials.wallMat}>
           <boxGeometry args={[6, 3, 8]} />
         </mesh>
         
         {/* Balcony */}
-        <mesh position={[0, 3, 4.5]} receiveShadow castShadow material={woodMat}>
+        <mesh position={[0, 3, 4.5]} receiveShadow castShadow material={materials.woodMat}>
           <boxGeometry args={[6, 0.2, 2]} />
         </mesh>
         
         {/* Balcony Glass */}
-        <mesh position={[0, 3.5, 5.5]} material={glassMat}>
+        <mesh position={[0, 3.5, 5.5]} material={materials.glassMat}>
           <planeGeometry args={[6, 1]} />
         </mesh>
 
@@ -173,7 +175,7 @@ function BuildingUnit({ position, isRight, opacity, exploded, name, isNight }) {
 
         {/* Roof (Explodable further) */}
         <group position={[0, roofY, 0]}>
-          <mesh position={[0, 6.2, 0]} castShadow receiveShadow material={roofMat}>
+          <mesh position={[0, 6.2, 0]} castShadow receiveShadow material={materials.roofMat}>
             <boxGeometry args={[6.4, 0.4, 8.4]} />
           </mesh>
         </group>
@@ -184,6 +186,13 @@ function BuildingUnit({ position, isRight, opacity, exploded, name, isNight }) {
 
 function Firewall({ opacity }) {
   const ref = useRef();
+  const firewallMat = useMemo(() => new THREE.MeshStandardMaterial({
+    color: '#2a2a2a',
+    roughness: 0.9,
+    bumpMap: noiseTex,
+    bumpScale: 0.005
+  }), []);
+
   useFrame(() => {
     if (ref.current) {
       ref.current.material.transparent = true;
@@ -193,7 +202,7 @@ function Firewall({ opacity }) {
 
   return (
     <group>
-      <mesh ref={ref} position={[0, 3, 0]} receiveShadow castShadow material={darkWallMat}>
+      <mesh ref={ref} position={[0, 3, 0]} receiveShadow castShadow material={firewallMat}>
         <boxGeometry args={[0.5, 6.5, 8.5]} />
       </mesh>
       <Html position={[0, 3, 4.5]} distanceFactor={15} center>
@@ -313,7 +322,7 @@ function DuplexScene({ activeUnit, exploded, setControlsTarget, disableOrbit, co
         position={[10, 15, 10]} 
         intensity={2.5}
         color="#ffeedd"
-        shadow-mapSize={[2048, 2048]}
+        shadow-mapSize={[1024, 1024]}
         shadow-bias={-0.0001}
       >
         <orthographicCamera attach="shadow-camera" args={[-15, 15, 15, -15, 0.1, 50]} />
@@ -342,14 +351,13 @@ function DuplexScene({ activeUnit, exploded, setControlsTarget, disableOrbit, co
         <primitive object={driveMat} attach="material" />
       </mesh>
       
-      <ContactShadows resolution={2048} scale={30} blur={2.5} opacity={0.6} far={10} color="#000000" />
+      <ContactShadows resolution={512} scale={30} blur={2.5} opacity={0.6} far={10} color="#000000" />
       
       {/* Cinematic Post-Processing */}
-      <EffectComposer disableNormalPass>
-        <Bloom luminanceThreshold={0.85} luminanceSmoothing={0.9} height={300} intensity={0.5} />
+      <EffectComposer multisampling={0} disableNormalPass>
+        <Bloom luminanceThreshold={0.85} luminanceSmoothing={0.9} intensity={0.5} />
         <Vignette eskil={false} offset={0.1} darkness={1.1} />
         <Noise opacity={0.03} />
-        <DepthOfField focusDistance={0} focalLength={0.02} bokehScale={1.5} height={480} />
       </EffectComposer>
     </group>
   );
@@ -403,10 +411,18 @@ export default function Duplex3DPage() {
       {/* 3D Canvas fixed in background */}
       <div className="fixed inset-0 z-0 h-screen w-screen">
         <Canvas 
-          shadows 
+          shadows={{ type: THREE.PCFShadowMap }}
           camera={{ position: [15, 12, 20], fov: 45 }}
-          gl={{ antialias: false, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1 }}
-          dpr={[1, 2]}
+          gl={{ 
+            antialias: true, 
+            toneMapping: THREE.ACESFilmicToneMapping, 
+            toneMappingExposure: 1,
+            powerPreference: 'default'
+          }}
+          dpr={[1, 1.5]}
+          onCreated={({ gl }) => {
+            gl.shadowMap.type = THREE.PCFShadowMap;
+          }}
         >
           <DuplexScene 
             activeUnit={activeUnit} 
@@ -425,7 +441,6 @@ export default function Duplex3DPage() {
             maxPolarAngle={Math.PI / 2 + 0.1}
             enabled={orbitEnabled}
           />
-        </Canvas>
       </div>
       
       {/* Scrollable Content overlay for GSAP ScrollTrigger */}
