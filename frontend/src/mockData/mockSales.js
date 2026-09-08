@@ -1,0 +1,80 @@
+export const mockSales = [
+  {
+    id: "sale-301",
+    property_id: "4",
+    property_title: "One Serendra Garden Villa",
+    property_location: "BGC, Taguig City",
+    client_name: "Patricia Sy-Cojuangco",
+    agent_id: "agent-1",
+    agent_name: "Elena Rossi",
+    sale_date: "2026-08-25",
+    property_value: 68000000,
+    status: "COMPLETED",
+    notes: "Full deed of absolute sale executed. Verified by legal department."
+  },
+  {
+    id: "sale-302",
+    property_id: "2",
+    property_title: "The Proscenium Penthouse",
+    property_location: "Rockwell Center, Makati",
+    client_name: "Dr. Beatrice Ramos-Tan",
+    agent_id: "agent-1",
+    agent_name: "Elena Rossi",
+    sale_date: "2026-09-02",
+    property_value: 85500000,
+    status: "PENDING",
+    notes: "Earnest deposit received. Awaiting bank mortgage release letter."
+  },
+  {
+    id: "sale-303",
+    property_id: "1",
+    property_title: "Ayala Alabang Estate",
+    property_location: "Muntinlupa City, Metro Manila",
+    client_name: "Atty. Fernando Zobel",
+    agent_id: "agent-1",
+    agent_name: "Elena Rossi",
+    sale_date: "2026-09-04",
+    property_value: 185000000,
+    status: "PENDING",
+    notes: "Offer to purchase draft currently under family council review."
+  },
+  {
+    id: "sale-304",
+    property_id: "6",
+    property_title: "Aurelia Residences Horizon Suite",
+    property_location: "BGC, Taguig City",
+    client_name: "Michael Anthony Cruz",
+    agent_id: "agent-2",
+    agent_name: "Alexander Sterling",
+    sale_date: "2026-08-15",
+    property_value: 145000000,
+    status: "COMPLETED",
+    notes: "Foreign executive inward investment remitted via accredited escrow."
+  },
+  {
+    id: "sale-305",
+    property_id: "7",
+    property_title: "Greenhills West Contemporary Villa",
+    property_location: "San Juan City, Metro Manila",
+    client_name: "Corazon Aquino-Dee",
+    agent_id: "agent-2",
+    agent_name: "Alexander Sterling",
+    sale_date: "2026-07-20",
+    property_value: 210000000,
+    status: "COMPLETED",
+    notes: "Direct transfer of title to family holding corporation."
+  },
+  {
+    id: "sale-306",
+    property_id: "3",
+    property_title: "Forbes Park Modern Residence",
+    property_location: "Makati City, Metro Manila",
+    client_name: "Engr. Mateo Villanueva",
+    agent_id: "agent-1",
+    agent_name: "Elena Rossi",
+    sale_date: "2026-07-02",
+    property_value: 420000000,
+    status: "CANCELLED",
+    notes: "Cancelled during initial escrow negotiation due to foreign equity structure issues."
+  }
+];
