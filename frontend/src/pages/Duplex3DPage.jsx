@@ -1,7 +1,6 @@
 import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Html, Environment, ContactShadows } from '@react-three/drei';
-import { EffectComposer, Bloom, Vignette, Noise, DepthOfField } from '@react-three/postprocessing';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
@@ -313,8 +312,8 @@ function DuplexScene({ activeUnit, exploded, setControlsTarget, disableOrbit, co
   return (
     <group ref={sceneGroupRef}>
       {/* High-End IBL Lighting */}
-      <Environment preset="sunset" background blur={0.8} />
-      <ambientLight intensity={timeOfDay === 1 ? 0.3 : 0.8} color={timeOfDay === 1 ? '#ffffff' : '#445588'} />
+      <Environment preset="sunset" />
+      <ambientLight intensity={timeOfDay === 1 ? 0.4 : 0.8} color={timeOfDay === 1 ? '#ffffff' : '#445588'} />
 
       <directionalLight
         ref={sunLightRef}
@@ -352,13 +351,6 @@ function DuplexScene({ activeUnit, exploded, setControlsTarget, disableOrbit, co
       </mesh>
 
       <ContactShadows resolution={512} scale={30} blur={2.5} opacity={0.6} far={10} color="#000000" />
-
-      {/* Cinematic Post-Processing */}
-      <EffectComposer multisampling={0} disableNormalPass>
-        <Bloom luminanceThreshold={0.85} luminanceSmoothing={0.9} intensity={0.5} />
-        <Vignette eskil={false} offset={0.1} darkness={1.1} />
-        <Noise opacity={0.03} />
-      </EffectComposer>
     </group>
   );
 }
@@ -374,6 +366,8 @@ export default function Duplex3DPage() {
 
   return (
     <div className="relative w-full bg-[#111111] min-h-screen overflow-hidden">
+      {/* Cinematic Vignette Overlay */}
+      <div className="pointer-events-none fixed inset-0 z-[1] bg-[radial-gradient(ellipse_at_center,transparent_55%,rgba(0,0,0,0.85)_100%)]" />
 
       {/* Controls HUD */}
       <div className="fixed top-32 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-4">
@@ -416,12 +410,20 @@ export default function Duplex3DPage() {
           gl={{
             antialias: true,
             toneMapping: THREE.ACESFilmicToneMapping,
-            toneMappingExposure: 1,
-            powerPreference: 'default'
+            toneMappingExposure: 1.1,
+            powerPreference: 'high-performance',
+            preserveDrawingBuffer: false
           }}
           dpr={[1, 1.5]}
           onCreated={({ gl }) => {
             gl.shadowMap.type = THREE.PCFShadowMap;
+          }}
+          onContextLost={(e) => {
+            e.preventDefault();
+            console.warn('WebGL context lost, restoring...');
+          }}
+          onContextRestored={() => {
+            console.log('WebGL context restored successfully.');
           }}
         >
           <DuplexScene
