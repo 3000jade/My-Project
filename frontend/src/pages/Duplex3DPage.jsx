@@ -423,24 +423,25 @@ export default function Duplex3DPage() {
           onCreated={({ gl }) => {
             gl.shadowMap.type = THREE.PCFShadowMap;
           }}
-        />
-        <DuplexScene
-          activeUnit={activeUnit}
-          exploded={exploded}
-          setControlsTarget={controlsTarget.current}
-          controlsRef={controlsRef}
-          disableOrbit={(val) => setOrbitEnabled(!val)}
-          timeOfDay={timeOfDay}
-        />
-        <OrbitControls
-          ref={controlsRef}
-          enableDamping
-          dampingFactor={0.05}
-          minDistance={5}
-          maxDistance={50}
-          maxPolarAngle={Math.PI / 2 + 0.1}
-          enabled={orbitEnabled}
-        />
+        >
+          <DuplexScene
+            activeUnit={activeUnit}
+            exploded={exploded}
+            setControlsTarget={controlsTarget.current}
+            controlsRef={controlsRef}
+            disableOrbit={(val) => setOrbitEnabled(!val)}
+            timeOfDay={timeOfDay}
+          />
+          <OrbitControls
+            ref={controlsRef}
+            enableDamping
+            dampingFactor={0.05}
+            minDistance={5}
+            maxDistance={50}
+            maxPolarAngle={Math.PI / 2 + 0.1}
+            enabled={orbitEnabled}
+          />
+        </Canvas>
       </div>
 
       {/* Scrollable Content overlay for GSAP ScrollTrigger */}
