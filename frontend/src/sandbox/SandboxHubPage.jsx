@@ -68,6 +68,17 @@ const MODULES = [
     description: 'Interactive testbed showcasing physics-based spring modals, liquid text kerning, optical lens distortion, catwalk horizontal scroll, and video scrubbing.',
     icon: IconLayoutDashboard,
     tech: ['Framer Motion Springs', 'Tailwind v4 CSS', 'Canvas Scrubbing', 'Lenis Momentum']
+  },
+  {
+    id: 'parallax-lab',
+    title: 'Anime Parallax Motion Lab',
+    path: '/sandbox/parallax-lab',
+    category: '2.5D Motion Engineering',
+    badge: 'After Effects Techniques',
+    badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+    description: "Interactive testbed exploring the 3 core anime parallax camera movements from mclelun: Pan (velocity multipliers), Zoom (focal push-in), and Arc (counter-directional orbit).",
+    icon: IconBoxModel2,
+    tech: ['Framer Motion', 'Z-Depth Math', 'Dynamic Bokeh Blur', 'Live Metrics']
   }
 ];
 

@@ -19,6 +19,7 @@ const DemoUIUXPage = lazy(() => import('./sandbox/DemoUIUXPage'));
 const HomeValuationPage = lazy(() => import('./sandbox/HomeValuationPage'));
 const NeighborhoodGuidesPage = lazy(() => import('./sandbox/NeighborhoodGuidesPage'));
 const BlogPage = lazy(() => import('./sandbox/BlogPage'));
+const ParallaxLabPage = lazy(() => import('./sandbox/ParallaxLabPage'));
 
 // Sandbox Sub-App
 import SandboxLayout from './sandbox/SandboxLayout';
@@ -104,6 +105,7 @@ function AppRoutes({ isDarkTheme, setIsDarkTheme, isAppLoading }) {
           <Route path="journal" element={<BlogPage />} />
           <Route path="3d-demo" element={<Duplex3DPage />} />
           <Route path="ui-ux-labs" element={<DemoUIUXPage />} />
+          <Route path="parallax-lab" element={<ParallaxLabPage />} />
         </Route>
       </Routes>
     );
