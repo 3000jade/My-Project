@@ -4,12 +4,14 @@ import Button from './Button';
 import StarTwinkleCanvas from './StarTwinkleCanvas';
 import VectorHUDOverlay from './VectorHUDOverlay';
 
-// Import transparent layer assets
+// Import 2.5D depth layers and Nano Banana transition frames
 import layerSky from '../../assets/parallax/layer-sky.png';
 import layerVillas from '../../assets/parallax/layer-villas.png';
 import layerGround from '../../assets/parallax/layer-ground.png';
 import layerFgLeft from '../../assets/parallax/layer-foreground-left.png';
 import layerFgRight from '../../assets/parallax/layer-foreground-right.png';
+import layerCloseUp from '../../assets/parallax/layer-close-up.jpg';
+import layerInterior from '../../assets/parallax/layer-interior.jpg';
 
 export default function ParallaxMultiVectorHero({
   onExplore,
@@ -46,34 +48,46 @@ export default function ParallaxMultiVectorHero({
     offset: ['start start', 'end end']
   });
 
-  // Layer Transforms on Scroll
-  const skyY = useTransform(scrollYProgress, [0, 1], [0, -60]);
-  const skyScale = useTransform(scrollYProgress, [0, 1], [1, 1.06]);
+  // Layer Transforms on Scroll (Scene 1: Wide Enclave)
+  const skyY = useTransform(scrollYProgress, [0, 0.6], [0, -60]);
+  const skyScale = useTransform(scrollYProgress, [0, 0.6], [1, 1.08]);
 
-  const villasY = useTransform(scrollYProgress, [0, 0.85], [0, -35]);
-  const villasScale = useTransform(scrollYProgress, [0, 0.85], [1, 1.15]);
+  const villasY = useTransform(scrollYProgress, [0, 0.45], [0, -35]);
+  const villasScale = useTransform(scrollYProgress, [0, 0.45], [1, 1.15]);
+  const wideVillasOpacity = useTransform(scrollYProgress, [0.32, 0.48], [1, 0]);
 
-  const groundY = useTransform(scrollYProgress, [0, 0.85], [0, 45]);
-  const groundScale = useTransform(scrollYProgress, [0, 0.85], [1, 1.18]);
+  const groundY = useTransform(scrollYProgress, [0, 0.45], [0, 45]);
+  const groundScale = useTransform(scrollYProgress, [0, 0.45], [1, 1.18]);
+  const wideGroundOpacity = useTransform(scrollYProgress, [0.32, 0.48], [1, 0]);
 
   // Lateral Multi-Vector Parting for Foreground Elements
-  const fgLeftX = useTransform(scrollYProgress, [0.2, 0.75], [0, -240]);
-  const fgLeftY = useTransform(scrollYProgress, [0.2, 0.75], [0, 80]);
-  const fgLeftScale = useTransform(scrollYProgress, [0.2, 0.75], [1, 1.25]);
-  const fgLeftOpacity = useTransform(scrollYProgress, [0.45, 0.75], [1, 0.2]);
+  const fgLeftX = useTransform(scrollYProgress, [0.15, 0.6], [0, -260]);
+  const fgLeftY = useTransform(scrollYProgress, [0.15, 0.6], [0, 90]);
+  const fgLeftScale = useTransform(scrollYProgress, [0.15, 0.6], [1, 1.3]);
+  const fgLeftOpacity = useTransform(scrollYProgress, [0.35, 0.6], [1, 0]);
 
-  const fgRightX = useTransform(scrollYProgress, [0.2, 0.75], [0, 240]);
-  const fgRightY = useTransform(scrollYProgress, [0.2, 0.75], [0, 60]);
-  const fgRightScale = useTransform(scrollYProgress, [0.2, 0.75], [1, 1.20]);
-  const fgRightOpacity = useTransform(scrollYProgress, [0.45, 0.75], [1, 0.2]);
+  const fgRightX = useTransform(scrollYProgress, [0.15, 0.6], [0, 260]);
+  const fgRightY = useTransform(scrollYProgress, [0.15, 0.6], [0, 70]);
+  const fgRightScale = useTransform(scrollYProgress, [0.15, 0.6], [1, 1.25]);
+  const fgRightOpacity = useTransform(scrollYProgress, [0.35, 0.6], [1, 0]);
+
+  // Transition Stage 2: Close-up Grand Entrance Terrace
+  const closeUpOpacity = useTransform(scrollYProgress, [0.30, 0.46, 0.66, 0.76], [0, 1, 1, 0]);
+  const closeUpScale = useTransform(scrollYProgress, [0.30, 0.66], [1.12, 1.0]);
+  const closeUpY = useTransform(scrollYProgress, [0.30, 0.66], [30, 0]);
+
+  // Transition Stage 3: Interior Living & Pool Sanctuary
+  const interiorOpacity = useTransform(scrollYProgress, [0.68, 0.82], [0, 1]);
+  const interiorScale = useTransform(scrollYProgress, [0.68, 1.0], [1.10, 1.0]);
+  const interiorY = useTransform(scrollYProgress, [0.68, 1.0], [25, 0]);
 
   // HUD and Editorial Overlays
-  const hudOpacity = useTransform(scrollYProgress, [0.28, 0.38, 0.65, 0.75], [0, 1, 1, 0]);
-  const initialTitleOpacity = useTransform(scrollYProgress, [0.0, 0.28], [1, 0]);
-  const initialTitleY = useTransform(scrollYProgress, [0.0, 0.28], [0, -40]);
+  const hudOpacity = useTransform(scrollYProgress, [0.22, 0.32, 0.65, 0.74], [0, 1, 1, 0]);
+  const initialTitleOpacity = useTransform(scrollYProgress, [0.0, 0.22], [1, 0]);
+  const initialTitleY = useTransform(scrollYProgress, [0.0, 0.22], [0, -40]);
 
-  const ctaOpacity = useTransform(scrollYProgress, [0.72, 0.88], [0, 1]);
-  const ctaY = useTransform(scrollYProgress, [0.72, 0.88], [40, 0]);
+  const ctaOpacity = useTransform(scrollYProgress, [0.76, 0.90], [0, 1]);
+  const ctaY = useTransform(scrollYProgress, [0.76, 0.90], [40, 0]);
 
   // 2. MOUSE TILT PHYSICS
   const mouseX = useRef(0);
@@ -113,7 +127,7 @@ export default function ParallaxMultiVectorHero({
       ref={containerRef}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      className={`relative w-full h-[220vh] bg-[#071313] ${className}`}
+      className={`relative w-full h-[260vh] bg-[#071313] ${className}`}
     >
       {/* Pinned Viewport Stage */}
       <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center select-none perspective-[1200px]">
@@ -144,12 +158,13 @@ export default function ParallaxMultiVectorHero({
             <div className="absolute bottom-[20%] right-[-5%] w-[40%] h-[50%] bg-[#FB8E5D]/15 blur-[120px] rounded-full mix-blend-screen pointer-events-none" />
           </motion.div>
 
-          {/* 2. LAYER VILLAS (MIDGROUND) */}
+          {/* 2. LAYER VILLAS (WIDE MIDGROUND) */}
           <motion.div
             style={{
               y: prefersReducedMotion ? 0 : villasY,
               scale: prefersReducedMotion ? 1 : villasScale,
-              x: prefersReducedMotion ? 0 : midTiltX
+              x: prefersReducedMotion ? 0 : midTiltX,
+              opacity: prefersReducedMotion ? 1 : wideVillasOpacity
             }}
             className="absolute inset-0 w-full h-full z-[2] pointer-events-none transform-gpu will-change-transform"
           >
@@ -165,9 +180,10 @@ export default function ParallaxMultiVectorHero({
             style={{
               y: prefersReducedMotion ? 0 : groundY,
               scale: prefersReducedMotion ? 1 : groundScale,
-              x: prefersReducedMotion ? 0 : midTiltX
+              x: prefersReducedMotion ? 0 : midTiltX,
+              opacity: prefersReducedMotion ? 1 : wideGroundOpacity
             }}
-            className="absolute inset-0 w-full h-full z-[3] pointer-events-none transform-gpu will-change-transform"
+            className="absolute inset-0 w-full h-full z-[2] pointer-events-none transform-gpu will-change-transform"
           >
             <img
               src={layerGround}
@@ -176,10 +192,48 @@ export default function ParallaxMultiVectorHero({
             />
           </motion.div>
 
-          {/* 4. ARCHITECTURAL VECTOR HUD */}
+          {/* 4. TRANSITION FRAME 1: GRAND ENTRANCE TERRACE (NANO BANANA GENERATED) */}
+          <motion.div
+            style={{
+              opacity: prefersReducedMotion ? 0 : closeUpOpacity,
+              scale: prefersReducedMotion ? 1 : closeUpScale,
+              y: prefersReducedMotion ? 0 : closeUpY,
+              x: prefersReducedMotion ? 0 : midTiltX
+            }}
+            className="absolute inset-0 w-full h-full z-[3] pointer-events-none transform-gpu will-change-transform"
+          >
+            <img
+              src={layerCloseUp}
+              alt="Dahlia Enclave Grand Villa Entrance"
+              className="w-full h-full object-cover object-center"
+            />
+            {/* Ambient Golden Doorway Accent */}
+            <div className="absolute bottom-[20%] left-[28%] w-[40%] h-[45%] bg-[#FB8E5D]/15 blur-[100px] rounded-full mix-blend-screen pointer-events-none" />
+          </motion.div>
+
+          {/* 5. TRANSITION FRAME 2: INTERIOR LIVING & POOL SANCTUARY (NANO BANANA GENERATED) */}
+          <motion.div
+            style={{
+              opacity: prefersReducedMotion ? 0 : interiorOpacity,
+              scale: prefersReducedMotion ? 1 : interiorScale,
+              y: prefersReducedMotion ? 0 : interiorY,
+              x: prefersReducedMotion ? 0 : midTiltX
+            }}
+            className="absolute inset-0 w-full h-full z-[3] pointer-events-none transform-gpu will-change-transform"
+          >
+            <img
+              src={layerInterior}
+              alt="Dahlia Enclave Biophilic Living & Pool Vista"
+              className="w-full h-full object-cover object-center"
+            />
+            {/* Ambient Interior Ceiling Light Accent */}
+            <div className="absolute top-[10%] left-[35%] w-[45%] h-[35%] bg-[#FB8E5D]/12 blur-[100px] rounded-full mix-blend-screen pointer-events-none" />
+          </motion.div>
+
+          {/* 6. ARCHITECTURAL VECTOR HUD */}
           <VectorHUDOverlay opacity={prefersReducedMotion ? 0.8 : hudOpacity} />
 
-          {/* 5. FOREGROUND LEFT (Dahlia Street Sign & Anthurium Flora) */}
+          {/* 7. FOREGROUND LEFT (Dahlia Street Sign & Anthurium Flora) */}
           <motion.div
             style={{
               x: prefersReducedMotion ? 0 : fgLeftX,
@@ -198,7 +252,7 @@ export default function ParallaxMultiVectorHero({
             />
           </motion.div>
 
-          {/* 6. FOREGROUND RIGHT (Palms & Boundary Fence) */}
+          {/* 8. FOREGROUND RIGHT (Palms & Boundary Fence) */}
           <motion.div
             style={{
               x: prefersReducedMotion ? 0 : fgRightX,
@@ -217,7 +271,7 @@ export default function ParallaxMultiVectorHero({
             />
           </motion.div>
 
-          {/* 7. INITIAL STAGE EDITORIAL TITLE (0% -> 25%) */}
+          {/* 9. INITIAL STAGE EDITORIAL TITLE (0% -> 22%) */}
           <motion.div
             style={{
               opacity: prefersReducedMotion ? 1 : initialTitleOpacity,
@@ -245,7 +299,7 @@ export default function ParallaxMultiVectorHero({
             </div>
           </motion.div>
 
-          {/* 8. CONCLUDING RESOLUTION & CTA DECK (72% -> 100%) */}
+          {/* 10. CONCLUDING RESOLUTION & CTA DECK (76% -> 100%) */}
           <motion.div
             style={{
               opacity: prefersReducedMotion ? 1 : ctaOpacity,
