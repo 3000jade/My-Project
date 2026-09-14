@@ -28,3 +28,47 @@ When building or modifying UI components in this project, adhere strictly to the
 
 7. **Close Buttons (X):**
    - Close buttons floating over images must be small but highly visible. The standard is a `w-9 h-9` solid white circle (`bg-white`) with a heavy drop shadow and a dark icon (`text-[20px]`).
+
+---
+
+# Superpowers Engineering Methodology & Directives
+
+> Inherited from `obra/superpowers` (v6.3.0) adapted for Antigravity
+
+## Core Directive: Skills Before Action
+
+If you think there is even a 1% chance a skill might apply to what you are doing, you ABSOLUTELY MUST invoke the skill before taking implementation action or writing code.
+
+- **Process Skills First**: Process skills set the engineering discipline, then domain/UI skills carry it out.
+  - New feature, component, behavior change, or project structure → `brainstorming` first.
+  - Bug, unexpected behavior, or error → `systematic-debugging` first.
+  - Writing code with verifiable behavior → `test-driven-development` (strict Red/Green/Refactor).
+  - Multi-step implementation → `writing-plans` then `executing-plans` (or `subagent-driven-development`).
+  - Pre-completion verification → `verification-before-completion`.
+
+## Antigravity Tool Mapping
+
+| Action Requested | Antigravity CLI Equivalent |
+|---|---|
+| **Dispatch Subagent** | `invoke_subagent` using built-in `TypeName`: `self` (full-capability execution) or `research` (read-only review/investigation). |
+| **Task Tracking / Checklists** | Maintain a **task artifact**: `write_to_file` with `IsArtifact: true` and `ArtifactMetadata.ArtifactType: "task"`, updated incrementally with `replace_file_content`. *(Do not use `manage_task`, which manages OS background tasks).* |
+| **Skill Invocation** | View and follow `.agents/skills/<skill-name>/SKILL.md` using `view_file`. |
+
+## Hard Gates
+
+1. **Brainstorming Gate**: Do NOT jump into code or scaffold implementation until the design path (Spike, Bounded, Architectural) is classified and approved by the human partner.
+2. **TDD Gate**: Tests must be written and seen to FAIL first (Red) before writing implementation code to make them PASS (Green).
+3. **Review & Verification Gate**: Never mark work complete without running automated tests, checking git status, and validating against acceptance criteria.
+
+---
+
+# Architecture & Directory Blueprint
+
+All code additions, refactors, and file placements MUST strictly comply with the directory structure and layer responsibilities defined in [ARCHITECTURE_MAP.md](file:///c:/Users/Win11x64/Desktop/My%20code%20space/CP_kerby/ARCHITECTURE_MAP.md):
+- **Frontend Layout**: Structural chrome (`Header`, `Footer`) lives in `frontend/src/components/layout/`.
+- **Frontend UI**: Atomic components and showcases live in `frontend/src/components/ui/`.
+- **Frontend Services**: API integrations live in `frontend/src/services/`.
+- **Backend Architecture**: Maintain strict separation across `config/`, `controllers/`, `middleware/`, `models/`, `routes/`, `services/`, and `utils/`.
+- **Shared Contracts**: Cross-stack DTOs and API envelopes live in `shared/types/`.
+
+
