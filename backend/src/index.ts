@@ -1,34 +1,35 @@
-import express, { Express, Request, Response, NextFunction } from 'express';
+import express, { Express, Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import dotenv from 'dotenv';
-import healthRoutes from './routes/health.routes';
-import { errorHandler } from './middlewares/error.middleware';
-
-dotenv.config();
+import config from './config';
+import apiRoutes from './routes';
+import { errorHandler } from './middleware/error.middleware';
+import logger from './utils/logger';
 
 const app: Express = express();
-const port = process.env.PORT || 5000;
+const port = config.port;
 
-// Middleware
-app.use(cors());
+// Global Middleware
+app.use(cors({ origin: config.clientOrigin, credentials: true }));
 app.use(helmet());
-app.use(morgan('dev'));
+app.use(morgan(config.isProduction ? 'combined' : 'dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Routes
-app.use('/api/health', healthRoutes);
+// Master API Routes
+app.use('/api', apiRoutes);
 
-// Base route
+// Base Root Route
 app.get('/', (req: Request, res: Response) => {
-  res.send('Backend API is running...');
+  res.send('CP_kerby Backend API is running...');
 });
 
 // Error handling middleware
 app.use(errorHandler);
 
 app.listen(port, () => {
-  console.log(`[server]: Server is running at http://localhost:${port}`);
+  logger.info(`Server is running at http://localhost:${port} in ${config.nodeEnv} mode`);
 });
+
+export default app;
