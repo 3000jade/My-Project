@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ActionConsole from '../../components/ui/ActionConsole';
 import Button from '../../components/ui/Button';
-import { mockUsers } from '../../utils/mockUsers';
+import { mockUsers } from '../../mockData/mockUsers';
 
 export default function LoginPage() {
   const navigate = useNavigate();

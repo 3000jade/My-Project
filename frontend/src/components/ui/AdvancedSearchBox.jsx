@@ -3,6 +3,7 @@ import { Select, Button, MultiSelect, ActionIcon } from '@mantine/core';
 import { IconSearch, IconMapPin, IconAdjustmentsHorizontal } from '@tabler/icons-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { regions, provinces, cities } from 'select-philippines-address';
+import { useNavigate } from 'react-router-dom';
 
 const availableAmenities = [
   'Private Cinema', 'Wine Cellar', 'Infinity Pool', 'Smart Home System',
@@ -13,6 +14,8 @@ const availableAmenities = [
 ];
 
 export default function AdvancedSearchBox({ onSearch, isSticky }) {
+  const navigate = useNavigate();
+  const [mode, setMode] = useState('Buy');
   const [location, setLocation] = useState(''); // Generic keyword
   const [propertyType, setPropertyType] = useState(null);
   const [minPrice, setMinPrice] = useState('');
@@ -94,6 +97,7 @@ export default function AdvancedSearchBox({ onSearch, isSticky }) {
   const handleSearch = () => {
     if (onSearch) {
       onSearch({ 
+        mode,
         location, 
         propertyType, 
         minPrice, 
@@ -115,7 +119,7 @@ export default function AdvancedSearchBox({ onSearch, isSticky }) {
       animate={{ 
         opacity: 1, 
         y: 0,
-        borderRadius: isSticky ? '0px' : '32px',
+        borderRadius: isSticky ? '0px' : '40px',
         maxWidth: isSticky ? '100%' : '64rem' 
       }}
       transition={{ duration: 0.3, ease: "easeInOut" }}
@@ -123,109 +127,153 @@ export default function AdvancedSearchBox({ onSearch, isSticky }) {
       className={`w-full mx-auto bg-white shadow-[0px_4px_12px_rgba(23,72,73,0.05)] border border-[#E5E7EB] flex flex-col gap-4 relative z-20 ${isSticky ? 'px-5 md:px-10 lg:px-20 py-4 border-t-0 border-x-0' : 'p-4'}`}
     >
       
+      {/* Mode Switcher */}
+      <div className={`flex justify-start ${isSticky ? 'max-w-[1440px] mx-auto w-full' : 'mb-2 px-2'}`}>
+        <div className="bg-[#F1F0EC] p-1 rounded-full flex gap-1">
+          {['Buy', 'Sell', 'Rent'].map((m) => (
+            <button
+              key={m}
+              onClick={() => setMode(m)}
+              className={`px-6 py-2 rounded-full text-[12px] uppercase tracking-widest font-bold transition-all h-[36px] ${mode === m ? 'bg-[#174849] text-white shadow-md' : 'text-[#174849] hover:bg-[#E5E7EB]'}`}
+            >
+              {m}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Primary Row */}
       <div className={`flex flex-col md:flex-row items-center gap-4 ${isSticky ? 'max-w-[1440px] mx-auto w-full' : ''}`}>
         
-        {/* 1. Location (Keyword) - Standard input without preset suggestions */}
-        <div className="flex-1 w-full relative">
-          <motion.div 
-            whileFocus={{ scale: 1.01 }}
-            className="flex items-center bg-[#F1F0EC] rounded-full px-4 h-[54px] border-2 border-transparent focus-within:border-[#266F71] transition-colors"
-          >
-            <IconMapPin size={22} className="text-[#174849] opacity-70 mr-2" />
-            <input
-              type="text"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              placeholder="Keyword Search (City, Neighborhood)"
-              className="w-full bg-transparent outline-none border-none text-[#1B1C1A] h-full text-[16px] font-manrope"
-            />
-          </motion.div>
-        </div>
+        {mode === 'Sell' ? (
+          <div className="flex flex-col md:flex-row items-center gap-4 w-full">
+            <div className="flex-1 w-full relative">
+              <motion.div 
+                whileFocus={{ scale: 1.01 }}
+                className="flex items-center bg-[#F1F0EC] rounded-full px-4 h-[54px] border-2 border-transparent focus-within:border-[#266F71] transition-colors"
+              >
+                <IconMapPin size={22} className="text-[#174849] opacity-70 mr-2" />
+                <input
+                  type="text"
+                  placeholder="Enter Address for CMA Valuation"
+                  className="w-full bg-transparent outline-none border-none text-[#1B1C1A] h-[54px] text-[16px] font-manrope"
+                />
+              </motion.div>
+            </div>
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="flex-none w-full md:w-auto">
+              <Button
+                onClick={() => navigate('/valuation')}
+                size="lg"
+                className="w-full md:w-auto bg-[#FB8E5D] hover:bg-[#e07a4a] text-white rounded-full font-manrope font-bold tracking-widest text-[12px] uppercase px-8 h-[54px]"
+              >
+                Get Free Valuation
+              </Button>
+            </motion.div>
+          </div>
+        ) : (
+          <>
+            {/* 1. Location (Keyword) */}
+            <div className="flex-1 w-full relative">
+              <motion.div 
+                whileFocus={{ scale: 1.01 }}
+                className="flex items-center bg-[#F1F0EC] rounded-full px-4 h-[54px] border-2 border-transparent focus-within:border-[#266F71] transition-colors"
+              >
+                <IconMapPin size={22} className="text-[#174849] opacity-70 mr-2" />
+                <input
+                  type="text"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  placeholder="Keyword Search (City, Neighborhood)"
+                  className="w-full bg-transparent outline-none border-none text-[#1B1C1A] h-[54px] text-[16px] font-manrope"
+                />
+              </motion.div>
+            </div>
 
-        {/* 2. Property Type */}
-        <div className="w-full md:w-[200px]">
-          <Select
-            placeholder="Property Type"
-            data={['All Types', 'House', 'Condo', 'Mansion', 'Estate', 'Penthouse', 'Townhouse', 'Land']}
-            value={propertyType}
-            onChange={setPropertyType}
-            classNames={{
-              input: 'bg-[#F1F0EC] border-transparent focus:border-[#266F71] text-[16px] font-manrope text-[#1B1C1A] h-[54px] rounded-full px-5',
-            }}
-            clearable
-          />
-        </div>
+            {/* 2. Property Type */}
+            <div className="w-full md:w-[200px]">
+              <Select
+                placeholder="Property Type"
+                data={['All Types', 'House', 'Condo', 'Mansion', 'Estate', 'Penthouse', 'Townhouse', 'Land']}
+                value={propertyType}
+                onChange={setPropertyType}
+                classNames={{
+                  input: 'bg-[#F1F0EC] border-transparent focus:border-[#266F71] text-[16px] font-manrope text-[#1B1C1A] h-[54px] rounded-full px-5',
+                }}
+                clearable
+              />
+            </div>
 
-        {/* 3. Price Range */}
-        <div className="w-full md:w-[320px] flex gap-2">
-          <Select
-            placeholder="Min Price"
-            value={minPrice}
-            onChange={setMinPrice}
-            data={[
-              { value: '5000000', label: '₱5,000,000' },
-              { value: '10000000', label: '₱10,000,000' },
-              { value: '25000000', label: '₱25,000,000' },
-              { value: '50000000', label: '₱50,000,000' },
-              { value: '100000000', label: '₱100,000,000' }
-            ]}
-            classNames={{
-              input: 'bg-[#F1F0EC] border-transparent focus:border-[#266F71] text-[14px] font-manrope text-[#1B1C1A] h-[54px] rounded-full px-4',
-            }}
-            clearable
-          />
-          <Select
-            placeholder="Max Price"
-            value={maxPrice}
-            onChange={setMaxPrice}
-            data={[
-              { value: '10000000', label: '₱10,000,000' },
-              { value: '25000000', label: '₱25,000,000' },
-              { value: '50000000', label: '₱50,000,000' },
-              { value: '100000000', label: '₱100,000,000' },
-              { value: '250000000', label: '₱250,000,000' },
-              { value: '500000000', label: '₱500,000,000+' }
-            ]}
-            classNames={{
-              input: 'bg-[#F1F0EC] border-transparent focus:border-[#266F71] text-[14px] font-manrope text-[#1B1C1A] h-[54px] rounded-full px-4',
-            }}
-            clearable
-          />
-        </div>
+            {/* 3. Price Range */}
+            <div className="w-full md:w-[320px] flex gap-2">
+              <Select
+                placeholder="Min Price"
+                value={minPrice}
+                onChange={setMinPrice}
+                data={[
+                  { value: '5000000', label: '₱5,000,000' },
+                  { value: '10000000', label: '₱10,000,000' },
+                  { value: '25000000', label: '₱25,000,000' },
+                  { value: '50000000', label: '₱50,000,000' },
+                  { value: '100000000', label: '₱100,000,000' }
+                ]}
+                classNames={{
+                  input: 'bg-[#F1F0EC] border-transparent focus:border-[#266F71] text-[14px] font-manrope text-[#1B1C1A] h-[54px] rounded-full px-4',
+                }}
+                clearable
+              />
+              <Select
+                placeholder="Max Price"
+                value={maxPrice}
+                onChange={setMaxPrice}
+                data={[
+                  { value: '10000000', label: '₱10,000,000' },
+                  { value: '25000000', label: '₱25,000,000' },
+                  { value: '50000000', label: '₱50,000,000' },
+                  { value: '100000000', label: '₱100,000,000' },
+                  { value: '250000000', label: '₱250,000,000' },
+                  { value: '500000000', label: '₱500,000,000+' }
+                ]}
+                classNames={{
+                  input: 'bg-[#F1F0EC] border-transparent focus:border-[#266F71] text-[14px] font-manrope text-[#1B1C1A] h-[54px] rounded-full px-4',
+                }}
+                clearable
+              />
+            </div>
 
-        {/* 4. Search Button & Toggle */}
-        <div className="w-full md:w-auto flex gap-2">
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <ActionIcon 
-              size={54} 
-              variant={showAdvanced ? "filled" : "light"} 
-              color="#266F71"
-              onClick={() => setShowAdvanced(!showAdvanced)}
-              className="rounded-full bg-[#F1F0EC] hover:bg-[#E5E7EB]"
-              style={showAdvanced ? { backgroundColor: '#266F71', color: 'white' } : {}}
-              title="Toggle Advanced Filters"
-            >
-              <IconAdjustmentsHorizontal size={24} />
-            </ActionIcon>
-          </motion.div>
-          
-          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="flex-1 md:flex-none">
-            <Button
-              onClick={handleSearch}
-              leftSection={<IconSearch size={20} />}
-              size="lg"
-              className="w-full md:w-auto bg-[#266F71] hover:bg-[#174849] text-white rounded-full font-manrope font-semibold px-8 h-[54px]"
-            >
-              Search
-            </Button>
-          </motion.div>
-        </div>
+            {/* 4. Search Button & Toggle */}
+            <div className="w-full md:w-auto flex gap-2">
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <ActionIcon 
+                  size={54} 
+                  variant={showAdvanced ? "filled" : "light"} 
+                  color="#266F71"
+                  onClick={() => setShowAdvanced(!showAdvanced)}
+                  className="rounded-full bg-[#F1F0EC] hover:bg-[#E5E7EB]"
+                  style={showAdvanced ? { backgroundColor: '#266F71', color: 'white' } : {}}
+                  title="Toggle Advanced Filters"
+                >
+                  <IconAdjustmentsHorizontal size={24} />
+                </ActionIcon>
+              </motion.div>
+              
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="flex-1 md:flex-none">
+                <Button
+                  onClick={handleSearch}
+                  leftSection={<IconSearch size={20} />}
+                  size="lg"
+                  className="w-full md:w-auto bg-[#174849] hover:bg-[#103536] text-white rounded-full font-manrope font-bold tracking-widest text-[12px] uppercase px-8 h-[54px]"
+                >
+                  Search
+                </Button>
+              </motion.div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Expanded Advanced Filters Row */}
       <AnimatePresence>
-        {showAdvanced && (
+        {showAdvanced && mode !== 'Sell' && (
           <motion.div 
             initial={{ height: 0, opacity: 0, y: -10 }}
             animate={{ height: 'auto', opacity: 1, y: 0 }}

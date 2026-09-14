@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Cinematic Video Render Stage</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 1280px;
+      height: 720px;
+      overflow: hidden;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    #renderCanvas {
+      width: 1280px;
+      height: 720px;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="renderCanvas" width="1280" height="720"></canvas>
+
+  <script>
+    const canvas = document.getElementById('renderCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const img = new Image();
+    img.src = '/src/assets/luxury_modern_villa.jpg';
+
+    let startTime = null;
+    const duration = 6000; // 6 seconds loop
+
+    img.onload = () => {
+      requestAnimationFrame(render);
+    };
+
+    function render(timestamp) {
+      if (!startTime) startTime = timestamp;
+      const elapsed = (timestamp - startTime) % duration;
+      const progress = elapsed / duration; // 0.0 to 1.0
+
+      // Smooth ping-pong or continuous dolly ease
+      const t = Math.sin(progress * Math.PI); // 0 -> 1 -> 0
+
+      // 1. Camera Zoom & Pan (Dolly sweep)
+      const zoom = 1.0 + 0.28 * t;
+      const panX = (t - 0.5) * 40;
+      const panY = (t - 0.5) * 20;
+
+      ctx.save();
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.scale(zoom, zoom);
+      ctx.translate(-canvas.width / 2 + panX, -canvas.height / 2 + panY);
+
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      // 2. Dynamic Pool Water Ripples (Bottom third of canvas)
+      // Subtle moving refraction waves on infinity pool surface
+      const poolY = canvas.height * 0.62;
+      const poolHeight = canvas.height * 0.38;
+      
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(0, poolY, canvas.width, poolHeight);
+      ctx.clip();
+
+      // Draw water sheen gradient with moving harmonic waves
+      const waveOffset = (elapsed / 1000) * 2.5;
+      const waterGrad = ctx.createLinearGradient(0, poolY, 0, canvas.height);
+      const waveShift = Math.sin(waveOffset) * 0.05;
+      waterGrad.addColorStop(0, `rgba(20, 45, 60, ${0.15 + waveShift})`);
+      waterGrad.addColorStop(0.5, `rgba(60, 110, 140, ${0.25 - waveShift})`);
+      waterGrad.addColorStop(1, 'rgba(10, 25, 35, 0.45)');
+
+      ctx.fillStyle = waterGrad;
+      ctx.fillRect(0, poolY, canvas.width, poolHeight);
+
+      // Caustic shimmer bands across pool
+      ctx.strokeStyle = `rgba(255, 235, 200, ${0.08 + Math.sin(waveOffset * 1.8) * 0.04})`;
+      ctx.lineWidth = 1.5;
+      for (let y = poolY + 20; y < canvas.height; y += 22) {
+        ctx.beginPath();
+        for (let x = 0; x < canvas.width; x += 15) {
+          const cy = y + Math.sin(x * 0.02 + waveOffset + y * 0.01) * 3;
+          if (x === 0) ctx.moveTo(x, cy);
+          else ctx.lineTo(x, cy);
+        }
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // 3. Twilight Golden Hour Lighting Sweep
+      const lightSweep = ctx.createRadialGradient(
+        canvas.width * 0.35 + panX,
+        canvas.height * 0.45 + panY,
+        50,
+        canvas.width * 0.35 + panX,
+        canvas.height * 0.45 + panY,
+        canvas.width * 0.7
+      );
+      lightSweep.addColorStop(0, `rgba(255, 190, 120, ${0.08 + 0.06 * t})`);
+      lightSweep.addColorStop(0.5, `rgba(255, 140, 80, ${0.04 + 0.03 * t})`);
+      lightSweep.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = lightSweep;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.restore();
+
+      // 4. Subtle Cinematic Vignette
+      const vignette = ctx.createRadialGradient(
+        canvas.width / 2, canvas.height / 2, canvas.width * 0.35,
+        canvas.width / 2, canvas.height / 2, canvas.width * 0.7
+      );
+      vignette.addColorStop(0, 'rgba(0,0,0,0)');
+      vignette.addColorStop(1, 'rgba(0,0,0,0.55)');
+      ctx.fillStyle = vignette;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      requestAnimationFrame(render);
+    }
+  </script>
+</body>
+</html>

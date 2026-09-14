@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { IconMessageCircle2, IconX, IconSend, IconRobot } from '@tabler/icons-react';
-import { mockProperties } from '../../utils/mockProperties';
+import { mockProperties } from '../../mockData/mockProperties';
 
 export default function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);

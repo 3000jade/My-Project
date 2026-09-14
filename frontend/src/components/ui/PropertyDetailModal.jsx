@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import useEmblaCarousel from 'embla-carousel-react';
-import { mockProperties } from '../../utils/mockProperties';
+import { mockProperties } from '../../mockData/mockProperties';
 import ActionConsole from './ActionConsole';
 import Button from './Button';
 
@@ -60,13 +60,16 @@ export default function PropertyDetailModal() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
+            onClick={handleClose}
           >
             <motion.div
-              className="w-full h-full bg-black flex flex-col lg:flex-row overflow-hidden md:rounded-[32px] shadow-[0_30px_100px_rgba(0,0,0,0.8)] relative"
+              className="w-full h-full bg-black flex flex-col lg:flex-row overflow-y-auto md:rounded-[32px] shadow-[0_30px_100px_rgba(0,0,0,0.8)] relative"
               initial={{ y: 100, scale: 0.9, opacity: 0 }}
               animate={{ y: 0, scale: 1, opacity: 1 }}
               exit={{ y: 100, scale: 0.9, opacity: 0 }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              onClick={e => e.stopPropagation()}
+              data-lenis-prevent="true"
             >
             {/* Left Section: Immersive Media Viewer */}
             <div className="relative w-full lg:w-[65%] h-[40vh] lg:h-full bg-[#050505] flex items-center justify-center overflow-hidden">

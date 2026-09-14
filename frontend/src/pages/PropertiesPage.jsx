@@ -7,7 +7,7 @@ import PropertyCard from '../components/ui/PropertyCard';
 import Button from '../components/ui/Button';
 import Hero3DCarousel from '../components/ui/Hero3DCarousel';
 
-import { mockProperties } from '../utils/mockProperties';
+import { mockProperties } from '../mockData/mockProperties';
 
 export default function PropertiesPage() {
   const [sortBy, setSortBy] = useState('Newest');

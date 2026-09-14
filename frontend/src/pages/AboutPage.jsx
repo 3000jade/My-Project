@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Timeline, Text } from '@mantine/core';
-import { leadershipTeam, journeyMilestones, accolades } from '../utils/mockAbout';
+import { leadershipTeam, journeyMilestones, accolades } from '../mockData/mockAbout';
 
 export default function AboutPage() {
   const revealVariants = {
