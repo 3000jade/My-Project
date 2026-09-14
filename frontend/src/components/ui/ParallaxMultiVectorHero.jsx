@@ -4,12 +4,12 @@ import Button from './Button';
 import StarTwinkleCanvas from './StarTwinkleCanvas';
 import VectorHUDOverlay from './VectorHUDOverlay';
 
-// Import 2.5D depth layers and Nano Banana transition frames
+// Import 2.5D depth layers, clean plate, and Nano Banana transition frames
 import layerSky from '../../assets/parallax/layer-sky.png';
-import layerVillas from '../../assets/parallax/layer-villas.png';
-import layerGround from '../../assets/parallax/layer-ground.png';
+import layerVillasClean from '../../assets/parallax/layer-villas-clean.jpg';
 import layerFgLeft from '../../assets/parallax/layer-foreground-left.png';
 import layerFgRight from '../../assets/parallax/layer-foreground-right.png';
+import layerHeadlightBloom from '../../assets/parallax/layer-headlight-bloom.png';
 import layerCloseUp from '../../assets/parallax/layer-close-up.jpg';
 import layerInterior from '../../assets/parallax/layer-interior.jpg';
 
@@ -48,7 +48,7 @@ export default function ParallaxMultiVectorHero({
     offset: ['start start', 'end end']
   });
 
-  // Layer Transforms on Scroll (Scene 1: Wide Enclave)
+  // Layer Transforms on Scroll (Scene 1: Wide Enclave Unobstructed)
   const skyY = useTransform(scrollYProgress, [0, 0.6], [0, -60]);
   const skyScale = useTransform(scrollYProgress, [0, 0.6], [1, 1.08]);
 
@@ -56,20 +56,23 @@ export default function ParallaxMultiVectorHero({
   const villasScale = useTransform(scrollYProgress, [0, 0.45], [1, 1.15]);
   const wideVillasOpacity = useTransform(scrollYProgress, [0.32, 0.48], [1, 0]);
 
-  const groundY = useTransform(scrollYProgress, [0, 0.45], [0, 45]);
-  const groundScale = useTransform(scrollYProgress, [0, 0.45], [1, 1.18]);
-  const wideGroundOpacity = useTransform(scrollYProgress, [0.32, 0.48], [1, 0]);
-
-  // Lateral Multi-Vector Parting for Foreground Elements
-  const fgLeftX = useTransform(scrollYProgress, [0.15, 0.6], [0, -260]);
+  // Lateral Multi-Vector Parting & Dynamic Depth-of-Field for Foreground
+  const fgLeftX = useTransform(scrollYProgress, [0.15, 0.6], [0, -280]);
   const fgLeftY = useTransform(scrollYProgress, [0.15, 0.6], [0, 90]);
-  const fgLeftScale = useTransform(scrollYProgress, [0.15, 0.6], [1, 1.3]);
+  const fgLeftScale = useTransform(scrollYProgress, [0.15, 0.6], [1, 1.35]);
   const fgLeftOpacity = useTransform(scrollYProgress, [0.35, 0.6], [1, 0]);
 
-  const fgRightX = useTransform(scrollYProgress, [0.15, 0.6], [0, 260]);
+  const fgRightX = useTransform(scrollYProgress, [0.15, 0.6], [0, 280]);
   const fgRightY = useTransform(scrollYProgress, [0.15, 0.6], [0, 70]);
-  const fgRightScale = useTransform(scrollYProgress, [0.15, 0.6], [1, 1.25]);
+  const fgRightScale = useTransform(scrollYProgress, [0.15, 0.6], [1, 1.30]);
   const fgRightOpacity = useTransform(scrollYProgress, [0.35, 0.6], [1, 0]);
+
+  // Dynamic Depth-of-Field Bokeh Blur: as flowers come close to lens, they blur
+  const fgBlurValue = useTransform(scrollYProgress, [0.15, 0.45], [0, 6]);
+  const fgBlurFilter = useTransform(fgBlurValue, (v) => prefersReducedMotion ? 'none' : `blur(${v}px)`);
+
+  // Volumetric Headlight & Sconce Lighting Bloom
+  const headlightBloomOpacity = useTransform(scrollYProgress, [0, 0.25, 0.45], [0.6, 1, 0]);
 
   // Transition Stage 2: Close-up Grand Entrance Terrace
   const closeUpOpacity = useTransform(scrollYProgress, [0.30, 0.46, 0.66, 0.76], [0, 1, 1, 0]);
@@ -158,7 +161,7 @@ export default function ParallaxMultiVectorHero({
             <div className="absolute bottom-[20%] right-[-5%] w-[40%] h-[50%] bg-[#FB8E5D]/15 blur-[120px] rounded-full mix-blend-screen pointer-events-none" />
           </motion.div>
 
-          {/* 2. LAYER VILLAS (WIDE MIDGROUND) */}
+          {/* 2. LAYER VILLAS & DRIVEWAY CLEAN INPAINTED PLATE (UNOBSTRUCTED) */}
           <motion.div
             style={{
               y: prefersReducedMotion ? 0 : villasY,
@@ -169,26 +172,26 @@ export default function ParallaxMultiVectorHero({
             className="absolute inset-0 w-full h-full z-[2] pointer-events-none transform-gpu will-change-transform"
           >
             <img
-              src={layerVillas}
-              alt="Illuminated Modern Duplexes"
+              src={layerVillasClean}
+              alt="Illuminated Modern Duplexes and Continuous Driveway"
               className="w-full h-full object-cover object-center"
             />
           </motion.div>
 
-          {/* 3. LAYER GROUND & HARDSCAPE */}
+          {/* 3. VOLUMETRIC HEADLIGHT BLOOM LAYER (ADDITIVE SCREEN BLEND) */}
           <motion.div
             style={{
-              y: prefersReducedMotion ? 0 : groundY,
-              scale: prefersReducedMotion ? 1 : groundScale,
+              opacity: prefersReducedMotion ? 0.4 : headlightBloomOpacity,
+              scale: prefersReducedMotion ? 1 : villasScale,
               x: prefersReducedMotion ? 0 : midTiltX,
-              opacity: prefersReducedMotion ? 1 : wideGroundOpacity
+              y: prefersReducedMotion ? 0 : villasY
             }}
-            className="absolute inset-0 w-full h-full z-[2] pointer-events-none transform-gpu will-change-transform"
+            className="absolute inset-0 w-full h-full z-[2] pointer-events-none mix-blend-screen transform-gpu will-change-transform"
           >
             <img
-              src={layerGround}
-              alt="Cobblestone Hardscape Driveway"
-              className="w-full h-full object-cover object-center"
+              src={layerHeadlightBloom}
+              alt="Volumetric Car Headlight Rays"
+              className="w-full h-full object-cover object-center opacity-80"
             />
           </motion.div>
 
@@ -233,7 +236,7 @@ export default function ParallaxMultiVectorHero({
           {/* 6. ARCHITECTURAL VECTOR HUD */}
           <VectorHUDOverlay opacity={prefersReducedMotion ? 0.8 : hudOpacity} />
 
-          {/* 7. FOREGROUND LEFT (Dahlia Street Sign & Anthurium Flora) */}
+          {/* 7. FOREGROUND LEFT WITH DYNAMIC DEPTH-OF-FIELD (Dahlia Street Sign & Anthurium Flora) */}
           <motion.div
             style={{
               x: prefersReducedMotion ? 0 : fgLeftX,
@@ -241,7 +244,8 @@ export default function ParallaxMultiVectorHero({
               scale: prefersReducedMotion ? 1 : fgLeftScale,
               opacity: prefersReducedMotion ? 1 : fgLeftOpacity,
               translateX: prefersReducedMotion ? 0 : fgTiltX,
-              translateY: prefersReducedMotion ? 0 : fgTiltY
+              translateY: prefersReducedMotion ? 0 : fgTiltY,
+              filter: fgBlurFilter
             }}
             className="absolute inset-0 w-full h-full z-[5] pointer-events-none transform-gpu will-change-transform"
           >
@@ -252,7 +256,7 @@ export default function ParallaxMultiVectorHero({
             />
           </motion.div>
 
-          {/* 8. FOREGROUND RIGHT (Palms & Boundary Fence) */}
+          {/* 8. FOREGROUND RIGHT WITH DYNAMIC DEPTH-OF-FIELD (Palms & Boundary Fence) */}
           <motion.div
             style={{
               x: prefersReducedMotion ? 0 : fgRightX,
@@ -260,7 +264,8 @@ export default function ParallaxMultiVectorHero({
               scale: prefersReducedMotion ? 1 : fgRightScale,
               opacity: prefersReducedMotion ? 1 : fgRightOpacity,
               translateX: prefersReducedMotion ? 0 : fgTiltX,
-              translateY: prefersReducedMotion ? 0 : fgTiltY
+              translateY: prefersReducedMotion ? 0 : fgTiltY,
+              filter: fgBlurFilter
             }}
             className="absolute inset-0 w-full h-full z-[5] pointer-events-none transform-gpu will-change-transform"
           >
