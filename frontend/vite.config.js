@@ -26,4 +26,9 @@ export default defineConfig({
       '@tanstack/react-virtual',
     ],
   },
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: './src/test-setup.js',
+  },
 })
