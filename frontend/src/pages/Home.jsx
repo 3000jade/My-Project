@@ -1,7 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence, useInView } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import { useLenis } from 'lenis/react';
 
 import AgentCard from '../components/ui/AgentCard';
+import ParallaxMultiVectorHero from '../components/ui/ParallaxMultiVectorHero';
 
 const TEAM_MEMBERS = [
   { id: 1, name: "Alexander Sterling", role: "Founding Partner", image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=400&q=80" },
@@ -44,9 +47,24 @@ const CONSULTATION_FORM_DATA = {
 
 export default function Home({ setIsDarkTheme }) {
   const containerRef = useRef(null);
+  const sentinelRef = useRef(null);
+  const navigate = useNavigate();
+  const lenis = useLenis();
 
   const [isVideoOpen, setIsVideoOpen] = useState(false);
   const [activeFormInput, setActiveFormInput] = useState(null);
+
+  const handleExplore = () => {
+    if (lenis && videoSectionRef.current) {
+      lenis.scrollTo(videoSectionRef.current, { offset: -40, duration: 1.2 });
+    } else if (videoSectionRef.current) {
+      videoSectionRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const handleRequestValuation = () => {
+    navigate('/properties');
+  };
 
   const consultationRevealProps = {
     initial: { opacity: 0, y: 40 },
@@ -74,6 +92,14 @@ export default function Home({ setIsDarkTheme }) {
 
   return (
     <div ref={containerRef} className="w-full bg-white relative">
+      {/* 2.5D PARALLAX MULTI-VECTOR INTRO HERO */}
+      <ParallaxMultiVectorHero
+        onExplore={handleExplore}
+        onRequestValuation={handleRequestValuation}
+      />
+      {/* Precision Scroll Tracking Sentinel per AGENTS.md */}
+      <div id="hero-sentinel" ref={sentinelRef} className="h-0 w-full pointer-events-none" />
+
       {/* VIDEO TOURS SECTION (Rounded Dark Elegance) */}
       <section
         ref={videoSectionRef}
