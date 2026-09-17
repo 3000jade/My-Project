@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import useEmblaCarousel from 'embla-carousel-react';
 import { mockProperties } from '../../mockData/mockProperties';
@@ -275,6 +275,14 @@ export default function PropertyDetailModal() {
                         Message
                       </Button>
                     </div>
+                    <Link
+                      to={`/properties/${property.id}`}
+                      onClick={handleClose}
+                      className="w-full h-[46px] rounded-xl border border-[#266F71] text-[#266F71] hover:bg-[#266F71]/5 text-xs font-bold font-sans uppercase tracking-wider flex items-center justify-center gap-2 transition-colors mt-2"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">open_in_new</span>
+                      Open Full Lamudi Listing View
+                    </Link>
                   </div>
 
                </div>

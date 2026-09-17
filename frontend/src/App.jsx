@@ -8,23 +8,19 @@ import PropertyDetailModal from './components/ui/PropertyDetailModal';
 import PageLoader from './components/ui/PageLoader';
 import { ReactLenis, useLenis } from 'lenis/react';
 import { Agentation } from 'agentation';
+import { AuthProvider } from './context/AuthContext';
 
 // Code-split secondary client routes to shrink initial bundle size and boost startup speed
 const PropertiesPage = lazy(() => import('./pages/PropertiesPage'));
+const PropertyListingView = lazy(() => import('./pages/PropertyListingView'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
 const ContactPage = lazy(() => import('./pages/ContactPage'));
 const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
-const Duplex3DPage = lazy(() => import('./sandbox/Duplex3DPage'));
-const DemoUIUXPage = lazy(() => import('./sandbox/DemoUIUXPage'));
-const HomeValuationPage = lazy(() => import('./sandbox/HomeValuationPage'));
-const NeighborhoodGuidesPage = lazy(() => import('./sandbox/NeighborhoodGuidesPage'));
-const BlogPage = lazy(() => import('./sandbox/BlogPage'));
-const ParallaxLabPage = lazy(() => import('./sandbox/ParallaxLabPage'));
+const RegisterPage = lazy(() => import('./pages/auth/RegisterPage'));
+const UnauthorizedPage = lazy(() => import('./pages/UnauthorizedPage'));
 
-// Sandbox Sub-App
-import SandboxLayout from './sandbox/SandboxLayout';
-import SandboxHubPage from './sandbox/SandboxHubPage';
-import SandboxPinnedButton from './sandbox/SandboxPinnedButton';
+// Protected Route Guard
+import ProtectedRoute from './components/auth/ProtectedRoute';
 
 // Dashboard Layout
 import DashboardLayout from './components/dashboard/DashboardLayout';
@@ -92,31 +88,20 @@ function ScrollToTop() {
 function AppRoutes({ isDarkTheme, setIsDarkTheme, isAppLoading }) {
   const location = useLocation();
   const isDashboardRoute = location.pathname.startsWith('/agent') || location.pathname.startsWith('/broker');
-  const isSandboxRoute = location.pathname.startsWith('/sandbox');
-
-  // If on Sandbox sub-app, render isolated SandboxLayout with its own SandboxHeader
-  if (isSandboxRoute) {
-    return (
-      <Routes>
-        <Route path="/sandbox" element={<SandboxLayout />}>
-          <Route index element={<SandboxHubPage />} />
-          <Route path="valuation" element={<HomeValuationPage />} />
-          <Route path="neighborhoods" element={<NeighborhoodGuidesPage />} />
-          <Route path="journal" element={<BlogPage />} />
-          <Route path="3d-demo" element={<Duplex3DPage />} />
-          <Route path="ui-ux-labs" element={<DemoUIUXPage />} />
-          <Route path="parallax-lab" element={<ParallaxLabPage />} />
-        </Route>
-      </Routes>
-    );
-  }
 
   // If on Agent or Broker portals, render dashboard layouts without Client Header/Footer/ChatWidget
   if (isDashboardRoute) {
     return (
       <Routes>
-        {/* Agent Routes */}
-        <Route path="/agent" element={<DashboardLayout role="agent" title="Agent Workspace" />}>
+        {/* Agent Routes (Protected for Agent & Admin) */}
+        <Route
+          path="/agent"
+          element={
+            <ProtectedRoute allowedRoles={['agent', 'admin']}>
+              <DashboardLayout role="agent" title="Agent Workspace" />
+            </ProtectedRoute>
+          }
+        >
           <Route index element={<Navigate to="/agent/dashboard" replace />} />
           <Route path="dashboard" element={<AgentDashboard />} />
           <Route path="properties" element={<AgentProperties />} />
@@ -130,8 +115,15 @@ function AppRoutes({ isDarkTheme, setIsDarkTheme, isAppLoading }) {
           <Route path="profile" element={<AgentProfile />} />
         </Route>
 
-        {/* Broker / Admin Routes */}
-        <Route path="/broker" element={<DashboardLayout role="broker" title="Broker Executive Workspace" />}>
+        {/* Broker / Admin Routes (Protected for Broker & Admin) */}
+        <Route
+          path="/broker"
+          element={
+            <ProtectedRoute allowedRoles={['broker', 'admin']}>
+              <DashboardLayout role="broker" title="Broker Executive Workspace" />
+            </ProtectedRoute>
+          }
+        >
           <Route index element={<Navigate to="/broker/dashboard" replace />} />
           <Route path="dashboard" element={<BrokerDashboard />} />
           <Route path="properties" element={<BrokerProperties />} />
@@ -150,30 +142,29 @@ function AppRoutes({ isDarkTheme, setIsDarkTheme, isAppLoading }) {
     );
   }
 
+  const isAuthRoute = location.pathname === '/login' || location.pathname === '/register';
+
   // Client Application Structure (Preserved with lazy loading and 3D duplex route)
   return (
     <div className={`transition-colors duration-700 min-h-screen ${isDarkTheme ? 'bg-black' : 'bg-white'}`}>
-      <Header isDarkTheme={isDarkTheme} />
+      {!isAuthRoute && <Header isDarkTheme={isDarkTheme} />}
       <main>
         <Suspense fallback={<div className="min-h-[60vh] bg-transparent" />}>
           <Routes>
             <Route path="/" element={<Home setIsDarkTheme={setIsDarkTheme} />} />
             <Route path="/properties" element={<PropertiesPage />} />
+            <Route path="/properties/:id" element={<PropertyListingView />} />
+            <Route path="/listing/:id" element={<PropertyListingView />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/login" element={<LoginPage />} />
-            {/* Legacy route redirects to Sandbox */}
-            <Route path="/valuation" element={<Navigate to="/sandbox/valuation" replace />} />
-            <Route path="/neighborhoods" element={<Navigate to="/sandbox/neighborhoods" replace />} />
-            <Route path="/journal" element={<Navigate to="/sandbox/journal" replace />} />
-            <Route path="/duplex-3d" element={<Navigate to="/sandbox/3d-demo" replace />} />
-            <Route path="/demo-ui-ux" element={<Navigate to="/sandbox/ui-ux-labs" replace />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/unauthorized" element={<UnauthorizedPage />} />
           </Routes>
         </Suspense>
       </main>
-      <SandboxPinnedButton />
-      <ChatWidget />
-      <Footer />
+      {!isAuthRoute && <ChatWidget />}
+      {!isAuthRoute && <Footer />}
       <PropertyDetailModal />
       <PageLoader isLoading={isAppLoading} />
     </div>
@@ -198,11 +189,13 @@ export default function App() {
     <ReactLenis root options={{ lerp: 0.08, smoothWheel: true }}>
       <Router>
         <ScrollToTop />
-        <AppRoutes
-          isDarkTheme={isDarkTheme}
-          setIsDarkTheme={setIsDarkTheme}
-          isAppLoading={isAppLoading}
-        />
+        <AuthProvider>
+          <AppRoutes
+            isDarkTheme={isDarkTheme}
+            setIsDarkTheme={setIsDarkTheme}
+            isAppLoading={isAppLoading}
+          />
+        </AuthProvider>
         {import.meta.env.DEV && <Agentation />}
       </Router>
     </ReactLenis>
