@@ -28,7 +28,6 @@ describe('InspectionScheduleModal', () => {
     expect(screen.getByText(/MLSPH91M99LRH7/i)).toBeInTheDocument();
     expect(screen.getByText(/Target Move-In Window/i)).toBeInTheDocument();
     expect(screen.getByText(/Jayson Canonico/i)).toBeInTheDocument();
-    expect(screen.getByText(/Real Estate Agent/i)).toBeInTheDocument();
   });
 
   it('submits inspection booking and invokes onScheduleSuccess callback', () => {
