@@ -105,7 +105,7 @@ export default function PropertyGalleryMosaic({
             onClick={() => setActiveLightboxIndex(null)}
           >
             <motion.div
-              className="relative w-full max-w-5xl h-[85vh] bg-[#0c1212] rounded-3xl overflow-hidden flex flex-col items-center justify-center shadow-2xl border border-white/10"
+              className="relative w-full max-w-5xl h-[85vh] bg-white rounded-3xl overflow-hidden flex flex-col items-center justify-center shadow-2xl border border-gray-200"
               initial={{ y: 100, scale: 0.9, opacity: 0 }}
               animate={{ y: 0, scale: 1, opacity: 1 }}
               exit={{ y: 100, scale: 0.9, opacity: 0 }}
@@ -117,22 +117,22 @@ export default function PropertyGalleryMosaic({
               <button
                 onClick={() => setActiveLightboxIndex(null)}
                 aria-label="Close lightbox"
-                className="absolute top-4 right-4 z-50 w-9 h-9 bg-white text-black shadow-xl rounded-full flex items-center justify-center hover:scale-110 active:scale-95 transition-all"
+                className="absolute top-4 right-4 z-50 w-9 h-9 bg-white text-black shadow-xl rounded-full flex items-center justify-center hover:scale-110 active:scale-95 transition-all border border-gray-200"
               >
                 <span className="material-symbols-outlined text-[18px] font-bold">close</span>
               </button>
 
               {/* Photo Counter Tag in Geist Mono */}
-              <div className="absolute top-4 left-4 z-50 px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-md text-white text-xs font-mono font-semibold border border-white/15">
+              <div className="absolute top-4 left-4 z-50 px-3 py-1.5 rounded-full bg-gray-100/90 backdrop-blur-md text-gray-800 text-xs font-mono font-semibold border border-gray-200 shadow-sm">
                 {activeLightboxIndex + 1} / {photoList.length}
               </div>
 
               {/* Main Expanded Image */}
-              <div className="w-full h-full flex items-center justify-center p-4 md:p-12 overflow-hidden" data-lenis-prevent="true">
+              <div className="w-full h-full flex items-center justify-center p-4 md:p-12 overflow-hidden bg-gray-50" data-lenis-prevent="true">
                 <img
                   src={photoList[activeLightboxIndex]}
                   alt={`${title} - Lightbox view`}
-                  className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl transition-all duration-300"
+                  className="max-w-full max-h-full object-contain rounded-2xl shadow-xl transition-all duration-300"
                 />
               </div>
 
@@ -140,7 +140,7 @@ export default function PropertyGalleryMosaic({
               <button
                 onClick={handlePrev}
                 aria-label="Previous photo"
-                className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/20 hover:bg-white/40 text-white rounded-full flex items-center justify-center backdrop-blur-md transition-all active:scale-90"
+                className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 hover:bg-white text-gray-800 shadow-md rounded-full flex items-center justify-center backdrop-blur-md transition-all active:scale-90 border border-gray-200"
               >
                 <span className="material-symbols-outlined text-2xl">chevron_left</span>
               </button>
@@ -149,7 +149,7 @@ export default function PropertyGalleryMosaic({
               <button
                 onClick={handleNext}
                 aria-label="Next photo"
-                className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/20 hover:bg-white/40 text-white rounded-full flex items-center justify-center backdrop-blur-md transition-all active:scale-90"
+                className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 hover:bg-white text-gray-800 shadow-md rounded-full flex items-center justify-center backdrop-blur-md transition-all active:scale-90 border border-gray-200"
               >
                 <span className="material-symbols-outlined text-2xl">chevron_right</span>
               </button>
