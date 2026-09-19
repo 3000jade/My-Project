@@ -32,7 +32,7 @@ export default function PropertyGalleryMosaic({
 
   return (
     <>
-      <div className="relative rounded-3xl overflow-hidden bg-gray-100 dark:bg-zinc-800/60 shadow-sm">
+      <div className="relative rounded-3xl overflow-hidden bg-[#ecefe9] dark:bg-[#151c1c] border border-[#e1e5df] dark:border-[#222f2e] shadow-sm">
         {/* Desktop 5-Photo Grid / Mobile Single Hero */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-2 h-[340px] md:h-[440px] lg:h-[480px]">
           {/* Main Hero Photo (2 Cols) */}
@@ -45,9 +45,9 @@ export default function PropertyGalleryMosaic({
               alt={`${title} - Main View`}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
-              <span className="text-white text-xs font-semibold flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-[18px]">zoom_in</span> Click to expand
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-5">
+              <span className="text-white text-xs font-semibold font-sans flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[18px]">zoom_in</span> Click to view high-res
               </span>
             </div>
           </div>
@@ -68,12 +68,12 @@ export default function PropertyGalleryMosaic({
                     alt={`${title} - Photo ${actualIndex + 1}`}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                   />
-                  <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors" />
+                  <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors" />
 
                   {isLast && (
                     <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] flex flex-col items-center justify-center text-white p-2">
                       <span className="material-symbols-outlined text-2xl mb-1">grid_view</span>
-                      <span className="text-xs font-extrabold uppercase tracking-wider">
+                      <span className="text-xs font-bold font-sans uppercase tracking-wider">
                         +{photoList.length > 5 ? photoList.length - 4 : 'All'} Photos
                       </span>
                     </div>
@@ -88,7 +88,7 @@ export default function PropertyGalleryMosaic({
         <button
           type="button"
           onClick={() => setActiveLightboxIndex(0)}
-          className="absolute bottom-4 right-4 z-10 px-4 py-2.5 bg-white/90 dark:bg-black/80 hover:bg-white dark:hover:bg-black text-gray-900 dark:text-white backdrop-blur-md rounded-2xl text-xs font-bold shadow-lg border border-white/20 flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
+          className="absolute bottom-4 right-4 z-10 px-4 py-2.5 bg-white/95 dark:bg-[#183d3b]/90 hover:bg-white dark:hover:bg-[#183d3b] text-[#183d3b] dark:text-white backdrop-blur-md rounded-2xl text-xs font-bold font-sans uppercase tracking-wider shadow-lg border border-[#e1e5df]/60 flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
         >
           <span className="material-symbols-outlined text-[18px]">photo_library</span>
           View All Photos ({photoList.length})
@@ -101,11 +101,11 @@ export default function PropertyGalleryMosaic({
           <div
             role="dialog"
             aria-modal="true"
-            className="fixed inset-0 z-[250] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 md:p-8 overflow-hidden"
+            className="fixed inset-0 z-[250] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 md:p-8 overflow-hidden font-sans"
             onClick={() => setActiveLightboxIndex(null)}
           >
             <motion.div
-              className="relative w-full max-w-5xl h-[85vh] bg-black rounded-3xl overflow-hidden flex flex-col items-center justify-center shadow-2xl"
+              className="relative w-full max-w-5xl h-[85vh] bg-[#0c1212] rounded-3xl overflow-hidden flex flex-col items-center justify-center shadow-2xl border border-white/10"
               initial={{ y: 100, scale: 0.9, opacity: 0 }}
               animate={{ y: 0, scale: 1, opacity: 1 }}
               exit={{ y: 100, scale: 0.9, opacity: 0 }}
@@ -122,8 +122,8 @@ export default function PropertyGalleryMosaic({
                 <span className="material-symbols-outlined text-[18px] font-bold">close</span>
               </button>
 
-              {/* Photo Counter Tag */}
-              <div className="absolute top-4 left-4 z-50 px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-md text-white text-xs font-semibold border border-white/10">
+              {/* Photo Counter Tag in Geist Mono */}
+              <div className="absolute top-4 left-4 z-50 px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-md text-white text-xs font-mono font-semibold border border-white/15">
                 {activeLightboxIndex + 1} / {photoList.length}
               </div>
 
