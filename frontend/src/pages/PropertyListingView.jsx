@@ -68,7 +68,7 @@ export default function PropertyListingView() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f4f5f2] dark:bg-[#0c1212] text-[#1c2224] dark:text-[#e4e9e8] pb-24 pt-24 font-sans antialiased">
+    <div className="min-h-screen bg-white dark:bg-black text-[#1c2224] dark:text-[#e4e9e8] pb-24 pt-24 font-sans antialiased">
       {/* Toast Notification Banner */}
       {toastMessage && (
         <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[300] bg-[#183d3b] text-white px-6 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 border border-[#183d3b]/40 transition-all animate-bounce">
