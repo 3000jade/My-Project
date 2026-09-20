@@ -4,7 +4,6 @@ import Header from './components/layout/Header';
 import ChatWidget from './modules/Chat/ChatWidget';
 import Footer from './components/layout/Footer';
 import Home from './pages/Home';
-import PropertyDetailModal from './components/ui/PropertyDetailModal';
 import PageLoader from './components/ui/PageLoader';
 import { ReactLenis, useLenis } from 'lenis/react';
 import { Agentation } from 'agentation';
@@ -14,10 +13,13 @@ import { AuthProvider } from './context/AuthContext';
 const PropertiesPage = lazy(() => import('./pages/PropertiesPage'));
 const PropertyListingView = lazy(() => import('./pages/PropertyListingView'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
+const HowWeWorkPage = lazy(() => import('./pages/HowWeWorkPage'));
+const PartnerPage = lazy(() => import('./pages/PartnerPage'));
 const ContactPage = lazy(() => import('./pages/ContactPage'));
 const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
 const RegisterPage = lazy(() => import('./pages/auth/RegisterPage'));
 const UnauthorizedPage = lazy(() => import('./pages/UnauthorizedPage'));
+const DemoApiPage = lazy(() => import('./pages/DemoApiPage'));
 
 // Protected Route Guard
 import ProtectedRoute from './components/auth/ProtectedRoute';
@@ -156,16 +158,18 @@ function AppRoutes({ isDarkTheme, setIsDarkTheme, isAppLoading }) {
             <Route path="/properties/:id" element={<PropertyListingView />} />
             <Route path="/listing/:id" element={<PropertyListingView />} />
             <Route path="/about" element={<AboutPage />} />
+            <Route path="/how-we-work" element={<HowWeWorkPage />} />
+            <Route path="/our-partner" element={<PartnerPage />} />
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/unauthorized" element={<UnauthorizedPage />} />
+            <Route path="/demo-api" element={<DemoApiPage />} />
           </Routes>
         </Suspense>
       </main>
       {!isAuthRoute && <ChatWidget />}
       {!isAuthRoute && <Footer />}
-      <PropertyDetailModal />
       <PageLoader isLoading={isAppLoading} />
     </div>
   );
@@ -201,3 +205,4 @@ export default function App() {
     </ReactLenis>
   );
 }
+
