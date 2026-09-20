@@ -5,6 +5,7 @@ import morgan from 'morgan';
 import config from './config';
 import apiRoutes from './routes';
 import { errorHandler } from './middleware/error.middleware';
+import { apiRateLimiter } from './middleware/rateLimiter.middleware';
 import logger from './utils/logger';
 
 const app: Express = express();
@@ -17,8 +18,8 @@ app.use(morgan(config.isProduction ? 'combined' : 'dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Master API Routes
-app.use('/api', apiRoutes);
+// Master API Routes (Rate limited to 300 req / 15 min per IP)
+app.use('/api', apiRateLimiter, apiRoutes);
 
 // Base Root Route
 app.get('/', (req: Request, res: Response) => {
