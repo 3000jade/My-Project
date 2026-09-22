@@ -12,7 +12,37 @@ const app: Express = express();
 const port = config.port;
 
 // Global Middleware
-app.use(cors({ origin: config.clientOrigin, credentials: true }));
+const allowedOrigins = Array.isArray(config.clientOrigin)
+  ? config.clientOrigin
+  : [config.clientOrigin];
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (curl, mobile apps, Postman)
+      if (!origin) return callback(null, true);
+
+      // Allowed origins from config / environment
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      // Automatically allow all Vercel deployments (preview & production)
+      if (/^https:\/\/.*\.vercel\.app$/.test(origin)) {
+        return callback(null, true);
+      }
+
+      // Allow local development origins
+      if (/^http:\/\/localhost(:\d+)?$/.test(origin)) {
+        return callback(null, true);
+      }
+
+      logger.warn(`CORS blocked for origin: ${origin}`);
+      return callback(null, false);
+    },
+    credentials: true,
+  })
+);
 app.use(helmet());
 app.use(morgan(config.isProduction ? 'combined' : 'dev'));
 app.use(express.json());
