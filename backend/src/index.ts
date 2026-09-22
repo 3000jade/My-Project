@@ -51,6 +51,9 @@ app.use(express.urlencoded({ extended: true }));
 // Master API Routes (Rate limited to 300 req / 15 min per IP)
 app.use('/api', apiRateLimiter, apiRoutes);
 
+// Direct Alias: Support endpoints called without /api prefix (e.g., /auth/login)
+app.use(apiRateLimiter, apiRoutes);
+
 // Base Root Route
 app.get('/', (req: Request, res: Response) => {
   res.send('CP_kerby Backend API is running...');
