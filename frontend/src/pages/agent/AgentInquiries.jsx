@@ -1,23 +1,49 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import PageHeader from '../../components/dashboard/PageHeader';
 import SearchAndFilterBar from '../../components/dashboard/SearchAndFilterBar';
 import StatusBadge from '../../components/dashboard/StatusBadge';
 import DataTable from '../../components/dashboard/DataTable';
 import EmptyState from '../../components/dashboard/EmptyState';
-import { mockInquiries } from '../../mockData/mockInquiries';
+import { inquiryService } from '../../services/inquiryService';
 
 export default function AgentInquiries() {
   const navigate = useNavigate();
-  const [inquiries, setInquiries] = useState(mockInquiries.filter(i => i.agent_id === 'agent-1'));
+  const [inquiries, setInquiries] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
 
+  const loadInquiries = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await inquiryService.getInquiries({ agentId: 'agent-1' });
+      // Filter for agent or show assigned leads
+      const list = Array.isArray(data) ? data : [];
+      setInquiries(list);
+    } catch (err) {
+      setError(err.message || 'Failed to retrieve inquiries.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadInquiries();
+  }, [loadInquiries]);
+
   const filtered = inquiries.filter(inq => {
-    const matchesSearch = inq.client_name.toLowerCase().includes(search.toLowerCase()) ||
-                          inq.property_title.toLowerCase().includes(search.toLowerCase()) ||
-                          inq.last_message.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = statusFilter === 'ALL' || inq.status === statusFilter;
+    const clientName = inq.client_name || '';
+    const propertyTitle = inq.property_title || '';
+    const message = inq.last_message || '';
+    const matchesSearch =
+      clientName.toLowerCase().includes(search.toLowerCase()) ||
+      propertyTitle.toLowerCase().includes(search.toLowerCase()) ||
+      message.toLowerCase().includes(search.toLowerCase());
+    const matchesStatus =
+      statusFilter === 'ALL' || (inq.status || '').toUpperCase() === statusFilter.toUpperCase();
     return matchesSearch && matchesStatus;
   });
 
@@ -79,7 +105,34 @@ export default function AgentInquiries() {
           { label: "Dashboard", to: "/agent/dashboard" },
           { label: "Inquiries" }
         ]}
+        actions={
+          <button
+            onClick={loadInquiries}
+            disabled={loading}
+            className="h-[46px] px-4 bg-white hover:bg-gray-50 text-[#174849] border border-gray-200 rounded-xl text-xs font-bold font-sans uppercase tracking-wider flex items-center gap-2 transition-all shadow-xs"
+          >
+            <span className={`material-symbols-outlined text-[18px] ${loading ? 'animate-spin' : ''}`}>
+              refresh
+            </span>
+            <span>Refresh</span>
+          </button>
+        }
       />
+
+      {error && (
+        <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl flex items-center justify-between text-rose-700 font-sans text-sm">
+          <div className="flex items-center gap-3">
+            <span className="material-symbols-outlined text-rose-600">error</span>
+            <span>Failed to load inquiries: {error}</span>
+          </div>
+          <button
+            onClick={loadInquiries}
+            className="px-4 py-1.5 bg-rose-600 text-white text-xs font-bold rounded-xl uppercase tracking-wider hover:bg-rose-700 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      )}
 
       <SearchAndFilterBar
         searchValue={search}
@@ -100,7 +153,14 @@ export default function AgentInquiries() {
         ]}
       />
 
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className="bg-white rounded-2xl border border-gray-200/80 p-12 text-center space-y-3">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-[#266F71] border-t-transparent"></div>
+          <p className="text-xs font-bold uppercase tracking-wider text-gray-400 font-sans">
+            Loading assigned inquiries...
+          </p>
+        </div>
+      ) : filtered.length === 0 ? (
         <EmptyState
           icon="inbox"
           title="No inquiries match your criteria"

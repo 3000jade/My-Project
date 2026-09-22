@@ -13,10 +13,10 @@ import {
   IconMaximize
 } from '@tabler/icons-react';
 
-import coastalVilla from '../../assets/luxury_modern_villa.jpg';
-import zenCourtyard from '../../assets/luxury_zen_courtyard.jpg';
-import twilightVilla from '../../assets/cinematic_duplex_twilight.jpg';
-import interiorPenthouse from '../../assets/cinematic_interior_penthouse.jpg';
+import coastalVilla from '../../sandbox/assets/luxury_modern_villa.jpg';
+import zenCourtyard from '../../sandbox/assets/luxury_zen_courtyard.jpg';
+import twilightVilla from '../../sandbox/assets/cinematic_duplex_twilight.jpg';
+import interiorPenthouse from '../../sandbox/assets/cinematic_interior_penthouse.jpg';
 
 export default function HorizontalAndPinnedScrollShowcase() {
   // Horizontal scroll container reference

@@ -1,272 +1,1240 @@
 <!DOCTYPE html>
-
-<html class="light scroll-smooth" lang="en">
-
+<html lang="en">
 <head>
-    <meta charset="utf-8" />
-    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&amp;family=Inter:wght@400;500;600;700&amp;display=swap"
-        rel="stylesheet" />
-    <link
-        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block"
-        rel="stylesheet" />
-    <script id="tailwind-config">
-        try {
-            tailwind.config = {
-                darkMode: "class",
-                theme: {
-                    extend: {
-                        "colors": {
-                            "primary": "#266F71",
-                            "on-primary": "#ffffff",
-                            "primary-container": "#266F71",
-                            "on-primary-container": "#ffffff",
-                            "secondary": "#266F71",
-                            "on-secondary": "#ffffff",
-                            "accent": "#FB8E5D",
-                            "on-accent": "#ffffff",
-                            "background": "#FFFFFF",
-                            "on-background": "#174849",
-                            "surface": "#FFFFFF",
-                            "on-surface": "#174849",
-                            "surface-variant": "#F1F0EC",
-                            "on-surface-variant": "#3f4949",
-                            "outline": "#6f7979",
-                            "outline-variant": "#bec8c8",
-                            "surface-container": "#F1F0EC",
-                            "surface-container-high": "#E9E8E4",
-                            "surface-container-low": "#F5F4EF",
-                            "tertiary": "#174849",
-                            "on-tertiary": "#ffffff",
-                            "tertiary-container": "#174849",
-                            "on-tertiary-container": "#ffffff"
-                        },
-                        "borderRadius": {
-                            "DEFAULT": "1rem",
-                            "lg": "1rem",
-                            "xl": "1rem",
-                            "2xl": "1rem",
-                            "full": "9999px"
-                        },
-                        "spacing": {
-                            "unit": "8px",
-                            "container-max-width": "1440px",
-                            "margin-desktop": "80px",
-                            "margin-mobile": "20px",
-                            "margin-tablet": "40px",
-                            "gutter": "32px",
-                            "section-gap": "120px"
-                        },
-                        "fontFamily": {
-                            "headline-lg-mobile": ["Manrope"],
-                            "headline-md": ["Manrope"],
-                            "body-lg": ["Manrope"],
-                            "label-sm": ["Inter"],
-                            "headline-lg": ["Manrope"],
-                            "display-lg": ["Manrope"],
-                            "body-md": ["Manrope"],
-                            "label-lg": ["Inter"],
-                            "headline-sm": ["Manrope"]
-                        },
-                        "fontSize": {
-                            "headline-lg-mobile": ["32px", { "lineHeight": "1.2", "fontWeight": "700" }],
-                            "headline-md": ["32px", { "lineHeight": "1.3", "fontWeight": "700" }],
-                            "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }],
-                            "label-sm": ["12px", { "lineHeight": "1.2", "letterSpacing": "0.05em", "fontWeight": "600" }],
-                            "headline-lg": ["48px", { "lineHeight": "1.2", "fontWeight": "700" }],
-                            "display-lg": ["64px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800" }],
-                            "body-md": ["16px", { "lineHeight": "1.6", "fontWeight": "400" }],
-                            "label-lg": ["14px", { "lineHeight": "1.2", "letterSpacing": "0.1em", "fontWeight": "600" }],
-                            "headline-sm": ["24px", { "lineHeight": "1.4", "fontWeight": "600" }]
-                        }
-                    },
-                },
-            }
-        } catch (_e) { }
-    </script>
-    <style>
-        .premium-btn {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ATELIER COVE // Secure Client Authentication</title>
 
-        .premium-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        }
+  <!-- Typography: Fraunces (Sculptural Display), Satoshi (Humanist Grotesque Body), Geist Mono (Telemetry) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,400&family=Geist+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://api.fontshare.com">
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600,700&display=swap" rel="stylesheet">
 
-        .image-overlay {
-            background: linear-gradient(to bottom, rgba(23, 72, 73, 0.2) 0%, rgba(23, 72, 73, 0.6) 100%);
-        }
-    </style>
+  <style>
+    :root {
+      --canvas-fog: #f4f5f2;
+      --surface-pure: #ffffff;
+      --surface-birch: #ecefe9;
+      --primary: #183d3b;
+      --primary-hover: #122e2c;
+      --primary-subtle: #e8eeea;
+      --secondary: #c4683c;
+      --secondary-hover: #b0572d;
+      --secondary-subtle: #fcf1eb;
+      --ink-charcoal: #1c2224;
+      --ink-slate: #5f6b6f;
+      --caption-muted: #7a868a;
+      --hairline-birch: #e1e5df;
+      --hairline-focus: #c2c9bf;
+      --status-success: #2d6a4f;
+      --status-danger: #d90429;
+      
+      --font-display: "Fraunces", Georgia, serif;
+      --font-body: "Satoshi", -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-telemetry: "Geist Mono", monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--canvas-fog);
+      color: var(--ink-charcoal);
+      font-family: var(--font-body);
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* Ambient Subtle Mesh Atmosphere */
+    .bg-mesh-glow {
+      position: fixed;
+      inset: 0;
+      pointer-events-none;
+      z-index: 0;
+      background: 
+        radial-gradient(circle at 15% 25%, rgba(24, 61, 59, 0.035) 0%, transparent 45%),
+        radial-gradient(circle at 85% 75%, rgba(196, 104, 60, 0.03) 0%, transparent 50%);
+    }
+
+    /* Floating Nordic Pill Navbar */
+    .nav-container {
+      position: relative;
+      z-index: 50;
+      width: 100%;
+      padding: 24px 44px 0;
+      display: flex;
+      justify-content: center;
+    }
+
+    .floating-nav {
+      width: 100%;
+      max-width: 1440px;
+      height: 64px;
+      padding: 0 28px;
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(225, 229, 223, 0.8);
+      border-radius: 9999px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 24px -4px rgba(28, 34, 36, 0.04);
+    }
+
+    .nav-brand-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+    }
+
+    .nav-seal-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--primary);
+      border-radius: 50%;
+    }
+
+    .nav-brand {
+      font-family: var(--font-display);
+      font-variation-settings: "opsz" 72, "SOFT" 15;
+      font-size: 20px;
+      font-weight: 500;
+      letter-spacing: -0.02em;
+      color: var(--primary);
+    }
+
+    .nav-center-menu {
+      display: flex;
+      gap: 32px;
+      list-style: none;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .nav-center-menu a {
+      color: var(--ink-slate);
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    .nav-center-menu a:hover { color: var(--primary); }
+
+    .nav-badge-pill {
+      font-family: var(--font-telemetry);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      background: var(--surface-birch);
+      color: var(--primary);
+      border-radius: 9999px;
+      font-weight: 600;
+    }
+
+    /* Asymmetric Viewport Stage */
+    .viewport-stage {
+      position: relative;
+      z-index: 10;
+      flex: 1;
+      width: 100%;
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 24px 44px 36px;
+      display: grid;
+      grid-template-columns: 1.15fr 0.95fr;
+      gap: 36px;
+      align-items: stretch;
+      min-height: calc(100vh - 100px);
+    }
+
+    /* Left Hero Plinth */
+    .hero-plinth-tray {
+      position: relative;
+      border-radius: 28px;
+      overflow: hidden;
+      background: var(--primary);
+      border: 1px solid rgba(225, 229, 223, 0.6);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 48px 52px;
+      box-shadow: 0 16px 40px -10px rgba(24, 61, 59, 0.18);
+    }
+
+    .hero-photo-bg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      filter: brightness(0.88) contrast(1.06);
+      transform: scale(1.01);
+      transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .hero-plinth-tray:hover .hero-photo-bg { transform: scale(1.03); }
+
+    .hero-photo-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        180deg,
+        rgba(24, 61, 59, 0.45) 0%,
+        rgba(24, 61, 59, 0.2) 35%,
+        rgba(24, 61, 59, 0.96) 100%
+      );
+      pointer-events-none;
+    }
+
+    .hero-top-docket {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .docket-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 16px;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(12px);
+      border-radius: 9999px;
+      border: 1px solid rgba(225, 229, 223, 0.7);
+    }
+
+    .docket-pulse {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--status-success);
+      box-shadow: 0 0 8px var(--status-success);
+    }
+
+    .docket-text {
+      font-family: var(--font-telemetry);
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--primary);
+    }
+
+    .docket-coordinates {
+      font-family: var(--font-telemetry);
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.75);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .hero-editorial-footer {
+      position: relative;
+      z-index: 10;
+      max-width: 540px;
+    }
+
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--font-telemetry);
+      font-size: 11px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--secondary-subtle);
+      margin-bottom: 18px;
+    }
+
+    .hero-eyebrow-line { width: 24px; height: 1px; background: var(--secondary); }
+
+    .hero-heading {
+      font-family: var(--font-display);
+      font-variation-settings: "opsz" 96, "SOFT" 15;
+      font-size: clamp(34px, 3.1vw, 46px);
+      font-weight: 400;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      color: #ffffff;
+      margin-bottom: 20px;
+    }
+
+    .hero-heading em {
+      font-style: italic;
+      color: #fcf1eb;
+      font-weight: 300;
+    }
+
+    .hero-narrative-frame {
+      border-left: 2px solid rgba(225, 229, 223, 0.4);
+      padding-left: 20px;
+    }
+
+    .hero-body {
+      font-size: 14px;
+      line-height: 1.75;
+      color: rgba(255, 255, 255, 0.84);
+      font-weight: 400;
+    }
+
+    /* Right Console: Double-Bezel Architecture */
+    .console-stage {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .double-bezel-tray {
+      width: 100%;
+      max-width: 480px;
+      background: var(--surface-birch);
+      border: 1px solid var(--hairline-birch);
+      border-radius: 28px;
+      padding: 10px;
+      box-shadow: 0 16px 44px -12px rgba(28, 34, 36, 0.07);
+    }
+
+    .plinth-inner-core {
+      background: var(--surface-pure);
+      border-radius: 20px;
+      padding: 38px 36px;
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 4px 20px -4px rgba(28, 34, 36, 0.03);
+    }
+
+    .core-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 4px;
+    }
+
+    .core-telemetry-tag {
+      font-family: var(--font-telemetry);
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--secondary);
+    }
+
+    .mode-switch-btn {
+      font-family: var(--font-telemetry);
+      font-size: 10.5px;
+      color: var(--ink-slate);
+      background: none;
+      border: none;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+
+    .mode-switch-btn:hover { color: var(--primary); }
+
+    .core-title {
+      font-family: var(--font-display);
+      font-variation-settings: "opsz" 72, "SOFT" 10;
+      font-size: 30px;
+      font-weight: 500;
+      letter-spacing: -0.025em;
+      color: var(--ink-charcoal);
+      line-height: 1.15;
+      margin-bottom: 6px;
+    }
+
+    .core-desc {
+      font-size: 12.5px;
+      color: var(--ink-slate);
+      line-height: 1.5;
+      margin-bottom: 22px;
+    }
+
+    /* Error Banner */
+    .error-banner {
+      display: none;
+      padding: 10px 14px;
+      background: var(--secondary-subtle);
+      border: 1px solid rgba(196, 104, 60, 0.3);
+      color: var(--secondary-hover);
+      border-radius: 8px;
+      font-size: 12px;
+      margin-bottom: 16px;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .error-banner.active { display: flex; }
+
+    /* Form Fields */
+    .bespoke-form {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .field-block {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+
+    .field-caption {
+      font-family: var(--font-telemetry);
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-charcoal);
+    }
+
+    .field-link {
+      font-family: var(--font-telemetry);
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--secondary);
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    .field-link:hover {
+      color: var(--secondary-hover);
+      text-decoration: underline;
+    }
+
+    .input-chamber {
+      position: relative;
+      display: flex;
+      align-items: center;
+      background: var(--canvas-fog);
+      border: 1px solid var(--hairline-birch);
+      border-radius: 8px;
+      transition: all 0.2s ease;
+      overflow: hidden;
+    }
+
+    .input-chamber:focus-within {
+      background: #ffffff;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(24, 61, 59, 0.08);
+    }
+
+    .input-architectural {
+      width: 100%;
+      height: 46px;
+      padding: 0 16px;
+      background: transparent;
+      border: none;
+      font-family: var(--font-body);
+      font-size: 13.5px;
+      color: var(--ink-charcoal);
+      outline: none;
+    }
+
+    .input-architectural::placeholder {
+      color: var(--caption-muted);
+      font-size: 13px;
+    }
+
+    .eye-trigger {
+      background: none;
+      border: none;
+      color: var(--caption-muted);
+      cursor: pointer;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.2s ease;
+    }
+
+    .eye-trigger:hover { color: var(--primary); }
+
+    /* Password Rules & Live Feedback */
+    .password-rules-box {
+      display: none;
+      padding-top: 6px;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .password-rules-box.visible { display: flex; }
+
+    .strength-meter-bar {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .meter-segment {
+      height: 4px;
+      flex: 1;
+      border-radius: 9999px;
+      background: var(--hairline-birch);
+      transition: background-color 0.3s ease;
+    }
+
+    .strength-meter-label {
+      font-family: var(--font-telemetry);
+      font-size: 9px;
+      text-transform: uppercase;
+      color: var(--caption-muted);
+      margin-left: 6px;
+      width: 44px;
+    }
+
+    .rules-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .rule-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10.5px;
+      color: var(--caption-muted);
+      transition: color 0.2s ease;
+    }
+
+    .rule-item.met {
+      color: var(--status-success);
+      font-weight: 500;
+    }
+
+    .rule-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--caption-muted);
+    }
+
+    .rule-item.met .rule-dot {
+      background: var(--status-success);
+    }
+
+    /* Remember Checkbox */
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      cursor: pointer;
+      user-select: none;
+      padding-top: 2px;
+    }
+
+    .checkbox-row input[type="checkbox"] {
+      width: 15px;
+      height: 15px;
+      border-radius: 3px;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+
+    .checkbox-text {
+      font-size: 12px;
+      color: var(--ink-slate);
+    }
+
+    /* Primary Submit Button (Button-in-Button) */
+    .btn-island-primary {
+      position: relative;
+      width: 100%;
+      height: 54px;
+      padding: 0 8px 0 22px;
+      background: var(--primary);
+      color: #ffffff;
+      border: none;
+      border-radius: 9999px;
+      font-family: var(--font-body);
+      font-size: 12.5px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.25s ease;
+      box-shadow: 0 8px 24px -6px rgba(24, 61, 59, 0.3);
+      margin-top: 6px;
+    }
+
+    .btn-island-primary:hover:not(:disabled) {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 12px 28px -6px rgba(24, 61, 59, 0.38);
+    }
+
+    .btn-island-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-trailing-capsule {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.3s ease;
+    }
+
+    .btn-island-primary:hover:not(:disabled) .btn-trailing-capsule {
+      transform: translateX(2px);
+    }
+
+    /* Social Login SSO Divider */
+    .sso-divider-row {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 18px 0 14px;
+    }
+
+    .sso-line {
+      width: 100%;
+      height: 1px;
+      background: var(--hairline-birch);
+    }
+
+    .sso-text {
+      position: absolute;
+      background: #ffffff;
+      padding: 0 12px;
+      font-family: var(--font-telemetry);
+      font-size: 9.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--caption-muted);
+    }
+
+    .sso-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .sso-btn {
+      height: 44px;
+      background: #ffffff;
+      border: 1px solid var(--hairline-birch);
+      border-radius: 8px;
+      font-family: var(--font-body);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ink-charcoal);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(28, 34, 36, 0.02);
+      transition: all 0.2s ease;
+    }
+
+    .sso-btn:hover {
+      background: var(--canvas-fog);
+      border-color: var(--hairline-focus);
+      transform: translateY(-1px);
+    }
+
+    /* Sign-up Prompt */
+    .signup-prompt-row {
+      padding-top: 16px;
+      border-top: 1px solid var(--hairline-birch);
+      text-align: center;
+      font-size: 12px;
+      color: var(--ink-slate);
+    }
+
+    .signup-prompt-row a {
+      color: var(--primary);
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .signup-prompt-row a:hover {
+      color: var(--secondary);
+      text-decoration: underline;
+    }
+
+    /* 2FA Mode Panel */
+    .otp-panel {
+      display: none;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .otp-panel.active { display: flex; }
+
+    .otp-cells-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+    }
+
+    .otp-input-box {
+      width: 48px;
+      height: 48px;
+      text-align: center;
+      font-family: var(--font-telemetry);
+      font-size: 18px;
+      font-weight: 700;
+      background: var(--canvas-fog);
+      border: 1px solid var(--hairline-birch);
+      border-radius: 8px;
+      outline: none;
+    }
+
+    .otp-input-box:focus {
+      background: #ffffff;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(24, 61, 59, 0.08);
+    }
+
+    .otp-resend-row {
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--font-telemetry);
+      font-size: 10.5px;
+      color: var(--caption-muted);
+    }
+
+    .otp-resend-link {
+      color: var(--secondary);
+      text-decoration: underline;
+      cursor: pointer;
+      background: none;
+      border: none;
+      font-family: var(--font-telemetry);
+      font-size: 10.5px;
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .nav-container { padding: 16px 20px 0; }
+      .viewport-stage {
+        grid-template-columns: 1fr;
+        padding: 20px;
+        min-height: auto;
+      }
+      .hero-plinth-tray {
+        min-height: 340px;
+        padding: 32px 24px;
+      }
+      .double-bezel-tray { max-width: 100%; }
+      .nav-center-menu { display: none; }
+    }
+  </style>
 </head>
+<body>
 
-<body class="bg-background text-on-surface font-body-md overflow-x-hidden selection:bg-accent selection:text-on-accent">
-    <!-- TopNavBar: Synchronized with SCREEN_190 -->
-    <nav class="fixed top-0 w-full z-50 bg-white/95 backdrop-blur-md border-b border-surface-container-high">
-        <div class="flex justify-between items-center h-[100px] px-margin-desktop max-w-container-max-width mx-auto">
-            <div class="flex items-center gap-2">
-                <span class="font-headline-sm text-headline-sm font-bold tracking-tight text-primary">PropAI</span>
-            </div>
-            <div class="hidden md:flex gap-10 items-center">
-                <a class="font-label-lg text-label-lg text-on-surface-variant hover:text-primary transition-colors duration-300"
-                    href="#">Home</a>
-                <a class="font-label-lg text-label-lg text-on-surface-variant hover:text-primary transition-colors duration-300"
-                    href="#">Properties</a>
-                <a class="font-label-lg text-label-lg text-on-surface-variant hover:text-primary transition-colors duration-300"
-                    href="#">Agents</a>
-                <a class="font-label-lg text-label-lg text-on-surface-variant hover:text-primary transition-colors duration-300"
-                    href="#">About</a>
-            </div>
-            <button
-                class="bg-primary text-on-primary px-8 py-3 font-label-lg text-label-lg uppercase rounded-lg premium-btn">
-                Request Consultation
-            </button>
-        </div>
+  <div class="bg-mesh-glow"></div>
+
+  <!-- Floating Nordic Pill Navbar -->
+  <header class="nav-container">
+    <nav class="floating-nav">
+      <a href="#" class="nav-brand-wrap">
+        <span class="nav-seal-dot"></span>
+        <span class="nav-brand">Atelier Cove</span>
+      </a>
+      <ul class="nav-center-menu">
+        <li><a href="#">Curated Portfolios</a></li>
+        <li><a href="#">Registry Safeguards</a></li>
+        <li><a href="#">Orthographic Plans</a></li>
+        <li><a href="#">Direct Advisory</a></li>
+      </ul>
+      <div class="nav-badge-pill">PRC Accredited</div>
     </nav>
-    <main class="min-h-screen pt-[100px] flex flex-col md:flex-row w-full">
-        <!-- Left Section: High-end luxury real estate image -->
-        <section class="hidden md:flex md:w-1/2 relative overflow-hidden">
-            <img alt="Luxurious Modern Villa" class="w-full h-full object-cover"
-                src="https://lh3.googleusercontent.com/aida/AP1WRLtaLPZ-Yj9cofUiSHw1Ha_VYK553FpTlrStPmmbbpecDAC50Hn7AQEL03bMYVRRaNbFZSHKAhjZx5ZyrDoS90749CyVn838wSwlx_XOGgRgPcJo1bbuRh3Rq9EcKBwyks2znzUn_L68Enid6KWC_SaIGfo7Puiw4z_pKmkygJqkMqBiesR2sgGY2GhtMyT9JN_u5gv33UZ2eRi3zwR80vsZj1Fxx9ioHNrqBewajxtMpsEu5w47yUyjdzU" />
-            <div class="absolute inset-0 image-overlay"></div>
-            <div class="absolute bottom-12 left-12 right-12 z-10">
-                <span class="font-label-lg text-label-lg text-accent uppercase tracking-widest mb-4 block">Elite Real
-                    Estate Intelligence</span>
-                <h2 class="text-white font-headline-lg text-headline-lg max-w-md">Securing generational wealth through
-                    predictive analytics.</h2>
-            </div>
-        </section>
-        <!-- Right Section: Login Container -->
-        <section class="w-full md:w-1/2 flex flex-col items-center justify-center bg-surface px-6 py-12">
-            <div class="w-full max-w-[440px] flex flex-col">
-                <div class="mb-10">
-                    <h2 class="text-display-lg text-headline-lg font-headline-lg text-tertiary mb-2">Welcome back.</h2>
-                    <p class="text-body-lg font-body-lg text-on-surface-variant">Access your private portfolio and
-                        strategic market insights.</p>
-                </div>
-                <!-- Login Form -->
-                <form class="w-full space-y-6">
-                    <div class="space-y-2">
-                        <label class="font-label-sm text-label-sm text-on-surface uppercase tracking-widest">Email
-                            Address</label>
-                        <input
-                            class="w-full h-14 px-5 border border-outline-variant bg-surface-container-low rounded-xl focus:border-primary focus:ring-1 focus:ring-primary transition-all text-body-md outline-none"
-                            placeholder="name@propai.com" type="email" />
-                    </div>
-                    <div class="space-y-2">
-                        <div class="flex justify-between items-center">
-                            <label
-                                class="font-label-sm text-label-sm text-on-surface uppercase tracking-widest">Password</label>
-                            <a class="text-label-sm font-label-sm text-primary hover:text-accent transition-colors"
-                                href="#">Forgot password?</a>
-                        </div>
-                        <div class="relative">
-                            <input
-                                class="w-full h-14 px-5 border border-outline-variant bg-surface-container-low rounded-xl focus:border-primary focus:ring-1 focus:ring-primary transition-all text-body-md outline-none"
-                                placeholder="••••••••" type="password" />
-                            <button
-                                class="absolute right-5 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-primary"
-                                type="button">
-                                <span class="material-symbols-outlined text-[20px]">visibility</span>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="pt-4">
-                        <button
-                            class="w-full h-14 bg-primary text-on-primary font-label-lg text-label-lg uppercase tracking-widest rounded-xl premium-btn"
-                            type="submit">
-                            Login to Account
-                        </button>
-                    </div>
-                </form>
-                <!-- Registration Links -->
-                <div class="mt-12 w-full pt-8 border-t border-surface-container-high flex flex-col gap-6 items-center">
-                    <p class="text-body-md text-on-surface-variant">Don't have an account yet?</p>
-                    <div class="flex flex-col sm:flex-row items-center gap-4 sm:gap-8">
-                        <a class="text-label-lg font-label-lg text-primary hover:text-accent transition-colors flex items-center gap-2 uppercase tracking-widest"
-                            href="#">
-                            <span class="material-symbols-outlined text-[18px]">person_add</span>
-                            Client Access
-                        </a>
-                        <div class="hidden sm:block w-[1px] h-4 bg-outline-variant"></div>
-                        <a class="text-label-lg font-label-lg text-primary hover:text-accent transition-colors flex items-center gap-2 uppercase tracking-widest"
-                            href="#">
-                            <span class="material-symbols-outlined text-[18px]">business_center</span>
-                            Partner Portal
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </main>
-    <!-- Footer Component: Synchronized with SCREEN_190 -->
-    <footer class="bg-tertiary text-on-tertiary pt-section-gap pb-12">
-        <div
-            class="grid grid-cols-1 md:grid-cols-4 gap-gutter py-section-gap px-margin-desktop max-w-container-max-width mx-auto border-t border-white/10">
-            <div class="space-y-6">
-                <span class="font-headline-md text-headline-md font-bold text-white tracking-tight">PROPAI</span>
-                <p class="font-body-md text-body-md opacity-70">Empowering high-net-worth investors with the world's
-                    most advanced strategic intelligence platform.</p>
-                <div class="flex gap-4">
-                    <a class="text-white/60 hover:text-accent transition-colors" href="#"><span
-                            class="material-symbols-outlined">public</span></a>
-                    <a class="text-white/60 hover:text-accent transition-colors" href="#"><span
-                            class="material-symbols-outlined">alternate_email</span></a>
-                    <a class="text-white/60 hover:text-accent transition-colors" href="#"><span
-                            class="material-symbols-outlined">share</span></a>
-                </div>
-            </div>
-            <div class="space-y-4">
-                <h5 class="font-label-lg text-label-lg uppercase tracking-widest text-accent mb-6">Expertise</h5>
-                <ul class="space-y-3 font-body-md text-body-md">
-                    <li><a class="hover:text-accent transition-colors" href="#">Portfolio Management</a></li>
-                    <li><a class="hover:text-accent transition-colors" href="#">Market Reports</a></li>
-                    <li><a class="hover:text-accent transition-colors" href="#">Strategic Intelligence</a></li>
-                    <li><a class="hover:text-accent transition-colors" href="#">Asset Valuation</a></li>
-                </ul>
-            </div>
-            <div class="space-y-4">
-                <h5 class="font-label-lg text-label-lg uppercase tracking-widest text-accent mb-6">Company</h5>
-                <ul class="space-y-3 font-body-md text-body-md">
-                    <li><a class="hover:text-accent transition-colors" href="#">Our Vision</a></li>
-                    <li><a class="hover:text-accent transition-colors" href="#">Elite Partners</a></li>
-                    <li><a class="hover:text-accent transition-colors" href="#">Careers</a></li>
-                    <li><a class="hover:text-accent transition-colors" href="#">Private Office</a></li>
-                </ul>
-            </div>
-            <div class="space-y-4">
-                <h5 class="font-label-lg text-label-lg uppercase tracking-widest text-accent mb-6">Legal</h5>
-                <ul class="space-y-3 font-body-md text-body-md">
-                    <li><a class="hover:text-accent transition-colors" href="#">Privacy Policy</a></li>
-                    <li><a class="hover:text-accent transition-colors" href="#">Terms of Service</a></li>
-                    <li><a class="hover:text-accent transition-colors" href="#">Disclosures</a></li>
-                    <li><a class="hover:text-accent transition-colors" href="#">Market Disclaimers</a></li>
-                </ul>
-            </div>
-        </div>
-        <div class="max-w-container-max-width mx-auto px-margin-desktop mt-12 pt-8 border-t border-white/5 text-center">
-            <p class="font-label-sm text-label-sm opacity-50 uppercase tracking-widest">© 2024 PropAI Luxury Real
-                Estate. Precise Data. Timeless Luxury.</p>
-        </div>
-    </footer>
-    <script>
-        window.addEventListener('scroll', () => {
-            const nav = document.querySelector('nav');
-            const container = nav.querySelector('div');
-            if (window.scrollY > 50) {
-                nav.classList.add('shadow-md');
-                container.classList.add('h-[80px]');
-                container.classList.remove('h-[100px]');
-            } else {
-                nav.classList.remove('shadow-md');
-                container.classList.add('h-[100px]');
-                container.classList.remove('h-[80px]');
-            }
-        });
-    </script>
-</body>
+  </header>
 
+  <!-- Asymmetric Viewport Stage (50/50 Architecture) -->
+  <main class="viewport-stage">
+
+    <!-- LEFT: Editorial Architectural Monograph Plinth -->
+    <section class="hero-plinth-tray">
+      <img 
+        src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=85" 
+        alt="Scandinavian Modernist Coastal Residence" 
+        class="hero-photo-bg"
+      />
+      <div class="hero-photo-overlay"></div>
+
+      <div class="hero-top-docket">
+        <div class="docket-chip">
+          <span class="docket-pulse"></span>
+          <span class="docket-text">Folio Vol. 14 // Escrow Protected</span>
+        </div>
+        <div class="docket-coordinates">14°32'N // Ocean Facing</div>
+      </div>
+
+      <div class="hero-editorial-footer">
+        <div class="hero-eyebrow">
+          <span class="hero-eyebrow-line"></span>
+          <span>Architectural Registry</span>
+        </div>
+        <h2 class="hero-heading">
+          Architecture designed with <em>honesty</em>, timber, and daylight.
+        </h2>
+        <div class="hero-narrative-frame">
+          <p class="hero-body">
+            Every deed is certified with the Registry of Deeds before introduction. Protected under institutional DHSUD bank escrow accounts.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT: The "Double-Bezel" Daylight Plinth Console -->
+    <section class="console-stage">
+      <div class="double-bezel-tray">
+        <div class="plinth-inner-core">
+
+          <div class="core-header-row">
+            <span class="core-telemetry-tag" id="authModeTag">Private Folio Gateway</span>
+            <button type="button" class="mode-switch-btn" id="modeSwitchBtn" onclick="toggleAuthMode()">
+              Use 2FA Prompt →
+            </button>
+          </div>
+
+          <h1 class="core-title" id="authTitle">Sign In</h1>
+          <p class="core-desc" id="authDesc">
+            Enter your credentials to access verified deed archives and escrow settlements.
+          </p>
+
+          <!-- Inline Polite Error Handling -->
+          <div class="error-banner" id="errorBanner">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0; margin-top:2px;">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <span id="errorText">Invalid email or security passphrase. Please check your credentials.</span>
+          </div>
+
+          <!-- =============================================================
+               VIEW A: CORE AUTHENTICATION FORM
+               ============================================================= -->
+          <form class="bespoke-form" id="standardLoginForm" onsubmit="handleStandardLogin(event)">
+            
+            <!-- Identifier Field (Email or Username) -->
+            <div class="field-block">
+              <div class="field-header">
+                <label class="field-caption" for="identifierInput">Email or Username</label>
+              </div>
+              <div class="input-chamber">
+                <input 
+                  type="text" 
+                  id="identifierInput" 
+                  class="input-architectural" 
+                  placeholder="Enter your email or username" 
+                  autocomplete="username"
+                  required 
+                />
+              </div>
+            </div>
+
+            <!-- Password Field with Visibility Toggle & Live Validation -->
+            <div class="field-block">
+              <div class="field-header">
+                <label class="field-caption" for="passwordInput">Password</label>
+                <a href="#" class="field-link" onclick="alert('Password reset link sent to your registered contact.'); return false;">
+                  Forgot Password?
+                </a>
+              </div>
+              <div class="input-chamber">
+                <input 
+                  type="password" 
+                  id="passwordInput" 
+                  class="input-architectural" 
+                  placeholder="••••••••••••" 
+                  autocomplete="current-password"
+                  oninput="handlePasswordInput(this.value)"
+                  required 
+                />
+                <button 
+                  type="button" 
+                  class="eye-trigger" 
+                  id="eyeBtn" 
+                  onclick="togglePasswordVisibility()" 
+                  aria-label="Toggle password visibility"
+                >
+                  <svg id="eyeSvg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+                    <path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" />
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Password Rules & Live Validation Hints -->
+              <div class="password-rules-box" id="passwordRulesBox">
+                <div class="strength-meter-bar">
+                  <div class="meter-segment" id="meter1"></div>
+                  <div class="meter-segment" id="meter2"></div>
+                  <div class="meter-segment" id="meter3"></div>
+                  <div class="meter-segment" id="meter4"></div>
+                  <span class="strength-meter-label" id="strengthLabel">Empty</span>
+                </div>
+                <div class="rules-grid">
+                  <div class="rule-item" id="ruleLength">
+                    <span class="rule-dot"></span>
+                    <span>8+ Characters</span>
+                  </div>
+                  <div class="rule-item" id="ruleMixed">
+                    <span class="rule-dot"></span>
+                    <span>Upper & Lowercase</span>
+                  </div>
+                  <div class="rule-item" id="ruleNumber">
+                    <span class="rule-dot"></span>
+                    <span>At least 1 Number</span>
+                  </div>
+                  <div class="rule-item" id="ruleSymbol">
+                    <span class="rule-dot"></span>
+                    <span>Special Symbol (!@#$)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Remember Me Checkbox -->
+            <label class="checkbox-row">
+              <input type="checkbox" id="rememberCheck" checked />
+              <span class="checkbox-text">Remember me on this browser</span>
+            </label>
+
+            <!-- Submit Button (Button-in-Button) -->
+            <button type="submit" class="btn-island-primary" id="submitBtn">
+              <span id="btnLabel">Sign In to Account</span>
+              <span class="btn-trailing-capsule" id="btnIconCapsule">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                  <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+              </span>
+            </button>
+
+            <!-- Social Login (SSO) Section -->
+            <div class="sso-divider-row">
+              <div class="sso-line"></div>
+              <span class="sso-text">Or sign in with</span>
+            </div>
+
+            <div class="sso-grid">
+              <button type="button" class="sso-btn" onclick="handleSSOLogin('Google')">
+                <svg width="15" height="15" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                </svg>
+                <span>Google</span>
+              </button>
+
+              <button type="button" class="sso-btn" onclick="handleSSOLogin('Apple')">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.85c.66-.8 1.11-1.92.99-3.04-1 .04-2.14.67-2.82 1.47-.6.69-1.12 1.83-1 2.93 1.11.09 2.18-.56 2.83-1.36z" />
+                </svg>
+                <span>Apple</span>
+              </button>
+            </div>
+
+            <!-- Sign-Up Prompt for New Visitors -->
+            <div class="signup-prompt-row">
+              Don't have an account? <a href="#" onclick="alert('Directing to client registration portal.'); return false;">Sign up here</a>
+            </div>
+
+          </form>
+
+
+          <!-- =============================================================
+               VIEW B: TWO-FACTOR AUTHENTICATION (2FA) PROMPT
+               ============================================================= -->
+          <form class="otp-panel" id="otpForm" onsubmit="handle2FASubmit(event)">
+            <p style="font-size:12.5px; color:var(--ink-slate); line-height:1.5; text-align:center;">
+              Enter the 6-digit authorization code dispatched to your registered authenticator or phone ending in <strong style="color:var(--ink-charcoal);">•••• 882</strong>
+            </p>
+
+            <!-- 6 Discrete Auto-Advancing Cells -->
+            <div class="otp-cells-row">
+              <input type="text" class="otp-input-box" maxlength="1" oninput="handleOtpCell(this, 0)" onkeydown="handleOtpKey(event, 0)" autofocus />
+              <input type="text" class="otp-input-box" maxlength="1" oninput="handleOtpCell(this, 1)" onkeydown="handleOtpKey(event, 1)" />
+              <input type="text" class="otp-input-box" maxlength="1" oninput="handleOtpCell(this, 2)" onkeydown="handleOtpKey(event, 2)" />
+              <input type="text" class="otp-input-box" maxlength="1" oninput="handleOtpCell(this, 3)" onkeydown="handleOtpKey(event, 3)" />
+              <input type="text" class="otp-input-box" maxlength="1" oninput="handleOtpCell(this, 4)" onkeydown="handleOtpKey(event, 4)" />
+              <input type="text" class="otp-input-box" maxlength="1" oninput="handleOtpCell(this, 5)" onkeydown="handleOtpKey(event, 5)" />
+            </div>
+
+            <div class="otp-resend-row">
+              <span>Expires: <strong id="otpTimerLabel" style="color:var(--primary);">59s</strong></span>
+              <button type="button" class="otp-resend-link" id="otpResendBtn" onclick="resendOtpCode()" disabled>Resend Code</button>
+            </div>
+
+            <button type="submit" class="btn-island-primary" id="otpSubmitBtn">
+              <span>Confirm Authorization</span>
+              <span class="btn-trailing-capsule">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                  <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+              </span>
+            </button>
+          </form>
+
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    let failedAttempts = 0;
+    let lockoutTimer = 0;
+    let is2FAMode = false;
+    let otpCountdown = 59;
+    let otpInterval = null;
+
+    // Toggle Password Visibility
+    function togglePasswordVisibility() {
+      const passInput = document.getElementById('passwordInput');
+      const eyeSvg = document.getElementById('eyeSvg');
+      const isPassword = passInput.type === 'password';
+
+      passInput.type = isPassword ? 'text' : 'password';
+
+      if (isPassword) {
+        eyeSvg.innerHTML = `
+          <path d="M10.585 10.587a2 2 0 0 0 2.829 2.828" />
+          <path d="M16.681 16.673a8.717 8.717 0 0 1 -4.681 1.327c-3.6 0 -6.6 -2 -9 -6c1.272 -2.12 2.712 -3.678 4.32 -4.674m2.86 -1.146a9.055 9.055 0 0 1 1.82 -.18c3.6 0 6.6 2 9 6c-.666 1.11 -1.379 2.067 -2.138 2.87" />
+          <line x1="3" y1="3" x2="21" y2="21" />
+        `;
+      } else {
+        eyeSvg.innerHTML = `
+          <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+          <path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" />
+        `;
+      }
+    }
+
+    // Password Rules Live Evaluation
+    function handlePasswordInput(value) {
+      const rulesBox = document.getElementById('passwordRulesBox');
+      if (!value) {
+        rulesBox.classList.remove('visible');
+        return;
+      }
+      rulesBox.classList.add('visible');
+
+      const isLen = value.length >= 8;
+      const isMixed = /[A-Z]/.test(value) && /[a-z]/.test(value);
+      const isNum = /\d/.test(value);
+      const isSym = /[!@#$%^&*(),.?":{}|<>]/.test(value);
+
+      document.getElementById('ruleLength').className = 'rule-item ' + (isLen ? 'met' : '');
+      document.getElementById('ruleMixed').className = 'rule-item ' + (isMixed ? 'met' : '');
+      document.getElementById('ruleNumber').className = 'rule-item ' + (isNum ? 'met' : '');
+      document.getElementById('ruleSymbol').className = 'rule-item ' + (isSym ? 'met' : '');
+
+      const score = [isLen, isMixed, isNum, isSym].filter(Boolean).length;
+      const labels = ['Empty', 'Weak', 'Fair', 'Good', 'Strong'];
+      const colors = ['#e1e5df', '#d90429', '#c4683c', '#e09f3e', '#2d6a4f'];
+
+      document.getElementById('strengthLabel').textContent = labels[score];
+      document.getElementById('strengthLabel').style.color = colors[score];
+
+      for (let i = 1; i <= 4; i++) {
+        const seg = document.getElementById('meter' + i);
+        seg.style.backgroundColor = (score >= i) ? colors[score] : 'var(--hairline-birch)';
+      }
+    }
+
+    // Switch between Password form and 2FA Code prompt
+    function toggleAuthMode() {
+      is2FAMode = !is2FAMode;
+      const tag = document.getElementById('authModeTag');
+      const switchBtn = document.getElementById('modeSwitchBtn');
+      const title = document.getElementById('authTitle');
+      const desc = document.getElementById('authDesc');
+      const standardForm = document.getElementById('standardLoginForm');
+      const otpForm = document.getElementById('otpForm');
+      hideError();
+
+      if (is2FAMode) {
+        tag.textContent = 'Two-Factor Challenge';
+        switchBtn.textContent = '← Use Passphrase';
+        title.textContent = 'Security Code';
+        desc.textContent = 'Enter the 6-digit authorization code dispatched to your registered device.';
+        standardForm.style.display = 'none';
+        otpForm.classList.add('active');
+        startOtpCountdown();
+      } else {
+        tag.textContent = 'Private Folio Gateway';
+        switchBtn.textContent = 'Use 2FA Prompt →';
+        title.textContent = 'Sign In';
+        desc.textContent = 'Enter your credentials to access verified deed archives and escrow settlements.';
+        standardForm.style.display = 'flex';
+        otpForm.classList.remove('active');
+        clearInterval(otpInterval);
+      }
+    }
+
+    // Handle Standard Login with Brute-force simulation
+    function handleStandardLogin(e) {
+      e.preventDefault();
+      if (lockoutTimer > 0) return;
+
+      const email = document.getElementById('identifierInput').value;
+      const pass = document.getElementById('passwordInput').value;
+      const btn = document.getElementById('submitBtn');
+      const label = document.getElementById('btnLabel');
+
+      btn.disabled = true;
+      label.textContent = 'Signing In...';
+      hideError();
+
+      setTimeout(() => {
+        btn.disabled = false;
+        label.textContent = 'Sign In to Account';
+
+        // Check demo credentials
+        if (email.includes('error') || pass !== 'Password123!') {
+          failedAttempts++;
+          if (failedAttempts >= 3) {
+            triggerLockout(30);
+          } else {
+            showError(`Invalid email or security passphrase. (${3 - failedAttempts} attempts remaining before temporary lockout)`);
+          }
+        } else {
+          showSuccess('Authenticated successfully. Redirecting to workspace...');
+        }
+      }, 700);
+    }
+
+    // Brute-force Lockout Countdown
+    function triggerLockout(seconds) {
+      lockoutTimer = seconds;
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      showError(`Account security protocol engaged: 3 failed attempts. Cooldown active for ${lockoutTimer}s.`);
+
+      const interval = setInterval(() => {
+        lockoutTimer--;
+        if (lockoutTimer > 0) {
+          showError(`Account security protocol engaged: 3 failed attempts. Cooldown active for ${lockoutTimer}s.`);
+        } else {
+          clearInterval(interval);
+          failedAttempts = 0;
+          btn.disabled = false;
+          hideError();
+        }
+      }, 1000);
+    }
+
+    // 2FA Auto-Advancing Cells
+    function handleOtpCell(input, index) {
+      const val = input.value.replace(/[^0-9]/g, '');
+      input.value = val;
+      const cells = document.querySelectorAll('.otp-input-box');
+      if (val && index < 5) {
+        cells[index + 1].focus();
+      }
+    }
+
+    function handleOtpKey(e, index) {
+      const cells = document.querySelectorAll('.otp-input-box');
+      if (e.key === 'Backspace' && !cells[index].value && index > 0) {
+        cells[index - 1].focus();
+      }
+    }
+
+    function startOtpCountdown() {
+      otpCountdown = 59;
+      const timerLabel = document.getElementById('otpTimerLabel');
+      const resendBtn = document.getElementById('otpResendBtn');
+      resendBtn.disabled = true;
+      resendBtn.style.opacity = '0.5';
+
+      clearInterval(otpInterval);
+      otpInterval = setInterval(() => {
+        otpCountdown--;
+        timerLabel.textContent = otpCountdown + 's';
+        if (otpCountdown <= 0) {
+          clearInterval(otpInterval);
+          resendBtn.disabled = false;
+          resendBtn.style.opacity = '1';
+        }
+      }, 1000);
+    }
+
+    function resendOtpCode() {
+      alert('A new 6-digit authorization code has been dispatched.');
+      startOtpCountdown();
+    }
+
+    function handle2FASubmit(e) {
+      e.preventDefault();
+      const cells = document.querySelectorAll('.otp-input-box');
+      const code = Array.from(cells).map(c => c.value).join('');
+
+      if (code.length < 6) {
+        showError('Please enter the complete 6-digit authorization code.');
+        return;
+      }
+
+      const btn = document.getElementById('otpSubmitBtn');
+      btn.disabled = true;
+      btn.querySelector('span').textContent = 'Confirming...';
+
+      setTimeout(() => {
+        btn.disabled = false;
+        btn.querySelector('span').textContent = 'Confirm Authorization';
+        showSuccess('2FA verified. Minting audited session...');
+      }, 800);
+    }
+
+    function handleSSOLogin(provider) {
+      showError(`${provider} authentication routes through the secure institutional bank gateway.`);
+    }
+
+    function showError(msg) {
+      const banner = document.getElementById('errorBanner');
+      const text = document.getElementById('errorText');
+      text.textContent = msg;
+      banner.style.backgroundColor = 'var(--secondary-subtle)';
+      banner.style.color = 'var(--secondary-hover)';
+      banner.classList.add('active');
+    }
+
+    function showSuccess(msg) {
+      const banner = document.getElementById('errorBanner');
+      const text = document.getElementById('errorText');
+      text.textContent = msg;
+      banner.style.backgroundColor = 'var(--primary-subtle)';
+      banner.style.color = 'var(--status-success)';
+      banner.classList.add('active');
+    }
+
+    function hideError() {
+      const banner = document.getElementById('errorBanner');
+      banner.classList.remove('active');
+    }
+  </script>
+
+</body>
 </html>

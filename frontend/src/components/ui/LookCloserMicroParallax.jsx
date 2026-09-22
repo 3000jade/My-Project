@@ -11,7 +11,7 @@ import {
   IconAdjustmentsHorizontal 
 } from '@tabler/icons-react';
 
-import macroFacadeImg from '../../assets/macro_craftsmanship_facade.jpg';
+import macroFacadeImg from '../../sandbox/assets/macro_craftsmanship_facade.jpg';
 
 export default function LookCloserMicroParallax() {
   const containerRef = useRef(null);

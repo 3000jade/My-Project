@@ -88,7 +88,7 @@ export default function PropertyGalleryMosaic({
         <button
           type="button"
           onClick={() => setActiveLightboxIndex(0)}
-          className="absolute bottom-4 right-4 z-10 px-4 py-2.5 bg-white/95 dark:bg-[#183d3b]/90 hover:bg-white dark:hover:bg-[#183d3b] text-[#183d3b] dark:text-white backdrop-blur-md rounded-2xl text-xs font-bold font-sans uppercase tracking-wider shadow-lg border border-[#e1e5df]/60 flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
+          className="absolute bottom-4 right-4 z-10 px-4 py-2.5 bg-white/95 dark:bg-[#183d3b]/90 hover:bg-white dark:hover:bg-[#183d3b] text-[#183d3b] dark:text-white backdrop-blur-md rounded-xl text-xs font-bold font-sans uppercase tracking-wider shadow-lg border border-[#e1e5df]/60 flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
         >
           <span className="material-symbols-outlined text-[18px]">photo_library</span>
           View All Photos ({photoList.length})
@@ -123,7 +123,7 @@ export default function PropertyGalleryMosaic({
               </button>
 
               {/* Photo Counter Tag in Geist Mono */}
-              <div className="absolute top-4 left-4 z-50 px-3 py-1.5 rounded-full bg-gray-100/90 backdrop-blur-md text-gray-800 text-xs font-mono font-semibold border border-gray-200 shadow-sm">
+              <div className="absolute top-4 left-4 z-50 px-3 py-1.5 rounded-lg bg-white/95 backdrop-blur-md text-gray-800 text-xs font-mono font-semibold border border-gray-200 shadow-sm">
                 {activeLightboxIndex + 1} / {photoList.length}
               </div>
 

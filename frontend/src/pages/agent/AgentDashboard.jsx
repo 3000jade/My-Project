@@ -1,33 +1,50 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import MetricCard from '../../components/dashboard/MetricCard';
 import StatusBadge from '../../components/dashboard/StatusBadge';
 import PageHeader from '../../components/dashboard/PageHeader';
-import { mockProperties } from '../../mockData/mockProperties';
-import { mockInquiries } from '../../mockData/mockInquiries';
-import { mockAppointments } from '../../mockData/mockAppointments';
-import { mockSales } from '../../mockData/mockSales';
-import { mockActivity } from '../../mockData/mockActivity';
+import { dashboardService, computeAgentFallback } from '../../services/dashboardService';
 
 export default function AgentDashboard() {
-  // Current agent properties and records
-  const agentProperties = mockProperties.filter(p => p.agent_id === 'agent-1');
-  const agentInquiries = mockInquiries.filter(i => i.agent_id === 'agent-1');
-  const agentAppointments = mockAppointments.filter(a => a.agent_id === 'agent-1');
-  const agentSales = mockSales.filter(s => s.agent_id === 'agent-1');
+  const [data, setData] = useState(() => computeAgentFallback('agent-1'));
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Metrics computation
-  const totalProperties = agentProperties.length;
-  const availableProperties = agentProperties.filter(p => p.status === 'AVAILABLE').length;
-  const reservedProperties = agentProperties.filter(p => p.status === 'RESERVED').length;
-  const soldProperties = agentProperties.filter(p => p.status === 'SOLD').length;
-  const newInquiries = agentInquiries.filter(i => i.status === 'NEW').length;
-  const unresolvedInquiries = agentInquiries.filter(i => i.status === 'NEW' || i.status === 'ASSIGNED' || i.status === 'REOPENED').length;
-  const upcomingAppointments = agentAppointments.filter(a => a.status === 'REQUESTED' || a.status === 'CONFIRMED').length;
+  const loadDashboard = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const summary = await dashboardService.getDashboardSummary({
+        role: 'agent',
+        agentId: 'agent-1',
+      });
+      setData(summary);
+    } catch (err) {
+      console.error('[AgentDashboard] load failed:', err);
+      setError('Unable to fetch live agent dashboard metrics. Displaying offline snapshot.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const totalRecordedSalesValue = agentSales
-    .filter(s => s.status === 'COMPLETED')
-    .reduce((sum, s) => sum + s.property_value, 0);
+  useEffect(() => {
+    loadDashboard();
+  }, [loadDashboard]);
+
+  const metrics = data?.metrics || {};
+  const agentAppointments = data?.agentAppointments || [];
+  const agentInquiries = data?.agentInquiries || [];
+  const agentSales = data?.agentSales || [];
+  const recentActivity = data?.recentActivity || [];
+
+  const totalProperties = metrics.totalProperties || 0;
+  const availableProperties = metrics.availableProperties || 0;
+  const reservedProperties = metrics.reservedProperties || 0;
+  const soldProperties = metrics.soldProperties || 0;
+  const newInquiries = metrics.newInquiries || 0;
+  const unresolvedInquiries = metrics.unresolvedInquiries || 0;
+  const upcomingAppointments = metrics.upcomingAppointments || 0;
+  const totalRecordedSalesValue = metrics.totalRecordedSalesValue || 0;
 
   return (
     <div className="space-y-8">
@@ -35,15 +52,42 @@ export default function AgentDashboard() {
         title="Agent Overview"
         subtitle="Track assigned property listings, client inquiries, viewing appointments, and sales milestones."
         actions={
-          <Link
-            to="/agent/properties/create"
-            className="h-[46px] px-5 bg-[#266F71] hover:bg-[#174849] text-white rounded-xl text-xs font-bold font-sans uppercase tracking-wider flex items-center gap-2 shadow-sm transition-all"
-          >
-            <span className="material-symbols-outlined text-[18px]">add</span>
-            Create Property
-          </Link>
+          <div className="flex items-center flex-wrap gap-2.5">
+            <button
+              onClick={loadDashboard}
+              disabled={loading}
+              className="h-[46px] px-4 bg-white hover:bg-gray-50 text-[#174849] border border-gray-200 rounded-xl text-xs font-bold font-sans uppercase tracking-wider flex items-center gap-2 transition-all shadow-xs cursor-pointer disabled:opacity-60"
+            >
+              <span className={`material-symbols-outlined text-[18px] ${loading ? 'animate-spin' : ''}`}>
+                refresh
+              </span>
+              <span>Refresh</span>
+            </button>
+            <Link
+              to="/agent/properties/create"
+              className="h-[46px] px-5 bg-[#266F71] hover:bg-[#174849] text-white rounded-xl text-xs font-bold font-sans uppercase tracking-wider flex items-center gap-2 shadow-sm transition-all"
+            >
+              <span className="material-symbols-outlined text-[18px]">add</span>
+              Create Property
+            </Link>
+          </div>
         }
       />
+
+      {error && (
+        <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-center justify-between text-amber-800 font-sans text-sm">
+          <div className="flex items-center gap-3">
+            <span className="material-symbols-outlined text-amber-600">warning</span>
+            <span>{error}</span>
+          </div>
+          <button
+            onClick={loadDashboard}
+            className="px-3 py-1 bg-amber-600 text-white text-xs font-bold uppercase rounded-lg tracking-wider hover:bg-amber-700 cursor-pointer"
+          >
+            Retry
+          </button>
+        </div>
+      )}
 
       {/* 1. Summary Metric Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4">
@@ -112,7 +156,7 @@ export default function AgentDashboard() {
                 Total Closed Value
               </p>
               <p className="text-xl font-display font-bold text-[#174849]">
-                ₱{(totalRecordedSalesValue / 1000000).toFixed(1)}M
+                {`₱${(totalRecordedSalesValue / 1000000).toFixed(1)}M`}
               </p>
             </div>
             <div className="w-[1px] h-8 bg-gray-300" />
@@ -121,7 +165,7 @@ export default function AgentDashboard() {
                 Recorded Sales Count
               </p>
               <p className="text-xl font-display font-bold text-[#266F71]">
-                {agentSales.length} Deals
+                {`${agentSales.length} Deals`}
               </p>
             </div>
           </div>
@@ -146,7 +190,7 @@ export default function AgentDashboard() {
                   <td className="py-3 text-gray-600">{sale.client_name}</td>
                   <td className="py-3 text-gray-500">{sale.sale_date}</td>
                   <td className="py-3 font-bold text-[#266F71]">
-                    ₱{sale.property_value.toLocaleString()}
+                    {`₱${(sale.property_value || 0).toLocaleString()}`}
                   </td>
                   <td className="py-3">
                     <StatusBadge status={sale.status} />
@@ -253,7 +297,7 @@ export default function AgentDashboard() {
                   <StatusBadge status={inq.status} />
                 </div>
                 <p className="text-xs text-gray-500 font-sans line-clamp-1 mt-1.5">
-                  "{inq.last_message}"
+                  "{inq.last_message || inq.message}"
                 </p>
                 <span className="text-[10px] text-gray-400 mt-1 block">
                   {inq.created_at}
@@ -270,7 +314,7 @@ export default function AgentDashboard() {
           Recent Activity Timeline
         </h3>
         <div className="space-y-4">
-          {mockActivity.slice(0, 5).map((act) => (
+          {recentActivity.map((act) => (
             <div key={act.id} className="flex items-start gap-3.5 text-sm font-sans">
               <div className="w-8 h-8 rounded-full bg-[#266F71]/10 text-[#266F71] flex items-center justify-center shrink-0 mt-0.5">
                 <span className="material-symbols-outlined text-[18px]">{act.icon}</span>

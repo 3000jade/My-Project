@@ -8,6 +8,9 @@ import agentRoutes from './agent.routes';
 import appointmentRoutes from './appointment.routes';
 import chatRoutes from './chat.routes';
 import profileRoutes from './profile.routes';
+import notificationRoutes from './notification.routes';
+import saleRoutes from './sale.routes';
+import dashboardRoutes from './dashboard.routes';
 
 const router = Router();
 
@@ -21,5 +24,8 @@ router.use('/agents', agentRoutes);
 router.use('/appointments', appointmentRoutes);
 router.use('/chat', chatRoutes);
 router.use('/profile', profileRoutes);
+router.use('/notifications', notificationRoutes);
+router.use('/sales', saleRoutes);
+router.use('/dashboard', dashboardRoutes);
 
 export default router;

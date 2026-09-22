@@ -10,9 +10,9 @@ import {
   IconCheck
 } from '@tabler/icons-react';
 
-import villaTwilight from '../../assets/cinematic_duplex_twilight.jpg';
-import penthouseInterior from '../../assets/cinematic_interior_penthouse.jpg';
-import coastalVilla from '../../assets/luxury_modern_villa.jpg';
+import villaTwilight from '../../sandbox/assets/cinematic_duplex_twilight.jpg';
+import penthouseInterior from '../../sandbox/assets/cinematic_interior_penthouse.jpg';
+import coastalVilla from '../../sandbox/assets/luxury_modern_villa.jpg';
 
 const properties = [
   {

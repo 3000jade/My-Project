@@ -69,63 +69,68 @@ export default function PropertyListingView() {
 
   return (
     <div className="min-h-screen bg-white text-[#1c2224] pb-24 pt-24 font-sans antialiased">
-      {/* Toast Notification Banner - Clean White Theme */}
+      {/* Toast Notification Banner - Editorial Card */}
       {toastMessage && (
-        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[300] bg-white text-[#183d3b] px-6 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 border border-[#e1e5df] transition-all animate-bounce">
-          <span className="material-symbols-outlined text-[#c4683c]">verified</span>
-          <span className="text-xs font-bold tracking-wide font-sans">{toastMessage}</span>
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[300] bg-white text-[#183d3b] px-6 py-3.5 rounded-xl shadow-xl flex items-center gap-3 border border-[#e1e5df] transition-all">
+          <span className="material-symbols-outlined text-[#c4683c] text-[20px]">verified</span>
+          <span className="text-xs font-semibold tracking-wide font-sans">{toastMessage}</span>
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         {/* Breadcrumb Navigation Strip */}
-        <nav className="flex items-center gap-2 text-xs text-[#5f6b6f] overflow-x-auto whitespace-nowrap py-1 font-sans">
-          <Link to="/" className="hover:text-[#c4683c] transition-colors">Home</Link>
+        <nav className="flex items-center gap-2 text-xs text-[#7a868a] overflow-x-auto whitespace-nowrap py-1 font-sans">
+          <Link to="/" className="hover:text-[#183d3b] transition-colors">Home</Link>
           <span className="text-[#c2c9bf]">/</span>
-          <Link to="/properties" className="hover:text-[#c4683c] transition-colors">Properties</Link>
+          <Link to="/properties" className="hover:text-[#183d3b] transition-colors">Properties</Link>
           <span className="text-[#c2c9bf]">/</span>
           <span>{property.city || 'Pasig City'}</span>
           <span className="text-[#c2c9bf]">/</span>
           <span>{property.barangay || 'Rosario'}</span>
           <span className="text-[#c2c9bf]">/</span>
-          <span className="text-[#183d3b] font-semibold truncate max-w-xs">
+          <span className="text-[#183d3b] font-medium truncate max-w-xs">
             {property.development || 'Urban Deca Homes Ortigas'}
           </span>
         </nav>
 
-        {/* SECTION 1: LISTING IDENTIFICATION & STATUS HEADER */}
-        <div className="bg-white border border-[#e1e5df] rounded-3xl p-6 md:p-8 shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-4 pb-5 border-b border-[#e1e5df]">
-            {/* Status Chips with Scandinavian Soft Functionalism Accents */}
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="px-3.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider font-sans bg-[#183d3b]/10 text-[#183d3b] border border-[#183d3b]/20">
-                {property.status || 'For Sale'}
-              </span>
-              <span className="px-3.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider font-sans bg-[#c4683c]/10 text-[#c4683c] border border-[#c4683c]/20">
+        {/* SECTION 1: EDITORIAL HEADER & ARCHITECTURAL CADASTRE */}
+        <div className="border-b border-[#e1e5df] pb-8">
+          {/* Architectural Cadastre Metadata Strip (Replaces generic pill chips) */}
+          <div className="flex flex-wrap items-center justify-between gap-4 pb-4">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-sans">
+              <div className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#183d3b]"></span>
+                <span className="font-bold uppercase tracking-[0.16em] text-[#183d3b] text-[11px]">
+                  {property.status || 'For Sale'}
+                </span>
+              </div>
+              <span className="text-[#c2c9bf]">|</span>
+              <span className="font-semibold uppercase tracking-wider text-[#1c2224] text-[11px]">
                 {property.unit_status || 'New'}
               </span>
-              <span className="px-3.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider font-sans bg-[#ecefe9] text-[#1c2224] border border-[#e1e5df]">
+              <span className="text-[#c2c9bf]">|</span>
+              <span className="font-medium text-[#5f6b6f] text-[11px]">
                 {property.property_type || 'Residential Condominium'}
               </span>
-              <span className="px-3.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider font-sans bg-[#fcf1eb] text-[#c4683c] border border-[#c4683c]/20">
+              <span className="text-[#c2c9bf]">|</span>
+              <span className="text-[#c4683c] font-semibold text-[11px]">
                 {property.tenure || 'Perpetual Ownership (Freehold)'}
               </span>
             </div>
 
-            {/* Listing ID & MLS Reference Strip (Geist Mono Telemetry) */}
-            <div className="flex items-center gap-3 text-xs font-mono">
-              <div className="flex items-center gap-1.5 bg-[#ecefe9] px-3 py-1.5 rounded-xl border border-[#e1e5df]">
-                <span className="text-[#7a868a]">ID:</span>
-                <span className="font-semibold text-[#1c2224]">{property.id}</span>
-              </div>
-
-              <div className="flex items-center gap-1.5 bg-[#fcf1eb] px-3 py-1.5 rounded-xl border border-[#c4683c]/30">
-                <span className="text-[#c4683c] font-semibold">Ref:</span>
-                <span className="font-extrabold text-[#c4683c]">{property.ref_code || 'MLSPH91M99LRH7'}</span>
+            {/* Cadastral Reference & Telemetry */}
+            <div className="flex items-center gap-3 text-xs font-mono text-[#5f6b6f]">
+              <span className="text-[#7a868a]">
+                ID: <span className="font-semibold text-[#1c2224]">{property.id}</span>
+              </span>
+              <span className="text-[#c2c9bf]">|</span>
+              <div className="flex items-center gap-1 text-[#183d3b]">
+                <span className="text-[#7a868a]">REF:</span>
+                <span className="font-bold tracking-wider">{property.ref_code || 'MLSPH91M99LRH7'}</span>
                 <button
                   type="button"
                   onClick={handleCopyRef}
-                  className="ml-1 text-[#c4683c] hover:text-[#b0572d] hover:scale-110 transition-transform"
+                  className="ml-1 text-[#7a868a] hover:text-[#183d3b] hover:scale-110 transition-transform"
                   title="Copy Reference Code"
                 >
                   <span className="material-symbols-outlined text-[15px]">
@@ -136,14 +141,15 @@ export default function PropertyListingView() {
             </div>
           </div>
 
-          {/* Title & Geographic Subhead in Fraunces / Satoshi */}
-          <div className="mt-5">
-            <h1 className="font-display text-2xl sm:text-3xl lg:text-4xl font-normal text-[#183d3b] leading-[1.2] tracking-tight">
+          {/* Title & Geographic Subhead */}
+          <div className="mt-3">
+            <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl font-light text-[#183d3b] leading-[1.15] tracking-tight">
               {property.title}
             </h1>
-            <p className="flex items-center gap-1.5 text-xs sm:text-sm text-[#5f6b6f] mt-2.5 font-sans">
+            <p className="flex items-center gap-2 text-xs sm:text-sm text-[#5f6b6f] mt-3 font-sans">
               <span className="material-symbols-outlined text-[#c4683c] text-[18px]">location_on</span>
-              <span className="font-medium text-[#1c2224]">{property.development || 'Urban Deca Homes Ortigas'}</span> •{' '}
+              <span className="font-semibold text-[#1c2224]">{property.development || 'Urban Deca Homes Ortigas'}</span>
+              <span className="text-[#c2c9bf]">•</span>
               <span>{property.thoroughfare || 'Ortigas Avenue Extension'}</span>,{' '}
               <span>{property.barangay || 'Rosario'}</span>,{' '}
               <span>{property.city || 'Pasig City'}</span>,{' '}
@@ -158,46 +164,62 @@ export default function PropertyListingView() {
           title={property.title}
         />
 
+        {/* SECTION 3: KEY METRICS - ARCHITECTURAL LEDGER STRIP (Replaces generic pill/icon boxes) */}
+        <div className="bg-white border border-[#e1e5df] rounded-2xl p-6 shadow-sm">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 divide-y sm:divide-y-0 sm:divide-x divide-[#e1e5df]">
+            <div className="px-4 py-2 first:pl-0">
+              <p className="text-[10px] uppercase tracking-[0.16em] font-bold text-[#7a868a] font-sans">Bedrooms</p>
+              <p className="font-display text-3xl font-light text-[#183d3b] mt-1">{property.bedrooms || 2}</p>
+            </div>
+
+            <div className="px-4 py-2">
+              <p className="text-[10px] uppercase tracking-[0.16em] font-bold text-[#7a868a] font-sans">Bathrooms</p>
+              <p className="font-display text-3xl font-light text-[#183d3b] mt-1">{property.bathrooms || 1}</p>
+            </div>
+
+            <div className="px-4 py-2">
+              <p className="text-[10px] uppercase tracking-[0.16em] font-bold text-[#7a868a] font-sans">Floor Area</p>
+              <p className="font-display text-3xl font-light text-[#183d3b] mt-1">{property.sqm || '30.60 sqm'}</p>
+            </div>
+
+            <div className="px-4 py-2">
+              <p className="text-[10px] uppercase tracking-[0.16em] font-bold text-[#7a868a] font-sans">Floor Level</p>
+              <p className="font-display text-3xl font-light text-[#183d3b] mt-1">{property.floor_level || '6th Floor'}</p>
+            </div>
+
+            <div className="px-4 py-2">
+              <p className="text-[10px] uppercase tracking-[0.16em] font-bold text-[#7a868a] font-sans">Furnishing</p>
+              <p className="font-display text-3xl font-light text-[#183d3b] mt-1">{property.furnishing || 'Bare'}</p>
+            </div>
+
+            <div className="px-4 py-2 last:pr-0">
+              <p className="text-[10px] uppercase tracking-[0.16em] font-bold text-[#7a868a] font-sans">Year Built</p>
+              <p className="font-display text-3xl font-light text-[#183d3b] mt-1">{property.year_built || 2023}</p>
+            </div>
+          </div>
+        </div>
+
         {/* MAIN BODY: 2-COLUMN SPLIT */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* LEFT CONTENT COLUMN (65% width / 8 cols) */}
           <div className="lg:col-span-8 space-y-8">
-            {/* SECTION 3: KEY METRICS PILL BAR */}
-            <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 bg-white border border-[#e1e5df] rounded-3xl p-4 md:p-6 shadow-sm">
-              <div className="text-center p-3 rounded-2xl bg-[#ecefe9]/60">
-                <span className="material-symbols-outlined text-[#183d3b] text-xl">bed</span>
-                <p className="font-display text-lg font-medium text-[#183d3b] mt-0.5">{property.bedrooms || 2}</p>
-                <p className="text-[10px] text-[#7a868a] uppercase tracking-wider font-bold font-sans">Bedrooms</p>
-              </div>
-
-              <div className="text-center p-3 rounded-2xl bg-[#ecefe9]/60">
-                <span className="material-symbols-outlined text-[#183d3b] text-xl">bathtub</span>
-                <p className="font-display text-lg font-medium text-[#183d3b] mt-0.5">{property.bathrooms || 1}</p>
-                <p className="text-[10px] text-[#7a868a] uppercase tracking-wider font-bold font-sans">Bathroom</p>
-              </div>
-
-              <div className="text-center p-3 rounded-2xl bg-[#ecefe9]/60">
-                <span className="material-symbols-outlined text-[#183d3b] text-xl">square_foot</span>
-                <p className="font-display text-lg font-medium text-[#183d3b] mt-0.5">{property.sqm || '30.60 sqm'}</p>
-                <p className="text-[10px] text-[#7a868a] uppercase tracking-wider font-bold font-sans">Floor Area</p>
-              </div>
-
-              <div className="text-center p-3 rounded-2xl bg-[#ecefe9]/60">
-                <span className="material-symbols-outlined text-[#183d3b] text-xl">stairs</span>
-                <p className="font-display text-lg font-medium text-[#183d3b] mt-0.5">{property.floor_level || '6th Floor'}</p>
-                <p className="text-[10px] text-[#7a868a] uppercase tracking-wider font-bold font-sans">Floor Level</p>
-              </div>
-
-              <div className="text-center p-3 rounded-2xl bg-[#ecefe9]/60">
-                <span className="material-symbols-outlined text-[#183d3b] text-xl">chair</span>
-                <p className="font-display text-lg font-medium text-[#183d3b] mt-0.5">{property.furnishing || 'Bare'}</p>
-                <p className="text-[10px] text-[#7a868a] uppercase tracking-wider font-bold font-sans">Furnishing</p>
-              </div>
-
-              <div className="text-center p-3 rounded-2xl bg-[#ecefe9]/60">
-                <span className="material-symbols-outlined text-[#183d3b] text-xl">calendar_today</span>
-                <p className="font-display text-lg font-medium text-[#183d3b] mt-0.5">{property.year_built || 2023}</p>
-                <p className="text-[10px] text-[#7a868a] uppercase tracking-wider font-bold font-sans">Year Built</p>
+            {/* SECTION 1.5: THE BROKER'S NOTE (Why This Property) */}
+            <div className="bg-[#f9f9f7] border border-[#e1e5df] rounded-2xl p-6 md:p-8 shadow-sm">
+              <h2 className="font-serif text-2xl font-normal text-[#183d3b] mb-4 flex items-center gap-3">
+                <span className="material-symbols-outlined text-[#c4683c]">format_quote</span>
+                Why This Property
+              </h2>
+              <p className="text-sm md:text-base text-gray-600 font-sans leading-relaxed italic">
+                {property.broker_note || "This residence represents a rare intersection of architectural intent and location. We specifically selected this unit for its commanding, unobstructed views and the pristine condition of its bespoke interiors. It's an exceptional asset for both end-use and long-term equity holding."}
+              </p>
+              <div className="mt-6 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 border border-[#e1e5df]">
+                  <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=100&auto=format&fit=crop" alt="Broker" className="w-full h-full object-cover" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-[#0f1722] uppercase tracking-wider">{property.agent?.name || 'Marcus Reyes'}</div>
+                  <div className="text-[10px] text-gray-500 font-medium uppercase tracking-widest">Principal Broker</div>
+                </div>
               </div>
             </div>
 
@@ -208,58 +230,85 @@ export default function PropertyListingView() {
               startingAmortization={property.monthly_amortization || 'Starting at PHP 15,000 / month'}
             />
 
-            {/* SECTION 3: DETAILED SPECIFICATIONS TABLE */}
-            <div className="bg-white border border-[#e1e5df] rounded-3xl p-6 md:p-8 shadow-sm">
+            {/* SECTION 3: DETAILED SPECIFICATIONS MATRIX */}
+            <div className="bg-white border border-[#e1e5df] rounded-2xl p-6 md:p-8 shadow-sm">
               <h2 className="font-display text-xl font-normal text-[#183d3b] mb-6 flex items-center gap-2.5">
-                <span className="material-symbols-outlined text-[#c4683c]">tune</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-[#c4683c]"></span>
                 Unit & Space Specifications
               </h2>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs font-sans">
-                <div className="flex items-center justify-between p-4 rounded-2xl bg-[#ecefe9]/50 border border-[#e1e5df]/60">
-                  <span className="text-[#5f6b6f] font-medium">Property Type</span>
-                  <span className="font-bold text-[#183d3b]">{property.property_type || 'Residential Condominium'}</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-sans">
+                <div className="flex items-center justify-between py-3 border-b border-[#e1e5df]/80">
+                  <span className="text-[#7a868a] font-medium flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[16px]">apartment</span>
+                    Property Type
+                  </span>
+                  <span className="font-semibold text-[#1c2224]">{property.property_type || 'Residential Condominium'}</span>
                 </div>
 
-                <div className="flex items-center justify-between p-4 rounded-2xl bg-[#ecefe9]/50 border border-[#e1e5df]/60">
-                  <span className="text-[#5f6b6f] font-medium">Floor Area</span>
-                  <span className="font-bold font-mono text-[#183d3b]">{property.sqm || '30.60 sqm'}</span>
+                <div className="flex items-center justify-between py-3 border-b border-[#e1e5df]/80">
+                  <span className="text-[#7a868a] font-medium flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[16px]">square_foot</span>
+                    Floor Area
+                  </span>
+                  <span className="font-semibold font-mono text-[#1c2224]">{property.sqm || '30.60 sqm'}</span>
                 </div>
 
-                <div className="flex items-center justify-between p-4 rounded-2xl bg-[#ecefe9]/50 border border-[#e1e5df]/60">
-                  <span className="text-[#5f6b6f] font-medium">Bedrooms</span>
-                  <span className="font-bold text-[#183d3b]">{property.bedrooms || 2} Bedrooms</span>
+                <div className="flex items-center justify-between py-3 border-b border-[#e1e5df]/80">
+                  <span className="text-[#7a868a] font-medium flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[16px]">bed</span>
+                    Bedrooms
+                  </span>
+                  <span className="font-semibold text-[#1c2224]">{property.bedrooms || 2} Bedrooms</span>
                 </div>
 
-                <div className="flex items-center justify-between p-4 rounded-2xl bg-[#ecefe9]/50 border border-[#e1e5df]/60">
-                  <span className="text-[#5f6b6f] font-medium">Bathrooms</span>
-                  <span className="font-bold text-[#183d3b]">{property.bathrooms || 1} Bathroom</span>
+                <div className="flex items-center justify-between py-3 border-b border-[#e1e5df]/80">
+                  <span className="text-[#7a868a] font-medium flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[16px]">shower</span>
+                    Bathrooms
+                  </span>
+                  <span className="font-semibold text-[#1c2224]">{property.bathrooms || 1} Bathroom</span>
                 </div>
 
-                <div className="flex items-center justify-between p-4 rounded-2xl bg-[#ecefe9]/50 border border-[#e1e5df]/60">
-                  <span className="text-[#5f6b6f] font-medium">Floor Level</span>
-                  <span className="font-bold text-[#183d3b]">{property.floor_level || '6th Floor'}</span>
+                <div className="flex items-center justify-between py-3 border-b border-[#e1e5df]/80">
+                  <span className="text-[#7a868a] font-medium flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[16px]">layers</span>
+                    Floor Level
+                  </span>
+                  <span className="font-semibold text-[#1c2224]">{property.floor_level || '6th Floor'}</span>
                 </div>
 
-                <div className="flex items-center justify-between p-4 rounded-2xl bg-[#ecefe9]/50 border border-[#e1e5df]/60">
-                  <span className="text-[#5f6b6f] font-medium">Furnishing</span>
-                  <span className="font-bold text-[#183d3b]">{property.furnishing || 'Bare'}</span>
+                <div className="flex items-center justify-between py-3 border-b border-[#e1e5df]/80">
+                  <span className="text-[#7a868a] font-medium flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[16px]">chair</span>
+                    Furnishing
+                  </span>
+                  <span className="font-semibold text-[#1c2224]">{property.furnishing || 'Bare'}</span>
                 </div>
 
-                <div className="flex items-center justify-between p-4 rounded-2xl bg-[#ecefe9]/50 border border-[#e1e5df]/60">
-                  <span className="text-[#5f6b6f] font-medium">Year Built</span>
-                  <span className="font-bold font-mono text-[#183d3b]">{property.year_built || 2023}</span>
+                <div className="flex items-center justify-between py-3 border-b border-[#e1e5df]/80">
+                  <span className="text-[#7a868a] font-medium flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[16px]">construction</span>
+                    Year Built
+                  </span>
+                  <span className="font-semibold font-mono text-[#1c2224]">{property.year_built || 2023}</span>
                 </div>
 
-                <div className="flex items-center justify-between p-4 rounded-2xl bg-[#ecefe9]/50 border border-[#e1e5df]/60">
-                  <span className="text-[#5f6b6f] font-medium">Tenure</span>
-                  <span className="font-bold text-[#183d3b]">{property.tenure || 'Perpetual Ownership (Freehold)'}</span>
+                <div className="flex items-center justify-between py-3 border-b border-[#e1e5df]/80">
+                  <span className="text-[#7a868a] font-medium flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[16px]">gavel</span>
+                    Tenure
+                  </span>
+                  <span className="font-semibold text-[#1c2224]">{property.tenure || 'Perpetual Ownership (Freehold)'}</span>
                 </div>
 
-                <div className="flex items-center justify-between p-4 rounded-2xl bg-[#ecefe9]/50 border border-[#e1e5df]/60 sm:col-span-2">
-                  <span className="text-[#5f6b6f] font-medium">Terrain & Drainage</span>
-                  <span className="font-bold text-[#2d6a4f] flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-[16px]">verified</span>
+                <div className="flex items-center justify-between py-3 border-b border-[#e1e5df]/80 sm:col-span-2">
+                  <span className="text-[#7a868a] font-medium flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[16px]">landscape</span>
+                    Terrain & Drainage
+                  </span>
+                  <span className="font-semibold text-[#2d6a4f] flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#2d6a4f]"></span>
                     {property.terrain || 'Flood-Free Area'}
                   </span>
                 </div>
@@ -267,9 +316,9 @@ export default function PropertyListingView() {
             </div>
 
             {/* SECTION 4: GEOGRAPHIC LOCATION & VICINITY */}
-            <div className="bg-white border border-[#e1e5df] rounded-3xl p-6 md:p-8 shadow-sm">
+            <div className="bg-white border border-[#e1e5df] rounded-2xl p-6 md:p-8 shadow-sm">
               <h2 className="font-display text-xl font-normal text-[#183d3b] mb-4 flex items-center gap-2.5">
-                <span className="material-symbols-outlined text-[#c4683c]">map</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-[#c4683c]"></span>
                 Geographic Location & Neighborhood
               </h2>
 
@@ -279,19 +328,19 @@ export default function PropertyListingView() {
                 <strong className="text-[#183d3b] font-semibold">{property.barangay || 'Rosario'}</strong>, <strong className="text-[#183d3b] font-semibold">{property.city || 'Pasig City'}</strong>. The development provides rapid arterial access to the Ortigas Central Business District, Eastwood City, Bridgetowne Destination Estate, and the C-5 transit corridor.
               </p>
 
-              {/* Geographic Cadastral Pin Card - White Theme */}
-              <div className="relative rounded-2xl overflow-hidden bg-white text-[#1c2224] p-6 border border-[#e1e5df] shadow-sm">
+              {/* Geographic Cadastral Pin Card */}
+              <div className="rounded-xl bg-[#fafafa] text-[#1c2224] p-6 border border-[#e1e5df]">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-[#c4683c] font-mono">Cadastral Pin</span>
-                    <h3 className="font-display text-lg font-medium mt-1 text-[#183d3b]">{property.development || 'Urban Deca Homes Ortigas'}</h3>
-                    <p className="text-xs text-[#5f6b6f] mt-1 font-sans">Ortigas Avenue Extension, Rosario, Pasig City</p>
+                    <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#c4683c] font-mono">Cadastral Pin</span>
+                    <h3 className="font-display text-lg font-normal mt-1 text-[#183d3b]">{property.development || 'Urban Deca Homes Ortigas'}</h3>
+                    <p className="text-xs text-[#7a868a] mt-1 font-sans">Ortigas Avenue Extension, Rosario, Pasig City</p>
                   </div>
                   <a
                     href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('Urban Deca Homes Ortigas, Ortigas Avenue Extension, Rosario, Pasig City')}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="h-[54px] px-6 rounded-xl bg-[#183d3b] text-white text-xs font-bold font-sans uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-[#122e2c] transition-all shadow-md active:scale-95"
+                    className="h-[54px] px-6 rounded-xl bg-[#183d3b] text-white text-xs font-bold font-sans uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-[#122e2c] transition-all shadow-sm active:scale-95"
                   >
                     <span className="material-symbols-outlined text-[18px]">open_in_new</span>
                     Open in Google Maps
@@ -301,71 +350,41 @@ export default function PropertyListingView() {
             </div>
 
             {/* SECTION 5: AMENITIES & COMMUNITY POLICIES */}
-            <div className="bg-white border border-[#e1e5df] rounded-3xl p-6 md:p-8 shadow-sm">
+            <div className="bg-white border border-[#e1e5df] rounded-2xl p-6 md:p-8 shadow-sm">
               <h2 className="font-display text-xl font-normal text-[#183d3b] mb-6 flex items-center gap-2.5">
-                <span className="material-symbols-outlined text-[#c4683c]">verified_user</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-[#c4683c]"></span>
                 Amenities & Building Policies
               </h2>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5 font-sans">
-                <div className="p-4 rounded-2xl bg-[#ecefe9]/50 border border-[#e1e5df]/60 flex items-center gap-3.5">
-                  <div className="w-10 h-10 rounded-full bg-[#183d3b]/10 flex items-center justify-center shrink-0">
-                    <span className="material-symbols-outlined text-[#183d3b] text-xl">shield</span>
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-[#183d3b]">{property.security || '24/7 Gated Security'}</p>
-                    <p className="text-[11px] text-[#7a868a]">CCTV & roving guards</p>
-                  </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 font-sans">
+                <div className="p-4 rounded-xl border border-[#e1e5df] bg-[#fafafa]">
+                  <p className="text-xs font-bold text-[#183d3b]">{property.security || '24/7 Gated Security'}</p>
+                  <p className="text-[11px] text-[#7a868a] mt-0.5">CCTV & roving guards</p>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-[#ecefe9]/50 border border-[#e1e5df]/60 flex items-center gap-3.5">
-                  <div className="w-10 h-10 rounded-full bg-[#c4683c]/10 flex items-center justify-center shrink-0">
-                    <span className="material-symbols-outlined text-[#c4683c] text-xl">pets</span>
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-[#183d3b]">{property.pet_policy || 'Pet-Friendly'}</p>
-                    <p className="text-[11px] text-[#7a868a]">Pets allowed in building</p>
-                  </div>
+                <div className="p-4 rounded-xl border border-[#e1e5df] bg-[#fafafa]">
+                  <p className="text-xs font-bold text-[#183d3b]">{property.pet_policy || 'Pet-Friendly'}</p>
+                  <p className="text-[11px] text-[#7a868a] mt-0.5">Pets allowed in building</p>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-[#ecefe9]/50 border border-[#e1e5df]/60 flex items-center gap-3.5">
-                  <div className="w-10 h-10 rounded-full bg-[#183d3b]/10 flex items-center justify-center shrink-0">
-                    <span className="material-symbols-outlined text-[#183d3b] text-xl">real_estate_agent</span>
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-[#183d3b]">{property.tenure || 'Perpetual Ownership (Freehold)'}</p>
-                    <p className="text-[11px] text-[#7a868a]">Lifetime condominium title</p>
-                  </div>
+                <div className="p-4 rounded-xl border border-[#e1e5df] bg-[#fafafa]">
+                  <p className="text-xs font-bold text-[#183d3b]">{property.tenure || 'Perpetual Ownership (Freehold)'}</p>
+                  <p className="text-[11px] text-[#7a868a] mt-0.5">Lifetime condominium title</p>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-[#ecefe9]/50 border border-[#e1e5df]/60 flex items-center gap-3.5">
-                  <div className="w-10 h-10 rounded-full bg-[#2d6a4f]/10 flex items-center justify-center shrink-0">
-                    <span className="material-symbols-outlined text-[#2d6a4f] text-xl">water_drop</span>
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-[#183d3b]">{property.terrain || 'Flood-Free Area'}</p>
-                    <p className="text-[11px] text-[#7a868a]">Elevated road infrastructure</p>
-                  </div>
+                <div className="p-4 rounded-xl border border-[#e1e5df] bg-[#fafafa]">
+                  <p className="text-xs font-bold text-[#183d3b]">{property.terrain || 'Flood-Free Area'}</p>
+                  <p className="text-[11px] text-[#7a868a] mt-0.5">Elevated road infrastructure</p>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-[#ecefe9]/50 border border-[#e1e5df]/60 flex items-center gap-3.5">
-                  <div className="w-10 h-10 rounded-full bg-[#183d3b]/10 flex items-center justify-center shrink-0">
-                    <span className="material-symbols-outlined text-[#183d3b] text-xl">sports_gymnastics</span>
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-[#183d3b]">Community Clubhouse</p>
-                    <p className="text-[11px] text-[#7a868a]">Social hall & events lounge</p>
-                  </div>
+                <div className="p-4 rounded-xl border border-[#e1e5df] bg-[#fafafa]">
+                  <p className="text-xs font-bold text-[#183d3b]">Community Clubhouse</p>
+                  <p className="text-[11px] text-[#7a868a] mt-0.5">Social hall & events lounge</p>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-[#ecefe9]/50 border border-[#e1e5df]/60 flex items-center gap-3.5">
-                  <div className="w-10 h-10 rounded-full bg-[#183d3b]/10 flex items-center justify-center shrink-0">
-                    <span className="material-symbols-outlined text-[#183d3b] text-xl">park</span>
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-[#183d3b]">Pocket Parks</p>
-                    <p className="text-[11px] text-[#7a868a]">Green open landscaped areas</p>
-                  </div>
+                <div className="p-4 rounded-xl border border-[#e1e5df] bg-[#fafafa]">
+                  <p className="text-xs font-bold text-[#183d3b]">Pocket Parks</p>
+                  <p className="text-[11px] text-[#7a868a] mt-0.5">Green open landscaped areas</p>
                 </div>
               </div>
             </div>
@@ -373,36 +392,38 @@ export default function PropertyListingView() {
 
           {/* RIGHT STICKY ACTION RAIL (35% width / 4 cols) */}
           <div className="lg:col-span-4 space-y-6 lg:sticky lg:top-24 font-sans">
-            {/* Quick Price Card - White Theme */}
-            <div className="bg-white border border-[#e1e5df] rounded-3xl p-6 shadow-sm">
-              <span className="text-[11px] uppercase font-bold tracking-wider text-[#7a868a] font-sans">
+            {/* Price Card */}
+            <div className="bg-white border border-[#e1e5df] rounded-2xl p-6 shadow-sm">
+              <span className="text-[10px] uppercase font-bold tracking-[0.16em] text-[#7a868a] font-sans">
                 Total Contract Price
               </span>
-              <div className="font-display text-3xl sm:text-4xl font-normal text-[#183d3b] mt-1">
+              <div className="font-display text-3xl sm:text-4xl font-light text-[#183d3b] mt-1">
                 ₱{(property.price_raw || 3000000).toLocaleString()}
               </div>
 
-              <div className="mt-3.5 flex items-center justify-between text-xs py-2.5 px-3.5 bg-[#fcf1eb] rounded-2xl border border-[#c4683c]/30 text-[#c4683c]">
-                <span className="font-semibold">Promo Cash-Out:</span>
-                <span className="font-extrabold">{property.promo_cash_out || 'PHP 5,000 to PHP 20,000'}</span>
-              </div>
-
-              <div className="mt-2 text-xs text-[#5f6b6f] font-medium">
-                {property.monthly_amortization || 'Starting at PHP 15,000 / month'}
+              <div className="mt-4 pt-4 border-t border-[#e1e5df] space-y-1.5">
+                <div className="flex items-baseline justify-between text-xs">
+                  <span className="text-[#7a868a] font-medium">Promo Cash-Out</span>
+                  <span className="font-bold text-[#c4683c]">{property.promo_cash_out || 'PHP 5,000 to PHP 20,000'}</span>
+                </div>
+                <div className="flex items-baseline justify-between text-xs">
+                  <span className="text-[#7a868a] font-medium">Monthly Amortization</span>
+                  <span className="font-semibold text-[#183d3b]">{property.monthly_amortization || 'Starting at PHP 15,000 / month'}</span>
+                </div>
               </div>
 
               {/* SECTION 7: VIEWING LIST AGGREGATE TRIGGER */}
-              <div className="mt-5 pt-5 border-t border-[#e1e5df] space-y-3">
+              <div className="mt-6 pt-6 border-t border-[#e1e5df] space-y-3">
                 <button
                   type="button"
                   onClick={() => toggleViewingList(property)}
-                  className={`w-full h-[54px] rounded-2xl text-xs font-bold uppercase tracking-wider font-sans flex items-center justify-center gap-2 transition-all shadow-sm ${
+                  className={`w-full h-[54px] rounded-xl text-xs font-bold uppercase tracking-wider font-sans flex items-center justify-center gap-2 transition-all ${
                     isSaved
-                      ? 'bg-[#2d6a4f] hover:bg-[#24543e] text-white'
-                      : 'bg-white hover:bg-gray-50 text-[#183d3b] border-2 border-[#183d3b]'
+                      ? 'bg-[#2d6a4f] text-white shadow-sm'
+                      : 'bg-white hover:bg-gray-50 text-[#183d3b] border border-[#183d3b]'
                   }`}
                 >
-                  <span className="material-symbols-outlined text-[20px]">
+                  <span className="material-symbols-outlined text-[18px]">
                     {isSaved ? 'check_circle' : 'playlist_add'}
                   </span>
                   {isSaved ? 'In Viewing List' : 'Add to Viewing List'}
@@ -415,45 +436,42 @@ export default function PropertyListingView() {
                 <button
                   type="button"
                   onClick={() => setIsScheduleModalOpen(true)}
-                  className="w-full h-[54px] rounded-2xl bg-[#c4683c] hover:bg-[#b0572d] text-white text-xs font-bold uppercase tracking-wider font-sans flex items-center justify-center gap-2 shadow-lg shadow-[#c4683c]/20 transition-all hover:-translate-y-0.5 active:scale-[0.99]"
+                  className="w-full h-[54px] rounded-xl bg-[#c4683c] hover:bg-[#b0572d] text-white text-xs font-bold uppercase tracking-wider font-sans flex items-center justify-center gap-2 shadow-sm transition-all hover:-translate-y-0.5 active:scale-[0.99]"
                 >
-                  <span className="material-symbols-outlined text-[20px]">calendar_month</span>
+                  <span className="material-symbols-outlined text-[18px]">calendar_month</span>
                   Schedule Free Site Viewing
                 </button>
               </div>
             </div>
 
-            {/* SECTION 6: CONTACT & BROKERAGE CARD - White Theme */}
-            <div className="bg-white border border-[#e1e5df] rounded-3xl p-6 shadow-sm">
+            {/* SECTION 6: CONTACT & BROKERAGE CARD */}
+            <div className="bg-white border border-[#e1e5df] rounded-2xl p-6 shadow-sm">
               <div className="flex items-center gap-3.5 pb-4 border-b border-[#e1e5df]">
                 <img
                   src={property.agent?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'}
                   alt={property.agent?.name || 'Jayson Canonico'}
-                  className="w-14 h-14 rounded-2xl object-cover shadow-sm border border-[#e1e5df]"
+                  className="w-12 h-12 rounded-xl object-cover border border-[#e1e5df]"
                 />
                 <div>
                   <h3 className="text-sm font-bold text-[#183d3b] font-sans">
                     {property.agent?.name || 'Jayson Canonico'}
                   </h3>
-                  <p className="text-xs text-[#c4683c] font-semibold mt-0.5 font-sans">
+                  <p className="text-xs text-[#7a868a] font-medium font-sans">
                     {property.agent?.title || 'Real Estate Agent'}
                   </p>
-                  <span className="inline-block mt-1 text-[10px] font-bold text-[#2d6a4f] bg-[#2d6a4f]/10 px-2 py-0.5 rounded-md font-sans">
-                    Verified Brokerage
-                  </span>
                 </div>
               </div>
 
               <div className="mt-4 font-sans">
-                <p className="text-xs font-bold text-[#183d3b]">
+                <p className="text-xs font-semibold text-[#183d3b]">
                   {property.call_to_action || property.agent?.cta || 'Direct message for free site viewing'}
                 </p>
 
                 {inquirySent ? (
-                  <div className="mt-4 p-4 rounded-2xl bg-[#e8eeea] border border-[#183d3b]/20 text-center">
+                  <div className="mt-4 p-4 rounded-xl bg-[#fafafa] border border-[#e1e5df] text-center">
                     <span className="material-symbols-outlined text-[#2d6a4f] text-2xl">check_circle</span>
                     <p className="text-xs font-bold text-[#183d3b] mt-1">Message Dispatched</p>
-                    <p className="text-[11px] text-[#5f6b6f] mt-0.5">
+                    <p className="text-[11px] text-[#7a868a] mt-0.5">
                       Jayson Canonico has been notified via automated broker routing.
                     </p>
                   </div>
@@ -464,7 +482,7 @@ export default function PropertyListingView() {
                       placeholder="Your Name"
                       value={senderName}
                       onChange={(e) => setSenderName(e.target.value)}
-                      className="w-full h-[54px] px-4 rounded-xl border border-[#e1e5df] bg-[#ecefe9]/40 text-[#1c2224] text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#c4683c]"
+                      className="w-full h-[54px] px-4 rounded-xl border border-[#e1e5df] bg-[#fafafa] text-[#1c2224] text-xs font-medium focus:outline-none focus:ring-1 focus:ring-[#183d3b]"
                       required
                     />
                     <input
@@ -472,19 +490,19 @@ export default function PropertyListingView() {
                       placeholder="Mobile Number (09XX XXX XXXX)"
                       value={senderPhone}
                       onChange={(e) => setSenderPhone(e.target.value)}
-                      className="w-full h-[54px] px-4 rounded-xl border border-[#e1e5df] bg-[#ecefe9]/40 text-[#1c2224] text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#c4683c]"
+                      className="w-full h-[54px] px-4 rounded-xl border border-[#e1e5df] bg-[#fafafa] text-[#1c2224] text-xs font-medium focus:outline-none focus:ring-1 focus:ring-[#183d3b]"
                       required
                     />
                     <textarea
                       rows={3}
                       value={agentMessage}
                       onChange={(e) => setAgentMessage(e.target.value)}
-                      className="w-full p-3 rounded-xl border border-[#e1e5df] bg-[#ecefe9]/40 text-[#1c2224] text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#c4683c]"
+                      className="w-full p-3 rounded-xl border border-[#e1e5df] bg-[#fafafa] text-[#1c2224] text-xs font-medium focus:outline-none focus:ring-1 focus:ring-[#183d3b]"
                       required
                     />
                     <button
                       type="submit"
-                      className="w-full h-[54px] rounded-2xl bg-[#183d3b] hover:bg-[#122e2c] text-white text-xs font-bold uppercase tracking-wider font-sans flex items-center justify-center gap-2 transition-all shadow-md active:scale-[0.99]"
+                      className="w-full h-[54px] rounded-xl bg-[#183d3b] hover:bg-[#122e2c] text-white text-xs font-bold uppercase tracking-wider font-sans flex items-center justify-center gap-2 transition-all shadow-sm active:scale-[0.99]"
                     >
                       <span className="material-symbols-outlined text-[18px]">send</span>
                       Send Direct Message

@@ -39,7 +39,7 @@ export default function GalleryCard({ property, variants }) {
     <motion.div
       variants={animationVariants}
       className="relative w-full h-full group cursor-pointer flex flex-col gap-4"
-      onClick={() => navigate(`?propertyId=${property.id}`)}
+      onClick={() => navigate(`/properties/${property.id}`)}
     >
       <motion.div
         ref={ref}

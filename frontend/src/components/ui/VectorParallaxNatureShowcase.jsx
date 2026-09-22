@@ -23,10 +23,10 @@ import {
   IconMaximize
 } from '@tabler/icons-react';
 
-import vectorMountainsBg from '../../assets/vector_mountains_bg.jpg';
-import vectorHillsMidground from '../../assets/vector_hills_midground.png';
-import vectorAnimalsForeground from '../../assets/vector_animals_foreground.png';
-import vectorAnimalsIsolated from '../../assets/vector_animals_isolated.png';
+import vectorMountainsBg from '../../sandbox/assets/vector_mountains_bg.jpg';
+import vectorHillsMidground from '../../sandbox/assets/vector_hills_midground.png';
+import vectorAnimalsForeground from '../../sandbox/assets/vector_animals_foreground.png';
+import vectorAnimalsIsolated from '../../sandbox/assets/vector_animals_isolated.png';
 
 export default function VectorParallaxNatureShowcase() {
   const containerRef = useRef(null);

@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1376 768" width="100%" height="100%">
+  <defs>
+    <!-- ClipPath 0: Sky (Above roofline) -->
+    <clipPath id="clip-sky">
+      <polygon points="0,0 1376,0 1376,310 1360,150 980,85 1060,50 325,48 390,140 40,115 0,310" />
+    </clipPath>
+
+    <!-- ClipPath 1: Background Left & Right Villas -->
+    <clipPath id="clip-bg-villas">
+      <path d="M 30,115 L 390,140 L 390,460 L 30,460 Z M 980,85 L 1376,150 L 1376,460 L 980,460 Z" />
+    </clipPath>
+
+    <!-- ClipPath 2: Central Main Villa (Cantilever & Core) -->
+    <clipPath id="clip-main-villa">
+      <polygon points="325,48 1060,50 1025,82 990,82 990,285 800,285 800,480 380,480 380,82 355,80" />
+    </clipPath>
+
+    <!-- ClipPath 3: Perimeter Gates & Entrance Fence -->
+    <clipPath id="clip-gates">
+      <polygon points="380,350 1200,350 1200,490 380,490" />
+    </clipPath>
+
+    <!-- ClipPath 4: Tropical Landscaping & Traveler's Palm -->
+    <clipPath id="clip-palms">
+      <path d="M 160,130 Q 380,130 380,490 L 160,490 Z M 950,130 Q 1200,130 1200,490 L 950,490 Z" />
+    </clipPath>
+
+    <!-- ClipPath 5: Foreground Cobblestone Road & Vehicle -->
+    <clipPath id="clip-driveway">
+      <polygon points="0,480 1376,480 1376,768 0,768" />
+    </clipPath>
+  </defs>
+
+  <!-- Photographic image can be rendered 6 times, each with its dedicated clip-path -->
+  <g id="photo-layers">
+    <image id="photo-layer-sky" href="C:\Users\Win11x64\.gemini\antigravity\brain\6441366b-4b13-4099-a1c8-37b199304142\dahlia_driveway_cleaned_1789372708502.jpg" width="1376" height="768" clip-path="url(#clip-sky)" />
+    <image id="photo-layer-bg-villas" href="C:\Users\Win11x64\.gemini\antigravity\brain\6441366b-4b13-4099-a1c8-37b199304142\dahlia_driveway_cleaned_1789372708502.jpg" width="1376" height="768" clip-path="url(#clip-bg-villas)" />
+    <image id="photo-layer-main-villa" href="C:\Users\Win11x64\.gemini\antigravity\brain\6441366b-4b13-4099-a1c8-37b199304142\dahlia_driveway_cleaned_1789372708502.jpg" width="1376" height="768" clip-path="url(#clip-main-villa)" />
+    <image id="photo-layer-gates" href="C:\Users\Win11x64\.gemini\antigravity\brain\6441366b-4b13-4099-a1c8-37b199304142\dahlia_driveway_cleaned_1789372708502.jpg" width="1376" height="768" clip-path="url(#clip-gates)" />
+    <image id="photo-layer-palms" href="C:\Users\Win11x64\.gemini\antigravity\brain\6441366b-4b13-4099-a1c8-37b199304142\dahlia_driveway_cleaned_1789372708502.jpg" width="1376" height="768" clip-path="url(#clip-palms)" />
+    <image id="photo-layer-driveway" href="C:\Users\Win11x64\.gemini\antigravity\brain\6441366b-4b13-4099-a1c8-37b199304142\dahlia_driveway_cleaned_1789372708502.jpg" width="1376" height="768" clip-path="url(#clip-driveway)" />
+  </g>
+</svg>

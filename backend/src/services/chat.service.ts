@@ -1,8 +1,5 @@
 import config from '../config/index';
 
-const GROK_API_URL = 'https://api.x.ai/v1/chat/completions';
-const GROK_MODEL = 'grok-2-latest';
-
 // System prompt to define the AI persona
 const SYSTEM_PROMPT = {
   role: 'system',
@@ -13,9 +10,20 @@ Keep your responses concise but exceptionally polite. If you do not know specifi
 
 export class ChatService {
   async generateChatResponse(messages: { role: string; content: string }[]): Promise<string> {
-    if (!config.xaiApiKey) {
-      throw new Error('XAI_API_KEY is not configured in the environment variables.');
+    const groqKey = config.groqApiKey || (config.xaiApiKey?.startsWith('gsk_') ? config.xaiApiKey : '');
+    const isGroq = Boolean(groqKey);
+    const apiKey = isGroq ? groqKey : config.xaiApiKey;
+
+    if (!apiKey) {
+      throw new Error('AI API key (GROQ_API_KEY or XAI_API_KEY) is not configured in the environment variables.');
     }
+
+    const apiUrl = isGroq 
+      ? 'https://api.groq.com/openai/v1/chat/completions'
+      : 'https://api.x.ai/v1/chat/completions';
+
+    const defaultModel = isGroq ? 'openai/gpt-oss-120b' : 'grok-2-latest';
+    const model = config.aiModel || defaultModel;
 
     // Prepend the system prompt if not present
     const payloadMessages = [
@@ -24,14 +32,14 @@ export class ChatService {
     ];
 
     try {
-      const response = await fetch(GROK_API_URL, {
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${config.xaiApiKey}`,
+          'Authorization': `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: GROK_MODEL,
+          model,
           messages: payloadMessages,
           temperature: 0.7,
         }),
@@ -39,8 +47,9 @@ export class ChatService {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('XAI API Error Response:', errorText);
-        throw new Error(`XAI API returned status ${response.status}`);
+        const providerName = isGroq ? 'Groq' : 'xAI';
+        console.error(`${providerName} API Error Response:`, errorText);
+        throw new Error(`${providerName} API returned status ${response.status}: ${errorText}`);
       }
 
       const data = (await response.json()) as { choices?: Array<{ message?: { content?: string } }> };
@@ -53,3 +62,4 @@ export class ChatService {
 }
 
 export const chatService = new ChatService();
+

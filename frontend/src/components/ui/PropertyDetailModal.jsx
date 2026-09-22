@@ -3,15 +3,21 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import useEmblaCarousel from 'embla-carousel-react';
 import { mockProperties } from '../../mockData/mockProperties';
+import useViewingList from '../../hooks/useViewingList';
+import InspectionScheduleModal from './InspectionScheduleModal';
 import ActionConsole from './ActionConsole';
-import Button from './Button';
 
 export default function PropertyDetailModal() {
   const [searchParams, setSearchParams] = useSearchParams();
   const id = searchParams.get('propertyId');
   const [property, setProperty] = useState(null);
   const [logs, setLogs] = useState([]);
-  
+  const [copiedRef, setCopiedRef] = useState(false);
+  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  const { isInViewingList, toggleViewingList } = useViewingList();
+
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
 
   const scrollPrev = useCallback(() => {
@@ -22,12 +28,23 @@ export default function PropertyDetailModal() {
     if (emblaApi) emblaApi.scrollNext();
   }, [emblaApi]);
 
+  const onSelect = useCallback(() => {
+    if (!emblaApi) return;
+    setCurrentSlide(emblaApi.selectedScrollSnap());
+  }, [emblaApi]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+    emblaApi.on('select', onSelect);
+    return () => emblaApi.off('select', onSelect);
+  }, [emblaApi, onSelect]);
+
   useEffect(() => {
     if (!id) {
       setProperty(null);
       return;
     }
-    let found = mockProperties.find(p => p.id === id);
+    let found = mockProperties.find(p => p.id === id || p.ref_code === id);
     if (!found) found = mockProperties[0]; // fallback
     if (found) {
       setProperty(found);
@@ -50,249 +67,292 @@ export default function PropertyDetailModal() {
     setSearchParams(searchParams);
   };
 
+  const handleCopyRef = (e) => {
+    e.stopPropagation();
+    const textToCopy = property?.ref_code || 'MLSPH91M99LRH7';
+    navigator.clipboard?.writeText(textToCopy);
+    setCopiedRef(true);
+    setTimeout(() => setCopiedRef(false), 2500);
+  };
+
+  const isSaved = property ? isInViewingList(property.id) : false;
+
+  const images = property?.images || property?.gallery || (property?.mainImage ? [property.mainImage] : []);
+
   return (
     <>
       <AnimatePresence>
         {id && property && (
-          <motion.div 
-            className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-md flex flex-col items-center justify-center p-0 md:p-8 overflow-hidden" 
+          <motion.div
+            className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-md flex flex-col items-center justify-center p-0 md:p-6 lg:p-8 overflow-hidden font-sans"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.25 }}
             onClick={handleClose}
           >
             <motion.div
-              className="w-full h-full bg-black flex flex-col lg:flex-row overflow-y-auto md:rounded-[32px] shadow-[0_30px_100px_rgba(0,0,0,0.8)] relative"
-              initial={{ y: 100, scale: 0.9, opacity: 0 }}
+              className="w-full max-w-6xl h-full max-h-[92vh] bg-white border border-[#e1e5df] flex flex-col lg:flex-row overflow-hidden md:rounded-[28px] shadow-2xl relative text-[#1c2224]"
+              initial={{ y: 80, scale: 0.95, opacity: 0 }}
               animate={{ y: 0, scale: 1, opacity: 1 }}
-              exit={{ y: 100, scale: 0.9, opacity: 0 }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              exit={{ y: 80, scale: 0.95, opacity: 0 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
               onClick={e => e.stopPropagation()}
               data-lenis-prevent="true"
             >
-            {/* Left Section: Immersive Media Viewer */}
-            <div className="relative w-full lg:w-[65%] h-[40vh] lg:h-full bg-[#050505] flex items-center justify-center overflow-hidden">
-               {/* Blurred Background Layer for Immersive Feel */}
-               <div 
-                  className="absolute inset-0 w-full h-full bg-cover bg-center blur-[80px] opacity-40 transform scale-125"
-                  style={{ backgroundImage: `url(${property.mainImage})` }}
-               />
-               
-               <button 
-                onClick={handleClose}
-                className="absolute top-6 left-6 z-50 w-10 h-10 bg-black/40 hover:bg-black/60 backdrop-blur-xl text-white border border-white/20 shadow-[0_8px_30px_rgba(0,0,0,0.5)] rounded-full flex items-center justify-center transition-all hover:scale-110 group"
-                aria-label="Close details"
-              >
-                <span className="material-symbols-outlined text-[20px] font-bold group-hover:rotate-90 transition-transform">close</span>
-              </button>
+              {/* Left Section: Architectural Media Viewer (White Theme) */}
+              <div className="relative w-full lg:w-[55%] h-[36vh] lg:h-full bg-[#f8f9f8] flex items-center justify-center overflow-hidden border-b lg:border-b-0 lg:border-r border-[#e1e5df]">
+                {/* Standard w-9 h-9 solid white circular close button */}
+                <button
+                  onClick={handleClose}
+                  className="absolute top-5 left-5 z-50 w-9 h-9 bg-white text-black shadow-lg rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all border border-[#e1e5df]"
+                  aria-label="Close details"
+                >
+                  <span className="material-symbols-outlined text-[18px] font-bold">close</span>
+                </button>
 
-              <div className="overflow-hidden w-full h-full flex items-center relative z-10" ref={emblaRef}>
-                <div className="flex w-full h-full items-center">
-                  {[property.mainImage, ...property.gallery].map((img, index) => (
-                    <div className="relative flex-[0_0_100%] min-w-0 h-full flex items-center justify-center p-0 lg:p-12" key={index}>
-                       <img src={img} alt={`${property.name} - ${index}`} className="max-w-full max-h-full object-contain rounded-xl shadow-2xl" />
-                    </div>
-                  ))}
+                {/* Photo Counter Tag in Geist Mono */}
+                <div className="absolute top-5 right-5 z-40 px-3 py-1.5 rounded-lg bg-white/90 backdrop-blur-md text-[#183d3b] text-xs font-mono font-semibold border border-[#e1e5df] shadow-sm">
+                  {currentSlide + 1} / {images.length || 1}
                 </div>
+
+                {/* Carousel Viewport */}
+                <div className="overflow-hidden w-full h-full flex items-center relative z-10" ref={emblaRef}>
+                  <div className="flex w-full h-full items-center">
+                    {images.map((img, index) => (
+                      <div className="relative flex-[0_0_100%] min-w-0 h-full flex items-center justify-center p-4 lg:p-8" key={index}>
+                        <img
+                          src={img}
+                          alt={`${property.title || property.name} - ${index + 1}`}
+                          className="max-w-full max-h-full object-contain rounded-xl shadow-md transition-all duration-300"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Carousel Controls */}
+                <button
+                  onClick={scrollPrev}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-white/90 hover:bg-white text-[#183d3b] rounded-full flex items-center justify-center transition-all hover:scale-105 active:scale-95 border border-[#e1e5df] shadow-md"
+                  aria-label="Previous photo"
+                >
+                  <span className="material-symbols-outlined text-[22px]">chevron_left</span>
+                </button>
+                <button
+                  onClick={scrollNext}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-white/90 hover:bg-white text-[#183d3b] rounded-full flex items-center justify-center transition-all hover:scale-105 active:scale-95 border border-[#e1e5df] shadow-md"
+                  aria-label="Next photo"
+                >
+                  <span className="material-symbols-outlined text-[22px]">chevron_right</span>
+                </button>
               </div>
 
-              {/* Carousel Controls */}
-              <button onClick={scrollPrev} className="absolute left-6 top-1/2 -translate-y-1/2 z-20 w-12 h-12 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white rounded-full flex items-center justify-center transition-all hover:scale-105 border border-white/20 shadow-lg">
-                 <span className="material-symbols-outlined text-[28px]">chevron_left</span>
-              </button>
-              <button onClick={scrollNext} className="absolute right-6 top-1/2 -translate-y-1/2 z-20 w-12 h-12 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white rounded-full flex items-center justify-center transition-all hover:scale-105 border border-white/20 shadow-lg">
-                 <span className="material-symbols-outlined text-[28px]">chevron_right</span>
-              </button>
-              
-              {/* Bottom Gradient overlay for text contrast if needed */}
-              <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#050505] to-transparent z-10 pointer-events-none" />
-            </div>
-
-            {/* Right Section: Details Sidebar */}
-            <div 
-              className="w-full lg:w-[35%] h-[60vh] lg:h-full bg-[#FDFCF8] overflow-y-auto custom-scrollbar flex flex-col relative z-10 border-l border-white/20"
-              data-lenis-prevent="true"
-            >
-               <div className="p-8 md:p-10 flex flex-col gap-10">
-                  
-                  {/* Header Area */}
+              {/* Right Section: Details Sidebar (Pure White & Architectural) */}
+              <div
+                className="w-full lg:w-[45%] h-[64vh] lg:h-full bg-white overflow-y-auto custom-scrollbar flex flex-col relative z-10"
+                data-lenis-prevent="true"
+              >
+                <div className="p-6 sm:p-8 flex flex-col gap-6 font-sans">
+                  {/* SECTION 1: ARCHITECTURAL CADASTRE STRIP */}
                   <div>
-                    <div className="flex items-center gap-2 mb-4">
-                      {property.badge && (
-                        <div className="inline-flex items-center px-3 py-1.5 rounded-full text-[10px] font-bold font-sans bg-[#266F71]/10 text-[#266F71] uppercase tracking-widest border border-[#266F71]/20 shadow-sm">
-                          {property.badge}
+                    <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[#e1e5df]">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#183d3b]"></span>
+                          <span className="font-bold uppercase tracking-[0.16em] text-[#183d3b] text-[10px]">
+                            {property.status || 'FOR SALE'}
+                          </span>
                         </div>
-                      )}
-                      {property.propertyType && (
-                        <div className="inline-flex items-center px-3 py-1.5 rounded-full text-[10px] font-bold font-sans bg-[#F4A261]/10 text-[#F4A261] uppercase tracking-widest border border-[#F4A261]/20 shadow-sm">
-                          {property.propertyType}
-                        </div>
-                      )}
+                        <span className="text-[#c2c9bf]">|</span>
+                        <span className="font-semibold uppercase tracking-wider text-[#1c2224] text-[10px]">
+                          {property.unit_status || 'NEW'}
+                        </span>
+                        <span className="text-[#c2c9bf]">|</span>
+                        <span className="font-medium text-[#5f6b6f] text-[10px]">
+                          {property.property_type || property.propertyType || 'Residential Condominium'}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-1 text-xs font-mono text-[#5f6b6f]">
+                        <span className="text-[#7a868a]">REF:</span>
+                        <span className="font-bold text-[#183d3b]">{property.ref_code || 'MLSPH91M99LRH7'}</span>
+                        <button
+                          type="button"
+                          onClick={handleCopyRef}
+                          className="ml-1 text-[#7a868a] hover:text-[#183d3b] transition-colors"
+                          title="Copy Reference Code"
+                        >
+                          <span className="material-symbols-outlined text-[14px]">
+                            {copiedRef ? 'done' : 'content_copy'}
+                          </span>
+                        </button>
+                      </div>
                     </div>
-                    <h1 className="font-display text-4xl text-[#1B1C1A] mb-3 font-extrabold leading-[1.1] tracking-tight">{property.name}</h1>
-                    <div className="flex items-center text-gray-500 font-sans text-sm mb-6">
-                      <span className="material-symbols-outlined text-[#266F71] mr-1.5 text-[20px]">location_on</span>
-                      {property.location}
-                    </div>
-                    <div className="font-display text-4xl font-extrabold mb-1 bg-gradient-to-r from-[#266F71] to-[#174849] bg-clip-text text-transparent">{property.price}</div>
-                    <div className="text-gray-400 font-sans text-[11px] uppercase tracking-widest font-bold">
-                      Estimated Market Value
+
+                    {/* Title & Geographic Subhead */}
+                    <div className="mt-4">
+                      <h1 className="font-display text-2xl sm:text-3xl font-light text-[#183d3b] leading-[1.2] tracking-tight">
+                        {property.title || property.name}
+                      </h1>
+                      <p className="flex items-center gap-1.5 text-xs text-[#5f6b6f] mt-2 font-sans">
+                        <span className="material-symbols-outlined text-[#c4683c] text-[16px]">location_on</span>
+                        <span className="font-semibold text-[#1c2224]">{property.development || property.location || 'Urban Deca Homes Ortigas'}</span>
+                        <span className="text-[#c2c9bf]">•</span>
+                        <span>{property.city || property.address || 'Pasig City'}</span>
+                      </p>
                     </div>
                   </div>
 
-                  {/* Actions */}
-                  <div className="flex gap-4 border-y border-[#E5E7EB] py-8">
-                    <Button 
-                      variant="primary" 
-                      size="full" 
-                      onClick={() => handleAction('Schedule Tour', { propertyId: property.id }, '/api/scheduling/tour')}
-                      className="bg-[#266F71] hover:bg-[#174849] text-white shadow-xl shadow-[#266F71]/20 h-[54px]"
-                    >
-                      Schedule Tour
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="icon" 
-                      className="h-[54px] w-[54px] border-[#E5E7EB] hover:bg-[#266F71]/5 hover:border-[#266F71]/30 hover:text-[#266F71]"
-                      onClick={() => handleAction('Save Property', { propertyId: property.id }, '/api/users/saved-properties')}
-                    >
-                      <span className="material-symbols-outlined">favorite</span>
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="icon" 
-                      className="h-[54px] w-[54px] border-[#E5E7EB] hover:bg-[#266F71]/5 hover:border-[#266F71]/30 hover:text-[#266F71]"
-                      onClick={() => handleAction('Share Property', { propertyId: property.id }, '/api/actions/share')}
-                    >
-                      <span className="material-symbols-outlined">share</span>
-                    </Button>
+                  {/* SECTION 2: PRICE & PROMO CALLOUT */}
+                  <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-4 p-5 bg-[#fafafa] border border-[#e1e5df] rounded-2xl">
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#7a868a]">Total Contract Price</span>
+                      <div className="font-display text-3xl font-light text-[#183d3b] mt-0.5">
+                        {property.price || `₱${(property.price_raw || 3000000).toLocaleString()}`}
+                      </div>
+                    </div>
+
+                    <div className="border-l-2 border-[#c4683c] pl-3 py-0.5">
+                      <span className="text-[10px] font-bold text-[#c4683c] uppercase tracking-[0.16em] block">
+                        Promo Cash-Out
+                      </span>
+                      <p className="font-display text-base font-normal text-[#183d3b] mt-0.5">
+                        {property.promo_cash_out || 'PHP 5,000 to PHP 20,000'}
+                      </p>
+                      <p className="text-[11px] text-[#5f6b6f] font-medium mt-0.5">
+                        {property.monthly_amortization || 'Starting at PHP 15,000 / mo'}
+                      </p>
+                    </div>
                   </div>
 
-                  {/* Quick Specs Grid */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-[#E5E7EB] shadow-[0_4px_20px_rgba(0,0,0,0.02)] transition-transform hover:-translate-y-1">
-                      <div className="w-10 h-10 rounded-full bg-[#266F71]/10 flex items-center justify-center">
-                        <span className="material-symbols-outlined text-[#266F71] text-[20px]">bed</span>
+                  {/* SECTION 3: KEY METRICS - ARCHITECTURAL LEDGER STRIP */}
+                  <div className="border border-[#e1e5df] rounded-2xl p-4 bg-white shadow-sm">
+                    <div className="grid grid-cols-3 gap-y-4 divide-x divide-[#e1e5df]">
+                      <div className="px-3 first:pl-0">
+                        <p className="text-[10px] uppercase tracking-[0.16em] font-bold text-[#7a868a]">Bedrooms</p>
+                        <p className="font-display text-2xl font-light text-[#183d3b] mt-0.5">{property.bedrooms || property.beds || 2}</p>
                       </div>
-                      <div>
-                        <div className="font-extrabold text-lg text-[#1B1C1A] leading-none mb-1">{property.beds}</div>
-                        <div className="text-[#266F71]/70 text-[10px] uppercase tracking-widest font-bold">Beds</div>
+
+                      <div className="px-3">
+                        <p className="text-[10px] uppercase tracking-[0.16em] font-bold text-[#7a868a]">Bathrooms</p>
+                        <p className="font-display text-2xl font-light text-[#183d3b] mt-0.5">{property.bathrooms || property.baths || 1}</p>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-[#E5E7EB] shadow-[0_4px_20px_rgba(0,0,0,0.02)] transition-transform hover:-translate-y-1">
-                      <div className="w-10 h-10 rounded-full bg-[#266F71]/10 flex items-center justify-center">
-                        <span className="material-symbols-outlined text-[#266F71] text-[20px]">bathtub</span>
-                      </div>
-                      <div>
-                        <div className="font-extrabold text-lg text-[#1B1C1A] leading-none mb-1">{property.baths}</div>
-                        <div className="text-[#266F71]/70 text-[10px] uppercase tracking-widest font-bold">Baths</div>
+
+                      <div className="px-3">
+                        <p className="text-[10px] uppercase tracking-[0.16em] font-bold text-[#7a868a]">Floor Area</p>
+                        <p className="font-display text-2xl font-light text-[#183d3b] mt-0.5">{property.sqm || '30.60 sqm'}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-[#E5E7EB] shadow-[0_4px_20px_rgba(0,0,0,0.02)] transition-transform hover:-translate-y-1">
-                      <div className="w-10 h-10 rounded-full bg-[#266F71]/10 flex items-center justify-center">
-                        <span className="material-symbols-outlined text-[#266F71] text-[20px]">square_foot</span>
+
+                    <div className="grid grid-cols-3 gap-y-4 divide-x divide-[#e1e5df] pt-4 mt-4 border-t border-[#e1e5df]">
+                      <div className="px-3 first:pl-0">
+                        <p className="text-[10px] uppercase tracking-[0.16em] font-bold text-[#7a868a]">Floor Level</p>
+                        <p className="font-display text-xl font-light text-[#183d3b] mt-0.5">{property.floor_level || '6th Floor'}</p>
                       </div>
-                      <div>
-                        <div className="font-extrabold text-lg text-[#1B1C1A] leading-none mb-1">{property.sqm}</div>
-                        <div className="text-[#266F71]/70 text-[10px] uppercase tracking-widest font-bold">Sqm</div>
+
+                      <div className="px-3">
+                        <p className="text-[10px] uppercase tracking-[0.16em] font-bold text-[#7a868a]">Furnishing</p>
+                        <p className="font-display text-xl font-light text-[#183d3b] mt-0.5">{property.furnishing || 'Bare'}</p>
+                      </div>
+
+                      <div className="px-3">
+                        <p className="text-[10px] uppercase tracking-[0.16em] font-bold text-[#7a868a]">Year Built</p>
+                        <p className="font-display text-xl font-light text-[#183d3b] mt-0.5">{property.year_built || 2023}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-[#E5E7EB] shadow-[0_4px_20px_rgba(0,0,0,0.02)] transition-transform hover:-translate-y-1">
-                      <div className="w-10 h-10 rounded-full bg-[#266F71]/10 flex items-center justify-center">
-                        <span className="material-symbols-outlined text-[#266F71] text-[20px]">garage</span>
-                      </div>
-                      <div>
-                        <div className="font-extrabold text-lg text-[#1B1C1A] leading-none mb-1">{property.parking || "0"}</div>
-                        <div className="text-[#266F71]/70 text-[10px] uppercase tracking-widest font-bold">Parking</div>
-                      </div>
+                  </div>
+
+                  {/* ACTION BUTTONS (Standardized h-[54px]) */}
+                  <div className="space-y-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleAction('Schedule Tour', { propertyId: property.id }, '/api/scheduling/tour');
+                        setIsScheduleModalOpen(true);
+                      }}
+                      className="w-full h-[54px] rounded-xl bg-[#c4683c] hover:bg-[#b0572d] text-white text-xs font-bold uppercase tracking-wider font-sans flex items-center justify-center gap-2 shadow-sm transition-all hover:-translate-y-0.5 active:scale-[0.99]"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">calendar_month</span>
+                      Schedule Free Site Viewing
+                    </button>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          toggleViewingList(property);
+                          handleAction('Toggle Viewing List', { propertyId: property.id }, '/api/viewing-list');
+                        }}
+                        className={`w-full h-[54px] rounded-xl text-xs font-bold uppercase tracking-wider font-sans flex items-center justify-center gap-2 transition-all ${
+                          isSaved
+                            ? 'bg-[#2d6a4f] text-white shadow-sm'
+                            : 'bg-white hover:bg-gray-50 text-[#183d3b] border border-[#183d3b]'
+                        }`}
+                      >
+                        <span className="material-symbols-outlined text-[18px]">
+                          {isSaved ? 'check_circle' : 'playlist_add'}
+                        </span>
+                        {isSaved ? 'In Viewing List' : 'Add to Viewing List'}
+                      </button>
+
+                      <Link
+                        to={`/properties/${property.id}`}
+                        onClick={handleClose}
+                        className="w-full h-[54px] rounded-xl border border-[#183d3b] text-[#183d3b] hover:bg-[#183d3b]/5 text-xs font-bold font-sans uppercase tracking-wider flex items-center justify-center gap-2 transition-colors"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">open_in_new</span>
+                        Open Full Listing View
+                      </Link>
                     </div>
                   </div>
 
                   {/* Description */}
-                  <div>
-                    <h2 className="text-[11px] font-bold font-sans text-[#266F71] mb-4 uppercase tracking-[0.2em]">Property Description</h2>
-                    <p className="font-sans text-[15px] text-gray-600 leading-[1.8]">
-                      {property.description}
-                    </p>
-                  </div>
-
-                  {/* Amenities */}
-                  <div>
-                    <h2 className="text-[11px] font-bold font-sans text-[#266F71] mb-4 uppercase tracking-[0.2em]">Premium Amenities</h2>
-                    <div className="grid grid-cols-2 gap-y-4 gap-x-2">
-                      {property.amenities.map((amenity, idx) => (
-                        <div key={idx} className="flex items-center gap-3">
-                          <span className="material-symbols-outlined text-[#266F71] text-[18px]">check_circle</span>
-                          <span className="font-sans text-sm text-gray-700 font-medium">{amenity}</span>
-                        </div>
-                      ))}
+                  {property.description && (
+                    <div className="pt-2">
+                      <h2 className="text-[10px] font-bold font-sans text-[#7a868a] mb-2 uppercase tracking-[0.16em]">Property Overview</h2>
+                      <p className="font-sans text-xs text-[#5f6b6f] leading-relaxed">
+                        {property.description}
+                      </p>
                     </div>
-                  </div>
+                  )}
 
-                  {/* Map / Location */}
-                  <div>
-                    <h2 className="text-[11px] font-bold font-sans text-[#266F71] mb-4 uppercase tracking-[0.2em]">Location Details</h2>
-                    <div className="h-56 w-full rounded-2xl overflow-hidden relative shadow-inner border border-[#E5E7EB] bg-[#F1F0EC] flex flex-col items-center justify-center">
-                       <span className="material-symbols-outlined text-gray-300 text-5xl mb-2">map</span>
-                       <span className="text-gray-400 font-sans text-sm font-medium">Interactive Map Unavailable</span>
-                    </div>
-                    <div className="mt-4 font-sans text-[13px] text-gray-500 font-medium tracking-wide flex items-start gap-2">
-                      <span className="material-symbols-outlined text-[#266F71] text-[18px] mt-0.5">pin_drop</span>
-                      {property.address}
+                  {/* Assigned Brokerage Information */}
+                  <div className="mt-2 p-4 rounded-xl border border-[#e1e5df] bg-[#fafafa] flex items-center gap-3.5">
+                    <img
+                      src={property.agent?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'}
+                      alt={property.agent?.name || 'Jayson Canonico'}
+                      className="w-12 h-12 rounded-xl object-cover border border-[#e1e5df]"
+                    />
+                    <div>
+                      <p className="text-xs font-bold text-[#183d3b]">
+                        {property.agent?.name || 'Jayson Canonico'}
+                      </p>
+                      <p className="text-[11px] text-[#7a868a]">
+                        {property.agent?.title || 'Real Estate Agent'} • Verified Partner
+                      </p>
+                      <p className="text-[10px] text-[#c4683c] font-semibold mt-0.5">
+                        {property.call_to_action || property.agent?.cta || 'Direct message for free site viewing'}
+                      </p>
                     </div>
                   </div>
-
-                  {/* Agent Card */}
-                  <div className="mt-2 mb-8 flex flex-col gap-5 p-6 bg-white rounded-2xl border border-[#E5E7EB] shadow-[0_8px_30px_rgba(0,0,0,0.04)] relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-[#266F71]/5 rounded-bl-full -z-10"></div>
-                    <div className="flex items-center gap-4">
-                      <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-200 border-2 border-white shadow-md">
-                        <img alt="Agent" src={property.agent.avatar} className="w-full h-full object-cover" />
-                      </div>
-                      <div>
-                        <div className="text-base font-extrabold text-[#1B1C1A] font-sans">{property.agent.name}</div>
-                        <div className="text-[10px] text-[#F4A261] uppercase font-bold tracking-widest font-sans mt-0.5">{property.agent.title}</div>
-                      </div>
-                    </div>
-                    <div className="flex gap-3 mt-1">
-                      <Button 
-                        variant="primary" 
-                        size="sm" 
-                        className="flex-1 bg-[#266F71] hover:bg-[#174849] text-white shadow-[0_4px_14px_rgba(38,111,113,0.3)] transition-transform hover:-translate-y-0.5 flex items-center justify-center gap-2 border-none"
-                        onClick={() => handleAction('Call Agent', { propertyId: property.id, agent: property.agent.name }, '/api/inquiries/call')}
-                      >
-                        <span className="material-symbols-outlined text-[16px]">call</span>
-                        Call Agent
-                      </Button>
-                      <Button 
-                        variant="primary" 
-                        size="sm" 
-                        className="flex-1 bg-[#F4A261] hover:bg-[#D97706] text-white shadow-[0_4px_14px_rgba(244,162,97,0.3)] transition-transform hover:-translate-y-0.5 flex items-center justify-center gap-2 border-none"
-                        onClick={() => handleAction('Contact Agent', { propertyId: property.id, agent: property.agent.name }, '/api/inquiries/contact')}
-                      >
-                        <span className="material-symbols-outlined text-[16px]">chat</span>
-                        Message
-                      </Button>
-                    </div>
-                    <Link
-                      to={`/properties/${property.id}`}
-                      onClick={handleClose}
-                      className="w-full h-[46px] rounded-xl border border-[#266F71] text-[#266F71] hover:bg-[#266F71]/5 text-xs font-bold font-sans uppercase tracking-wider flex items-center justify-center gap-2 transition-colors mt-2"
-                    >
-                      <span className="material-symbols-outlined text-[18px]">open_in_new</span>
-                      Open Full Lamudi Listing View
-                    </Link>
-                  </div>
-
-               </div>
-            </div>
+                </div>
+              </div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Visual Action Console */}
+      {/* Downstream Inspection Schedule Modal */}
+      {property && (
+        <InspectionScheduleModal
+          isOpen={isScheduleModalOpen}
+          onClose={() => setIsScheduleModalOpen(false)}
+          property={property}
+        />
+      )}
+
+      {/* Action Console */}
       {id && property && <ActionConsole logs={logs} />}
     </>
   );

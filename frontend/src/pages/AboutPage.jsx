@@ -17,7 +17,7 @@ export default function AboutPage() {
     <div className="bg-surface text-on-surface font-body-md min-h-screen">
       <main className="">
         {/* Sophisticated Hero Section */}
-        <section className="relative min-h-screen flex items-start pt-32 lg:pt-40 pb-20 px-5 md:px-10 lg:px-20 max-w-container-max mx-auto overflow-hidden">
+        <section className="relative min-h-screen flex items-start pt-32 lg:pt-40 pb-20 max-w-[1560px] mx-auto px-5 md:px-10 lg:px-16 overflow-hidden">
           <div className="grid lg:grid-cols-2 gap-24 items-start w-full">
             <motion.div
               className="z-10"
@@ -74,7 +74,7 @@ export default function AboutPage() {
         <section className="min-h-screen flex flex-col justify-center py-20 bg-surface-container-low/50 border-y border-outline-variant/20 relative w-full">
           <div className="absolute inset-0 opacity-[0.04] bg-[url('https://www.transparenttextures.com/patterns/pinstriped-suit.png')]"></div>
           <motion.div
-            className="px-5 md:px-10 lg:px-20 max-w-container-max mx-auto text-center relative z-10"
+            className="max-w-[1560px] mx-auto px-5 md:px-10 lg:px-16 text-center relative z-10"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-100px" }}
@@ -96,7 +96,7 @@ export default function AboutPage() {
         </section>
 
         {/* Vision & Mission Details */}
-        <section className="min-h-screen flex flex-col justify-center py-20 px-5 md:px-10 lg:px-20 max-w-container-max mx-auto w-full">
+        <section className="min-h-screen flex flex-col justify-center py-20 max-w-[1560px] mx-auto px-5 md:px-10 lg:px-16 w-full">
           <div className="grid md:grid-cols-2 gap-16 lg:gap-32">
             <motion.div
               className="p-12 rounded-[2.5rem] bg-white border border-outline-variant/30 shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-500 group"
@@ -135,7 +135,7 @@ export default function AboutPage() {
 
         {/* Enhanced Timeline (Mantine Integration) */}
         <section className="min-h-screen flex flex-col justify-center py-20 bg-surface-container-low/30 border-y border-outline-variant/20 relative overflow-hidden w-full">
-          <div className="px-5 md:px-10 lg:px-20 max-w-container-max mx-auto relative z-10">
+          <div className="max-w-[1560px] mx-auto px-5 md:px-10 lg:px-16 relative z-10">
             <motion.div
               className="text-center mb-32"
               initial="hidden"
@@ -181,7 +181,7 @@ export default function AboutPage() {
         </section>
 
         {/* Enhanced Leadership Section */}
-        <section className="min-h-screen flex flex-col justify-center py-20 px-5 md:px-10 lg:px-20 max-w-container-max mx-auto w-full">
+        <section className="min-h-screen flex flex-col justify-center py-20 max-w-[1560px] mx-auto px-5 md:px-10 lg:px-16 w-full">
           <motion.div
             className="flex flex-col md:flex-row justify-between items-end mb-24 gap-12"
             initial="hidden"
@@ -235,8 +235,8 @@ export default function AboutPage() {
         </section>
 
         {/* Improved Immersive CTA & Accolades */}
-        <section className="min-h-screen flex flex-col justify-center py-20 px-5 md:px-10 lg:px-20 bg-surface-container-low/30 border-t border-outline-variant/20 w-full">
-          <div className="max-w-container-max mx-auto">
+        <section className="min-h-screen flex flex-col justify-center py-20 bg-surface-container-low/30 border-t border-outline-variant/20 w-full">
+          <div className="max-w-[1560px] mx-auto px-5 md:px-10 lg:px-16 w-full">
             <motion.div
               className="text-center mb-24"
               initial="hidden"

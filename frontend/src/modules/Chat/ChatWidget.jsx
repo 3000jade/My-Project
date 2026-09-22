@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { IconMessageCircle2, IconX, IconSend, IconRobot } from '@tabler/icons-react';
 import { mockProperties } from '../../mockData/mockProperties';
+import { chatService } from '../../services/chatService';
 
 export default function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
@@ -24,66 +25,42 @@ export default function ChatWidget() {
     }
   }, [isOpen, messages, isTyping]);
 
-  const handleSend = (e, textOverride = null) => {
+  const handleSend = async (e, textOverride = null) => {
     if (e) e.preventDefault();
     const userText = textOverride || inputValue;
     if (!userText.trim()) return;
 
     const newMsg = { id: Date.now(), type: 'user', text: userText };
-    setMessages(prev => [...prev, newMsg]);
+    const updatedMessages = [...messages, newMsg];
+    setMessages(updatedMessages);
     setInputValue('');
     setIsTyping(true);
 
-    // Simulate AI response based on mock data
-    setTimeout(() => {
-      setIsTyping(false);
-      
-      const query = userText.toLowerCase();
-      let responseText = "I'm sorry, I couldn't find exact matches for that right now. Could you specify a location like Makati, BGC, or Cebu?";
-      
-      // 1. Check if a specific property is mentioned by name
-      const specificProperty = mockProperties.find(p => query.includes(p.name.toLowerCase()) || query.includes(p.name.split(' ')[0].toLowerCase() + ' ' + (p.name.split(' ')[1] || '').toLowerCase()));
-      
-      if (specificProperty) {
-        // Answer specific details about this property
-        if (query.includes('price') || query.includes('how much') || query.includes('cost')) {
-          responseText = `The price for ${specificProperty.name} is ${specificProperty.price}.`;
-        } else if (query.includes('location') || query.includes('where') || query.includes('address')) {
-          responseText = `${specificProperty.name} is located at ${specificProperty.address} (${specificProperty.location}).`;
-        } else if (query.includes('bed') || query.includes('room')) {
-          responseText = `It features ${specificProperty.beds} spacious bedrooms.`;
-        } else if (query.includes('bath')) {
-          responseText = `It has ${specificProperty.baths} luxurious bathrooms.`;
-        } else if (query.includes('amenities') || query.includes('features') || query.includes('facilities')) {
-          responseText = `The amenities for ${specificProperty.name} include: ${specificProperty.amenities.join(', ')}.`;
-        } else if (query.includes('size') || query.includes('sqm') || query.includes('area') || query.includes('how big')) {
-          responseText = `The total floor area is ${specificProperty.sqm}.`;
-        } else if (query.includes('agent') || query.includes('broker') || query.includes('who')) {
-          responseText = `This property is exclusively handled by ${specificProperty.agent.name}, our ${specificProperty.agent.title}.`;
-        } else {
-          responseText = `${specificProperty.name} in ${specificProperty.location} is an incredible ${specificProperty.propertyType} listed at ${specificProperty.price}. It has ${specificProperty.beds} beds and ${specificProperty.baths} baths. Would you like to know about its amenities or schedule a viewing?`;
-        }
-      } else {
-        // 2. General Search (Location or Type)
-        const matches = mockProperties.filter(p => 
-          query.includes(p.propertyType.toLowerCase()) || 
-          query.includes(p.location.split(',')[0].toLowerCase()) ||
-          query.includes(p.badge.toLowerCase())
-        );
+    try {
+      // Map messages to the format expected by the backend
+      const apiMessages = updatedMessages.map(msg => ({
+        role: msg.type === 'ai' ? 'assistant' : 'user',
+        content: msg.text
+      }));
 
-        if (matches.length > 0) {
-          responseText = `I found ${matches.length} propert${matches.length > 1 ? 'ies' : 'y'} that might interest you! For example, ${matches[0].name} in ${matches[0].location} is listed at ${matches[0].price}. You can ask me for more details like "What is the price of ${matches[0].name}?"`;
-        } else if (query.includes('hi') || query.includes('hello') || query.includes('hey')) {
-          responseText = "Hello! I am your Private Concierge. I can help you find properties or answer specific questions like 'What is the price of the Forbes Park Mansion?' or 'Show me penthouses in Makati'.";
-        }
-      }
+      // Call the backend service (which calls Grok API)
+      const aiResponseText = await chatService.sendMessage(apiMessages);
 
       setMessages(prev => [...prev, {
         id: Date.now(),
         type: 'ai',
-        text: responseText
+        text: aiResponseText
       }]);
-    }, 1500);
+    } catch (error) {
+      console.error("Chat error:", error);
+      setMessages(prev => [...prev, {
+        id: Date.now(),
+        type: 'ai',
+        text: "I apologize, but I am currently experiencing technical difficulties. Please try again later."
+      }]);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   return (

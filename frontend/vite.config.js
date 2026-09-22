@@ -4,6 +4,11 @@ import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
+  server: {
+    fs: {
+      allow: ['..'],
+    },
+  },
   plugins: [
     tailwindcss(),
     react(),
@@ -30,5 +35,9 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: './src/test-setup.js',
+    include: [
+      'src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
+      '../test files/frontend/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
+    ],
   },
 })

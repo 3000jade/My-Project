@@ -1,34 +1,55 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import MetricCard from '../../components/dashboard/MetricCard';
 import StatusBadge from '../../components/dashboard/StatusBadge';
 import PageHeader from '../../components/dashboard/PageHeader';
-import { mockProperties } from '../../mockData/mockProperties';
-import { mockInquiries } from '../../mockData/mockInquiries';
-import { mockAppointments } from '../../mockData/mockAppointments';
-import { mockAgents } from '../../mockData/mockAgents';
-import { mockSales } from '../../mockData/mockSales';
-import { mockActivity } from '../../mockData/mockActivity';
+import { dashboardService, computeBrokerFallback } from '../../services/dashboardService';
 
 export default function BrokerDashboard() {
-  // Metrics computation across entire firm
-  const totalProperties = mockProperties.length;
-  const availableProperties = mockProperties.filter(p => p.status === 'AVAILABLE').length;
-  const reservedProperties = mockProperties.filter(p => p.status === 'RESERVED').length;
-  const soldProperties = mockProperties.filter(p => p.status === 'SOLD').length;
+  const [data, setData] = useState(() => computeBrokerFallback());
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const totalInquiries = mockInquiries.length;
-  const newInquiries = mockInquiries.filter(i => i.status === 'NEW').length;
-  const unresolvedInquiries = mockInquiries.filter(i => i.status !== 'RESOLVED').length;
+  const loadDashboard = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const summary = await dashboardService.getDashboardSummary({ role: 'broker' });
+      setData(summary);
+    } catch (err) {
+      console.error('[BrokerDashboard] load failed:', err);
+      setError('Unable to fetch live firm dashboard metrics. Displaying offline snapshot.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const upcomingAppointments = mockAppointments.filter(a => a.status === 'REQUESTED' || a.status === 'CONFIRMED').length;
+  useEffect(() => {
+    loadDashboard();
+  }, [loadDashboard]);
 
-  const totalAgents = mockAgents.length;
-  const pendingAgentVerification = mockAgents.filter(a => a.verification_status === 'PENDING').length;
+  const metrics = data?.metrics || {};
+  const salesSummary = data?.salesSummary || {};
+  const agentOverview = data?.agentOverview || [];
+  const recentActivity = data?.recentActivity || [];
 
-  const totalSalesValue = mockSales
-    .filter(s => s.status === 'COMPLETED')
-    .reduce((sum, s) => sum + s.property_value, 0);
+  const totalProperties = metrics.totalProperties || 0;
+  const availableProperties = metrics.availableProperties || 0;
+  const reservedProperties = metrics.reservedProperties || 0;
+  const soldProperties = metrics.soldProperties || 0;
+
+  const totalInquiries = metrics.totalInquiries || 0;
+  const newInquiries = metrics.newInquiries || 0;
+  const unresolvedInquiries = metrics.unresolvedInquiries || 0;
+
+  const upcomingAppointments = metrics.upcomingAppointments || 0;
+
+  const totalAgents = metrics.totalAgents || 0;
+  const pendingAgentVerification = metrics.pendingAgentVerification || 0;
+
+  const totalSalesValue = salesSummary.totalSalesValue || metrics.totalSalesValue || 0;
+  const closedCount = salesSummary.closedCount || 0;
+  const recentSales = salesSummary.recentSales || [];
 
   return (
     <div className="space-y-8">
@@ -36,7 +57,17 @@ export default function BrokerDashboard() {
         title="Executive Broker Operations"
         subtitle="Consolidated real estate firm monitoring, agent performance metrics, and sales audit trail."
         actions={
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center flex-wrap gap-2.5">
+            <button
+              onClick={loadDashboard}
+              disabled={loading}
+              className="h-[46px] px-4 bg-white hover:bg-gray-50 text-[#174849] border border-gray-200 rounded-xl text-xs font-bold font-sans uppercase tracking-wider flex items-center gap-2 transition-all shadow-xs cursor-pointer disabled:opacity-60"
+            >
+              <span className={`material-symbols-outlined text-[18px] ${loading ? 'animate-spin' : ''}`}>
+                refresh
+              </span>
+              <span>Refresh</span>
+            </button>
             <Link
               to="/broker/reports"
               className="h-[46px] px-4 rounded-xl border border-gray-300 hover:bg-white text-gray-700 text-xs font-bold font-sans uppercase tracking-wider flex items-center gap-2 transition-colors"
@@ -54,6 +85,21 @@ export default function BrokerDashboard() {
           </div>
         }
       />
+
+      {error && (
+        <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-center justify-between text-amber-800 font-sans text-sm">
+          <div className="flex items-center gap-3">
+            <span className="material-symbols-outlined text-amber-600">warning</span>
+            <span>{error}</span>
+          </div>
+          <button
+            onClick={loadDashboard}
+            className="px-3 py-1 bg-amber-600 text-white text-xs font-bold uppercase rounded-lg tracking-wider hover:bg-amber-700 cursor-pointer"
+          >
+            Retry
+          </button>
+        </div>
+      )}
 
       {/* 1. Ten Summary Metric Cards */}
       <div>
@@ -147,7 +193,7 @@ export default function BrokerDashboard() {
                 Total Closed Valuation
               </p>
               <p className="text-2xl font-display font-bold text-[#174849]">
-                ₱{(totalSalesValue / 1000000).toFixed(1)}M
+                {`₱${(totalSalesValue / 1000000).toFixed(1)}M`}
               </p>
             </div>
             <div className="w-[1px] h-9 bg-gray-300 hidden sm:block" />
@@ -156,7 +202,7 @@ export default function BrokerDashboard() {
                 Number of Closed Sales
               </p>
               <p className="text-2xl font-display font-bold text-[#266F71]">
-                {mockSales.filter(s => s.status === 'COMPLETED').length} Deals
+                {`${closedCount} Deals`}
               </p>
             </div>
           </div>
@@ -176,14 +222,14 @@ export default function BrokerDashboard() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {mockSales.slice(0, 4).map((sale) => (
+              {recentSales.map((sale) => (
                 <tr key={sale.id} className="hover:bg-gray-50/50 transition-colors">
                   <td className="py-3 font-semibold text-[#174849]">{sale.property_title}</td>
                   <td className="py-3 text-gray-600">{sale.client_name}</td>
                   <td className="py-3 text-gray-600 font-medium">{sale.agent_name}</td>
                   <td className="py-3 text-gray-500">{sale.sale_date}</td>
                   <td className="py-3 font-bold text-[#266F71]">
-                    ₱{sale.property_value.toLocaleString()}
+                    {`₱${(sale.property_value || 0).toLocaleString()}`}
                   </td>
                   <td className="py-3">
                     <StatusBadge status={sale.status} />
@@ -228,7 +274,7 @@ export default function BrokerDashboard() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {mockAgents.map((ag) => (
+              {agentOverview.map((ag) => (
                 <tr key={ag.id} className="hover:bg-gray-50/50 transition-colors">
                   <td className="py-3.5">
                     <div className="flex items-center gap-3">
@@ -256,7 +302,7 @@ export default function BrokerDashboard() {
                     {ag.upcoming_appointments_count} Tours
                   </td>
                   <td className="py-3.5 font-bold text-[#266F71]">
-                    {ag.recorded_sales_count} Deals (₱{(ag.total_sales_value / 1000000).toFixed(0)}M)
+                    {`${ag.recorded_sales_count} Deals (₱${((ag.total_sales_value || 0) / 1000000).toFixed(0)}M)`}
                   </td>
                   <td className="py-3.5 text-right">
                     <Link
@@ -279,7 +325,7 @@ export default function BrokerDashboard() {
           Firm-Wide Operations Activity Log
         </h3>
         <div className="space-y-4">
-          {mockActivity.map((act) => (
+          {recentActivity.map((act) => (
             <div key={act.id} className="flex items-start gap-3.5 text-sm font-sans">
               <div className="w-8 h-8 rounded-full bg-[#266F71]/10 text-[#266F71] flex items-center justify-center shrink-0 mt-0.5">
                 <span className="material-symbols-outlined text-[18px]">{act.icon}</span>

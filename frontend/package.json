@@ -38,7 +38,8 @@
     "select-philippines-address": "^1.0.6",
     "tailwindcss": "^4.3.3",
     "three": "^0.185.1",
-    "yet-another-react-lightbox": "^3.32.1"
+    "yet-another-react-lightbox": "^3.32.1",
+    "axios": "^1.7.9"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -56,8 +57,5 @@
     "jsdom": "^29.1.1",
     "vite": "^8.1.1",
     "vitest": "^5.0.0"
-  },
-  "overrides": {
-    "axios": "^1.7.9"
   }
 }

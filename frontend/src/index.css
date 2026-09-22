@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Manrope:wght@200;300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&family=Manrope:wght@200;300;400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -37,18 +37,20 @@
 
 
 
-  --font-sans: "Inter", sans-serif;
-  --font-display: "Manrope", sans-serif;
-
-
+  --font-sans: "Satoshi", "Plus Jakarta Sans", "Inter", sans-serif;
+  --font-display: "Fraunces", "Manrope", serif;
+  --font-fraunces: "Fraunces", Georgia, serif;
+  --font-mono: "Geist Mono", monospace;
+  --font-serif: "Fraunces", "Newsreader", "Cormorant Garamond", Georgia, serif;
 }
-
-
 
 @layer base {
   :root {
-    --font-sans: 'Inter', sans-serif;
-    --font-display: 'Manrope', sans-serif;
+    --font-sans: "Satoshi", "Plus Jakarta Sans", "Inter", sans-serif;
+    --font-display: "Fraunces", "Manrope", serif;
+    --font-fraunces: "Fraunces", Georgia, serif;
+    --font-mono: "Geist Mono", monospace;
+    --font-serif: "Fraunces", "Newsreader", "Cormorant Garamond", Georgia, serif;
   }
 
   html,
@@ -175,4 +177,27 @@
   background: url('https://api.mapbox.com/styles/v1/mapbox/light-v10/static/121.05,14.58,13,0/800x400?access_token=pk.eyJ1IjoiZXhhbXBsZSIsImEiOiJja2p1MnB4ZHowM3B3MnBvMGp6amR6ZzR6In0.fake_token');
   background-size: cover;
   background-position: center;
+}
+
+@keyframes cloudDrift {
+  0% {
+    transform: translate3d(-500px, 0, 0);
+  }
+  100% {
+    transform: translate3d(calc(100vw + 100px), 0, 0);
+  }
+}
+
+.cloud-flow {
+  animation: cloudDrift linear infinite;
+  will-change: transform;
+}
+
+/* Hide scrollbar universally for clean architectural feeds */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

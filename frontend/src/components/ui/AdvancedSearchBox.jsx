@@ -183,7 +183,7 @@ export default function AdvancedSearchBox({ onSearch, isSticky }) {
                   type="text"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
-                  placeholder="Keyword Search (City, Neighborhood)"
+                  placeholder="I am looking for a..."
                   className="w-full bg-transparent outline-none border-none text-[#1B1C1A] h-[54px] text-[16px] font-manrope"
                 />
               </motion.div>

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 export default function Footer() {
   return (
     <footer className="bg-[#174849] text-white pt-12 pb-6">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-8 px-5 md:px-10 lg:px-20 w-full">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-8 max-w-[1560px] mx-auto px-5 md:px-10 lg:px-16 w-full">
         {/* Column 1: Brand & Contact */}
         <div className="space-y-4">
           <span className="text-2xl md:text-4xl font-bold font-display tracking-tight text-white">[COMPANY NAME]</span>
@@ -58,7 +58,7 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="mt-12 pt-6 border-t border-white/10 px-5 md:px-10 lg:px-20 flex flex-col md:flex-row justify-between items-center text-xs opacity-50 font-sans text-gray-500">
+      <div className="mt-12 pt-6 border-t border-white/10 max-w-[1560px] mx-auto px-5 md:px-10 lg:px-16 flex flex-col md:flex-row justify-between items-center text-xs opacity-50 font-sans text-gray-500">
         <p>&copy; {new Date().getFullYear()} [COMPANY NAME]. All rights reserved.</p>
         <div className="flex gap-6 mt-4 md:mt-0">
           <a className="hover:underline" href="#">Privacy Policy</a>

@@ -1,22 +1,63 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import PageHeader from '../../components/dashboard/PageHeader';
 import StatusBadge from '../../components/dashboard/StatusBadge';
 import { mockProperties } from '../../mockData/mockProperties';
 import { mockAgents } from '../../mockData/mockAgents';
+import propertyService, { normalizeProperty } from '../../services/propertyService';
 
 export default function BrokerPropertyDetail() {
   const { id } = useParams();
-  const property = mockProperties.find(p => p.id === id) || mockProperties[0];
-  const assignedAgent = mockAgents.find(a => a.id === property.agent_id) || mockAgents[0];
+  const [property, setProperty] = useState(() => {
+    const fallback = mockProperties.find(p => p.id === id) || mockProperties[0];
+    return normalizeProperty(fallback);
+  });
+  const [loading, setLoading] = useState(true);
+  const [activeImg, setActiveImg] = useState(() => property.mainImage);
+  const [updating, setUpdating] = useState(false);
 
-  const [activeImg, setActiveImg] = useState(property.mainImage);
+  const fetchDetail = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await propertyService.getPropertyById(id);
+      if (data) {
+        setProperty(data);
+        if (data.mainImage) setActiveImg(data.mainImage);
+      }
+    } catch (err) {
+      console.warn('[BrokerPropertyDetail] Fetch failed, using fallback:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    fetchDetail();
+  }, [fetchDetail]);
+
+  const assignedAgent = mockAgents.find(a => a.id === property.agent_id) || property.agent || mockAgents[0];
+
+  const handleStatusChange = async (newStatus) => {
+    setUpdating(true);
+    try {
+      await propertyService.updateProperty(property.id, { status: newStatus.toLowerCase() });
+      setProperty(prev => ({
+        ...prev,
+        status: newStatus.toUpperCase(),
+        is_published: newStatus.toUpperCase() !== 'SOLD' && newStatus.toUpperCase() !== 'INACTIVE',
+      }));
+    } catch (err) {
+      console.error('[BrokerPropertyDetail] Status update failed:', err);
+    } finally {
+      setUpdating(false);
+    }
+  };
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto">
       <PageHeader
         title={property.title}
-        subtitle={`${property.property_type} • Supervised Listing Audit`}
+        subtitle={`${property.property_type || property.propertyType} • Supervised Listing Audit`}
         breadcrumbs={[
           { label: "Dashboard", to: "/broker/dashboard" },
           { label: "Property Monitoring", to: "/broker/properties" },
@@ -25,8 +66,19 @@ export default function BrokerPropertyDetail() {
         badge={<StatusBadge status={property.status} />}
         actions={
           <div className="flex items-center gap-2">
+            <select
+              value={String(property.status).toUpperCase()}
+              disabled={updating}
+              onChange={(e) => handleStatusChange(e.target.value)}
+              className="h-[46px] px-3.5 rounded-xl border border-gray-300 bg-white hover:border-[#266F71] text-gray-800 text-xs font-bold font-sans uppercase tracking-wider outline-none transition-colors cursor-pointer disabled:opacity-50"
+            >
+              <option value="AVAILABLE">Status: Available</option>
+              <option value="RESERVED">Status: Reserved</option>
+              <option value="SOLD">Status: Sold</option>
+              <option value="INACTIVE">Status: Inactive</option>
+            </select>
             <Link
-              to={`/broker/agents/${assignedAgent.id}`}
+              to={`/broker/agents/${assignedAgent.id || 'agent-1'}`}
               className="h-[46px] px-4 rounded-xl border border-gray-300 hover:bg-white text-gray-700 text-xs font-bold font-sans uppercase tracking-wider flex items-center gap-2 transition-colors"
             >
               <span className="material-symbols-outlined text-[18px]">person</span>

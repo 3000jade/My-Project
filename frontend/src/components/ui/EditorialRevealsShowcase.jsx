@@ -11,9 +11,9 @@ import {
   IconCompass
 } from '@tabler/icons-react';
 
-import coastalVilla from '../../assets/luxury_modern_villa.jpg';
-import twilightVilla from '../../assets/cinematic_duplex_twilight.jpg';
-import interiorPenthouse from '../../assets/cinematic_interior_penthouse.jpg';
+import coastalVilla from '../../sandbox/assets/luxury_modern_villa.jpg';
+import twilightVilla from '../../sandbox/assets/cinematic_duplex_twilight.jpg';
+import interiorPenthouse from '../../sandbox/assets/cinematic_interior_penthouse.jpg';
 
 export default function EditorialRevealsShowcase() {
   const [maskKey, setMaskKey] = useState(0);

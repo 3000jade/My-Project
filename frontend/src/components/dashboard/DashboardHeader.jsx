@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { mockNotifications } from '../../mockData/mockNotifications';
+import { notificationService } from '../../services/notificationService';
 
 export default function DashboardHeader({
   role = 'agent',
@@ -8,12 +8,43 @@ export default function DashboardHeader({
   title = "Dashboard"
 }) {
   const [showNotifications, setShowNotifications] = useState(false);
-  const [notifications, setNotifications] = useState(mockNotifications);
+  const [notifications, setNotifications] = useState([]);
+
+  const loadNotifications = useCallback(async () => {
+    try {
+      const data = await notificationService.getNotifications();
+      if (Array.isArray(data)) {
+        setNotifications(data);
+      }
+    } catch {
+      // Keep empty or current if error
+    }
+  }, []);
+
+  useEffect(() => {
+    loadNotifications();
+  }, [loadNotifications]);
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
-  const markAllRead = () => {
+  const markAllRead = async () => {
     setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+    try {
+      await notificationService.markAllAsRead();
+    } catch (err) {
+      console.warn('Failed to mark all read:', err.message);
+    }
+  };
+
+  const handleNotificationClick = async (n) => {
+    if (!n.is_read) {
+      setNotifications(prev => prev.map(item => item.id === n.id ? { ...item, is_read: true } : item));
+      try {
+        await notificationService.markAsRead(n.id, true);
+      } catch (err) {
+        console.warn('Failed to mark notification as read:', err.message);
+      }
+    }
   };
 
   return (
@@ -73,7 +104,8 @@ export default function DashboardHeader({
                 {notifications.slice(0, 4).map((n) => (
                   <div
                     key={n.id}
-                    className={`p-3.5 hover:bg-[#F1F0EC]/50 transition-colors ${
+                    onClick={() => handleNotificationClick(n)}
+                    className={`p-3.5 hover:bg-[#F1F0EC]/50 transition-colors cursor-pointer ${
                       !n.is_read ? 'bg-[#FB8E5D]/5' : ''
                     }`}
                   >

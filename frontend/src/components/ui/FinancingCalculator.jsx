@@ -59,28 +59,32 @@ export default function FinancingCalculator({
   return (
     <div className="bg-white dark:bg-[#141b1b] border border-[#e1e5df] dark:border-[#222f2e] rounded-3xl p-6 md:p-8 shadow-sm font-sans">
       {/* Header & Promo Callout */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#e1e5df] dark:border-[#222f2e]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 pb-6 border-b border-[#e1e5df] dark:border-[#222f2e]">
         <div>
-          <span className="text-[11px] uppercase tracking-widest text-[#c4683c] font-bold font-sans">Pricing & Payment Plans</span>
-          <h3 className="font-display text-2xl sm:text-3xl font-normal text-[#183d3b] dark:text-[#f4f5f2] mt-1">
+          <span className="text-[10px] uppercase tracking-[0.18em] text-[#7a868a] font-bold font-sans">Pricing & Payment Plans</span>
+          <h3 className="font-display text-3xl sm:text-4xl font-light text-[#183d3b] dark:text-[#f4f5f2] mt-1">
             ₱{totalContractPrice.toLocaleString()}
           </h3>
           <p className="text-xs text-[#7a868a] mt-0.5 font-sans">Total Contract Price (TCP)</p>
         </div>
 
-        <div className="bg-[#fcf1eb] dark:bg-[#281d19] border border-[#c4683c]/30 rounded-2xl px-4 py-3">
-          <div className="flex items-center gap-1.5">
-            <span className="material-symbols-outlined text-[#c4683c] text-lg">local_fire_department</span>
-            <span className="text-[11px] font-bold text-[#c4683c] dark:text-[#f6b492] uppercase tracking-wider font-sans">Promo Cash-Out</span>
-          </div>
-          <p className="text-sm font-black text-[#c4683c] dark:text-[#f6b492] mt-0.5">{promoCashOut}</p>
-          <p className="text-[11px] text-[#c4683c]/80 dark:text-[#f6b492]/80 font-medium font-sans">{startingAmortization}</p>
+        {/* Architectural Editorial Callout (Replaces generic AI flame badge) */}
+        <div className="border-l-2 border-[#c4683c] pl-4 py-1">
+          <span className="text-[10px] font-bold text-[#c4683c] uppercase tracking-[0.18em] font-sans block">
+            Promo Cash-Out
+          </span>
+          <p className="font-display text-xl font-normal text-[#183d3b] dark:text-[#f6b492] mt-0.5">
+            {promoCashOut}
+          </p>
+          <p className="text-xs text-[#5f6b6f] dark:text-[#a0b0af] font-medium font-sans mt-0.5">
+            {startingAmortization}
+          </p>
         </div>
       </div>
 
       {/* Scheme Selector Tabs */}
       <div className="mt-6">
-        <label className="block text-[11px] font-bold uppercase tracking-wider text-[#5f6b6f] dark:text-[#88989c] mb-3 font-sans">
+        <label className="block text-[10px] font-bold uppercase tracking-[0.16em] text-[#7a868a] dark:text-[#88989c] mb-3 font-sans">
           Select Financing Method
         </label>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
@@ -93,10 +97,10 @@ export default function FinancingCalculator({
                 if (scheme.id === 'bank' && loanTermYears > 20) setLoanTermYears(20);
                 if (scheme.id === 'inhouse' && loanTermYears > 10) setLoanTermYears(10);
               }}
-              className={`h-[54px] px-3 rounded-2xl text-xs font-bold font-sans transition-all flex flex-col items-center justify-center border text-center ${
+              className={`h-[54px] px-3 rounded-xl text-xs font-bold font-sans transition-all flex flex-col items-center justify-center border text-center ${
                 selectedScheme === scheme.id
-                  ? 'bg-[#183d3b] text-white border-[#183d3b] shadow-md shadow-[#183d3b]/20'
-                  : 'bg-[#ecefe9]/60 hover:bg-[#ecefe9] text-[#1c2224] dark:bg-[#1d2726] dark:text-[#d3dedc] border-[#e1e5df] dark:border-[#2c3d3b]'
+                  ? 'bg-[#183d3b] text-white border-[#183d3b] shadow-sm'
+                  : 'bg-[#fafafa] hover:bg-[#ecefe9] text-[#1c2224] dark:bg-[#1d2726] dark:text-[#d3dedc] border-[#e1e5df] dark:border-[#2c3d3b]'
               }`}
             >
               <span className="truncate w-full">{scheme.label}</span>
@@ -104,7 +108,7 @@ export default function FinancingCalculator({
             </button>
           ))}
         </div>
-        <p className="text-xs text-[#5f6b6f] dark:text-[#88989c] mt-2 italic font-sans">{currentScheme.desc}</p>
+        <p className="text-xs text-[#7a868a] dark:text-[#88989c] mt-2 font-sans">{currentScheme.desc}</p>
       </div>
 
       {/* Calculator Body */}
@@ -181,13 +185,13 @@ export default function FinancingCalculator({
           </div>
 
           {/* Monthly Amortization Output Box */}
-          <div className="bg-[#e8eeea]/50 dark:bg-[#183d3b]/20 border border-[#183d3b]/20 rounded-2xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="bg-[#fafafa] dark:bg-[#183d3b]/20 border border-[#e1e5df] dark:border-[#222f2e] rounded-2xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
             <div>
-              <span className="text-[11px] uppercase tracking-wider font-bold text-[#c4683c] dark:text-[#f6b492] font-sans">
+              <span className="text-[10px] uppercase tracking-[0.16em] font-bold text-[#c4683c] dark:text-[#f6b492] font-sans">
                 Est. Monthly Amortization
               </span>
               <div className="flex items-baseline gap-2 mt-1">
-                <span className="font-display text-3xl md:text-4xl font-normal text-[#183d3b] dark:text-white">
+                <span className="font-display text-3xl md:text-4xl font-light text-[#183d3b] dark:text-white">
                   ₱{calculation.monthlyAmortization.toLocaleString()}
                 </span>
                 <span className="text-xs font-semibold text-[#7a868a] font-sans">/ month</span>
@@ -197,7 +201,7 @@ export default function FinancingCalculator({
               </p>
             </div>
 
-            <div className="text-xs text-[#5f6b6f] dark:text-[#88989c] max-w-xs border-t md:border-t-0 md:border-l border-[#183d3b]/20 pt-3 md:pt-0 md:pl-6 font-sans">
+            <div className="text-xs text-[#7a868a] dark:text-[#88989c] max-w-xs border-t md:border-t-0 md:border-l border-[#e1e5df] dark:border-[#2c3d3b] pt-3 md:pt-0 md:pl-6 font-sans">
               * Indicative computation only. Final loan value, interest fixing period, and monthly amortization are subject to bank/Pag-IBIG assessment and credit committee approval.
             </div>
           </div>

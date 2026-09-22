@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 
 export default function Button({ 
@@ -18,11 +17,14 @@ export default function Button({
   
   const variants = {
     primary: "bg-primary text-white hover:bg-primary/90",
+    pine: "bg-[#183d3b] text-white hover:bg-[#122e2c] shadow-[0_8px_20px_-4px_rgba(24,61,59,0.3)]",
     cta: "bg-accent text-white hover:bg-accent/90",
+    amber: "bg-[#c4683c] text-white hover:bg-[#b0572d] shadow-[0_8px_20px_-4px_rgba(196,104,60,0.3)]",
     secondary: "bg-white/10 backdrop-blur-md border border-white/30 text-white hover:bg-white/20",
     teal: "bg-primary text-white hover:bg-primary/90",
     text: "nav-link text-primary hover:text-primary/80",
-    outline: "bg-surface-container-low border border-outline-variant/30 text-tertiary hover:bg-surface-container"
+    outline: "bg-surface-container-low border border-outline-variant/30 text-tertiary hover:bg-surface-container",
+    birch: "bg-white border border-[#e1e5df] text-[#183d3b] hover:bg-[#ecefe9]"
   };
   
   const sizes = {
@@ -30,7 +32,9 @@ export default function Button({
     md: "px-8 py-3 text-xs rounded-full",
     lg: "px-12 py-4 text-sm rounded-full",
     icon: "p-2 rounded-full",
-    full: "w-full py-4 text-xs rounded-full"
+    full: "w-full py-4 text-xs rounded-full",
+    '54': "h-[54px] px-8 text-xs rounded-full",
+    uniform: "h-[54px] px-8 text-xs rounded-full"
   };
 
   // If text variant, remove the large padding

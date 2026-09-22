@@ -14,6 +14,8 @@ export const config = {
   supabaseAnonKey: process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_PUBLISHABLE_KEY || '',
   supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || '',
   xaiApiKey: process.env.XAI_API_KEY || '',
+  groqApiKey: process.env.GROQ_API_KEY || (process.env.XAI_API_KEY?.startsWith('gsk_') ? process.env.XAI_API_KEY : ''),
+  aiModel: process.env.AI_MODEL || '',
 };
 
 export default config;

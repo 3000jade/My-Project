@@ -39,8 +39,8 @@ import {
   IconPaw
 } from '@tabler/icons-react';
 import CinematicPropertyViewer from '../components/3d/CinematicPropertyViewer';
-import cinematicVillaTwilight from '../assets/cinematic_duplex_twilight.jpg';
-import cinematicInteriorPenthouse from '../assets/cinematic_interior_penthouse.jpg';
+import cinematicVillaTwilight from './assets/cinematic_duplex_twilight.jpg';
+import cinematicInteriorPenthouse from './assets/cinematic_interior_penthouse.jpg';
 import AnalyticsMetricCard from '../components/ui/AnalyticsMetricCard';
 import FramerMotionShowcase from '../components/ui/FramerMotionShowcase';
 import ParallaxPropertyShowcase from '../components/ui/ParallaxPropertyShowcase';
@@ -57,6 +57,8 @@ import VectorParallaxNatureShowcase from '../components/ui/VectorParallaxNatureS
 import ScrollScrubbedVideoShowcase from '../components/ui/ScrollScrubbedVideoShowcase';
 import AnimatedVectorShapeShowcase from '../components/ui/AnimatedVectorShapeShowcase';
 import AnimeMorphingAnimalsShowcase from '../components/ui/AnimeMorphingAnimalsShowcase';
+import AnimeParallaxShowcase from '../components/ui/AnimeParallaxShowcase';
+import PinnedDollyHeroShowcase from '../components/ui/PinnedDollyHeroShowcase';
 
 
 export default function DemoUIUXPage() {
@@ -259,6 +261,8 @@ export default function DemoUIUXPage() {
               { id: 'scrollvideo', label: 'Scroll Video Scrub', icon: IconVideo },
               { id: 'vectorshapes', label: 'Vector & Shape Lab', icon: IconVectorBezier2 },
               { id: 'morphinganimals', label: 'Morphing Animals', icon: IconPaw },
+              { id: 'animeparallax', label: 'Anime 2.5D Parallax', icon: IconCamera },
+              { id: 'pinneddolly', label: 'Approach A Dolly', icon: IconCompass },
               { id: 'sizing', label: 'Uniform 54px Search', icon: IconDimensions },
               { id: 'buttons', label: 'Buttons & States', icon: IconSparkles },
               { id: 'transformation', label: 'Before/After Slider', icon: IconArrowsSplit },
@@ -619,6 +623,16 @@ export default function DemoUIUXPage() {
         {/* SECTION: ANIME.JS MORPHING ANIMALS */}
         <section id="morphinganimals" className="py-14 border-b border-stone-200">
           <AnimeMorphingAnimalsShowcase />
+        </section>
+
+        {/* SECTION: ANIME 2.5D PARALLAX MOTION LAB */}
+        <section id="animeparallax" className="py-14 border-b border-stone-200">
+          <AnimeParallaxShowcase />
+        </section>
+
+        {/* SECTION: APPROACH A PINNED MULTI-PLATE SCROLL DOLLY */}
+        <section id="pinneddolly" className="py-14 border-b border-stone-200">
+          <PinnedDollyHeroShowcase />
         </section>
 
         {/* SECTION 2: UNIFORM 54PX SEARCH CONTROLS (WORKSPACE RULE #6) */}

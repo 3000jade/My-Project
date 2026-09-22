@@ -1,6 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useLenis } from 'lenis/react';
+import { Link, useLocation } from 'react-router-dom';
 import Button from '../ui/Button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { IconChevronDown } from '@tabler/icons-react';
@@ -13,11 +12,9 @@ export default function Header({ isDarkTheme }) {
   const clickScrollPosRef = useRef(0);
   
   const location = useLocation();
-  const navigate = useNavigate();
-  const lenis = useLenis();
 
   const isPropertiesPage = location.pathname === '/properties';
-  const isSolidTheme = scrolled || location.pathname === '/login' || location.pathname === '/about' || location.pathname === '/contact';
+  const isSolidTheme = scrolled || location.pathname === '/properties' || location.pathname === '/login' || location.pathname === '/about' || location.pathname === '/contact';
   
   const isHeaderHidden = isPropertiesPage && deepScrolled && !forceShowHeader;
 
@@ -64,19 +61,6 @@ export default function Header({ isDarkTheme }) {
     clickScrollPosRef.current = window.scrollY;
   };
 
-  const handleAnchorClick = (e, hash) => {
-    e.preventDefault();
-    if (location.pathname === '/') {
-      // Smooth and slow scroll if already on home page
-      const butteryEasing = (t) => t < 0.5 ? 8 * t * t * t * t : 1 - Math.pow(-2 * t + 2, 4) / 2;
-      lenis?.scrollTo(hash, { offset: -100, duration: 3.5, easing: butteryEasing });
-      // Optionally update URL without jumping
-      window.history.pushState(null, '', `/${hash}`);
-    } else {
-      // Navigate to home and let App.jsx handle the immediate scroll
-      navigate(`/${hash}`);
-    }
-  };
 
   const getLinkColor = (path) => {
     const isActive = location.pathname === path || (path !== '/' && location.hash === path);
@@ -101,7 +85,7 @@ export default function Header({ isDarkTheme }) {
           } ${isHeaderHidden ? '-translate-y-full' : 'translate-y-0'}`}
       >
         <div
-          className={`relative flex justify-between items-center px-5 md:px-10 lg:px-20 w-full transition-all duration-300 ${isSolidTheme ? 'h-[80px]' : 'h-[100px]'
+          className={`relative flex justify-between items-center max-w-[1560px] mx-auto px-5 md:px-10 lg:px-16 w-full transition-all duration-300 ${isSolidTheme ? 'h-[80px]' : 'h-[100px]'
             }`}
         >
           <div className="flex items-center gap-2">
@@ -116,18 +100,12 @@ export default function Header({ isDarkTheme }) {
             <Link className={`text-[11px] font-bold uppercase tracking-widest font-sans nav-link transition-colors duration-700 ${getLinkColor('/properties')}`} to="/properties">
               Properties
             </Link>
-            <Link className={`text-[11px] font-bold uppercase tracking-widest font-sans nav-link transition-colors duration-700 ${getLinkColor('/about')}`} to="/about">
-              About
+            <Link className={`text-[11px] font-bold uppercase tracking-widest font-sans nav-link transition-colors duration-700 ${getLinkColor('/how-we-work')}`} to="/how-we-work">
+              How We Work
             </Link>
-            <a className={`text-[11px] font-bold uppercase tracking-widest font-sans nav-link transition-colors duration-700 ${getLinkColor('#services')}`} href="#">
-              Services
-            </a>
-            <a className={`text-[11px] font-bold uppercase tracking-widest font-sans nav-link transition-colors duration-700 ${getLinkColor('#agents')}`} href="#">
-              Agents
-            </a>
-            <a className={`text-[11px] font-bold uppercase tracking-widest font-sans nav-link transition-colors duration-700 ${getLinkColor('#testimonials')}`} href="/#testimonials" onClick={(e) => handleAnchorClick(e, '#testimonials')}>
-              Testimonials
-            </a>
+            <Link className={`text-[11px] font-bold uppercase tracking-widest font-sans nav-link transition-colors duration-700 ${getLinkColor('/our-partner')}`} to="/our-partner">
+              Partner
+            </Link>
             <Link className={`text-[11px] font-bold uppercase tracking-widest font-sans nav-link transition-colors duration-700 ${getLinkColor('/contact')}`} to="/contact">
               Contact
             </Link>

@@ -1,53 +1,168 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import PageHeader from '../../components/dashboard/PageHeader';
 import StatusBadge from '../../components/dashboard/StatusBadge';
 import DashboardModal from '../../components/dashboard/DashboardModal';
-import { mockInquiries } from '../../mockData/mockInquiries';
+import { inquiryService } from '../../services/inquiryService';
 
 export default function AgentInquiryDetail() {
   const { id } = useParams();
-  const initialInquiry = mockInquiries.find(i => i.id === id) || mockInquiries[0];
-
-  const [inquiry, setInquiry] = useState(initialInquiry);
+  const [inquiry, setInquiry] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [replyText, setReplyText] = useState('');
+  const [sendingReply, setSendingReply] = useState(false);
   const [showAppointmentModal, setShowAppointmentModal] = useState(false);
-  const [appointmentDate, setAppointmentDate] = useState('2026-09-10');
+  const [appointmentDate, setAppointmentDate] = useState('2026-09-28');
   const [appointmentTime, setAppointmentTime] = useState('10:00 AM');
   const [appointmentType, setAppointmentType] = useState('Site Visit');
   const [appointmentConfirmedMessage, setAppointmentConfirmedMessage] = useState(false);
 
-  const handleSendReply = (e) => {
+  useEffect(() => {
+    let mounted = true;
+    async function fetchDetail() {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await inquiryService.getInquiryById(id);
+        if (mounted) {
+          if (data) {
+            setInquiry(data);
+          } else {
+            setError(`Inquiry "${id}" was not found.`);
+          }
+        }
+      } catch (err) {
+        if (mounted) {
+          setError(err.message || 'Failed to retrieve inquiry details.');
+        }
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    }
+    fetchDetail();
+    return () => {
+      mounted = false;
+    };
+  }, [id]);
+
+  const handleSendReply = async (e) => {
     e.preventDefault();
-    if (!replyText.trim()) return;
+    if (!replyText.trim() || !inquiry) return;
 
     const newMsg = {
       id: `msg-${Date.now()}`,
       sender: "agent",
       sender_name: "Elena Rossi",
       timestamp: "Just now",
-      content: replyText.trim()
+      content: replyText.trim(),
     };
+
+    const updatedMessages = [...(inquiry.messages || []), newMsg];
+    const newLastMessage = replyText.trim();
 
     setInquiry(prev => ({
       ...prev,
-      messages: [...prev.messages, newMsg],
-      last_message: replyText.trim()
+      messages: updatedMessages,
+      last_message: newLastMessage,
     }));
     setReplyText('');
+
+    setSendingReply(true);
+    try {
+      await inquiryService.updateInquiry(inquiry.id, {
+        messages: updatedMessages,
+        last_message: newLastMessage,
+      });
+    } catch (err) {
+      console.warn('Error syncing message to backend:', err.message);
+    } finally {
+      setSendingReply(false);
+    }
   };
 
-  const handleStatusChange = (newStatus) => {
+  const handleStatusChange = async (newStatus) => {
+    if (!inquiry) return;
     setInquiry(prev => ({ ...prev, status: newStatus }));
+    try {
+      await inquiryService.updateInquiry(inquiry.id, { status: newStatus });
+    } catch (err) {
+      console.warn('Error updating status:', err.message);
+    }
   };
 
-  const handleCreateAppointment = () => {
+  const handleCreateAppointment = async () => {
     setAppointmentConfirmedMessage(true);
+    if (inquiry) {
+      const scheduleMsg = {
+        id: `msg-${Date.now()}`,
+        sender: 'agent',
+        sender_name: 'Elena Rossi',
+        timestamp: 'Just now',
+        content: `Appointment scheduled: ${appointmentType} on ${appointmentDate} at ${appointmentTime}.`,
+      };
+      const updatedMessages = [...(inquiry.messages || []), scheduleMsg];
+      setInquiry(prev => ({
+        ...prev,
+        status: 'ASSIGNED',
+        messages: updatedMessages,
+        last_message: scheduleMsg.content,
+      }));
+      try {
+        await inquiryService.updateInquiry(inquiry.id, {
+          status: 'SCHEDULED',
+          messages: updatedMessages,
+          preferred_date: appointmentDate,
+        });
+      } catch (err) {
+        console.warn('Failed to update schedule in backend:', err.message);
+      }
+    }
+
     setTimeout(() => {
       setAppointmentConfirmedMessage(false);
       setShowAppointmentModal(false);
     }, 1800);
   };
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-2xl border border-gray-200/80 p-16 text-center space-y-3 max-w-6xl mx-auto">
+        <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-[#266F71] border-t-transparent"></div>
+        <p className="text-xs font-bold uppercase tracking-wider text-gray-400 font-sans">
+          Loading assigned inquiry...
+        </p>
+      </div>
+    );
+  }
+
+  if (error || !inquiry) {
+    return (
+      <div className="space-y-6 max-w-6xl mx-auto">
+        <PageHeader
+          title="Inquiry Not Found"
+          breadcrumbs={[
+            { label: "Dashboard", to: "/agent/dashboard" },
+            { label: "Inquiries", to: "/agent/inquiries" },
+            { label: "Error" }
+          ]}
+        />
+        <div className="p-8 bg-rose-50 border border-rose-200 rounded-2xl text-center space-y-4">
+          <span className="material-symbols-outlined text-4xl text-rose-600">error</span>
+          <h2 className="text-lg font-bold text-[#174849] font-display">Inquiry Record Unavailable</h2>
+          <p className="text-sm text-gray-600 font-sans max-w-md mx-auto">
+            {error || "The inquiry record could not be located."}
+          </p>
+          <Link
+            to="/agent/inquiries"
+            className="inline-block px-5 py-2 bg-[#266F71] text-white rounded-xl text-xs font-bold uppercase tracking-wider font-sans hover:bg-[#174849] transition-colors"
+          >
+            ← Return to Inquiries List
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
@@ -64,7 +179,7 @@ export default function AgentInquiryDetail() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowAppointmentModal(true)}
-              className="h-[46px] px-4 bg-[#FB8E5D] hover:bg-[#d96b37] text-white rounded-xl text-xs font-bold font-sans uppercase tracking-wider flex items-center gap-2 transition-colors shadow-sm"
+              className="h-[46px] px-4 bg-[#FB8E5D] hover:bg-[#d96b37] text-white rounded-xl text-xs font-bold font-sans uppercase tracking-wider flex items-center gap-2 transition-colors shadow-sm cursor-pointer"
             >
               <span className="material-symbols-outlined text-[18px]">calendar_add_on</span>
               Coordinate Appointment
@@ -73,7 +188,7 @@ export default function AgentInquiryDetail() {
             {inquiry.status !== 'RESOLVED' ? (
               <button
                 onClick={() => handleStatusChange('RESOLVED')}
-                className="h-[46px] px-4 bg-[#266F71] hover:bg-[#174849] text-white rounded-xl text-xs font-bold font-sans uppercase tracking-wider flex items-center gap-1.5 transition-colors"
+                className="h-[46px] px-4 bg-[#266F71] hover:bg-[#174849] text-white rounded-xl text-xs font-bold font-sans uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[18px]">check_circle</span>
                 Mark Resolved
@@ -81,7 +196,7 @@ export default function AgentInquiryDetail() {
             ) : (
               <button
                 onClick={() => handleStatusChange('REOPENED')}
-                className="h-[46px] px-4 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold font-sans uppercase tracking-wider flex items-center gap-1.5 transition-colors"
+                className="h-[46px] px-4 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold font-sans uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[18px]">restart_alt</span>
                 Reopen Inquiry
@@ -116,33 +231,39 @@ export default function AgentInquiryDetail() {
 
             {/* Messages Container */}
             <div className="flex-1 overflow-y-auto py-4 space-y-4 custom-scrollbar" data-lenis-prevent="true">
-              {inquiry.messages.map((msg) => {
-                const isAgent = msg.sender === 'agent';
-                return (
-                  <div
-                    key={msg.id}
-                    className={`flex flex-col ${isAgent ? 'items-end' : 'items-start'}`}
-                  >
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-[11px] font-bold text-gray-500 font-sans">
-                        {msg.sender_name}
-                      </span>
-                      <span className="text-[10px] text-gray-400 font-sans">
-                        {msg.timestamp}
-                      </span>
-                    </div>
+              {inquiry.messages && inquiry.messages.length > 0 ? (
+                inquiry.messages.map((msg) => {
+                  const isAgent = msg.sender === 'agent';
+                  return (
                     <div
-                      className={`max-w-md p-4 rounded-2xl text-sm font-sans leading-relaxed ${
-                        isAgent
-                          ? 'bg-[#266F71] text-white rounded-tr-xs shadow-xs'
-                          : 'bg-[#F1F0EC] text-gray-800 rounded-tl-xs'
-                      }`}
+                      key={msg.id}
+                      className={`flex flex-col ${isAgent ? 'items-end' : 'items-start'}`}
                     >
-                      {msg.content}
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-[11px] font-bold text-gray-500 font-sans">
+                          {msg.sender_name}
+                        </span>
+                        <span className="text-[10px] text-gray-400 font-sans">
+                          {msg.timestamp}
+                        </span>
+                      </div>
+                      <div
+                        className={`max-w-md p-4 rounded-2xl text-sm font-sans leading-relaxed ${
+                          isAgent
+                            ? 'bg-[#266F71] text-white rounded-tr-xs shadow-xs'
+                            : 'bg-[#F1F0EC] text-gray-800 rounded-tl-xs'
+                        }`}
+                      >
+                        {msg.content}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              ) : (
+                <div className="text-center py-12 text-xs text-gray-400 font-sans">
+                  No conversation messages registered yet.
+                </div>
+              )}
             </div>
 
             {/* Reply Input Bar */}
@@ -156,9 +277,10 @@ export default function AgentInquiryDetail() {
               />
               <button
                 type="submit"
-                className="h-[54px] px-6 bg-[#266F71] hover:bg-[#174849] text-white rounded-xl text-xs font-bold uppercase tracking-wider font-sans flex items-center gap-2 transition-colors cursor-pointer"
+                disabled={sendingReply || !replyText.trim()}
+                className="h-[54px] px-6 bg-[#266F71] hover:bg-[#174849] text-white rounded-xl text-xs font-bold uppercase tracking-wider font-sans flex items-center gap-2 transition-colors cursor-pointer disabled:opacity-50"
               >
-                <span>Send</span>
+                <span>{sendingReply ? 'Sending...' : 'Send'}</span>
                 <span className="material-symbols-outlined text-[18px]">send</span>
               </button>
             </form>
@@ -174,7 +296,7 @@ export default function AgentInquiryDetail() {
             </h3>
             <div className="space-y-3 font-sans text-sm">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#266F71]/10 text-[#266F71] flex items-center justify-center font-bold">
+                <div className="w-10 h-10 rounded-full bg-[#266F71]/10 text-[#266F71] flex items-center justify-center font-bold font-display">
                   {inquiry.client_name.charAt(0)}
                 </div>
                 <div>
@@ -229,13 +351,13 @@ export default function AgentInquiryDetail() {
           <div className="flex gap-2">
             <button
               onClick={() => setShowAppointmentModal(false)}
-              className="px-4 py-2 text-xs font-bold uppercase tracking-wider text-gray-500 font-sans"
+              className="px-4 py-2 text-xs font-bold uppercase tracking-wider text-gray-500 font-sans cursor-pointer"
             >
               Cancel
             </button>
             <button
               onClick={handleCreateAppointment}
-              className="px-6 py-2.5 bg-[#266F71] hover:bg-[#174849] text-white rounded-xl text-xs font-bold font-sans uppercase tracking-wider transition-colors"
+              className="px-6 py-2.5 bg-[#266F71] hover:bg-[#174849] text-white rounded-xl text-xs font-bold font-sans uppercase tracking-wider transition-colors cursor-pointer"
             >
               Confirm Schedule
             </button>

@@ -1,12 +1,82 @@
-# Ignore system files
-.DS_Store
-Thumbs.db
+# ==============================================================================
+# Master Monorepo .gitignore
+# CP_kerby Luxury Architectural Real Estate Platform
+# ==============================================================================
 
-# Ignore local configuration and secrets
+# 1. Dependencies & Package Managers
+node_modules/
+node_modules
+*/node_modules/
+.pnp
+.pnp.js
+
+# 2. Production & Build Outputs (tsc & vite artifacts)
+dist/
+dist
+*/dist/
+dist-ssr/
+dist-ssr
+build/
+out/
+*.tsbuildinfo
+
+# 3. Environment Variables & Secrets (Keep templates trackable)
 .env
+.env.*
+*.env
+!.env.example
+!*.env.example
+!**/.env.example
 config.json
 
-# Ignore giant folders you can easily reinstall later
-node_modules/
+# 4. Logs & Debugging
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# 5. Testing & Code Coverage
+test files/
+test\ files/
+coverage/
+.nyc_output/
+*.lcov
+
+# 6. Tooling, Bundler & Framework Caches
+.eslintcache
+.parcel-cache/
+.vite/
+.turbo/
+.cache/
+*.tmp
+*.temp
+
+# 7. Operating System Artifacts
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# 8. IDE & Editor Metadata
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.swo
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# 9. Python Tooling & Virtual Environments (scripts/)
 env/
 venv/
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class

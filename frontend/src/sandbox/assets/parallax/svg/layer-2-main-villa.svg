@@ -1,0 +1,114 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1376 768" width="100%" height="100%">
+  <defs>
+    
+    <!-- Nano Banana Pro Tactile Texture: Stone & Masonry Relief -->
+    <filter id="nanoTactileStone" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="4" result="stoneNoise" />
+      <feColorMatrix type="matrix" values="0.33 0.33 0.33 0 0  0.33 0.33 0.33 0 0  0.33 0.33 0.33 0 0  0 0 0 0.32 0" in="stoneNoise" result="stoneContrast" />
+      <feBlend in="SourceGraphic" in2="stoneContrast" mode="multiply" result="stoneBlended" />
+    </filter>
+
+    <!-- Nano Banana Pro Tactile Texture: Organic Timber Wood Grain -->
+    <filter id="nanoTactileWood" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.015 0.22" numOctaves="3" result="woodNoise" />
+      <feColorMatrix type="matrix" values="0 0 0 0 0.35  0 0 0 0 0.18  0 0 0 0 0.08  0 0 0 0.28 0" in="woodNoise" result="woodGrain" />
+      <feBlend in="SourceGraphic" in2="woodGrain" mode="multiply" />
+    </filter>
+
+    <!-- Nano Banana Pro Tactile Texture: Wet Cobblestone Specular Glint -->
+    <filter id="nanoTactileCobble" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="3" result="cobbleNoise" />
+      <feDiffuseLighting in="cobbleNoise" lighting-color="#FDE68A" surfaceScale="2" diffuseConstant="1.2" result="cobbleLight">
+        <feDistantLight azimuth="225" elevation="50" />
+      </feDiffuseLighting>
+      <feBlend in="SourceGraphic" in2="cobbleLight" mode="multiply" />
+    </filter>
+
+    <!-- Nano Banana Pro Tactile Texture: Botanical Leaf Veins & Sheen -->
+    <filter id="nanoTactileFoliage" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.03 0.08" numOctaves="2" result="leafNoise" />
+      <feColorMatrix type="matrix" values="0 0 0 0 0.05  0 0 0 0 0.3  0 0 0 0 0.12  0 0 0 0.2 0" in="leafNoise" result="leafVeins" />
+      <feBlend in="SourceGraphic" in2="leafVeins" mode="overlay" />
+    </filter>
+
+    <linearGradient id="mainRoofGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#2D3035" />
+      <stop offset="50%" stop-color="#1F2124" />
+      <stop offset="100%" stop-color="#2D3035" />
+    </linearGradient>
+    <linearGradient id="glassCurtain" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FEF3C7" stop-opacity="0.9" />
+      <stop offset="40%" stop-color="#FDE68A" stop-opacity="0.75" />
+      <stop offset="80%" stop-color="#38BDF8" stop-opacity="0.4" />
+      <stop offset="100%" stop-color="#0284C7" stop-opacity="0.5" />
+    </linearGradient>
+    <linearGradient id="mainTimber" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#9A3412" />
+      <stop offset="50%" stop-color="#C2410C" />
+      <stop offset="100%" stop-color="#7C2D12" />
+    </linearGradient>
+    <pattern id="stoneWallPattern" width="40" height="20" patternUnits="userSpaceOnUse">
+      <rect width="40" height="20" fill="#4B5563" />
+      <rect x="0" y="0" width="38" height="9" fill="#374151" rx="1" />
+      <rect x="20" y="10" width="38" height="9" fill="#3F3F46" rx="1" />
+      <rect x="0" y="10" width="18" height="9" fill="#374151" rx="1" />
+    </pattern>
+    <filter id="intenseGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="4" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+  </defs>
+  
+  <g id="main-villa">
+    <polygon points="325,48 1060,50 1025,82 355,80" fill="url(#mainRoofGrad)" stroke="#111827" stroke-width="2" />
+    <polyline points="358,78 1022,80" stroke="#FDE68A" stroke-width="4" filter="url(#intenseGlow)" />
+    <polyline points="358,80 1022,82" stroke="#FFFFFF" stroke-width="1.5" />
+
+    <rect x="380" y="82" width="610" height="200" fill="#2E3238" />
+
+    <!-- Tactile Wood Siding with Nano Banana Grain -->
+    <rect x="740" y="82" width="240" height="195" fill="url(#mainTimber)" filter="url(#nanoTactileWood)" />
+    <g stroke="#431407" stroke-width="2">
+      <line x1="740" y1="98" x2="980" y2="98" />
+      <line x1="740" y1="114" x2="980" y2="114" />
+      <line x1="740" y1="130" x2="980" y2="130" />
+      <line x1="740" y1="146" x2="980" y2="146" />
+      <line x1="740" y1="162" x2="980" y2="162" />
+      <line x1="740" y1="178" x2="980" y2="178" />
+      <line x1="740" y1="194" x2="980" y2="194" />
+      <line x1="740" y1="210" x2="980" y2="210" />
+      <line x1="740" y1="226" x2="980" y2="226" />
+      <line x1="740" y1="242" x2="980" y2="242" />
+      <line x1="740" y1="258" x2="980" y2="258" />
+      <line x1="740" y1="274" x2="980" y2="274" />
+    </g>
+
+    <g id="upper-windows">
+      <rect x="390" y="90" width="180" height="185" fill="url(#glassCurtain)" stroke="#18181B" stroke-width="3" />
+      <rect x="580" y="90" width="150" height="185" fill="url(#glassCurtain)" stroke="#18181B" stroke-width="3" />
+      <line x1="450" y1="90" x2="450" y2="275" stroke="#18181B" stroke-width="2" />
+      <line x1="510" y1="90" x2="510" y2="275" stroke="#18181B" stroke-width="2" />
+      <line x1="655" y1="90" x2="655" y2="275" stroke="#18181B" stroke-width="2" />
+      <line x1="390" y1="150" x2="730" y2="150" stroke="#18181B" stroke-width="2" />
+    </g>
+
+    <rect x="560" y="275" width="220" height="12" fill="#18181B" />
+    <line x1="560" y1="287" x2="780" y2="287" stroke="#FDE68A" stroke-width="3" filter="url(#intenseGlow)" />
+    
+    <rect x="565" y="215" width="210" height="60" fill="#38BDF8" opacity="0.3" stroke="#CBD5E1" stroke-width="1.5" />
+    <line x1="565" y1="215" x2="775" y2="215" stroke="#F8FAFC" stroke-width="3" />
+    <line x1="635" y1="215" x2="635" y2="275" stroke="#F8FAFC" stroke-width="2" />
+    <line x1="705" y1="215" x2="705" y2="275" stroke="#F8FAFC" stroke-width="2" />
+
+    <!-- Tactile Split-Face Ledger Stone Wall with Nano Banana Texture -->
+    <rect x="385" y="287" width="410" height="190" fill="url(#stoneWallPattern)" filter="url(#nanoTactileStone)" />
+    
+    <rect x="405" y="325" width="140" height="150" fill="url(#glassCurtain)" opacity="0.8" stroke="#18181B" stroke-width="3" />
+    <line x1="475" y1="325" x2="475" y2="475" stroke="#18181B" stroke-width="2" />
+  </g>
+
+</svg>

@@ -1,13 +1,13 @@
 import { motion } from 'framer-motion';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { mockProperties } from '../../mockData/mockProperties';
 
 export default function ExclusiveListingsSection() {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const exclusiveListings = mockProperties.filter(p => p.exclusive);
 
   const handleInspect = (id) => {
-    setSearchParams({ propertyId: id });
+    navigate(`/properties/${id}`);
   };
 
   return (

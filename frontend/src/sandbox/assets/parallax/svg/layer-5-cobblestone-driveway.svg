@@ -1,0 +1,247 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1376 768" width="100%" height="100%">
+  <defs>
+    
+    <!-- Nano Banana Pro Tactile Texture: Stone & Masonry Relief -->
+    <filter id="nanoTactileStone" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="4" result="stoneNoise" />
+      <feColorMatrix type="matrix" values="0.33 0.33 0.33 0 0  0.33 0.33 0.33 0 0  0.33 0.33 0.33 0 0  0 0 0 0.32 0" in="stoneNoise" result="stoneContrast" />
+      <feBlend in="SourceGraphic" in2="stoneContrast" mode="multiply" result="stoneBlended" />
+    </filter>
+
+    <!-- Nano Banana Pro Tactile Texture: Organic Timber Wood Grain -->
+    <filter id="nanoTactileWood" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.015 0.22" numOctaves="3" result="woodNoise" />
+      <feColorMatrix type="matrix" values="0 0 0 0 0.35  0 0 0 0 0.18  0 0 0 0 0.08  0 0 0 0.28 0" in="woodNoise" result="woodGrain" />
+      <feBlend in="SourceGraphic" in2="woodGrain" mode="multiply" />
+    </filter>
+
+    <!-- Nano Banana Pro Tactile Texture: Wet Cobblestone Specular Glint -->
+    <filter id="nanoTactileCobble" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="3" result="cobbleNoise" />
+      <feDiffuseLighting in="cobbleNoise" lighting-color="#FDE68A" surfaceScale="2" diffuseConstant="1.2" result="cobbleLight">
+        <feDistantLight azimuth="225" elevation="50" />
+      </feDiffuseLighting>
+      <feBlend in="SourceGraphic" in2="cobbleLight" mode="multiply" />
+    </filter>
+
+    <!-- Nano Banana Pro Tactile Texture: Botanical Leaf Veins & Sheen -->
+    <filter id="nanoTactileFoliage" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.03 0.08" numOctaves="2" result="leafNoise" />
+      <feColorMatrix type="matrix" values="0 0 0 0 0.05  0 0 0 0 0.3  0 0 0 0 0.12  0 0 0 0.2 0" in="leafNoise" result="leafVeins" />
+      <feBlend in="SourceGraphic" in2="leafVeins" mode="overlay" />
+    </filter>
+
+    <linearGradient id="curbGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#D1D5DB" />
+      <stop offset="100%" stop-color="#9CA3AF" />
+    </linearGradient>
+    <linearGradient id="grassGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#15803D" />
+      <stop offset="100%" stop-color="#166534" />
+    </linearGradient>
+    <linearGradient id="roadBase" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#26282B" />
+      <stop offset="50%" stop-color="#323438" />
+      <stop offset="100%" stop-color="#1E2023" />
+    </linearGradient>
+    <radialGradient id="headlightFlare" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="1" />
+      <stop offset="25%" stop-color="#FEF08A" stop-opacity="0.9" />
+      <stop offset="60%" stop-color="#EAB308" stop-opacity="0.4" />
+      <stop offset="100%" stop-color="#CA8A04" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="beamSweep" x1="1" y1="0.5" x2="0" y2="0.5">
+      <stop offset="0%" stop-color="#FEF08A" stop-opacity="0.5" />
+      <stop offset="60%" stop-color="#FDE047" stop-opacity="0.15" />
+      <stop offset="100%" stop-color="#EAB308" stop-opacity="0" />
+    </linearGradient>
+
+  </defs>
+  
+  <g id="foreground-driveway">
+    <path d="M 0 490 L 1376 490 L 1376 768 L 0 768 Z" fill="url(#roadBase)" />
+
+    <g id="left-curb">
+      <path d="M 0 490 Q 120 540 145 768 L 0 768 Z" fill="url(#grassGrad)" />
+      <path d="M 0 515 Q 125 560 150 768 L 170 768 Q 140 550 15 500 Z" fill="url(#curbGrad)" stroke="#6B7280" stroke-width="1.5" />
+    </g>
+
+    <g id="right-curb">
+      <path d="M 1200 550 Q 1220 650 1376 680 L 1376 768 L 1180 768 Q 1180 620 1200 550 Z" fill="url(#grassGrad)" />
+      <path d="M 1180 570 Q 1165 670 1320 768 L 1345 768 Q 1185 660 1200 560 Z" fill="url(#curbGrad)" stroke="#6B7280" stroke-width="1.5" />
+    </g>
+
+    <!-- Concentric Paver Stone Array with Nano Banana Tactile Texture -->
+    <g id="cobblestones" opacity="0.95" filter="url(#nanoTactileCobble)">
+      <ellipse cx="642.3" cy="784.5" rx="18.2" ry="14.3" fill="#5C6069" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="618.3" cy="768.1" rx="22.7" ry="18.3" fill="#2F3136" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="734.4" cy="778.6" rx="16.0" ry="11.9" fill="#3B3D43" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="490.4" cy="786.8" rx="20.0" ry="16.1" fill="#2F3136" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="586.0" cy="754.2" rx="13.5" ry="10.3" fill="#2F3136" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="695.8" cy="752.1" rx="24.5" ry="18.5" fill="#2F3136" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="798.7" cy="782.9" rx="15.9" ry="11.8" fill="#474A51" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="458.2" cy="780.2" rx="15.4" ry="12.5" fill="#5C6069" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="567.8" cy="738.9" rx="14.8" ry="11.1" fill="#3B3D43" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="678.7" cy="732.7" rx="12.9" ry="9.6" fill="#2F3136" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="784.4" cy="754.1" rx="18.0" ry="12.0" fill="#52565E" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="414.6" cy="782.9" rx="18.4" ry="15.3" fill="#474A51" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="511.2" cy="733.6" rx="17.7" ry="13.4" fill="#3B3D43" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="630.7" cy="714.3" rx="20.0" ry="16.7" fill="#3B3D43" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="762.7" cy="727.5" rx="20.6" ry="16.6" fill="#3B3D43" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="866.3" cy="771.6" rx="18.2" ry="12.2" fill="#3B3D43" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="387.0" cy="774.0" rx="24.4" ry="20.2" fill="#52565E" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="488.4" cy="720.6" rx="21.3" ry="17.5" fill="#474A51" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="624.4" cy="696.9" rx="15.9" ry="12.5" fill="#5C6069" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="751.1" cy="706.0" rx="18.6" ry="12.3" fill="#3B3D43" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="862.2" cy="743.2" rx="16.7" ry="13.6" fill="#2F3136" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="350.9" cy="772.6" rx="23.8" ry="19.9" fill="#383A3F" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="451.1" cy="712.9" rx="20.8" ry="14.5" fill="#383A3F" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="570.4" cy="683.7" rx="19.4" ry="13.0" fill="#383A3F" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="714.5" cy="682.4" rx="14.1" ry="11.5" fill="#383A3F" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="846.6" cy="713.5" rx="16.6" ry="12.2" fill="#474A51" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="946.5" cy="774.0" rx="18.4" ry="15.3" fill="#474A51" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="331.4" cy="756.5" rx="23.3" ry="18.8" fill="#5C6069" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="421.0" cy="703.2" rx="21.9" ry="16.1" fill="#52565E" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="546.4" cy="668.9" rx="18.4" ry="14.2" fill="#52565E" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="685.0" cy="662.2" rx="18.4" ry="15.1" fill="#5C6069" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="825.8" cy="685.8" rx="16.5" ry="12.0" fill="#3B3D43" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="933.5" cy="733.4" rx="20.2" ry="16.0" fill="#3B3D43" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="298.0" cy="752.7" rx="16.0" ry="11.8" fill="#383A3F" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="388.7" cy="694.8" rx="21.2" ry="15.3" fill="#2F3136" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="503.1" cy="658.2" rx="16.5" ry="11.4" fill="#5C6069" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="641.9" cy="643.6" rx="17.8" ry="14.2" fill="#3B3D43" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="786.9" cy="657.0" rx="19.5" ry="16.3" fill="#52565E" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="919.2" cy="700.4" rx="20.1" ry="14.9" fill="#5C6069" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="1011.2" cy="765.8" rx="22.3" ry="18.2" fill="#5C6069" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="257.9" cy="756.1" rx="13.3" ry="8.9" fill="#52565E" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="340.2" cy="695.1" rx="12.4" ry="8.2" fill="#52565E" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="460.8" cy="649.0" rx="16.8" ry="14.1" fill="#5C6069" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="608.5" cy="627.0" rx="12.7" ry="8.5" fill="#2F3136" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="755.8" cy="633.4" rx="12.6" ry="9.4" fill="#3B3D43" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="902.9" cy="670.7" rx="20.9" ry="17.2" fill="#383A3F" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="1012.5" cy="732.4" rx="17.4" ry="14.6" fill="#3B3D43" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="230.1" cy="747.3" rx="22.6" ry="17.9" fill="#3B3D43" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="330.9" cy="675.7" rx="21.4" ry="16.0" fill="#383A3F" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="472.0" cy="627.1" rx="15.4" ry="10.6" fill="#474A51" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="624.0" cy="608.7" rx="19.9" ry="15.0" fill="#474A51" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="772.5" cy="617.6" rx="15.4" ry="11.0" fill="#383A3F" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="900.0" cy="648.5" rx="18.0" ry="12.7" fill="#474A51" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="1017.1" cy="706.2" rx="16.7" ry="11.4" fill="#5C6069" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="1096.6" cy="787.2" rx="18.4" ry="12.2" fill="#5C6069" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="202.9" cy="737.9" rx="14.6" ry="10.8" fill="#383A3F" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="304.6" cy="665.1" rx="13.9" ry="9.5" fill="#2F3136" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="426.5" cy="619.0" rx="13.3" ry="9.6" fill="#5C6069" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="590.9" cy="592.6" rx="17.3" ry="11.9" fill="#52565E" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="753.8" cy="597.0" rx="17.8" ry="11.9" fill="#383A3F" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="890.7" cy="625.1" rx="12.0" ry="8.1" fill="#5C6069" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="1006.6" cy="673.2" rx="19.5" ry="15.2" fill="#3B3D43" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="1096.6" cy="741.7" rx="21.8" ry="15.2" fill="#5C6069" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="169.3" cy="735.4" rx="16.6" ry="10.9" fill="#52565E" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="270.1" cy="658.9" rx="15.8" ry="11.3" fill="#383A3F" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="389.6" cy="609.7" rx="15.2" ry="12.8" fill="#383A3F" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="555.1" cy="577.7" rx="12.1" ry="10.0" fill="#474A51" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="725.9" cy="576.3" rx="18.8" ry="14.3" fill="#383A3F" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="889.1" cy="604.7" rx="18.6" ry="12.4" fill="#3B3D43" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="1029.6" cy="661.0" rx="20.0" ry="16.1" fill="#52565E" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="1120.8" cy="729.1" rx="19.2" ry="14.7" fill="#474A51" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="142.8" cy="725.2" rx="22.4" ry="18.2" fill="#52565E" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="234.0" cy="654.1" rx="16.3" ry="13.2" fill="#474A51" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="359.1" cy="599.0" rx="16.0" ry="11.4" fill="#52565E" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="517.3" cy="564.0" rx="16.8" ry="14.1" fill="#2F3136" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="692.1" cy="556.5" rx="14.9" ry="11.3" fill="#383A3F" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="858.5" cy="577.8" rx="16.8" ry="14.1" fill="#383A3F" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="998.7" cy="622.3" rx="15.7" ry="13.0" fill="#3B3D43" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="1106.1" cy="683.3" rx="16.1" ry="10.6" fill="#3B3D43" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="1184.9" cy="766.1" rx="15.2" ry="11.6" fill="#2F3136" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="111.3" cy="720.4" rx="21.8" ry="14.7" fill="#3B3D43" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="209.9" cy="642.5" rx="11.7" ry="9.7" fill="#3B3D43" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="343.4" cy="583.7" rx="14.0" ry="9.1" fill="#383A3F" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="483.8" cy="550.6" rx="12.9" ry="10.9" fill="#2F3136" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="636.2" cy="538.1" rx="14.2" ry="10.2" fill="#3B3D43" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="802.6" cy="549.1" rx="14.7" ry="10.6" fill="#3B3D43" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="949.8" cy="582.8" rx="15.2" ry="10.5" fill="#474A51" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="1080.5" cy="639.3" rx="13.0" ry="10.6" fill="#3B3D43" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="1178.6" cy="714.0" rx="22.2" ry="15.2" fill="#383A3F" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="75.8" cy="720.4" rx="18.1" ry="14.9" fill="#5C6069" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="159.7" cy="647.3" rx="13.6" ry="9.5" fill="#383A3F" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="283.3" cy="584.1" rx="14.8" ry="9.8" fill="#52565E" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="429.7" cy="541.8" rx="14.1" ry="10.6" fill="#474A51" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="607.3" cy="521.1" rx="9.3" ry="6.1" fill="#474A51" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="772.1" cy="527.2" rx="16.6" ry="13.0" fill="#3B3D43" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="926.9" cy="556.1" rx="17.5" ry="12.3" fill="#5C6069" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="1069.9" cy="609.2" rx="12.4" ry="9.0" fill="#3B3D43" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="1178.0" cy="678.6" rx="13.2" ry="9.4" fill="#52565E" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="1247.8" cy="758.5" rx="13.8" ry="11.6" fill="#52565E" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="43.4" cy="717.0" rx="21.6" ry="15.7" fill="#52565E" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="145.8" cy="629.1" rx="19.5" ry="13.6" fill="#3B3D43" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="284.5" cy="562.4" rx="9.9" ry="6.8" fill="#3B3D43" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="436.6" cy="521.8" rx="11.1" ry="9.3" fill="#383A3F" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="590.4" cy="504.2" rx="9.6" ry="7.1" fill="#383A3F" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="776.6" cy="509.7" rx="14.5" ry="10.9" fill="#5C6069" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="953.6" cy="543.8" rx="15.8" ry="13.2" fill="#52565E" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="1092.1" cy="596.5" rx="13.5" ry="9.1" fill="#5C6069" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="1200.5" cy="665.4" rx="21.0" ry="14.6" fill="#52565E" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="1278.7" cy="753.8" rx="16.2" ry="11.5" fill="#5C6069" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="9.6" cy="715.5" rx="17.3" ry="11.3" fill="#383A3F" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="95.3" cy="635.4" rx="18.6" ry="12.5" fill="#474A51" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="214.1" cy="568.7" rx="16.5" ry="13.7" fill="#383A3F" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="363.9" cy="518.6" rx="15.3" ry="12.3" fill="#5C6069" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="551.2" cy="488.9" rx="13.0" ry="9.8" fill="#474A51" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="743.3" cy="488.8" rx="11.5" ry="7.9" fill="#5C6069" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="928.4" cy="517.6" rx="12.6" ry="9.4" fill="#5C6069" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="1068.7" cy="563.1" rx="9.9" ry="7.6" fill="#383A3F" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="1187.0" cy="625.8" rx="14.8" ry="10.9" fill="#383A3F" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="1283.1" cy="711.4" rx="18.6" ry="12.2" fill="#52565E" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="-13.8" cy="701.2" rx="12.3" ry="9.0" fill="#52565E" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="73.9" cy="621.8" rx="12.1" ry="9.7" fill="#52565E" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="215.9" cy="545.8" rx="15.4" ry="10.3" fill="#3B3D43" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="381.5" cy="495.4" rx="11.5" ry="7.7" fill="#52565E" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="931.4" cy="499.2" rx="14.2" ry="11.4" fill="#383A3F" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="1076.6" cy="544.3" rx="15.7" ry="12.8" fill="#52565E" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="1207.4" cy="611.8" rx="11.8" ry="8.4" fill="#2F3136" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="1300.3" cy="690.2" rx="22.5" ry="18.1" fill="#52565E" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="26.3" cy="627.6" rx="13.6" ry="9.4" fill="#5C6069" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="138.6" cy="557.8" rx="14.0" ry="10.8" fill="#5C6069" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="288.7" cy="499.7" rx="10.4" ry="7.7" fill="#3B3D43" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="997.5" cy="496.8" rx="14.7" ry="9.6" fill="#474A51" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="1146.6" cy="552.5" rx="10.5" ry="6.8" fill="#474A51" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="1275.1" cy="631.8" rx="13.8" ry="9.3" fill="#383A3F" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="1356.4" cy="716.6" rx="15.8" ry="12.9" fill="#383A3F" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="-10.3" cy="625.8" rx="11.1" ry="9.1" fill="#52565E" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="107.7" cy="549.5" rx="13.8" ry="10.2" fill="#52565E" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="256.8" cy="489.3" rx="13.1" ry="9.1" fill="#3B3D43" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="1151.2" cy="531.6" rx="16.2" ry="13.1" fill="#383A3F" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="1280.3" cy="605.7" rx="14.4" ry="10.8" fill="#3B3D43" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="1375.5" cy="695.8" rx="18.0" ry="14.3" fill="#5C6069" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="-30.4" cy="610.8" rx="14.7" ry="9.7" fill="#52565E" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="106.3" cy="526.5" rx="13.6" ry="11.1" fill="#3B3D43" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="1142.2" cy="505.4" rx="15.8" ry="11.6" fill="#383A3F" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="1270.6" cy="571.2" rx="11.4" ry="7.6" fill="#2F3136" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="1375.7" cy="655.4" rx="16.8" ry="12.2" fill="#5C6069" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="87.5" cy="512.2" rx="11.6" ry="7.7" fill="#383A3F" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="1285.1" cy="553.6" rx="18.0" ry="12.7" fill="#3B3D43" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="1389.1" cy="632.4" rx="19.6" ry="16.0" fill="#52565E" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="58.5" cy="502.7" rx="12.8" ry="8.7" fill="#2F3136" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="1266.2" cy="517.4" rx="12.9" ry="9.6" fill="#474A51" stroke="#1E2024" stroke-width="1.2" />
+    <ellipse cx="1389.5" cy="599.3" rx="13.2" ry="10.6" fill="#474A51" stroke="#1E2024" stroke-width="1.2" />
+    </g>
+
+    <g id="vehicle-sedan">
+      <path d="M 1220 480 Q 1235 445 1270 440 L 1340 440 Q 1365 448 1376 480 Z" fill="#1C1D21" stroke="#0F1012" stroke-width="2" />
+      <ellipse cx="1255" cy="485" rx="14" ry="7" fill="#0B0C0E" />
+      <ellipse cx="1350" cy="485" rx="14" ry="7" fill="#0B0C0E" />
+      <rect x="1285" y="465" width="40" height="12" rx="2" fill="#E5E7EB" stroke="#111827" stroke-width="1" />
+      <text x="1295" y="474" fill="#111827" font-family="monospace" font-size="7" font-weight="bold">ESTATE</text>
+
+      <polygon points="1245,455 1050,430 850,560 1245,465" fill="url(#beamSweep)" opacity="0.65" />
+      <polygon points="1335,455 1180,440 980,590 1335,465" fill="url(#beamSweep)" opacity="0.55" />
+
+      <circle cx="1245" cy="458" r="32" fill="url(#headlightFlare)" />
+      <circle cx="1245" cy="458" r="7" fill="#FFFFFF" />
+
+      <circle cx="1335" cy="458" r="32" fill="url(#headlightFlare)" />
+      <circle cx="1335" cy="458" r="7" fill="#FFFFFF" />
+    </g>
+  </g>
+
+</svg>

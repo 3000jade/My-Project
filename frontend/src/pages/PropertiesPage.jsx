@@ -5,7 +5,6 @@ import { useWindowVirtualizer } from '@tanstack/react-virtual';
 import AdvancedSearchBox from '../components/ui/AdvancedSearchBox';
 import PropertyCard from '../components/ui/PropertyCard';
 import Button from '../components/ui/Button';
-import Hero3DCarousel from '../components/ui/Hero3DCarousel';
 
 import { mockProperties } from '../mockData/mockProperties';
 
@@ -125,12 +124,13 @@ export default function PropertiesPage() {
 
   return (
     <div className="bg-white min-h-screen w-full relative overflow-x-clip">
-      {/* 1. 3D Carousel Hero */}
-      <Hero3DCarousel properties={mockProperties.slice(0, 5)} />
+      {/* Sentinel anchor to measure when search reaches 80px offset */}
+      <div className="pt-24 md:pt-28">
+        <div ref={sentinelRef} className="w-full h-0 pointer-events-none" />
+      </div>
 
-      {/* 2. Advanced Search Component */}
-      <div className={`transition-all duration-500 z-[45] sticky ${headerVisible && isStickySearch ? 'top-[80px]' : 'top-0'} ${isStickySearch ? 'px-0 pt-0 bg-white/80 backdrop-blur-2xl shadow-sm border-b border-gray-100' : 'mt-10 px-5 md:px-10 lg:px-24 relative'}`}>
-        <div ref={sentinelRef} className="absolute top-0 left-0 w-full h-0 pointer-events-none" />
+      {/* Advanced Search Component */}
+      <div className={`transition-all duration-500 z-[45] sticky ${headerVisible && isStickySearch ? 'top-[80px]' : 'top-0'} ${isStickySearch ? 'px-0 pt-0 bg-white/80 backdrop-blur-2xl shadow-sm border-b border-gray-100' : 'max-w-[1560px] mx-auto px-5 md:px-10 lg:px-16 relative pb-4'}`}>
         <AdvancedSearchBox onSearch={handleSearch} isSticky={isStickySearch} />
       </div>
 
@@ -140,7 +140,7 @@ export default function PropertiesPage() {
         <div className="absolute top-40 left-0 w-[500px] h-[500px] bg-[#174849]/5 blur-[120px] rounded-full pointer-events-none mix-blend-multiply" />
         <div className="absolute bottom-40 right-0 w-[500px] h-[500px] bg-[#F4A261]/5 blur-[120px] rounded-full pointer-events-none mix-blend-multiply" />
 
-        <section className="w-full px-5 md:px-10 lg:px-24 py-10 relative z-10 max-w-[1600px] mx-auto">
+        <section className="w-full max-w-[1560px] mx-auto px-5 md:px-10 lg:px-16 py-10 relative z-10">
           <div className="flex flex-col md:flex-row justify-between items-end mb-12 border-b border-gray-200/60 pb-6">
             <div>
               <span className="inline-block px-3 py-1 bg-[#174849]/10 text-[#174849] rounded-full text-[10px] font-bold font-sans uppercase tracking-[0.2em] mb-4 border border-[#174849]/20">Exclusive Portfolio</span>

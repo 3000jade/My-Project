@@ -9,8 +9,8 @@ import {
   IconAdjustmentsHorizontal
 } from '@tabler/icons-react';
 
-import coastalVilla from '../../assets/luxury_modern_villa.jpg';
-import zenCourtyard from '../../assets/luxury_zen_courtyard.jpg';
+import coastalVilla from '../../sandbox/assets/luxury_modern_villa.jpg';
+import zenCourtyard from '../../sandbox/assets/luxury_zen_courtyard.jpg';
 
 export default function OverlappingOffsetCardShowcase() {
   const [boxTheme, setBoxTheme] = useState('stark'); // 'stark' | 'glass'

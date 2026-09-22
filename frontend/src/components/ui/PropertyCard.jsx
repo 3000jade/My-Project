@@ -13,7 +13,7 @@ export default function PropertyCard({ property, variant = 'vertical', variants 
 
   if (variant === 'large') {
     return (
-      <motion.div variants={cardAnimation} whileHover={{ y: -4, scale: 1.01 }} className="group bg-surface-container-lowest rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 flex flex-col border border-outline-variant/20 h-full relative cursor-pointer" onClick={() => navigate(`?propertyId=${property.id}`)}>
+      <motion.div variants={cardAnimation} whileHover={{ y: -4, scale: 1.01 }} className="group bg-surface-container-lowest rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 flex flex-col border border-outline-variant/20 h-full relative cursor-pointer" onClick={() => navigate(`/properties/${property.id}`)}>
         {property.badge && (
           <div className="absolute top-4 left-4 z-20 bg-tertiary-container text-white text-[11px] font-bold uppercase tracking-wider font-sans px-3 py-1 rounded-full flex items-center gap-1 shadow-md">
             <span className="material-symbols-outlined text-[16px] icon-fill">star</span> {property.badge}
@@ -38,7 +38,7 @@ export default function PropertyCard({ property, variant = 'vertical', variants 
             )}
             <div className="flex items-center gap-1 bg-surface-container px-3 py-1.5 rounded-md"><span className="material-symbols-outlined text-[18px]">square_foot</span><span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 font-sans">{property.area}</span></div>
           </div>
-          <Button variant="primary" size="full" onClick={(e) => { e.stopPropagation(); navigate(`?propertyId=${property.id}`); }}>View Details</Button>
+          <Button variant="primary" size="full" onClick={(e) => { e.stopPropagation(); navigate(`/properties/${property.id}`); }}>View Details</Button>
         </div>
       </motion.div>
     );
@@ -49,7 +49,7 @@ export default function PropertyCard({ property, variant = 'vertical', variants 
       variants={cardAnimation}
       whileHover={{ y: -4, scale: 1.01 }}
       className="group bg-transparent rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 flex flex-col border border-outline-variant/20 h-full relative cursor-pointer"
-      onClick={() => navigate(`?propertyId=${property.id}`)}
+      onClick={() => navigate(`/properties/${property.id}`)}
     >
       <div className="relative w-full aspect-[4/3] overflow-hidden bg-surface-container-low">
         {property.image ? (

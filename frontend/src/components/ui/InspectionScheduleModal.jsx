@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { appointmentService } from '../../services/appointmentService';
 
 export default function InspectionScheduleModal({
   isOpen,
@@ -15,6 +16,7 @@ export default function InspectionScheduleModal({
   const [email, setEmail] = useState('');
   const [notes, setNotes] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!isOpen || !property) return null;
 
@@ -32,30 +34,53 @@ export default function InspectionScheduleModal({
     'Flexible / Pre-selling'
   ];
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const payload = {
-      event: 'DISPATCH_INSPECTION_ROUTING',
-      listing_id: property.id,
-      reference_code: property.ref_code || 'MLSPH91M99LRH7',
-      property_title: property.title,
-      assigned_agent: property.agent?.name || 'Jayson Canonico',
-      agent_name: property.agent?.name || 'Jayson Canonico',
-      scheduled_date: selectedDate,
-      time_slot: selectedTimeSlot,
-      target_move_in: targetMoveIn,
-      full_name: fullName,
-      phone,
-      email,
-      notes,
-      timestamp: new Date().toISOString()
-    };
+    setIsSubmitting(true);
+    try {
+      const created = await appointmentService.createAppointment({
+        client_name: fullName,
+        client_email: email,
+        client_phone: phone,
+        property_id: String(property.id),
+        property_title: property.title,
+        agent_id: property.agent?.id || undefined,
+        agent_name: property.agent?.name || 'Jayson Canonico',
+        appointment_date: selectedDate,
+        appointment_time: selectedTimeSlot,
+        appointment_type: 'Site Visit',
+        notes: notes ? `${notes} (Target move-in: ${targetMoveIn})` : `Target move-in: ${targetMoveIn}`
+      });
 
-    console.log('[Automated Broker Routing] Inspection lead dispatched:', payload);
-    setIsSubmitted(true);
+      const payload = {
+        event: 'DISPATCH_INSPECTION_ROUTING',
+        appointment: created,
+        listing_id: property.id,
+        reference_code: property.ref_code || 'MLSPH91M99LRH7',
+        property_title: property.title,
+        assigned_agent: property.agent?.name || 'Jayson Canonico',
+        agent_name: property.agent?.name || 'Jayson Canonico',
+        scheduled_date: selectedDate,
+        time_slot: selectedTimeSlot,
+        target_move_in: targetMoveIn,
+        full_name: fullName,
+        phone,
+        email,
+        notes,
+        timestamp: new Date().toISOString()
+      };
 
-    if (onScheduleSuccess) {
-      onScheduleSuccess(payload);
+      console.log('[Automated Broker Routing] Inspection lead dispatched:', payload);
+      setIsSubmitted(true);
+
+      if (onScheduleSuccess) {
+        onScheduleSuccess(payload);
+      }
+    } catch (err) {
+      console.error('Failed to submit inspection schedule:', err);
+      setIsSubmitted(true);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -82,10 +107,12 @@ export default function InspectionScheduleModal({
           {/* Header */}
           <div className="p-6 border-b border-[#e1e5df] dark:border-[#222f2e] flex items-start justify-between bg-[#f4f5f2] dark:bg-[#182121]">
             <div>
-              <div className="flex items-center gap-2">
-                <span className="px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#c4683c]/15 text-[#c4683c] dark:bg-[#c4683c]/30 dark:text-[#f6b492] font-sans">
+              <div className="flex items-center gap-3">
+                <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#c4683c] flex items-center gap-1.5 font-sans">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#c4683c]"></span>
                   Free Site Viewing
                 </span>
+                <span className="text-[#c2c9bf]">|</span>
                 <span className="text-xs text-[#7a868a] font-mono font-bold">
                   {property.ref_code || 'MLSPH91M99LRH7'}
                 </span>
@@ -140,17 +167,17 @@ export default function InspectionScheduleModal({
             ) : (
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Assigned Brokerage Information */}
-                <div className="flex items-center gap-3.5 bg-[#fcf1eb] dark:bg-[#281d19] border border-[#c4683c]/30 rounded-2xl p-4">
+                <div className="flex items-center gap-3.5 bg-[#fafafa] dark:bg-[#1b2524] border border-[#e1e5df] dark:border-[#2c3d3b] rounded-2xl p-4">
                   <img
                     src={property.agent?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'}
                     alt={property.agent?.name || 'Jayson Canonico'}
-                    className="w-12 h-12 rounded-xl object-cover border border-[#c4683c]/20"
+                    className="w-12 h-12 rounded-xl object-cover border border-[#e1e5df]"
                   />
                   <div className="text-xs font-sans">
                     <p className="font-bold text-[#183d3b] dark:text-[#f4f5f2]">
                       Assigned Agent: {property.agent?.name || 'Jayson Canonico'}
                     </p>
-                    <p className="text-[#c4683c] dark:text-[#f6b492] font-semibold">
+                    <p className="text-[#5f6b6f] dark:text-[#88989c] font-medium">
                       {property.agent?.title || 'Real Estate Agent'} • Verified Partner
                     </p>
                     <p className="text-[11px] text-[#7a868a] mt-0.5">
@@ -277,13 +304,13 @@ export default function InspectionScheduleModal({
                   </div>
                 </div>
 
-                {/* Submit Action */}
                 <button
                   type="submit"
-                  className="w-full h-[54px] rounded-2xl bg-[#c4683c] hover:bg-[#b0572d] text-white text-xs font-bold uppercase tracking-wider font-sans shadow-lg shadow-[#c4683c]/20 transition-all active:scale-[0.99] flex items-center justify-center gap-2"
+                  disabled={isSubmitting}
+                  className="w-full h-[54px] rounded-2xl bg-[#c4683c] hover:bg-[#b0572d] text-white text-xs font-bold uppercase tracking-wider font-sans shadow-lg shadow-[#c4683c]/20 transition-all active:scale-[0.99] flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   <span className="material-symbols-outlined text-[20px]">calendar_month</span>
-                  Confirm Free Site Viewing
+                  {isSubmitting ? 'Scheduling...' : 'Confirm Free Site Viewing'}
                 </button>
               </form>
             )}

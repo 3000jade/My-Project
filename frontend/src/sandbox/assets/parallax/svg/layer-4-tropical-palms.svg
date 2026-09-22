@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1376 768" width="100%" height="100%">
+  <defs>
+    
+    <!-- Nano Banana Pro Tactile Texture: Stone & Masonry Relief -->
+    <filter id="nanoTactileStone" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="4" result="stoneNoise" />
+      <feColorMatrix type="matrix" values="0.33 0.33 0.33 0 0  0.33 0.33 0.33 0 0  0.33 0.33 0.33 0 0  0 0 0 0.32 0" in="stoneNoise" result="stoneContrast" />
+      <feBlend in="SourceGraphic" in2="stoneContrast" mode="multiply" result="stoneBlended" />
+    </filter>
+
+    <!-- Nano Banana Pro Tactile Texture: Organic Timber Wood Grain -->
+    <filter id="nanoTactileWood" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.015 0.22" numOctaves="3" result="woodNoise" />
+      <feColorMatrix type="matrix" values="0 0 0 0 0.35  0 0 0 0 0.18  0 0 0 0 0.08  0 0 0 0.28 0" in="woodNoise" result="woodGrain" />
+      <feBlend in="SourceGraphic" in2="woodGrain" mode="multiply" />
+    </filter>
+
+    <!-- Nano Banana Pro Tactile Texture: Wet Cobblestone Specular Glint -->
+    <filter id="nanoTactileCobble" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="3" result="cobbleNoise" />
+      <feDiffuseLighting in="cobbleNoise" lighting-color="#FDE68A" surfaceScale="2" diffuseConstant="1.2" result="cobbleLight">
+        <feDistantLight azimuth="225" elevation="50" />
+      </feDiffuseLighting>
+      <feBlend in="SourceGraphic" in2="cobbleLight" mode="multiply" />
+    </filter>
+
+    <!-- Nano Banana Pro Tactile Texture: Botanical Leaf Veins & Sheen -->
+    <filter id="nanoTactileFoliage" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.03 0.08" numOctaves="2" result="leafNoise" />
+      <feColorMatrix type="matrix" values="0 0 0 0 0.05  0 0 0 0 0.3  0 0 0 0 0.12  0 0 0 0.2 0" in="leafNoise" result="leafVeins" />
+      <feBlend in="SourceGraphic" in2="leafVeins" mode="overlay" />
+    </filter>
+
+    <linearGradient id="palmFrondGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#10B981" />
+      <stop offset="50%" stop-color="#047857" />
+      <stop offset="100%" stop-color="#064E3B" />
+    </linearGradient>
+    <linearGradient id="fanPalmGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#34D399" />
+      <stop offset="60%" stop-color="#059669" />
+      <stop offset="100%" stop-color="#022C22" />
+    </linearGradient>
+    <radialGradient id="gardenSpotlight" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FDE68A" stop-opacity="0.8" />
+      <stop offset="60%" stop-color="#F59E0B" stop-opacity="0.3" />
+      <stop offset="100%" stop-color="#10B981" stop-opacity="0" />
+    </radialGradient>
+
+  </defs>
+  
+  <g id="tropical-palms" filter="url(#nanoTactileFoliage)">
+    <ellipse cx="570" cy="460" rx="45" ry="25" fill="url(#gardenSpotlight)" />
+    <ellipse cx="280" cy="480" rx="55" ry="30" fill="url(#gardenSpotlight)" />
+
+    <g id="left-palms">
+      <path d="M 270 480 Q 265 350 260 220" stroke="#78350F" stroke-width="8" stroke-linecap="round" fill="none" />
+      <path d="M 260 220 Q 220 180 160 210 Q 210 240 260 220" fill="url(#palmFrondGrad)" />
+      <path d="M 260 220 Q 240 160 190 170 Q 230 210 260 220" fill="url(#palmFrondGrad)" />
+      <path d="M 260 220 Q 260 140 240 130 Q 260 190 260 220" fill="url(#palmFrondGrad)" />
+      <path d="M 260 220 Q 290 140 310 140 Q 285 190 260 220" fill="url(#palmFrondGrad)" />
+      <path d="M 260 220 Q 330 170 370 190 Q 315 220 260 220" fill="url(#palmFrondGrad)" />
+      <path d="M 260 220 Q 320 210 360 240 Q 300 240 260 220" fill="url(#palmFrondGrad)" />
+    </g>
+
+    <g id="center-palms">
+      <path d="M 570 490 Q 565 380 560 240" stroke="#78350F" stroke-width="6" stroke-linecap="round" fill="none" />
+      <path d="M 580 490 Q 590 390 600 260" stroke="#78350F" stroke-width="5" stroke-linecap="round" fill="none" />
+      <path d="M 560 240 Q 510 190 460 220 Q 510 250 560 240" fill="url(#palmFrondGrad)" />
+      <path d="M 560 240 Q 540 170 490 170 Q 530 220 560 240" fill="url(#palmFrondGrad)" />
+      <path d="M 560 240 Q 570 160 550 140 Q 570 200 560 240" fill="url(#palmFrondGrad)" />
+      <path d="M 560 240 Q 600 170 630 170 Q 590 220 560 240" fill="url(#palmFrondGrad)" />
+      <path d="M 600 260 Q 650 200 700 230 Q 645 260 600 260" fill="url(#palmFrondGrad)" />
+      <path d="M 600 260 Q 640 250 680 280 Q 630 280 600 260" fill="url(#palmFrondGrad)" />
+    </g>
+
+    <!-- Traveler's Palm Symmetrical Fan with Nano Tactile Veins -->
+    <g id="travelers-palm-fan">
+      <path d="M 1070 380 Q 1020 310 970 280 Q 1020 350 1070 380" fill="url(#fanPalmGrad)" />
+      <path d="M 1070 380 Q 1030 270 990 230 Q 1035 320 1070 380" fill="url(#fanPalmGrad)" />
+      <path d="M 1070 380 Q 1040 240 1015 190 Q 1050 290 1070 380" fill="url(#fanPalmGrad)" />
+      <path d="M 1070 380 Q 1055 210 1045 160 Q 1065 270 1070 380" fill="url(#fanPalmGrad)" />
+      <path d="M 1070 380 Q 1070 200 1070 140 Q 1075 260 1070 380" fill="url(#fanPalmGrad)" stroke="#10B981" stroke-width="1.5" />
+      <path d="M 1070 380 Q 1085 210 1095 160 Q 1075 270 1070 380" fill="url(#fanPalmGrad)" />
+      <path d="M 1070 380 Q 1100 240 1125 190 Q 1090 290 1070 380" fill="url(#fanPalmGrad)" />
+      <path d="M 1070 380 Q 1110 270 1150 230 Q 1105 320 1070 380" fill="url(#fanPalmGrad)" />
+      <path d="M 1070 380 Q 1120 310 1170 280 Q 1120 350 1070 380" fill="url(#fanPalmGrad)" />
+    </g>
+
+    <path d="M 400 480 Q 450 440 510 460 Q 570 430 640 460 Q 720 440 780 480 L 780 500 L 400 500 Z" fill="#064E3B" />
+    <circle cx="480" cy="465" r="4" fill="#F43F5E" />
+    <circle cx="510" cy="455" r="5" fill="#FB7185" />
+    <circle cx="545" cy="460" r="4" fill="#F43F5E" />
+    <circle cx="620" cy="450" r="6" fill="#FB7185" />
+    <circle cx="660" cy="458" r="4" fill="#F43F5E" />
+  </g>
+
+</svg>

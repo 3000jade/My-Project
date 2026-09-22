@@ -12,13 +12,13 @@ import {
 } from '@tabler/icons-react';
 
 // Layer Assets
-import layerSky from '../assets/parallax/layer-sky.png';
-import layerHouse from '../assets/parallax/layer-house.png';
-import layerGateLeft from '../assets/parallax/layer-gate-left.png';
-import layerGateRight from '../assets/parallax/layer-gate-right.png';
-import layerThresholdLeft from '../assets/parallax/layer-threshold-left.png';
-import layerThresholdRight from '../assets/parallax/layer-threshold-right.png';
-import layerHeadlightBloom from '../assets/parallax/layer-headlight-bloom.png';
+import layerSky from './assets/parallax/layer-sky.png';
+import layerHouse from './assets/parallax/layer-house.png';
+import layerGateLeft from './assets/parallax/layer-gate-left.png';
+import layerGateRight from './assets/parallax/layer-gate-right.png';
+import layerThresholdLeft from './assets/parallax/layer-threshold-left.png';
+import layerThresholdRight from './assets/parallax/layer-threshold-right.png';
+import layerHeadlightBloom from './assets/parallax/layer-headlight-bloom.png';
 
 const MODES = [
   {

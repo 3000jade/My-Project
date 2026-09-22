@@ -366,3 +366,73 @@ INSERT INTO public.properties (
 )
 ON CONFLICT (id) DO NOTHING;
 
+-- ==============================================================================
+-- 6. NOTIFICATIONS TABLE
+-- ==============================================================================
+CREATE TABLE IF NOT EXISTS public.notifications (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  message TEXT NOT NULL,
+  type TEXT NOT NULL CHECK (type IN ('inquiry', 'verification', 'appointment', 'sale', 'property')),
+  related_record TEXT,
+  timestamp TEXT DEFAULT 'Recent',
+  is_read BOOLEAN NOT NULL DEFAULT false,
+  role TEXT DEFAULT 'broker',
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
+);
+
+ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Notifications are viewable by authenticated users." ON public.notifications;
+CREATE POLICY "Notifications are viewable by authenticated users."
+  ON public.notifications FOR SELECT
+  USING (true);
+
+DROP POLICY IF EXISTS "Notifications can be updated by authenticated users." ON public.notifications;
+CREATE POLICY "Notifications can be updated by authenticated users."
+  ON public.notifications FOR UPDATE
+  USING (true);
+
+DROP POLICY IF EXISTS "Notifications can be inserted." ON public.notifications;
+CREATE POLICY "Notifications can be inserted."
+  ON public.notifications FOR INSERT
+  WITH CHECK (true);
+
+-- ==============================================================================
+-- 7. SALES CONVEYANCE TABLE
+-- ==============================================================================
+CREATE TABLE IF NOT EXISTS public.sales (
+  id TEXT PRIMARY KEY,
+  property_id TEXT NOT NULL,
+  property_title TEXT NOT NULL,
+  property_location TEXT NOT NULL,
+  client_name TEXT NOT NULL,
+  agent_id TEXT NOT NULL,
+  agent_name TEXT NOT NULL,
+  sale_date TEXT NOT NULL,
+  property_value NUMERIC(15, 2) NOT NULL,
+  status TEXT NOT NULL DEFAULT 'PENDING' CHECK (status IN ('COMPLETED', 'PENDING', 'CANCELLED')),
+  notes TEXT DEFAULT '',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
+);
+
+ALTER TABLE public.sales ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Sales are viewable by authenticated users." ON public.sales;
+CREATE POLICY "Sales are viewable by authenticated users."
+  ON public.sales FOR SELECT
+  USING (true);
+
+DROP POLICY IF EXISTS "Sales can be inserted by authenticated users." ON public.sales;
+CREATE POLICY "Sales can be inserted by authenticated users."
+  ON public.sales FOR INSERT
+  WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Sales can be updated by authenticated users." ON public.sales;
+CREATE POLICY "Sales can be updated by authenticated users."
+  ON public.sales FOR UPDATE
+  USING (true);
+
+
+

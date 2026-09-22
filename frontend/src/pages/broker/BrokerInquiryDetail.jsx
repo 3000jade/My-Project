@@ -1,31 +1,113 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import PageHeader from '../../components/dashboard/PageHeader';
 import StatusBadge from '../../components/dashboard/StatusBadge';
 import DashboardModal from '../../components/dashboard/DashboardModal';
-import { mockInquiries } from '../../mockData/mockInquiries';
+import { inquiryService } from '../../services/inquiryService';
 import { mockAgents } from '../../mockData/mockAgents';
 
 export default function BrokerInquiryDetail() {
   const { id } = useParams();
-  const initial = mockInquiries.find(i => i.id === id) || mockInquiries[0];
-
-  const [inquiry, setInquiry] = useState(initial);
+  const [inquiry, setInquiry] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [reassignModalOpen, setReassignModalOpen] = useState(false);
-  const [selectedAgentId, setSelectedAgentId] = useState(inquiry.agent_id);
+  const [selectedAgentId, setSelectedAgentId] = useState('');
+  const [saving, setSaving] = useState(false);
 
-  const handleSaveReassignment = () => {
+  useEffect(() => {
+    let mounted = true;
+    async function fetchDetail() {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await inquiryService.getInquiryById(id);
+        if (mounted) {
+          if (data) {
+            setInquiry(data);
+            setSelectedAgentId(data.agent_id || '');
+          } else {
+            setError(`Inquiry with ID "${id}" could not be found.`);
+          }
+        }
+      } catch (err) {
+        if (mounted) {
+          setError(err.message || 'Error loading inquiry details.');
+        }
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    }
+    fetchDetail();
+    return () => {
+      mounted = false;
+    };
+  }, [id]);
+
+  const handleSaveReassignment = async () => {
     const selectedAgent = mockAgents.find(a => a.id === selectedAgentId);
-    if (selectedAgent) {
+    if (!selectedAgent || !inquiry) return;
+
+    setSaving(true);
+    try {
+      const updated = await inquiryService.updateInquiry(inquiry.id, {
+        agent_id: selectedAgent.id,
+        agent_name: selectedAgent.name,
+        status: 'ASSIGNED',
+      });
+      setInquiry(updated);
+    } catch (err) {
+      console.warn('Reassignment update failed:', err.message);
       setInquiry(prev => ({
         ...prev,
         agent_id: selectedAgent.id,
         agent_name: selectedAgent.name,
-        status: 'ASSIGNED'
+        status: 'ASSIGNED',
       }));
+    } finally {
+      setSaving(false);
+      setReassignModalOpen(false);
     }
-    setReassignModalOpen(false);
   };
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-2xl border border-gray-200/80 p-16 text-center space-y-3 max-w-6xl mx-auto">
+        <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-[#266F71] border-t-transparent"></div>
+        <p className="text-xs font-bold uppercase tracking-wider text-gray-400 font-sans">
+          Loading inquiry dossier...
+        </p>
+      </div>
+    );
+  }
+
+  if (error || !inquiry) {
+    return (
+      <div className="space-y-6 max-w-6xl mx-auto">
+        <PageHeader
+          title="Inquiry Not Found"
+          breadcrumbs={[
+            { label: "Dashboard", to: "/broker/dashboard" },
+            { label: "Inquiries", to: "/broker/inquiries" },
+            { label: "Error" }
+          ]}
+        />
+        <div className="p-8 bg-rose-50 border border-rose-200 rounded-2xl text-center space-y-4">
+          <span className="material-symbols-outlined text-4xl text-rose-600">error</span>
+          <h2 className="text-lg font-bold text-[#174849] font-display">Inquiry Record Unavailable</h2>
+          <p className="text-sm text-gray-600 font-sans max-w-md mx-auto">
+            {error || "The inquiry record could not be loaded."}
+          </p>
+          <Link
+            to="/broker/inquiries"
+            className="inline-block px-5 py-2 bg-[#266F71] text-white rounded-xl text-xs font-bold uppercase tracking-wider font-sans hover:bg-[#174849] transition-colors"
+          >
+            ← Return to Firm Inquiries
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
@@ -73,33 +155,39 @@ export default function BrokerInquiryDetail() {
             </h3>
 
             <div className="flex-1 overflow-y-auto py-4 space-y-4 custom-scrollbar" data-lenis-prevent="true">
-              {inquiry.messages.map((msg) => {
-                const isAgent = msg.sender === 'agent';
-                return (
-                  <div
-                    key={msg.id}
-                    className={`flex flex-col ${isAgent ? 'items-end' : 'items-start'}`}
-                  >
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-[11px] font-bold text-gray-500 font-sans">
-                        {msg.sender_name}
-                      </span>
-                      <span className="text-[10px] text-gray-400 font-sans">
-                        {msg.timestamp}
-                      </span>
-                    </div>
+              {inquiry.messages && inquiry.messages.length > 0 ? (
+                inquiry.messages.map((msg) => {
+                  const isAgent = msg.sender === 'agent';
+                  return (
                     <div
-                      className={`max-w-md p-4 rounded-2xl text-sm font-sans leading-relaxed ${
-                        isAgent
-                          ? 'bg-[#266F71] text-white rounded-tr-xs shadow-xs'
-                          : 'bg-[#F1F0EC] text-gray-800 rounded-tl-xs'
-                      }`}
+                      key={msg.id}
+                      className={`flex flex-col ${isAgent ? 'items-end' : 'items-start'}`}
                     >
-                      {msg.content}
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-[11px] font-bold text-gray-500 font-sans">
+                          {msg.sender_name}
+                        </span>
+                        <span className="text-[10px] text-gray-400 font-sans">
+                          {msg.timestamp}
+                        </span>
+                      </div>
+                      <div
+                        className={`max-w-md p-4 rounded-2xl text-sm font-sans leading-relaxed ${
+                          isAgent
+                            ? 'bg-[#266F71] text-white rounded-tr-xs shadow-xs'
+                            : 'bg-[#F1F0EC] text-gray-800 rounded-tl-xs'
+                        }`}
+                      >
+                        {msg.content}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              ) : (
+                <div className="text-center py-12 text-xs text-gray-400 font-sans">
+                  No previous audit history recorded.
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -118,13 +206,13 @@ export default function BrokerInquiryDetail() {
                 className="w-12 h-12 rounded-full object-cover border border-gray-200"
               />
               <div>
-                <p className="font-bold text-sm text-[#174849] font-sans">{inquiry.agent_name}</p>
+                <p className="font-bold text-sm text-[#174849] font-sans">{inquiry.agent_name || 'Unassigned'}</p>
                 <p className="text-xs text-gray-400 font-sans">Assigned Consultant</p>
               </div>
             </div>
             <button
               onClick={() => setReassignModalOpen(true)}
-              className="w-full py-2 bg-[#F1F0EC] hover:bg-[#266F71] hover:text-white rounded-xl text-xs font-bold font-sans uppercase tracking-wider transition-colors"
+              className="w-full py-2 bg-[#F1F0EC] hover:bg-[#266F71] hover:text-white rounded-xl text-xs font-bold font-sans uppercase tracking-wider transition-colors cursor-pointer"
             >
               Reassign to Different Agent
             </button>
@@ -169,15 +257,16 @@ export default function BrokerInquiryDetail() {
           <div className="flex gap-2">
             <button
               onClick={() => setReassignModalOpen(false)}
-              className="px-4 py-2 text-xs font-bold uppercase tracking-wider text-gray-500 font-sans"
+              className="px-4 py-2 text-xs font-bold uppercase tracking-wider text-gray-500 font-sans cursor-pointer"
             >
               Cancel
             </button>
             <button
               onClick={handleSaveReassignment}
-              className="px-5 py-2 bg-[#266F71] text-white rounded-xl text-xs font-bold uppercase tracking-wider font-sans"
+              disabled={saving}
+              className="px-5 py-2 bg-[#266F71] hover:bg-[#174849] text-white rounded-xl text-xs font-bold uppercase tracking-wider font-sans cursor-pointer transition-colors"
             >
-              Confirm Assignment
+              {saving ? 'Assigning...' : 'Confirm Assignment'}
             </button>
           </div>
         }

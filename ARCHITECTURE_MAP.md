@@ -13,13 +13,15 @@ The **CP_kerby** platform is structured as an enterprise-grade decoupled monorep
 
 ```text
 CP_kerby/
-├── frontend/                   # Client-side SPA (React 18, Vite, Tailwind CSS v4, Framer Motion)
-├── backend/                    # Server-side API (Node.js, Express, TypeScript)
+├── frontend/                   # Client-side SPA (React 19, Vite 8, Tailwind CSS v4, Framer Motion)
+├── backend/                    # Server-side API (Node.js, Express v5, TypeScript, Supabase)
+├── test files/                 # Unified test suite directory (ignored by git; frontend/ & backend/)
 ├── shared/                     # Cross-cutting types and data contracts
 ├── docs/                       # Specifications, plans, and architectural design docs
 ├── .agents/                    # Agent behaviors, prompt engineering rules, and skills
 ├── .env.example                # Unified environment variable template
 ├── ARCHITECTURE_MAP.md         # Canonical project directory map (this document)
+├── TECHSTACK.md                # Comprehensive technology stack & dependency inventory
 └── design.md                   # Visual design philosophy ("The Monolith & The Void")
 ```
 
@@ -33,11 +35,13 @@ CP_kerby/
 | :--- | :--- |
 | `frontend/` | Complete user interface application, animation engines, and client routers. |
 | `backend/` | RESTful API server, health monitoring, business services, and database schemas. |
+| `test files/` | Unified test repository (`frontend/` & `backend/`), excluded from git tracking while executing via Vitest. |
 | `shared/` | Full-stack TypeScript interfaces, shared DTOs, and API contract envelopes. |
 | `docs/` | Architecture specs (`docs/superpowers/specs/`) and execution plans (`docs/superpowers/plans/`). |
 | `.agents/` | Antigravity AI agent rules (`AGENTS.md`) and specialized skills. |
 | `.env.example` | Root template documenting required environment variables for client and server. |
 | `ARCHITECTURE_MAP.md` | Living blueprint defining structural conventions and code locations. |
+| `TECHSTACK.md` | Complete technology stack, dependency versions, and architectural runtime roles. |
 | `design.md` | "The Monolith & The Void" design manifesto and mathematical token formulas. |
 
 ---
@@ -160,6 +164,7 @@ shared/
 | Express middleware (auth, error, headers) | `backend/src/middleware/` | `error.middleware.ts` |
 | Environment variable parsing or app config | `backend/src/config/` | `index.ts` |
 | Shared data interface or DTO used by both sides | `shared/types/` | `property.ts`, `api.ts` |
+| Automated unit/integration test file | `test files/frontend/` or `test files/backend/` | `PropertyCard.test.jsx`, `chat.controller.test.ts` |
 
 ---
 
