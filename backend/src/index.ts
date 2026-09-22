@@ -11,6 +11,9 @@ import logger from './utils/logger';
 const app: Express = express();
 const port = config.port;
 
+// Trust reverse proxy (Render, Vercel, Cloudflare, etc.) for correct client IP resolution
+app.set('trust proxy', 1);
+
 // Global Middleware
 const allowedOrigins = Array.isArray(config.clientOrigin)
   ? config.clientOrigin
