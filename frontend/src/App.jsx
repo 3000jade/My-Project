@@ -3,23 +3,23 @@ import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'r
 import Header from './components/layout/Header';
 import ChatWidget from './modules/Chat/ChatWidget';
 import Footer from './components/layout/Footer';
-import Home from './pages/Home';
+import Home from './pages/public/Home';
 import PageLoader from './components/ui/PageLoader';
 import { ReactLenis, useLenis } from 'lenis/react';
 import { Agentation } from 'agentation';
 import { AuthProvider } from './context/AuthContext';
 
 // Code-split secondary client routes to shrink initial bundle size and boost startup speed
-const PropertiesPage = lazy(() => import('./pages/PropertiesPage'));
-const PropertyListingView = lazy(() => import('./pages/PropertyListingView'));
-const AboutPage = lazy(() => import('./pages/AboutPage'));
-const HowWeWorkPage = lazy(() => import('./pages/HowWeWorkPage'));
-const PartnerPage = lazy(() => import('./pages/PartnerPage'));
-const ContactPage = lazy(() => import('./pages/ContactPage'));
+const PropertiesPage = lazy(() => import('./pages/public/PropertiesPage'));
+const PropertyListingView = lazy(() => import('./pages/public/PropertyListingView'));
+const AboutPage = lazy(() => import('./pages/public/AboutPage'));
+const HowWeWorkPage = lazy(() => import('./pages/public/HowWeWorkPage'));
+const PartnerPage = lazy(() => import('./pages/public/PartnerPage'));
+const ContactPage = lazy(() => import('./pages/public/ContactPage'));
 const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
 const RegisterPage = lazy(() => import('./pages/auth/RegisterPage'));
-const UnauthorizedPage = lazy(() => import('./pages/UnauthorizedPage'));
-const DemoApiPage = lazy(() => import('./pages/DemoApiPage'));
+const UnauthorizedPage = lazy(() => import('./pages/public/UnauthorizedPage'));
+const DemoApiPage = lazy(() => import('./pages/public/DemoApiPage'));
 
 // Protected Route Guard
 import ProtectedRoute from './components/auth/ProtectedRoute';
@@ -28,30 +28,30 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 import DashboardLayout from './components/dashboard/DashboardLayout';
 
 // Agent Portal Pages
-import AgentDashboard from './pages/agent/AgentDashboard';
-import AgentProperties from './pages/agent/AgentProperties';
-import AgentPropertyCreate from './pages/agent/AgentPropertyCreate';
-import AgentPropertyDetail from './pages/agent/AgentPropertyDetail';
-import AgentInquiries from './pages/agent/AgentInquiries';
-import AgentInquiryDetail from './pages/agent/AgentInquiryDetail';
-import AgentAppointments from './pages/agent/AgentAppointments';
-import AgentAvailability from './pages/agent/AgentAvailability';
-import AgentSales from './pages/agent/AgentSales';
-import AgentProfile from './pages/agent/AgentProfile';
+import AgentDashboard from './pages/portals/agent/AgentDashboard';
+import AgentProperties from './pages/portals/agent/AgentProperties';
+import AgentPropertyCreate from './pages/portals/agent/AgentPropertyCreate';
+import AgentPropertyDetail from './pages/portals/agent/AgentPropertyDetail';
+import AgentInquiries from './pages/portals/agent/AgentInquiries';
+import AgentInquiryDetail from './pages/portals/agent/AgentInquiryDetail';
+import AgentAppointments from './pages/portals/agent/AgentAppointments';
+import AgentAvailability from './pages/portals/agent/AgentAvailability';
+import AgentSales from './pages/portals/agent/AgentSales';
+import AgentProfile from './pages/portals/agent/AgentProfile';
 
 // Broker Portal Pages
-import BrokerDashboard from './pages/broker/BrokerDashboard';
-import BrokerProperties from './pages/broker/BrokerProperties';
-import BrokerPropertyDetail from './pages/broker/BrokerPropertyDetail';
-import BrokerInquiries from './pages/broker/BrokerInquiries';
-import BrokerInquiryDetail from './pages/broker/BrokerInquiryDetail';
-import BrokerAppointments from './pages/broker/BrokerAppointments';
-import BrokerAgents from './pages/broker/BrokerAgents';
-import BrokerAgentDetail from './pages/broker/BrokerAgentDetail';
-import BrokerSales from './pages/broker/BrokerSales';
-import BrokerReports from './pages/broker/BrokerReports';
-import BrokerNotifications from './pages/broker/BrokerNotifications';
-import BrokerProfile from './pages/broker/BrokerProfile';
+import BrokerDashboard from './pages/portals/broker/BrokerDashboard';
+import BrokerProperties from './pages/portals/broker/BrokerProperties';
+import BrokerPropertyDetail from './pages/portals/broker/BrokerPropertyDetail';
+import BrokerInquiries from './pages/portals/broker/BrokerInquiries';
+import BrokerInquiryDetail from './pages/portals/broker/BrokerInquiryDetail';
+import BrokerAppointments from './pages/portals/broker/BrokerAppointments';
+import BrokerAgents from './pages/portals/broker/BrokerAgents';
+import BrokerAgentDetail from './pages/portals/broker/BrokerAgentDetail';
+import BrokerSales from './pages/portals/broker/BrokerSales';
+import BrokerReports from './pages/portals/broker/BrokerReports';
+import BrokerNotifications from './pages/portals/broker/BrokerNotifications';
+import BrokerProfile from './pages/portals/broker/BrokerProfile';
 
 function ScrollToTop() {
   const { pathname, hash } = useLocation();
