@@ -38,10 +38,10 @@ import {
   IconVectorBezier2,
   IconPaw
 } from '@tabler/icons-react';
-import CinematicPropertyViewer from '../../../components/3d/CinematicPropertyViewer';
+import CinematicPropertyViewer from '../../components/3d/CinematicPropertyViewer';
 import cinematicVillaTwilight from '../assets/cinematic_duplex_twilight.jpg';
 import cinematicInteriorPenthouse from '../assets/cinematic_interior_penthouse.jpg';
-import AnalyticsMetricCard from '../../../components/ui/AnalyticsMetricCard';
+import { AnalyticsMetricCard } from '../../components/ui';
 import FramerMotionShowcase from '../components/FramerMotionShowcase';
 import ParallaxPropertyShowcase from '../components/ParallaxPropertyShowcase';
 import EditorialRevealsShowcase from '../components/EditorialRevealsShowcase';

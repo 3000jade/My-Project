@@ -2,9 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useWindowVirtualizer } from '@tanstack/react-virtual';
 
-import AdvancedSearchBox from '../../components/ui/AdvancedSearchBox';
-import PropertyCard from '../../components/ui/PropertyCard';
-import Button from '../../components/ui/Button';
+import { AdvancedSearchBox, PropertyCard, Button } from '../../components/ui';
 
 import { mockProperties } from '../../mockData/mockProperties';
 

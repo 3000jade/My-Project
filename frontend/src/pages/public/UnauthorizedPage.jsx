@@ -1,6 +1,6 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import Button from '../../components/ui/Button';
+import { Button } from '../../components/ui';
 
 export default function UnauthorizedPage() {
   const location = useLocation();

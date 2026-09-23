@@ -1,32 +1,37 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&family=Manrope:wght@200;300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #266F71;
+  --color-primary: #0D4446;
+  --color-primary-hover: #083335;
   --color-on-primary: #ffffff;
-  --color-primary-container: #266F71;
-  --color-on-primary-container: #ffffff;
-  --color-secondary: #266F71;
+  --color-primary-container: #185E60;
+  --color-on-primary-container: #D2F2F3;
+  --color-secondary: #2A5B5D;
   --color-on-secondary: #ffffff;
-  --color-accent: #FB8E5D;
+  --color-secondary-container: #CBE8E9;
+  --color-accent: #E76F51;
+  --color-accent-hover: #D65C3E;
+  --color-accent-container: #FDF0EC;
   --color-on-accent: #ffffff;
-  --color-background: #FFFFFF;
-  --color-on-background: #174849;
-  --color-surface: #FFFFFF;
-  --color-on-surface: #174849;
-  --color-surface-variant: #F1F0EC;
-  --color-on-surface-variant: #3f4949;
-  --color-outline: #6f7979;
-  --color-outline-variant: #bec8c8;
-  --color-surface-container: #F1F0EC;
-  --color-surface-container-high: #E9E8E4;
-  --color-surface-container-low: #F5F4EF;
-  --color-tertiary: #174849;
+  --color-background: #FBFBFA;
+  --color-on-background: #141717;
+  --color-surface: #FBFBFA;
+  --color-on-surface: #141717;
+  --color-surface-variant: #EBEEED;
+  --color-on-surface-variant: #434E4F;
+  --color-outline: #6B7B7C;
+  --color-outline-variant: #D0D9D9;
+  --color-surface-container: #EBEEED;
+  --color-surface-container-high: #DFE4E3;
+  --color-surface-container-low: #F4F5F4;
+  --color-surface-container-lowest: #FFFFFF;
+  --color-tertiary: #0A2829;
   --color-on-tertiary: #ffffff;
-  --color-tertiary-container: #174849;
-  --color-on-tertiary-container: #ffffff;
+  --color-tertiary-container: #185E60;
+  --color-on-tertiary-container: #D2F2F3;
   
-  --color-coral: #E07A5F;
+  --color-coral: #E76F51;
   --color-on-coral: #ffffff;
 
   --radius-DEFAULT: 1rem;
@@ -35,22 +40,19 @@
   --radius-2xl: 1rem;
   --radius-full: 9999px;
 
-
-
-  --font-sans: "Satoshi", "Plus Jakarta Sans", "Inter", sans-serif;
-  --font-display: "Fraunces", "Manrope", serif;
-  --font-fraunces: "Fraunces", Georgia, serif;
-  --font-mono: "Geist Mono", monospace;
-  --font-serif: "Fraunces", "Newsreader", "Cormorant Garamond", Georgia, serif;
+  /* Geometric Modernist (Bauhaus Precision) */
+  --font-sans: "Manrope", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+  --font-label: "Inter", sans-serif;
 }
 
 @layer base {
   :root {
-    --font-sans: "Satoshi", "Plus Jakarta Sans", "Inter", sans-serif;
-    --font-display: "Fraunces", "Manrope", serif;
-    --font-fraunces: "Fraunces", Georgia, serif;
-    --font-mono: "Geist Mono", monospace;
-    --font-serif: "Fraunces", "Newsreader", "Cormorant Garamond", Georgia, serif;
+    --font-sans: "Manrope", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --font-display: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: "JetBrains Mono", monospace;
+    --font-label: "Inter", sans-serif;
   }
 
   html,
@@ -83,11 +85,11 @@
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: #F1F0EC;
+  background: #F4F5F4;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #266F71;
+  background: #0D4446;
   border-radius: 10px;
 }
 

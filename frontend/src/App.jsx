@@ -4,7 +4,7 @@ import Header from './components/layout/Header';
 import ChatWidget from './modules/Chat/ChatWidget';
 import Footer from './components/layout/Footer';
 import Home from './pages/public/Home';
-import PageLoader from './components/ui/PageLoader';
+import { PageLoader } from './components/ui';
 import { ReactLenis, useLenis } from 'lenis/react';
 import { Agentation } from 'agentation';
 import { AuthProvider } from './context/AuthContext';

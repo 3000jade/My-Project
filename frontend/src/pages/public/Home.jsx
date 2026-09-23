@@ -4,14 +4,16 @@ import { useNavigate } from 'react-router-dom';
 import { useLenis } from 'lenis/react';
 
 // Specialized Section Components
-import ListingHeroGallery from '../../components/ui/ListingHeroGallery';
-import AdvancedSearchBox from '../../components/ui/AdvancedSearchBox';
-import LeadCaptureSection from '../../components/ui/LeadCaptureSection';
-import RelatedListingsSection from '../../components/ui/RelatedListingsSection';
-import ArchitecturalGallerySection from '../../components/ui/ArchitecturalGallerySection';
-import InstitutionalAuthoritySection from '../../components/ui/InstitutionalAuthoritySection';
-import NeighborhoodSpotlightsSection from '../../components/ui/NeighborhoodSpotlightsSection';
-import ClientStoriesSection from '../../components/ui/ClientStoriesSection';
+import {
+  ListingHeroGallery,
+  AdvancedSearchBox,
+  LeadCaptureSection,
+  RelatedListingsSection,
+  ArchitecturalGallerySection,
+  InstitutionalAuthoritySection,
+  NeighborhoodSpotlightsSection,
+  ClientStoriesSection,
+} from '../../components/ui';
 
 export default function Home({ setIsDarkTheme }) {
   const containerRef = useRef(null);

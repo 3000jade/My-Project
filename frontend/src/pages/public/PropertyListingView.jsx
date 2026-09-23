@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { mockProperties } from '../../mockData/mockProperties';
 import useViewingList from '../../hooks/useViewingList';
-import PropertyGalleryMosaic from '../../components/ui/PropertyGalleryMosaic';
-import FinancingCalculator from '../../components/ui/FinancingCalculator';
-import InspectionScheduleModal from '../../components/ui/InspectionScheduleModal';
+import {
+  PropertyGalleryMosaic,
+  FinancingCalculator,
+  InspectionScheduleModal,
+} from '../../components/ui';
 
 export default function PropertyListingView() {
   const { id } = useParams();

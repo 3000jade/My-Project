@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import HomeValuationTool from '../../../components/ui/HomeValuationTool';
+import { HomeValuationTool } from '../../components/ui';
 
 export default function HomeValuationPage() {
   return (

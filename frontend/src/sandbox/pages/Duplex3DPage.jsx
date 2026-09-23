@@ -5,7 +5,7 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
 import * as THREE from 'three';
-import Button from '../../../components/ui/Button';
+import { Button } from '../../components/ui';
 
 gsap.registerPlugin(ScrollTrigger);
 

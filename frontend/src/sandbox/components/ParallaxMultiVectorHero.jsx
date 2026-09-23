@@ -1,5 +1,5 @@
 import React from 'react';
-import Button from '../../components/ui/Button';
+import { Button } from '../../components/ui';
 import heroImage from '../assets/hero-dahlia-estate.jpg';
 
 export default function ParallaxMultiVectorHero({

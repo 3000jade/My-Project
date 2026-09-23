@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import NeighborhoodCard from '../../../components/ui/NeighborhoodCard';
-import { mockNeighborhoods } from '../../../mockData/mockNeighborhoods';
+import { NeighborhoodCard } from '../../components/ui';
+import { mockNeighborhoods } from '../../mockData/mockNeighborhoods';
 
 export default function NeighborhoodGuidesPage() {
   const [activeTab, setActiveTab] = useState('All');
