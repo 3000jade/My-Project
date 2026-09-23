@@ -50,20 +50,38 @@ CP_kerby/
 
 ```text
 frontend/
-├── public/                     # Static unbundled assets
-│   ├── frames/                 # WebP image sequence frames for scrubbed video transitions
-│   └── video/                  # Flythrough renders & media assets
+├── public/                     # Static unbundled assets (video flythroughs, webp frames)
 ├── src/
-│   ├── assets/                 # High-resolution architectural photography & vector graphics
+│   ├── assets/                 # Production branding, photography & vector icons
 │   ├── components/             # React presentation components
+│   │   ├── 3d/                 # Three.js canvas components, camera rigs, and 3D visual anchors
+│   │   ├── auth/               # Security guards & route protectors (ProtectedRoute.jsx)
+│   │   ├── dashboard/          # Shared multi-role portal UI (Sidebar, Header, MetricCards, DataTable)
 │   │   ├── layout/             # Top-level shell frames: Header.jsx, Footer.jsx, index.js
-│   │   ├── ui/                 # Atomic & showcase controls (Buttons, Modals, SearchBox, Cards)
-│   │   └── 3d/                 # Three.js canvas components, camera rigs, and 3D visual anchors
-│   ├── hooks/                  # Custom reusable React hooks (e.g., useLenis, scroll tracking)
+│   │   └── ui/                 # Production design system (strictly non-experimental UI)
+│   │       ├── index.js        # Root barrel re-export hub for design system
+│   │       ├── core/           # Primitives & atomic controls (Button, PageLoader, DynamicBackground)
+│   │       ├── cards/          # Domain entity cards (PropertyCard, AgentCard, NeighborhoodCard)
+│   │       ├── modals/         # Transactional overlays (PropertyDetailModal, InspectionScheduleModal)
+│   │       ├── search/         # Advanced search bar & faceted filter engine (AdvancedSearchBox)
+│   │       └── sections/       # Production marketing sections & calculators (Hero, BrandHeritage, Financial)
+│   ├── context/                # React global state providers (AuthContext.jsx)
+│   ├── hooks/                  # Custom reusable React hooks (useLenis, filter engines, viewing list)
 │   ├── mockData/               # High-fidelity mock property datasets, user fixtures, and about content
 │   ├── modules/                # Self-contained feature slices (e.g., modules/Chat/ChatWidget.jsx)
-│   ├── pages/                  # Route page views (Home.jsx, PropertiesPage.jsx, AboutPage.jsx, auth/)
-│   ├── sandbox/                # Visual staging lab, UI/UX showcases, and component playgrounds
+│   ├── pages/                  # Route page views
+│   │   ├── auth/               # Authentication views (LoginPage.jsx, RegisterPage.jsx)
+│   │   ├── portals/            # Multi-tenant operational role portals:
+│   │   │   ├── agent/          # 10 Agent workflow pages
+│   │   │   ├── broker/         # 12 Broker executive pages
+│   │   │   ├── client/         # Client buyer/investor dashboard (.gitkeep)
+│   │   │   └── super-admin/    # Platform administration (.gitkeep)
+│   │   └── public/             # Public guest & marketing routes (Home, Properties, About, Contact)
+│   ├── sandbox/                # 🧪 100% Self-Contained Experimental Staging Lab
+│   │   ├── assets/             # Test plates, vector layers, and experimental media
+│   │   ├── components/         # Experimental UI Showcases (Catwalk, Editorial, Parallax, Anime, HUD)
+│   │   ├── layout/             # Lab shell chrome (SandboxHeader, SandboxLayout, SandboxPinnedButton)
+│   │   └── pages/              # Isolated staging routes (DemoUIUXPage, ParallaxLabPage, SandboxHubPage)
 │   ├── services/               # HTTP client layer & API service integrations (apiClient.js)
 │   ├── types/                  # Frontend-specific UI prop types and local interfaces
 │   ├── utils/                  # Helper formatters (currency, measurement conversions)
@@ -78,15 +96,19 @@ frontend/
 1. **Layout (`components/layout/`)**:
    - Houses global structural elements that wrap views: `Header.jsx`, `Footer.jsx`.
    - Must export through `components/layout/index.js`.
-2. **UI Library (`components/ui/`)**:
-   - Atomic primitives (`Button.jsx`, inputs) and specialized showcase displays (`AdvancedSearchBox.jsx`, `PropertyDetailModal.jsx`).
+2. **Production UI Library (`components/ui/`)**:
+   - Strictly reserved for production-grade UI components. Experimental or lab-only prototypes must NEVER be stored here.
+   - Decomposed into `core/` (primitives), `cards/` (entity cards), `modals/` (dialogs), `search/` (search tools), and `sections/` (page sections).
+   - Must export through `components/ui/index.js` to enable clean, decoupled imports.
    - Must adhere strictly to the uniform baseline height (`h-[54px]`) and concentric corner radius rules ($R_{\text{inner}} = R_{\text{outer}} - \text{Padding}$).
-3. **3D Visuals (`components/3d/`)**:
-   - All Three.js, React Three Fiber, WebGL canvas components, and orbit controllers live here.
-4. **Services (`services/`)**:
+3. **Role Portals (`pages/portals/`)**:
+   - All role-specific operational dashboard screens reside in `pages/portals/{agent,broker,client,super-admin}`.
+4. **Public Routes (`pages/public/`)**:
+   - Public guest-facing marketing, listings, and informational pages reside in `pages/public/`.
+5. **Experimental Sandbox (`sandbox/`)**:
+   - 100% self-contained staging ground. All experimental UI showcases, multi-plate raster layers, and lab routes reside strictly in `sandbox/components/`, `sandbox/assets/`, and `sandbox/pages/`.
+6. **Services (`services/`)**:
    - All network requests go through `services/apiClient.js`. Never invoke raw `fetch` or `axios` directly within UI components.
-5. **Sandbox (`sandbox/`)**:
-   - Isolated staging ground for experimental pages (`DemoUIUXPage.jsx`, `Duplex3DPage.jsx`, `HomeValuationPage.jsx`).
 
 ---
 
@@ -151,12 +173,20 @@ shared/
 | If you are adding / editing: | Place it in: | Example File |
 | :--- | :--- | :--- |
 | Global navigation, topbar, or site footer | `frontend/src/components/layout/` | `Header.jsx`, `Footer.jsx` |
-| Reusable button, modal, card, or search bar | `frontend/src/components/ui/` | `AdvancedSearchBox.jsx`, `Button.jsx` |
+| Atomic button, loader, badge, or plain input | `frontend/src/components/ui/core/` | `Button.jsx`, `PageLoader.jsx` |
+| Domain card (property, agent, neighborhood) | `frontend/src/components/ui/cards/` | `PropertyCard.jsx`, `AgentCard.jsx` |
+| Production modal (detail, booking, inquiry) | `frontend/src/components/ui/modals/` | `PropertyDetailModal.jsx` |
+| Advanced search bar or faceted filter engine | `frontend/src/components/ui/search/` | `AdvancedSearchBox.jsx` |
+| Curated page section or calculator | `frontend/src/components/ui/sections/` | `HeroVisualAnchor.jsx`, `BrandHeritageSection.jsx` |
+| Shared multi-role dashboard table, card, sidebar | `frontend/src/components/dashboard/` | `DashboardSidebar.jsx`, `DataTable.jsx` |
+| Experimental motion showcase, animation lab, vector demo | `frontend/src/sandbox/components/` | `CatwalkHorizontalShowcase.jsx`, `VectorHUDOverlay.jsx` |
+| Staged sandbox route or lab playground | `frontend/src/sandbox/pages/` | `DemoUIUXPage.jsx`, `ParallaxLabPage.jsx` |
 | 3D canvas, Three.js scene, or WebGL shader | `frontend/src/components/3d/` | `CinematicPropertyViewer.jsx` |
-| A full page route (Home, Properties, About) | `frontend/src/pages/` | `PropertiesPage.jsx`, `Home.jsx` |
-| An isolated experimental or staging screen | `frontend/src/sandbox/` | `DemoUIUXPage.jsx`, `SandboxHubPage.jsx` |
+| Public guest route (Home, Properties, About, Contact) | `frontend/src/pages/public/` | `Home.jsx`, `PropertiesPage.jsx` |
+| Role-specific workspace page (Agent, Broker, Client, SuperAdmin) | `frontend/src/pages/portals/<role>/` | `AgentDashboard.jsx`, `BrokerReports.jsx` |
+| Authentication page (Login, Register) | `frontend/src/pages/auth/` | `LoginPage.jsx`, `RegisterPage.jsx` |
 | HTTP request call, endpoint fetcher, or REST client | `frontend/src/services/` | `apiClient.js`, `propertyService.js` |
-| Custom React hook (scroll sentinel, state tween) | `frontend/src/hooks/` | `useLenisScroll.js` |
+| Custom React hook (scroll sentinel, state tween, filters) | `frontend/src/hooks/` | `useLenisScroll.js`, `usePropertyFilterEngine.js` |
 | Mock data fixtures or seed lists | `frontend/src/mockData/` | `mockProperties.js` |
 | Backend HTTP endpoint handler | `backend/src/controllers/` | `property.controller.ts` |
 | Backend business logic or database query | `backend/src/services/` | `property.service.ts` |
