@@ -2,9 +2,9 @@ import { useEffect, useState, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '../ui';
 import { motion, AnimatePresence } from 'framer-motion';
-import { IconChevronDown } from '@tabler/icons-react';
+import { IconChevronDown, IconSun, IconMoon } from '@tabler/icons-react';
 
-export default function Header({ isDarkTheme }) {
+export default function Header({ isDarkTheme, setIsDarkTheme }) {
   const [scrolled, setScrolled] = useState(false);
   const [deepScrolled, setDeepScrolled] = useState(false);
   const [forceShowHeader, setForceShowHeader] = useState(false);
@@ -110,7 +110,17 @@ export default function Header({ isDarkTheme }) {
               Contact
             </Link>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            {setIsDarkTheme && (
+              <button
+                type="button"
+                onClick={() => setIsDarkTheme(!isDarkTheme)}
+                className="w-9 h-9 rounded-full flex items-center justify-center transition-all bg-white/10 hover:bg-white/20 text-white border border-white/20 cursor-pointer shadow-sm active:scale-95"
+                title={isDarkTheme ? "Switch to Gallery Alabaster Light Mode" : "Switch to Obsidian Dark Mode"}
+              >
+                {isDarkTheme ? <IconSun size={18} className="text-amber-400" /> : <IconMoon size={18} className="text-white" />}
+              </button>
+            )}
             <Button variant={isSolidTheme && !isDarkTheme ? "outline" : "secondary"} size="sm" to="/login">
               Login
             </Button>

@@ -172,7 +172,7 @@ function SingleParallaxCard({ property, index, speedMultiplier }) {
 }
 
 export default function ParallaxPropertyShowcase() {
-  const [speedMultiplier, setSpeedMultiplier] = useState(1.5);
+  const [speedMultiplier, setSpeedMultiplier] = useState(2.5);
 
   return (
     <div className="w-full space-y-8">

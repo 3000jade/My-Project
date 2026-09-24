@@ -25,14 +25,7 @@ export default function Home({ setIsDarkTheme }) {
   const navigate = useNavigate();
   const lenis = useLenis();
 
-  // Scroll tracking sentinel for theme/header state
-  const isHeroInView = useInView(containerRef, { amount: 0.1 });
 
-  useEffect(() => {
-    if (setIsDarkTheme) {
-      setIsDarkTheme(!isHeroInView);
-    }
-  }, [isHeroInView, setIsDarkTheme]);
 
   const handleBookTour = () => {
     if (leadCaptureRef.current) {
@@ -92,9 +85,9 @@ export default function Home({ setIsDarkTheme }) {
   };
 
   return (
-    <div ref={containerRef} className="w-full bg-[#f9f9f7] text-[#0f1722] font-sans relative">
+    <div ref={containerRef} className="w-full bg-[#FBFBFA] dark:bg-[#070D0E] text-[#141717] dark:text-[#F4F7F7] font-sans relative selection:bg-[#E76F51] selection:text-white transition-colors duration-500">
       
-      {/* 1. HERO SECTION: BRAND SHOWCASE WITH FULL-WIDTH HOUSE */}
+      {/* 1. HERO SECTION: BRAND SHOWCASE WITH FULL-WIDTH HOUSE & HYPER-DEPTH 2.5x PARALLAX */}
       <ListingHeroGallery 
         onBookTour={handleBookTour}
         onViewGallery={handleViewGallery}
@@ -107,48 +100,54 @@ export default function Home({ setIsDarkTheme }) {
       <div id="hero-sentinel" ref={sentinelRef} className="h-0 w-full pointer-events-none" />
 
       {/* 2. ARCHITECTURAL GALLERY EXHIBITION (FEATURED PROPERTIES) */}
-      <div ref={galleryRef}>
+      <div id="architectural-gallery" ref={galleryRef}>
         <motion.div {...sectionRevealProps}>
           <ArchitecturalGallerySection />
         </motion.div>
       </div>
 
-      {/* INSTITUTIONAL AUTHORITY & BENCHMARK METRICS (CREDIBILITY GRID) */}
-      <motion.div {...sectionRevealProps}>
-        <InstitutionalAuthoritySection />
-      </motion.div>
+      {/* 3. PERFORMANCE LEDGER: INSTITUTIONAL AUTHORITY & BENCHMARK METRICS */}
+      <div id="performance-ledger">
+        <motion.div {...sectionRevealProps}>
+          <InstitutionalAuthoritySection />
+        </motion.div>
+      </div>
 
-      {/* NEIGHBORHOOD SPOTLIGHTS (WHERE WE OPERATE) */}
-      <NeighborhoodSpotlightsSection />
+      {/* 4. VELOCITY ENGINE: NEIGHBORHOOD SPOTLIGHTS (WHERE WE OPERATE) */}
+      <div id="velocity-engine">
+        <NeighborhoodSpotlightsSection />
+      </div>
 
-      {/* 3. PROPERTY SEARCH & FEATURED RESIDENCES SECTION */}
-      <section id="property-page" ref={searchRef} className="w-full bg-white py-16 md:py-24 border-b border-[#e5e5df] relative z-20">
-        <div className="w-full max-w-[1560px] mx-auto px-5 md:px-10 lg:px-16">
+      {/* 5. ACTIVE RESERVES: PROPERTY SEARCH & FEATURED RESIDENCES SECTION */}
+      <section id="active-reserves" ref={searchRef} className="w-full bg-white dark:bg-[#0C1618] py-16 md:py-24 border-b border-[#D8DFDF] dark:border-white/10 relative z-20 transition-colors duration-500">
+        <div className="w-full max-w-7xl mx-auto px-6 lg:px-12">
           
-          {/* Section Header */}
+          {/* Section Header (Bauhaus H2 36px & JetBrains Mono Micro-Telemetry) */}
           <motion.div {...sectionRevealProps} className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div>
-              <span className="inline-block px-3.5 py-1 bg-[#174849]/10 text-[#174849] rounded-full text-[10px] font-bold font-sans uppercase tracking-[0.25em] mb-3 border border-[#174849]/20">
-                Curated Collection
+              <span className="inline-block px-3.5 py-1 bg-[#0D4446]/10 dark:bg-[#14B8A6]/10 text-[#0D4446] dark:text-[#14B8A6] rounded-full text-[12px] font-semibold font-mono uppercase tracking-[0.12em] mb-3 border border-[#0D4446]/20 dark:border-[#14B8A6]/20">
+                Curated Collection · Active Reserves
               </span>
-              <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold text-[#0f1722] tracking-tight font-sans">
+              <h2 className="text-3xl md:text-[36px] font-bold text-[#141717] dark:text-[#F4F7F7] tracking-[-0.02em] leading-[1.2] font-display">
                 Featured Residences
               </h2>
-              <p className="mt-2 text-gray-500 font-sans text-sm md:text-base max-w-2xl">
+              <p className="mt-2 text-[#5C6768] dark:text-[#95A6A6] font-sans text-base leading-[1.6] max-w-2xl">
                 Filter through our exclusive collection of luxury estates, modern condominiums, and high-yield investments.
               </p>
             </div>
             
             <button
               onClick={() => navigate('/properties')}
-              className="self-start md:self-auto text-xs font-bold uppercase tracking-wider text-[#174849] hover:text-[#0e2c2c] font-sans flex items-center gap-1.5 px-4 py-2.5 rounded-lg border border-[#174849]/20 hover:border-[#174849] hover:bg-[#174849]/5 transition-all shadow-sm"
+              className="self-start md:self-auto h-[54px] px-6 text-[13px] font-bold uppercase tracking-wider text-[#0D4446] dark:text-[#14B8A6] hover:bg-[#0D4446]/5 dark:hover:bg-[#14B8A6]/10 font-sans flex items-center gap-2 rounded-xl border border-[#0D4446]/30 dark:border-[#14B8A6]/30 transition-all shadow-sm group cursor-pointer"
             >
               <span>Explore All Listings</span>
-              <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+              <span className="material-symbols-outlined text-[18px] transition-transform duration-300 group-hover:translate-x-1 group-hover:-rotate-45">
+                arrow_forward
+              </span>
             </button>
           </motion.div>
 
-          {/* Search Component */}
+          {/* Search Component (Strictly Uniform h-[54px]) */}
           <motion.div {...sectionRevealProps}>
             <AdvancedSearchBox onSearch={handleSearch} isSticky={false} />
           </motion.div>
@@ -156,16 +155,15 @@ export default function Home({ setIsDarkTheme }) {
         </div>
       </section>
 
-      {/* 4. CLIENT STORIES (REAL RELATIONSHIPS) */}
+      {/* 6. CLIENT STORIES (REAL RELATIONSHIPS) */}
       <ClientStoriesSection />
 
-      {/* 5. LEAD CAPTURE & CONVERSION (RESERVATION) */}
-      <div ref={leadCaptureRef}>
+      {/* 7. PRIVATE AUDIT: LEAD CAPTURE & CONVERSION */}
+      <div id="private-audit" ref={leadCaptureRef}>
         <motion.div {...sectionRevealProps}>
           <LeadCaptureSection />
         </motion.div>
       </div>
-
 
       {/* 8. RELATED LISTINGS */}
       <motion.div {...sectionRevealProps}>

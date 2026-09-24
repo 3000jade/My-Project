@@ -29,6 +29,41 @@ When building or modifying UI components in this project, adhere strictly to the
 7. **Close Buttons (X):**
    - Close buttons floating over images must be small but highly visible. The standard is a `w-9 h-9` solid white circle (`bg-white`) with a heavy drop shadow and a dark icon (`text-[20px]`).
 
+8. **Responsive 12-Column Flexible Grid:**
+   - All major views and components MUST align to a strict 12-column CSS Grid (`grid-cols-12` with 24px/1.5rem gutters on desktop `lg:`, 8 columns on tablet `md:`, 4/1 columns on mobile `sm:`).
+   - Component groupings must span integer multiples of column fractions (`col-span-12`, `col-span-8`, `col-span-6`, `col-span-4`, `col-span-3`). Elements must never orphan or break out of the 1280px (`max-w-7xl`) container bounds.
+
+9. **Fixed Visual Hierarchy (Major Third 1.250 Typographic Scale):**
+   - Strictly adhere to Bauhaus Geometric Modernist hierarchy using `Manrope` (Display/Headings), `Inter` (UI/Controls), and `JetBrains Mono` (Cadastral Telemetry & Ledger):
+     - **H1 (Display):** `56px` (`3.5rem`), `line-height: 1.1`, `font-weight: 800`, `letter-spacing: -0.03em` (`Manrope`).
+     - **H2 (Section Header):** `36px` (`2.25rem`), `line-height: 1.2`, `font-weight: 700`, `letter-spacing: -0.02em` (`Manrope`).
+     - **H3 (Card Title):** `24px` (`1.5rem`), `line-height: 1.3`, `font-weight: 600`, `letter-spacing: -0.01em` (`Manrope`).
+     - **H4 (Subhead):** `18px` (`1.125rem`), `line-height: 1.4`, `font-weight: 600` (`Inter`).
+     - **Body:** `16px` (`1.0rem`), `line-height: 1.6`, `font-weight: 400` (`Inter`).
+     - **Micro-Telemetry:** `12px` (`0.75rem`), `line-height: 1.4`, `font-weight: 600`, uppercase `JetBrains Mono` (`+0.12em` tracking, tabular figures `tnum 1`).
+
+10. **Accessible Color Ratios & 60-30-10 Rule:**
+    - Strictly enforce the 60-30-10 visual balance and WCAG AAA compliance:
+      - **60% Dominant Base Canvas:** Distraction-free plain ground (`#FBFBFA` Light / `#070D0E` Dark).
+      - **30% Structural Secondary Tone:** Deep Spruce Teal (`#0D4446` Light / `#14B8A6` Dark), card surfaces (`#FFFFFF` / `#0C1618`), and high-contrast text (`#141717` Light / `#F4F7F7` Dark, guaranteeing $\ge 15:1$ contrast ratio, exceeding WCAG AAA 7:1).
+      - **10% High-Impact Accent:** Burnt Terracotta Coral (`#E76F51` Light / `#FF7D5A` Dark) reserved strictly for primary conversion CTAs, active radio chips, and key metric badges. Never use accent colors on large background fills.
+
+11. **Predictable Navigation Patterns:**
+    - Essential controls MUST reside in universally understood positions:
+      - **Top Left:** Monogram identity and verified licensure badge (`[MR] MARCUS REYES`).
+      - **Top Center:** Primary section anchors (`Performance Ledger`, `Active Reserves`, `Velocity Engine`, `Private Audit`).
+      - **Top Right:** Utility cluster (Multi-Currency converter, Dark/Light theme switch, Primary action CTA).
+    - **Search Placement:** Positioned directly below the hero section in natural reading sequence, snapping flush to top when scrolled past hero, with all controls strictly uniform at **`h-[54px]`**.
+
+12. **Layering & Spatial Depth (Z-Axis):**
+    - Enforce a 4-tier spatial stack: Layer 0 (Z:0-1, plain canvas), Layer 1 (Z:10, structural stages & photography), Layer 2 (Z:30, floating HUD chips breaking outside container bounds with negative margins, deep frosted glass blurs `backdrop-filter: blur(28px)`, and elevation drop shadows), Layer 3 (Z:100, pinned spatial performance ledger and floating header island).
+
+13. **Micro-Interactions & Reactive Hover States:**
+    - Interactive elements must provide haptic feedback using physical spring curves (`cubic-bezier(0.16, 1, 0.3, 1)`): 3D card tilt & lift (`translateY(-8px) scale(1.015)`), magnetic button-in-button with $45^\circ$ rotating arrow icon, and interactive facade inspection pins with floating CAD spec readouts.
+
+14. **Dual-Engine Theming & Plain Backgrounds:**
+    - Backgrounds must remain plain and distraction-free (no decorative grid lines or blurred orbs in standard view). Theming is powered by zero-reflow CSS variables on `:root` and `[data-theme="dark"]`.
+
 ---
 
 # Superpowers Engineering Methodology & Directives

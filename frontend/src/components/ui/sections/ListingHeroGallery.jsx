@@ -1,4 +1,5 @@
-import { motion } from 'framer-motion';
+import { useRef } from 'react';
+import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
 import houseHeroSvg from '../../../sandbox/assets/House_Herosection.svg';
 
 export default function ListingHeroGallery({ 
@@ -8,11 +9,36 @@ export default function ListingHeroGallery({
   onConsultAgent,
   onInquireNow
 }) {
+  const heroRef = useRef(null);
+
+  // Parallax motion tracking with Hyper-Depth 2.5x intensity
+  const { scrollYProgress } = useScroll({
+    target: heroRef,
+    offset: ['start start', 'end start']
+  });
+
+  // Spring physics for smooth momentum scrolling with Lenis
+  const smoothProgress = useSpring(scrollYProgress, {
+    stiffness: 100,
+    damping: 24,
+    mass: 0.2
+  });
+
+  // Hyper-Depth 2.5x layer transformations
+  const yHeroHouse = useTransform(smoothProgress, [0, 1], ['0px', '220px']);
+  const scaleHeroHouse = useTransform(smoothProgress, [0, 1], [1, 1.12]);
+  const yHeadlineText = useTransform(smoothProgress, [0, 1], ['0px', '-90px']);
+  const ySkyClouds = useTransform(smoothProgress, [0, 1], ['0px', '55px']);
+  const opacitySkyGlow = useTransform(smoothProgress, [0, 0.85], [1, 0.45]);
+
   return (
-    <section className="relative w-full bg-white flex flex-col justify-end items-center overflow-hidden pt-[95px] md:pt-[105px] lg:pt-[115px] pb-0">
+    <section ref={heroRef} className="relative w-full bg-white flex flex-col justify-end items-center overflow-hidden pt-[95px] md:pt-[105px] lg:pt-[115px] pb-0">
       
       {/* ─── PURE MORNING SKY WITH TEXTURED NATURAL CLOUDS IN THE MIDDLE ─── */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+      <motion.div 
+        style={{ y: ySkyClouds, opacity: opacitySkyGlow }}
+        className="absolute inset-0 pointer-events-none overflow-hidden z-0"
+      >
         {/* SVG Definition for Organic Realistic Cloud Turbulence & Displacement */}
         <svg className="absolute w-0 h-0 pointer-events-none">
           <filter id="cloud-filter-main" x="-20%" y="-20%" width="140%" height="140%">
@@ -143,52 +169,87 @@ export default function ListingHeroGallery({
             background: 'radial-gradient(circle at 10% 15%, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.1) 35%, transparent 65%)'
           }}
         />
-      </div>
+      </motion.div>
 
-      {/* ─── EYE-CATCHING EDITORIAL TYPOGRAPHY (Replicated from Design) ─── */}
+      {/* ─── ARCHITECTURAL FROSTED GLASS MONOLITH (Authentic & Immersive Exhibition Plate) ─── */}
       <motion.div 
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
+        style={{ y: yHeadlineText }}
         transition={{ duration: 0.8, ease: [0.32, 0.72, 0, 1] }}
-        className="relative z-20 w-full max-w-[1440px] mx-auto px-6 md:px-12 lg:px-16 text-left flex flex-col items-start pt-1 md:pt-2"
+        className="relative z-20 w-full max-w-7xl mx-auto px-6 lg:px-12 text-left flex flex-col items-start pt-2 sm:pt-4 will-change-transform"
       >
-        {/* Eyebrow Label (Flush aligned with heading, Since 1989 only) */}
-        <div className="mb-3 sm:mb-4">
-          <span className="text-[11px] sm:text-[12px] font-semibold uppercase tracking-[0.14em] text-[#4a525d] font-sans">
-            SINCE 1989
-          </span>
-        </div>
+        <div className="relative w-full max-w-3xl rounded-3xl p-6 sm:p-8 md:p-10 bg-gradient-to-br from-white/70 via-white/50 to-[#d6ecff]/45 backdrop-blur-2xl border border-white/85 shadow-[inset_0_1px_2px_rgba(255,255,255,0.9),0_20px_50px_rgba(100,160,220,0.18)] transition-all">
+          
+          {/* Top Cadastral Telemetry Stamp Header */}
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-4 sm:mb-5">
+            <span className="text-[11px] sm:text-[12px] font-bold uppercase tracking-[0.14em] text-[#0D4446] font-mono bg-white/85 px-3 py-1 rounded-full border border-[#0D4446]/20 shadow-xs">
+              SINCE 1989 · HUMAN SHELTER ARCHITECTURAL HOLDINGS
+            </span>
+            <span className="hidden sm:inline-block text-[11px] font-mono font-medium tracking-[0.12em] text-[#0D4446]/70 uppercase">
+              14.5995° N, 120.9842° E // HS-PH
+            </span>
+          </div>
 
-        {/* Editorial Serif Dual-Tone Headline */}
-        <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-[80px] font-normal leading-[1.04] tracking-[-0.015em] mb-4 sm:mb-5 max-w-4xl" style={{ fontFamily: 'var(--font-serif)' }}>
-          <span className="text-[#266F71] block font-normal">
-            Selling Homes,
-          </span>
-          <span className="text-[#c9684b] block italic font-normal">
-            Building Dreams.
-          </span>
-        </h1>
+          {/* Editorial Modernist H1 Display (56px, -0.03em, weight 800) */}
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[54px] font-extrabold leading-[1.08] tracking-[-0.03em] mb-4 font-display">
+            <span className="text-[#0D4446] block drop-shadow-xs">
+              Selling Homes,
+            </span>
+            <span className="text-[#E76F51] block italic font-serif drop-shadow-xs">
+              Building Dreams.
+            </span>
+          </h1>
 
-        {/* Narrative Sub-headline paragraph */}
-        <div className="max-w-[720px]">
-          <p className="text-[16px] sm:text-[17px] md:text-[18px] text-[#3f4949] font-sans font-normal leading-[1.6] tracking-[-0.01em]">
-            For over 37 years, Human Shelter has helped thousands of Filipino families turn their dream of homeownership into reality. From affordable housing to mid-cost homes, we make the journey easy and trustworthy, because we know that owning a home is one of life’s biggest decisions.
-          </p>
+          {/* Architectural Subtle Hairline Accent */}
+          <div className="w-full h-px bg-gradient-to-r from-[#0D4446]/20 via-[#0D4446]/10 to-transparent my-4 sm:my-5" />
+
+          {/* Narrative Sub-headline paragraph */}
+          <div className="max-w-[640px]">
+            <p className="text-[15px] sm:text-[16px] md:text-[17px] text-[#141717] font-sans font-medium leading-[1.65] tracking-[-0.01em]">
+              For over 37 years, Human Shelter has helped thousands of Filipino families turn their dream of homeownership into reality. From affordable housing to mid-cost homes, we make the journey easy and trustworthy, because we know that owning a home is one of life’s biggest decisions.
+            </p>
+          </div>
+
+          {/* Action Buttons Beneath Body Text with Login Button 45° Glass Light-Beam Shine Effect */}
+          <div className="mt-6 sm:mt-7 flex flex-wrap items-center gap-3 sm:gap-4 z-30">
+            <button
+              type="button"
+              onClick={onConsultAgent}
+              className="premium-btn h-[54px] px-7 rounded-full bg-white/90 hover:bg-white text-[#0D4446] border border-[#0D4446]/25 backdrop-blur-md font-sans text-[15px] font-semibold transition-all duration-300 shadow-[0_4px_16px_rgba(13,68,70,0.08)] hover:shadow-[0_8px_24px_rgba(13,68,70,0.15)] flex items-center gap-3 cursor-pointer"
+            >
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+              </span>
+              <span>Consult with an agent</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={onInquireNow}
+              className="premium-btn h-[54px] px-8 rounded-full bg-[#E76F51] hover:bg-[#D65C3E] text-white font-sans text-[15px] font-bold tracking-wide transition-all duration-300 shadow-[0_8px_20px_rgba(231,111,81,0.35)] hover:shadow-[0_12px_28px_rgba(231,111,81,0.45)] flex items-center gap-2.5 justify-center cursor-pointer group"
+            >
+              <span>Inquire now</span>
+              <span className="text-[18px] leading-none transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-0.5">↗</span>
+            </button>
+          </div>
         </div>
       </motion.div>
 
-      {/* ─── FULL-WIDTH HOUSE ILLUSTRATION (Fitted to Screen Width - Forefront Layer) ─── */}
+      {/* ─── FULL-WIDTH HOUSE ILLUSTRATION (Hyper-Depth 2.5x Parallax Plane) ─── */}
       <motion.div 
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
+        style={{ y: yHeroHouse, scale: scaleHeroHouse }}
         transition={{ duration: 1, delay: 0.15, ease: [0.32, 0.72, 0, 1] }}
-        className="relative z-10 w-full flex justify-center items-end leading-none -mt-10 sm:-mt-14 md:-mt-20 lg:-mt-24 -translate-y-[32px] -mb-[32px] pointer-events-none"
+        className="relative z-10 w-full flex justify-center items-end leading-none -mt-24 sm:-mt-32 md:-mt-44 lg:-mt-52 pointer-events-none origin-bottom will-change-transform"
       >
         <div className="relative w-full flex justify-center items-end">
           <img
             src={houseHeroSvg}
             alt="Human Shelter - Selling Homes, Building Dreams"
-            className="w-full w-screen max-w-none h-auto object-contain object-bottom block drop-shadow-[0_20px_40px_rgba(0,0,0,0.05)]"
+            className="w-full min-w-full max-w-none h-auto object-cover object-center block drop-shadow-[0_20px_40px_rgba(0,0,0,0.05)]"
             loading="eager"
           />
 
@@ -198,35 +259,6 @@ export default function ListingHeroGallery({
             transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
             className="absolute inset-0 bg-gradient-to-r from-white/40 via-white/10 to-transparent pointer-events-none mix-blend-soft-light"
           />
-        </div>
-
-        {/* Action Buttons Centered Over Lower Section of the House (Driveway / Street base) */}
-        <div className="absolute inset-x-0 bottom-8 sm:bottom-12 md:bottom-16 flex justify-center items-center z-40 pointer-events-auto px-4">
-          <div className="flex flex-wrap justify-center items-center gap-3 sm:gap-4 p-2 sm:p-2.5 rounded-2xl bg-white/85 backdrop-blur-md border border-white shadow-[0_16px_40px_rgba(0,0,0,0.18)]">
-            <button
-              type="button"
-              onClick={onViewProperties}
-              className="h-[54px] px-7 rounded-xl bg-[#266F71] hover:bg-[#1f595b] active:scale-[0.98] text-white font-sans text-[15px] sm:text-[16px] font-semibold transition-all duration-200 shadow-[0_4px_16px_rgba(38,111,113,0.35)] flex items-center justify-center cursor-pointer"
-            >
-              View properties
-            </button>
-
-            <button
-              type="button"
-              onClick={onConsultAgent}
-              className="h-[54px] px-6 rounded-xl bg-white hover:bg-[#f5f4ef] active:scale-[0.98] text-[#174849] border border-[#266F71]/40 hover:border-[#266F71] font-sans text-[15px] sm:text-[16px] font-semibold transition-all duration-200 shadow-sm flex items-center justify-center cursor-pointer"
-            >
-              Consult with an agent
-            </button>
-
-            <button
-              type="button"
-              onClick={onInquireNow}
-              className="h-[54px] px-6 rounded-xl bg-[#c9684b] hover:bg-[#b5583c] active:scale-[0.98] text-white font-sans text-[15px] sm:text-[16px] font-semibold transition-all duration-200 shadow-[0_4px_16px_rgba(201,104,75,0.35)] flex items-center justify-center cursor-pointer"
-            >
-              Inquire now
-            </button>
-          </div>
         </div>
       </motion.div>
     </section>
