@@ -19,6 +19,9 @@ export { default as PropertyCard } from './cards/PropertyCard';
 export { default as InspectionScheduleModal } from './modals/InspectionScheduleModal';
 export { default as PropertyDetailModal } from './modals/PropertyDetailModal';
 
+// Map & Geographical
+export { default as PropertyMap } from './map/PropertyMap';
+
 // Search
 export { default as AdvancedSearchBox } from './search/AdvancedSearchBox';
 
