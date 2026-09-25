@@ -34,11 +34,10 @@ export default function PropertyMap({
       scrollWheelZoom: true,
     });
 
-    // CartoDB Voyager tiles - modern architectural luxury aesthetic
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; OpenStreetMap',
+    // OpenStreetMap standard tiles - clean, free, no API key required
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       maxZoom: 19,
-      subdomains: 'abcd',
     }).addTo(map);
 
     // Zoom controls bottom-right
