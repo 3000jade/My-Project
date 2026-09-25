@@ -16,14 +16,15 @@ export { default as NeighborhoodCard } from './cards/NeighborhoodCard';
 export { default as PropertyCard } from './cards/PropertyCard';
 
 // Modals
+export { default as AllFiltersDrawer } from './modals/AllFiltersDrawer';
 export { default as InspectionScheduleModal } from './modals/InspectionScheduleModal';
 export { default as PropertyDetailModal } from './modals/PropertyDetailModal';
 
+// Search
+export { default as UnifiedSearchBar } from './search/UnifiedSearchBar';
+
 // Map & Geographical
 export { default as PropertyMap } from './map/PropertyMap';
-
-// Search
-export { default as AdvancedSearchBox } from './search/AdvancedSearchBox';
 
 // Sections & Calculators
 export { default as AgentBrokerSection } from './sections/AgentBrokerSection';
@@ -41,6 +42,7 @@ export { default as LeadCaptureSection } from './sections/LeadCaptureSection';
 export { default as ListingHeroGallery } from './sections/ListingHeroGallery';
 export { default as LocationNeighborhoodSection } from './sections/LocationNeighborhoodSection';
 export { default as NeighborhoodSpotlightsSection } from './sections/NeighborhoodSpotlightsSection';
+export { default as PartnersSection } from './sections/PartnersSection';
 export { default as PropertyGalleryMosaic } from './sections/PropertyGalleryMosaic';
 export { default as PropertyOverviewSection } from './sections/PropertyOverviewSection';
 export { default as RelatedListingsSection } from './sections/RelatedListingsSection';
