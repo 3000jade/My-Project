@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { mockProperties } from '../../../mockProperties';
+import { mockProperties } from '../../mockData/mockProperties';
 
 export default function PropertyListingView() {
   const { id } = useParams();
