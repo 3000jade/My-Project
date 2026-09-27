@@ -32,7 +32,7 @@ export default function PropertyGalleryMosaic({
 
   return (
     <>
-      <div className="relative rounded-3xl overflow-hidden bg-gray-100 dark:bg-[#151c1c] border border-gray-200 dark:border-[#222f2e] shadow-sm">
+      <div className="relative rounded-3xl overflow-hidden bg-[#FBFBF9] border border-[#D8DFDF] shadow-sm">
         {/* Desktop 5-Photo Grid / Mobile Single Hero */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-2 h-[340px] md:h-[440px] lg:h-[480px]">
           {/* Main Hero Photo (2 Cols) */}
@@ -88,7 +88,7 @@ export default function PropertyGalleryMosaic({
         <button
           type="button"
           onClick={() => setActiveLightboxIndex(0)}
-          className="absolute bottom-4 right-4 z-10 px-4 py-2.5 bg-white/95 dark:bg-[#183d3b]/90 hover:bg-white dark:hover:bg-[#183d3b] text-[#183d3b] dark:text-white backdrop-blur-md rounded-xl text-xs font-bold font-sans uppercase tracking-wider shadow-lg border border-[#e1e5df]/60 flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
+          className="absolute bottom-4 right-4 z-10 px-4 py-2.5 bg-white/95 hover:bg-white text-[#0D4446] backdrop-blur-md rounded-xl text-xs font-bold font-sans uppercase tracking-wider shadow-lg border border-[#D8DFDF] flex items-center gap-2 transition-all hover:scale-105 active:scale-95 cursor-pointer"
         >
           <span className="material-symbols-outlined text-[18px]">photo_library</span>
           View All Photos ({photoList.length})

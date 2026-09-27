@@ -1,4 +1,4 @@
-﻿import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { getPropertyCoordinates } from '../utils/propertyCoordinates';
 
 export function usePropertyFilterEngine(initialProperties = []) {
@@ -157,6 +157,8 @@ export function usePropertyFilterEngine(initialProperties = []) {
       transactionType: {},
       propertyType: {},
       beds: {},
+      bedrooms: {},
+      status: {},
       furnishing: {},
       floorLevel: {},
       financingTerms: {},
@@ -168,13 +170,19 @@ export function usePropertyFilterEngine(initialProperties = []) {
       const t = p.transactionType || 'For Sale';
       counts.transactionType[t] = (counts.transactionType[t] || 0) + 1;
 
+      // Status
+      if (p.status) {
+        counts.status[p.status] = (counts.status[p.status] || 0) + 1;
+      }
+
       // Property Type
       const pt = p.propertyType || p.propertySubClass || 'Condominium';
       counts.propertyType[pt] = (counts.propertyType[pt] || 0) + 1;
 
-      // Beds
-      const b = p.beds || p.bedrooms || '1';
+      // Beds / Bedrooms
+      const b = p.beds !== undefined ? String(p.beds) : (p.bedrooms !== undefined ? String(p.bedrooms) : '1');
       counts.beds[b] = (counts.beds[b] || 0) + 1;
+      counts.bedrooms[b] = (counts.bedrooms[b] || 0) + 1;
 
       // Furnishing
       if (p.furnishing) counts.furnishing[p.furnishing] = (counts.furnishing[p.furnishing] || 0) + 1;

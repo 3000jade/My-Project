@@ -71,6 +71,89 @@ export function normalizeProperty(rawItem = {}) {
     baths: rawItem.baths || rawItem.specs?.baths || rawItem.bathrooms || 1,
     sqft: rawItem.sqft || rawItem.specs?.sqft || rawItem.floor_area || 0,
     features: Array.isArray(rawItem.features) ? rawItem.features : [],
+    listing_id: rawItem.listing_id || rawItem.listingId || `MLS-${String(rawItem.id || '').slice(0, 8).toUpperCase() || 'PH-8123'}`,
+    listing_key: rawItem.listing_key || rawItem.listingKey || `KEY-${rawItem.id}`,
+    standard_status: rawItem.standard_status || rawItem.standardStatus || (normalizedStatus === 'AVAILABLE' ? 'Active' : normalizedStatus === 'RESERVED' || normalizedStatus === 'UNDER CONTRACT' ? 'Active Under Contract' : normalizedStatus === 'SOLD' ? 'Closed' : normalizedStatus),
+    standardStatus: rawItem.standard_status || rawItem.standardStatus || (normalizedStatus === 'AVAILABLE' ? 'Active' : normalizedStatus === 'RESERVED' || normalizedStatus === 'UNDER CONTRACT' ? 'Active Under Contract' : normalizedStatus === 'SOLD' ? 'Closed' : normalizedStatus),
+    association_fee: rawItem.association_fee ?? rawItem.associationFee ?? 0,
+    associationFee: rawItem.association_fee ?? rawItem.associationFee ?? 0,
+    association_fee_frequency: rawItem.association_fee_frequency || rawItem.associationFeeFrequency || 'Monthly',
+    associationFeeFrequency: rawItem.association_fee_frequency || rawItem.associationFeeFrequency || 'Monthly',
+    tax_annual_amount: rawItem.tax_annual_amount ?? rawItem.taxAnnualAmount ?? null,
+    taxAnnualAmount: rawItem.tax_annual_amount ?? rawItem.taxAnnualAmount ?? null,
+    living_area: rawItem.living_area ?? rawItem.livingArea ?? rawItem.sqft ?? rawItem.specs?.livingArea ?? 100,
+    livingArea: rawItem.living_area ?? rawItem.livingArea ?? rawItem.sqft ?? rawItem.specs?.livingArea ?? 100,
+    living_area_units: rawItem.living_area_units || rawItem.livingAreaUnits || 'Square Meters',
+    livingAreaUnits: rawItem.living_area_units || rawItem.livingAreaUnits || 'Square Meters',
+    lot_size_area: rawItem.lot_size_area ?? rawItem.lotSizeArea ?? null,
+    lotSizeArea: rawItem.lot_size_area ?? rawItem.lotSizeArea ?? null,
+    lot_size_units: rawItem.lot_size_units || rawItem.lotSizeUnits || 'Square Meters',
+    lotSizeUnits: rawItem.lot_size_units || rawItem.lotSizeUnits || 'Square Meters',
+    subdivision_name: rawItem.subdivision_name || rawItem.subdivisionName || rawItem.location?.subdivisionName || '',
+    subdivisionName: rawItem.subdivision_name || rawItem.subdivisionName || rawItem.location?.subdivisionName || '',
+    confidential: rawItem.confidential || {
+      buyerAgencyCompensation: rawItem.buyer_agency_compensation || '',
+      privateRemarks: rawItem.private_remarks || '',
+      showingInstructions: rawItem.showing_instructions || '',
+      lockboxCode: rawItem.lockbox_code || '',
+    },
+    media: Array.isArray(rawItem.media) ? rawItem.media : [],
+  };
+}
+
+/**
+ * Converts ergonomic flat Studio form state into structured, Zod-compliant DTO
+ * for the Express backend (/api/properties).
+ */
+export function toApiPayload(item = {}) {
+  const numericPrice = typeof item.price === 'number'
+    ? item.price
+    : Number(String(item.price || 0).replace(/[^0-9.-]+/g, '')) || 0;
+
+  const rawAssocFee = item.association_fee ?? item.associationFee;
+  const numericAssocFee = typeof rawAssocFee === 'number'
+    ? rawAssocFee
+    : Number(String(rawAssocFee || 0).replace(/[^0-9.-]+/g, '')) || 0;
+
+  return {
+    title: (item.title || 'Untitled Luxury Property').trim(),
+    tagline: item.tagline || '',
+    price: numericPrice,
+    listPriceCurrency: item.listPriceCurrency || item.list_price_currency || 'PHP',
+    originalListPrice: item.originalListPrice || item.original_list_price ? Number(item.originalListPrice || item.original_list_price) : numericPrice,
+    associationFee: numericAssocFee,
+    associationFeeFrequency: item.associationFeeFrequency || item.association_fee_frequency || 'Monthly',
+    taxAnnualAmount: item.taxAnnualAmount ? Number(item.taxAnnualAmount) : undefined,
+    standardStatus: item.standardStatus || item.standard_status || (item.status === 'AVAILABLE' ? 'Active' : item.status === 'UNDER CONTRACT' ? 'Active Under Contract' : item.status === 'SOLD' ? 'Closed' : 'Draft'),
+    location: {
+      address: item.address || item.location || 'Metro Manila',
+      subdivisionName: item.subdivisionName || item.subdivision_name || '',
+      city: item.city || 'Metro Manila',
+      state: item.state || 'Metro Manila',
+      postalCode: item.postalCode || item.postal_code || '1000',
+    },
+    specs: {
+      beds: Number(item.bedrooms || item.beds) || 1,
+      baths: Number(item.bathrooms || item.baths) || 1,
+      bedroomsTotal: Number(item.bedrooms || item.beds) || 1,
+      bathroomsTotalInteger: Number(item.bathrooms || item.baths) || 1,
+      storiesTotal: Number(item.stories || item.stories_total) || 1,
+      sqft: Number(item.livingArea || item.living_area || item.sqft) || 100,
+      livingArea: Number(item.livingArea || item.living_area || item.sqft) || 100,
+      livingAreaUnits: item.livingAreaUnits || item.living_area_units || 'Square Meters',
+      lotSizeArea: item.lotSizeArea ? Number(item.lotSizeArea) : undefined,
+      lotSizeUnits: item.lotSizeUnits || 'Square Meters',
+      propertyType: item.propertyType || item.property_type || 'Estate',
+      yearBuilt: item.yearBuilt ? Number(item.yearBuilt) : new Date().getFullYear(),
+    },
+    features: Array.isArray(item.features) ? item.features : [],
+    images: item.coverImage ? [item.coverImage, ...(item.galleryImages || [])] : (item.images || []),
+    confidential: {
+      buyerAgencyCompensation: item.buyerAgencyCompensation || item.buyerBrokerCommission || item.confidential?.buyerAgencyCompensation || '',
+      privateRemarks: item.privateRemarks || item.confidential?.privateRemarks || '',
+      showingInstructions: item.showingInstructions || item.confidential?.showingInstructions || '',
+      lockboxCode: item.lockboxCode || item.confidential?.lockboxCode || '',
+    },
   };
 }
 

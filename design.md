@@ -9,13 +9,32 @@ philosophy:
     structural geometry, verifiable sales velocity, and typography command the viewport.
 
 colors:
-  # Base Grounds: 60% Dominant Base Canvas (Plain Distraction-Free)
-  canvas-light: '#FBFBFA'             # Gallery Alabaster light mode ground
+  # Base Grounds: 60% Dominant Base Canvas (Plain Distraction-Free & Warm Alabaster)
+  canvas-light: '#FBFBF9'             # Warm Gallery Alabaster ground (calibrated from image)
   canvas-dark: '#070D0E'              # Plain Deep Obsidian dark mode ground
-  surface-light-pure: '#FFFFFF'       # Elevated crisp daylight white surface
+  surface-light-pure: '#FFFFFF'       # Elevated crisp daylight white surface (from image)
   surface-light-low: '#F4F5F4'        # Soft alabaster section container
   surface-dark-card: '#0C1618'        # Plain basalt matte card surface
   surface-dark-elevated: '#132427'    # Elevated dark stage plinth
+
+  # Cadastral Architectural Micro-Grid (28px pitch geometric ground)
+  cadastral-grid-pitch: '28px 28px'   # Mathematical geometric pitch from reference image
+  cadastral-grid-dot: '#F3F6F4'       # Micro-dot color
+  cadastral-grid-dot-tint: 'rgba(13, 68, 70, 0.08)' # Subtle architectural tinted dot
+
+  # Light Theme Glassmorphism (80% Frosted Glass Architecture)
+  glass-light-plate: 'rgba(255, 255, 255, 0.80)'   # 80% frosted glass plate container
+  glass-light-subplate: 'rgba(255, 255, 255, 0.75)'# Inner search console plinth
+  glass-light-input: 'rgba(255, 255, 255, 0.90)'   # Daylight translucent input fill
+  glass-light-border: 'rgba(255, 255, 255, 0.90)'  # Luminous perimeter boundary
+  glass-light-inner-glow: 'rgba(255, 255, 255, 0.95)' # Specular refraction top highlight
+  glass-light-shadow: '0 20px 50px rgba(100, 160, 220, 0.18)' # Atmospheric sky drop-shadow
+
+  # Atmospheric Morning Sky
+  sky-cerulean-top: '#b3dbff'         # Zenith clear cerulean morning sky
+  sky-cerulean-mid: 'rgba(214, 236, 255, 0.70)' # Mid-sky horizon wash
+  sky-cerulean-bottom: '#FFFFFF'      # Ground level daylight horizon
+
 
   # Core Architectural Tones: 30% Structural Secondary
   primary-light: '#0D4446'            # Deep Spruce Teal (Light mode primary)
@@ -66,59 +85,59 @@ grid:
 typography:
   scaleRatio: "1.250 (Major Third Modular Scale)"
   fontFamilies:
-    display: "Manrope, sans-serif"
-    label: "Inter, sans-serif"
-    mono: "JetBrains Mono, monospace"
+    display: "Geist, sans-serif"
+    label: "Geist, sans-serif"
+    mono: "Geist Mono, monospace"
 
   hierarchy:
     display-h1:
-      fontFamily: "Manrope"
+      fontFamily: "Geist"
       fontSize: "56px"               # 3.5rem
       lineHeight: "62px"             # 1.1
       fontWeight: "800"
       letterSpacing: "-0.03em"
       role: "Hero declarations, primary authority statements"
     heading-h2:
-      fontFamily: "Manrope"
+      fontFamily: "Geist"
       fontSize: "36px"               # 2.25rem
       lineHeight: "44px"             # 1.2
       fontWeight: "700"
-      letterSpacing: "-0.02em"
+      letterSpacing: "-0.025em"
       role: "Major section headers, performance ledger titles"
     card-h3:
-      fontFamily: "Manrope"
+      fontFamily: "Geist"
       fontSize: "24px"               # 1.5rem
       lineHeight: "32px"             # 1.3
       fontWeight: "600"
-      letterSpacing: "-0.01em"
+      letterSpacing: "-0.02em"
       role: "Property reserve cards, feature titles, modal heads"
     subhead-h4:
-      fontFamily: "Inter"
+      fontFamily: "Geist"
       fontSize: "18px"               # 1.125rem
       lineHeight: "26px"             # 1.4
       fontWeight: "600"
-      letterSpacing: "-0.005em"
+      letterSpacing: "-0.015em"
       role: "Subsection titles, pricing tags, form group labels"
     body-regular:
-      fontFamily: "Inter"
+      fontFamily: "Geist"
       fontSize: "16px"               # 1.0rem
       lineHeight: "26px"             # 1.6
       fontWeight: "400"
-      letterSpacing: "0em"
+      letterSpacing: "-0.01em"
       role: "Editorial copy, narrative descriptions, user input text"
     body-small:
-      fontFamily: "Inter"
+      fontFamily: "Geist"
       fontSize: "14px"               # 0.875rem
       lineHeight: "22px"             # 1.5
       fontWeight: "500"
-      letterSpacing: "0.01em"
+      letterSpacing: "-0.005em"
       role: "Secondary metadata, dropdown selections, help text"
     telemetry-micro:
-      fontFamily: "JetBrains Mono"
+      fontFamily: "Geist Mono"
       fontSize: "12px"               # 0.75rem
       lineHeight: "16px"             # 1.33
       fontWeight: "600"
-      letterSpacing: "0.12em"
+      letterSpacing: "0.08em"
       textTransform: "uppercase"
       fontFeatureSettings: "'tnum' 1"
       role: "Cadastral stamps, license IDs, currency switches, contract days"
@@ -156,7 +175,7 @@ This specification codifies the engineering and visual standards for the real es
 
 The interface rejects visual clutter, decorative skeuomorphism, and dense administrative styling. It rests on **plain, distraction-free surfaces** allowing photographic architecture and quantifiable performance data to lead the experience.
 
-- **Dual-Engine Theming:** Controlled via CSS variables attached to `:root` (Light Mode: Gallery Alabaster `#FBFBFA`) and `[data-theme="dark"]` (Dark Mode: Plain Obsidian `#070D0E`).
+- **Dual-Engine Theming:** Controlled via CSS variables attached to `:root` (Light Mode: Warm Gallery Alabaster `#FBFBF9`) and `[data-theme="dark"]` (Dark Mode: Plain Obsidian `#070D0E`).
 - **Zero-Reflow Transitions:** Theme toggling switches color tokens instantly with 0ms layout shift.
 - **Mathematical Control Heights:** All inputs, dropdowns, filters, and action buttons maintain a strict, uniform height of **`h-[54px]`** (`--control-h: 54px`) for flush alignment.
 
@@ -205,7 +224,7 @@ Color application strictly complies with the **60-30-10 Rule** and meets **WCAG 
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
-│  60% BASE GROUND: Plain Alabaster (#FBFBFA) / Obsidian (#070D0E)        │
+│  60% BASE GROUND: Plain Alabaster (#FBFBF9) / Obsidian (#070D0E)        │
 │  30% STRUCTURAL:  Spruce Teal (#0D4446 / #14B8A6) & High-Contrast Ink  │
 │  10% ACCENT:      Burnt Terracotta Coral (#E76F51 / #FF7D5A) - CTAs    │
 └────────────────────────────────────────────────────────────────────────┘
@@ -213,7 +232,7 @@ Color application strictly complies with the **60-30-10 Rule** and meets **WCAG 
 
 - **60% Dominant Base Canvas:** Clean, plain ground without pattern noise.
 - **30% Structural Secondary Tone:** Spruce Teal structural headers, card containers, and high-contrast ink:
-  - Light mode ink `#141717` on `#FBFBFA` provides **15.4:1 contrast ratio** (Passes WCAG AAA).
+  - Light mode ink `#141717` on `#FBFBF9` provides **15.4:1 contrast ratio** (Passes WCAG AAA).
   - Dark mode ink `#F4F7F7` on `#070D0E` provides **16.1:1 contrast ratio** (Passes WCAG AAA).
 - **10% High-Impact Accent:** Burnt Terracotta Coral reserved *strictly* for high-value conversion elements: primary CTA buttons, active radio chips, slider thumbs, and status radar beacons. Accent colors are NEVER diluted on large background fills.
 
@@ -263,5 +282,83 @@ Interactive components give tactile, haptic feedback using physical spring curve
 - **Momentum Scrolling:** Governed globally by `lenis/react` for buttery smooth inertia.
 - **Pinned Spatial Ledger:** The `$184.2M` closed volume and `21 Days` sales velocity ledger serves as a sticky spatial bridge between hero storytelling and the active property catalog.
 - **Kinetic Market Ticker:** Infinite marquee pinned to the top edge continuously broadcasting verified closed transactions and off-market milestones.
+
+---
+
+## 9. Light Theme (Daylight Architectural Precision & 80% Frosted Glass)
+
+The **Light Theme** embodies Scandinavian daylight clarity, Bauhaus structural permanence, and architectural transparency. It establishes an elevated, distraction-free gallery ambiance where content breathes naturally on plain alabaster grounds.
+
+### 9.1 Atmospheric Morning Sky & Procedural Cloud Engine
+- **Morning Sky Gradient:** Seamless vertical transition from clear cerulean down to soft alabaster:
+  ```css
+  background: linear-gradient(180deg, #b3dbff 0%, rgba(214, 236, 255, 0.70) 45%, #FFFFFF 100%);
+  ```
+- **Procedural Cumulus Stream:** Endless, smooth horizontal parallax cloud flow across 4 altitude lanes:
+  - **Lane 1 (High Altitude Cumulus):** Duration `65s`, drop-shadow `0 12px 24px rgba(100, 160, 220, 0.35)`.
+  - **Lane 2 (Mid-Sky Parallel Stream):** Duration `55s`, drop-shadow `0 10px 20px rgba(100, 160, 220, 0.30)`.
+  - **Lane 3 (Lower Horizon Drift):** Duration `70s`, drop-shadow `0 8px 16px rgba(100, 160, 220, 0.25)`.
+  - **Lane 4 (Apex Horizon Stream):** Duration `80s`, drop-shadow `0 6px 14px rgba(100, 160, 220, 0.20)`.
+- **Solar Radiance Glow:** Radial wash at zenith:
+  ```css
+  radial-gradient(circle at 10% 15%, rgba(255, 255, 255, 0.60) 0%, rgba(255, 255, 255, 0.10) 35%, transparent 65%)
+  ```
+
+### 9.2 80% Transparency Frosted Glass Monolith (Hero Monolith)
+The primary hero exhibition card employs a mathematically calibrated **80% frosted glass** architectural plate:
+- **Base Plate Fill:** `rgba(255, 255, 255, 0.80)` (`bg-white/80`)
+- **Optical Diffusion (Lens Blur):** `backdrop-filter: blur(40px)` (`backdrop-blur-2xl`)
+- **Specular Top Refraction Line:** `box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.95)`
+- **Atmospheric Sky Shadow:** `box-shadow: 0 20px 50px rgba(100, 160, 220, 0.18)`
+- **Perimeter Boundary:** `border: 1px solid rgba(255, 255, 255, 0.90)` (`border-white/90`)
+- **Corner Curvature:** `20px` (`rounded-[20px]`) / `24px` (`rounded-3xl`)
+- **Architectural Drafting Crosshairs:** Cadastral crosshairs `⌜`, `⌝`, `⌞`, `⌟` positioned at `top-3`/`bottom-3` in Spruce Teal tint `rgba(13, 68, 70, 0.40)`.
+
+### 9.3 Integrated Quick Search Console in Light Theme
+- **Console Plinth:** Nested glass chassis with `rgba(255, 255, 255, 0.75)` fill, `backdrop-filter: blur(24px)`, border `rgba(255, 255, 255, 0.90)`, and shadow `0 8px 24px rgba(13, 68, 70, 0.06)`.
+- **Inputs & Dropdowns:**
+  - Height: Strict **`h-[54px]`** mathematical standard.
+  - Fill: `rgba(255, 255, 255, 0.90)` (`bg-white/90`).
+  - Hairline: `#D8DFDF` border, shifting to `#0D4446` on focus.
+  - Typography: `#141717` (High-contrast charcoal, 15.4:1 contrast).
+  - Icons: Deep Spruce Teal `#0D4446`.
+- **Action Buttons:**
+  - **Find Homes CTA:** `h-[54px]` Burnt Terracotta Coral `#E76F51` with hover `#D65C3E`, text pure white, and shadow `0 4px 16px rgba(231, 111, 81, 0.35)`.
+  - **Consult Advisor Beacon:** `h-[48px]` Deep Spruce Teal `#0D4446` with live pulsing emerald beacon (`bg-emerald-400` ping + solid `bg-emerald-400`), hover `#082b2d`, and shadow `0 4px 16px rgba(13, 68, 70, 0.18)`.
+  - **View Properties Link:** `#0D4446` with underlined hover transition to `#E76F51`.
+
+### 9.4 Light Mode Surface & Elevation Tokens
+| Token | Color Code | Role & Layer | Border Rule |
+| :--- | :--- | :--- | :--- |
+| `--canvas-light` | `#FBFBF9` | Plain base canvas ground (60%) | None |
+| `--surface-light-pure` | `#FFFFFF` | Elevated cards, search bars, modals | `1px solid #E5EBEB` |
+| `--surface-light-low` | `#F4F5F4` | Soft plinth containers, spec chips | `1px solid #D8DFDF` |
+| `--glass-light-plate` | `rgba(255, 255, 255, 0.80)` | Hero frosted glass monolith | `1px solid rgba(255, 255, 255, 0.90)` |
+| `--glass-light-subplate` | `rgba(255, 255, 255, 0.75)` | Nested console plinth | `1px solid rgba(255, 255, 255, 0.90)` |
+| `--glass-light-input` | `rgba(255, 255, 255, 0.90)` | Daylight form controls | `1px solid #D8DFDF` |
+
+### 9.5 Light Mode Typographic Ink & WCAG AAA Verification
+- **Display H1:** Deep Spruce Teal (`#0D4446`) paired with Burnt Terracotta Coral (`#E76F51`) italic serif accent.
+- **Section Headers (H2/H3):** Deep Spruce Teal (`#0D4446`) with contrast ratio **9.8:1** on `#FBFBF9` (Passes WCAG AAA).
+- **Body Text:** Charcoal Ink (`#141717`) with contrast ratio **15.4:1** on `#FBFBF9` (Passes WCAG AAA $\ge 7:1$).
+- **Secondary Narrative:** Granite Muted (`#5C6768`) with contrast ratio **6.2:1** on `#FFFFFF` (Passes WCAG AA $\ge 4.5:1$).
+- **Micro-Telemetry Badges:** JetBrains Mono `#0D4446` enclosed in `bg-white/85` with boundary `#0D4446]/20`.
+
+### 9.6 Cadastral Architectural Micro-Grid Ground (`.bg-cadastral-grid`)
+- **Mathematical Ground:** Warm Alabaster Canvas Base (`#FBFBF9`) paired with subtle architectural cadastral micro-grid dots spaced at exactly $28\text{px} \times 28\text{px}$ pitch (calibrated directly from the reference imagery).
+- **Dot Specifications:**
+  - Micro-dot radial size: `1.5px`
+  - Dot tone: `rgba(13, 68, 70, 0.08)` (subtle Spruce Teal architectural tint) / `#F3F6F4`
+  - Pitch: `28px 28px`
+  - CSS Implementation:
+    ```css
+    .bg-cadastral-grid {
+      background-color: #FBFBF9;
+      background-image: radial-gradient(rgba(13, 68, 70, 0.08) 1.5px, transparent 1.5px);
+      background-size: 28px 28px;
+    }
+    ```
+- **Usage:** Standardized background foundation across all public page sections, hero containers, and catalog viewports to convey cadastral architectural authenticity.
+
 
 

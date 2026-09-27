@@ -10,7 +10,8 @@ import {
   IconArrowRight,
   IconSparkles,
   IconCpu,
-  IconDeviceAnalytics
+  IconDeviceAnalytics,
+  IconEye
 } from '@tabler/icons-react';
 
 const MODULES = [
@@ -79,6 +80,17 @@ const MODULES = [
     description: "Interactive testbed exploring the 3 core anime parallax camera movements from mclelun: Pan (velocity multipliers), Zoom (focal push-in), and Arc (counter-directional orbit).",
     icon: IconBoxModel2,
     tech: ['Framer Motion', 'Z-Depth Math', 'Dynamic Bokeh Blur', 'Live Metrics']
+  },
+  {
+    id: 'scroll-reveals',
+    title: 'Immersive Scroll Reveal Suite',
+    path: '/sandbox/scroll-reveals',
+    category: 'Awwwards Scrollytelling',
+    badge: '10 Reveal Patterns',
+    badgeColor: 'bg-teal-500/20 text-teal-300 border-teal-500/30',
+    description: 'Explore 10 cinematic & landing page scroll reveal mechanisms: expanding container horizons, magnetic spring CTAs, diagonal slit image masks, editorial line staggers, circular iris portals, and 3D deck stacking.',
+    icon: IconEye,
+    tech: ['Framer Motion', 'Clip-Path Portals', 'Magnetic Springs', 'Mask Staggers']
   }
 ];
 
@@ -106,7 +118,7 @@ export default function SandboxHubPage() {
           <div className="flex flex-wrap gap-4 pt-2">
             <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/[0.03] border border-white/10 text-xs font-mono text-gray-300">
               <IconCpu size={16} className="text-emerald-400" />
-              <span>5 Modules Mounted</span>
+              <span>7 Modules Mounted</span>
             </div>
             <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/[0.03] border border-white/10 text-xs font-mono text-gray-300">
               <IconDeviceAnalytics size={16} className="text-teal-400" />

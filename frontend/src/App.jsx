@@ -30,6 +30,7 @@ const NeighborhoodGuidesPage = lazy(() => import('./sandbox/pages/NeighborhoodGu
 const BlogPage = lazy(() => import('./sandbox/pages/BlogPage'));
 const Duplex3DPage = lazy(() => import('./sandbox/pages/Duplex3DPage'));
 const ParallaxLabPage = lazy(() => import('./sandbox/pages/ParallaxLabPage'));
+const ScrollRevealPage = lazy(() => import('./sandbox/pages/ScrollRevealPage'));
 
 // Protected Route Guard
 import ProtectedRoute from './components/auth/ProtectedRoute';
@@ -53,6 +54,7 @@ import AgentProfile from './pages/portals/agent/AgentProfile';
 import BrokerDashboard from './pages/portals/broker/BrokerDashboard';
 import BrokerProperties from './pages/portals/broker/BrokerProperties';
 import BrokerPropertyDetail from './pages/portals/broker/BrokerPropertyDetail';
+import BrokerPropertyEditStudio from './pages/portals/broker/BrokerPropertyEditStudio';
 import BrokerInquiries from './pages/portals/broker/BrokerInquiries';
 import BrokerInquiryDetail from './pages/portals/broker/BrokerInquiryDetail';
 import BrokerAppointments from './pages/portals/broker/BrokerAppointments';
@@ -97,7 +99,7 @@ function ScrollToTop() {
   return null;
 }
 
-function AppRoutes({ isDarkTheme, setIsDarkTheme, isAppLoading }) {
+function AppRoutes({ isAppLoading }) {
   const location = useLocation();
   const isDashboardRoute = location.pathname.startsWith('/agent') || location.pathname.startsWith('/broker');
 
@@ -150,6 +152,16 @@ function AppRoutes({ isDarkTheme, setIsDarkTheme, isAppLoading }) {
           <Route path="notifications" element={<BrokerNotifications />} />
           <Route path="profile" element={<BrokerProfile />} />
         </Route>
+
+        {/* Dedicated Full-Bleed Content Studio */}
+        <Route
+          path="/broker/properties/:id/edit"
+          element={
+            <ProtectedRoute allowedRoles={['broker', 'admin']}>
+              <BrokerPropertyEditStudio />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     );
   }
@@ -176,6 +188,8 @@ function AppRoutes({ isDarkTheme, setIsDarkTheme, isAppLoading }) {
             <Route path="journal" element={<BlogPage />} />
             <Route path="3d-demo" element={<Duplex3DPage />} />
             <Route path="parallax-lab" element={<ParallaxLabPage />} />
+            <Route path="scroll-reveals" element={<ScrollRevealPage />} />
+            <Route path="scroll-reveal" element={<ScrollRevealPage />} />
           </Route>
         </Routes>
       </Suspense>
@@ -186,12 +200,12 @@ function AppRoutes({ isDarkTheme, setIsDarkTheme, isAppLoading }) {
 
   // Client Application Structure (Preserved with lazy loading and 3D duplex route)
   return (
-    <div className={`transition-colors duration-700 min-h-screen ${isDarkTheme ? 'bg-[#070D0E] text-[#F4F7F7]' : 'bg-[#FBFBFA] text-[#141717]'}`}>
-      {!isAuthRoute && <Header isDarkTheme={isDarkTheme} setIsDarkTheme={setIsDarkTheme} />}
+    <div className="bg-[#FBFBF9] text-[#141717] min-h-screen">
+      {!isAuthRoute && <Header />}
       <main>
         <Suspense fallback={<div className="min-h-[60vh] bg-transparent" />}>
           <Routes>
-            <Route path="/" element={<Home setIsDarkTheme={setIsDarkTheme} />} />
+            <Route path="/" element={<Home />} />
             <Route path="/properties" element={<PropertiesPage />} />
             <Route path="/properties/:id" element={<PropertyListingView />} />
             <Route path="/listing/:id" element={<PropertyListingView />} />
@@ -214,19 +228,17 @@ function AppRoutes({ isDarkTheme, setIsDarkTheme, isAppLoading }) {
 }
 
 export default function App() {
-  const [isDarkTheme, setIsDarkTheme] = useState(true);
   const [isAppLoading, setIsAppLoading] = useState(true);
 
-  // Synchronize dark theme class & data-theme on documentElement for Tailwind v4 and CSS tokens
+  // Permanently enforce light theme across documentElement and remove dark class
   useEffect(() => {
-    if (isDarkTheme) {
-      document.documentElement.classList.add('dark');
-      document.documentElement.setAttribute('data-theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      document.documentElement.setAttribute('data-theme', 'light');
-    }
-  }, [isDarkTheme]);
+    document.documentElement.classList.remove('dark');
+    document.documentElement.setAttribute('data-theme', 'light');
+    try {
+      localStorage.removeItem('hs_theme');
+      localStorage.setItem('hs_theme', 'light');
+    } catch {}
+  }, []);
 
   useEffect(() => {
     // Reveal site once brand animation completes (~1.1s)
@@ -243,11 +255,7 @@ export default function App() {
       <Router>
         <ScrollToTop />
         <AuthProvider>
-          <AppRoutes
-            isDarkTheme={isDarkTheme}
-            setIsDarkTheme={setIsDarkTheme}
-            isAppLoading={isAppLoading}
-          />
+          <AppRoutes isAppLoading={isAppLoading} />
         </AuthProvider>
         {import.meta.env.DEV && <Agentation />}
       </Router>

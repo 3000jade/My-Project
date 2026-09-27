@@ -8,8 +8,8 @@ export default function Footer() {
         <div className="space-y-4">
           <span className="text-2xl md:text-4xl font-bold font-display tracking-tight text-white">[COMPANY NAME]</span>
           <p className="text-sm leading-relaxed font-sans opacity-70 text-gray-500">
-            [Placeholder Address Line 1]<br/>
-            [Placeholder City, State, Zip]<br/>
+            [Placeholder Address Line 1]<br />
+            [Placeholder City, State, Zip]<br />
             [Placeholder Phone Number]
           </p>
           <div className="flex gap-4 pt-2">
@@ -46,9 +46,9 @@ export default function Footer() {
           <h4 className="text-lg font-bold font-display tracking-tight text-white">Stay Informed</h4>
           <p className="text-sm leading-relaxed font-sans opacity-70 text-gray-500">Subscribe for curations of architectural marvels and high-end listings.</p>
           <div className="flex gap-2">
-            <input 
-              type="email" 
-              placeholder="Your email address" 
+            <input
+              type="email"
+              placeholder="Your email address"
               className="bg-white/10 border border-white/20 px-3 py-2 text-sm text-white placeholder-white/40 focus:outline-none focus:border-accent w-full"
             />
             <button className="bg-white text-primary px-4 py-2 font-bold text-xs uppercase tracking-widest hover:bg-accent hover:text-white transition-colors">

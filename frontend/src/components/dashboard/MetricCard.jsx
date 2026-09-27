@@ -1,43 +1,59 @@
-import React from 'react';
+import React, { isValidElement } from 'react';
+import { cn } from '@/utils/cn';
 
 export default function MetricCard({
   title,
   value,
   subtitle,
-  icon,
-  accent = false,
+  icon: Icon,
+  trend,
   onClick,
   className = ""
 }) {
+  const renderIcon = () => {
+    if (!Icon) return null;
+    if (isValidElement(Icon)) return Icon;
+    if (typeof Icon === 'string') {
+      return <span className="material-symbols-outlined text-[18px]">{Icon}</span>;
+    }
+    const IconComponent = Icon;
+    return <IconComponent className="w-4 h-4" />;
+  };
+
   return (
     <div
       onClick={onClick}
-      className={`bg-white rounded-2xl p-5 border transition-all duration-300 shadow-sm ${
-        accent
-          ? "border-[#FB8E5D]/40 bg-gradient-to-br from-white to-[#FB8E5D]/5"
-          : "border-gray-200/80 hover:border-[#266F71]/40 hover:shadow-md"
-      } ${onClick ? "cursor-pointer" : ""} ${className}`}
+      className={cn(
+        "bg-white rounded-xl p-5 border border-[#E5EBEB] transition-all duration-200 shadow-2xs hover:border-[#D8DFDF] hover:shadow-xs",
+        onClick && "cursor-pointer",
+        className
+      )}
     >
       <div className="flex items-start justify-between">
         <div className="space-y-1">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500 font-sans">
+          <p className="text-xs font-medium text-slate-500">
             {title}
           </p>
-          <p className="text-2xl lg:text-3xl font-display font-bold text-[#174849]">
+          <p className="text-2xl font-mono font-bold text-[#0D4446] tracking-tight">
             {value}
           </p>
         </div>
-        <div
-          className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${
-            accent ? "bg-[#FB8E5D]/15 text-[#FB8E5D]" : "bg-[#266F71]/10 text-[#266F71]"
-          }`}
-        >
-          <span className="material-symbols-outlined text-[24px]">{icon}</span>
-        </div>
+
+        {Icon && (
+          <div className="w-9 h-9 rounded-lg bg-[#0D4446]/5 text-[#0D4446] flex items-center justify-center shrink-0 border border-[#0D4446]/10">
+            {renderIcon()}
+          </div>
+        )}
       </div>
-      {subtitle && (
-        <div className="mt-3 pt-3 border-t border-gray-100 flex items-center text-xs text-gray-500 font-sans">
+
+      {(subtitle || trend) && (
+        <div className="mt-3 pt-3 border-t border-[#E5EBEB] flex items-center justify-between text-[11px] font-mono text-slate-400">
           <span>{subtitle}</span>
+          {trend && (
+            <span className={cn("font-medium", trend.startsWith('+') ? "text-emerald-800" : "text-slate-500")}>
+              {trend}
+            </span>
+          )}
         </div>
       )}
     </div>

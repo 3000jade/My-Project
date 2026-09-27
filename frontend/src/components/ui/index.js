@@ -6,6 +6,8 @@ export { default as DynamicBackground } from './core/DynamicBackground';
 export { default as FilterEmptyState } from './core/FilterEmptyState';
 export { default as KeySpecsBar } from './core/KeySpecsBar';
 export { default as PageLoader } from './core/PageLoader';
+export { default as Accordion } from './core/Accordion';
+export { default as StatusBadge } from './core/StatusBadge';
 
 // Cards
 export { default as ActionConsole } from './cards/ActionConsole';
@@ -49,3 +51,4 @@ export { default as RelatedListingsSection } from './sections/RelatedListingsSec
 export { default as SearchBarSection } from './sections/SearchBarSection';
 export { default as SocialProofSection } from './sections/SocialProofSection';
 export { default as TestimonialCarousel } from './sections/TestimonialCarousel';
+export { default as BuyerProtectionPromiseSection } from './sections/BuyerProtectionPromiseSection';

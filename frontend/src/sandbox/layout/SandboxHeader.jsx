@@ -10,7 +10,8 @@ import {
   IconLayoutDashboard,
   IconArrowUpRight,
   IconMenu2,
-  IconX
+  IconX,
+  IconEye
 } from '@tabler/icons-react';
 
 const NAV_ITEMS = [
@@ -20,6 +21,7 @@ const NAV_ITEMS = [
   { name: 'Journal', path: '/sandbox/journal', icon: IconBook2 },
   { name: '3D Demo', path: '/sandbox/3d-demo', icon: IconBoxModel2 },
   { name: 'UI/UX Labs', path: '/sandbox/ui-ux-labs', icon: IconLayoutDashboard },
+  { name: 'Scroll Reveals', path: '/sandbox/scroll-reveals', icon: IconEye },
 ];
 
 export default function SandboxHeader() {

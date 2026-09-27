@@ -36,7 +36,8 @@ import {
   IconMountain,
   IconVideo,
   IconVectorBezier2,
-  IconPaw
+  IconPaw,
+  IconScan
 } from '@tabler/icons-react';
 import CinematicPropertyViewer from '../../components/3d/CinematicPropertyViewer';
 import cinematicVillaTwilight from '../assets/cinematic_duplex_twilight.jpg';
@@ -45,6 +46,8 @@ import { AnalyticsMetricCard } from '../../components/ui';
 import FramerMotionShowcase from '../components/FramerMotionShowcase';
 import ParallaxPropertyShowcase from '../components/ParallaxPropertyShowcase';
 import EditorialRevealsShowcase from '../components/EditorialRevealsShowcase';
+import ImmersiveScrollRevealShowcase from '../components/ImmersiveScrollRevealShowcase';
+import ScrollTriggerLandingShowcase from '../components/ScrollTriggerLandingShowcase';
 import HorizontalAndPinnedScrollShowcase from '../components/HorizontalAndPinnedScrollShowcase';
 import LookCloserMicroParallax from '../components/LookCloserMicroParallax';
 import CatwalkHorizontalShowcase from '../components/CatwalkHorizontalShowcase';
@@ -249,6 +252,8 @@ export default function DemoUIUXPage() {
               { id: 'framermotion', label: 'Framer Motion Lab', icon: IconSparkles },
               { id: 'parallax', label: 'Parallax Scrolling', icon: IconCompass },
               { id: 'editorialreveals', label: 'Editorial Reveals', icon: IconEye },
+              { id: 'immersivescrollreveal', label: 'Scroll Reveal Suite (5 Types)', icon: IconScan },
+              { id: 'scrolltriggerreveals', label: 'Landing Trigger Reveals', icon: IconSparkles },
               { id: 'horizontalpinned', label: 'Horizontal & Pinning', icon: IconArrowsSplit },
               { id: 'lookcloser', label: 'Look Closer Macro', icon: IconMicroscope },
               { id: 'catwalk', label: 'Catwalk Runway', icon: IconFlame },
@@ -473,6 +478,62 @@ export default function DemoUIUXPage() {
           </div>
 
           <EditorialRevealsShowcase />
+        </section>
+
+        {/* SECTION: IMMERSIVE SCROLL CONTENT REVEALS (5 MASTER PATTERNS) */}
+        <section id="immersivescrollreveal" className="py-14 border-b border-stone-200">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/10 text-teal-700 text-xs font-semibold uppercase tracking-wider mb-2 border border-teal-500/20">
+                <IconScan className="w-3.5 h-3.5 text-teal-600 animate-pulse" />
+                Awwwards Scrollytelling • 5 Immersive Reveal Mechanics
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-extrabold font-display text-[#174849] tracking-tight">
+                Immersive Scroll Content Reveal Showcase
+              </h2>
+              <p className="text-sm text-stone-600 mt-2 max-w-2xl leading-relaxed">
+                Featuring 5 award-winning scroll reveal mechanisms: <strong>Circular Iris Aperture Expansion</strong>, <strong>Asymmetric Split Shearing</strong>, <strong>3D Keynote Deck Stacking</strong>, <strong>Multi-Blade Louver Shutters</strong>, and <strong>Laser Telemetry CAD Inspection</strong>.
+              </p>
+            </div>
+            
+            <a
+              href="/sandbox/scroll-reveals"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-[#174849] hover:bg-[#266F71] text-white text-xs font-mono font-bold uppercase tracking-wider rounded-xl transition-all shadow-md self-start md:self-auto cursor-pointer"
+            >
+              <span>Launch Dedicated Lab</span>
+              <IconArrowUpRight size={16} />
+            </a>
+          </div>
+
+          <ImmersiveScrollRevealShowcase />
+        </section>
+
+        {/* SECTION: LANDING PAGE SCROLL TRIGGER REVEALS */}
+        <section id="scrolltriggerreveals" className="py-14 border-b border-stone-200">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/10 text-teal-700 text-xs font-semibold uppercase tracking-wider mb-2 border border-teal-500/20">
+                <IconSparkles className="w-3.5 h-3.5 text-teal-600 animate-pulse" />
+                Landing Page Motion • Containers, Buttons, Images &amp; Bento Matrix
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-extrabold font-display text-[#174849] tracking-tight">
+                Landing Page Scroll Trigger Reveals
+              </h2>
+              <p className="text-sm text-stone-600 mt-2 max-w-2xl leading-relaxed">
+                Component-level scroll animations: <strong>Expanding Horizon Containers</strong>, <strong>Diagonal Slit Masks &amp; Wireframe Dissolves</strong>, <strong>Magnetic Spring CTAs</strong>, and <strong>Masked Line Typographic Staggers</strong>.
+              </p>
+            </div>
+
+            <a
+              href="/sandbox/scroll-reveals"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-[#174849] hover:bg-[#266F71] text-white text-xs font-mono font-bold uppercase tracking-wider rounded-xl transition-all shadow-md self-start md:self-auto cursor-pointer"
+            >
+              <span>Explore Full Suite</span>
+              <IconArrowUpRight size={16} />
+            </a>
+          </div>
+
+          <ScrollTriggerLandingShowcase />
         </section>
 
         {/* SECTION: HORIZONTAL SCROLL & STICKY CONTENT PINNING */}

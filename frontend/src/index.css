@@ -14,9 +14,9 @@
   --color-accent-hover: #D65C3E;
   --color-accent-container: #FDF0EC;
   --color-on-accent: #ffffff;
-  --color-background: #FBFBFA;
+  --color-background: #FBFBF9;
   --color-on-background: #141717;
-  --color-surface: #FBFBFA;
+  --color-surface: #FBFBF9;
   --color-on-surface: #141717;
   --color-surface-variant: #EBEEED;
   --color-on-surface-variant: #434E4F;
@@ -30,7 +30,7 @@
   --color-on-tertiary: #ffffff;
   --color-tertiary-container: #185E60;
   --color-on-tertiary-container: #D2F2F3;
-  
+
   --color-coral: #E76F51;
   --color-on-coral: #ffffff;
 
@@ -47,12 +47,27 @@
   --font-label: "Inter", sans-serif;
 }
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @layer base {
   :root {
+    --theme-canvas: #FBFBF9;
+    --theme-surface: #FFFFFF;
+    --theme-primary: #0D4446;
+    --theme-accent: #E76F51;
+    --theme-ink: #141717;
+    --theme-ink-muted: #5C6768;
+    --theme-border: #D8DFDF;
     --font-sans: "Manrope", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     --font-display: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
     --font-mono: "JetBrains Mono", monospace;
     --font-label: "Inter", sans-serif;
+  }
+
+  html,
+  body {
+    background-color: #FBFBF9;
+    color: #141717;
   }
 
   html,
@@ -93,19 +108,42 @@
   border-radius: 10px;
 }
 
+/* ─── LUXURY 45° GLASS LIGHT-BEAM SHINE EFFECT (Hover-Triggered & Length-Calibrated) ─── */
+@keyframes hoverShineSweep {
+  0% {
+    transform: translate(120%, -120%) rotate(45deg);
+    opacity: 0;
+  }
+
+  15% {
+    opacity: 1;
+  }
+
+  85% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: translate(-120%, 120%) rotate(45deg);
+    opacity: 0;
+  }
+}
+
+.btn-shine,
 .premium-btn {
   position: relative;
   overflow: hidden;
+  white-space: nowrap;
   transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
   font-family: var(--font-sans);
   text-transform: uppercase;
-  /* Force universal clean-casing */
   letter-spacing: 0.05em;
   cursor: pointer;
   border: 1px solid rgba(255, 255, 255, 0.1);
+  --shine-duration: 0.65s;
 }
 
-/* Responsive Button B Sharp Glass Pane Overlay */
+.btn-shine::after,
 .premium-btn::after {
   content: '';
   position: absolute;
@@ -114,13 +152,14 @@
   width: 400%;
   height: 400%;
   background: linear-gradient(to right,
-      rgba(255, 255, 255, 0) 40%,
-      rgba(255, 255, 255, 0.28) 50%,
-      rgba(255, 255, 255, 0) 60%);
-  /* Placement Optimization: Sets absolute 45deg rotation, staged off-screen to the top-right */
-  transform: translate(50%, -50%) rotate(45deg);
-  transition: transform 0.75s cubic-bezier(0.19, 1, 0.22, 1);
+      rgba(255, 255, 255, 0) 30%,
+      rgba(255, 255, 255, 0.55) 50%,
+      rgba(255, 255, 255, 0) 70%);
+  transform: translate(120%, -120%) rotate(45deg);
   pointer-events: none;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.25s ease-out;
 }
 
 /* Hover Dynamics (Full-Width Linear Translation) */
@@ -129,15 +168,75 @@
   box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.15);
 }
 
+/* Triggered strictly on hover with length-calibrated speed */
+.btn-shine:hover::after,
 .premium-btn:hover::after {
-  /* Motion Fix: Sweeps dynamically across both axes from Right-to-Left down to bottom-left */
-  transform: translate(-50%, 50%) rotate(45deg);
+  opacity: 1;
+  animation: hoverShineSweep var(--shine-duration, 0.65s) cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Speed / Duration helpers for button lengths */
+.shine-sm {
+  --shine-duration: 0.45s;
+}
+
+.shine-md {
+  --shine-duration: 0.85s;
+}
+
+.shine-lg {
+  --shine-duration: 1.25s;
 }
 
 /* Active Click Press Dynamics */
 .premium-btn:active {
   transform: translateY(0px) scale(1.0);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Glass Button Effect with Deep Atmospheric Blurred Shadows */
+.glass-btn-teal {
+  background: rgba(13, 68, 70, 0.88) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.38) !important;
+  box-shadow:
+    inset 0 1.5px 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -1px 1px 0 rgba(0, 0, 0, 0.25),
+    0 20px 48px -6px rgba(13, 68, 70, 0.55),
+    0 10px 24px -3px rgba(13, 68, 70, 0.35) !important;
+  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.glass-btn-teal:hover {
+  background: rgba(13, 68, 70, 0.96) !important;
+  transform: translateY(-2px) scale(1.02);
+  box-shadow:
+    inset 0 1.5px 1px 0 rgba(255, 255, 255, 0.7),
+    inset 0 -1px 1px 0 rgba(0, 0, 0, 0.2),
+    0 28px 60px -4px rgba(13, 68, 70, 0.7),
+    0 14px 30px -2px rgba(13, 68, 70, 0.45) !important;
+}
+
+.glass-pill-subtle {
+  background: rgba(255, 255, 255, 0.45) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.65) !important;
+  box-shadow:
+    inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.85),
+    0 18px 40px -6px rgba(13, 68, 70, 0.16),
+    0 8px 18px -2px rgba(13, 68, 70, 0.1) !important;
+  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.glass-pill-subtle:hover {
+  background: rgba(255, 255, 255, 0.7) !important;
+  transform: translateY(-2px) scale(1.02);
+  box-shadow:
+    inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.95),
+    0 24px 50px -4px rgba(13, 68, 70, 0.24),
+    0 10px 22px -2px rgba(13, 68, 70, 0.14) !important;
 }
 
 .nav-link {
@@ -185,6 +284,7 @@
   0% {
     transform: translate3d(-500px, 0, 0);
   }
+
   100% {
     transform: translate3d(calc(100vw + 100px), 0, 0);
   }
@@ -199,7 +299,15 @@
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* ─── CADASTRAL ARCHITECTURAL MICRO-GRID GROUND (28px Geometric Calibration) ─── */
+.bg-cadastral-grid {
+  background-color: #FBFBF9;
+  background-image: radial-gradient(rgba(13, 68, 70, 0.08) 1.5px, transparent 1.5px);
+  background-size: 28px 28px;
 }

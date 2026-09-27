@@ -267,11 +267,32 @@ Use this skill when configuring Tailwind v4, using CSS-first theme and design to
 | **Purge unused** | Automatic in v4 |
 | **Avoid dynamism** | No template string classes |
 | **Use Oxide** | Default in v4, 10x faster |
-| **Cache builds** | CI/CD caching |
+---
+
+## 13. Tailwind v4 Dark Mode Scoping & Gotchas
+
+### Preventing System Dark Mode Bleed
+In Tailwind CSS v4, the `dark:` variant evaluates against `@media (prefers-color-scheme: dark)` by default if no custom variant is defined. If an application standardizes on a Light Theme (or uses a class-driven `.dark` switcher), OS dark mode will trigger all `dark:*` classes unexpectedly.
+
+To enforce class-based dark mode scoping in Tailwind v4:
+
+```css
+/* frontend/src/index.css */
+@import "tailwindcss";
+
+/* Scope dark: variant strictly to the .dark class on html/ancestor */
+@custom-variant dark (&:where(.dark, .dark *));
+```
+
+### Light Theme Invariants
+When refactoring components to a daylight or pure light theme:
+1. Purge or review all `dark:*` classes on public routes to ensure background and typography colors remain intentional.
+2. Ensure base surfaces use explicit semantic tokens (`bg-[#FBFBF9]`, `bg-[#FFFFFF]`, `text-[#141717]`) instead of browser defaults.
 
 ---
 
 > **Remember:** Tailwind v4 is CSS-first. Embrace CSS variables, container queries, and native features. The config file is now optional.
+
 
 ## Limitations
 - Use this skill only when the task clearly matches the scope described above.

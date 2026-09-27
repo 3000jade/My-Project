@@ -95,6 +95,108 @@ export const mockProperties = [
     "badge": "New Listing"
   },
   {
+    "id": "reso-fixture-101",
+    "ListingKey": "reso-key-101",
+    "ListingId": "RESO-2026-0042",
+    "StandardStatus": "Active",
+    "PropertyType": "Residential",
+    "ListPrice": 18500000,
+    "OriginalListPrice": 19000000,
+    "BedroomsTotal": 4,
+    "BathroomsTotalInteger": 3,
+    "LivingArea": 245.5,
+    "LivingAreaUnits": "sqm",
+    "LotSizeArea": 320.0,
+    "LotSizeUnits": "sqm",
+    "AssociationFee": 12500,
+    "UnitNumber": "Penthouse A",
+    "YearBuilt": 2024,
+    "City": "Makati City",
+    "StateOrProvince": "Metro Manila",
+    "PostalCode": "1226",
+    "ListOfficeName": "Nordic Architectural Realty Group",
+    "PublicRemarks": "Spectacular Bauhaus-inspired residence with floor-to-ceiling double-glazed thermal curtain walls, cantilevered terrace, and integrated smart energy management. Designed with authentic Nordic minimalist proportions and structural integrity.",
+    "Media": [
+      {
+        "MediaKey": "m-1",
+        "MediaURL": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=1200",
+        "Order": 1,
+        "MediaCategory": "Property"
+      },
+      {
+        "MediaKey": "m-2",
+        "MediaURL": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1200",
+        "Order": 2,
+        "MediaCategory": "Property"
+      },
+      {
+        "MediaKey": "m-3",
+        "MediaURL": "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=1200",
+        "Order": 3,
+        "MediaCategory": "Property"
+      },
+      {
+        "MediaKey": "m-4",
+        "MediaURL": "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?q=80&w=1200",
+        "Order": 4,
+        "MediaCategory": "Property"
+      },
+      {
+        "MediaKey": "m-5",
+        "MediaURL": "https://images.unsplash.com/photo-1600573472550-8090b5e0745e?q=80&w=1200",
+        "Order": 5,
+        "MediaCategory": "Property"
+      }
+    ],
+    "PrivateRemarks": "CONFIDENTIAL: Gate code #4829. Seller highly motivated, accepts 10% under list.",
+    "ShowingInstructions": "Call listing agent 2 hours prior. Lockbox located behind gas meter, code 9921.",
+    "LockboxCode": "9921",
+    "title": "Nordic Architectural Penthouse Residence",
+    "price_raw": 18500000,
+    "development": "Nordic Modern Residences",
+    "thoroughfare": "Ayala Avenue",
+    "barangay": "Bel-Air",
+    "city": "Makati City",
+    "region": "Metro Manila (NCR), Philippines",
+    "agent": {
+      "name": "Marcus Lindqvist",
+      "title": "Principal Architect & Broker",
+      "avatar": "https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=400&auto=format&fit=crop",
+      "phone": "+63 917 555 0199",
+      "email": "marcus@nordicarch.ph",
+      "brokerage": "Nordic Architectural Realty Group"
+    }
+  },
+  {
+    "id": "reso-fixture-edge",
+    "ListingKey": "reso-key-edge",
+    "ListingId": "RESO-EDGE-001",
+    "StandardStatus": "Active Under Contract",
+    "PropertyType": "Residential",
+    "ListPrice": null,
+    "BedroomsTotal": null,
+    "BathroomsTotalInteger": null,
+    "LivingArea": null,
+    "LivingAreaUnits": null,
+    "LotSizeArea": null,
+    "LotSizeUnits": null,
+    "AssociationFee": null,
+    "UnitNumber": null,
+    "YearBuilt": null,
+    "City": "BGC, Taguig",
+    "StateOrProvince": "Metro Manila",
+    "PostalCode": "1634",
+    "ListOfficeName": null,
+    "PublicRemarks": null,
+    "Media": [],
+    "PrivateRemarks": "SECRET: Do not disclose tenant details.",
+    "ShowingInstructions": "Lockbox 1234 on door handle.",
+    "LockboxCode": "1234",
+    "title": "Minimalist Edge Case Residence (Null Attributes Test)",
+    "price_raw": null,
+    "agent": null
+  },
+  {
     "id": "1",
     "agent_id": "agent-1",
     "agent_name": "Elena Rossi",

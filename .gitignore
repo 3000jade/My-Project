@@ -7,18 +7,24 @@
 node_modules/
 node_modules
 */node_modules/
+**/node_modules/
 .pnp
 .pnp.js
 
-# 2. Production & Build Outputs (tsc & vite artifacts)
+# 2. Production & Build Outputs (tsc & vite artifacts across monorepo packages)
 dist/
 dist
 */dist/
+**/dist/
 dist-ssr/
 dist-ssr
+**/dist-ssr/
 build/
+**/build/
 out/
+**/out/
 *.tsbuildinfo
+**/*.tsbuildinfo
 
 # 3. Environment Variables & Secrets (Keep templates trackable)
 .env
@@ -31,7 +37,9 @@ config.json
 
 # 4. Logs & Debugging
 logs/
+**/logs/
 *.log
+**/*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -42,6 +50,7 @@ lerna-debug.log*
 test files/
 test\ files/
 coverage/
+**/coverage/
 .nyc_output/
 *.lcov
 
@@ -51,6 +60,7 @@ coverage/
 .vite/
 .turbo/
 .cache/
+**/.cache/
 *.tmp
 *.temp
 
@@ -80,3 +90,18 @@ venv/
 __pycache__/
 *.py[cod]
 *$py.class
+
+# 10. RESO & MCP Tooling Integration
+.reso-cache/
+**/.reso-cache/
+*.reso.cache
+reso-token*.json
+.mcp-cache/
+**/.mcp-cache/
+*.mcp.log
+**/*.mcp.log
+.antigravity/*.local.json
+.antigravity/local/
+.agents/*.local.json
+!.antigravity/mcp.json
+!.agents/mcp_config.json

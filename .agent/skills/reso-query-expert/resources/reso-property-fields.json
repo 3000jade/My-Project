@@ -1,0 +1,34 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RESO Data Dictionary Property Resource",
+  "description": "Core standardized property fields according to RESO Data Dictionary v1.7+",
+  "entity": "Property",
+  "keyField": "ListingKey",
+  "idField": "ListingId",
+  "fields": {
+    "ListingKey": { "type": "string", "description": "Unique immutable system identifier for the listing" },
+    "ListingId": { "type": "string", "description": "Local public-facing MLS listing identifier" },
+    "StandardStatus": { 
+      "type": "string", 
+      "enum": ["Active", "Active Under Contract", "Pending", "Closed", "Canceled", "Expired", "Withdrawn", "Hold"] 
+    },
+    "PropertyType": { "type": "string", "enum": ["Residential", "Residential Income", "Land", "Commercial Sale", "Farm"] },
+    "PropertySubType": { "type": "string", "enum": ["Single Family Residence", "Condominium", "Townhouse", "Villa", "Penthouse"] },
+    "ListPrice": { "type": "number", "description": "Current active listing price" },
+    "OriginalListPrice": { "type": "number", "description": "Initial listing price at creation" },
+    "BedroomsTotal": { "type": "integer", "description": "Total bedroom count" },
+    "BathroomsTotalInteger": { "type": "integer", "description": "Total bathroom count" },
+    "BathroomsFull": { "type": "integer", "description": "Full bathroom count (toilet, sink, tub/shower)" },
+    "BathroomsHalf": { "type": "integer", "description": "Half bathroom count (toilet, sink)" },
+    "LivingArea": { "type": "number", "description": "Total enclosed heated/finished living area" },
+    "LivingAreaUnits": { "type": "string", "enum": ["Square Feet", "Square Meters"] },
+    "LotSizeArea": { "type": "number", "description": "Total land/lot parcel area" },
+    "LotSizeUnits": { "type": "string", "enum": ["Square Feet", "Acres", "Square Meters", "Hectares"] },
+    "City": { "type": "string", "description": "Municipal city name" },
+    "PostalCode": { "type": "string", "description": "Postal zip code" },
+    "Country": { "type": "string", "description": "ISO Country code" },
+    "PublicRemarks": { "type": "string", "description": "Public marketing description suitable for guest viewports" },
+    "AssociationFee": { "type": "number", "description": "HOA or condo association assessment fee" },
+    "AssociationFeeFrequency": { "type": "string", "enum": ["Monthly", "Annually", "Quarterly", "Semi-Annually"] }
+  }
+}

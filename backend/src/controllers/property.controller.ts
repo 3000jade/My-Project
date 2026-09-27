@@ -12,20 +12,54 @@ export class PropertyController {
     res: Response<PaginatedResponse>
   ): Promise<void> {
     try {
-      const { city, propertyType, transactionType, minPrice, maxPrice, status, agentId, search, page, limit } = req.query;
+      const {
+        city,
+        propertyType,
+        transactionType,
+        minPrice,
+        maxPrice,
+        beds,
+        baths,
+        status,
+        standardStatus,
+        agentId,
+        search,
+        page,
+        limit,
+        $filter,
+        $select,
+        $expand,
+        $top,
+        $skip,
+        $orderby,
+      } = req.query;
 
-      const result = await PropertyService.findProperties({
-        city: city as string,
-        propertyType: propertyType as string,
-        transactionType: transactionType as string,
-        minPrice: minPrice ? Number(minPrice) : undefined,
-        maxPrice: maxPrice ? Number(maxPrice) : undefined,
-        status: status as string,
-        agentId: agentId as string,
-        search: search as string,
-        page: page ? Number(page) : undefined,
-        limit: limit ? Number(limit) : undefined,
-      });
+      const userRole = (req as AuthenticatedRequest).user?.role;
+
+      const result = await PropertyService.findProperties(
+        {
+          city: city as string,
+          propertyType: propertyType as string,
+          transactionType: transactionType as string,
+          minPrice: minPrice ? Number(minPrice) : undefined,
+          maxPrice: maxPrice ? Number(maxPrice) : undefined,
+          beds: beds ? Number(beds) : undefined,
+          baths: baths ? Number(baths) : undefined,
+          status: status as string,
+          standardStatus: standardStatus as string,
+          agentId: agentId as string,
+          search: search as string,
+          page: page ? Number(page) : undefined,
+          limit: limit ? Number(limit) : undefined,
+          $filter: $filter as string,
+          $select: $select as string,
+          $expand: $expand as string,
+          $top: $top ? Number($top) : undefined,
+          $skip: $skip ? Number($skip) : undefined,
+          $orderby: $orderby as string,
+        },
+        userRole
+      );
 
       res.status(200).json({
         success: true,
@@ -67,7 +101,10 @@ export class PropertyController {
   ): Promise<void> {
     try {
       const id = String(req.params.id);
-      const property = await PropertyService.findPropertyById(id);
+      const expand = (req.query.$expand as string) || (req.query.expand as string);
+      const userRole = (req as AuthenticatedRequest).user?.role;
+
+      const property = await PropertyService.findPropertyById(id, expand, userRole);
 
       if (!property) {
         res.status(404).json({
@@ -113,7 +150,8 @@ export class PropertyController {
       }
 
       const userId = req.user?.id;
-      const created = await PropertyService.createProperty(req.body, userId);
+      const userRole = req.user?.role;
+      const created = await PropertyService.createProperty(req.body, userId, userRole);
 
       res.status(201).json({
         success: true,
@@ -140,7 +178,8 @@ export class PropertyController {
     try {
       const id = String(req.params.id);
       const userId = req.user?.id;
-      const updated = await PropertyService.updateProperty(id, req.body, userId);
+      const userRole = req.user?.role;
+      const updated = await PropertyService.updateProperty(id, req.body, userId, userRole);
 
       if (!updated) {
         res.status(404).json({
@@ -158,7 +197,8 @@ export class PropertyController {
         timestamp: new Date().toISOString(),
       });
     } catch (err: any) {
-      res.status(400).json({
+      const statusCode = err.message?.startsWith('Forbidden') ? 403 : 400;
+      res.status(statusCode).json({
         success: false,
         error: err.message || 'Could not update property.',
         timestamp: new Date().toISOString(),

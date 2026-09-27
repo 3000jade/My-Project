@@ -66,11 +66,10 @@ export default function UnifiedSearchBar({
 
   return (
     <div
-      className={`w-full transition-all duration-300 ${
-        isSticky
+      className={`w-full transition-all duration-300 ${isSticky
           ? 'bg-white/95 backdrop-blur-2xl shadow-sm border-b border-gray-200/80 py-3 px-4 md:px-8 lg:px-12'
           : 'bg-white rounded-3xl shadow-sm border border-gray-200/80 p-4 md:p-6'
-      }`}
+        }`}
     >
       {/* Upper Row: Transaction Mode + Search Input + Controls */}
       <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-3">
@@ -83,11 +82,10 @@ export default function UnifiedSearchBar({
                 key={type}
                 type="button"
                 onClick={() => setFilter('transactionType', type)}
-                className={`px-4 h-[44px] rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-                  isSelected
+                className={`px-4 h-[44px] rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${isSelected
                     ? 'bg-[#174849] text-white shadow-sm'
                     : 'text-gray-600 hover:text-[#174849]'
-                }`}
+                  }`}
               >
                 {type}
               </button>
@@ -123,11 +121,10 @@ export default function UnifiedSearchBar({
           <button
             type="button"
             onClick={() => setShowPricePopover(!showPricePopover)}
-            className={`h-[50px] px-4 rounded-2xl text-xs font-bold border flex items-center justify-between gap-2 transition-all cursor-pointer ${
-              filters.minPrice || filters.maxPrice
+            className={`h-[50px] px-4 rounded-2xl text-xs font-bold border flex items-center justify-between gap-2 transition-all cursor-pointer ${filters.minPrice || filters.maxPrice
                 ? 'bg-[#174849]/5 border-[#174849] text-[#174849]'
                 : 'bg-white hover:bg-gray-50 border-gray-200/80 text-gray-700'
-            }`}
+              }`}
           >
             <div className="flex items-center gap-1.5">
               <span className="material-symbols-outlined text-[18px] text-[#174849]">payments</span>
@@ -218,11 +215,10 @@ export default function UnifiedSearchBar({
                 key={opt}
                 type="button"
                 onClick={() => setFilter('beds', opt === 'Any' ? '' : opt)}
-                className={`px-3 h-[44px] rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  isSelected
+                className={`px-3 h-[44px] rounded-xl text-xs font-bold transition-all cursor-pointer ${isSelected
                     ? 'bg-[#174849] text-white shadow-sm'
                     : 'text-gray-600 hover:text-[#174849]'
-                }`}
+                  }`}
               >
                 {opt}
               </button>
@@ -234,11 +230,10 @@ export default function UnifiedSearchBar({
         <button
           type="button"
           onClick={onOpenFiltersDrawer}
-          className={`h-[50px] px-4 rounded-2xl text-xs font-bold border flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap flex-shrink-0 ${
-            activeFilterCount > 0
+          className={`h-[50px] px-4 rounded-2xl text-xs font-bold border flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap flex-shrink-0 ${activeFilterCount > 0
               ? 'bg-[#174849] text-white border-[#174849] shadow-md'
               : 'bg-white hover:bg-gray-50 border-gray-200/80 text-gray-700'
-          }`}
+            }`}
         >
           <span className="material-symbols-outlined text-[18px]">tune</span>
           <span>Filters</span>
@@ -255,11 +250,10 @@ export default function UnifiedSearchBar({
             <button
               type="button"
               onClick={() => setViewMode('split')}
-              className={`flex items-center gap-1.5 px-3.5 h-[44px] rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                viewMode === 'split'
+              className={`flex items-center gap-1.5 px-3.5 h-[44px] rounded-xl text-xs font-bold transition-all cursor-pointer ${viewMode === 'split'
                   ? 'bg-white text-[#174849] shadow-sm'
                   : 'text-gray-500 hover:text-[#174849]'
-              }`}
+                }`}
               title="Split Map View"
             >
               <span className="material-symbols-outlined text-[17px]">vertical_split</span>
@@ -268,11 +262,10 @@ export default function UnifiedSearchBar({
             <button
               type="button"
               onClick={() => setViewMode('grid')}
-              className={`flex items-center gap-1.5 px-3.5 h-[44px] rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                viewMode === 'grid'
+              className={`flex items-center gap-1.5 px-3.5 h-[44px] rounded-xl text-xs font-bold transition-all cursor-pointer ${viewMode === 'grid'
                   ? 'bg-white text-[#174849] shadow-sm'
                   : 'text-gray-500 hover:text-[#174849]'
-              }`}
+                }`}
               title="Grid Only View"
             >
               <span className="material-symbols-outlined text-[17px]">grid_view</span>
@@ -298,11 +291,10 @@ export default function UnifiedSearchBar({
                 key={preset.name}
                 type="button"
                 onClick={() => handleDistrictClick(preset)}
-                className={`px-3 py-1.5 rounded-full text-[11px] font-bold whitespace-nowrap transition-all border cursor-pointer ${
-                  isSelected
+                className={`px-3 py-1.5 rounded-full text-[11px] font-bold whitespace-nowrap transition-all border cursor-pointer ${isSelected
                     ? 'bg-[#174849] text-white border-[#174849] shadow-sm'
                     : 'bg-gray-50/80 text-gray-600 border-gray-200/80 hover:border-gray-300 hover:bg-gray-100'
-                }`}
+                  }`}
               >
                 {preset.name}
               </button>

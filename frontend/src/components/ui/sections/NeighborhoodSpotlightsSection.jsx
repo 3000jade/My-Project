@@ -1,94 +1,288 @@
-import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  IconHome, 
+  IconBuildingSkyscraper, 
+  IconHome2, 
+  IconBuildingStore,
+  IconShieldCheck
+} from '@tabler/icons-react';
 
-const NEIGHBORHOODS = [
+const PROPERTY_CATEGORIES = [
+  { id: 'all', title: 'All Properties', icon: null },
+  { id: 'house-and-lot', title: 'Single-Family', icon: IconHome },
+  { id: 'condominium', title: 'Condominiums', icon: IconBuildingSkyscraper },
+  { id: 'townhouse', title: 'Townhouses', icon: IconHome2 },
+  { id: 'duplex', title: 'Duplexes', icon: IconBuildingStore }
+];
+
+const NEIGHBORHOOD_STORIES = [
   {
-    id: 'bgc',
-    name: 'Bonifacio Global City',
-    tagline: 'The Pulse of the Modern City',
-    description: 'A master-planned metropolis offering premium high-rise living, world-class dining, and pedestrian-friendly greenways.',
-    image: 'https://images.unsplash.com/photo-1577901089617-64906f362141?q=80&w=1600&auto=format&fit=crop',
+    id: 'cavite',
+    tag: 'South Suburbs',
+    name: 'Cavite Growth Corridor',
+    location: 'Bacoor, Imus, Dasma, Gen. Trias',
+    tagline: 'Spacious Family Living Near Expressways',
+    description: 'The prime residential choice for suburban Filipino families. Enjoy spacious house-and-lot properties, top Cavite schools, and rapid connectivity via CAVITEX, CALAX, and MCX.',
+    image: 'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?q=80&w=1600&auto=format&fit=crop',
+    stats: '₱1.8M – ₱12M Homes',
+    supportedTypes: ['house-and-lot', 'townhouse', 'duplex']
   },
   {
-    id: 'forbes',
-    name: 'Forbes Park',
-    tagline: 'Heritage and Exclusivity',
-    description: 'The premier residential enclave in the Philippines, defined by sprawling estates, ancient acacia trees, and absolute privacy.',
-    image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1600&auto=format&fit=crop',
+    id: 'laguna',
+    tag: 'Eco-City Hub',
+    name: 'Laguna Green Corridors',
+    location: 'Santa Rosa, Biñan, Nuvali, Calamba',
+    tagline: 'Master-Planned Nature & Modern Subdivisions',
+    description: 'The booming Lion City of the South. Featuring sprawling green subdivisions, top universities, commercial lifestyle parks, and peaceful family environments.',
+    image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=1600&auto=format&fit=crop',
+    stats: '₱2.8M – ₱28M Homes',
+    supportedTypes: ['house-and-lot', 'townhouse', 'duplex']
   },
   {
-    id: 'dasma',
-    name: 'Dasmariñas Village',
-    tagline: 'A Sanctuary in the Metropolis',
-    description: 'A highly sought-after community blending lush, tree-lined avenues with close proximity to the Makati central business district.',
+    id: 'antipolo',
+    tag: 'Eastern Haven',
+    name: 'Antipolo & Rizal Ridge',
+    location: 'Antipolo City, Taytay, Cainta',
+    tagline: 'Fresh Mountain Air & Relaxed Townhouse Enclaves',
+    description: 'Elevated green hills with cooler temperatures, scenic sunrise vistas, and multi-level modern townhouses just minutes away from Ortigas East and LRT-2.',
     image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1600&auto=format&fit=crop',
+    stats: '₱2.2M – ₱15M Homes',
+    supportedTypes: ['house-and-lot', 'townhouse']
+  },
+  {
+    id: 'taguig-bgc',
+    tag: 'Global Metropolis',
+    name: 'Taguig & BGC Metropolis',
+    location: 'Bonifacio Global City, ARCA South',
+    tagline: 'Walk-to-Work Urban High-Rise Living',
+    description: 'A master-planned world-class urban core offering secure condominiums, multinational headquarters, walkable pedestrian parks, and premier international hospitals.',
+    image: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?q=80&w=1600&auto=format&fit=crop',
+    stats: '₱4.5M – ₱85M Condos',
+    supportedTypes: ['condominium']
+  },
+  {
+    id: 'quezon-city',
+    tag: 'University & Media Hub',
+    name: 'Quezon City Enclaves',
+    location: 'Katipunan, New Manila, Fairview',
+    tagline: 'Premier Academic Institutions & Quiet Villages',
+    description: 'The educational heart of Metro Manila, home to the country’s top universities (UP, Ateneo), leading medical complexes, and quiet gated family residential communities.',
+    image: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=1600&auto=format&fit=crop',
+    stats: '₱3.5M – ₱35M Estates',
+    supportedTypes: ['condominium']
   }
 ];
 
 export default function NeighborhoodSpotlightsSection() {
+  const [activeId, setActiveId] = useState('cavite');
+  const [activeFilter, setActiveFilter] = useState('all');
+  const navigate = useNavigate();
+
+  const filteredNeighborhoods = NEIGHBORHOOD_STORIES.filter(hood => 
+    activeFilter === 'all' || hood.supportedTypes.includes(activeFilter)
+  );
+
+  // Auto-select the first item when filter changes
+  useEffect(() => {
+    if (filteredNeighborhoods.length > 0 && !filteredNeighborhoods.find(h => h.id === activeId)) {
+      setActiveId(filteredNeighborhoods[0].id);
+    }
+  }, [activeFilter, filteredNeighborhoods, activeId]);
+
   return (
-    <section className="w-full bg-[#f9f9f7] py-16 md:py-24 border-b border-[#e5e5df] relative z-20">
-      <div className="w-full max-w-[1560px] mx-auto px-5 md:px-10 lg:px-16">
-        
+    <section
+      id="neighborhood-spotlights-inner"
+      className="w-full bg-[#FBFBF9] py-16 md:py-24 border-b border-[#D1D5DB] relative z-20 transition-colors duration-500 overflow-hidden font-sans text-[#141717]"
+      style={{
+        backgroundImage: "url('/images/neighborhood-pattern.png')",
+        backgroundRepeat: 'repeat',
+      }}
+    >
+      <div className="relative z-10 w-full max-w-[1560px] mx-auto px-5 md:px-10 lg:px-16">
+
         {/* Section Header */}
-        <div className="mb-12 md:mb-16 flex flex-col md:flex-row md:items-end justify-between gap-6">
-          <div className="max-w-2xl">
-            <div className="flex items-center gap-3 mb-4">
-              <span className="w-6 h-[2px] bg-[#1b4d4b]" />
-              <span className="text-xs font-bold tracking-[0.25em] text-[#1b4d4b] uppercase font-sans">
-                Where We Operate
-              </span>
-            </div>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold text-[#0f1722] tracking-tight font-sans">
-              Neighborhood Spotlights
-            </h2>
-            <p className="mt-4 text-gray-500 font-sans text-sm md:text-base leading-relaxed">
-              Discover the most prestigious addresses in Metro Manila. We curate properties exclusively within highly secure, master-planned communities that offer unparalleled lifestyles.
-            </p>
+        <div className="mb-8 md:mb-10 max-w-3xl space-y-3">
+          <div className="flex items-center gap-3">
+            <span className="w-6 h-[2px] bg-[#0D4446]" />
+            <span className="text-xs font-bold tracking-[0.25em] text-[#0D4446] uppercase">
+              Where We Operate
+            </span>
           </div>
-          
-          <button className="self-start md:self-auto text-xs font-bold uppercase tracking-wider text-[#1b4d4b] hover:text-[#0e2c2c] font-sans flex items-center gap-1.5 px-4 py-2.5 rounded-lg border border-[#1b4d4b]/20 hover:border-[#1b4d4b] hover:bg-[#1b4d4b]/5 transition-all shadow-sm">
-            <span>Explore All Areas</span>
-            <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-          </button>
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#141717] tracking-tight leading-tight">
+            Explore Properties & Neighborhoods
+          </h2>
+          <p className="text-sm sm:text-base text-[#5C6768] font-normal leading-relaxed pt-1">
+            Explore the most prestigious residential enclaves across Metro Manila. Select a property type to discover curated communities that offer unparalleled lifestyles for your family.
+          </p>
         </div>
 
-        {/* Spotlights Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
-          {NEIGHBORHOODS.map((hood, index) => (
-            <motion.div 
-              key={hood.id}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.1 }}
-              transition={{ duration: 0.7, delay: index * 0.15, ease: [0.32, 0.72, 0, 1] }}
-              className="group cursor-pointer flex flex-col"
-            >
-              {/* Image Container with Soft Functionalism Physics */}
-              <div className="relative w-full aspect-[4/5] md:aspect-[3/4] rounded-2xl overflow-hidden mb-6 bg-[#0f1722] shadow-sm group-hover:shadow-xl transition-shadow duration-500">
-                <img 
-                  src={hood.image} 
-                  alt={hood.name}
-                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                  loading="lazy"
-                />
-                {/* Subtle vignette for depth */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none opacity-50 group-hover:opacity-0 transition-opacity duration-500" />
-              </div>
-              
-              {/* Content Block (Clean, whitespace heavy) */}
-              <div className="pr-4">
-                <h3 className="text-xl md:text-2xl font-extrabold font-sans text-[#0f1722] mb-1 group-hover:text-[#1b4d4b] transition-colors">
-                  {hood.name}
-                </h3>
-                <div className="text-[10px] md:text-xs font-bold tracking-[0.2em] uppercase text-[#c9684b] mb-3">
-                  {hood.tagline}
-                </div>
-                <p className="text-sm text-gray-500 font-sans leading-relaxed line-clamp-3">
-                  {hood.description}
-                </p>
-              </div>
-            </motion.div>
-          ))}
+        {/* Property Category Filters */}
+        <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-10 overflow-x-auto pb-2 scrollbar-hide">
+          {PROPERTY_CATEGORIES.map((category) => {
+            const Icon = category.icon;
+            const isActive = activeFilter === category.id;
+
+            return (
+              <button
+                key={category.id}
+                onClick={() => setActiveFilter(category.id)}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-full border transition-all duration-300 text-sm font-bold whitespace-nowrap ${
+                  isActive
+                    ? 'bg-[#0D4446] border-[#0D4446] text-white shadow-md'
+                    : 'bg-white border-[#D8DFDF] text-[#5C6768] hover:border-[#0D4446] hover:text-[#0D4446]'
+                }`}
+              >
+                {Icon && <Icon size={18} stroke={isActive ? 2.5 : 2} />}
+                {category.title}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* ─── EXPANDING ACCORDION ─── */}
+        <div className="w-full">
+          <div className="flex flex-col md:flex-row gap-3 md:gap-4 h-[500px] md:h-[560px] lg:h-[600px] w-full">
+            <AnimatePresence mode="popLayout">
+              {filteredNeighborhoods.map((hood) => {
+                const isActive = activeId === hood.id;
+
+                return (
+                  <motion.div
+                    key={hood.id}
+                    layout
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.2 } }}
+                    transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                    onClick={() => {
+                      if (isActive) {
+                        navigate('/properties', { state: { search: hood.name } });
+                      } else {
+                        setActiveId(hood.id);
+                      }
+                    }}
+                    onMouseEnter={() => setActiveId(hood.id)}
+                    className={`group relative rounded-[5px] border border-[#D1D5DB] overflow-hidden cursor-pointer transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] select-none flex flex-col justify-between bg-slate-100 ${isActive
+                        ? 'flex-[3.5] lg:flex-[4] shadow-[0_20px_40px_rgba(0,0,0,0.18)] border-[#141717]'
+                        : 'flex-[1] shadow-[0_8px_30px_rgba(0,0,0,0.06)] hover:shadow-[0_16px_32px_rgba(0,0,0,0.12)] hover:border-[#141717]'
+                      }`}
+                  >
+                    {/* Architecture Photography — crisp, no blur */}
+                    <img
+                      src={hood.image}
+                      alt={hood.name}
+                      className={`absolute inset-0 w-full h-full object-cover transition-transform duration-1000 ease-out ${isActive ? 'scale-105' : 'scale-100 brightness-95 group-hover:brightness-100'
+                        }`}
+                    />
+
+                    {/* Dark Vignette for crisp white text contrast */}
+                    <div
+                      className={`absolute inset-0 transition-opacity duration-500 pointer-events-none ${isActive
+                          ? 'bg-gradient-to-t from-black/80 via-black/25 to-transparent'
+                          : 'bg-gradient-to-t from-black/70 via-black/20 to-transparent'
+                        }`}
+                    />
+
+                    {/* ACTIVE EXPANDED STATE — Title on Left, View Properties on Lower Right */}
+                    {isActive ? (
+                      <div className="relative z-10 w-full h-full p-6 sm:p-8 md:p-10 flex flex-col justify-end">
+                        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 w-full">
+                          <div>
+                            <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight text-white leading-tight font-sans drop-shadow-lg">
+                              {hood.name}
+                            </h3>
+                          </div>
+
+                          {/* Lower Right: View Properties Button with 30° Angled Arrow */}
+                          <div className="shrink-0 mb-1">
+                            <div
+                              className="inline-flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full bg-white/95 text-[#0D4446] backdrop-blur-md shadow-lg border border-white/70 group-hover:bg-white group-hover:shadow-2xl transition-all duration-300 cursor-pointer"
+                              title="View properties"
+                            >
+                              <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider font-sans whitespace-nowrap">
+                                View properties
+                              </span>
+                              <span
+                                className="inline-flex items-center justify-center transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-0.5"
+                                style={{ transform: 'rotate(-30deg)' }}
+                                aria-hidden="true"
+                              >
+                                <svg
+                                  width="16"
+                                  height="16"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2.5"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                                  <polyline points="12 5 19 12 12 19"></polyline>
+                                </svg>
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      /* COLLAPSED INACTIVE STRIP — Vertical Title with 30° Angled Arrow at Lower Section */
+                      <div className="relative z-10 w-full h-full p-4 flex flex-col justify-end items-center gap-4">
+                        <div className="[writing-mode:vertical-rl] rotate-180 text-white/90 group-hover:text-white font-bold text-xs sm:text-sm uppercase tracking-[0.25em] whitespace-nowrap drop-shadow-md select-none transition-colors">
+                          {hood.name}
+                        </div>
+                        <div
+                          className="w-7 h-7 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white/90 group-hover:bg-white group-hover:text-[#0D4446] transition-all duration-300 shadow-xs mb-2"
+                          title={`View properties in ${hood.name}`}
+                        >
+                          <span
+                            className="inline-flex items-center justify-center transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                            style={{ transform: 'rotate(-30deg)' }}
+                            aria-hidden="true"
+                          >
+                            <svg
+                              width="13"
+                              height="13"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <line x1="5" y1="12" x2="19" y2="12"></line>
+                              <polyline points="12 5 19 12 12 19"></polyline>
+                            </svg>
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+          </div>
+        </div>
+
+        {/* Assistance strip beneath accordion */}
+        <div className="mt-12 md:mt-16 p-4 sm:p-5 rounded-[14px] bg-white border border-[#D8DFDF] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs sm:text-sm shadow-xs max-w-5xl mx-auto">
+          <div className="flex items-center gap-3 text-[#141717]">
+            <span className="w-8 h-8 rounded-full bg-[#0D4446]/10 flex items-center justify-center text-[#0D4446] shrink-0">
+              <IconShieldCheck size={18} stroke={2.5} />
+            </span>
+            <span className="font-medium">
+              Not sure which property type matches your family’s budget or Pag-IBIG loan capacity?
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => navigate('/contact')}
+            className="px-5 py-2.5 rounded-full bg-[#0D4446] hover:bg-[#082b2d] text-white font-bold text-xs uppercase tracking-wider transition-all duration-300 cursor-pointer shrink-0 shadow-xs"
+          >
+            Ask a Licensed Advisor Free
+          </button>
         </div>
 
       </div>

@@ -1,44 +1,44 @@
 import React from 'react';
+import { Search, X, ChevronDown } from 'lucide-react';
+import { cn } from '@/utils/cn';
 
 export default function SearchAndFilterBar({
   searchValue = "",
   onSearchChange,
-  searchPlaceholder = "Search...",
+  searchPlaceholder = "Search by title, location, or ID...",
   filters = [],
   extraActions,
   className = ""
 }) {
   return (
-    <div className={`flex flex-col md:flex-row items-stretch md:items-center gap-3 mb-6 ${className}`}>
-      {/* Search Input - Strictly h-[54px] */}
+    <div className={cn("flex flex-col md:flex-row items-stretch md:items-center gap-3", className)}>
+      {/* Search Input - Clean 40px height */}
       <div className="relative flex-1">
-        <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-[20px]">
-          search
-        </span>
+        <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
         <input
           type="text"
           value={searchValue}
           onChange={(e) => onSearchChange && onSearchChange(e.target.value)}
           placeholder={searchPlaceholder}
-          className="w-full h-[54px] pl-11 pr-4 bg-white border border-gray-200/80 rounded-xl text-sm font-sans text-gray-800 placeholder-gray-400 focus:border-[#266F71] focus:ring-1 focus:ring-[#266F71] transition-all outline-none"
+          className="w-full h-10 pl-10 pr-9 bg-white border border-[#E2E8F0] rounded-lg text-xs text-[#0F172A] placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#0D4446] focus:border-[#0D4446] transition-all"
         />
         {searchValue && (
           <button
             onClick={() => onSearchChange && onSearchChange('')}
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
           >
-            <span className="material-symbols-outlined text-[18px]">close</span>
+            <X className="w-3.5 h-3.5" />
           </button>
         )}
       </div>
 
-      {/* Filter Dropdowns - Strictly h-[54px] */}
+      {/* Filter Dropdowns */}
       {filters.map((filter, idx) => (
-        <div key={idx} className="relative min-w-[160px]">
+        <div key={idx} className="relative min-w-[150px]">
           <select
             value={filter.value}
             onChange={(e) => filter.onChange(e.target.value)}
-            className="w-full h-[54px] px-4 pr-10 bg-white border border-gray-200/80 rounded-xl text-sm font-sans text-gray-700 focus:border-[#266F71] focus:ring-1 focus:ring-[#266F71] transition-all outline-none appearance-none cursor-pointer"
+            className="w-full h-10 px-3 pr-8 bg-white border border-[#E2E8F0] rounded-lg text-xs text-[#0F172A] focus:outline-none focus:ring-1 focus:ring-[#0D4446] focus:border-[#0D4446] transition-all appearance-none cursor-pointer"
           >
             {filter.options.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -46,15 +46,13 @@ export default function SearchAndFilterBar({
               </option>
             ))}
           </select>
-          <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 text-[20px]">
-            expand_more
-          </span>
+          <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
         </div>
       ))}
 
-      {/* Extra Action Buttons - Matching h-[54px] */}
+      {/* Extra Action Buttons */}
       {extraActions && (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {extraActions}
         </div>
       )}

@@ -23,9 +23,9 @@ const STORIES = [
 
 export default function ClientStoriesSection() {
   return (
-    <section className="w-full bg-[#f9f9f7] py-16 md:py-24 border-b border-[#e5e5df] relative z-20">
+    <section className="w-full bg-[#FBFBF9] py-16 md:py-24 border-b border-[#D8DFDF] relative z-20">
       <div className="w-full max-w-[1560px] mx-auto px-5 md:px-10 lg:px-16">
-        
+
         {/* Header */}
         <div className="mb-12 md:mb-16 flex flex-col md:items-center text-center">
           <div className="flex items-center gap-3 mb-4 justify-center">
@@ -43,7 +43,7 @@ export default function ClientStoriesSection() {
         {/* Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
           {STORIES.map((story, index) => (
-            <motion.div 
+            <motion.div
               key={story.id}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}

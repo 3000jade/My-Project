@@ -35,7 +35,7 @@ export default function HowWeWorkPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-white text-[#0f1722] font-sans pt-24 pb-16">
+    <div className="min-h-screen bg-[#FBFBF9] text-[#141717] font-sans pt-24 pb-16">
       
       {/* Masthead */}
       <section className="max-w-[1200px] mx-auto px-5 md:px-10 lg:px-16 pt-12 md:pt-20 pb-16 text-center">
@@ -46,23 +46,23 @@ export default function HowWeWorkPage() {
           className="flex flex-col items-center"
         >
           <div className="flex items-center gap-3 mb-6">
-            <span className="w-6 h-[2px] bg-[#1b4d4b]" />
-            <span className="text-xs font-bold tracking-[0.25em] text-[#1b4d4b] uppercase font-sans">
+            <span className="w-6 h-[2px] bg-[#0D4446]" />
+            <span className="text-xs font-bold tracking-[0.25em] text-[#0D4446] uppercase font-sans">
               The Journey Home
             </span>
-            <span className="w-6 h-[2px] bg-[#1b4d4b]" />
+            <span className="w-6 h-[2px] bg-[#0D4446]" />
           </div>
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-semibold tracking-tight text-[#0f1722] mb-6 font-serif max-w-3xl">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-semibold tracking-tight text-[#141717] mb-6 font-serif max-w-3xl">
             A seamless, transparent process designed around your peace of mind.
           </h1>
-          <p className="text-gray-500 max-w-2xl text-lg md:text-xl font-sans leading-relaxed">
+          <p className="text-[#5C6768] max-w-2xl text-lg md:text-xl font-sans leading-relaxed">
             Real estate in the Philippines doesn't have to be complex. We handle the friction so you can focus on the future.
           </p>
         </motion.div>
       </section>
 
       {/* Steps (Buyer Journey) */}
-      <section className="bg-[#f9f9f7] py-20 border-y border-[#e5e5df]">
+      <section className="bg-[#FFFFFF] py-20 border-y border-[#D8DFDF]">
         <div className="max-w-[1200px] mx-auto px-5 md:px-10 lg:px-16">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-8">
             {STEPS.map((step, idx) => (
@@ -74,18 +74,18 @@ export default function HowWeWorkPage() {
                 transition={{ duration: 0.6, delay: idx * 0.15 }}
                 className="flex flex-col"
               >
-                <div className="text-[10px] font-bold text-[#c9684b] uppercase tracking-[0.3em] mb-4">
+                <div className="text-[10px] font-bold text-[#E76F51] uppercase tracking-[0.3em] mb-4">
                   Step {step.number}
                 </div>
-                <div className="h-16 w-16 bg-white rounded-2xl flex items-center justify-center border border-[#e5e5df] shadow-sm mb-6">
-                  <span className="material-symbols-outlined text-[#1b4d4b] text-3xl">
+                <div className="h-16 w-16 bg-[#FBFBF9] rounded-2xl flex items-center justify-center border border-[#D8DFDF] shadow-sm mb-6">
+                  <span className="material-symbols-outlined text-[#0D4446] text-3xl">
                     {step.icon}
                   </span>
                 </div>
-                <h3 className="text-2xl font-bold font-sans text-[#0f1722] mb-3">
+                <h3 className="text-2xl font-bold font-sans text-[#141717] mb-3">
                   {step.title}
                 </h3>
-                <p className="text-sm font-sans text-gray-600 leading-relaxed">
+                <p className="text-sm font-sans text-[#5C6768] leading-relaxed">
                   {step.description}
                 </p>
               </motion.div>
@@ -118,26 +118,26 @@ export default function HowWeWorkPage() {
             transition={{ duration: 0.8 }}
             className="w-full md:w-1/2"
           >
-            <div className="text-xs font-bold tracking-[0.25em] text-[#c9684b] uppercase font-sans mb-4">
+            <div className="text-xs font-bold tracking-[0.25em] text-[#E76F51] uppercase font-sans mb-4">
               For Sellers
             </div>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold text-[#0f1722] tracking-tight font-sans mb-6">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold text-[#141717] tracking-tight font-sans mb-6">
               Positioning Your Property
             </h2>
-            <p className="text-gray-600 text-base md:text-lg leading-relaxed font-sans mb-8">
+            <p className="text-[#5C6768] text-base md:text-lg leading-relaxed font-sans mb-8">
               We do more than just list your home. We craft a narrative. Using high-end architectural photography, targeted digital campaigns, and our exclusive network of vetted buyers, we ensure your property reaches the right audience at the right time.
             </p>
             <ul className="space-y-4 mb-10">
               {['Editorial-grade property photography', 'Discreet off-market placements', 'Rigorous buyer vetting'].map((item, i) => (
-                <li key={i} className="flex items-center gap-3 text-sm md:text-base font-semibold text-[#0f1722]">
-                  <span className="material-symbols-outlined text-[#1b4d4b]">check_circle</span>
+                <li key={i} className="flex items-center gap-3 text-sm md:text-base font-semibold text-[#141717]">
+                  <span className="material-symbols-outlined text-[#0D4446]">check_circle</span>
                   {item}
                 </li>
               ))}
             </ul>
             <Link 
               to="/contact"
-              className="inline-flex h-[54px] px-8 rounded-xl bg-[#1b4d4b] hover:bg-[#123635] text-white font-sans text-[15px] font-semibold transition-all duration-300 shadow-sm items-center justify-center"
+              className="inline-flex h-[54px] px-8 rounded-xl bg-[#0D4446] hover:bg-[#083335] text-white font-sans text-[15px] font-semibold transition-all duration-300 shadow-sm items-center justify-center cursor-pointer"
             >
               Consult with us
             </Link>

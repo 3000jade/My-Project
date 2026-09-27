@@ -136,14 +136,14 @@ export default function PropertiesPage() {
   };
 
   return (
-    <div className="bg-white min-h-screen w-full relative">
+    <div className="bg-[#FBFBF9] min-h-screen w-full relative">
       {/* Top spacing below fixed navigation header */}
       <div className="pt-20 md:pt-24" />
 
       {/* Main Container */}
       <div className="w-full max-w-[1720px] mx-auto px-4 md:px-8 lg:px-10 pb-20">
         {/* Sticky Unified Search Bar & Quick District Chips */}
-        <div className="sticky top-[80px] z-30 pt-2 pb-4 bg-white/95 backdrop-blur-md">
+        <div className="sticky top-[80px] z-30 pt-2 pb-4 bg-[#FBFBF9]/95 backdrop-blur-md">
           <UnifiedSearchBar
             filters={filters}
             setFilter={setFilter}
@@ -201,11 +201,10 @@ export default function PropertiesPage() {
           <div className={`w-full ${viewMode === 'split' ? 'flex flex-col lg:flex-row gap-8 lg:gap-10 items-start' : ''}`}>
             {/* Left Pane: Property Cards Grid (Visible on mobile when mobileTab === 'list' or in grid mode) */}
             <div
-              className={`w-full ${
-                viewMode === 'split'
+              className={`w-full ${viewMode === 'split'
                   ? `lg:w-[54%] xl:w-[52%] flex-shrink-0 ${mobileTab === 'map' ? 'hidden lg:block' : 'block'}`
                   : 'w-full'
-              }`}
+                }`}
             >
               <div
                 className="w-full relative"
@@ -227,23 +226,21 @@ export default function PropertiesPage() {
                         width: '100%',
                         transform: `translateY(${virtualRow.start}px)`,
                       }}
-                      className={`grid ${
-                        viewMode === 'split'
+                      className={`grid ${viewMode === 'split'
                           ? 'grid-cols-1 sm:grid-cols-2 gap-6 pb-8'
                           : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 lg:gap-x-12 pb-12'
-                      }`}
+                        }`}
                     >
                       {rowItems.map((property, idx) => (
                         <motion.div
                           key={property.id}
                           id={`property-card-${property.id}`}
-                          className={`h-full transition-all duration-300 rounded-2xl ${
-                            selectedPropertyId === property.id
+                          className={`h-full transition-all duration-300 rounded-2xl ${selectedPropertyId === property.id
                               ? 'ring-2 ring-[#E76F51] shadow-2xl scale-[1.01]'
                               : hoveredPropertyId === property.id
-                              ? 'ring-2 ring-[#174849]/70 shadow-lg'
-                              : ''
-                          }`}
+                                ? 'ring-2 ring-[#174849]/70 shadow-lg'
+                                : ''
+                            }`}
                           onMouseEnter={() => setHoveredPropertyId(property.id)}
                           onMouseLeave={() => setHoveredPropertyId(null)}
                           initial={{ opacity: 0, scale: 0.95, y: 30 }}
@@ -291,9 +288,8 @@ export default function PropertiesPage() {
             {/* Right Pane: Interactive Geographical Map Split Plane (RIGHT SIDE) */}
             {viewMode === 'split' && (
               <div
-                className={`w-full lg:w-[46%] xl:w-[48%] lg:sticky lg:top-[220px] h-[550px] lg:h-[calc(100vh-240px)] rounded-3xl overflow-hidden shadow-lg border border-gray-200/90 z-20 bg-gray-50 ${
-                  mobileTab === 'list' ? 'hidden lg:block' : 'block'
-                }`}
+                className={`w-full lg:w-[46%] xl:w-[48%] lg:sticky lg:top-[220px] h-[550px] lg:h-[calc(100vh-240px)] rounded-3xl overflow-hidden shadow-lg border border-gray-200/90 z-20 bg-gray-50 ${mobileTab === 'list' ? 'hidden lg:block' : 'block'
+                  }`}
               >
                 <PropertyMap
                   properties={filteredProperties}

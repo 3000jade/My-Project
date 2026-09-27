@@ -3,11 +3,11 @@ import { Outlet } from 'react-router-dom';
 import DashboardSidebar from './DashboardSidebar';
 import DashboardHeader from './DashboardHeader';
 
-export default function DashboardLayout({ role = 'agent', title = 'Dashboard' }) {
+export default function DashboardLayout({ role = 'broker', title = 'Property Inventory' }) {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen bg-[#F1F0EC] text-gray-800 font-sans">
+    <div className="flex min-h-screen bg-[#FBFBF9] text-[#0F172A] font-sans antialiased">
       {/* Sidebar Navigation */}
       <DashboardSidebar
         role={role}
@@ -23,7 +23,7 @@ export default function DashboardLayout({ role = 'agent', title = 'Dashboard' })
           onMenuClick={() => setMobileSidebarOpen(true)}
         />
 
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto space-y-6">
           <Outlet />
         </main>
       </div>
