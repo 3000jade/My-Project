@@ -3,9 +3,15 @@ import { AuthController } from '../controllers/auth.controller';
 import { requireAuth } from '../middleware/auth.middleware';
 import { authRateLimiter } from '../middleware/rateLimiter.middleware';
 import { validateBody } from '../middleware/validate.middleware';
-import { loginSchema, registerSchema } from '../schemas/auth.schema';
+import { loginSchema, registerSchema, googleAuthSchema } from '../schemas/auth.schema';
 
 const router = Router();
+
+/**
+ * POST /api/auth/google
+ * Google OAuth SSO token verification and profile synchronization
+ */
+router.post('/google', authRateLimiter, validateBody(googleAuthSchema), AuthController.googleAuth);
 
 /**
  * POST /api/auth/login

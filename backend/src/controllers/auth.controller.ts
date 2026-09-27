@@ -1,9 +1,43 @@
 import { Request, Response } from 'express';
 import { AuthService } from '../services/auth.service';
+import { GoogleAuthService } from '../services/googleAuth.service';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
 import type { ApiResponse } from '../types/api';
 
 export class AuthController {
+  /**
+   * Handle Google OAuth authentication
+   */
+  public static async googleAuth(req: Request, res: Response<ApiResponse>): Promise<void> {
+    try {
+      const { idToken, role } = req.body;
+
+      if (!idToken) {
+        res.status(400).json({
+          success: false,
+          error: 'Google ID token is required.',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const authData = await GoogleAuthService.verifyAndAuthenticate(idToken, role);
+
+      res.status(200).json({
+        success: true,
+        data: authData,
+        message: 'Google authentication successful.',
+        timestamp: new Date().toISOString(),
+      });
+    } catch (err: any) {
+      res.status(401).json({
+        success: false,
+        error: err.message || 'Google authentication failed.',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
   /**
    * Handle user login
    */

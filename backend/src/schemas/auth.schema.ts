@@ -40,3 +40,10 @@ export const registerSchema = z.object({
 
 export type LoginInput = z.infer<typeof loginSchema>;
 export type RegisterInput = z.infer<typeof registerSchema>;
+
+export const googleAuthSchema = z.object({
+  idToken: z.string().min(10, 'Google ID token is required.'),
+  role: z.enum(['agent', 'broker', 'client']).optional().default('client'),
+});
+
+export type GoogleAuthInput = z.infer<typeof googleAuthSchema>;

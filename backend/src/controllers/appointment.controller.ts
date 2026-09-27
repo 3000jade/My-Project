@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
 import { AppointmentService } from '../services/appointment.service';
+import { GmailService } from '../services/gmail.service';
+import logger from '../utils/logger';
 import type { ApiResponse } from '../types/api';
 
 export class AppointmentController {
@@ -88,6 +90,16 @@ export class AppointmentController {
       }
 
       const appointment = await AppointmentService.createAppointment(req.body);
+
+      // Asynchronous notification dispatch via Gmail API
+      void GmailService.sendTourConfirmation({
+        clientName: appointment.client_name,
+        clientEmail: req.body.client_email || 'client@luxuryrealty.test',
+        propertyTitle: appointment.property_title || 'Exclusive Residence',
+        address: appointment.property_address || 'Metropolitan Luxury Cadastre',
+        appointmentTime: `${appointment_date}T${appointment_time}`,
+        agentName: 'Estate Concierge',
+      }).catch((err) => logger.warn('[AppointmentController] Gmail tour confirmation warning:', err.message));
 
       res.status(201).json({
         success: true,

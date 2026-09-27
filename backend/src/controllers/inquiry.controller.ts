@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
 import { InquiryService } from '../services/inquiry.service';
+import { GmailService } from '../services/gmail.service';
+import logger from '../utils/logger';
 import type { ApiResponse } from '../types/api';
 
 export class InquiryController {
@@ -20,6 +22,18 @@ export class InquiryController {
       }
 
       const inquiry = await InquiryService.createInquiry(req.body);
+
+      // Asynchronous notification dispatch via Gmail API
+      void GmailService.sendInquiryNotification({
+        agentName: 'Listing Consultant',
+        agentEmail: 'consultant@cpkerby.luxury',
+        clientName: inquiry.name,
+        clientEmail: inquiry.email,
+        clientPhone: inquiry.phone,
+        propertyTitle: inquiry.property_title || 'Luxury Estate',
+        propertyPrice: inquiry.property_price,
+        message: inquiry.message,
+      }).catch((err) => logger.warn('[InquiryController] Gmail dispatch warning:', err.message));
 
       res.status(201).json({
         success: true,

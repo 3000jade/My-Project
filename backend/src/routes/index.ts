@@ -11,6 +11,10 @@ import profileRoutes from './profile.routes';
 import notificationRoutes from './notification.routes';
 import saleRoutes from './sale.routes';
 import dashboardRoutes from './dashboard.routes';
+import driveRoutes from './drive.routes';
+import mailRoutes from './mail.routes';
+import whatsappRoutes from './whatsapp.routes';
+import mapsRoutes from './maps.routes';
 
 const router = Router();
 
@@ -27,5 +31,10 @@ router.use('/profile', profileRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/sales', saleRoutes);
 router.use('/dashboard', dashboardRoutes);
+// External Services Integrations
+router.use('/drive', driveRoutes);
+router.use('/mail', mailRoutes);
+router.use('/whatsapp', whatsappRoutes);
+router.use('/maps', mapsRoutes);
 
 export default router;

@@ -16,6 +16,19 @@ export const config = {
   xaiApiKey: process.env.XAI_API_KEY || '',
   groqApiKey: process.env.GROQ_API_KEY || (process.env.XAI_API_KEY?.startsWith('gsk_') ? process.env.XAI_API_KEY : ''),
   aiModel: process.env.AI_MODEL || '',
+  integrations: {
+    googleClientId: process.env.GOOGLE_CLIENT_ID || '',
+    googleClientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+    googleDriveServiceAccountEmail: process.env.GOOGLE_DRIVE_SERVICE_ACCOUNT_EMAIL || '',
+    googleDrivePrivateKey: (process.env.GOOGLE_DRIVE_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
+    googleDriveRootFolderId: process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID || '',
+    gmailUserEmail: process.env.GMAIL_USER_EMAIL || '',
+    whatsappPhoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID || '',
+    whatsappAccessToken: process.env.WHATSAPP_ACCESS_TOKEN || '',
+    whatsappVerifyToken: process.env.WHATSAPP_VERIFY_TOKEN || 'cp_kerby_whatsapp_verify_token',
+    googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY || '',
+    isMockMode: process.env.NODE_ENV !== 'production' || !process.env.GOOGLE_CLIENT_ID,
+  },
 };
 
 export default config;
