@@ -1,826 +1,380 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Camera, Compass, Star } from 'lucide-react';
-import { mockProperties } from '../../mockData/mockProperties';
-import useViewingList from '../../hooks/useViewingList';
-import { cn } from '../../utils/cn';
-import {
-  PropertyGalleryMosaic,
-  FinancingCalculator,
-  InspectionScheduleModal,
-} from '../../components/ui';
+import { mockProperties } from '../../../mockProperties';
 
 export default function PropertyListingView() {
   const { id } = useParams();
-  const { isInViewingList, toggleViewingList } = useViewingList();
+  const propertyId = id ? parseInt(id, 10) : 1;
+  const property = mockProperties.find(p => p.id === propertyId) || mockProperties[0];
+  
+  const [activePhoto, setActivePhoto] = useState(null);
 
-  // Find listing by id, ref_code, ListingId, or ListingKey
-  const rawProperty = mockProperties.find(
-    p => p.id === id || p.ref_code === id || p.ListingId === id || p.ListingKey === id
-  ) || mockProperties[0];
-
-  // =========================================================================
-  // 1. COMPLIANCE & REDACTION: Strictly sanitize & strip confidential MLS fields
-  // Never expose PrivateRemarks, ShowingInstructions, or Lockbox codes on public view
-  // =========================================================================
-  const property = { ...rawProperty };
-  delete property.PrivateRemarks;
-  delete property.ShowingInstructions;
-  delete property.LockboxCode;
-  delete property.AccessCode;
-  delete property.private_remarks;
-  delete property.showing_instructions;
-  delete property.lockbox_code;
-
-  // =========================================================================
-  // 2. RESO SCHEMA INTEGRITY: Map directly to RESO Data Dictionary standard
-  // =========================================================================
-  const listingId = property.ListingId || property.ListingKey || property.id || property.ref_code || 'N/A';
-  const refCode = property.ref_code || property.ListingId || property.id || 'N/A';
-  const listPrice = property.ListPrice ?? property.price_raw ?? null;
-  const standardStatus = property.StandardStatus || property.status || property.listing_status || 'Active';
-  const propertyType = property.PropertyType || property.property_type || 'Residential';
-  const bedroomsTotal = property.BedroomsTotal ?? property.bedrooms ?? property.beds ?? null;
-  const bathroomsTotalInteger = property.BathroomsTotalInteger ?? property.bathrooms ?? property.baths ?? null;
-  const livingArea = property.LivingArea ?? property.floor_area ?? (typeof property.sqm === 'number' ? property.sqm : parseFloat(property.sqm)) ?? null;
-  const livingAreaUnits = property.LivingAreaUnits || 'sqm';
-  const publicRemarks = property.PublicRemarks || property.description || 'Exclusive architectural residence engineered with Nordic permanence and Bauhaus geometric precision.';
-  const listOfficeName = property.ListOfficeName || property.brokerage || property.agent?.brokerage || 'Nordic Architectural Realty Group';
-
-  // =========================================================================
-  // 3. EDGE CASES & NULL SAFETY: Format optional fields without undefined / NaN
-  // =========================================================================
-  const unitNumber = property.UnitNumber || property.unit_number || null;
-  const associationFee = property.AssociationFee != null && !isNaN(Number(property.AssociationFee)) ? Number(property.AssociationFee) : null;
-  const lotSizeArea = property.LotSizeArea != null && !isNaN(Number(property.LotSizeArea)) ? Number(property.LotSizeArea) : null;
-  const lotSizeUnits = property.LotSizeUnits || 'sqm';
-  const yearBuilt = property.YearBuilt ?? property.year_built ?? null;
-
-  // Safe Price Formatting
-  const formattedPrice = listPrice != null && !isNaN(Number(listPrice)) && Number(listPrice) > 0
-    ? `₱${Number(listPrice).toLocaleString()}`
-    : 'Price on Application';
-
-  // Safe Numeric Metrics
-  const formattedBedrooms = bedroomsTotal != null && !isNaN(Number(bedroomsTotal)) ? Number(bedroomsTotal) : '—';
-  const formattedBathrooms = bathroomsTotalInteger != null && !isNaN(Number(bathroomsTotalInteger)) ? Number(bathroomsTotalInteger) : '—';
-  const formattedLivingArea = (typeof property.sqm === 'string' && property.sqm)
-    ? property.sqm
-    : (livingArea != null && !isNaN(Number(livingArea))
-      ? `${Number(livingArea).toLocaleString()} ${livingAreaUnits}`
-      : '—');
-
-  // Media Array: Sort by RESO Order ascending and fallback gracefully if empty
-  let mediaImages = [];
-  if (Array.isArray(property.Media) && property.Media.length > 0) {
-    mediaImages = [...property.Media]
-      .sort((a, b) => (Number(a.Order) || 0) - (Number(b.Order) || 0))
-      .map(m => m.MediaURL)
-      .filter(Boolean);
-  } else if (Array.isArray(property.images) && property.images.length > 0) {
-    mediaImages = property.images.filter(Boolean);
-  } else if (Array.isArray(property.gallery) && property.gallery.length > 0) {
-    mediaImages = property.gallery.filter(Boolean);
-  } else if (property.mainImage) {
-    mediaImages = [property.mainImage];
-  }
-
-  // Graceful visual fallback for empty media arrays (avoids render crashes)
-  if (mediaImages.length === 0) {
-    mediaImages = [
-      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=1200',
-      'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1200',
-      'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=1200'
-    ];
-  }
-
-  // Set document title
-  useEffect(() => {
-    document.title = `${property.title || 'Property'} | MLS #${listingId}`;
-  }, [property.title, listingId]);
-
-  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
-  const [copiedRef, setCopiedRef] = useState(false);
-  const [agentMessage, setAgentMessage] = useState(
-    `Hi ${property.agent?.name || 'Listing Specialist'}, I am interested in ${property.title || 'this residence'} (MLS #${listingId}). Please contact me for a private site viewing.`
-  );
-  const [senderName, setSenderName] = useState('');
-  const [senderPhone, setSenderPhone] = useState('');
-  const [inquirySent, setInquirySent] = useState(false);
-  const [toastMessage, setToastMessage] = useState(null);
-  const [unitMode, setUnitMode] = useState('sqm'); // 'sqm' | 'sqft'
-  const [mediaMode, setMediaMode] = useState('photo'); // 'photo' | 'cad'
-  const [showStickyDock, setShowStickyDock] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setShowStickyDock(window.scrollY > 380);
-    };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  const isSaved = isInViewingList(property.id || listingId);
-
-  // Dynamic unit conversions
-  const computedLivingAreaStr = unitMode === 'sqm'
-    ? formattedLivingArea
-    : (livingArea != null && !isNaN(Number(livingArea))
-      ? `${Math.round(Number(livingArea) * 10.7639).toLocaleString()} sq ft`
-      : formattedLivingArea);
-
-  const computedLotAreaStr = unitMode === 'sqm'
-    ? (lotSizeArea != null ? `${lotSizeArea.toLocaleString()} ${lotSizeUnits}` : '—')
-    : (lotSizeArea != null ? `${Math.round(Number(lotSizeArea) * 10.7639).toLocaleString()} sq ft` : '—');
-
-  const handleCopyRef = () => {
-    navigator.clipboard?.writeText(refCode);
-    setCopiedRef(true);
-    setTimeout(() => setCopiedRef(false), 2500);
-  };
-
-  const handleSendAgentInquiry = (e) => {
-    e.preventDefault();
-    const payload = {
-      event: 'AUTOMATED_BROKER_INQUIRY_DISPATCH',
-      listing_id: listingId,
-      reference_code: refCode,
-      assigned_agent: property.agent?.name || 'Listing Specialist',
-      listing_office: listOfficeName,
-      sender_name: senderName,
-      sender_phone: senderPhone,
-      message: agentMessage,
-      timestamp: new Date().toISOString()
-    };
-
-    console.log('[RESO Broker Routing] Direct message dispatched:', payload);
-    setInquirySent(true);
-    setToastMessage(`Direct inquiry dispatched to ${property.agent?.name || listOfficeName}!`);
-    setTimeout(() => setToastMessage(null), 5000);
-  };
-
-  const handleScheduleSuccess = (schedulePayload) => {
-    setToastMessage(
-      `Viewing scheduled for ${schedulePayload.scheduled_date} (${schedulePayload.time_slot})! Assigned to ${schedulePayload.assigned_agent}.`
-    );
-    setTimeout(() => setToastMessage(null), 6000);
-  };
+  // Hardcoded Data from Wireframe
+  const propertyTitle = property.title || "Modern Duplex in Rolling Hills";
+  const propertyLocation = "Rolling Hills Subdivision, New Manila, Quezon City";
+  const propertyPrice = "PHP 28,500,000";
+  const propertyPricePerSqm = "~PHP 83,820/sqm";
 
   return (
-    <div className="min-h-screen bg-[#FBFBF9] text-[#141717] pb-24 pt-24 font-sans antialiased transition-colors">
-      {/* Toast Notification Banner */}
-      {toastMessage && (
-        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[300] bg-white dark:bg-[#0C1618] text-[#141717] dark:text-[#F4F7F7] px-6 py-3.5 rounded-[12px] shadow-xl flex items-center gap-3 border border-[#D8DFDF] dark:border-white/10 transition-all">
-          <span className="material-symbols-outlined text-[#E76F51] text-[20px]">verified</span>
-          <span className="text-xs font-semibold tracking-wide font-sans">{toastMessage}</span>
+    <div className="min-h-screen bg-[#FBFBF9] font-sans text-[#141717] pb-24">
+      {/* 1. HEADER / NAVIGATION */}
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-[#D8DFDF] shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-[80px] flex items-center justify-between">
+          <div className="flex items-center gap-8">
+            <Link to="/" className="font-display font-bold text-xl text-[#0D4446] flex items-center gap-2">
+              <span className="material-symbols-outlined text-[24px]">real_estate_agent</span>
+              RealEstate Hub
+            </Link>
+            <nav className="hidden md:flex items-center gap-6 text-sm font-semibold text-[#5C6768]">
+              <Link to="/properties" className="text-[#0D4446]">Buy</Link>
+              <Link to="/rent" className="hover:text-[#0D4446]">Rent</Link>
+              <Link to="/commercial" className="hover:text-[#0D4446]">Commercial</Link>
+            </nav>
+          </div>
+          <div className="flex items-center gap-4 text-sm font-semibold">
+            <button className="flex items-center gap-2 text-[#5C6768] hover:text-[#E76F51]">
+              <span className="material-symbols-outlined text-[20px]">favorite</span>
+              Saved
+            </button>
+            <button className="flex items-center gap-2 text-[#5C6768] hover:text-[#0D4446]">
+              <span className="material-symbols-outlined text-[20px]">person</span>
+              Log In
+            </button>
+          </div>
         </div>
-      )}
+      </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-        {/* Breadcrumb Navigation Strip */}
-        <nav className="flex items-center gap-2 text-xs text-[#5C6768] dark:text-[#95A6A6] overflow-x-auto whitespace-nowrap py-1 font-sans">
-          <Link to="/" className="hover:text-[#0D4446] dark:hover:text-[#14B8A6] transition-colors">Home</Link>
-          <span className="text-[#D8DFDF] dark:text-white/20">/</span>
-          <Link to="/properties" className="hover:text-[#0D4446] dark:hover:text-[#14B8A6] transition-colors">Properties</Link>
-          <span className="text-[#D8DFDF] dark:text-white/20">/</span>
-          <span className="text-[#0D4446] dark:text-[#14B8A6] font-semibold">Property Listing Details</span>
-          <span className="text-[#D8DFDF] dark:text-white/20">/</span>
-          <span className="text-[#5C6768] dark:text-[#95A6A6] truncate max-w-xs">
-            {property.development || property.title || propertyType}
-          </span>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        
+        {/* BREADCRUMBS */}
+        <nav className="flex items-center gap-2 text-xs font-semibold text-[#5C6768]">
+          <Link to="/">Home</Link>
+          <span>/</span>
+          <Link to="/properties">Properties for Sale</Link>
+          <span>/</span>
+          <Link to="/properties?city=Quezon+City">Quezon City</Link>
+          <span>/</span>
+          <span className="text-[#0D4446] truncate max-w-[200px]">{propertyTitle}</span>
         </nav>
 
-        {/* SECTION 1: RESO EDITORIAL HEADER & ARCHITECTURAL CADASTRE */}
-        <div className="border-b border-[#D8DFDF] dark:border-white/10 pb-8">
-          {/* Eyebrow Badge */}
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-[11px] uppercase font-bold tracking-[0.16em] text-[#E76F51] font-mono flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#E76F51]"></span>
-              Property Listing Details
-            </span>
-          </div>
-
-          {/* Status & Telemetry Row */}
-          <div className="flex flex-wrap items-center justify-between gap-4 pb-4">
-            <div className="flex flex-wrap items-center gap-3 text-xs font-sans">
-              {/* StandardStatus Badge */}
-              <div className="flex items-center gap-1.5 px-3 py-1 rounded-[6px] bg-[#0D4446]/10 dark:bg-[#14B8A6]/20 text-[#0D4446] dark:text-[#14B8A6] font-mono text-[11px] font-bold uppercase tracking-wider">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#0D4446] dark:bg-[#14B8A6]"></span>
-                <span data-testid="reso-standard-status">{standardStatus}</span>
+        {/* 2. PHOTOS SECTION (Asymmetrical 1 + 3) */}
+        <div className="relative rounded-3xl overflow-hidden bg-white shadow-sm border border-[#D8DFDF]">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 h-[480px] lg:h-[560px]">
+            {/* Main Hero Photo (8 Cols) */}
+            <div className="lg:col-span-8 relative h-full group cursor-pointer" onClick={() => setActivePhoto(0)}>
+              <img 
+                src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?q=80&w=1200" 
+                alt="Main View" 
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+              />
+              <div className="absolute top-4 left-4 bg-black/60 text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg backdrop-blur-md">
+                Main View
               </div>
+            </div>
 
-              {/* UnitNumber Pill (Safely Rendered Only When Populated) */}
-              {unitNumber && (
-                <div className="px-2.5 py-1 rounded-[6px] bg-[#F4F5F4] dark:bg-white/5 border border-[#D8DFDF] dark:border-white/10 text-[#141717] dark:text-[#F4F7F7] font-mono text-[11px] font-semibold">
-                  Unit: <span data-testid="reso-unit-number">{unitNumber}</span>
+            {/* Right Stack (4 Cols) */}
+            <div className="hidden lg:grid col-span-4 grid-rows-3 gap-2 h-full">
+              <div className="relative h-full overflow-hidden group cursor-pointer">
+                <img src="https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?q=80&w=600" alt="Living Room" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+              </div>
+              <div className="relative h-full overflow-hidden group cursor-pointer">
+                <img src="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=600" alt="Primary Bedroom" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+              </div>
+              {/* Floor Plan Block */}
+              <div className="relative h-full overflow-hidden group cursor-pointer bg-[#070D0E] flex items-center justify-center border border-[#D8DFDF]/20">
+                <div className="absolute inset-0 opacity-40 bg-[url('https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=600')] bg-cover bg-center grayscale group-hover:scale-105 transition-transform duration-700"></div>
+                <div className="relative z-10 flex flex-col items-center justify-center text-[#F4F7F7]">
+                  <span className="material-symbols-outlined text-3xl text-[#14B8A6] mb-1">view_in_ar</span>
+                  <span className="text-sm font-bold tracking-wide">Floor Plans & 3D Tour</span>
                 </div>
-              )}
-
-              {property.unit_status && (
-                <>
-                  <span className="text-[#D8DFDF] dark:text-white/20">|</span>
-                  <span className="font-semibold uppercase tracking-wider text-[#141717] dark:text-[#F4F7F7] text-[11px] font-mono">
-                    {property.unit_status}
-                  </span>
-                </>
-              )}
-
-              <span className="text-[#D8DFDF] dark:text-white/20">|</span>
-              <span className="font-semibold uppercase tracking-wider text-[#141717] dark:text-[#F4F7F7] text-[11px] font-mono">
-                {propertyType}
-              </span>
-
-              {property.tenure && (
-                <>
-                  <span className="text-[#D8DFDF] dark:text-white/20">|</span>
-                  <span className="text-[#E76F51] font-semibold text-[11px]">
-                    {property.tenure}
-                  </span>
-                </>
-              )}
-            </div>
-
-            {/* Cadastral Reference & Telemetry */}
-            <div className="flex items-center gap-3 text-xs font-mono text-[#5C6768] dark:text-[#95A6A6]">
-              <span>
-                MLS ID: <strong className="text-[#141717] dark:text-[#F4F7F7]" data-testid="reso-listing-id">{listingId}</strong>
-              </span>
-              <span className="text-[#D8DFDF] dark:text-white/20">|</span>
-              <div className="flex items-center gap-1 text-[#0D4446] dark:text-[#14B8A6]">
-                <span className="text-[#5C6768] dark:text-[#95A6A6]">REF:</span>
-                <span className="font-bold tracking-wider">{refCode}</span>
-                <button
-                  type="button"
-                  onClick={handleCopyRef}
-                  className="ml-1 text-[#5C6768] hover:text-[#0D4446] dark:hover:text-[#14B8A6] hover:scale-110 transition-transform cursor-pointer"
-                  title="Copy Reference Code"
-                >
-                  <span className="material-symbols-outlined text-[15px]">
-                    {copiedRef ? 'done' : 'content_copy'}
-                  </span>
-                </button>
               </div>
             </div>
           </div>
 
-          {/* Title & Geographic Subhead */}
-          <div className="mt-3">
-            <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#141717] dark:text-[#F4F7F7] leading-[1.15] tracking-tight">
-              {property.title || `${propertyType} Residence`}
-            </h1>
-            <p className="flex items-center gap-2 text-xs sm:text-sm text-[#5C6768] dark:text-[#95A6A6] mt-3 font-sans">
-              <span className="material-symbols-outlined text-[#E76F51] text-[18px]">location_on</span>
-              <span className="font-semibold text-[#141717] dark:text-[#F4F7F7]">
-                {property.development || property.thoroughfare || property.City || 'Metro Manila'}
-              </span>
-              <span className="text-[#D8DFDF] dark:text-white/20">•</span>
-              <span>{property.City || property.city || 'Makati City'}</span>,{' '}
-              <span>{property.StateOrProvince || property.region || 'Metro Manila'}</span>
-              {property.PostalCode && <span>, {property.PostalCode}</span>}
-            </p>
-          </div>
-        </div>
-
-        {/* Gallery Controls: Architectural Photography vs CAD Floorplan */}
-        <div className="flex items-center justify-between gap-4 mb-2">
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setMediaMode('photo')}
-              className={cn(
-                "px-3 py-1.5 rounded-lg text-xs font-mono font-medium transition-all cursor-pointer flex items-center gap-1.5",
-                mediaMode === 'photo'
-                  ? "bg-[#0D4446] text-white shadow-xs"
-                  : "bg-white dark:bg-white/5 border border-[#D8DFDF] dark:border-white/10 text-slate-600 dark:text-slate-300"
-              )}
-            >
-              <Camera className="w-3.5 h-3.5" />
-              <span>Architectural Photos ({mediaImages.length})</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setMediaMode('cad')}
-              className={cn(
-                "px-3 py-1.5 rounded-lg text-xs font-mono font-medium transition-all cursor-pointer flex items-center gap-1.5",
-                mediaMode === 'cad'
-                  ? "bg-[#0D4446] text-white shadow-xs"
-                  : "bg-white dark:bg-white/5 border border-[#D8DFDF] dark:border-white/10 text-slate-600 dark:text-slate-300"
-              )}
-            >
-              <Compass className="w-3.5 h-3.5" />
-              <span>CAD Blueprint & Floorplan</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Media Viewport */}
-        {mediaMode === 'photo' ? (
-          <PropertyGalleryMosaic
-            images={mediaImages}
-            title={property.title || 'Property Photos'}
-          />
-        ) : (
-          <div className="relative h-[480px] rounded-[14px] overflow-hidden border border-[#D8DFDF] dark:border-white/10 bg-[#070D0E] flex items-center justify-center">
-            <img
-              src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=1400&auto=format&fit=crop"
-              alt="CAD Blueprint"
-              className="w-full h-full object-cover opacity-85"
-            />
-            <div className="absolute bottom-4 left-4 bg-black/80 backdrop-blur-md text-white px-4 py-2 rounded-lg font-mono text-xs border border-white/20 flex items-center gap-2">
-              <Compass className="w-4 h-4 text-[#14B8A6]" />
-              <span>Architectural CAD Blueprint • Level 1 Floorplan (1:100 Metric Scale)</span>
-            </div>
-          </div>
-        )}
-
-        {/* SECTION 3: KEY METRICS - RESO ARCHITECTURAL LEDGER */}
-        <div className="bg-white dark:bg-[#0C1618] border border-[#D8DFDF] dark:border-white/10 rounded-[14px] p-6 shadow-[0_16px_36px_rgba(13,68,70,0.06)]">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 mb-4 border-b border-[#D8DFDF] dark:border-white/10">
-            <div>
-              <h3 className="text-xs font-semibold text-[#0F172A] dark:text-white uppercase tracking-wider font-mono">
-                Key Architectural Specs
-              </h3>
-              <p className="text-[11px] text-slate-500 font-sans">Standard real estate metrics verified with RESO Data Dictionary.</p>
-            </div>
-
-            {/* In-Place Unit Switcher */}
-            <div className="bg-[#F4F5F4] dark:bg-white/5 p-1 rounded-lg flex items-center border border-[#D8DFDF] dark:border-white/10 text-xs font-mono self-start sm:self-auto">
-              <button
-                type="button"
-                onClick={() => setUnitMode('sqm')}
-                className={cn(
-                  "px-2.5 py-1 rounded transition-all cursor-pointer font-bold",
-                  unitMode === 'sqm' ? "bg-white dark:bg-[#132427] text-[#0D4446] dark:text-[#14B8A6] shadow-xs" : "text-slate-500 hover:text-slate-700"
-                )}
-              >
-                m² (Metric)
+          {/* Floating Action Strip */}
+          <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
+            <div className="flex gap-2">
+              <button className="px-4 py-2.5 bg-white/95 backdrop-blur-md text-[#0D4446] font-bold text-xs rounded-xl shadow-lg border border-[#D8DFDF] flex items-center gap-2 hover:scale-105 transition-transform">
+                <span className="material-symbols-outlined text-[18px]">photo_library</span> 24 Photos
               </button>
-              <button
-                type="button"
-                onClick={() => setUnitMode('sqft')}
-                className={cn(
-                  "px-2.5 py-1 rounded transition-all cursor-pointer font-bold",
-                  unitMode === 'sqft' ? "bg-white dark:bg-[#132427] text-[#0D4446] dark:text-[#14B8A6] shadow-xs" : "text-slate-500 hover:text-slate-700"
-                )}
-              >
-                sq ft (Imperial)
+              <button className="px-4 py-2.5 bg-white/95 backdrop-blur-md text-[#0D4446] font-bold text-xs rounded-xl shadow-lg border border-[#D8DFDF] flex items-center gap-2 hover:scale-105 transition-transform">
+                <span className="material-symbols-outlined text-[18px]">360</span> 360° Virtual Tour
+              </button>
+            </div>
+            <div className="flex gap-2">
+              <button className="px-4 py-2.5 bg-white/95 backdrop-blur-md text-[#5C6768] font-bold text-xs rounded-xl shadow-lg border border-[#D8DFDF] flex items-center gap-2 hover:text-[#0D4446] transition-colors">
+                <span className="material-symbols-outlined text-[18px]">share</span> Share
+              </button>
+              <button className="px-4 py-2.5 bg-white/95 backdrop-blur-md text-[#5C6768] font-bold text-xs rounded-xl shadow-lg border border-[#D8DFDF] flex items-center gap-2 hover:text-[#E76F51] transition-colors">
+                <span className="material-symbols-outlined text-[18px]">favorite</span> Save
               </button>
             </div>
           </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 divide-y sm:divide-y-0 sm:divide-x divide-[#D8DFDF] dark:divide-white/10">
-            <div className="px-4 py-2 first:pl-0">
-              <p className="text-[11px] font-medium text-[#5C6768] dark:text-[#95A6A6]">Bedrooms</p>
-              <p className="font-mono text-3xl font-bold text-[#0D4446] dark:text-[#14B8A6] mt-1 tabular-nums" data-testid="reso-bedrooms">
-                {formattedBedrooms}
-              </p>
-            </div>
-
-            <div className="px-4 py-2">
-              <p className="text-[11px] font-medium text-[#5C6768] dark:text-[#95A6A6]">Bathrooms</p>
-              <p className="font-mono text-3xl font-bold text-[#0D4446] dark:text-[#14B8A6] mt-1 tabular-nums" data-testid="reso-bathrooms">
-                {formattedBathrooms}
-              </p>
-            </div>
-
-            <div className="px-4 py-2">
-              <p className="text-[11px] font-medium text-[#5C6768] dark:text-[#95A6A6]">Living Area</p>
-              <p className="font-mono text-3xl font-bold text-[#0D4446] dark:text-[#14B8A6] mt-1 tabular-nums" data-testid="reso-living-area">
-                {computedLivingAreaStr}
-              </p>
-            </div>
-
-            <div className="px-4 py-2">
-              <p className="text-[11px] font-medium text-[#5C6768] dark:text-[#95A6A6]">Lot Size</p>
-              <p className="font-mono text-3xl font-bold text-[#0D4446] dark:text-[#14B8A6] mt-1 tabular-nums" data-testid="reso-lot-size">
-                {computedLotAreaStr}
-              </p>
-            </div>
-
-            <div className="px-4 py-2">
-              <p className="text-[11px] font-medium text-[#5C6768] dark:text-[#95A6A6]">Association Fee</p>
-              <p className="font-mono text-2xl font-bold text-[#0D4446] dark:text-[#14B8A6] mt-1.5 tabular-nums" data-testid="reso-hoa-fee">
-                {associationFee != null ? `₱${associationFee.toLocaleString()}` : '—'}
-              </p>
-            </div>
-
-            <div className="px-4 py-2 last:pr-0">
-              <p className="text-[11px] font-medium text-[#5C6768] dark:text-[#95A6A6]">Year Built</p>
-              <p className="font-mono text-3xl font-bold text-[#0D4446] dark:text-[#14B8A6] mt-1 tabular-nums" data-testid="reso-year-built">
-                {yearBuilt ?? '—'}
-              </p>
-            </div>
-          </div>
         </div>
 
-        {/* MAIN BODY: 2-COLUMN SPLIT */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* LEFT CONTENT COLUMN (65% width / 8 cols) */}
-          <div className="lg:col-span-8 space-y-8">
-            {/* PUBLIC REMARKS SECTION */}
-            <div className="bg-white dark:bg-[#0C1618] border border-[#D8DFDF] dark:border-white/10 rounded-[14px] p-6 md:p-8 shadow-[0_16px_36px_rgba(13,68,70,0.06)]">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-display text-xl font-bold text-[#141717] dark:text-[#F4F7F7] flex items-center gap-2.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#E76F51]"></span>
-                  Public Remarks
-                </h2>
-                <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#0D4446] dark:text-[#14B8A6] px-2 py-0.5 rounded bg-[#0D4446]/10 dark:bg-[#14B8A6]/20">
-                  RESO Data Dictionary Verified
-                </span>
-              </div>
-              <p className="text-sm md:text-base text-[#5C6768] dark:text-[#95A6A6] font-sans leading-relaxed" data-testid="reso-public-remarks">
-                {publicRemarks}
-              </p>
+        {/* 3. OVERVIEW SECTION */}
+        <section className="bg-white rounded-3xl p-8 shadow-[0_16px_36px_rgba(13,68,70,0.06)] border border-[#D8DFDF]">
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-3">
+              <span className="material-symbols-outlined text-[#E76F51] text-2xl">location_on</span>
+              <h1 className="text-2xl font-display font-bold text-[#141717]">{propertyLocation}</h1>
             </div>
-
-            {/* PRICING & FINANCING ENGINE */}
-            <FinancingCalculator
-              totalContractPrice={listPrice || 3000000}
-              promoCashOut={property.promo_cash_out || 'PHP 5,000 to PHP 20,000'}
-              startingAmortization={property.monthly_amortization || 'Starting at PHP 15,000 / month'}
-            />
-
-            {/* DETAILED RESO SPECIFICATIONS MATRIX */}
-            <div className="bg-white dark:bg-[#0C1618] border border-[#D8DFDF] dark:border-white/10 rounded-[14px] p-6 md:p-8 shadow-[0_16px_36px_rgba(13,68,70,0.06)]">
-              <h2 className="font-display text-xl font-bold text-[#141717] dark:text-[#F4F7F7] mb-6 flex items-center gap-2.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#E76F51]"></span>
-                RESO Unit & Space Specifications
-              </h2>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-sans">
-                <div className="flex items-center justify-between py-3 border-b border-[#D8DFDF]/70 dark:border-white/10">
-                  <span className="text-[#5C6768] dark:text-[#95A6A6] font-medium flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[16px] text-[#0D4446] dark:text-[#14B8A6]">tag</span>
-                    Listing ID
-                  </span>
-                  <span className="font-semibold font-mono text-[#141717] dark:text-[#F4F7F7]">{listingId}</span>
-                </div>
-
-                <div className="flex items-center justify-between py-3 border-b border-[#D8DFDF]/70 dark:border-white/10">
-                  <span className="text-[#5C6768] dark:text-[#95A6A6] font-medium flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[16px] text-[#0D4446] dark:text-[#14B8A6]">category</span>
-                    Standard Status
-                  </span>
-                  <span className="font-semibold font-mono text-[#0D4446] dark:text-[#14B8A6]">{standardStatus}</span>
-                </div>
-
-                <div className="flex items-center justify-between py-3 border-b border-[#D8DFDF]/70 dark:border-white/10">
-                  <span className="text-[#5C6768] dark:text-[#95A6A6] font-medium flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[16px] text-[#0D4446] dark:text-[#14B8A6]">apartment</span>
-                    Property Type
-                  </span>
-                  <span className="font-semibold text-[#141717] dark:text-[#F4F7F7]">{propertyType}</span>
-                </div>
-
-                <div className="flex items-center justify-between py-3 border-b border-[#D8DFDF]/70 dark:border-white/10">
-                  <span className="text-[#5C6768] dark:text-[#95A6A6] font-medium flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[16px] text-[#0D4446] dark:text-[#14B8A6]">square_foot</span>
-                    Living Area
-                  </span>
-                  <span className="font-semibold font-mono text-[#141717] dark:text-[#F4F7F7] tabular-nums">{formattedLivingArea}</span>
-                </div>
-
-                <div className="flex items-center justify-between py-3 border-b border-[#D8DFDF]/70 dark:border-white/10">
-                  <span className="text-[#5C6768] dark:text-[#95A6A6] font-medium flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[16px] text-[#0D4446] dark:text-[#14B8A6]">bed</span>
-                    Bedrooms Total
-                  </span>
-                  <span className="font-semibold text-[#141717] dark:text-[#F4F7F7] font-mono tabular-nums">{formattedBedrooms}</span>
-                </div>
-
-                <div className="flex items-center justify-between py-3 border-b border-[#D8DFDF]/70 dark:border-white/10">
-                  <span className="text-[#5C6768] dark:text-[#95A6A6] font-medium flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[16px] text-[#0D4446] dark:text-[#14B8A6]">shower</span>
-                    Bathrooms Total
-                  </span>
-                  <span className="font-semibold text-[#141717] dark:text-[#F4F7F7] font-mono tabular-nums">{formattedBathrooms}</span>
-                </div>
-
-                <div className="flex items-center justify-between py-3 border-b border-[#D8DFDF]/70 dark:border-white/10">
-                  <span className="text-[#5C6768] dark:text-[#95A6A6] font-medium flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[16px] text-[#0D4446] dark:text-[#14B8A6]">landscape</span>
-                    Lot Size Area
-                  </span>
-                  <span className="font-semibold text-[#141717] dark:text-[#F4F7F7] font-mono">
-                    {lotSizeArea != null ? `${lotSizeArea.toLocaleString()} ${lotSizeUnits}` : '—'}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between py-3 border-b border-[#D8DFDF]/70 dark:border-white/10">
-                  <span className="text-[#5C6768] dark:text-[#95A6A6] font-medium flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[16px] text-[#0D4446] dark:text-[#14B8A6]">receipt_long</span>
-                    Association Fee
-                  </span>
-                  <span className="font-semibold text-[#141717] dark:text-[#F4F7F7] font-mono">
-                    {associationFee != null ? `₱${associationFee.toLocaleString()}/mo` : '—'}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between py-3 border-b border-[#D8DFDF]/70 dark:border-white/10">
-                  <span className="text-[#5C6768] dark:text-[#95A6A6] font-medium flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[16px] text-[#0D4446] dark:text-[#14B8A6]">business</span>
-                    Listing Office
-                  </span>
-                  <span className="font-semibold text-[#141717] dark:text-[#F4F7F7]" data-testid="reso-list-office-name">
-                    {listOfficeName}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between py-3 border-b border-[#D8DFDF]/70 dark:border-white/10">
-                  <span className="text-[#5C6768] dark:text-[#95A6A6] font-medium flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[16px] text-[#0D4446] dark:text-[#14B8A6]">layers</span>
-                    Floor Level
-                  </span>
-                  <span className="font-semibold text-[#141717] dark:text-[#F4F7F7] font-mono">{property.floor_level || '6th Floor'}</span>
-                </div>
-
-                <div className="flex items-center justify-between py-3 border-b border-[#D8DFDF]/70 dark:border-white/10">
-                  <span className="text-[#5C6768] dark:text-[#95A6A6] font-medium flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[16px] text-[#0D4446] dark:text-[#14B8A6]">chair</span>
-                    Furnishing
-                  </span>
-                  <span className="font-semibold text-[#141717] dark:text-[#F4F7F7]">{property.furnishing || 'Bare'}</span>
-                </div>
-
-                <div className="flex items-center justify-between py-3 border-b border-[#D8DFDF]/70 dark:border-white/10">
-                  <span className="text-[#5C6768] dark:text-[#95A6A6] font-medium flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[16px] text-[#0D4446] dark:text-[#14B8A6]">construction</span>
-                    Year Built
-                  </span>
-                  <span className="font-semibold font-mono text-[#141717] dark:text-[#F4F7F7] tabular-nums">
-                    {yearBuilt ?? 2023}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* SECTION 4: GEOGRAPHIC LOCATION & VICINITY */}
-            <div className="bg-white dark:bg-[#0C1618] border border-[#D8DFDF] dark:border-white/10 rounded-[14px] p-6 md:p-8 shadow-[0_16px_36px_rgba(13,68,70,0.06)]">
-              <h2 className="font-display text-xl font-bold text-[#141717] dark:text-[#F4F7F7] mb-4 flex items-center gap-2.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#E76F51]"></span>
-                Geographic Location & Neighborhood
-              </h2>
-
-              <p className="text-xs sm:text-sm text-[#5C6768] dark:text-[#95A6A6] leading-relaxed mb-6 font-sans">
-                Situated prominently within <strong className="text-[#0D4446] dark:text-[#14B8A6] font-semibold">{property.development || 'Urban Deca Homes Ortigas'}</strong> along{' '}
-                <strong className="text-[#0D4446] dark:text-[#14B8A6] font-semibold">{property.thoroughfare || 'Ortigas Avenue Extension'}</strong> in Barangay{' '}
-                <strong className="text-[#0D4446] dark:text-[#14B8A6] font-semibold">{property.barangay || property.district || 'Rosario'}</strong>, <strong className="text-[#0D4446] dark:text-[#14B8A6] font-semibold">{property.city || property.City || 'Pasig City'}</strong>. The development provides rapid arterial access to the Ortigas Central Business District, Eastwood City, Bridgetowne Destination Estate, and the C-5 transit corridor.
-              </p>
-
-              {/* Geographic Cadastral Pin Card */}
-              <div className="rounded-[10px] bg-[#F4F5F4] dark:bg-white/5 text-[#141717] dark:text-[#F4F7F7] p-6 border border-[#D8DFDF] dark:border-white/10">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div>
-                    <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#E76F51] font-mono">Cadastral Pin</span>
-                    <h3 className="font-display text-lg font-bold mt-1 text-[#0D4446] dark:text-[#14B8A6]">{property.development || property.title || 'Urban Deca Homes Ortigas'}</h3>
-                    <p className="text-xs text-[#5C6768] dark:text-[#95A6A6] mt-1 font-sans">
-                      {property.thoroughfare || 'Ortigas Avenue Extension'}, {property.barangay || 'Rosario'}, {property.city || property.City || 'Pasig City'}
-                    </p>
-                  </div>
-                  <a
-                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${property.development || 'Urban Deca Homes Ortigas'}, ${property.city || property.City || 'Pasig City'}`)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="h-[54px] px-6 rounded-[8px] bg-[#0D4446] hover:bg-[#083335] text-white text-xs font-bold font-sans uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-sm active:scale-95"
-                  >
-                    <span className="material-symbols-outlined text-[18px]">open_in_new</span>
-                    Open in Google Maps
-                  </a>
-                </div>
-              </div>
-            </div>
-
-            {/* SECTION 5: AMENITIES & COMMUNITY POLICIES */}
-            <div className="bg-white dark:bg-[#0C1618] border border-[#D8DFDF] dark:border-white/10 rounded-[14px] p-6 md:p-8 shadow-[0_16px_36px_rgba(13,68,70,0.06)]">
-              <h2 className="font-display text-xl font-bold text-[#141717] dark:text-[#F4F7F7] mb-6 flex items-center gap-2.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#E76F51]"></span>
-                Amenities & Building Policies
-              </h2>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 font-sans">
-                <div className="p-4 rounded-[10px] border border-[#D8DFDF] dark:border-white/10 bg-[#F4F5F4] dark:bg-white/5">
-                  <p className="text-xs font-bold text-[#0D4446] dark:text-[#14B8A6]">{property.security || '24/7 Gated Security'}</p>
-                  <p className="text-[11px] text-[#5C6768] dark:text-[#95A6A6] mt-0.5">CCTV & roving guards</p>
-                </div>
-
-                <div className="p-4 rounded-[10px] border border-[#D8DFDF] dark:border-white/10 bg-[#F4F5F4] dark:bg-white/5">
-                  <p className="text-xs font-bold text-[#0D4446] dark:text-[#14B8A6]">{property.pet_policy || 'Pet-Friendly'}</p>
-                  <p className="text-[11px] text-[#5C6768] dark:text-[#95A6A6] mt-0.5">Pets allowed in building</p>
-                </div>
-
-                <div className="p-4 rounded-[10px] border border-[#D8DFDF] dark:border-white/10 bg-[#F4F5F4] dark:bg-white/5">
-                  <p className="text-xs font-bold text-[#0D4446] dark:text-[#14B8A6]">{property.tenure || 'Perpetual Ownership (Freehold)'}</p>
-                  <p className="text-[11px] text-[#5C6768] dark:text-[#95A6A6] mt-0.5">Lifetime condominium title</p>
-                </div>
-
-                <div className="p-4 rounded-[10px] border border-[#D8DFDF] dark:border-white/10 bg-[#F4F5F4] dark:bg-white/5">
-                  <p className="text-xs font-bold text-[#0D4446] dark:text-[#14B8A6]">{property.terrain || 'Flood-Free Area'}</p>
-                  <p className="text-[11px] text-[#5C6768] dark:text-[#95A6A6] mt-0.5">Elevated road infrastructure</p>
-                </div>
-
-                <div className="p-4 rounded-[10px] border border-[#D8DFDF] dark:border-white/10 bg-[#F4F5F4] dark:bg-white/5">
-                  <p className="text-xs font-bold text-[#0D4446] dark:text-[#14B8A6]">Community Clubhouse</p>
-                  <p className="text-[11px] text-[#5C6768] dark:text-[#95A6A6] mt-0.5">Social hall & events lounge</p>
-                </div>
-
-                <div className="p-4 rounded-[10px] border border-[#D8DFDF] dark:border-white/10 bg-[#F4F5F4] dark:bg-white/5">
-                  <p className="text-xs font-bold text-[#0D4446] dark:text-[#14B8A6]">Pocket Parks</p>
-                  <p className="text-[11px] text-[#5C6768] dark:text-[#95A6A6] mt-0.5">Green open landscaped areas</p>
-                </div>
-              </div>
-            </div>
-
-            {/* COMPLIANCE DISCLAIMER & REDACTION CERTIFICATION */}
-            <div className="rounded-[12px] bg-[#F4F5F4] dark:bg-white/5 border border-[#D8DFDF] dark:border-white/10 p-5 text-xs text-[#5C6768] dark:text-[#95A6A6] space-y-2">
-              <div className="flex items-center gap-2 text-[#0D4446] dark:text-[#14B8A6] font-bold">
-                <span className="material-symbols-outlined text-[18px]">verified_user</span>
-                <span>RESO Web API & MLS Compliance Verified</span>
-              </div>
-              <p className="leading-relaxed">
-                Listing data provided courtesy of <strong className="text-[#141717] dark:text-[#F4F7F7]">{listOfficeName}</strong>. All data adheres to the Real Estate Standards Organization (RESO) Data Dictionary v1.7. Confidential remarks, private showing instructions, and security lockbox credentials have been strictly redacted from public viewing.
-              </p>
-            </div>
-          </div>
-
-          {/* RIGHT STICKY ACTION RAIL (35% width / 4 cols) */}
-          <div className="lg:col-span-4 space-y-6 lg:sticky lg:top-24 font-sans">
-            {/* Price Card */}
-            <div className="bg-white dark:bg-[#0C1618] border border-[#D8DFDF] dark:border-white/10 rounded-[14px] p-6 shadow-[0_16px_36px_rgba(13,68,70,0.06)]">
-              <span className="text-[11px] uppercase font-bold tracking-[0.14em] text-[#5C6768] dark:text-[#95A6A6] font-mono">
-                ListPrice (Total Contract Price)
+            
+            <div className="flex gap-3">
+              <span className="bg-[#14B8A6]/10 text-[#0D9488] px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 border border-[#14B8A6]/20">
+                <span className="material-symbols-outlined text-[16px]">verified</span> Verified Listing
               </span>
-              <div className="font-mono text-3xl sm:text-4xl font-bold text-[#0D4446] dark:text-[#14B8A6] mt-1 tabular-nums" data-testid="reso-list-price">
-                {formattedPrice}
-              </div>
-
-              <div className="mt-4 pt-4 border-t border-[#D8DFDF] dark:border-white/10 space-y-2">
-                <div className="flex items-baseline justify-between text-xs">
-                  <span className="text-[#5C6768] dark:text-[#95A6A6] font-medium font-sans">Listing Office</span>
-                  <span className="font-bold text-[#141717] dark:text-[#F4F7F7] font-mono truncate max-w-[200px] text-right">
-                    {listOfficeName}
-                  </span>
-                </div>
-                {associationFee != null && (
-                  <div className="flex items-baseline justify-between text-xs">
-                    <span className="text-[#5C6768] dark:text-[#95A6A6] font-medium font-sans">Association Fee</span>
-                    <span className="font-semibold text-[#0D4446] dark:text-[#14B8A6] font-mono">₱{associationFee.toLocaleString()}/mo</span>
-                  </div>
-                )}
-              </div>
-
-              {/* VIEWING LIST & SITE INSPECTION TRIGGERS */}
-              <div className="mt-6 pt-6 border-t border-[#D8DFDF] dark:border-white/10 space-y-3">
-                <button
-                  type="button"
-                  onClick={() => toggleViewingList(property)}
-                  className={`w-full h-[54px] rounded-[8px] text-xs font-bold uppercase tracking-wider font-sans flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                    isSaved
-                      ? 'bg-[#0D4446] text-white shadow-sm'
-                      : 'bg-white dark:bg-transparent hover:bg-[#F4F5F4] dark:hover:bg-white/5 text-[#0D4446] dark:text-[#14B8A6] border border-[#0D4446] dark:border-[#14B8A6]'
-                  }`}
-                >
-                  <span className="material-symbols-outlined text-[18px]">
-                    {isSaved ? 'check_circle' : 'playlist_add'}
-                  </span>
-                  {isSaved ? 'In Viewing List' : 'Add to Viewing List'}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setIsScheduleModalOpen(true)}
-                  className="w-full h-[54px] rounded-[8px] bg-[#E76F51] hover:bg-[#D65C3E] text-white text-xs font-bold uppercase tracking-wider font-sans flex items-center justify-center gap-2 shadow-sm transition-all hover:-translate-y-0.5 active:scale-[0.99] cursor-pointer"
-                >
-                  <span className="material-symbols-outlined text-[18px]">calendar_month</span>
-                  Schedule Free Site Viewing
-                </button>
-              </div>
+              <span className="bg-[#E76F51]/10 text-[#D65C3E] px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 border border-[#E76F51]/20">
+                <span className="material-symbols-outlined text-[16px]">key</span> Ready for Occupancy
+              </span>
             </div>
 
-            {/* BROKERAGE & AGENT CONTACT CARD */}
-            <div className="bg-white dark:bg-[#0C1618] border border-[#D8DFDF] dark:border-white/10 rounded-[14px] p-6 shadow-sm">
-              <div className="flex items-center gap-3.5 pb-4 border-b border-[#D8DFDF] dark:border-white/10">
-                <img
-                  src={property.agent?.avatar || 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=400&q=80'}
-                  alt={property.agent?.name || listOfficeName}
-                  className="w-12 h-12 rounded-[8px] object-cover border border-[#D8DFDF] dark:border-white/10"
-                />
+            <div className="h-px w-full bg-[#D8DFDF] my-2"></div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 py-2">
+              <div>
+                <p className="font-display font-bold text-3xl text-[#0D4446]">{propertyPrice}</p>
+                <p className="text-xs text-[#5C6768] font-semibold mt-1">{propertyPricePerSqm}</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="material-symbols-outlined text-4xl text-[#0D4446]">bed</span>
                 <div>
-                  <h3 className="text-sm font-bold text-[#0D4446] dark:text-[#14B8A6] font-sans">
-                    {property.agent?.name || 'Authorized RESO Broker'}
-                  </h3>
-                  <p className="text-xs text-[#5C6768] dark:text-[#95A6A6] font-medium font-sans">
-                    {property.agent?.title || 'Real Estate Agent'}
-                  </p>
-                  <p className="text-[10px] text-[#5C6768] dark:text-[#95A6A6] font-mono">
-                    {listOfficeName}
-                  </p>
+                  <p className="font-display font-bold text-xl text-[#141717]">4 Beds | 5 Baths</p>
+                  <p className="text-xs text-[#5C6768] font-semibold mt-0.5">+ Maid's Room</p>
                 </div>
               </div>
-
-              <div className="mt-4 font-sans">
-                <p className="text-xs font-semibold text-[#141717] dark:text-[#F4F7F7]">
-                  {property.call_to_action || property.agent?.cta || 'Direct message for free site viewing'}
-                </p>
-                {inquirySent ? (
-                  <div className="mt-4 p-4 rounded-[8px] bg-[#F4F5F4] dark:bg-white/5 border border-[#D8DFDF] dark:border-white/10 text-center">
-                    <span className="material-symbols-outlined text-[#0D4446] dark:text-[#14B8A6] text-2xl">check_circle</span>
-                    <p className="text-xs font-bold text-[#0D4446] dark:text-[#14B8A6] mt-1">Inquiry Dispatched</p>
-                    <p className="text-[11px] text-[#5C6768] dark:text-[#95A6A6] mt-0.5">
-                      {property.agent?.name || listOfficeName} has been routed this listing inquiry.
-                    </p>
-                  </div>
-                ) : (
-                  <form onSubmit={handleSendAgentInquiry} className="mt-3 space-y-3">
-                    <input
-                      type="text"
-                      placeholder="Your Name"
-                      value={senderName}
-                      onChange={(e) => setSenderName(e.target.value)}
-                      className="w-full h-[54px] px-4 rounded-[8px] border border-[#D8DFDF] dark:border-white/10 bg-[#F4F5F4] dark:bg-white/5 text-[#141717] dark:text-[#F4F7F7] text-xs font-medium focus:outline-none focus:ring-1 focus:ring-[#0D4446] dark:focus:ring-[#14B8A6]"
-                      required
-                    />
-                    <input
-                      type="tel"
-                      placeholder="Mobile Number (09XX XXX XXXX)"
-                      value={senderPhone}
-                      onChange={(e) => setSenderPhone(e.target.value)}
-                      className="w-full h-[54px] px-4 rounded-[8px] border border-[#D8DFDF] dark:border-white/10 bg-[#F4F5F4] dark:bg-white/5 text-[#141717] dark:text-[#F4F7F7] text-xs font-medium focus:outline-none focus:ring-1 focus:ring-[#0D4446] dark:focus:ring-[#14B8A6]"
-                      required
-                    />
-                    <textarea
-                      rows={3}
-                      value={agentMessage}
-                      onChange={(e) => setAgentMessage(e.target.value)}
-                      className="w-full p-3 rounded-[8px] border border-[#D8DFDF] dark:border-white/10 bg-[#F4F5F4] dark:bg-white/5 text-[#141717] dark:text-[#F4F7F7] text-xs font-medium focus:outline-none focus:ring-1 focus:ring-[#0D4446] dark:focus:ring-[#14B8A6]"
-                      required
-                    />
-                    <button
-                      type="submit"
-                      className="w-full h-[54px] rounded-[8px] bg-[#0D4446] hover:bg-[#083335] text-white text-xs font-bold uppercase tracking-wider font-sans flex items-center justify-center gap-2 transition-all shadow-sm active:scale-[0.99] cursor-pointer"
-                    >
-                      <span className="material-symbols-outlined text-[18px]">send</span>
-                      Send Direct Message
-                    </button>
-                  </form>
-                )}
+              <div className="flex items-center gap-3">
+                <span className="material-symbols-outlined text-4xl text-[#0D4446]">square_foot</span>
+                <div>
+                  <p className="font-display font-bold text-xl text-[#141717]">340 sqm Floor</p>
+                  <p className="text-xs text-[#5C6768] font-semibold mt-0.5">185 sqm Lot</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="material-symbols-outlined text-4xl text-[#0D4446]">directions_car</span>
+                <div>
+                  <p className="font-display font-bold text-xl text-[#141717]">2 Garage Slots</p>
+                  <p className="text-xs text-[#5C6768] font-semibold mt-0.5">Covered Parking</p>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Sticky Floating Inquire Dock on Scroll */}
-      <div
-        className={cn(
-          "fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-white dark:bg-[#0C1618] border border-[#D8DFDF] dark:border-white/15 text-[#141717] dark:text-white px-5 py-3 rounded-full shadow-2xl flex items-center justify-between gap-6 max-w-2xl w-[92%] transition-all duration-300",
-          showStickyDock ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 translate-y-12 pointer-events-none"
-        )}
-      >
-        <div className="flex items-center gap-3 min-w-0">
-          <img
-            src={mediaImages[0]}
-            alt={property.title}
-            className="w-10 h-10 rounded-full object-cover border border-[#D8DFDF] dark:border-white/20 shrink-0"
-          />
-          <div className="truncate min-w-0">
-            <p className="font-semibold text-xs truncate text-[#0F172A] dark:text-white">
-              {property.title}
-            </p>
-            <p className="font-mono text-xs font-bold text-[#0D4446] dark:text-[#14B8A6]">
-              {formattedPrice}
+            <p className="text-[#5C6768] text-base leading-relaxed mt-4">
+              Brand-new modern duplex featuring high ceilings, open-concept living and dining spaces, and a private rooftop terrace. Includes a clean kitchen with built-in storage, dedicated utility quarters, and spacious en-suite bedrooms throughout.
             </p>
           </div>
+        </section>
+
+        {/* 4. MAIN BODY (2-COLUMN SPLIT) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          
+          {/* LEFT COLUMN (65%) */}
+          <div className="lg:col-span-8 space-y-8">
+            
+            {/* PROPERTY DETAILS */}
+            <div className="bg-white rounded-[20px] p-8 shadow-sm border border-[#D8DFDF]">
+              <h2 className="font-display text-xl font-bold text-[#141717] mb-6 flex items-center gap-2">
+                <span className="material-symbols-outlined text-[#0D4446]">info</span>
+                PROPERTY DETAILS
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8 text-sm">
+                <div className="flex justify-between border-b border-[#D8DFDF] pb-2">
+                  <span className="text-[#5C6768] font-semibold">Property Type</span>
+                  <span className="font-bold text-[#141717]">Duplex / Townhouse</span>
+                </div>
+                <div className="flex justify-between border-b border-[#D8DFDF] pb-2">
+                  <span className="text-[#5C6768] font-semibold">Year Built</span>
+                  <span className="font-bold text-[#141717]">2024</span>
+                </div>
+                <div className="flex justify-between border-b border-[#D8DFDF] pb-2">
+                  <span className="text-[#5C6768] font-semibold">Furnishing</span>
+                  <span className="font-bold text-[#141717]">Semi-Furnished</span>
+                </div>
+                <div className="flex justify-between border-b border-[#D8DFDF] pb-2">
+                  <span className="text-[#5C6768] font-semibold">Orientation</span>
+                  <span className="font-bold text-[#141717]">East Facing</span>
+                </div>
+                <div className="flex justify-between border-b border-[#D8DFDF] pb-2">
+                  <span className="text-[#5C6768] font-semibold">HOA Dues</span>
+                  <span className="font-bold text-[#141717]">PHP 2,500 / month</span>
+                </div>
+                <div className="flex justify-between border-b border-[#D8DFDF] pb-2">
+                  <span className="text-[#5C6768] font-semibold">Status</span>
+                  <span className="font-bold text-[#0D9488]">Active</span>
+                </div>
+              </div>
+            </div>
+
+            {/* FLOOR PLANS */}
+            <div className="bg-white rounded-[20px] p-8 shadow-sm border border-[#D8DFDF]">
+              <h2 className="font-display text-xl font-bold text-[#141717] mb-6 flex items-center gap-2">
+                <span className="material-symbols-outlined text-[#0D4446]">architecture</span>
+                FLOOR PLANS
+              </h2>
+              <div className="flex gap-4 mb-6">
+                <button className="px-5 py-2.5 bg-[#0D4446] text-white text-xs font-bold uppercase tracking-wider rounded-lg shadow-sm">Ground Floor</button>
+                <button className="px-5 py-2.5 bg-[#F4F5F4] text-[#5C6768] hover:text-[#0D4446] text-xs font-bold uppercase tracking-wider rounded-lg border border-[#D8DFDF]">Second Floor</button>
+                <button className="px-5 py-2.5 bg-[#F4F5F4] text-[#5C6768] hover:text-[#0D4446] text-xs font-bold uppercase tracking-wider rounded-lg border border-[#D8DFDF]">Third Floor</button>
+              </div>
+              <ul className="text-sm text-[#141717] font-semibold space-y-3 mb-6">
+                <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#E76F51]"></span> 2-Car Garage with automated gate</li>
+                <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#E76F51]"></span> Open-layout Living & Dining Area</li>
+                <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#E76F51]"></span> Main Kitchen with Island Counter</li>
+                <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#E76F51]"></span> Maid's Room with T&B</li>
+              </ul>
+              <div className="h-64 bg-[#F4F5F4] rounded-xl border border-[#D8DFDF] flex items-center justify-center overflow-hidden relative">
+                <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=800" alt="Floor plan preview" className="w-full h-full object-cover opacity-30 grayscale" />
+                <button className="absolute px-6 py-3 bg-[#0D4446] text-white text-xs font-bold uppercase tracking-widest rounded-xl shadow-lg flex items-center gap-2 hover:scale-105 transition-transform">
+                  <span className="material-symbols-outlined text-[18px]">zoom_in</span> View High-Res Blueprint
+                </button>
+              </div>
+            </div>
+
+            {/* LOCATION */}
+            <div className="bg-white rounded-[20px] p-8 shadow-sm border border-[#D8DFDF]">
+              <h2 className="font-display text-xl font-bold text-[#141717] mb-6 flex items-center gap-2">
+                <span className="material-symbols-outlined text-[#0D4446]">map</span>
+                LOCATION
+              </h2>
+              <div className="h-48 bg-[#E5EBEB] rounded-xl mb-6 flex items-center justify-center">
+                <span className="text-[#5C6768] font-bold text-sm uppercase tracking-widest">[ Map Preview Placeholder ]</span>
+              </div>
+              <h3 className="text-sm font-bold text-[#141717] mb-3 uppercase tracking-wider">Nearby Landmarks</h3>
+              <ul className="text-sm text-[#5C6768] space-y-2">
+                <li className="flex items-center justify-between"><span className="flex items-center gap-2"><span className="material-symbols-outlined text-[16px] text-[#E76F51]">school</span> Ateneo de Manila University</span> <span className="font-semibold text-[#141717]">3.5 km</span></li>
+                <li className="flex items-center justify-between"><span className="flex items-center gap-2"><span className="material-symbols-outlined text-[16px] text-[#E76F51]">local_hospital</span> St. Luke's Medical Center</span> <span className="font-semibold text-[#141717]">2.1 km</span></li>
+                <li className="flex items-center justify-between"><span className="flex items-center gap-2"><span className="material-symbols-outlined text-[16px] text-[#E76F51]">shopping_mall</span> Robinsons Magnolia</span> <span className="font-semibold text-[#141717]">1.8 km</span></li>
+              </ul>
+            </div>
+
+            {/* PROPERTY RECORDS & DUE DILIGENCE */}
+            <div className="bg-white rounded-[20px] p-8 shadow-sm border border-[#D8DFDF]">
+              <h2 className="font-display text-xl font-bold text-[#141717] mb-6 flex items-center gap-2">
+                <span className="material-symbols-outlined text-[#0D4446]">verified_user</span>
+                PROPERTY RECORDS & DUE DILIGENCE
+              </h2>
+              <ul className="text-sm space-y-4">
+                <li className="flex justify-between border-b border-[#D8DFDF] pb-3">
+                  <span className="font-semibold text-[#5C6768] flex items-center gap-2"><span className="material-symbols-outlined text-[16px]">description</span> Title Status</span>
+                  <span className="font-bold text-[#141717]">Clean Transfer Certificate (TCT)</span>
+                </li>
+                <li className="flex justify-between border-b border-[#D8DFDF] pb-3">
+                  <span className="font-semibold text-[#5C6768] flex items-center gap-2"><span className="material-symbols-outlined text-[16px]">gavel</span> Encumbrances</span>
+                  <span className="font-bold text-[#0D9488]">None / Cleared</span>
+                </li>
+                <li className="flex justify-between border-b border-[#D8DFDF] pb-3">
+                  <span className="font-semibold text-[#5C6768] flex items-center gap-2"><span className="material-symbols-outlined text-[16px]">receipt_long</span> Property Taxes</span>
+                  <span className="font-bold text-[#141717]">Updated for 2024</span>
+                </li>
+                <li className="flex justify-between pb-1">
+                  <span className="font-semibold text-[#5C6768] flex items-center gap-2"><span className="material-symbols-outlined text-[16px]">water_drop</span> Flood Risk</span>
+                  <span className="font-bold text-[#0D9488]">Low / Zero Recorded History</span>
+                </li>
+              </ul>
+            </div>
+
+          </div>
+
+          {/* RIGHT COLUMN (35%) */}
+          <div className="lg:col-span-4 space-y-6 lg:sticky lg:top-[100px]">
+            
+            {/* SCHEDULE A TOUR */}
+            <div className="bg-white rounded-[20px] p-6 shadow-[0_16px_36px_rgba(13,68,70,0.06)] border border-[#D8DFDF]">
+              <h3 className="font-display text-lg font-bold text-[#141717] mb-4 flex items-center gap-2">
+                <span className="material-symbols-outlined text-[#0D4446]">calendar_month</span> SCHEDULE A TOUR
+              </h3>
+              <div className="flex gap-2 mb-4 p-1 bg-[#F4F5F4] rounded-lg border border-[#D8DFDF]">
+                <button className="flex-1 py-2 bg-white text-[#0D4446] font-bold text-xs rounded-md shadow-sm border border-[#D8DFDF]">In-Person</button>
+                <button className="flex-1 py-2 text-[#5C6768] hover:text-[#0D4446] font-bold text-xs rounded-md transition-colors">Video Chat</button>
+              </div>
+              <div className="mb-4">
+                <p className="text-xs font-semibold text-[#5C6768] mb-2 uppercase tracking-wider">Select Date</p>
+                <div className="flex justify-between">
+                  {['Thu 14', 'Fri 15', 'Sat 16', 'Sun 17'].map((date, i) => (
+                    <button key={i} className={`flex flex-col items-center justify-center w-[60px] h-[70px] rounded-xl border ${i===1 ? 'border-[#0D4446] bg-[#0D4446]/5 text-[#0D4446]' : 'border-[#D8DFDF] text-[#5C6768] hover:border-[#0D4446]'} transition-colors`}>
+                      <span className="text-xs font-bold">{date.split(' ')[0]}</span>
+                      <span className="text-lg font-display font-bold">{date.split(' ')[1]}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <button className="w-full py-3.5 bg-[#E76F51] hover:bg-[#D65C3E] text-white font-bold text-sm rounded-xl uppercase tracking-wider transition-colors shadow-md">
+                Request This Time
+              </button>
+            </div>
+
+            {/* CONTACT AGENT */}
+            <div className="bg-white rounded-[20px] p-6 shadow-[0_16px_36px_rgba(13,68,70,0.06)] border border-[#D8DFDF]">
+              <h3 className="font-display text-lg font-bold text-[#141717] mb-4 flex items-center gap-2">
+                <span className="material-symbols-outlined text-[#0D4446]">contact_page</span> CONTACT AGENT
+              </h3>
+              <div className="flex items-center gap-4 mb-6">
+                <img src="https://ui-avatars.com/api/?name=Sarah+Cruz&background=0D4446&color=fff" alt="Agent" className="w-16 h-16 rounded-full border-2 border-[#D8DFDF]" />
+                <div>
+                  <p className="font-bold text-[#141717] text-lg">Sarah Cruz</p>
+                  <p className="text-xs font-semibold text-[#5C6768]">Licensed Broker • PRC #12345</p>
+                  <p className="text-[10px] text-[#0D9488] font-bold uppercase tracking-widest mt-1">SuperAgent™</p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button className="flex-1 py-2.5 bg-[#25D366]/10 text-[#25D366] border border-[#25D366]/30 font-bold text-xs rounded-xl flex items-center justify-center gap-2 hover:bg-[#25D366]/20 transition-colors">
+                  <span className="material-symbols-outlined text-[16px]">chat</span> WhatsApp
+                </button>
+                <button className="flex-1 py-2.5 bg-[#F4F5F4] text-[#0D4446] border border-[#D8DFDF] font-bold text-xs rounded-xl flex items-center justify-center gap-2 hover:border-[#0D4446] transition-colors">
+                  <span className="material-symbols-outlined text-[16px]">call</span> Call
+                </button>
+              </div>
+            </div>
+
+            {/* MONTHLY PAYMENT */}
+            <div className="bg-white rounded-[20px] p-6 shadow-[0_16px_36px_rgba(13,68,70,0.06)] border border-[#D8DFDF]">
+              <h3 className="font-display text-lg font-bold text-[#141717] mb-2 flex items-center gap-2">
+                <span className="material-symbols-outlined text-[#0D4446]">payments</span> MONTHLY PAYMENT
+              </h3>
+              <p className="font-display font-bold text-2xl text-[#0D4446] mb-1">Est. PHP 176,700 <span className="text-sm text-[#5C6768] font-sans">/ mo</span></p>
+              <p className="text-xs text-[#5C6768] font-semibold mb-4">Based on 20% DP, 15 yrs @ 7.5%</p>
+              <button className="w-full py-2.5 bg-[#F4F5F4] text-[#0D4446] font-bold text-xs uppercase tracking-wider rounded-xl border border-[#D8DFDF] hover:border-[#0D4446] transition-colors flex items-center justify-center gap-2">
+                Payment Calculator <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+              </button>
+            </div>
+
+            {/* DOCUMENTS */}
+            <div className="bg-white rounded-[20px] p-6 shadow-[0_16px_36px_rgba(13,68,70,0.06)] border border-[#D8DFDF]">
+              <h3 className="font-display text-lg font-bold text-[#141717] mb-4 flex items-center gap-2">
+                <span className="material-symbols-outlined text-[#0D4446]">folder</span> DOCUMENTS
+              </h3>
+              <ul className="text-sm font-semibold space-y-3">
+                <li><a href="#" className="flex items-center gap-2 text-[#5C6768] hover:text-[#E76F51] transition-colors"><span className="material-symbols-outlined text-[18px]">picture_as_pdf</span> Property Brochure (PDF)</a></li>
+                <li><a href="#" className="flex items-center gap-2 text-[#5C6768] hover:text-[#E76F51] transition-colors"><span className="material-symbols-outlined text-[18px]">picture_as_pdf</span> Subdivision Guidelines</a></li>
+              </ul>
+            </div>
+
+          </div>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
-          <button
-            type="button"
-            onClick={() => toggleViewingList(property)}
-            className={cn(
-              "w-9 h-9 rounded-full border border-[#D8DFDF] dark:border-white/20 flex items-center justify-center transition-colors cursor-pointer",
-              isSaved ? "bg-[#E76F51] text-white border-transparent" : "hover:bg-[#F4F5F4] dark:hover:bg-white/10 text-slate-500"
-            )}
-            title={isSaved ? "Remove from viewing list" : "Save to viewing list"}
-          >
-            <Star className={cn("w-4 h-4", isSaved && "fill-current")} />
-          </button>
-          <button
-            type="button"
-            onClick={() => setIsScheduleModalOpen(true)}
-            className="px-4 py-2 rounded-full bg-[#E76F51] hover:bg-[#D65C3E] text-white font-mono text-xs font-bold shadow-xs transition-colors cursor-pointer"
-          >
-            Schedule Private Tour
-          </button>
+      </main>
+      
+      {/* 5. SIMILAR HOMES SECTION */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 mt-8 border-t border-[#D8DFDF]">
+        <h2 className="font-display text-2xl font-bold text-[#141717] mb-6">🏡 SIMILAR HOMES YOU MIGHT LIKE</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[1,2,3].map(i => (
+            <div key={i} className="bg-white rounded-[20px] overflow-hidden border border-[#D8DFDF] shadow-sm hover:shadow-lg transition-shadow group cursor-pointer">
+              <div className="h-48 overflow-hidden relative">
+                <img src={`https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=600&sig=${i}`} alt="Home" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <span className="absolute top-3 left-3 bg-white/90 backdrop-blur text-[#0D4446] text-[10px] font-bold px-2 py-1 rounded-md uppercase">For Sale</span>
+              </div>
+              <div className="p-5">
+                <p className="font-display font-bold text-xl text-[#0D4446] mb-1">PHP 27,000,000</p>
+                <p className="text-sm font-bold text-[#141717] mb-2 truncate">Modern Townhouse in Scout Area</p>
+                <p className="text-xs text-[#5C6768] font-semibold mb-3">4 Beds • 4 Baths • 280 sqm</p>
+                <p className="text-xs text-[#5C6768] flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">location_on</span> Scout Area, Quezon City</p>
+              </div>
+            </div>
+          ))}
         </div>
-      </div>
-
-      {/* Downstream Inspection Schedule Modal */}
-      <InspectionScheduleModal
-        isOpen={isScheduleModalOpen}
-        onClose={() => setIsScheduleModalOpen(false)}
-        property={property}
-        onScheduleSuccess={handleScheduleSuccess}
-      />
+      </section>
+      
     </div>
   );
 }

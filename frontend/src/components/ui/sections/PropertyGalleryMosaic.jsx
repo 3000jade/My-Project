@@ -18,7 +18,7 @@ export default function PropertyGalleryMosaic({
       ];
 
   const primaryImage = photoList[0];
-  const secondaryImages = photoList.slice(1, 5);
+  const secondaryImages = photoList.slice(1, 3);
 
   const handlePrev = (e) => {
     e.stopPropagation();
@@ -33,12 +33,12 @@ export default function PropertyGalleryMosaic({
   return (
     <>
       <div className="relative rounded-3xl overflow-hidden bg-[#FBFBF9] border border-[#D8DFDF] shadow-sm">
-        {/* Desktop 5-Photo Grid / Mobile Single Hero */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-2 h-[340px] md:h-[440px] lg:h-[480px]">
-          {/* Main Hero Photo (2 Cols) */}
+        {/* Desktop 1 Hero + 3 Stacked Grid / Mobile Single Hero */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 h-[400px] md:h-[480px] lg:h-[560px]">
+          {/* Main Hero Photo (8 Cols) */}
           <div
             onClick={() => setActiveLightboxIndex(0)}
-            className="lg:col-span-2 relative h-full overflow-hidden cursor-pointer group"
+            className="lg:col-span-8 relative h-full overflow-hidden cursor-pointer group"
           >
             <img
               src={primaryImage}
@@ -52,11 +52,10 @@ export default function PropertyGalleryMosaic({
             </div>
           </div>
 
-          {/* Secondary 4-Photo Mosaic (2 Cols, 2x2 grid) */}
-          <div className="hidden lg:grid col-span-2 grid-cols-2 gap-2 h-full">
+          {/* Secondary Stack (4 Cols, 3 rows) */}
+          <div className="hidden lg:grid col-span-4 grid-rows-3 gap-2 h-full">
             {secondaryImages.map((img, idx) => {
               const actualIndex = idx + 1;
-              const isLast = idx === 3;
               return (
                 <div
                   key={actualIndex}
@@ -69,30 +68,50 @@ export default function PropertyGalleryMosaic({
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                   />
                   <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors" />
-
-                  {isLast && (
-                    <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] flex flex-col items-center justify-center text-white p-2">
-                      <span className="material-symbols-outlined text-2xl mb-1">grid_view</span>
-                      <span className="text-xs font-bold font-sans uppercase tracking-wider">
-                        +{photoList.length > 5 ? photoList.length - 4 : 'All'} Photos
-                      </span>
-                    </div>
-                  )}
                 </div>
               );
             })}
+            
+            {/* Floor Plans & 3D Tour Block */}
+            <div className="relative h-full overflow-hidden cursor-pointer group bg-[#070D0E] flex items-center justify-center border border-[#0D4446]/20">
+              <div className="absolute inset-0 opacity-40 bg-[url('https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=600')] bg-cover bg-center grayscale group-hover:scale-105 transition-transform duration-700 ease-out"></div>
+              <div className="relative z-10 flex flex-col items-center justify-center text-[#F4F7F7] p-4 text-center">
+                <span className="material-symbols-outlined text-3xl text-[#14B8A6] mb-2">view_in_ar</span>
+                <span className="text-sm font-bold font-sans tracking-wide">Floor Plans & 3D Tour</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Floating "View All Photos" Button */}
-        <button
-          type="button"
-          onClick={() => setActiveLightboxIndex(0)}
-          className="absolute bottom-4 right-4 z-10 px-4 py-2.5 bg-white/95 hover:bg-white text-[#0D4446] backdrop-blur-md rounded-xl text-xs font-bold font-sans uppercase tracking-wider shadow-lg border border-[#D8DFDF] flex items-center gap-2 transition-all hover:scale-105 active:scale-95 cursor-pointer"
-        >
-          <span className="material-symbols-outlined text-[18px]">photo_library</span>
-          View All Photos ({photoList.length})
-        </button>
+        {/* Floating Actions Strip */}
+        <div className="absolute bottom-4 left-4 right-4 z-10 flex items-center justify-between pointer-events-none">
+          <div className="flex gap-2 pointer-events-auto">
+            <button
+              type="button"
+              onClick={() => setActiveLightboxIndex(0)}
+              className="px-4 py-2.5 bg-white/95 hover:bg-white text-[#0D4446] backdrop-blur-md rounded-xl text-xs font-bold font-sans shadow-lg border border-[#D8DFDF] flex items-center gap-2 transition-all hover:scale-105 active:scale-95 cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-[18px]">photo_library</span>
+              {photoList.length} Photos
+            </button>
+            <button
+              type="button"
+              className="px-4 py-2.5 bg-white/95 hover:bg-white text-[#0D4446] backdrop-blur-md rounded-xl text-xs font-bold font-sans shadow-lg border border-[#D8DFDF] flex items-center gap-2 transition-all hover:scale-105 active:scale-95 cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-[18px]">360</span>
+              360° Tour
+            </button>
+          </div>
+          
+          <div className="flex gap-2 pointer-events-auto">
+            <button className="px-4 py-2.5 bg-white/95 hover:bg-white text-[#5C6768] hover:text-[#0D4446] backdrop-blur-md rounded-xl text-xs font-bold font-sans shadow-lg border border-[#D8DFDF] flex items-center gap-2 transition-all hover:scale-105 active:scale-95 cursor-pointer">
+              <span className="material-symbols-outlined text-[18px]">share</span> Share
+            </button>
+            <button className="px-4 py-2.5 bg-white/95 hover:bg-white text-[#5C6768] hover:text-[#E76F51] backdrop-blur-md rounded-xl text-xs font-bold font-sans shadow-lg border border-[#D8DFDF] flex items-center gap-2 transition-all hover:scale-105 active:scale-95 cursor-pointer">
+              <span className="material-symbols-outlined text-[18px]">favorite</span> Save
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Lightbox Dialog adhering to project rules */}

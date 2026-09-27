@@ -3,7 +3,8 @@ import React, { useState, useMemo } from 'react';
 export default function FinancingCalculator({
   totalContractPrice = 3000000,
   promoCashOut = 'PHP 5,000 to PHP 20,000',
-  startingAmortization = 'Starting at PHP 15,000 / month'
+  startingAmortization = 'Starting at PHP 15,000 / month',
+  variant = 'default'
 }) {
   const [selectedScheme, setSelectedScheme] = useState('pagibig');
   const [downPaymentPercent, setDownPaymentPercent] = useState(10);
@@ -57,9 +58,9 @@ export default function FinancingCalculator({
   }, [totalContractPrice, downPaymentPercent, loanTermYears, selectedScheme, currentScheme]);
 
   return (
-    <div className="bg-white border border-[#D8DFDF] rounded-3xl p-6 md:p-8 shadow-sm font-sans">
+    <div className={`bg-white border border-[#D8DFDF] rounded-3xl p-6 ${variant === 'compact' ? 'md:p-6' : 'md:p-8'} shadow-sm font-sans`}>
       {/* Header & Promo Callout */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 pb-6 border-b border-[#D8DFDF]">
+      <div className={`flex ${variant === 'compact' ? 'flex-col gap-4' : 'flex-col sm:flex-row sm:items-center'} justify-between pb-6 border-b border-[#D8DFDF]`}>
         <div>
           <span className="text-[10px] uppercase tracking-[0.18em] text-[#5C6768] font-bold font-sans">Pricing & Payment Plans</span>
           <h3 className="font-display text-3xl sm:text-4xl font-light text-[#0D4446] mt-1">
@@ -87,7 +88,7 @@ export default function FinancingCalculator({
         <label className="block text-[10px] font-bold uppercase tracking-[0.16em] text-[#5C6768] mb-3 font-sans">
           Select Financing Method
         </label>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+        <div className={`grid ${variant === 'compact' ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-4'} gap-2`}>
           {schemes.map(scheme => (
             <button
               key={scheme.id}
@@ -134,7 +135,7 @@ export default function FinancingCalculator({
         </div>
       ) : (
         <div className="mt-6 space-y-6 font-sans">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className={`grid ${variant === 'compact' ? 'grid-cols-1 gap-6' : 'grid-cols-1 md:grid-cols-2 gap-4'}`}>
             {/* Down Payment Option */}
             <div>
               <label className="block text-[11px] font-bold uppercase tracking-wider text-[#5C6768] mb-2 font-sans">
@@ -185,7 +186,7 @@ export default function FinancingCalculator({
           </div>
 
           {/* Monthly Amortization Output Box */}
-          <div className="bg-[#FBFBF9] border border-[#D8DFDF] rounded-2xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
+          <div className={`bg-[#FBFBF9] border border-[#D8DFDF] rounded-2xl p-6 flex flex-col ${variant === 'compact' ? 'gap-4' : 'md:flex-row md:items-center justify-between gap-4'} shadow-sm`}>
             <div>
               <span className="text-[10px] uppercase tracking-[0.16em] font-bold text-[#E76F51] font-sans">
                 Est. Monthly Amortization
@@ -201,7 +202,7 @@ export default function FinancingCalculator({
               </p>
             </div>
 
-            <div className="text-xs text-[#5C6768] max-w-xs border-t md:border-t-0 md:border-l border-[#D8DFDF] pt-3 md:pt-0 md:pl-6 font-sans">
+            <div className={`text-xs text-[#5C6768] ${variant === 'compact' ? '' : 'max-w-xs'} border-t ${variant === 'compact' ? 'pt-3' : 'md:border-t-0 md:border-l pt-3 md:pt-0 md:pl-6'} border-[#D8DFDF] font-sans`}>
               * Indicative computation only. Final loan value, interest fixing period, and monthly amortization are subject to bank/Pag-IBIG assessment and credit committee approval.
             </div>
           </div>
