@@ -13,6 +13,7 @@ import {
   PartnersSection,
   ClientStoriesSection,
   BuyerProtectionPromiseSection,
+  AwardsShowcase,
 } from '../../components/ui';
 
 export default function Home() {
@@ -142,6 +143,13 @@ export default function Home() {
       {/* 9. CLIENT STORIES (REAL RELATIONSHIPS) */}
       <div id="client-stories" className="w-full">
         <ClientStoriesSection />
+      </div>
+
+      {/* 9.5 AWARDS & ACHIEVEMENTS */}
+      <div id="awards-showcase" className="w-full">
+        <motion.div {...sectionRevealProps}>
+          <AwardsShowcase />
+        </motion.div>
       </div>
 
       {/* 10. PRIVATE AUDIT: LEAD CAPTURE & CONVERSION */}

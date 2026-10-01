@@ -45,6 +45,7 @@ export { default as ListingHeroGallery } from './sections/ListingHeroGallery';
 export { default as LocationNeighborhoodSection } from './sections/LocationNeighborhoodSection';
 export { default as NeighborhoodSpotlightsSection } from './sections/NeighborhoodSpotlightsSection';
 export { default as PartnersSection } from './sections/PartnersSection';
+export { default as AwardsShowcase } from './sections/AwardsShowcase';
 export { default as PropertyGalleryMosaic } from './sections/PropertyGalleryMosaic';
 export { default as PropertyOverviewSection } from './sections/PropertyOverviewSection';
 export { default as RelatedListingsSection } from './sections/RelatedListingsSection';

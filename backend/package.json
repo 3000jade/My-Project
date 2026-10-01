@@ -12,6 +12,7 @@
     "auth:test": "tsx src/scripts/test-auth.ts",
     "test": "vitest run",
     "db:test": "tsx src/scripts/test-db-connection.ts",
+    "drive:test": "tsx src/scripts/test-google-drive.ts",
     "db:push": "tsx src/scripts/migrate.ts"
   },
   "keywords": [],
