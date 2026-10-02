@@ -18,6 +18,17 @@ export const authService = {
   },
 
   /**
+   * Log in user via Google OAuth SSO
+   */
+  async googleLogin(idToken, role = 'agent') {
+    const response = await apiClient.post('/auth/google', { idToken, role });
+    if (response?.data?.token) {
+      apiClient.setToken(response.data.token);
+    }
+    return response.data;
+  },
+
+  /**
    * Register new user via Express Backend
    */
   async register(email, password, metadata = {}) {

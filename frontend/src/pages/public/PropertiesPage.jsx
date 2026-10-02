@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { useWindowVirtualizer } from '@tanstack/react-virtual';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useVirtualizer } from '@tanstack/react-virtual';
 
 import {
   UnifiedSearchBar,
@@ -12,7 +12,7 @@ import {
   Button
 } from '../../components/ui';
 import { usePropertyFilterEngine } from '../../hooks/usePropertyFilterEngine';
-import { mockProperties } from '../../mockData/mockProperties';
+import { propertyService } from '../../services/propertyService';
 
 export default function PropertiesPage() {
   const [searchParams] = useSearchParams();
@@ -23,6 +23,27 @@ export default function PropertiesPage() {
   const [hoveredPropertyId, setHoveredPropertyId] = useState(null);
   const [targetDistrict, setTargetDistrict] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [showActiveFilters, setShowActiveFilters] = useState(false);
+
+  const [properties, setProperties] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchProperties() {
+      try {
+        setIsLoading(true);
+        const res = await propertyService.getProperties();
+        if (res && res.data) {
+          setProperties(res.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch properties:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchProperties();
+  }, []);
 
   // Hook-driven unified filter engine
   const {
@@ -34,7 +55,7 @@ export default function PropertiesPage() {
     setFilter,
     clearFilters,
     clearSpecificFilter
-  } = usePropertyFilterEngine(mockProperties);
+  } = usePropertyFilterEngine(properties);
 
   // Sync URL search params into the filter engine
   useEffect(() => {
@@ -94,6 +115,7 @@ export default function PropertiesPage() {
 
   // Responsive columns logic for virtualizer
   const [columns, setColumns] = useState(2);
+  const parentRef = useRef(null);
 
   useEffect(() => {
     const handleResize = () => {
@@ -112,8 +134,9 @@ export default function PropertiesPage() {
     return () => window.removeEventListener('resize', handleResize);
   }, [viewMode]);
 
-  const rowVirtualizer = useWindowVirtualizer({
+  const rowVirtualizer = useVirtualizer({
     count: Math.ceil(displayedProperties.length / columns),
+    getScrollElement: () => parentRef.current,
     estimateSize: () => 540,
     overscan: 2,
   });
@@ -136,14 +159,14 @@ export default function PropertiesPage() {
   };
 
   return (
-    <div className="bg-[#FBFBF9] min-h-screen w-full relative">
+    <div className="bg-[#FBFBF9] h-screen overflow-hidden w-full flex flex-col">
       {/* Top spacing below fixed navigation header */}
-      <div className="pt-20 md:pt-24" />
+      <div className="h-[80px] shrink-0" />
 
       {/* Main Container */}
-      <div className="w-full max-w-[1720px] mx-auto px-4 md:px-8 lg:px-10 pb-20">
-        {/* Sticky Unified Search Bar & Quick District Chips */}
-        <div className="sticky top-[80px] z-30 pt-2 pb-4 bg-[#FBFBF9]/95 backdrop-blur-md">
+      <div className="flex-1 w-full px-4 md:px-6 lg:px-8 flex flex-col overflow-hidden pb-4">
+        {/* Unified Search Bar & Quick District Chips (Non-sticky) */}
+        <div className="shrink-0 pt-2 pb-4">
           <UnifiedSearchBar
             filters={filters}
             setFilter={setFilter}
@@ -156,17 +179,48 @@ export default function PropertiesPage() {
         </div>
 
         {/* Portfolio Section Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end my-6 border-b border-gray-200/60 pb-5 gap-4">
+        <div className="shrink-0 flex flex-col md:flex-row justify-between items-start md:items-end my-4 border-b border-gray-200/60 pb-4 gap-4">
           <div>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="inline-block px-3 py-1 bg-[#174849]/10 text-[#174849] rounded-full text-[10px] font-bold font-sans uppercase tracking-[0.2em] border border-[#174849]/20">
-                Exclusive Portfolio
-              </span>
-              <span className="text-[12px] font-semibold text-gray-500 font-sans">
-                • {filteredProperties.length} {filteredProperties.length === 1 ? 'Residence' : 'Residences'} Available
-                {filters.district && ` in ${filters.district}`}
-              </span>
-            </div>
+            {activeFilterCount > 0 && (
+              <div className="flex flex-wrap items-center gap-2 mb-3 min-h-[32px]">
+                <div className="flex items-center gap-1.5 text-[11px] font-bold font-sans uppercase tracking-[0.15em] text-[#174849] shrink-0 mr-1">
+                  <span className="material-symbols-outlined text-[16px]">tune</span>
+                  Active Filtering ({activeFilterCount})
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                      {Object.entries(filters).map(([key, value]) => {
+                        if (!value || value === '' || value === 'Any' || key === 'mapBounds') return null;
+                        if (Array.isArray(value) && value.length === 0) return null;
+                        
+                        let displayValue = String(value);
+                        if (key === 'minPrice') displayValue = `> ₱${(value / 1000000).toFixed(0)}M`;
+                        else if (key === 'maxPrice') displayValue = `< ₱${(value / 1000000).toFixed(0)}M`;
+                        else if (key === 'keyword') displayValue = `Search: "${value}"`;
+                        else if (key === 'propertyType') displayValue = `Type: ${value}`;
+                        else if (key === 'district') displayValue = `District: ${value}`;
+                        else if (key === 'beds') displayValue = `Beds: ${value}`;
+                        else if (key === 'baths') displayValue = `Baths: ${value}`;
+
+                        if (!displayValue || displayValue.trim() === '') return null;
+
+                        return (
+                          <div key={key} className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#174849]/10 text-[#174849] rounded-full text-[10px] font-bold font-sans uppercase tracking-wider border border-[#174849]/20 transition-all hover:bg-[#174849]/15 shrink-0">
+                            <span>{displayValue}</span>
+                            <button type="button" onClick={() => clearSpecificFilter(key)} className="hover:text-red-500 cursor-pointer flex items-center justify-center transition-colors">
+                              <span className="material-symbols-outlined text-[14px]">close</span>
+                            </button>
+                          </div>
+                        );
+                      })}
+                      {activeFilterCount > 0 && (
+                        <button type="button" onClick={clearFilters} className="text-[10px] font-bold text-gray-500 hover:text-gray-800 uppercase tracking-widest cursor-pointer ml-1 transition-colors shrink-0">
+                          Clear All
+                        </button>
+                      )}
+                </div>
+              </div>
+            )}
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold font-display text-[#174849] tracking-tight">
               Available Properties
             </h1>
@@ -198,11 +252,12 @@ export default function PropertiesPage() {
 
         {/* Results Area */}
         {displayedProperties && displayedProperties.length > 0 ? (
-          <div className={`w-full ${viewMode === 'split' ? 'flex flex-col lg:flex-row gap-8 lg:gap-10 items-start' : ''}`}>
+          <div className={`flex-1 overflow-hidden w-full ${viewMode === 'split' ? 'grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start' : ''}`}>
             {/* Left Pane: Property Cards Grid (Visible on mobile when mobileTab === 'list' or in grid mode) */}
             <div
-              className={`w-full ${viewMode === 'split'
-                  ? `lg:w-[54%] xl:w-[52%] flex-shrink-0 ${mobileTab === 'map' ? 'hidden lg:block' : 'block'}`
+              ref={parentRef}
+              className={`h-full overflow-y-auto pr-2 custom-scrollbar w-full ${viewMode === 'split'
+                  ? `lg:col-span-6 xl:col-span-6 ${mobileTab === 'map' ? 'hidden lg:block' : 'block'}`
                   : 'w-full'
                 }`}
             >
@@ -288,7 +343,7 @@ export default function PropertiesPage() {
             {/* Right Pane: Interactive Geographical Map Split Plane (RIGHT SIDE) */}
             {viewMode === 'split' && (
               <div
-                className={`w-full lg:w-[46%] xl:w-[48%] lg:sticky lg:top-[220px] h-[550px] lg:h-[calc(100vh-240px)] rounded-3xl overflow-hidden shadow-lg border border-gray-200/90 z-20 bg-gray-50 ${mobileTab === 'list' ? 'hidden lg:block' : 'block'
+                className={`w-full h-full lg:col-span-6 xl:col-span-6 rounded-3xl overflow-hidden shadow-lg border border-gray-200/90 z-20 bg-gray-50 ${mobileTab === 'list' ? 'hidden lg:block' : 'block'
                   }`}
               >
                 <PropertyMap

@@ -9,7 +9,6 @@ import SearchAndFilterBar from '../../../components/dashboard/SearchAndFilterBar
 import DataTable from '../../../components/dashboard/DataTable';
 import StatusBadge from '../../../components/ui/core/StatusBadge';
 import PropertyQuickEditDrawer from '../../../components/cms/PropertyQuickEditDrawer';
-import CreateListingModal from '../../../components/dashboard/CreateListingModal';
 import { mockProperties } from '../../../mockData/mockProperties';
 import propertyService, { normalizeProperty } from '../../../services/propertyService';
 import { cn } from '../../../utils/cn';
@@ -20,7 +19,6 @@ export default function BrokerProperties() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [activeTab, setActiveTab] = useState('ALL');
@@ -465,13 +463,13 @@ export default function BrokerProperties() {
               <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
               <span className="hidden sm:inline">Refresh</span>
             </button>
-            <button
-              onClick={() => setIsCreateModalOpen(true)}
+            <Link
+              to="/broker/properties/new/edit"
               className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#E76F51] hover:bg-[#D65C3E] text-white text-xs font-mono font-semibold shadow-xs transition-colors cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>New Listing</span>
-            </button>
+            </Link>
             <Link
               to="/broker/properties/new/edit"
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[#D8DFDF] bg-white hover:bg-[#F4F5F4] text-xs font-mono text-slate-700 transition-colors cursor-pointer"
@@ -610,12 +608,7 @@ export default function BrokerProperties() {
         onSave={handleQuickDrawerSave}
       />
 
-      {/* Create New Listing Modal */}
-      <CreateListingModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        onSubmit={handleCreateListing}
-      />
+
 
     </div>
   );

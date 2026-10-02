@@ -38,6 +38,13 @@ export function AuthProvider({ children }) {
     return authData;
   };
 
+  const googleLogin = async (idToken, role = 'agent') => {
+    setError(null);
+    const authData = await authService.googleLogin(idToken, role);
+    setUser(authData.user);
+    return authData;
+  };
+
   const register = async (email, password, metadata) => {
     setError(null);
     const authData = await authService.register(email, password, metadata);
@@ -56,6 +63,7 @@ export function AuthProvider({ children }) {
     loading,
     error,
     login,
+    googleLogin,
     register,
     logout,
   };

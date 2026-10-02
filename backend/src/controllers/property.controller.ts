@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { PropertyService } from '../services/property.service';
+import { GoogleDriveService } from '../services/googleDrive.service';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
 import type { ApiResponse, PaginatedResponse } from '../types/api';
 
@@ -201,6 +202,48 @@ export class PropertyController {
       res.status(statusCode).json({
         success: false,
         error: err.message || 'Could not update property.',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
+  /**
+   * POST /api/properties/:id/media
+   */
+  public static async uploadMedia(
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse>
+  ): Promise<void> {
+    try {
+      const propertyId = String(req.params.id);
+      const files = req.files as Express.Multer.File[];
+      const category = (req.body.category as any) || 'Photos';
+
+      if (!files || files.length === 0) {
+        res.status(400).json({
+          success: false,
+          error: 'No files provided for upload.',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const results = [];
+      for (const file of files) {
+        const result = await GoogleDriveService.uploadListingFile(propertyId, file, category);
+        results.push(result);
+      }
+
+      res.status(200).json({
+        success: true,
+        data: results,
+        message: `Successfully uploaded ${results.length} file(s).`,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (err: any) {
+      res.status(500).json({
+        success: false,
+        error: err.message || 'Error uploading media.',
         timestamp: new Date().toISOString(),
       });
     }

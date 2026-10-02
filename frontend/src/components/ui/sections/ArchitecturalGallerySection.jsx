@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import useEmblaCarousel from 'embla-carousel-react';
 import { 
@@ -8,7 +9,8 @@ import {
   IconChevronLeft, 
   IconChevronRight, 
   IconDimensions, 
-  IconBed, 
+  IconBed,
+  IconBath,
   IconCar,
   IconMapPin
 } from '@tabler/icons-react';
@@ -247,7 +249,7 @@ function getFinancingInfo(item) {
 }
 
 export default function ArchitecturalGallerySection() {
-  const [modalItem, setModalItem] = useState(null);
+  const navigate = useNavigate();
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [scrollSnaps, setScrollSnaps] = useState([]);
   const [visibleRange, setVisibleRange] = useState({ first: 1, last: 3 });
@@ -259,8 +261,8 @@ export default function ArchitecturalGallerySection() {
     align: 'start',
     duration: 38,
     breakpoints: {
-      '(min-width: 1024px)': { slidesToScroll: 3 },
-      '(min-width: 768px)': { slidesToScroll: 2 },
+      '(min-width: 1024px)': { slidesToScroll: 1 },
+      '(min-width: 768px)': { slidesToScroll: 1 },
       '(max-width: 767px)': { slidesToScroll: 1 },
     }
   });
@@ -309,13 +311,13 @@ export default function ArchitecturalGallerySection() {
 
   // 20-second automatic timer triggering next images coming from the right
   useEffect(() => {
-    if (!emblaApi || isPaused || modalItem) return;
+    if (!emblaApi || isPaused) return;
     const timer = setInterval(() => {
       emblaApi.scrollNext();
     }, 20000);
 
     return () => clearInterval(timer);
-  }, [emblaApi, isPaused, modalItem]);
+  }, [emblaApi, isPaused]);
 
   const totalSnapCount = scrollSnaps.length || 3;
 
@@ -352,7 +354,7 @@ export default function ArchitecturalGallerySection() {
 
         {/* 3x1 CAROUSEL STAGE (FLANKED BY LEFT & RIGHT BUTTONS) */}
         <div 
-          className="relative px-0 sm:px-2"
+          className="relative w-full"
           onMouseEnter={() => setIsPaused(true)}
           onMouseLeave={() => setIsPaused(false)}
         >
@@ -361,7 +363,7 @@ export default function ArchitecturalGallerySection() {
             type="button"
             onClick={scrollPrev}
             aria-label="Previous properties"
-            className="absolute -left-3 sm:-left-5 lg:-left-6 top-1/2 -translate-y-1/2 z-30 w-11 h-11 sm:w-13 sm:h-13 rounded-full bg-white/95 backdrop-blur-md border border-[#D1D5DB] shadow-[0_8px_24px_rgba(0,0,0,0.08)] text-[#0D4446] hover:bg-[#0D4446] hover:text-white flex items-center justify-center transition-all duration-300 cursor-pointer active:scale-90 group focus:outline-none"
+            className="absolute -left-4 sm:-left-8 lg:-left-12 top-1/2 -translate-y-1/2 z-30 w-11 h-11 sm:w-13 sm:h-13 rounded-full bg-white/95 backdrop-blur-md border border-[#D1D5DB] shadow-[0_8px_24px_rgba(0,0,0,0.08)] text-[#0D4446] hover:bg-[#0D4446] hover:text-white flex items-center justify-center transition-all duration-300 cursor-pointer active:scale-90 group focus:outline-none"
           >
             <IconChevronLeft size={24} stroke={2.5} className="group-hover:-translate-x-0.5 transition-transform duration-200" />
           </button>
@@ -371,7 +373,7 @@ export default function ArchitecturalGallerySection() {
             type="button"
             onClick={scrollNext}
             aria-label="Next properties"
-            className="absolute -right-3 sm:-right-5 lg:-right-6 top-1/2 -translate-y-1/2 z-30 w-11 h-11 sm:w-13 sm:h-13 rounded-full bg-white/95 backdrop-blur-md border border-[#D1D5DB] shadow-[0_8px_24px_rgba(0,0,0,0.08)] text-[#0D4446] hover:bg-[#0D4446] hover:text-white flex items-center justify-center transition-all duration-300 cursor-pointer active:scale-90 group focus:outline-none"
+            className="absolute -right-4 sm:-right-8 lg:-right-12 top-1/2 -translate-y-1/2 z-30 w-11 h-11 sm:w-13 sm:h-13 rounded-full bg-white/95 backdrop-blur-md border border-[#D1D5DB] shadow-[0_8px_24px_rgba(0,0,0,0.08)] text-[#0D4446] hover:bg-[#0D4446] hover:text-white flex items-center justify-center transition-all duration-300 cursor-pointer active:scale-90 group focus:outline-none"
           >
             <IconChevronRight size={24} stroke={2.5} className="group-hover:translate-x-0.5 transition-transform duration-200" />
           </button>
@@ -385,15 +387,15 @@ export default function ArchitecturalGallerySection() {
                 return (
                   <div
                     key={item.id}
-                    className="pl-6 sm:pl-7 lg:pl-8 min-w-0 flex-[0_0_100%] md:flex-[0_0_50%] lg:flex-[0_0_33.333333%] shrink-0"
+                    className="pl-4 sm:pl-6 lg:pl-8 min-w-0 flex-[0_0_90%] md:flex-[0_0_50%] lg:flex-[0_0_33.333333%] shrink-0"
                   >
                     <div
-                      onClick={() => setModalItem(item)}
-                      className="relative bg-white rounded-[10px] border border-[#D1D5DB] shadow-[0_8px_30px_rgba(0,0,0,0.06)] hover:shadow-[0_20px_40px_rgba(13,68,70,0.12)] hover:border-[#0D4446]/40 hover:-translate-y-1.5 transition-all duration-500 ease-out group cursor-pointer overflow-hidden flex flex-col justify-between h-full"
+                      onClick={() => navigate(`/properties/${item.id}`)}
+                      className="relative bg-white rounded-[10px] border border-[#D1D5DB] shadow-[0_8px_30px_rgba(0,0,0,0.06)] hover:shadow-[0_20px_40px_rgba(13,68,70,0.12)] hover:border-[#0D4446]/40 hover:-translate-y-1.5 transition-all duration-700 ease-out group cursor-pointer overflow-hidden flex flex-col justify-between h-full scale-100 opacity-100 z-10"
                       tabIndex={0}
                       role="button"
                       aria-label={`View details for ${item.title}`}
-                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setModalItem(item); }}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate(`/properties/${item.id}`); }}
                     >
                       {/* Dynamic Top Accent Border */}
                       <div 
@@ -411,83 +413,97 @@ export default function ArchitecturalGallerySection() {
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent pointer-events-none" />
 
-                          {/* Top Badges: Status + Property Type + Financing Badge */}
-                          <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-1.5 z-10 flex-wrap">
-                            <div className="flex items-center gap-1.5">
-                              <span className={`backdrop-blur-md text-white text-[9px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border border-white/20 shadow-xs ${item.statusColor || 'bg-[#0D4446]/90'}`}>
-                                {item.status || (item.priceSuffix ? 'For Rent' : 'For Sale')}
-                              </span>
-                              <span className={`${item.typeColor || 'bg-[#E76F51]'} text-white text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shadow-xs`}>
-                                {item.propertySubType || 'Featured'}
-                              </span>
-                            </div>
-
-                            <span className="bg-white/90 text-[#0D4446] text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shadow-xs backdrop-blur-md border border-white/30">
-                              {finance.badge}
+                          {/* Top Badges: Single Status Pill */}
+                          <div className="absolute top-3 left-3 z-10">
+                            <span className="backdrop-blur-md bg-white/95 text-[#0D4446] text-[10px] sm:text-[11px] font-bold uppercase tracking-wider px-3.5 py-1.5 rounded-full shadow-xs border border-white/40">
+                              {item.status || (item.priceSuffix ? 'For Rent' : 'For Sale')}
                             </span>
                           </div>
 
                           {/* Title and Location overlaid on image bottom */}
                           <div className="absolute bottom-3 left-3.5 right-3.5 z-10">
-                            <h3 className="text-base sm:text-[17px] font-bold font-display text-white line-clamp-1 leading-snug drop-shadow-sm group-hover:text-white transition-colors">
+                            <h3 className="text-lg sm:text-xl font-bold font-display text-white line-clamp-1 leading-snug drop-shadow-sm group-hover:text-white transition-colors">
                               {item.title}
                             </h3>
-                            <p className="flex items-center gap-1 text-[11px] sm:text-xs text-stone-300 font-sans mt-0.5">
-                              <IconMapPin size={12} stroke={2} className="shrink-0 text-stone-400" />
+                            <p className="flex items-center gap-1 text-xs text-stone-300 font-sans mt-0.5">
+                              <IconMapPin size={14} stroke={2} className="shrink-0 text-stone-400" />
                               <span className="truncate">{item.location}</span>
                             </p>
                           </div>
                         </div>
 
-                        {/* Body Content: 3 Metric Cards with Icons + Short Description */}
-                        <div className="p-4 sm:p-5">
-                          <div className="grid grid-cols-3 gap-1.5 pb-3.5 border-b border-stone-200/80 text-center">
-                            <div className="p-1.5 px-1 bg-[#F4F5F4] rounded-[6px] flex flex-col items-center justify-center">
-                              <span className="text-[9px] uppercase font-mono text-[#5C6768] flex items-center justify-center gap-1">
-                                <IconDimensions size={13} stroke={2} className="text-[#0D4446]" />
+                        {/* Body Content: Price + Metrics */}
+                        <div className="p-4 sm:p-5 flex flex-col gap-4">
+                          {/* Price Heading */}
+                          <div>
+                            <span className="text-[11px] sm:text-xs uppercase text-[#E76F51] font-mono font-bold block leading-none mb-1">
+                              {finance.label}
+                            </span>
+                            <div className="text-2xl sm:text-3xl font-extrabold text-[#141717] font-sans tracking-tight leading-tight">
+                              {finance.monthly}
+                            </div>
+                            <div className="text-[11px] sm:text-xs font-mono text-[#5C6768] mt-1 tracking-wide">
+                              {finance.tcp}
+                            </div>
+                          </div>
+
+                          {/* 4 Metric Cards with Icons */}
+                          <div className="grid grid-cols-4 gap-2 sm:gap-2.5 pb-2 border-b border-transparent text-center">
+                            <div className="py-2 px-1.5 bg-[#F4F5F4] rounded-[6px] flex flex-col items-center justify-center">
+                              <span className="text-[9px] uppercase font-mono text-[#5C6768] flex items-center justify-center gap-0.5">
+                                <IconDimensions size={16} stroke={2} className="text-[#0D4446]" />
                                 Area
                               </span>
-                              <p className="text-[10px] sm:text-[11px] font-bold text-[#0D4446] font-mono mt-0.5 text-center leading-tight">
+                              <p className="text-[13px] sm:text-[14px] font-bold text-[#0D4446] font-mono mt-1 text-center leading-tight">
                                 {item.area}
                               </p>
                             </div>
-                            <div className="p-1.5 px-1 bg-[#F4F5F4] rounded-[6px] flex flex-col items-center justify-center">
-                              <span className="text-[9px] uppercase font-mono text-[#5C6768] flex items-center justify-center gap-1">
-                                <IconBed size={13} stroke={2} className="text-[#0D4446]" />
-                                Rooms
+                            <div className="py-2 px-1.5 bg-[#F4F5F4] rounded-[6px] flex flex-col items-center justify-center">
+                              <span className="text-[9px] uppercase font-mono text-[#5C6768] flex items-center justify-center gap-0.5">
+                                <IconBed size={16} stroke={2} className="text-[#0D4446]" />
+                                Beds
                               </span>
-                              <p className="text-[10px] sm:text-[11px] font-bold text-[#0D4446] font-mono mt-0.5 text-center leading-tight">
-                                {item.rooms}
+                              <p className="text-[13px] sm:text-[14px] font-bold text-[#0D4446] font-mono mt-1 text-center leading-tight">
+                                {item.specs.split(' • ')[0].replace(' Beds', '').replace(' Bed', '')}
                               </p>
                             </div>
-                            <div className="p-1.5 px-1 bg-[#F4F5F4] rounded-[6px] flex flex-col items-center justify-center">
-                              <span className="text-[9px] uppercase font-mono text-[#5C6768] flex items-center justify-center gap-1">
-                                <IconCar size={13} stroke={2} className="text-[#0D4446]" />
+                            <div className="py-2 px-1.5 bg-[#F4F5F4] rounded-[6px] flex flex-col items-center justify-center">
+                              <span className="text-[9px] uppercase font-mono text-[#5C6768] flex items-center justify-center gap-0.5">
+                                <IconBath size={16} stroke={2} className="text-[#0D4446]" />
+                                Baths
+                              </span>
+                              <p className="text-[13px] sm:text-[14px] font-bold text-[#0D4446] font-mono mt-1 text-center leading-tight">
+                                {item.specs.split(' • ')[1].replace(' Baths', '').replace(' Bath', '')}
+                              </p>
+                            </div>
+                            <div className="py-2 px-1.5 bg-[#F4F5F4] rounded-[6px] flex flex-col items-center justify-center">
+                              <span className="text-[9px] uppercase font-mono text-[#5C6768] flex items-center justify-center gap-0.5">
+                                <IconCar size={16} stroke={2} className="text-[#0D4446]" />
                                 Parking
                               </span>
-                              <p className="text-[10px] sm:text-[11px] font-bold text-[#0D4446] font-mono mt-0.5 text-center leading-tight">
-                                {item.parking}
+                              <p className="text-[13px] sm:text-[14px] font-bold text-[#0D4446] font-mono mt-1 text-center leading-tight">
+                                {item.parking.replace(' Cars', '')}
                               </p>
                             </div>
                           </div>
-
-                          <p className="text-xs text-[#5C6768] mt-3 leading-relaxed line-clamp-2 font-normal">
-                            {item.tagline}
-                          </p>
                         </div>
                       </div>
 
-                      {/* Lower Stage: Monthly Amortization First + Total Price + Inspect Action */}
-                      <div className="px-4 sm:px-5 pb-4 sm:pb-5 pt-2.5 flex items-center justify-between border-t border-stone-200/80">
-                        <div>
-                          <span className="text-[10px] uppercase text-[#E76F51] font-mono font-bold block leading-none">
-                            {finance.label}
-                          </span>
-                          <div className="text-base sm:text-lg font-extrabold text-[#0D4446] font-sans tracking-tight leading-tight mt-1">
-                            {finance.monthly}
+                      {/* Lower Stage: Agent Redesign + Inspect Action */}
+                      <div className="px-4 sm:px-5 pb-4 sm:pb-5 pt-3.5 flex items-center justify-between border-t border-stone-200/80 mt-1">
+                        {/* Redesigned Agent Profile */}
+                        <div className="flex items-center gap-3 group/agent cursor-pointer">
+                          <div className="relative">
+                            <img 
+                              src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=100&h=100" 
+                              alt="Listing Agent" 
+                              className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm ring-1 ring-stone-200 transition-transform duration-300 group-hover/agent:scale-105" 
+                            />
+                            {/* Online Status Indicator */}
+                            <div className="absolute bottom-0.5 right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white shadow-sm" />
                           </div>
-                          <div className="text-[10px] font-mono text-[#5C6768] mt-0.5">
-                            {finance.tcp}
+                          <div className="flex flex-col justify-center">
+                            <span className="text-[13px] sm:text-sm font-bold text-[#0D4446] leading-none group-hover/agent:text-[#E76F51] transition-colors duration-300">Elena Silva</span>
                           </div>
                         </div>
 
@@ -495,12 +511,12 @@ export default function ArchitecturalGallerySection() {
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setModalItem(item);
+                            navigate(`/properties/${item.id}`);
                           }}
-                          className="btn-shine premium-btn px-3.5 py-2 bg-[#0D4446] hover:bg-[#082b2d] text-white rounded-[6px] text-xs font-bold uppercase tracking-wider transition-all duration-300 cursor-pointer flex items-center gap-1.5 shadow-sm"
+                          className="btn-shine premium-btn group/btn px-3 py-1.5 bg-[#0D4446] hover:bg-[#082b2d] text-white rounded-[5px] text-[10px] font-bold uppercase tracking-widest transition-all duration-300 cursor-pointer flex items-center justify-center gap-1 shadow-sm"
                         >
-                          <IconEye size={16} stroke={2} className="shrink-0" />
-                          <span>Inspect</span>
+                          <span>View Details</span>
+                          <IconArrowRight size={12} stroke={3} className="shrink-0 group-hover/btn:translate-x-1 transition-transform duration-300" />
                         </button>
                       </div>
                     </div>
@@ -540,111 +556,6 @@ export default function ArchitecturalGallerySection() {
         </div>
 
       </div>
-
-      {/* FULLSCREEN STUDY MODAL (Compliant with AGENTS.md Physics & Lenis Prevention) */}
-      <AnimatePresence>
-        {modalItem && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8 font-sans text-[#0f1722]">
-            {/* Heavy Blur Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              onClick={() => setModalItem(null)}
-              className="absolute inset-0 bg-black/80 backdrop-blur-md"
-            />
-
-            {/* Modal Body with Spring Entrance Physics */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 100 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 60 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              data-lenis-prevent="true"
-              className="relative w-full max-w-5xl max-h-[90vh] bg-white border border-[#e5e5df] rounded-[5px] overflow-hidden shadow-2xl z-10 flex flex-col md:flex-row overflow-y-auto no-scrollbar"
-            >
-              {/* Premium White Circle Close Button */}
-              <button
-                onClick={() => setModalItem(null)}
-                aria-label="Close modal"
-                className="absolute top-5 right-5 z-20 w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-lg hover:bg-gray-100 transition-colors cursor-pointer text-black"
-              >
-                <IconX size={20} stroke={2.5} />
-              </button>
-
-              {/* Modal Left Image Stage */}
-              <div className="w-full md:w-3/5 bg-black flex items-center justify-center min-h-[320px]">
-                <img
-                  src={modalItem.image}
-                  alt={modalItem.title}
-                  className="w-full h-full max-h-[70vh] object-cover"
-                />
-              </div>
-
-              {/* Modal Right Dossier Panel */}
-              <div className="w-full md:w-2/5 p-8 md:p-10 flex flex-col justify-between bg-[#FFFFFF]">
-                <div className="space-y-6">
-                  <div>
-                    <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#0D4446] block mb-1">
-                      {modalItem.propertySubType}
-                    </span>
-                    <h3 className="text-2xl sm:text-3xl font-sans font-extrabold text-[#141717] tracking-tight leading-tight">
-                      {modalItem.title}
-                    </h3>
-                    <p className="text-xs font-medium font-sans text-[#5C6768] mt-1">
-                      {modalItem.location} • {modalItem.architect} ({modalItem.yearBuilt})
-                    </p>
-                  </div>
-
-                  {/* Philippine Peso Price Card */}
-                  <div className="p-4 rounded-[8px] bg-[#FBFBF9] border border-[#D8DFDF]">
-                    <div className="text-[10px] font-semibold text-[#5C6768] uppercase tracking-wider">
-                      Acquisition Value
-                    </div>
-                    <div className="flex items-baseline gap-1 mt-1 text-[#141717] font-sans font-extrabold text-2xl sm:text-3xl">
-                      <span className="text-lg font-extrabold text-emerald-600">₱</span>
-                      <span>{modalItem.price}</span>
-                      {modalItem.priceSuffix && (
-                        <span className="text-xs font-medium text-[#5C6768] ml-1">
-                          {modalItem.priceSuffix}
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-xs text-[#5C6768] font-medium font-sans mt-1">
-                      {modalItem.specs}
-                    </div>
-                  </div>
-
-                  {/* Property Narrative */}
-                  <p className="text-xs sm:text-sm text-[#5C6768] leading-relaxed font-sans font-normal">
-                    {modalItem.publicRemarks}
-                  </p>
-
-                  {/* Amenities Tags */}
-                  <div className="flex flex-wrap gap-1.5">
-                    {modalItem.features.map((amenity, i) => (
-                      <span key={i} className="px-2.5 py-1 rounded-[4px] text-[10px] font-semibold uppercase bg-[#F4F5F4] text-[#141717] border border-[#D8DFDF]">
-                        {amenity}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="pt-6 mt-6 border-t border-[#D8DFDF]">
-                  <button
-                    onClick={() => setModalItem(null)}
-                    className="w-full h-[54px] rounded-[6px] bg-[#0D4446] hover:bg-[#083335] text-white font-semibold text-sm transition-all duration-300 flex items-center justify-center gap-2 shadow-sm cursor-pointer"
-                  >
-                    <span>Inquire Portfolio Asset</span>
-                    <IconArrowRight size={18} stroke={2} />
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </section>
   );
 }

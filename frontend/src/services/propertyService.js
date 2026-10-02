@@ -211,6 +211,20 @@ export const propertyService = {
     const response = await apiClient.delete(`/properties/${id}`);
     return response;
   },
+
+  /**
+   * Upload media files to a property
+   */
+  async uploadMedia(id, formData) {
+    // Note: We use the underlying axios instance to ensure FormData isn't stringified
+    // and let the browser set the boundary for Content-Type
+    const response = await apiClient.post(`/properties/${id}/media`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response?.data || response;
+  }
 };
 
 export default propertyService;

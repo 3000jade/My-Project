@@ -46,9 +46,13 @@ export const createPropertySchema = z.object({
       lotSizeArea: z.number().nonnegative().optional(),
       lotSizeUnits: z.string().optional(),
       propertyType: z.string().optional(),
+      transactionType: z.enum(['For Sale', 'For Rent']).optional(),
+      propertyCondition: z.string().optional(),
       propertySubType: z.string().optional(),
       yearBuilt: z.number().int().optional(),
       parkingTotal: z.number().int().nonnegative().optional(),
+      parkingCovered: z.number().int().nonnegative().optional(),
+      parkingOpen: z.number().int().nonnegative().optional(),
     })
     .optional(),
   features: z.array(z.string()).optional(),

@@ -59,7 +59,8 @@ CP_kerby/
 - **Iconography**: [Tabler Icons](https://tabler.io/icons) (`@tabler/icons-react: ^3.45.0`)
 
 ### Maps & Regional Data
-- **Interactive Maps**: [Leaflet](https://leafletjs.com/) (`leaflet: ^1.9.4`, `react-leaflet: ^5.0.0`)
+- **Interactive Maps**: [OpenStreetMap (OSM)](https://www.openstreetmap.org/) rendered via [Leaflet](https://leafletjs.com/) (`leaflet: ^1.9.4`, `react-leaflet: ^5.0.0`)
+- **Geocoding Engine**: Nominatim API (Free, open-source address-to-coordinate resolution with auto-pin functionality)
 - **Localization**: [select-philippines-address](https://www.npmjs.com/package/select-philippines-address) (`^1.0.6`) — Philippine regions, provinces, cities, and barangays
 
 ### Networking & Client Services

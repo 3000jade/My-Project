@@ -94,7 +94,7 @@ export default function NeighborhoodSpotlightsSection() {
   return (
     <section
       id="neighborhood-spotlights-inner"
-      className="w-full bg-[#FBFBF9] py-16 md:py-24 border-b border-[#D1D5DB] relative z-20 transition-colors duration-500 overflow-hidden font-sans text-[#141717]"
+      className="w-full min-h-screen flex items-center justify-center bg-[#FBFBF9] py-12 md:py-16 border-b border-[#D1D5DB] relative z-20 transition-colors duration-500 overflow-hidden font-sans text-[#141717]"
       style={{
         backgroundImage: "url('/images/neighborhood-pattern.png')",
         backgroundRepeat: 'repeat',
@@ -265,26 +265,6 @@ export default function NeighborhoodSpotlightsSection() {
             </AnimatePresence>
           </div>
         </div>
-
-        {/* Assistance strip beneath accordion */}
-        <div className="mt-12 md:mt-16 p-4 sm:p-5 rounded-[14px] bg-white border border-[#D8DFDF] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs sm:text-sm shadow-xs max-w-5xl mx-auto">
-          <div className="flex items-center gap-3 text-[#141717]">
-            <span className="w-8 h-8 rounded-full bg-[#0D4446]/10 flex items-center justify-center text-[#0D4446] shrink-0">
-              <IconShieldCheck size={18} stroke={2.5} />
-            </span>
-            <span className="font-medium">
-              Not sure which property type matches your family’s budget or Pag-IBIG loan capacity?
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={() => navigate('/contact')}
-            className="px-5 py-2.5 rounded-full bg-[#0D4446] hover:bg-[#082b2d] text-white font-bold text-xs uppercase tracking-wider transition-all duration-300 cursor-pointer shrink-0 shadow-xs"
-          >
-            Ask a Licensed Advisor Free
-          </button>
-        </div>
-
       </div>
     </section>
   );

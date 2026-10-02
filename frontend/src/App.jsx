@@ -8,6 +8,10 @@ import { PageLoader } from './components/ui';
 import { ReactLenis, useLenis } from 'lenis/react';
 import { Agentation } from 'agentation';
 import { AuthProvider } from './context/AuthContext';
+import { GoogleOAuthProvider } from '@react-oauth/google';
+
+// Safe fallback if env var is missing during dev
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'mock-client-id-for-dev';
 
 // Code-split secondary client routes to shrink initial bundle size and boost startup speed
 const PropertiesPage = lazy(() => import('./pages/public/PropertiesPage'));
@@ -54,7 +58,7 @@ import AgentProfile from './pages/portals/agent/AgentProfile';
 import BrokerDashboard from './pages/portals/broker/BrokerDashboard';
 import BrokerProperties from './pages/portals/broker/BrokerProperties';
 import BrokerPropertyDetail from './pages/portals/broker/BrokerPropertyDetail';
-import BrokerPropertyEditStudio from './pages/portals/broker/BrokerPropertyEditStudio';
+import BrokerCreateListings from './pages/portals/broker/BrokerCreateListings';
 import BrokerInquiries from './pages/portals/broker/BrokerInquiries';
 import BrokerInquiryDetail from './pages/portals/broker/BrokerInquiryDetail';
 import BrokerAppointments from './pages/portals/broker/BrokerAppointments';
@@ -158,7 +162,7 @@ function AppRoutes({ isAppLoading }) {
           path="/broker/properties/:id/edit"
           element={
             <ProtectedRoute allowedRoles={['broker', 'admin']}>
-              <BrokerPropertyEditStudio />
+              <BrokerCreateListings />
             </ProtectedRoute>
           }
         />
@@ -252,13 +256,15 @@ export default function App() {
 
   return (
     <ReactLenis root options={{ lerp: 0.08, smoothWheel: true }}>
-      <Router>
-        <ScrollToTop />
-        <AuthProvider>
-          <AppRoutes isAppLoading={isAppLoading} />
-        </AuthProvider>
-        {import.meta.env.DEV && <Agentation />}
-      </Router>
+      <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+        <Router>
+          <ScrollToTop />
+          <AuthProvider>
+            <AppRoutes isAppLoading={isAppLoading} />
+          </AuthProvider>
+          {import.meta.env.DEV && <Agentation />}
+        </Router>
+      </GoogleOAuthProvider>
     </ReactLenis>
   );
 }

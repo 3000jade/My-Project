@@ -4,6 +4,12 @@ import { requireAuth } from '../middleware/auth.middleware';
 import { requireRole } from '../middleware/role.middleware';
 import { validateBody, validateQuery } from '../middleware/validate.middleware';
 import { createPropertySchema, queryPropertySchema } from '../schemas/property.schema';
+import multer from 'multer';
+
+const upload = multer({ 
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 50 * 1024 * 1024 } // 50MB per file
+});
 
 const router = Router();
 
@@ -32,6 +38,15 @@ router.put(
   requireAuth,
   requireRole(['agent', 'broker', 'admin']),
   PropertyController.updateProperty
+);
+
+// Upload media for a property (Google Drive integration)
+router.post(
+  '/:id/media',
+  requireAuth,
+  requireRole(['agent', 'broker', 'admin']),
+  upload.array('media', 15),
+  PropertyController.uploadMedia
 );
 
 // High-privilege: Only brokers and admins can delete property listings
