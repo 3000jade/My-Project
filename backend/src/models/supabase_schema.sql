@@ -44,13 +44,21 @@ CREATE POLICY "Users can insert their own profile."
 DROP POLICY IF EXISTS "Users can update their own profile." ON public.profiles;
 CREATE POLICY "Users can update their own profile."
   ON public.profiles FOR UPDATE
-  USING (auth.uid() = id OR EXISTS (
-    SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'
-  ));
+  USING ((select auth.uid()) = id OR EXISTS (
+    SELECT 1 FROM public.profiles WHERE id = (select auth.uid()) AND role = 'admin'
+  ))
+  WITH CHECK (
+    (role = (SELECT p.role FROM public.profiles p WHERE p.id = (select auth.uid()))) OR
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = (select auth.uid()) AND role = 'admin')
+  );
 
 -- Automatic profile creation on auth.users insert
 CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, auth
+AS $$
 BEGIN
   INSERT INTO public.profiles (id, email, full_name, avatar_url, role)
   VALUES (
@@ -58,7 +66,10 @@ BEGIN
     NEW.email,
     COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
     COALESCE(NEW.raw_user_meta_data->>'avatar_url', ''),
-    COALESCE(NEW.raw_user_meta_data->>'role', 'agent')
+    CASE 
+      WHEN NEW.raw_user_meta_data->>'role' IN ('admin', 'broker') THEN 'agent'
+      ELSE COALESCE(NEW.raw_user_meta_data->>'role', 'agent')
+    END
   )
   ON CONFLICT (id) DO UPDATE SET
     email = EXCLUDED.email,
@@ -68,7 +79,7 @@ BEGIN
     updated_at = timezone('utc'::text, now());
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
@@ -105,15 +116,15 @@ CREATE TABLE IF NOT EXISTS public.properties (
   state TEXT,
   state_or_province VARCHAR(64),
   postal_code VARCHAR(20) DEFAULT '1000',
-  latitude DOUBLE PRECISION,
-  longitude DOUBLE PRECISION,
+  latitude NUMERIC(10, 7),
+  longitude NUMERIC(10, 7),
   beds INTEGER NOT NULL DEFAULT 1,
   baths INTEGER NOT NULL DEFAULT 1,
-  bedrooms_total SMALLINT DEFAULT 1,
-  bathrooms_total_integer SMALLINT DEFAULT 1,
-  bathrooms_full SMALLINT DEFAULT 1,
-  bathrooms_half SMALLINT DEFAULT 0,
-  stories_total SMALLINT DEFAULT 1,
+  bedrooms_total INTEGER DEFAULT 1,
+  bathrooms_total_integer INTEGER DEFAULT 1,
+  bathrooms_full INTEGER DEFAULT 1,
+  bathrooms_half INTEGER DEFAULT 0,
+  stories_total INTEGER DEFAULT 1,
   sqft NUMERIC(10, 2) NOT NULL,
   living_area NUMERIC(10, 2),
   living_area_units VARCHAR(20) DEFAULT 'Square Meters',
@@ -124,9 +135,9 @@ CREATE TABLE IF NOT EXISTS public.properties (
   features TEXT[] DEFAULT '{}',
   interior_features TEXT[] DEFAULT '{}',
   exterior_features TEXT[] DEFAULT '{}',
-  parking_total SMALLINT DEFAULT 0,
-  parking_covered SMALLINT DEFAULT 0,
-  parking_open SMALLINT DEFAULT 0,
+  parking_total INTEGER DEFAULT 0,
+  parking_covered INTEGER DEFAULT 0,
+  parking_open INTEGER DEFAULT 0,
   images TEXT[] DEFAULT '{}',
   public_remarks TEXT,
   custom_reso_attributes JSONB DEFAULT '{}'::jsonb,
@@ -156,16 +167,16 @@ ALTER TABLE public.properties
   ADD COLUMN IF NOT EXISTS living_area_units VARCHAR(20) DEFAULT 'Square Meters',
   ADD COLUMN IF NOT EXISTS lot_size_area NUMERIC(12, 2),
   ADD COLUMN IF NOT EXISTS lot_size_units VARCHAR(20) DEFAULT 'Square Meters',
-  ADD COLUMN IF NOT EXISTS bedrooms_total SMALLINT DEFAULT 1,
-  ADD COLUMN IF NOT EXISTS bathrooms_total_integer SMALLINT DEFAULT 1,
-  ADD COLUMN IF NOT EXISTS bathrooms_full SMALLINT DEFAULT 1,
-  ADD COLUMN IF NOT EXISTS bathrooms_half SMALLINT DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS stories_total SMALLINT DEFAULT 1,
+  ADD COLUMN IF NOT EXISTS bedrooms_total INTEGER DEFAULT 1,
+  ADD COLUMN IF NOT EXISTS bathrooms_total_integer INTEGER DEFAULT 1,
+  ADD COLUMN IF NOT EXISTS bathrooms_full INTEGER DEFAULT 1,
+  ADD COLUMN IF NOT EXISTS bathrooms_half INTEGER DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS stories_total INTEGER DEFAULT 1,
   ADD COLUMN IF NOT EXISTS interior_features TEXT[] DEFAULT '{}',
   ADD COLUMN IF NOT EXISTS exterior_features TEXT[] DEFAULT '{}',
-  ADD COLUMN IF NOT EXISTS parking_total SMALLINT DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS parking_covered SMALLINT DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS parking_open SMALLINT DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS parking_total INTEGER DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS parking_covered INTEGER DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS parking_open INTEGER DEFAULT 0,
   ADD COLUMN IF NOT EXISTS unparsed_address TEXT,
   ADD COLUMN IF NOT EXISTS subdivision_name VARCHAR(128),
   ADD COLUMN IF NOT EXISTS state_or_province VARCHAR(64),
@@ -313,7 +324,11 @@ CREATE POLICY "Agents, brokers, and admins can manage media."
 
 -- Trigger to synchronize property_media with properties.images
 CREATE OR REPLACE FUNCTION public.sync_property_media_to_images()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   target_id UUID;
 BEGIN
@@ -329,7 +344,7 @@ BEGIN
   WHERE id = target_id;
   RETURN NULL;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 DROP TRIGGER IF EXISTS trg_sync_property_media ON public.property_media;
 CREATE TRIGGER trg_sync_property_media
@@ -379,19 +394,23 @@ CREATE POLICY "Agents, brokers, and admins can manage rooms."
 -- 2D. BROKER APPROVAL STATUS LIFECYCLE ENFORCEMENT
 -- ==============================================================================
 CREATE OR REPLACE FUNCTION public.enforce_property_status_lifecycle()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, auth
+AS $$
 DECLARE
   user_role TEXT;
 BEGIN
-  SELECT role INTO user_role FROM public.profiles WHERE id = auth.uid();
+  SELECT role INTO user_role FROM public.profiles WHERE id = (select auth.uid());
   IF NEW.standard_status = 'Active' AND (OLD.standard_status IS DISTINCT FROM 'Active') THEN
-    IF user_role IS NOT NULL AND user_role NOT IN ('broker', 'admin') THEN
+    IF user_role IS NULL OR user_role NOT IN ('broker', 'admin') THEN
       RAISE EXCEPTION 'Only brokers and administrators can approve and activate property listings.';
     END IF;
   END IF;
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 DROP TRIGGER IF EXISTS trg_enforce_property_status ON public.properties;
 CREATE TRIGGER trg_enforce_property_status
@@ -407,7 +426,7 @@ CREATE TABLE IF NOT EXISTS public.inquiries (
   property_id UUID REFERENCES public.properties(id) ON DELETE SET NULL,
   name TEXT NOT NULL,
   email TEXT NOT NULL,
-  phone TEXT,
+  phone TEXT NOT NULL DEFAULT '',
   message TEXT NOT NULL,
   preferred_date DATE,
   type TEXT NOT NULL DEFAULT 'general' CHECK (type IN ('general', 'tour', 'offer')),
@@ -450,6 +469,7 @@ CREATE TABLE IF NOT EXISTS public.appointments (
   agent_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
   client_name TEXT NOT NULL,
   client_email TEXT NOT NULL,
+  email TEXT GENERATED ALWAYS AS (client_email) STORED,
   client_phone TEXT,
   appointment_time TIMESTAMPTZ NOT NULL,
   status TEXT NOT NULL DEFAULT 'requested' CHECK (status IN ('requested', 'confirmed', 'completed', 'cancelled')),
