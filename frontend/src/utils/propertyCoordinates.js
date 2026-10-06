@@ -1,4 +1,26 @@
-// Property Coordinates Mapping & Geocoding Resolver
+// Property Coordinates Mapping & Geocoding Resolver for the Philippines
+
+export const PHILIPPINES_BBOX = {
+  minLat: 4.5,
+  maxLat: 21.5,
+  minLng: 116.0,
+  maxLng: 127.0
+};
+
+/**
+ * Validates whether given coordinates fall within the Philippine archipelago bounds
+ */
+export function isWithinPhilippineBounds(lat, lng) {
+  if (typeof lat !== 'number' || typeof lng !== 'number' || isNaN(lat) || isNaN(lng)) {
+    return false;
+  }
+  return (
+    lat >= PHILIPPINES_BBOX.minLat &&
+    lat <= PHILIPPINES_BBOX.maxLat &&
+    lng >= PHILIPPINES_BBOX.minLng &&
+    lng <= PHILIPPINES_BBOX.maxLng
+  );
+}
 
 export const KNOWN_PROPERTY_COORDINATES = {
   "cmtdur9ap00011041l5curjy2": { lat: 14.5866, lng: 121.0827, area: "Rosario, Pasig" },
@@ -17,7 +39,7 @@ export const KNOWN_PROPERTY_COORDINATES = {
 };
 
 // District fallback coordinates in the Philippines
-const DISTRICT_CENTERS = {
+export const DISTRICT_CENTERS = {
   "makati": { lat: 14.5547, lng: 121.0244 },
   "taguig": { lat: 14.5498, lng: 121.0504 },
   "bgc": { lat: 14.5505, lng: 121.0478 },
@@ -46,10 +68,18 @@ export function getPropertyCoordinates(property) {
 
   // Explicit coordinates on property record
   if (property.lat && property.lng) {
-    return { lat: Number(property.lat), lng: Number(property.lng) };
+    const lat = Number(property.lat);
+    const lng = Number(property.lng);
+    if (!isNaN(lat) && !isNaN(lng)) {
+      return { lat, lng };
+    }
   }
   if (property.coordinates && property.coordinates.lat && property.coordinates.lng) {
-    return { lat: Number(property.coordinates.lat), lng: Number(property.coordinates.lng) };
+    const lat = Number(property.coordinates.lat);
+    const lng = Number(property.coordinates.lng);
+    if (!isNaN(lat) && !isNaN(lng)) {
+      return { lat, lng };
+    }
   }
 
   // Known mock ID
@@ -62,7 +92,7 @@ export function getPropertyCoordinates(property) {
   const fullText = `${property.location || ''} ${property.address || ''} ${property.city || ''} ${property.district || ''}`.toLowerCase();
   for (const [key, coords] of Object.entries(DISTRICT_CENTERS)) {
     if (fullText.includes(key)) {
-      // Add slight jitter so overlapping pins don't completely cover each other
+      // Deterministic jitter so overlapping pins don't completely cover each other
       const hash = String(property.id || property.name || '0').split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
       const jitterLat = ((hash % 17) - 8) * 0.003;
       const jitterLng = (((hash * 3) % 17) - 8) * 0.003;
@@ -78,28 +108,28 @@ export function getPropertyCoordinates(property) {
 }
 
 /**
- * Formats property price into short clean representation (e.g. ?185M, ?3.0M)
+ * Formats property price into short clean representation (e.g. ₱185M, ₱3.5M)
  */
 export function formatPricePill(priceStr, priceRaw) {
   if (priceRaw && typeof priceRaw === 'number') {
     if (priceRaw >= 1000000) {
       const inMillions = priceRaw / 1000000;
-      return `?${inMillions % 1 === 0 ? inMillions : inMillions.toFixed(1)}M`;
+      return `₱${inMillions % 1 === 0 ? inMillions : inMillions.toFixed(1)}M`;
     }
     if (priceRaw >= 1000) {
-      return `?${(priceRaw / 1000).toFixed(0)}K`;
+      return `₱${(priceRaw / 1000).toFixed(0)}K`;
     }
   }
-  if (!priceStr) return '? --';
-  const clean = priceStr.replace(/[^0-9.]/g, '');
+  if (!priceStr) return '₱ --';
+  const clean = String(priceStr).replace(/[^0-9.]/g, '');
   const num = parseFloat(clean);
   if (!isNaN(num)) {
     if (num >= 1000000) {
       const inM = num / 1000000;
-      return `?${inM % 1 === 0 ? inM : inM.toFixed(1)}M`;
+      return `₱${inM % 1 === 0 ? inM : inM.toFixed(1)}M`;
     }
     if (num >= 1000) {
-      return `?${(num / 1000).toFixed(0)}K`;
+      return `₱${(num / 1000).toFixed(0)}K`;
     }
   }
   return priceStr;
