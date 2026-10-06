@@ -3,6 +3,8 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useNavigate } from 'react-router-dom';
 import { getPropertyCoordinates, formatPricePill } from '../../../utils/propertyCoordinates';
+import { PHILIPPINE_BASEMAPS, MOCK_PH_DISTRICTS } from '../../../mockData/mockMapDistricts';
+import MapLayerControl from './MapLayerControl';
 
 export default function PropertyMap({
   properties = [],
@@ -15,18 +17,22 @@ export default function PropertyMap({
 }) {
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
+  const tileLayerRef = useRef(null);
   const markersLayerRef = useRef(null);
+  const districtsLayerRef = useRef(null);
   const moveTimeoutRef = useRef(null);
   const navigate = useNavigate();
 
   const [searchOnMove, setSearchOnMove] = useState(false);
+  const [activeBasemap, setActiveBasemap] = useState('osm-standard');
+  const [showDistricts, setShowDistricts] = useState(false);
   const [mapReady, setMapReady] = useState(false);
 
-  // Initialize Map
+  // Initialize Map Instance
   useEffect(() => {
     if (!mapContainerRef.current || mapInstanceRef.current) return;
 
-    // Manila / Makati center default
+    // Default to Manila / Makati center
     const map = L.map(mapContainerRef.current, {
       center: [14.5547, 121.0350],
       zoom: 12,
@@ -34,11 +40,13 @@ export default function PropertyMap({
       scrollWheelZoom: true,
     });
 
-    // OpenStreetMap standard tiles - clean, free, no API key required
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      maxZoom: 19,
+    // Default Tile Layer
+    const baseConfig = PHILIPPINE_BASEMAPS[activeBasemap] || PHILIPPINE_BASEMAPS['osm-standard'];
+    const initialTileLayer = L.tileLayer(baseConfig.url, {
+      attribution: baseConfig.attribution,
+      maxZoom: baseConfig.maxZoom,
     }).addTo(map);
+    tileLayerRef.current = initialTileLayer;
 
     // Zoom controls bottom-right
     L.control.zoom({ position: 'bottomright' }).addTo(map);
@@ -51,8 +59,72 @@ export default function PropertyMap({
     return () => {
       map.remove();
       mapInstanceRef.current = null;
+      tileLayerRef.current = null;
+      markersLayerRef.current = null;
+      districtsLayerRef.current = null;
     };
   }, []);
+
+  // Handle Dynamic Basemap Switching
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    const baseConfig = PHILIPPINE_BASEMAPS[activeBasemap];
+    if (!baseConfig) return;
+
+    if (tileLayerRef.current) {
+      if (typeof map.removeLayer === 'function') {
+        map.removeLayer(tileLayerRef.current);
+      } else if (typeof tileLayerRef.current.remove === 'function') {
+        tileLayerRef.current.remove();
+      }
+    }
+
+    const nextTileLayer = L.tileLayer(baseConfig.url, {
+      attribution: baseConfig.attribution,
+      maxZoom: baseConfig.maxZoom,
+    }).addTo(map);
+
+    tileLayerRef.current = nextTileLayer;
+  }, [activeBasemap]);
+
+  // Handle District Polygon Boundaries Overlay
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    if (districtsLayerRef.current) {
+      if (typeof map.removeLayer === 'function') {
+        map.removeLayer(districtsLayerRef.current);
+      } else if (typeof districtsLayerRef.current.remove === 'function') {
+        districtsLayerRef.current.remove();
+      }
+      districtsLayerRef.current = null;
+    }
+
+    if (showDistricts) {
+      const districtsLayer = L.geoJSON(MOCK_PH_DISTRICTS, {
+        style: (feature) => ({
+          color: feature?.properties?.highlightColor || '#174849',
+          weight: 2,
+          dashArray: '4, 4',
+          fillColor: feature?.properties?.highlightColor || '#174849',
+          fillOpacity: 0.12,
+        }),
+        onEachFeature: (feature, layer) => {
+          if (feature?.properties?.name) {
+            layer.bindTooltip(
+              `<strong>${feature.properties.name}</strong><br/><span style="font-size:11px;color:#555;">${feature.properties.city} • ${feature.properties.propertyCount || 0} Residences</span>`,
+              { sticky: true, className: 'district-tooltip' }
+            );
+          }
+        }
+      }).addTo(map);
+
+      districtsLayerRef.current = districtsLayer;
+    }
+  }, [showDistricts]);
 
   // Listen to map pan/zoom for "Search as I move the map"
   useEffect(() => {
@@ -169,6 +241,7 @@ export default function PropertyMap({
       // Interactive popup preview
       const popupContent = document.createElement('div');
       popupContent.className = 'property-popup-card';
+      popupContent.setAttribute('data-lenis-prevent', 'true');
       popupContent.innerHTML = `
         <div style="width: 240px; font-family: system-ui, -apple-system, sans-serif; overflow: hidden; border-radius: 16px;">
           <div style="position: relative; width: 100%; height: 130px; overflow: hidden; background: #f3f4f6;">
@@ -238,31 +311,44 @@ export default function PropertyMap({
   }, []);
 
   return (
-    <div className={`relative w-full h-full min-h-[450px] overflow-hidden ${className}`}>
+    <div
+      data-lenis-prevent="true"
+      className={`relative w-full h-full min-h-[450px] overflow-hidden ${className}`}
+    >
       {/* Map Canvas */}
       <div ref={mapContainerRef} className="w-full h-full z-0" />
 
       {/* Top Floating Controls Bar */}
-      <div className="absolute top-4 left-4 right-4 z-[400] flex items-center justify-between gap-2 pointer-events-none">
-        {/* "Search as I move the map" Toggle Checkbox */}
-        <label className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-white/95 backdrop-blur-md rounded-full border border-gray-200/80 shadow-sm pointer-events-auto cursor-pointer hover:bg-white transition-all select-none">
-          <input
-            type="checkbox"
-            checked={searchOnMove}
-            onChange={(e) => {
-              setSearchOnMove(e.target.checked);
-              if (!e.target.checked && onBoundsChange) {
-                onBoundsChange(null); // Clear bounding box restriction
-              }
-            }}
-            className="w-3.5 h-3.5 rounded text-[#174849] accent-[#174849] cursor-pointer"
-          />
-          <span className="text-[11px] font-bold text-gray-700 whitespace-nowrap">
-            Search as I move map
-          </span>
-        </label>
+      <div className="absolute top-4 left-4 right-4 z-[400] flex flex-wrap items-center justify-between gap-2 pointer-events-none">
+        {/* Left Side: "Search as I move" Checkbox + MapLayerControl */}
+        <div className="flex flex-wrap items-center gap-2 pointer-events-auto">
+          <label className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-white/95 backdrop-blur-md rounded-full border border-gray-200/80 shadow-sm pointer-events-auto cursor-pointer hover:bg-white transition-all select-none">
+            <input
+              type="checkbox"
+              checked={searchOnMove}
+              onChange={(e) => {
+                setSearchOnMove(e.target.checked);
+                if (!e.target.checked && onBoundsChange) {
+                  onBoundsChange(null); // Clear bounding box restriction
+                }
+              }}
+              className="w-3.5 h-3.5 rounded text-[#174849] accent-[#174849] cursor-pointer"
+            />
+            <span className="text-[11px] font-bold text-gray-700 whitespace-nowrap">
+              Search as I move map
+            </span>
+          </label>
 
-        {/* Telemetry Count + Recenter Button */}
+          {/* Floating Glass Basemap & District Layer Control */}
+          <MapLayerControl
+            activeBasemap={activeBasemap}
+            onBasemapChange={setActiveBasemap}
+            showDistricts={showDistricts}
+            onToggleDistricts={() => setShowDistricts((prev) => !prev)}
+          />
+        </div>
+
+        {/* Right Side: Telemetry Count + Recenter Button */}
         <div className="flex items-center gap-1.5 pointer-events-auto">
           <div className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/95 backdrop-blur-md rounded-full border border-gray-200/80 shadow-sm">
             <span className="w-2 h-2 rounded-full bg-[#174849] animate-pulse"></span>
@@ -302,6 +388,17 @@ export default function PropertyMap({
         }
         .custom-leaflet-popup .leaflet-popup-tip {
           background: #ffffff !important;
+        }
+        .district-tooltip {
+          background: rgba(255, 255, 255, 0.95) !important;
+          backdrop-filter: blur(8px) !important;
+          border: 1px solid rgba(23, 72, 73, 0.15) !important;
+          border-radius: 8px !important;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
+          font-family: inherit !important;
+          font-size: 12px !important;
+          color: #174849 !important;
+          padding: 6px 10px !important;
         }
       `}</style>
     </div>

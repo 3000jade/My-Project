@@ -27,6 +27,7 @@ export { default as UnifiedSearchBar } from './search/UnifiedSearchBar';
 
 // Map & Geographical
 export { default as PropertyMap } from './map/PropertyMap';
+export { default as MapLayerControl } from './map/MapLayerControl';
 
 // Sections & Calculators
 export { default as AgentBrokerSection } from './sections/AgentBrokerSection';
