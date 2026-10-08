@@ -1,15 +1,17 @@
 import { Request, Response } from 'express';
+import { NominatimService } from '../services/nominatim.service';
 import { GoogleMapsService } from '../services/googleMaps.service';
 import type { ApiResponse } from '../types/api';
 
 export class MapsController {
   /**
    * GET /api/maps/geocode
-   * Convert address string into exact coordinates
+   * Convert address string into exact coordinates via Nominatim OpenStreetMap
    */
   public static async geocode(req: Request, res: Response<ApiResponse>): Promise<void> {
     try {
       const address = req.query.address as string;
+      const country = (req.query.country as string) || 'ph';
 
       if (!address) {
         res.status(400).json({
@@ -20,18 +22,53 @@ export class MapsController {
         return;
       }
 
-      const result = await GoogleMapsService.geocodeAddress(address);
+      const result = await NominatimService.geocode(address, { countryCode: country });
 
       res.status(200).json({
         success: true,
         data: result,
-        message: 'Address geocoded successfully.',
+        message: 'Address geocoded via Nominatim OSM.',
         timestamp: new Date().toISOString(),
       });
     } catch (err: any) {
       res.status(500).json({
         success: false,
-        error: err.message || 'Error geocoding address.',
+        error: err.message || 'Error geocoding address via Nominatim.',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
+  /**
+   * GET /api/maps/reverse
+   * Reverse geocode coordinates to structured address via Nominatim OpenStreetMap
+   */
+  public static async reverse(req: Request, res: Response<ApiResponse>): Promise<void> {
+    try {
+      const lat = parseFloat(req.query.lat as string);
+      const lng = parseFloat(req.query.lng as string);
+
+      if (isNaN(lat) || isNaN(lng)) {
+        res.status(400).json({
+          success: false,
+          error: 'Valid numeric lat and lng query parameters are required.',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const result = await NominatimService.reverse(lat, lng);
+
+      res.status(200).json({
+        success: true,
+        data: result,
+        message: 'Coordinates reverse geocoded via Nominatim OSM.',
+        timestamp: new Date().toISOString(),
+      });
+    } catch (err: any) {
+      res.status(500).json({
+        success: false,
+        error: err.message || 'Error reverse geocoding coordinates.',
         timestamp: new Date().toISOString(),
       });
     }
@@ -39,7 +76,7 @@ export class MapsController {
 
   /**
    * GET /api/maps/places/autocomplete
-   * Predictive places search proxy with caching
+   * Predictive places search proxy with 24-hr caching via Nominatim OpenStreetMap
    */
   public static async autocomplete(req: Request, res: Response<ApiResponse>): Promise<void> {
     try {
@@ -56,12 +93,12 @@ export class MapsController {
         return;
       }
 
-      const predictions = await GoogleMapsService.placesAutocomplete(input, country);
+      const predictions = await NominatimService.autocomplete(input, country);
 
       res.status(200).json({
         success: true,
         data: predictions,
-        message: 'Place predictions retrieved.',
+        message: 'Place predictions retrieved from Nominatim OSM.',
         timestamp: new Date().toISOString(),
       });
     } catch (err: any) {

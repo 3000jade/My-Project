@@ -5,9 +5,15 @@ const router = Router();
 
 /**
  * GET /api/maps/geocode
- * Geocode text address into latitude/longitude coordinates
+ * Geocode text address into latitude/longitude coordinates via Nominatim OSM
  */
 router.get('/geocode', MapsController.geocode);
+
+/**
+ * GET /api/maps/reverse
+ * Reverse geocode coordinates into structured address via Nominatim OSM
+ */
+router.get('/reverse', MapsController.reverse);
 
 /**
  * GET /api/maps/places/autocomplete

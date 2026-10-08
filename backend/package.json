@@ -13,6 +13,7 @@
     "test": "vitest run",
     "db:test": "tsx src/scripts/test-db-connection.ts",
     "drive:test": "tsx src/scripts/test-google-drive.ts",
+    "nominatim:test": "tsx src/scripts/test-nominatim.ts",
     "db:push": "tsx src/scripts/migrate.ts"
   },
   "keywords": [],
