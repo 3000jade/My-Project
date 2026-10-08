@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import authService from '../services/authService';
+import { authService, hasRole as authHasRole, can as authCan } from '../services/authService';
 
 const AuthContext = createContext(null);
 
@@ -13,12 +13,17 @@ export function AuthProvider({ children }) {
 
     async function loadUser() {
       try {
-        const authData = await authService.getCurrentUser();
-        if (mounted && authData?.user) {
-          setUser(authData.user);
+        const authUser = await authService.validateSession();
+        if (mounted && authUser) {
+          setUser(authUser);
+        } else if (mounted) {
+          setUser(null);
         }
       } catch (err) {
-        if (mounted) setError(err.message);
+        if (mounted) {
+          setError(err.message);
+          setUser(null);
+        }
       } finally {
         if (mounted) setLoading(false);
       }
@@ -31,23 +36,16 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
-  const login = async (email, password) => {
+  const loginWithCredentials = async (email, password, rememberMe) => {
     setError(null);
-    const authData = await authService.login(email, password);
+    const authData = await authService.loginWithCredentials(email, password, rememberMe);
     setUser(authData.user);
     return authData;
   };
 
-  const googleLogin = async (idToken, role = 'agent') => {
+  const registerUser = async (payload) => {
     setError(null);
-    const authData = await authService.googleLogin(idToken, role);
-    setUser(authData.user);
-    return authData;
-  };
-
-  const register = async (email, password, metadata) => {
-    setError(null);
-    const authData = await authService.register(email, password, metadata);
+    const authData = await authService.registerUser(payload);
     setUser(authData.user);
     return authData;
   };
@@ -58,14 +56,50 @@ export function AuthProvider({ children }) {
     setError(null);
   };
 
+  const validateSession = async () => {
+    const authUser = await authService.validateSession();
+    setUser(authUser);
+    return authUser;
+  };
+
+  const refreshSession = async (refreshToken) => {
+    setError(null);
+    const authData = await authService.refreshSession(refreshToken);
+    setUser(authData.user);
+    return authData;
+  };
+
+  // Keep backward compatibility
+  const login = loginWithCredentials;
+  const register = async (email, password, metadata) => {
+    return registerUser({ email, password, fullName: metadata?.fullName, role: metadata?.role });
+  };
+  const googleLogin = async (idToken, role = 'agent') => {
+    setError(null);
+    const authData = await authService.googleLogin(idToken, role);
+    setUser(authData.user);
+    return authData;
+  };
+
+  const hasRole = (role) => authHasRole(user, role);
+  const can = (perm) => authCan(user, perm);
+
   const value = {
     user,
+    isAuthenticated: Boolean(user),
     loading,
     error,
-    login,
-    googleLogin,
-    register,
+    loginWithCredentials,
+    registerUser,
     logout,
+    refreshSession,
+    validateSession,
+    hasRole,
+    can,
+    // Aliases
+    login,
+    register,
+    googleLogin,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
