@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link, useParams } from 'react-router-dom';
 import axios from 'axios';
 import ReactQuill from 'react-quill-new';
@@ -6,6 +6,7 @@ import 'react-quill-new/dist/quill.snow.css';
 import PageHeader from '../../../components/dashboard/PageHeader';
 import DashboardModal from '../../../components/dashboard/DashboardModal';
 import propertyService, { normalizeProperty } from '../../../services/propertyService';
+import mapsService from '../../../services/mapsService';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -18,10 +19,12 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
 
-function LocationMarker({ position, setPosition }) {
+function LocationMarker({ position, setPosition, onPinMoved }) {
   const map = useMapEvents({
     click(e) {
-      setPosition([e.latlng.lat, e.latlng.lng]);
+      const nextPos = [e.latlng.lat, e.latlng.lng];
+      setPosition(nextPos);
+      if (onPinMoved) onPinMoved(nextPos);
     },
   });
 
@@ -38,7 +41,9 @@ function LocationMarker({ position, setPosition }) {
         dragend(e) {
           const marker = e.target;
           const pos = marker.getLatLng();
-          setPosition([pos.lat, pos.lng]);
+          const nextPos = [pos.lat, pos.lng];
+          setPosition(nextPos);
+          if (onPinMoved) onPinMoved(nextPos);
         },
       }}
       position={position}
@@ -60,6 +65,7 @@ export default function BrokerCreateListings() {
     currency: '₱',
     price_term: 'Total Contract Price',
     location: '',
+    address_number: '',
     address: '',
     subdivision: '',
     postal_code: '',
@@ -106,36 +112,134 @@ export default function BrokerCreateListings() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isGeocoding, setIsGeocoding] = useState(false);
 
+  // Nominatim Autocomplete & Reverse Geocoding States
+  const [addressSuggestions, setAddressSuggestions] = useState([]);
+  const [showAddressSuggestions, setShowAddressSuggestions] = useState(false);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+  const addressContainerRef = useRef(null);
+
+  // Close address predictions on outside click
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (addressContainerRef.current && !addressContainerRef.current.contains(e.target)) {
+        setShowAddressSuggestions(false);
+      }
+    }
+    if (showAddressSuggestions) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showAddressSuggestions]);
+
+  // Debounced address predictive autocomplete via Nominatim backend proxy
+  useEffect(() => {
+    const query = (formData.address || '').trim();
+    if (query.length < 2) {
+      setAddressSuggestions([]);
+      setShowAddressSuggestions(false);
+      setIsLoadingSuggestions(false);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      try {
+        setIsLoadingSuggestions(true);
+        const results = await mapsService.autocomplete(query, 'ph');
+        setAddressSuggestions(results || []);
+        if (results && results.length > 0) {
+          setShowAddressSuggestions(true);
+        }
+      } catch (err) {
+        console.error('[BrokerCreateListings] Autocomplete error:', err);
+      } finally {
+        setIsLoadingSuggestions(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [formData.address]);
+
   const handleMapPositionChange = (pos) => {
     setFormData(prev => ({ ...prev, latitude: pos[0].toFixed(7), longitude: pos[1].toFixed(7) }));
+  };
+
+  // Reverse geocode when map pin is moved or map is clicked
+  const handlePinMoved = async (pos) => {
+    try {
+      const geo = await mapsService.reverse(pos[0], pos[1]);
+      if (geo) {
+        setFormData(prev => ({
+          ...prev,
+          latitude: pos[0].toFixed(7),
+          longitude: pos[1].toFixed(7),
+          address: prev.address || geo.road || '',
+          subdivision: prev.subdivision || geo.subdivision || '',
+          location: prev.location || geo.city || '',
+          postal_code: prev.postal_code || geo.postalCode || '',
+        }));
+      }
+    } catch (err) {
+      console.warn('[BrokerCreateListings] Reverse geocode error:', err);
+    }
   };
 
   const mapPosition = formData.latitude && formData.longitude 
     ? [parseFloat(formData.latitude), parseFloat(formData.longitude)] 
     : [14.5995, 120.9842]; // Default Manila
 
+  // Forward geocode address via Nominatim backend proxy
   const handleGeocode = async (isSilent = false) => {
-    const query = `${formData.address || ''}, ${formData.subdivision || ''}, ${formData.location || ''}`.replace(/,\s*,/g, ',').replace(/^,|,$/g, '').trim();
-    if (!query || query === ',') return;
+    const query = [formData.address, formData.subdivision, formData.location]
+      .filter(Boolean)
+      .join(', ')
+      .trim();
+
+    if (!query) return;
     
     setIsGeocoding(true);
     try {
-      const res = await axios.get(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
-      if (res.data && res.data.length > 0) {
+      const geo = await mapsService.geocode(query, 'ph');
+      if (geo && geo.latitude && geo.longitude) {
         setFormData(prev => ({
           ...prev,
-          latitude: parseFloat(res.data[0].lat).toFixed(7),
-          longitude: parseFloat(res.data[0].lon).toFixed(7)
+          latitude: parseFloat(geo.latitude).toFixed(7),
+          longitude: parseFloat(geo.longitude).toFixed(7),
+          ...(geo.postalCode && !prev.postal_code ? { postal_code: geo.postalCode } : {}),
+          ...(geo.subdivision && !prev.subdivision ? { subdivision: geo.subdivision } : {}),
+          ...(geo.city && !prev.location ? { location: geo.city } : {}),
         }));
       } else {
         if (!isSilent) {
-          alert('Could not find exact location automatically. Please pin it manually on the map.');
+          alert('Could not find location coordinates automatically. Please position the pin manually on the map.');
         }
       }
     } catch (err) {
-      console.error('Geocoding error:', err);
+      console.error('[BrokerCreateListings] Geocoding error:', err);
     } finally {
       setIsGeocoding(false);
+    }
+  };
+
+  const handleSelectAddressSuggestion = (item) => {
+    setShowAddressSuggestions(false);
+    setFormData(prev => ({
+      ...prev,
+      address: item.mainText || item.description || prev.address,
+      latitude: item.latitude ? parseFloat(item.latitude).toFixed(7) : prev.latitude,
+      longitude: item.longitude ? parseFloat(item.longitude).toFixed(7) : prev.longitude,
+    }));
+
+    if (item.latitude && item.longitude) {
+      mapsService.reverse(item.latitude, item.longitude).then(geo => {
+        if (geo) {
+          setFormData(prev => ({
+            ...prev,
+            subdivision: geo.subdivision || prev.subdivision,
+            location: geo.city || prev.location,
+            postal_code: geo.postalCode || prev.postal_code,
+          }));
+        }
+      }).catch(() => {});
     }
   };
 
@@ -316,6 +420,11 @@ export default function BrokerCreateListings() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!formData.latitude || !formData.longitude) {
+      alert('Please ensure the property location is pinned on the map before submitting.');
+      return;
+    }
+    
     setIsSubmitting(true);
     try {
       const token = localStorage.getItem('token');
@@ -324,43 +433,56 @@ export default function BrokerCreateListings() {
       const payload = {
         title: formData.title,
         price: Number(formData.price),
-        propertyType: formData.property_type,
-        propertyCondition: formData.property_condition,
-        transactionType: formData.transaction_type,
-        location: formData.location,
-        address: formData.address,
-        description: formData.description,
-        beds: formData.bedrooms === 'Studio' ? 0 : Number(formData.bedrooms.replace('+', '')),
-        baths: Number(formData.bathrooms.replace('+', '')),
-        storiesTotal: Number(formData.stories_total),
-        parking: Number(formData.parking.replace('+', '')),
-        floorArea: Number(formData.floor_area),
-        lotArea: formData.property_type === 'Condominium' ? 0 : Number(formData.lot_area),
+        originalListPrice: Number(formData.originalListPrice),
+        associationFee: Number(formData.associationFee),
+        associationFeeFrequency: formData.associationFeeFrequency,
+        taxAnnualAmount: Number(formData.taxAnnualAmount),
         status: formData.status,
-        amenities: formData.amenities,
+        standardStatus: formData.status === 'AVAILABLE' ? 'Active' : formData.status === 'PENDING' ? 'Pending' : 'Draft',
+        description: formData.description,
+        publicRemarks: formData.description,
+        features: formData.amenities,
         is_published: formData.is_published,
-        // Broker specifics
-        listing_id: formData.listing_id,
-        cadastral_lot_id: formData.cadastralLotId,
-        buyer_agency_compensation: formData.commissionSplit,
-        lockbox_code: formData.lockboxCode,
-        showing_instructions: formData.showingInstructions,
-        private_remarks: formData.privateNotes,
-        seller_direct_phone: formData.seller_direct_phone,
-        association_fee: Number(formData.associationFee),
-        association_fee_frequency: formData.associationFeeFrequency,
-        tax_annual_amount: Number(formData.taxAnnualAmount),
-        original_list_price: Number(formData.originalListPrice),
-        blueprint_url: formData.blueprintUrl,
-        virtual_tour_url: formData.virtualTourUrl
+        location: {
+          address: formData.address_number ? `${formData.address_number} ${formData.address}`.trim() : formData.address,
+          city: formData.location,
+          subdivisionName: formData.subdivision,
+          postalCode: formData.postal_code,
+          coordinates: {
+            lat: formData.latitude ? Number(formData.latitude) : null,
+            lng: formData.longitude ? Number(formData.longitude) : null
+          }
+        },
+        specs: {
+          propertyType: formData.property_type,
+          propertyCondition: formData.property_condition,
+          transactionType: formData.transaction_type,
+          beds: formData.bedrooms === 'Studio' ? 0 : Number(formData.bedrooms.replace('+', '')),
+          baths: Number(formData.bathrooms.replace('+', '')),
+          storiesTotal: Number(formData.stories_total),
+          parkingTotal: Number(formData.parking.replace('+', '')),
+          livingArea: Number(formData.floor_area),
+          lotSizeArea: formData.property_type === 'Condominium' ? 0 : Number(formData.lot_area)
+        },
+        confidential: {
+          buyerAgencyCompensation: formData.commissionSplit,
+          lockboxCode: formData.lockboxCode,
+          showingInstructions: formData.showingInstructions,
+          privateRemarks: formData.privateNotes,
+          sellerDirectPhone: formData.seller_direct_phone
+        },
+        listingId: formData.listing_id,
+        listingKey: formData.cadastralLotId,
+        blueprintUrl: formData.blueprintUrl,
+        virtualTourUrl: formData.virtualTourUrl
       };
 
       let propertyId = id;
       if (isEditing) {
         await propertyService.updateProperty(id, payload);
       } else {
-        const res = await axios.post('http://localhost:5000/api/properties', payload, { headers });
-        propertyId = res.data?.data?.id || res.id || res.data?.id;
+        const res = await propertyService.createProperty(payload);
+        propertyId = res?.id || res?.data?.id;
       }
 
       if (selectedFiles.length > 0 && propertyId) {
@@ -643,8 +765,69 @@ export default function BrokerCreateListings() {
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-600 font-sans">Street Address *</label>
-                <input required type="text" placeholder="e.g. 142 Acacia Avenue" value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} onBlur={() => handleGeocode(true)} className="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-lg text-sm font-sans focus:bg-white focus:border-[#266F71] focus:ring-1 focus:ring-[#266F71] outline-none transition-colors" />
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-600 font-sans">Unit / House Number</label>
+                <input type="text" placeholder="e.g. 142 or Unit 4B" value={formData.address_number} onChange={e => setFormData({ ...formData, address_number: e.target.value })} onBlur={() => handleGeocode(true)} className="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-lg text-sm font-sans focus:bg-white focus:border-[#266F71] focus:ring-1 focus:ring-[#266F71] outline-none transition-colors" />
+              </div>
+              <div className="space-y-2 relative" ref={addressContainerRef}>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-600 font-sans">Street Name *</label>
+                  {isLoadingSuggestions && (
+                    <span className="text-[10px] text-[#266F71] font-bold flex items-center gap-1 animate-pulse">
+                      <span className="material-symbols-outlined text-[13px] animate-spin">sync</span>
+                      Nominatim searching...
+                    </span>
+                  )}
+                </div>
+                <div className="relative">
+                  <input 
+                    required 
+                    type="text" 
+                    placeholder="e.g. Acacia Avenue" 
+                    value={formData.address} 
+                    onChange={e => setFormData({ ...formData, address: e.target.value })} 
+                    onFocus={() => {
+                      if (addressSuggestions.length > 0) setShowAddressSuggestions(true);
+                    }}
+                    onBlur={() => setTimeout(() => handleGeocode(true), 250)} 
+                    className="w-full h-12 px-4 pr-10 bg-slate-50 border border-slate-200 rounded-lg text-sm font-sans focus:bg-white focus:border-[#266F71] focus:ring-1 focus:ring-[#266F71] outline-none transition-colors" 
+                  />
+                  <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px] pointer-events-none">
+                    search
+                  </span>
+                </div>
+
+                {/* Autocomplete Predictions Dropdown */}
+                {showAddressSuggestions && addressSuggestions.length > 0 && (
+                  <div className="absolute top-[72px] left-0 right-0 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-50 overflow-hidden">
+                    <div className="px-3 py-1.5 border-b border-slate-100 bg-slate-50 text-[10px] font-mono text-slate-500 uppercase tracking-wider flex items-center justify-between">
+                      <span className="font-bold text-[#266F71]">Nominatim OpenStreetMap Match</span>
+                      <span>{addressSuggestions.length} Found</span>
+                    </div>
+                    <div className="max-h-48 overflow-y-auto divide-y divide-slate-50">
+                      {addressSuggestions.map((item, idx) => (
+                        <button
+                          key={item.placeId || idx}
+                          type="button"
+                          onClick={() => handleSelectAddressSuggestion(item)}
+                          className="w-full text-left px-3.5 py-2 hover:bg-teal-50/60 transition-colors flex items-start gap-2.5 cursor-pointer"
+                        >
+                          <span className="material-symbols-outlined text-[#266F71] text-[16px] mt-0.5">location_on</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-bold text-slate-800 truncate">{item.mainText || item.description}</p>
+                            {item.secondaryText && (
+                              <p className="text-[11px] text-slate-500 truncate">{item.secondaryText}</p>
+                            )}
+                          </div>
+                          {item.latitude && item.longitude && (
+                            <span className="font-mono text-[9px] text-slate-400 font-semibold self-center">
+                              {Number(item.latitude).toFixed(2)}°, {Number(item.longitude).toFixed(2)}°
+                            </span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase tracking-wider text-slate-600 font-sans">Neighborhood / Subdivision</label>
@@ -664,7 +847,7 @@ export default function BrokerCreateListings() {
                 <div className="flex items-center justify-between mb-4">
                   <h4 className="text-sm font-bold text-slate-800 flex items-center gap-2">
                     <span className="material-symbols-outlined text-[#266F71] text-[18px]">public</span>
-                    Map Geolocation
+                    Map Geolocation (Nominatim OpenStreetMap)
                   </h4>
                   <button 
                     type="button" 
@@ -688,6 +871,7 @@ export default function BrokerCreateListings() {
                       <LocationMarker 
                         position={formData.latitude && formData.longitude ? mapPosition : null} 
                         setPosition={handleMapPositionChange} 
+                        onPinMoved={handlePinMoved}
                       />
                     </MapContainer>
                   </div>

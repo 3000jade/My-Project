@@ -1,5 +1,6 @@
 import { supabase, supabaseAdmin, isSupabaseConfigured } from '../config/supabase';
 import logger from '../utils/logger';
+import { NominatimService } from './nominatim.service';
 import { ResoQueryParser, ParsedFilterCondition } from './resoQueryParser';
 import { 
   ResoStandardStatus, 
@@ -699,6 +700,35 @@ export class PropertyService {
       ? 'Pending Approval'
       : (data.standardStatus || 'Draft');
 
+    let coordinates = data.location?.coordinates;
+    let resolvedPostal = data.location?.postalCode || '1000';
+    let resolvedSubdivision = data.location?.subdivisionName;
+    let resolvedCity = data.location?.city || 'Metro Manila';
+
+    // Auto-resolve geocoordinates via Nominatim OSM if not provided or default
+    const isMissingCoords = !coordinates || (!coordinates.lat && !coordinates.lng) || (coordinates.lat === 14.55 && coordinates.lng === 121.05);
+    const hasAddress = data.location?.address && data.location.address !== 'Address pending';
+
+    if (isMissingCoords && hasAddress) {
+      try {
+        const queryStr = [
+          data.location.address,
+          data.location.subdivisionName,
+          data.location.city,
+        ].filter(Boolean).join(', ');
+
+        const geo = await NominatimService.geocode(queryStr, { countryCode: 'ph' });
+        if (geo && geo.latitude && geo.longitude) {
+          coordinates = { lat: geo.latitude, lng: geo.longitude };
+          if (geo.postalCode && resolvedPostal === '1000') resolvedPostal = geo.postalCode;
+          if (geo.subdivision && !resolvedSubdivision) resolvedSubdivision = geo.subdivision;
+          if (geo.city && resolvedCity === 'Metro Manila') resolvedCity = geo.city;
+        }
+      } catch (err: any) {
+        logger.warn(`[PropertyService] Nominatim auto-geocode skipped: ${err.message}`);
+      }
+    }
+
     const generatedId = `prop-${Date.now()}`;
     const newProperty: PropertyItem = {
       id: generatedId,
@@ -716,12 +746,12 @@ export class PropertyService {
       location: {
         address: data.location?.address || 'Address pending',
         unparsedAddress: data.location?.unparsedAddress || data.location?.address || 'Address pending',
-        subdivisionName: data.location?.subdivisionName,
-        city: data.location?.city || 'Metro Manila',
+        subdivisionName: resolvedSubdivision,
+        city: resolvedCity,
         state: data.location?.state || 'Philippines',
         stateOrProvince: data.location?.stateOrProvince || data.location?.state || 'Metro Manila',
-        postalCode: data.location?.postalCode || '1000',
-        coordinates: data.location?.coordinates || { lat: 14.55, lng: 121.05 },
+        postalCode: resolvedPostal,
+        coordinates: coordinates || { lat: 14.55, lng: 121.05 },
       },
       specs: {
         beds: Number(data.specs?.beds) || 1,
