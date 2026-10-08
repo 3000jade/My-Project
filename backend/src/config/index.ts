@@ -29,6 +29,7 @@ export const config = {
     googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY || '',
     nominatimBaseUrl: process.env.NOMINATIM_BASE_URL || 'https://nominatim.openstreetmap.org',
     nominatimUserAgent: process.env.NOMINATIM_USER_AGENT || 'CP_kerby_Platform/1.0 (concierge@cpkerby.luxury)',
+    nominatimMockMode: process.env.NOMINATIM_MOCK_MODE === 'true',
     isMockMode: process.env.NODE_ENV !== 'production' || !process.env.GOOGLE_CLIENT_ID,
   },
 };
