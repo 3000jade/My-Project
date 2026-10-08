@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { mockProperties } from '../../mockData/mockProperties';
+import { getPropertyCoordinates } from '../../utils/propertyCoordinates';
 
 export default function PropertyListingView() {
   const { id } = useParams();
@@ -76,6 +77,7 @@ export default function PropertyListingView() {
   // Derived Title & Location
   const propertyTitle = property.title || property.name || "Modern Duplex in Rolling Hills";
   const propertyLocation = property.location || (property.address ? `${property.address}, ${property.city || ''}` : "Rolling Hills Subdivision, New Manila, Quezon City");
+  const propertyCoords = useMemo(() => getPropertyCoordinates(property), [property]);
   const pricePerSqm = (rawPrice && livingAreaNumeric) ? `~₱${Math.round(rawPrice / livingAreaNumeric).toLocaleString('en-PH')} / sqm` : "~₱83,820 / sqm";
 
   // Dynamic Mortgage Calculator
@@ -594,31 +596,31 @@ export default function PropertyListingView() {
                 </span>
               </div>
 
-              {/* Map Preview Plinth */}
-              <div className="relative w-full h-[220px] rounded-xl overflow-hidden mb-6 border border-[#E5EBEB] bg-slate-100 flex items-center justify-center">
-                <img 
-                  src="https://images.unsplash.com/photo-1524661135-423995f22d0b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80" 
-                  alt="Location Map Preview" 
-                  className="w-full h-full object-cover opacity-80"
+              {/* Map Preview Plinth with OpenStreetMap */}
+              <div className="relative w-full h-[240px] rounded-xl overflow-hidden mb-6 border border-[#E5EBEB] bg-slate-100 flex items-center justify-center">
+                <iframe 
+                  title="OpenStreetMap Property View"
+                  className="w-full h-full border-0 pointer-events-auto"
+                  loading="lazy"
+                  src={`https://www.openstreetmap.org/export/embed.html?bbox=${propertyCoords.lng - 0.008}%2C${propertyCoords.lat - 0.006}%2C${propertyCoords.lng + 0.008}%2C${propertyCoords.lat + 0.006}&layer=mapnik&marker=${propertyCoords.lat}%2C${propertyCoords.lng}`}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0D4446]/60 via-transparent to-black/20"></div>
                 
-                <div className="absolute flex flex-col items-center">
-                  <div className="bg-[#E76F51] text-white p-2 rounded-full shadow-lg border-2 border-white animate-bounce">
-                    <span className="material-symbols-outlined text-[18px]">location_on</span>
-                  </div>
-                  <div className="bg-white text-[#141717] text-xs font-bold px-3 py-1 rounded-full shadow mt-1">
-                    {property.development || "Rolling Hills Subdivision"}
-                  </div>
+                <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-sm px-3 py-1.5 rounded-lg shadow-sm border border-[#E5EBEB] flex items-center gap-2 pointer-events-none">
+                  <span className="w-2 h-2 rounded-full bg-[#14B8A6] animate-pulse"></span>
+                  <span className="font-mono text-[10px] font-bold text-[#0D4446] tracking-wider uppercase">
+                    OSM: {propertyCoords.lat.toFixed(4)}°N, {propertyCoords.lng.toFixed(4)}°E
+                  </span>
                 </div>
 
-                <button 
-                  onClick={() => alert('Opening Google Maps coordinates...')}
-                  className="absolute bottom-3 right-3 px-3 py-1.5 bg-white/95 text-[#0D4446] hover:bg-white text-xs font-bold rounded-lg shadow border border-white flex items-center gap-1.5 transition-colors"
+                <a 
+                  href={`https://www.openstreetmap.org/?mlat=${propertyCoords.lat}&mlon=${propertyCoords.lng}#map=16/${propertyCoords.lat}/${propertyCoords.lng}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="absolute bottom-3 right-3 px-3.5 py-1.5 bg-white/95 text-[#0D4446] hover:bg-white text-xs font-bold rounded-lg shadow border border-white flex items-center gap-1.5 transition-colors cursor-pointer"
                 >
-                  <span>Open in Maps</span>
+                  <span>Open in OpenStreetMap</span>
                   <span className="material-symbols-outlined text-[14px]">open_in_new</span>
-                </button>
+                </a>
               </div>
 
               {/* POI Structured Cards */}
