@@ -16,7 +16,11 @@ async function runMigrations() {
 
     const files = [
       'supabase_schema.sql',
-      'reso_schema_migration.sql'
+      'agent_invitations_migration.sql',
+      'property_edit_approval_migration.sql',
+      'invitation_atomic_claim_migration.sql',
+      'agent_audit_events_migration.sql',
+      'agent_credential_documents_migration.sql',
     ];
 
     for (const file of files) {

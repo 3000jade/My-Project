@@ -45,10 +45,20 @@ describe('propertyService RESO 2.0 Adapters', () => {
       livingArea: 620,
       livingAreaUnits: 'Square Meters',
       associationFee: 25000,
+      taxAnnualAmount: 45000,
+      yearBuilt: 2024,
+      propertyCondition: 'RFO',
+      transactionType: 'For Sale',
+      interiorFeatures: ['Smart Home Automation', 'Wine Cellar'],
+      exteriorFeatures: ['Private Swimming Pool', 'Covered Garage'],
+      amenities: ['24/7 Security'],
       coverImage: 'https://images.unsplash.com/photo-1.jpg',
       galleryImages: ['https://images.unsplash.com/photo-2.jpg'],
       buyerBrokerCommission: '3.0%',
+      sellerDirectPhone: '+63 917 123 4567',
       privateRemarks: 'Lockbox code 4821. Call broker before showing.',
+      latitude: '14.5501',
+      longitude: '121.0502',
     };
 
     const payload = toApiPayload(studioFormState);
@@ -58,14 +68,23 @@ describe('propertyService RESO 2.0 Adapters', () => {
     expect(payload.standardStatus).toBe('Pending Approval');
     expect(payload.location.city).toBe('Makati');
     expect(payload.location.subdivisionName).toBe('Forbes Park');
+    expect(payload.location.coordinates).toEqual({ lat: 14.5501, lng: 121.0502 });
     expect(payload.specs.beds).toBe(4);
     expect(payload.specs.livingArea).toBe(620);
+    expect(payload.specs.yearBuilt).toBe(2024);
+    expect(payload.specs.propertyCondition).toBe('RFO');
+    expect(payload.specs.transactionType).toBe('For Sale');
     expect(payload.associationFee).toBe(25000);
+    expect(payload.taxAnnualAmount).toBe(45000);
+    expect(payload.interiorFeatures).toEqual(['Smart Home Automation', 'Wine Cellar']);
+    expect(payload.exteriorFeatures).toEqual(['Private Swimming Pool', 'Covered Garage']);
+    expect(payload.features).toEqual(['24/7 Security']);
     expect(payload.images).toEqual([
       'https://images.unsplash.com/photo-1.jpg',
       'https://images.unsplash.com/photo-2.jpg',
     ]);
     expect(payload.confidential.buyerAgencyCompensation).toBe('3.0%');
+    expect(payload.confidential.sellerDirectPhone).toBe('+63 917 123 4567');
     expect(payload.confidential.privateRemarks).toContain('Lockbox code 4821');
   });
 });

@@ -24,7 +24,7 @@ export const requireRole = (allowedRoles: string[]) => {
       return;
     }
 
-    const userRole = (user as any).role || user.user_metadata?.role || 'client';
+    const userRole = (user as any).role || 'client';
 
     // Superuser bypass: admin is always permitted
     if (userRole === 'admin') {

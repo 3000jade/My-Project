@@ -16,5 +16,12 @@ export const mockUsers = {
     password: 'agentPassword123!',
     role: 'Agent',
     name: 'Elena Rossi'
+  },
+  client: {
+    email: 'client@pt.com',
+    password: 'clientPassword123!',
+    role: 'Client',
+    name: 'Sophia Isabella Laurel',
+    phone: '+63 917 555 8899'
   }
 };

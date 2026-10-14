@@ -37,7 +37,7 @@ CP_kerby/
 | `backend/` | RESTful API server, health monitoring, business services, and database schemas. |
 | `test files/` | Unified test repository (`frontend/` & `backend/`), excluded from git tracking while executing via Vitest. |
 | `shared/` | Full-stack TypeScript interfaces, shared DTOs, and API contract envelopes. |
-| `docs/` | Architecture specs (`docs/superpowers/specs/`) and execution plans (`docs/superpowers/plans/`). |
+| `docs/` | Architecture specs (`docs/superpowers/specs/`), plans, and module documentation (`docs/system-modules/`). |
 | `.agents/` | Antigravity AI agent rules (`AGENTS.md`) and specialized skills. |
 | `.env.example` | Root template documenting required environment variables for client and server. |
 | `ARCHITECTURE_MAP.md` | Living blueprint defining structural conventions and code locations. |

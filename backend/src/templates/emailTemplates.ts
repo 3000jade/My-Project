@@ -170,3 +170,64 @@ export function buildTourConfirmationEmailHtml(data: TourConfirmationEmailData):
 </body>
 </html>`;
 }
+
+export interface AgentInvitationEmailData {
+  agentEmail: string;
+  inviteUrl: string;
+  expiresInHours?: number;
+}
+
+export function buildAgentInvitationEmailHtml(data: AgentInvitationEmailData): string {
+  const hours = data.expiresInHours || 72;
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Invitation to Join CP_kerby as Licensed Property Consultant</title>
+</head>
+<body style="margin: 0; padding: 32px 16px; background-color: #FBFBF9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #141717;">
+  <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; background-color: #FFFFFF; border: 1px solid #D8DFDF; border-radius: 14px; overflow: hidden; box-shadow: 0 4px 16px rgba(13, 68, 70, 0.04);">
+    <tr>
+      <td style="padding: 28px 32px; background-color: #0D4446; text-align: left;">
+        <span style="font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #14B8A6; font-weight: 700;">CP_KERBY LUXURY REAL ESTATE</span>
+        <h1 style="margin: 6px 0 0 0; color: #FFFFFF; font-size: 22px; font-weight: 700; letter-spacing: -0.02em;">Consultant Onboarding Invitation</h1>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 32px;">
+        <p style="margin: 0 0 16px 0; font-size: 15px; color: #5C6768;">Hello,</p>
+        <p style="margin: 0 0 20px 0; font-size: 15px; line-height: 1.6; color: #141717;">
+          You have been formally invited to join the <strong>CP_kerby Luxury Real Estate</strong> brokerage network as a licensed real estate consultant.
+        </p>
+        <p style="margin: 0 0 24px 0; font-size: 14px; line-height: 1.5; color: #5C6768;">
+          To complete your onboarding, please click the secure link below to submit your PRC license details, DHSUD accreditation, and verification documents. This invitation is valid for <strong>${hours} hours</strong>.
+        </p>
+
+        <!-- CTA Button -->
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 28px;">
+          <tr>
+            <td align="center">
+              <a href="${data.inviteUrl}" style="display: inline-block; padding: 14px 32px; background-color: #E76F51; color: #FFFFFF; text-decoration: none; font-weight: 700; font-size: 14px; letter-spacing: 0.05em; text-transform: uppercase; border-radius: 8px; box-shadow: 0 4px 12px rgba(231, 111, 81, 0.35);">
+                Accept Invitation & Complete Registration
+              </a>
+            </td>
+          </tr>
+        </table>
+
+        <p style="margin: 0 0 10px 0; font-size: 12px; color: #8E9A9B;">
+          If the button does not open, copy and paste this secure link into your browser:
+        </p>
+        <p style="margin: 0 0 24px 0; font-size: 12px; color: #0D4446; word-break: break-all;">
+          ${data.inviteUrl}
+        </p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 20px 32px; background-color: #FBFBF9; border-top: 1px solid #E5EBEB; text-align: center; font-size: 12px; color: #8E9A9B;">
+        CP_kerby Luxury Architectural Platform &bull; Compliance & Broker Operations
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}

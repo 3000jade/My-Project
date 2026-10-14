@@ -23,6 +23,8 @@ export const config = {
     googleDrivePrivateKey: (process.env.GOOGLE_DRIVE_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
     googleDriveRootFolderId: process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID || '',
     gmailUserEmail: process.env.GMAIL_USER_EMAIL || '',
+    gmailAppPassword: (process.env.GMAIL_APP_PASSWORD || '').replace(/\s+/g, ''),
+    gmailRefreshToken: process.env.GMAIL_REFRESH_TOKEN || '',
     whatsappPhoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID || '',
     whatsappAccessToken: process.env.WHATSAPP_ACCESS_TOKEN || '',
     whatsappVerifyToken: process.env.WHATSAPP_VERIFY_TOKEN || 'cp_kerby_whatsapp_verify_token',
@@ -30,7 +32,25 @@ export const config = {
     nominatimBaseUrl: process.env.NOMINATIM_BASE_URL || 'https://nominatim.openstreetmap.org',
     nominatimUserAgent: process.env.NOMINATIM_USER_AGENT || 'CP_kerby_Platform/1.0 (concierge@cpkerby.luxury)',
     nominatimMockMode: process.env.NOMINATIM_MOCK_MODE === 'true',
-    isMockMode: process.env.NODE_ENV !== 'production' || !process.env.GOOGLE_CLIENT_ID,
+    googleDriveRefreshToken: process.env.GOOGLE_DRIVE_REFRESH_TOKEN || '',
+    isGoogleDriveConfigured: Boolean(
+      (process.env.GOOGLE_DRIVE_SERVICE_ACCOUNT_EMAIL && process.env.GOOGLE_DRIVE_PRIVATE_KEY) ||
+      process.env.GOOGLE_DRIVE_REFRESH_TOKEN
+    ),
+    googleDriveMockMode:
+      process.env.GOOGLE_DRIVE_MOCK_MODE === 'true' ||
+      process.env.NODE_ENV === 'test' ||
+      Boolean(process.env.VITEST) ||
+      !(
+        (process.env.GOOGLE_DRIVE_SERVICE_ACCOUNT_EMAIL && process.env.GOOGLE_DRIVE_PRIVATE_KEY) ||
+        process.env.GOOGLE_DRIVE_REFRESH_TOKEN
+      ),
+    isMockMode:
+      process.env.NODE_ENV === 'test' || Boolean(process.env.VITEST)
+        ? true
+        : (process.env.IS_MOCK_MODE !== undefined
+          ? process.env.IS_MOCK_MODE === 'true'
+          : (process.env.NODE_ENV !== 'production' || !process.env.GOOGLE_CLIENT_ID)),
   },
 };
 

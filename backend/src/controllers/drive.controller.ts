@@ -55,7 +55,7 @@ export class DriveController {
    */
   public static async listFiles(req: Request, res: Response<ApiResponse>): Promise<void> {
     try {
-      const { propertyId } = req.params;
+      const propertyId = req.params.propertyId ? String(req.params.propertyId) : '';
 
       if (!propertyId) {
         res.status(400).json({
@@ -88,7 +88,7 @@ export class DriveController {
    */
   public static async deleteFile(req: Request, res: Response<ApiResponse>): Promise<void> {
     try {
-      const { fileId } = req.params;
+      const fileId = req.params.fileId ? String(req.params.fileId) : '';
 
       if (!fileId) {
         res.status(400).json({
@@ -112,6 +112,38 @@ export class DriveController {
         error: err.message || 'Failed to delete file.',
         timestamp: new Date().toISOString(),
       });
+    }
+  }
+
+  /**
+   * Public streaming proxy for Google Drive files and images
+   * Allows direct embedding into <img src="/api/drive/media/:fileId">
+   */
+  public static async streamFile(req: Request, res: Response): Promise<void> {
+    try {
+      const fileId = req.params.fileId ? String(req.params.fileId) : '';
+
+      if (!fileId) {
+        res.status(400).send('fileId is required.');
+        return;
+      }
+
+      const fileData = await GoogleDriveService.getFileStream(fileId);
+      if (!fileData) {
+        // Fallback or 404
+        res.status(404).send('File not found or drive stream unavailable.');
+        return;
+      }
+
+      res.setHeader('Content-Type', fileData.mimeType || 'application/octet-stream');
+      if (fileData.contentLength) {
+        res.setHeader('Content-Length', fileData.contentLength);
+      }
+      res.setHeader('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
+
+      fileData.stream.pipe(res);
+    } catch (err: any) {
+      res.status(500).send(err.message || 'Failed to stream drive media.');
     }
   }
 }

@@ -63,13 +63,7 @@ export default function AgentDashboard() {
               </span>
               <span>Refresh</span>
             </button>
-            <Link
-              to="/agent/properties/create"
-              className="h-[46px] px-5 bg-[#266F71] hover:bg-[#174849] text-white rounded-xl text-xs font-bold font-sans uppercase tracking-wider flex items-center gap-2 shadow-sm transition-all"
-            >
-              <span className="material-symbols-outlined text-[18px]">add</span>
-              Create Property
-            </Link>
+
           </div>
         }
       />

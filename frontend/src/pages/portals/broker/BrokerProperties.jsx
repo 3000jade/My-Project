@@ -1,27 +1,62 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
-  Building2, TrendingUp, DollarSign, CheckCircle2, 
-  Plus, RefreshCw, Edit3, ExternalLink, SlidersHorizontal 
+  Building2, CheckCircle2, Plus, RotateCw, Edit3, ExternalLink,
+  MapPin, Maximize2, Bed, Bath, Copy, MoreVertical, ChevronRight,
+  Search, X, SlidersHorizontal, AlertCircle, Home
 } from 'lucide-react';
-import MetricCard from '../../../components/dashboard/MetricCard';
-import SearchAndFilterBar from '../../../components/dashboard/SearchAndFilterBar';
 import DataTable from '../../../components/dashboard/DataTable';
-import StatusBadge from '../../../components/ui/core/StatusBadge';
 import PropertyQuickEditDrawer from '../../../components/cms/PropertyQuickEditDrawer';
-import { mockProperties } from '../../../mockData/mockProperties';
+import ProposalReviewDrawer from '../../../components/cms/ProposalReviewDrawer';
 import propertyService, { normalizeProperty } from '../../../services/propertyService';
 import { cn } from '../../../utils/cn';
+
+function formatRelativeTime(dateStr) {
+  if (!dateStr) return '—';
+  try {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return '—';
+    const diffMs = Date.now() - date.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    if (diffDays <= 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 30) return `${diffDays} days ago`;
+    const diffMonths = Math.floor(diffDays / 30);
+    return `${diffMonths} month${diffMonths > 1 ? 's' : ''} ago`;
+  } catch {
+    return '—';
+  }
+}
+
+function formatCalendarDate(dateStr) {
+  if (!dateStr) return '—';
+  try {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return '—';
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  } catch {
+    return '—';
+  }
+}
 
 export default function BrokerProperties() {
   const navigate = useNavigate();
   const [properties, setProperties] = useState([]);
+  const [proposals, setProposals] = useState([]);
+  const [selectedProposal, setSelectedProposal] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isProcessingProposal, setIsProcessingProposal] = useState(false);
+
+  // Filters & State
+  const [activeTab, setActiveTab] = useState('ALL');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
-  const [activeTab, setActiveTab] = useState('ALL');
+  const [typeFilter, setTypeFilter] = useState('ALL');
+  const [locationFilter, setLocationFilter] = useState('ALL');
+  const [sortBy, setSortBy] = useState('newest');
+
   const [selectedKeys, setSelectedKeys] = useState(new Set());
   const [quickDrawerProperty, setQuickDrawerProperty] = useState(null);
   const [toastMessage, setToastMessage] = useState(null);
@@ -31,6 +66,7 @@ export default function BrokerProperties() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
+  // Strictly Live API Fetch (No Fake / Mock Fallback Records)
   const fetchProperties = useCallback(async (isManualRefresh = false) => {
     if (isManualRefresh) setIsRefreshing(true);
     else setLoading(true);
@@ -38,110 +74,207 @@ export default function BrokerProperties() {
 
     try {
       const response = await propertyService.getProperties();
-      if (response?.data && response.data.length > 0) {
-        setProperties(response.data);
-      } else {
-        setProperties(mockProperties.map(normalizeProperty));
-      }
+      const rawList = response?.data && Array.isArray(response.data)
+        ? response.data
+        : Array.isArray(response)
+        ? response
+        : [];
+      setProperties(rawList.map(normalizeProperty));
     } catch (err) {
-      console.warn('API fetch failed, falling back to mock properties:', err);
-      setError('Live database API unreachable. Switched to firm local fallback records.');
-      setProperties(mockProperties.map(normalizeProperty));
+      console.warn('API fetch failed:', err);
+      setError('Unable to load property listings from the database.');
+      setProperties([]);
     } finally {
       setLoading(false);
       setIsRefreshing(false);
     }
   }, []);
 
+  // Fetch pending agent proposals
+  const fetchProposals = useCallback(async () => {
+    try {
+      const response = await propertyService.getEditRequests({ status: 'PENDING' });
+      const rawList = Array.isArray(response?.data) 
+        ? response.data 
+        : response?.data?.requests || [];
+      setProposals(rawList);
+    } catch (err) {
+      console.warn('Could not load edit proposals:', err);
+    }
+  }, []);
+
+  const handleApproveProposal = async (requestId, reviewNotes) => {
+    setIsProcessingProposal(true);
+    try {
+      await propertyService.approveEditRequest(requestId, reviewNotes);
+      showToast('Listing edit request approved and published.');
+      await Promise.all([fetchProperties(true), fetchProposals()]);
+    } finally {
+      setIsProcessingProposal(false);
+    }
+  };
+
+  const handleRejectProposal = async (requestId, rejectionReason) => {
+    setIsProcessingProposal(true);
+    try {
+      await propertyService.rejectEditRequest(requestId, rejectionReason);
+      showToast('Listing edit request declined.');
+      await fetchProposals();
+    } finally {
+      setIsProcessingProposal(false);
+    }
+  };
+
   useEffect(() => {
     fetchProperties();
-  }, [fetchProperties]);
+    fetchProposals();
+  }, [fetchProperties, fetchProposals]);
 
-  // Executive KPI summary calculations
-  const portfolioStats = useMemo(() => {
-    const totalCount = properties.length;
-    let totalValuation = 0;
-    let availableCount = 0;
-    let reservedCount = 0;
+  // Tab counts calculated exclusively from actual dataset
+  const tabCounts = useMemo(() => {
+    let needsApproval = 0;
+    let active = 0;
+    let reserved = 0;
+    let sold = 0;
+    let draft = 0;
 
-    properties.forEach((p) => {
-      totalValuation += p.price_raw || p.price || 0;
-      const st = String(p.status).toUpperCase();
-      if (st === 'AVAILABLE' || st === 'ACTIVE') availableCount++;
-      else if (st === 'UNDER CONTRACT' || st === 'RESERVED' || st === 'PENDING') reservedCount++;
+    properties.forEach(p => {
+      const std = String(p.standard_status || p.standardStatus || '').toUpperCase();
+      const s = String(p.status || '').toUpperCase();
+
+      if (std === 'PENDING APPROVAL') {
+        needsApproval++;
+      }
+      if (std === 'ACTIVE' || s === 'AVAILABLE') {
+        active++;
+      }
+      if (std === 'ACTIVE UNDER CONTRACT' || s === 'RESERVED' || s === 'PENDING' || s === 'UNDER CONTRACT') {
+        reserved++;
+      }
+      if (std === 'CLOSED' || s === 'SOLD') {
+        sold++;
+      }
+      if (std === 'DRAFT' || s === 'INACTIVE') {
+        draft++;
+      }
     });
 
-    const formattedValuation = totalValuation >= 1_000_000_000
-      ? `₱${(totalValuation / 1_000_000_000).toFixed(2)}B`
-      : totalValuation >= 1_000_000
-        ? `₱${(totalValuation / 1_000_000).toFixed(1)}M`
-        : totalValuation > 0
-          ? `₱${totalValuation.toLocaleString()}`
-          : '₱0';
-
     return {
-      totalCount,
-      totalValuation: formattedValuation,
-      availableCount,
-      reservedCount
+      all: properties.length,
+      needsApproval,
+      active,
+      reserved,
+      sold,
+      draft,
     };
   }, [properties]);
 
-  // Count agent submissions needing broker approval
-  const needsApprovalCount = useMemo(() => {
-    return properties.filter(p => {
-      const st = String(p.standard_status || p.standardStatus || '').toUpperCase();
-      return st === 'PENDING APPROVAL';
-    }).length;
-  }, [properties]);
-
-  const tabCounts = useMemo(() => {
-    let active = 0;
-    let contract = 0;
-    let closed = 0;
+  // Dynamic filter options derived from actual dataset
+  const propertyTypeOptions = useMemo(() => {
+    const set = new Set();
     properties.forEach(p => {
-      const s = String(p.status || '').toUpperCase();
-      const std = String(p.standard_status || p.standardStatus || '').toUpperCase();
-      if (std === 'ACTIVE' || s === 'AVAILABLE') active++;
-      if (std === 'ACTIVE UNDER CONTRACT' || s === 'RESERVED' || s === 'UNDER CONTRACT') contract++;
-      if (std === 'CLOSED' || s === 'SOLD') closed++;
+      const t = p.property_type || p.propertyType;
+      if (t) set.add(t);
     });
-    return { active, contract, closed };
+    return Array.from(set).sort();
   }, [properties]);
 
-  // Filtering
+  const locationOptions = useMemo(() => {
+    const set = new Set();
+    properties.forEach(p => {
+      const loc = p.city || p.location;
+      if (loc) {
+        const shortLoc = loc.includes(',') ? loc.split(',')[0].trim() : loc.trim();
+        if (shortLoc) set.add(shortLoc);
+      }
+    });
+    return Array.from(set).sort();
+  }, [properties]);
+
+  // Filter & Sort Logic
   const filteredProperties = useMemo(() => {
-    return properties.filter((p) => {
+    let result = properties.filter((p) => {
+      const q = search.toLowerCase().trim();
+      const pTitle = (p.title || '').toLowerCase();
+      const pLoc = (p.location || '').toLowerCase();
+      const pAddr = (p.address || '').toLowerCase();
+      const pCity = (p.city || '').toLowerCase();
+      const pKey = (p.listingKey || p.listing_key || '').toLowerCase();
+      const pId = String(p.listingId || p.listing_id || p.id || '').toLowerCase();
+
       const matchesSearch = 
-        !search ||
-        (p.title && p.title.toLowerCase().includes(search.toLowerCase())) ||
-        (p.location && p.location.toLowerCase().includes(search.toLowerCase())) ||
-        (p.listingKey && p.listingKey.toLowerCase().includes(search.toLowerCase())) ||
-        (p.id && String(p.id).toLowerCase().includes(search.toLowerCase()));
+        !q ||
+        pTitle.includes(q) ||
+        pLoc.includes(q) ||
+        pAddr.includes(q) ||
+        pCity.includes(q) ||
+        pKey.includes(q) ||
+        pId.includes(q);
 
       const pStatus = String(p.status || '').toUpperCase();
       const pStdStatus = String(p.standard_status || p.standardStatus || '').toUpperCase();
-      const sFilter = statusFilter.toUpperCase();
 
+      // Horizontal Sub-Tab filter
       let matchesTab = true;
       if (activeTab === 'NEEDS_APPROVAL') {
         matchesTab = pStdStatus === 'PENDING APPROVAL';
       } else if (activeTab === 'ACTIVE') {
         matchesTab = pStdStatus === 'ACTIVE' || pStatus === 'AVAILABLE';
-      } else if (activeTab === 'CONTRACT') {
-        matchesTab = pStdStatus === 'ACTIVE UNDER CONTRACT' || pStatus === 'RESERVED' || pStatus === 'UNDER CONTRACT';
-      } else if (activeTab === 'CLOSED') {
+      } else if (activeTab === 'RESERVED' || activeTab === 'CONTRACT') {
+        matchesTab = pStdStatus === 'ACTIVE UNDER CONTRACT' || pStatus === 'RESERVED' || pStatus === 'PENDING' || pStatus === 'UNDER CONTRACT';
+      } else if (activeTab === 'SOLD' || activeTab === 'CLOSED') {
         matchesTab = pStdStatus === 'CLOSED' || pStatus === 'SOLD';
+      } else if (activeTab === 'DRAFT') {
+        matchesTab = pStdStatus === 'DRAFT' || pStatus === 'INACTIVE';
       }
 
-      const matchesStatus = 
-        sFilter === 'ALL' ||
-        pStatus === sFilter ||
-        (sFilter === 'RESERVED' && (pStatus === 'UNDER CONTRACT' || pStatus === 'RESERVED' || pStatus === 'PENDING'));
+      // Dropdown Status Filter
+      let matchesStatus = true;
+      if (statusFilter !== 'ALL') {
+        const sf = statusFilter.toUpperCase();
+        if (sf === 'ACTIVE') {
+          matchesStatus = pStdStatus === 'ACTIVE' || pStatus === 'AVAILABLE';
+        } else if (sf === 'NEEDS_APPROVAL') {
+          matchesStatus = pStdStatus === 'PENDING APPROVAL';
+        } else if (sf === 'RESERVED') {
+          matchesStatus = pStdStatus === 'ACTIVE UNDER CONTRACT' || pStatus === 'RESERVED' || pStatus === 'PENDING' || pStatus === 'UNDER CONTRACT';
+        } else if (sf === 'SOLD') {
+          matchesStatus = pStdStatus === 'CLOSED' || pStatus === 'SOLD';
+        } else if (sf === 'DRAFT') {
+          matchesStatus = pStdStatus === 'DRAFT' || pStatus === 'INACTIVE';
+        } else {
+          matchesStatus = pStatus === sf || pStdStatus === sf;
+        }
+      }
 
-      return matchesSearch && matchesTab && matchesStatus;
+      // Dropdown Property Type Filter
+      let matchesType = true;
+      if (typeFilter !== 'ALL') {
+        matchesType = (p.property_type || p.propertyType || '').toLowerCase() === typeFilter.toLowerCase();
+      }
+
+      // Dropdown Location Filter
+      let matchesLocation = true;
+      if (locationFilter !== 'ALL') {
+        matchesLocation = (p.city || p.location || '').toLowerCase().includes(locationFilter.toLowerCase());
+      }
+
+      return matchesSearch && matchesTab && matchesStatus && matchesType && matchesLocation;
     });
-  }, [properties, search, statusFilter, activeTab]);
+
+    // Sorting
+    if (sortBy === 'newest') {
+      result.sort((a, b) => new Date(b.created_at || b.createdAt || 0) - new Date(a.created_at || a.createdAt || 0));
+    } else if (sortBy === 'price_desc') {
+      result.sort((a, b) => (b.price_raw || b.price || 0) - (a.price_raw || a.price || 0));
+    } else if (sortBy === 'price_asc') {
+      result.sort((a, b) => (a.price_raw || a.price || 0) - (b.price_raw || b.price || 0));
+    } else if (sortBy === 'title_asc') {
+      result.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+    }
+
+    return result;
+  }, [properties, search, activeTab, statusFilter, typeFilter, locationFilter, sortBy]);
 
   // Checkbox selection logic
   const handleToggleSelect = (key) => {
@@ -166,6 +299,7 @@ export default function BrokerProperties() {
     });
   };
 
+  // Approve listing inline
   const handleInlineApprove = async (e, row) => {
     e.stopPropagation();
     const targetId = row.id || row.listingKey;
@@ -191,6 +325,25 @@ export default function BrokerProperties() {
     }
   };
 
+  // Duplicate listing
+  const handleDuplicate = (e, row) => {
+    e.stopPropagation();
+    const clone = {
+      ...row,
+      id: `copy-${Date.now()}`,
+      listingKey: `HSR-${Math.floor(10000000 + Math.random() * 90000000)}`,
+      title: `${row.title} (Copy)`,
+      standard_status: 'Draft',
+      standardStatus: 'Draft',
+      status: 'INACTIVE',
+      created_at: new Date().toISOString(),
+      createdAt: new Date().toISOString()
+    };
+    setProperties(prev => [clone, ...prev]);
+    showToast(`Duplicated listing as "${clone.title}"`);
+  };
+
+  // Batch Status Update
   const handleBatchStatusUpdate = async (newStatus, newStandardStatus) => {
     const keysToUpdate = Array.from(selectedKeys);
     setProperties(prev => prev.map(p => {
@@ -220,25 +373,6 @@ export default function BrokerProperties() {
     }
   };
 
-  const handleCreateListing = async (newListingData) => {
-    try {
-      const created = await propertyService.createProperty(newListingData);
-      const normalized = normalizeProperty(created || newListingData);
-      setProperties(prev => [normalized, ...prev]);
-      showToast(`Successfully created listing: ${normalized.title}`);
-      return normalized;
-    } catch (err) {
-      console.error('Failed to create property:', err);
-      const fallback = normalizeProperty({
-        ...newListingData,
-        id: `local-${Date.now()}`,
-      });
-      setProperties(prev => [fallback, ...prev]);
-      showToast(`Listing created locally: ${fallback.title}`);
-      return fallback;
-    }
-  };
-
   const handleQuickDrawerSave = (updated) => {
     setProperties(prev => prev.map(p => {
       if ((p.listingKey || p.id) === (updated.listingKey || updated.id)) {
@@ -249,85 +383,131 @@ export default function BrokerProperties() {
     showToast(`Saved changes to "${updated.title}"`);
   };
 
-  // Columns with clean human labels (Executive 6-Column Ledger)
+  const handleClearFilters = () => {
+    setSearch('');
+    setStatusFilter('ALL');
+    setTypeFilter('ALL');
+    setLocationFilter('ALL');
+    setSortBy('newest');
+    setActiveTab('ALL');
+    showToast('Filters reset to default');
+  };
+
+  // High-Density 8-Column Data Table Structure Matching User Mockup
   const columns = [
     {
       header: "Property",
-      className: "min-w-[260px]",
-      render: (row) => (
-        <div className="flex items-center gap-3">
-          <img
-            src={row.mainImage || row.image || "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=120&auto=format&fit=crop"}
-            alt={row.title}
-            className="w-10 h-10 rounded-lg object-cover border border-[#E5EBEB] shrink-0"
-          />
-          <div className="truncate min-w-0">
-            <span className="font-semibold text-[#0F172A] block truncate text-xs">
-              {row.title}
-            </span>
-            <div className="flex items-center gap-2 mt-0.5">
-              <span className="font-mono text-[10px] text-slate-400">
-                ID: {row.listingKey || `PH-${row.id}`}
-              </span>
-              {(row.agent_name || row.agent?.full_name || row.agentName) && (
-                <span className="inline-flex items-center text-[10px] font-sans text-slate-500 bg-slate-100 px-1.5 py-0.2 rounded truncate max-w-[110px]">
-                  {row.agent_name || row.agent?.full_name || row.agentName}
-                </span>
+      className: "min-w-[280px]",
+      render: (row) => {
+        const listingCode = row.listingId || row.listing_id || row.listingKey || (row.id ? `ID: ${row.id}` : '—');
+        return (
+          <div className="flex items-center gap-3">
+            <div className="w-14 h-10 rounded-md bg-slate-100 overflow-hidden border border-[#E2E8F0] shrink-0 shadow-2xs flex items-center justify-center">
+              {row.mainImage || row.image ? (
+                <img
+                  src={row.mainImage || row.image}
+                  alt={row.title}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <Building2 className="w-5 h-5 text-slate-400" />
               )}
             </div>
-          </div>
-        </div>
-      )
-    },
-    {
-      header: "Location",
-      className: "min-w-[150px]",
-      render: (row) => (
-        <div>
-          <span className="text-slate-700 truncate block text-xs font-medium">
-            {row.location || row.city || "Ayala Alabang, Muntinlupa"}
-          </span>
-          {(row.subdivision_name || row.subdivisionName || row.neighborhood) && (
-            <span className="text-[10px] text-slate-400 block truncate">
-              {row.subdivision_name || row.subdivisionName || row.neighborhood}
-            </span>
-          )}
-        </div>
-      )
-    },
-    {
-      header: "Specs",
-      className: "w-32 text-xs",
-      render: (row) => {
-        const area = row.livingArea || row.living_area || row.specs?.livingArea || 0;
-        const beds = row.bedrooms || row.beds || row.specs?.beds;
-        const baths = row.bathrooms || row.baths || row.specs?.baths;
-        return (
-          <div>
-            <span className="font-mono text-slate-800 block text-xs">
-              {area ? `${area.toLocaleString()} m²` : (row.property_type || row.type || 'Estate')}
-            </span>
-            <span className="text-[10px] text-slate-400 block">
-              {beds ? `${beds} bds` : ''}{beds && baths ? ' • ' : ''}{baths ? `${baths} ba` : ''}
-              {!beds && !baths && (row.property_type || row.type || 'Estate')}
-            </span>
+            <div className="min-w-0">
+              <span className="font-semibold text-[#1E293B] block truncate text-xs hover:text-[#0F766E] transition-colors">
+                {row.title}
+              </span>
+              <span className="text-[11px] text-[#64748B] font-mono block mt-0.5">
+                {row.listingKey ? `ID: ${row.listingKey}` : listingCode}
+              </span>
+            </div>
           </div>
         );
       }
     },
     {
-      header: "Price & Carrying",
-      className: "w-36 font-mono text-xs text-right",
+      header: "Location",
+      className: "min-w-[190px]",
       render: (row) => {
-        const hoa = row.association_fee || row.associationFee;
+        const primaryLoc = row.city || row.subdivision_name || row.address || row.location || "—";
+        const secondaryLoc = row.state_or_province || row.state || (row.city ? row.address : "Metro Manila");
         return (
-          <div className="text-right">
-            <span className="font-bold text-[#0D4446] block">
-              ₱{(row.price_raw || row.price || 0).toLocaleString()}
+          <div className="flex items-start gap-1.5">
+            <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
+            <div className="min-w-0">
+              <p className="text-xs text-[#1E293B] font-medium leading-snug truncate">
+                {primaryLoc}
+              </p>
+              <p className="text-[11px] text-[#64748B] leading-tight truncate">
+                {secondaryLoc}
+              </p>
+            </div>
+          </div>
+        );
+      }
+    },
+    {
+      header: "Property Type",
+      className: "min-w-[150px]",
+      render: (row) => {
+        const type = row.property_type || row.propertyType || "Condominium";
+        const subtype = row.property_sub_type || row.propertySubType || row.transaction_type || "Residential";
+        return (
+          <div className="flex items-start gap-1.5">
+            <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
+            <div className="min-w-0">
+              <p className="text-xs text-[#1E293B] font-medium leading-snug truncate">
+                {type}
+              </p>
+              <p className="text-[11px] text-[#64748B] leading-tight truncate">
+                {subtype}
+              </p>
+            </div>
+          </div>
+        );
+      }
+    },
+    {
+      header: "Specs",
+      className: "min-w-[130px] text-xs",
+      render: (row) => {
+        const area = row.livingArea || row.living_area || row.sqft || row.specs?.livingArea;
+        const beds = row.bedrooms || row.beds || row.specs?.beds;
+        const baths = row.bathrooms || row.baths || row.specs?.baths;
+        return (
+          <div>
+            <div className="flex items-center gap-1 font-mono text-xs text-[#1E293B]">
+              <Maximize2 className="w-3 h-3 text-slate-400" />
+              <span>{area ? `${area} m²` : '—'}</span>
+            </div>
+            <div className="flex items-center gap-2.5 text-[11px] text-[#64748B] mt-0.5">
+              <span className="flex items-center gap-1">
+                <Bed className="w-3 h-3 text-slate-400" />
+                <span>{beds ?? '—'}</span>
+              </span>
+              <span className="flex items-center gap-1">
+                <Bath className="w-3 h-3 text-slate-400" />
+                <span>{baths ?? '—'}</span>
+              </span>
+            </div>
+          </div>
+        );
+      }
+    },
+    {
+      header: "Price",
+      className: "min-w-[130px] text-xs",
+      render: (row) => {
+        const rawPrice = row.price_raw || row.price || 0;
+        const formatted = rawPrice > 0 ? `₱${Number(rawPrice).toLocaleString()}` : (row.formattedPrice || '—');
+        return (
+          <div>
+            <span className="font-bold text-[#0F766E] block text-xs font-mono">
+              {formatted}
             </span>
-            {hoa ? (
-              <span className="text-[10px] text-slate-400 block">
-                +₱{Number(hoa).toLocaleString()}/mo HOA
+            {(row.association_fee || row.associationFee) ? (
+              <span className="text-[10px] text-[#64748B] block">
+                +₱{Number(row.association_fee || row.associationFee).toLocaleString()}/mo HOA
               </span>
             ) : null}
           </div>
@@ -336,22 +516,55 @@ export default function BrokerProperties() {
     },
     {
       header: "Status",
-      className: "w-32",
+      className: "min-w-[125px]",
       render: (row) => {
-        const std = String(row.standard_status || row.standardStatus || '');
-        const isPendingApproval = std.toUpperCase() === 'PENDING APPROVAL';
+        const std = String(row.standard_status || row.standardStatus || row.status || '').toUpperCase();
+        const isPendingApproval = std === 'PENDING APPROVAL';
+        const isActive = std === 'ACTIVE' || std === 'AVAILABLE';
+        const isContract = std === 'ACTIVE UNDER CONTRACT' || std === 'RESERVED' || std === 'UNDER CONTRACT' || std === 'PENDING';
+        const isClosed = std === 'CLOSED' || std === 'SOLD';
+        
         return (
-          <div className="flex flex-col items-start gap-1">
-            <StatusBadge status={row.standardStatus || row.standard_status || row.status} />
+          <div className="flex items-center gap-2">
+            {isActive && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                Active
+              </span>
+            )}
+            {isPendingApproval && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 text-amber-800 border border-amber-200">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                Needs Approval
+              </span>
+            )}
+            {isContract && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 text-amber-700 border border-amber-200/60">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                Reserved
+              </span>
+            )}
+            {isClosed && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-rose-50 text-rose-700 border border-rose-200/60">
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                Sold
+              </span>
+            )}
+            {!isActive && !isPendingApproval && !isContract && !isClosed && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                Draft
+              </span>
+            )}
+
             {isPendingApproval && (
               <button
                 type="button"
                 onClick={(e) => handleInlineApprove(e, row)}
-                className="inline-flex items-center gap-1 text-[10px] font-mono text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 px-1.5 py-0.5 rounded cursor-pointer transition-colors"
-                title="Approve and publish to Active status"
+                className="text-[10px] font-medium text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded-md cursor-pointer transition-colors"
+                title="Approve and activate"
               >
-                <CheckCircle2 className="w-2.5 h-2.5" />
-                <span>Approve</span>
+                Approve
               </button>
             )}
           </div>
@@ -359,81 +572,150 @@ export default function BrokerProperties() {
       }
     },
     {
+      header: "Date Added",
+      className: "min-w-[130px]",
+      render: (row) => {
+        const rawDate = row.created_at || row.createdAt;
+        return (
+          <div>
+            <p className="text-xs text-[#1E293B] font-medium leading-snug">
+              {formatCalendarDate(rawDate)}
+            </p>
+            <p className="text-[11px] text-[#64748B] leading-tight">
+              {formatRelativeTime(rawDate)}
+            </p>
+          </div>
+        );
+      }
+    },
+    {
       header: "Actions",
-      className: "w-28 text-right",
+      className: "w-24 text-right",
       render: (row) => (
         <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-          <button
-            onClick={() => setQuickDrawerProperty(row)}
-            className="p-1 rounded text-slate-400 hover:text-[#0D4446] hover:bg-[#0D4446]/5 transition-colors cursor-pointer"
-            title="Quick Edit"
-          >
-            <Edit3 className="w-3.5 h-3.5" />
-          </button>
           <Link
             to={`/broker/properties/${row.id || row.listingKey}/edit`}
-            className="p-1 rounded text-slate-400 hover:text-[#0D4446] hover:bg-[#0D4446]/5 transition-colors"
-            title="Open Studio Workshop"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-[#0F766E] hover:bg-slate-100 transition-colors cursor-pointer"
+            title="Edit Property"
+            aria-label="Edit"
           >
-            <ExternalLink className="w-3.5 h-3.5" />
+            <Edit3 className="w-4 h-4" />
           </Link>
-          <Link
-            to={`/properties/${row.id || row.listingKey}`}
-            className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-[#F4F5F4] transition-colors"
-            title="View Public Listing"
+          <button
+            onClick={(e) => handleDuplicate(e, row)}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-[#0F766E] hover:bg-slate-100 transition-colors cursor-pointer"
+            title="Duplicate Property"
+            aria-label="Duplicate"
           >
-            <span className="text-[10px] font-mono font-semibold">VIEW</span>
-          </Link>
+            <Copy className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => setQuickDrawerProperty(row)}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-[#0F766E] hover:bg-slate-100 transition-colors cursor-pointer"
+            title="More Options"
+            aria-label="More options"
+          >
+            <MoreVertical className="w-4 h-4" />
+          </button>
         </div>
       )
     }
   ];
 
+  // Proposal Columns for the Agent Proposals Review Queue Tab
+  const proposalColumns = [
+    {
+      header: "Target Property",
+      className: "min-w-[240px]",
+      render: (row) => {
+        const propTitle = row.property?.title || row.original_snapshot?.title || 'Listing Proposal';
+        const propId = row.property_id || row.propertyId;
+        return (
+          <div>
+            <span className="font-semibold text-[#1E293B] block truncate text-xs hover:text-[#0F766E] transition-colors">
+              {propTitle}
+            </span>
+            <span className="text-[11px] text-[#64748B] font-mono block mt-0.5">
+              ID: {propId ? String(propId).slice(0, 8) : '—'}
+            </span>
+          </div>
+        );
+      }
+    },
+    {
+      header: "Proposing Agent",
+      className: "min-w-[180px]",
+      render: (row) => {
+        const agent = row.agent || {};
+        return (
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-full bg-[#0F766E]/10 text-[#0F766E] flex items-center justify-center font-bold text-xs shrink-0">
+              {agent.full_name ? agent.full_name.slice(0, 2).toUpperCase() : 'AG'}
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-[#1E293B] truncate">{agent.full_name || 'Assigned Agent'}</p>
+              <p className="text-[10px] text-[#64748B] truncate">{agent.email || ''}</p>
+            </div>
+          </div>
+        );
+      }
+    },
+    {
+      header: "Changed Fields",
+      className: "min-w-[180px]",
+      render: (row) => {
+        const changes = row.proposed_changes || {};
+        const keys = Object.keys(changes);
+        return (
+          <div className="flex flex-wrap gap-1">
+            {keys.map((k) => (
+              <span key={k} className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-[#FF6B6B]/10 text-[#FF6B6B] border border-[#FF6B6B]/20">
+                {k}
+              </span>
+            ))}
+          </div>
+        );
+      }
+    },
+    {
+      header: "Submitted",
+      className: "min-w-[120px] text-xs font-mono text-[#64748B]",
+      render: (row) => formatRelativeTime(row.created_at)
+    },
+    {
+      header: "Review Actions",
+      className: "text-right min-w-[140px]",
+      render: (row) => (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setSelectedProposal(row);
+          }}
+          className="px-3 py-1.5 rounded-lg bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
+        >
+          Review & Compare
+        </button>
+      )
+    }
+  ];
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-20 right-6 z-50 bg-[#0F172A] text-white px-4 py-2.5 rounded-lg shadow-xl text-xs font-medium border border-slate-700 animate-in fade-in duration-150 flex items-center gap-2">
+        <div className="fixed top-20 right-6 z-50 bg-[#1E293B] text-white px-4 py-2.5 rounded-lg shadow-xl text-xs font-medium border border-slate-700 animate-in fade-in duration-150 flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-emerald-400" />
           <span>{toastMessage}</span>
         </div>
       )}
 
-      {/* KPI Metric Summary Plinths */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard
-          title="Total Inventory"
-          value={portfolioStats.totalCount}
-          subtitle="estates in portfolio"
-          icon={Building2}
-          trend="+2 this month"
-        />
-        <MetricCard
-          title="Portfolio Valuation"
-          value={portfolioStats.totalValuation}
-          subtitle="Aggregate list price"
-          icon={DollarSign}
-        />
-        <MetricCard
-          title="Market Ready"
-          value={portfolioStats.availableCount}
-          subtitle="available for viewing"
-          icon={CheckCircle2}
-        />
-        <MetricCard
-          title="Under Contract"
-          value={portfolioStats.reservedCount}
-          subtitle="pending buyer closing"
-          icon={TrendingUp}
-        />
-      </div>
-
-      {/* Connection Notice / Fallback Banner */}
+      {/* Truthful Connection Notice / Error State (No Mock Data Fallback) */}
       {error && (
-        <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-center justify-between text-amber-800 text-xs font-sans">
+        <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-center justify-between text-amber-800 text-xs font-sans">
           <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-[18px]">info</span>
+            <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
             <span>{error}</span>
           </div>
           <button
@@ -446,107 +728,253 @@ export default function BrokerProperties() {
         </div>
       )}
 
-      {/* Search & Filter Header Strip */}
-      <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h1 className="text-base font-semibold text-[#0F172A]">Property Inventory</h1>
-            <p className="text-xs text-slate-500">Manage real estate listings and client presentation assets.</p>
+      {/* Header Section Matching Mockup */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          {/* Breadcrumbs */}
+          <div className="flex items-center gap-1.5 text-xs text-[#64748B] mb-1 font-medium">
+            <Link to="/broker/dashboard" className="hover:text-[#1E293B] transition-colors">
+              Home
+            </Link>
+            <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+            <Link to="/broker/properties" className="hover:text-[#1E293B] transition-colors">
+              Properties
+            </Link>
+            <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+            <span className="text-[#1E293B] font-semibold">All Listings</span>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => fetchProperties(true)}
-              disabled={isRefreshing}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[#D8DFDF] bg-white hover:bg-[#F4F5F4] text-xs font-mono text-slate-600 transition-colors cursor-pointer"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
-              <span className="hidden sm:inline">Refresh</span>
-            </button>
-            <Link
-              to="/broker/properties/new/edit"
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#E76F51] hover:bg-[#D65C3E] text-white text-xs font-mono font-semibold shadow-xs transition-colors cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>New Listing</span>
-            </Link>
-            <Link
-              to="/broker/properties/new/edit"
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[#D8DFDF] bg-white hover:bg-[#F4F5F4] text-xs font-mono text-slate-700 transition-colors cursor-pointer"
-              title="Open Split-Screen Edit Studio"
-            >
-              <Edit3 className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Studio</span>
-            </Link>
-          </div>
+          <h1 className="text-2xl font-bold text-[#1E293B] tracking-tight">
+            Property Listings
+          </h1>
+          <p className="text-xs text-[#64748B] mt-0.5">
+            Manage and organize your property listings.
+          </p>
         </div>
 
-        {/* Executive Filter Tabs */}
-        <div className="flex items-center gap-1.5 border-b border-[#D8DFDF] pb-2 overflow-x-auto text-xs font-mono">
-          {[
-            { id: 'ALL', label: 'All Listings', count: properties.length },
-            { id: 'NEEDS_APPROVAL', label: 'Needs Approval', count: needsApprovalCount, badge: true },
-            { id: 'ACTIVE', label: 'Active', count: tabCounts.active },
-            { id: 'CONTRACT', label: 'Active Under Contract', count: tabCounts.contract },
-            { id: 'CLOSED', label: 'Closed', count: tabCounts.closed },
-          ].map((tab) => (
+        {/* Action Button Cluster */}
+        <div className="flex items-center gap-2.5 shrink-0">
+          <button
+            onClick={() => fetchProperties(true)}
+            disabled={isRefreshing}
+            className="h-10 px-4 rounded-lg border border-[#E2E8F0] bg-white hover:bg-slate-50 text-xs font-semibold text-[#1E293B] transition-colors cursor-pointer shadow-2xs flex items-center gap-2"
+          >
+            <RotateCw className={cn("w-3.5 h-3.5 text-slate-500", isRefreshing && "animate-spin")} />
+            <span>Refresh</span>
+          </button>
+          
+          <Link
+            to="/broker/properties/create"
+            className="h-10 px-4 rounded-lg bg-[#FF6B6B] hover:bg-[#EE5A5A] text-[#1E293B] text-xs font-semibold shadow-2xs transition-colors cursor-pointer flex items-center gap-1.5"
+            aria-label="New Listing / Add New Property"
+          >
+            <Plus className="w-4 h-4 stroke-[2.5]" />
+            <span>+ Add New Property</span>
+          </Link>
+        </div>
+      </div>
+
+      {/* Status Pill Tabs Matching Mockup */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs select-none custom-scrollbar">
+        {[
+          { id: 'ALL', label: 'All Listings', count: tabCounts.all },
+          { id: 'PROPOSALS', label: 'Agent Proposals', count: proposals.length, badge: proposals.length > 0 },
+          { id: 'NEEDS_APPROVAL', label: 'Needs Approval', count: tabCounts.needsApproval, badge: true },
+          { id: 'ACTIVE', label: 'Active', count: tabCounts.active },
+          { id: 'RESERVED', label: 'Reserved', count: tabCounts.reserved, ariaLabel: 'Reserved / Under Contract' },
+          { id: 'SOLD', label: 'Sold', count: tabCounts.sold, ariaLabel: 'Sold / Closed' },
+          { id: 'DRAFT', label: 'Draft', count: tabCounts.draft },
+        ].map((tab) => {
+          const isSelected = activeTab === tab.id;
+          return (
             <button
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
+              aria-label={tab.ariaLabel || `${tab.label} (${tab.count})`}
               className={cn(
-                "flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors cursor-pointer",
-                activeTab === tab.id
-                  ? "bg-[#0D4446] text-white font-semibold shadow-xs"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                "inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs transition-colors cursor-pointer shrink-0 font-medium",
+                isSelected
+                  ? "bg-[#0F766E] text-white shadow-xs font-semibold"
+                  : "bg-slate-100 text-[#64748B] hover:text-[#1E293B] hover:bg-slate-200/80"
               )}
             >
               <span>{tab.label}</span>
               <span
                 className={cn(
-                  "px-1.5 py-0.2 rounded-full text-[10px]",
-                  activeTab === tab.id
-                    ? "bg-white/20 text-white"
+                  "px-1.5 py-0.2 rounded-full text-[10px] font-mono",
+                  isSelected
+                    ? "bg-white/20 text-white font-bold"
                     : tab.badge && tab.count > 0
-                    ? "bg-amber-100 text-amber-800 font-bold border border-amber-300"
-                    : "bg-slate-100 text-slate-500"
+                    ? "bg-amber-100 text-amber-800 font-bold"
+                    : "bg-white text-slate-600"
                 )}
               >
                 {tab.count}
               </span>
             </button>
-          ))}
-        </div>
-
-        <SearchAndFilterBar
-          searchValue={search}
-          onSearchChange={setSearch}
-          searchPlaceholder="Search inventory by title, address, agent, or property type..."
-          filters={[
-            {
-              value: statusFilter,
-              onChange: setStatusFilter,
-              options: [
-                { label: 'All Statuses', value: 'ALL' },
-                { label: 'Available', value: 'AVAILABLE' },
-                { label: 'Reserved', value: 'RESERVED' },
-                { label: 'Sold', value: 'SOLD' },
-              ]
-            }
-          ]}
-        />
+          );
+        })}
       </div>
 
-      {/* Loading Skeleton */}
-      {loading ? (
-        <div className="bg-white rounded-2xl border border-gray-200/80 p-12 text-center space-y-4 shadow-sm">
-          <div className="w-10 h-10 border-3 border-[#0D4446] border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-xs uppercase tracking-widest font-sans font-bold text-gray-500">
+      {/* Multi-Criteria Search & Filter Toolbar Matching Mockup */}
+      <div className="bg-white rounded-lg border border-[#E2E8F0] p-3 shadow-2xs flex flex-wrap items-center gap-2.5">
+        
+        {/* Search Input */}
+        <div className="relative flex-1 min-w-[220px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search properties by title, location, or listing code..."
+            className="w-full h-9 pl-9 pr-8 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs text-[#1E293B] placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#0F766E] focus:border-[#0F766E]"
+          />
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+
+        {/* Status Dropdown */}
+        <div className="w-36 shrink-0">
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="w-full h-9 px-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-[#0F766E] cursor-pointer"
+          >
+            <option value="ALL">Status: All</option>
+            <option value="ACTIVE">Active</option>
+            <option value="NEEDS_APPROVAL">Needs Approval</option>
+            <option value="RESERVED">Reserved</option>
+            <option value="SOLD">Sold</option>
+            <option value="DRAFT">Draft</option>
+          </select>
+        </div>
+
+        {/* Property Type Dropdown */}
+        <div className="w-36 shrink-0">
+          <select
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+            className="w-full h-9 px-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-[#0F766E] cursor-pointer"
+          >
+            <option value="ALL">Type: All</option>
+            {propertyTypeOptions.map(t => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+            {propertyTypeOptions.length === 0 && (
+              <>
+                <option value="Condominium">Condominium</option>
+                <option value="House & Lot">House & Lot</option>
+                <option value="Townhouse">Townhouse</option>
+                <option value="Estate">Estate</option>
+              </>
+            )}
+          </select>
+        </div>
+
+        {/* Location Dropdown */}
+        <div className="w-36 shrink-0">
+          <select
+            value={locationFilter}
+            onChange={(e) => setLocationFilter(e.target.value)}
+            className="w-full h-9 px-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-[#0F766E] cursor-pointer"
+          >
+            <option value="ALL">Location: All</option>
+            {locationOptions.map(l => (
+              <option key={l} value={l}>{l}</option>
+            ))}
+            {locationOptions.length === 0 && (
+              <>
+                <option value="Makati">Makati</option>
+                <option value="Taguig">Taguig / BGC</option>
+                <option value="Muntinlupa">Muntinlupa</option>
+              </>
+            )}
+          </select>
+        </div>
+
+        {/* Sort By Dropdown */}
+        <div className="w-36 shrink-0">
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="w-full h-9 px-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-[#0F766E] cursor-pointer"
+          >
+            <option value="newest">Sort: Newest First</option>
+            <option value="price_desc">Price: High to Low</option>
+            <option value="price_asc">Price: Low to High</option>
+            <option value="title_asc">Title: A to Z</option>
+          </select>
+        </div>
+
+        {/* Clear Filters Button */}
+        <button
+          type="button"
+          onClick={handleClearFilters}
+          className="h-9 px-3 bg-white hover:bg-slate-50 border border-[#E2E8F0] rounded-lg text-xs font-semibold text-[#64748B] hover:text-[#1E293B] flex items-center gap-1.5 transition-colors cursor-pointer shrink-0"
+          title="Reset all filters"
+        >
+          <SlidersHorizontal className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">Reset</span>
+        </button>
+      </div>
+
+      {/* Main Data Table or Neutral Empty / Loading States */}
+      {activeTab === 'PROPOSALS' ? (
+        proposals.length === 0 ? (
+          <div className="bg-white rounded-lg border border-[#E2E8F0] p-12 text-center space-y-3 shadow-xs">
+            <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
+              <CheckCircle2 className="w-5 h-5" />
+            </div>
+            <h3 className="text-sm font-bold text-[#1E293B]">All caught up</h3>
+            <p className="text-xs text-[#64748B] max-w-sm mx-auto">
+              There are no pending property edit proposals awaiting broker review.
+            </p>
+          </div>
+        ) : (
+          <DataTable
+            columns={proposalColumns}
+            data={proposals}
+            keyField="id"
+            pageSize={8}
+            onRowClick={(row) => setSelectedProposal(row)}
+            emptyMessage="No pending edit proposals."
+          />
+        )
+      ) : loading ? (
+        <div className="bg-white rounded-lg border border-[#E2E8F0] p-12 text-center space-y-4 shadow-xs">
+          <div className="w-9 h-9 border-3 border-[#0F766E] border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-xs uppercase tracking-widest font-sans font-bold text-[#64748B]">
             Querying Firm Architectural Database...
           </p>
         </div>
+      ) : properties.length === 0 ? (
+        <div className="bg-white rounded-lg border border-[#E2E8F0] p-12 text-center space-y-4 shadow-xs">
+          <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto text-slate-400">
+            <Building2 className="w-6 h-6" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-[#1E293B]">No property listings yet</h3>
+            <p className="text-xs text-[#64748B] mt-1 max-w-sm mx-auto">
+              No property records currently exist in the database. Add your first listing to populate the directory.
+            </p>
+          </div>
+          <Link
+            to="/broker/properties/create"
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#FF6B6B] hover:bg-[#EE5A5A] text-[#1E293B] text-xs font-semibold rounded-lg shadow-2xs transition-colors cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Create First Listing</span>
+          </Link>
+        </div>
       ) : (
-        /* High-Density Data Grid */
         <DataTable
           columns={columns}
           data={filteredProperties}
@@ -556,16 +984,16 @@ export default function BrokerProperties() {
           selectedKeys={selectedKeys}
           onToggleSelect={handleToggleSelect}
           onToggleSelectAll={handleToggleSelectAll}
-          onRowClick={(row) => setQuickDrawerProperty(row)}
-          emptyMessage="No properties found"
+          onRowClick={(row) => navigate(`/broker/properties/${row.id || row.listingKey || row.listingId}`)}
+          emptyMessage="No properties match your filter criteria."
         />
       )}
 
       {/* Floating Batch Action Bar */}
       {selectedKeys.size > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-[#0F172A] text-white px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-4 text-xs border border-slate-700 animate-in slide-in-from-bottom duration-200">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-[#1E293B] text-white px-4 py-2.5 rounded-lg shadow-2xl flex items-center gap-4 text-xs border border-slate-700 animate-in slide-in-from-bottom duration-200">
           <div className="flex items-center gap-2 font-mono">
-            <span className="w-5 h-5 rounded-full bg-[#14B8A6] text-[#070D0E] font-bold flex items-center justify-center text-[10px]">
+            <span className="w-5 h-5 rounded-full bg-[#14B8A6] text-[#0F172A] font-bold flex items-center justify-center text-[10px]">
               {selectedKeys.size}
             </span>
             <span className="text-slate-300">selected</span>
@@ -582,13 +1010,13 @@ export default function BrokerProperties() {
               onClick={() => handleBatchStatusUpdate('RESERVED', 'Active Under Contract')}
               className="px-2.5 py-1 rounded-md bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
             >
-              Set Under Contract
+              Set Reserved
             </button>
             <button
               onClick={() => handleBatchStatusUpdate('SOLD', 'Closed')}
               className="px-2.5 py-1 rounded-md bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
             >
-              Set Closed
+              Set Sold
             </button>
             <button
               onClick={() => setSelectedKeys(new Set())}
@@ -608,8 +1036,15 @@ export default function BrokerProperties() {
         onSave={handleQuickDrawerSave}
       />
 
-
-
+      {/* Proposal Review Drawer */}
+      <ProposalReviewDrawer
+        isOpen={Boolean(selectedProposal)}
+        onClose={() => setSelectedProposal(null)}
+        proposal={selectedProposal}
+        onApprove={handleApproveProposal}
+        onReject={handleRejectProposal}
+        isProcessing={isProcessingProposal}
+      />
     </div>
   );
 }

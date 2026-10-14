@@ -61,10 +61,6 @@ export default function BrokerProfile() {
       <PageHeader
         title="Broker Executive Profile"
         subtitle="Principal broker credentials, firm regulatory registrations, and administrative settings."
-        breadcrumbs={[
-          { label: "Dashboard", to: "/broker/dashboard" },
-          { label: "Profile" }
-        ]}
         actions={
           <div className="flex items-center gap-3">
             <button

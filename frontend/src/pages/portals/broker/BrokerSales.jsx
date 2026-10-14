@@ -130,10 +130,6 @@ export default function BrokerSales() {
       <PageHeader
         title="Firm-Wide Sales Audit & Monitoring"
         subtitle="Complete registry of property conveyance agreements, recorded valuations, and deed closing audits."
-        breadcrumbs={[
-          { label: "Dashboard", to: "/broker/dashboard" },
-          { label: "Sales Audit" }
-        ]}
         actions={
           <button
             onClick={loadData}

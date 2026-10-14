@@ -4,17 +4,19 @@
 // ==============================================================================
 
 import apiClient from './apiClient';
+import { resolveDriveImageUrl } from './driveService';
 
 /**
  * Normalizes raw property items from Supabase / Express backend or mock fixtures
  * into a consistent, UI-safe format.
  */
 export function normalizeProperty(rawItem = {}) {
-  const images = Array.isArray(rawItem.images) && rawItem.images.length > 0
+  const rawImages = Array.isArray(rawItem.images) && rawItem.images.length > 0
     ? rawItem.images
-    : [rawItem.mainImage || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1200&auto=format&fit=crop'];
+    : [rawItem.mainImage || rawItem.image || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1200&auto=format&fit=crop'];
 
-  const mainImage = rawItem.mainImage || images[0];
+  const images = rawImages.map(resolveDriveImageUrl);
+  const mainImage = resolveDriveImageUrl(rawItem.mainImage || rawItem.image) || images[0];
 
   let locationString = 'Metro Manila';
   if (typeof rawItem.location === 'string' && rawItem.location.trim()) {
@@ -40,13 +42,13 @@ export function normalizeProperty(rawItem = {}) {
     ? Boolean(rawItem.is_published)
     : (normalizedStatus !== 'SOLD' && normalizedStatus !== 'INACTIVE');
 
-  const agentName = rawItem.agent_name || rawItem.agentName || rawItem.agent?.name || 'Elena Rossi';
-  const agentId = rawItem.agent_id || rawItem.agentId || rawItem.createdBy || 'agent-1';
+  const agentName = rawItem.agent_name || rawItem.agentName || rawItem.agent?.name || '';
+  const agentId = rawItem.agent_id || rawItem.agentId || rawItem.createdBy || '';
 
   return {
     ...rawItem,
     id: String(rawItem.id || `prop-${Date.now()}`),
-    title: rawItem.title || rawItem.name || 'Prime Luxury Residence',
+    title: rawItem.title || rawItem.name || 'Untitled Property',
     tagline: rawItem.tagline || '',
     mainImage,
     images,
@@ -55,18 +57,19 @@ export function normalizeProperty(rawItem = {}) {
     price: displayPrice,
     price_raw: rawNumericPrice,
     formattedPrice: displayPrice,
-    property_type: rawItem.property_type || rawItem.specs?.propertyType || rawItem.propertyType || 'Estate',
-    propertyType: rawItem.property_type || rawItem.specs?.propertyType || rawItem.propertyType || 'Estate',
+    property_type: rawItem.property_type || rawItem.specs?.propertyType || rawItem.propertyType || 'Residential',
+    propertyType: rawItem.property_type || rawItem.specs?.propertyType || rawItem.propertyType || 'Residential',
+    property_type_id: Number(rawItem.property_type_id || rawItem.propertyTypeId || rawItem.specs?.propertyTypeId || 1),
+    propertyTypeId: Number(rawItem.property_type_id || rawItem.propertyTypeId || rawItem.specs?.propertyTypeId || 1),
+    property_sub_type: rawItem.property_sub_type || rawItem.propertySubType || rawItem.specs?.propertySubType || 'Residential',
+    propertySubType: rawItem.property_sub_type || rawItem.propertySubType || rawItem.specs?.propertySubType || 'Residential',
     status: normalizedStatus,
     is_published: isPublished,
     agent_id: agentId,
     agent_name: agentName,
-    agent: rawItem.agent || {
-      id: agentId,
-      name: agentName,
-      title: 'Senior Property Consultant',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
-    },
+    agent: rawItem.agent || (agentName ? { id: agentId, name: agentName } : null),
+    created_at: rawItem.created_at || rawItem.createdAt || null,
+    createdAt: rawItem.createdAt || rawItem.created_at || null,
     beds: rawItem.beds || rawItem.specs?.beds || rawItem.bedrooms || 1,
     baths: rawItem.baths || rawItem.specs?.baths || rawItem.bathrooms || 1,
     sqft: rawItem.sqft || rawItem.specs?.sqft || rawItem.floor_area || 0,
@@ -115,44 +118,78 @@ export function toApiPayload(item = {}) {
     ? rawAssocFee
     : Number(String(rawAssocFee || 0).replace(/[^0-9.-]+/g, '')) || 0;
 
+  const rawTax = item.tax_annual_amount ?? item.taxAnnualAmount;
+  const numericTax = rawTax !== undefined && rawTax !== null && rawTax !== ''
+    ? (typeof rawTax === 'number' ? rawTax : Number(String(rawTax).replace(/[^0-9.-]+/g, '')) || undefined)
+    : undefined;
+
+  const rawOriginalPrice = item.original_list_price ?? item.originalListPrice;
+  const numericOriginalPrice = rawOriginalPrice
+    ? (typeof rawOriginalPrice === 'number' ? rawOriginalPrice : Number(String(rawOriginalPrice).replace(/[^0-9.-]+/g, '')) || numericPrice)
+    : numericPrice;
+
+  const resolvedCoordinates = item.coordinates || (item.latitude && item.longitude ? {
+    lat: Number(item.latitude),
+    lng: Number(item.longitude)
+  } : undefined);
+
   return {
     title: (item.title || 'Untitled Luxury Property').trim(),
     tagline: item.tagline || '',
     price: numericPrice,
+    propertyTypeId: Number(item.property_type_id || item.propertyTypeId || item.specs?.propertyTypeId || 1),
+    property_type_id: Number(item.property_type_id || item.propertyTypeId || item.specs?.propertyTypeId || 1),
     listPriceCurrency: item.listPriceCurrency || item.list_price_currency || 'PHP',
-    originalListPrice: item.originalListPrice || item.original_list_price ? Number(item.originalListPrice || item.original_list_price) : numericPrice,
+    originalListPrice: numericOriginalPrice,
     associationFee: numericAssocFee,
     associationFeeFrequency: item.associationFeeFrequency || item.association_fee_frequency || 'Monthly',
-    taxAnnualAmount: item.taxAnnualAmount ? Number(item.taxAnnualAmount) : undefined,
+    taxAnnualAmount: numericTax,
     standardStatus: item.standardStatus || item.standard_status || (item.status === 'AVAILABLE' ? 'Active' : item.status === 'UNDER CONTRACT' ? 'Active Under Contract' : item.status === 'SOLD' ? 'Closed' : 'Draft'),
+    status: (item.status || 'available').toLowerCase(),
+    publicRemarks: item.publicRemarks || item.description || '',
     location: {
       address: item.address || item.location || 'Metro Manila',
-      subdivisionName: item.subdivisionName || item.subdivision_name || '',
-      city: item.city || 'Metro Manila',
-      state: item.state || 'Metro Manila',
+      unparsedAddress: item.address || item.location || 'Metro Manila',
+      subdivisionName: item.subdivisionName || item.subdivision_name || item.subdivision || '',
+      city: item.city || item.location || 'Metro Manila',
+      state: item.state || item.province || 'Metro Manila',
+      stateOrProvince: item.stateOrProvince || item.province || item.state || 'Metro Manila',
       postalCode: item.postalCode || item.postal_code || '1000',
+      coordinates: resolvedCoordinates,
     },
     specs: {
       beds: Number(item.bedrooms || item.beds) || 1,
       baths: Number(item.bathrooms || item.baths) || 1,
       bedroomsTotal: Number(item.bedrooms || item.beds) || 1,
       bathroomsTotalInteger: Number(item.bathrooms || item.baths) || 1,
+      bathroomsFull: Number(item.bathroomsFull || item.bathrooms_full || item.specs?.bathroomsFull) || 1,
+      bathroomsHalf: Number(item.bathroomsHalf || item.bathrooms_half || item.specs?.bathroomsHalf) || 0,
       storiesTotal: Number(item.stories || item.stories_total) || 1,
-      sqft: Number(item.livingArea || item.living_area || item.sqft) || 100,
-      livingArea: Number(item.livingArea || item.living_area || item.sqft) || 100,
+      parkingTotal: Number(item.parking || item.parking_total) || 0,
+      parkingCovered: Number(item.parkingCovered || item.parking_covered || item.specs?.parkingCovered) || 0,
+      parkingOpen: Number(item.parkingOpen || item.parking_open || item.specs?.parkingOpen) || 0,
+      sqft: Number(item.livingArea || item.living_area || item.floor_area || item.sqft) || 100,
+      livingArea: Number(item.livingArea || item.living_area || item.floor_area || item.sqft) || 100,
       livingAreaUnits: item.livingAreaUnits || item.living_area_units || 'Square Meters',
-      lotSizeArea: item.lotSizeArea ? Number(item.lotSizeArea) : undefined,
-      lotSizeUnits: item.lotSizeUnits || 'Square Meters',
+      lotSizeArea: item.lotSizeArea || item.lot_area ? Number(item.lotSizeArea || item.lot_area) : undefined,
+      lotSizeUnits: item.lotSizeUnits || item.lot_area_unit || 'Square Meters',
       propertyType: item.propertyType || item.property_type || 'Estate',
+      propertyTypeId: Number(item.property_type_id || item.propertyTypeId || item.specs?.propertyTypeId || 1),
+      propertySubType: item.propertySubType || item.property_sub_type || '',
+      propertyCondition: item.propertyCondition || item.property_condition || 'RFO',
+      transactionType: item.transactionType || item.transaction_type || 'For Sale',
       yearBuilt: item.yearBuilt ? Number(item.yearBuilt) : new Date().getFullYear(),
     },
-    features: Array.isArray(item.features) ? item.features : [],
+    features: Array.isArray(item.features) ? item.features : (Array.isArray(item.amenities) ? item.amenities : []),
+    interiorFeatures: Array.isArray(item.interiorFeatures) ? item.interiorFeatures : (Array.isArray(item.interior_features) ? item.interior_features : []),
+    exteriorFeatures: Array.isArray(item.exteriorFeatures) ? item.exteriorFeatures : (Array.isArray(item.exterior_features) ? item.exterior_features : []),
     images: item.coverImage ? [item.coverImage, ...(item.galleryImages || [])] : (item.images || []),
     confidential: {
-      buyerAgencyCompensation: item.buyerAgencyCompensation || item.buyerBrokerCommission || item.confidential?.buyerAgencyCompensation || '',
-      privateRemarks: item.privateRemarks || item.confidential?.privateRemarks || '',
+      buyerAgencyCompensation: item.buyerAgencyCompensation || item.buyerBrokerCommission || item.commissionSplit || item.confidential?.buyerAgencyCompensation || '',
+      privateRemarks: item.privateRemarks || item.privateNotes || item.confidential?.privateRemarks || '',
       showingInstructions: item.showingInstructions || item.confidential?.showingInstructions || '',
       lockboxCode: item.lockboxCode || item.confidential?.lockboxCode || '',
+      sellerDirectPhone: item.sellerDirectPhone || item.seller_direct_phone || item.confidential?.sellerDirectPhone || '',
     },
   };
 }
@@ -223,6 +260,61 @@ export const propertyService = {
         'Content-Type': 'multipart/form-data',
       },
     });
+    return response?.data || response;
+  },
+
+  /**
+   * Submit proposed modifications to an assigned property (Agent Workflow)
+   */
+  async proposeEdit(propertyId, proposedChanges, agentNotes = '') {
+    const response = await apiClient.post(`/properties/${propertyId}/propose-edit`, {
+      proposedChanges,
+      agentNotes,
+    });
+    return response?.data || response;
+  },
+
+  /**
+   * List edit requests with status or property filters
+   */
+  async getEditRequests(params = {}) {
+    const response = await apiClient.get('/properties/edit-requests', { params });
+    return response;
+  },
+
+  /**
+   * Fetch single edit request by ID
+   */
+  async getEditRequestById(requestId) {
+    const response = await apiClient.get(`/properties/edit-requests/${requestId}`);
+    return response?.data || response;
+  },
+
+  /**
+   * Approve an edit request (Broker / Admin)
+   */
+  async approveEditRequest(requestId, reviewNotes = '') {
+    const response = await apiClient.post(`/properties/edit-requests/${requestId}/approve`, {
+      reviewNotes,
+    });
+    return response?.data || response;
+  },
+
+  /**
+   * Reject an edit request with required remarks (Broker / Admin)
+   */
+  async rejectEditRequest(requestId, rejectionReason) {
+    const response = await apiClient.post(`/properties/edit-requests/${requestId}/reject`, {
+      rejectionReason,
+    });
+    return response?.data || response;
+  },
+
+  /**
+   * Cancel a pending edit request (Agent)
+   */
+  async cancelEditRequest(requestId) {
+    const response = await apiClient.post(`/properties/edit-requests/${requestId}/cancel`);
     return response?.data || response;
   }
 };

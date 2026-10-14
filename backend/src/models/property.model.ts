@@ -1,4 +1,4 @@
-import { ResoStandardStatus, ResoMediaItem, ResoRoomItem, ResoConfidentialItem } from '../../../shared/types/property';
+import { StandardStatus, MediaItem, RoomItem, ConfidentialItem } from '../../../shared/types/property';
 
 export interface PropertyModel {
   id: string;
@@ -48,16 +48,18 @@ export interface PropertyModel {
   interiorFeatures?: string[];
   exteriorFeatures?: string[];
   images: string[];
-  media?: ResoMediaItem[];
-  rooms?: ResoRoomItem[];
-  confidential?: ResoConfidentialItem;
+  media?: MediaItem[];
+  rooms?: RoomItem[];
+  confidential?: ConfidentialItem;
   publicRemarks?: string;
+  customAttributes?: Record<string, unknown>;
   customResoAttributes?: Record<string, unknown>;
   architecturalStyle?: string;
-  standardStatus?: ResoStandardStatus;
+  standardStatus?: StandardStatus;
   status: 'available' | 'pending' | 'sold';
   listAgentKey?: string;
   createdBy?: string;
   createdAt: Date | string;
   updatedAt: Date | string;
 }
+

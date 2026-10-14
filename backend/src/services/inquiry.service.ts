@@ -1,5 +1,6 @@
 import { supabaseAdmin, isSupabaseConfigured } from '../config/supabase';
 import logger from '../utils/logger';
+import { AgentEligibilityService } from './agentEligibility.service';
 
 export interface InquiryMessage {
   id: string;
@@ -342,6 +343,13 @@ export class InquiryService {
     }
 
     if (!item) return null;
+
+    if (updateData.agentId && updateData.agentId !== item.agentId) {
+      const eligibility = await AgentEligibilityService.evaluate(updateData.agentId, 'receive_lead');
+      if (!eligibility.allowed) {
+        throw new Error(`Cannot assign inquiry: Agent is not eligible to receive leads (${eligibility.reason}).`);
+      }
+    }
 
     const normalizedStatus = updateData.status
       ? (updateData.status.toLowerCase() as any)

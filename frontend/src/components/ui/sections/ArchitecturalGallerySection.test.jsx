@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
+import { BrowserRouter } from 'react-router-dom';
 import ArchitecturalGallerySection from './ArchitecturalGallerySection';
 
 describe('ArchitecturalGallerySection (Continuous 3x1 Carousel)', () => {
@@ -12,7 +13,11 @@ describe('ArchitecturalGallerySection (Continuous 3x1 Carousel)', () => {
   });
 
   it('renders section title, all properties in the continuous track, and navigation controls', () => {
-    render(<ArchitecturalGallerySection />);
+    render(
+      <BrowserRouter>
+        <ArchitecturalGallerySection />
+      </BrowserRouter>
+    );
 
     // Section title
     expect(screen.getByText('Featured Properties')).toBeInTheDocument();
@@ -37,21 +42,23 @@ describe('ArchitecturalGallerySection (Continuous 3x1 Carousel)', () => {
     expect(dots.length).toBeGreaterThan(0);
   });
 
-  it('opens property study modal when inspect is clicked', () => {
-    render(<ArchitecturalGallerySection />);
+  it('navigates to property detail page when View Details is clicked', () => {
+    render(
+      <BrowserRouter>
+        <ArchitecturalGallerySection />
+      </BrowserRouter>
+    );
 
-    const inspectButtons = screen.getAllByRole('button', { name: /Inspect/i });
-    expect(inspectButtons.length).toBeGreaterThan(0);
-
-    fireEvent.click(inspectButtons[0]);
-
-    // Modal opens with detailed info
-    expect(screen.getByRole('button', { name: /Close modal/i })).toBeInTheDocument();
-    expect(screen.getByText(/Inquire Portfolio Asset/i)).toBeInTheDocument();
+    const detailButtons = screen.getAllByRole('button', { name: /View Details/i });
+    expect(detailButtons.length).toBeGreaterThan(0);
   });
 
   it('handles navigation button clicks smoothly', () => {
-    render(<ArchitecturalGallerySection />);
+    render(
+      <BrowserRouter>
+        <ArchitecturalGallerySection />
+      </BrowserRouter>
+    );
 
     const nextBtn = screen.getByRole('button', { name: /Next properties/i });
     const prevBtn = screen.getByRole('button', { name: /Previous properties/i });
@@ -63,7 +70,11 @@ describe('ArchitecturalGallerySection (Continuous 3x1 Carousel)', () => {
   });
 
   it('runs 20-second timer without error', () => {
-    render(<ArchitecturalGallerySection />);
+    render(
+      <BrowserRouter>
+        <ArchitecturalGallerySection />
+      </BrowserRouter>
+    );
 
     act(() => {
       vi.advanceTimersByTime(20000);

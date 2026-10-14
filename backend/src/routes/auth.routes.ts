@@ -3,7 +3,7 @@ import { AuthController } from '../controllers/auth.controller';
 import { requireAuth } from '../middleware/auth.middleware';
 import { authRateLimiter } from '../middleware/rateLimiter.middleware';
 import { validateBody } from '../middleware/validate.middleware';
-import { loginSchema, registerSchema, googleAuthSchema } from '../schemas/auth.schema';
+import { loginSchema, registerSchema, googleAuthSchema, registerAgentSchema } from '../schemas/auth.schema';
 
 const router = Router();
 
@@ -24,6 +24,12 @@ router.post('/login', authRateLimiter, validateBody(loginSchema), AuthController
  * Rate limited to 10 attempts/15min, strong password validated via Zod registerSchema
  */
 router.post('/register', authRateLimiter, validateBody(registerSchema), AuthController.register);
+
+/**
+ * POST /api/auth/register-agent
+ * Single-use tokenized agent registration with PRC & DHSUD credentials
+ */
+router.post('/register-agent', authRateLimiter, validateBody(registerAgentSchema), AuthController.registerAgent);
 
 /**
  * POST /api/auth/logout

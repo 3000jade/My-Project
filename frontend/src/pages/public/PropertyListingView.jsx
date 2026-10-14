@@ -1,20 +1,62 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { mockProperties } from '../../mockData/mockProperties';
+import { propertyService } from '../../services/propertyService';
+import useViewingList from '../../hooks/useViewingList';
 import { getPropertyCoordinates } from '../../utils/propertyCoordinates';
+import InspectionScheduleModal from '../../components/ui/modals/InspectionScheduleModal';
+import { resolveDriveImageUrl } from '../../services/driveService';
 
 export default function PropertyListingView() {
   const { id } = useParams();
   
-  // Safe property lookup supporting string IDs, RESO keys, and numeric IDs
-  const property = useMemo(() => {
-    if (!id) return mockProperties[0];
+  // Safe initial property lookup supporting string IDs, RESO keys, and numeric IDs
+  const [property, setProperty] = useState(() => {
+    if (!id) return mockProperties[0] || null;
     return mockProperties.find(p => 
       String(p.id) === String(id) || 
       p.ListingKey === id || 
+      p.listingKey === id ||
       p.ListingId === id ||
+      p.listingId === id ||
       p.ref_code === id
-    ) || mockProperties[0];
+    ) || mockProperties[0] || null;
+  });
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Asynchronously hydrate from backend API while preserving fixture fallback
+  useEffect(() => {
+    let isMounted = true;
+    async function loadProperty() {
+      const localMatch = mockProperties.find(p => 
+        String(p.id) === String(id) || 
+        p.ListingKey === id || 
+        p.listingKey === id ||
+        p.ListingId === id || 
+        p.listingId === id ||
+        p.ref_code === id
+      );
+      if (localMatch) {
+        setProperty(localMatch);
+      }
+
+      if (id && (!localMatch || !String(localMatch.id).startsWith('reso-fixture-'))) {
+        try {
+          setIsLoading(true);
+          const remoteData = await propertyService.getPropertyById(id);
+          if (isMounted && remoteData) {
+            setProperty(remoteData);
+          }
+        } catch (err) {
+          console.warn('[PropertyListingView] Remote fetch fallback to local:', err);
+        } finally {
+          if (isMounted) setIsLoading(false);
+        }
+      }
+    }
+
+    loadProperty();
+    return () => { isMounted = false; };
   }, [id]);
 
   // UI Interactive States
@@ -24,60 +66,97 @@ export default function PropertyListingView() {
   const [selectedDate, setSelectedDate] = useState('today');
   const [downPaymentPercent, setDownPaymentPercent] = useState(20);
   const [loanTermYears, setLoanTermYears] = useState(20);
-  const [inViewingList, setInViewingList] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [toastMessage, setToastMessage] = useState(null);
 
-  // Safe Data Extraction & Null Guards (RESO 2.0 Compliance)
-  const standardStatus = property.StandardStatus || property.standard_status || property.status || property.listing_status || 'Active';
-  const listingId = property.ListingId || property.listing_id || property.ref_code || 'RESO-2026-0042';
+  // Global Viewing List Hook
+  const { isInViewingList, toggleViewingList } = useViewingList();
+  const inViewingList = property ? isInViewingList(property.id) : false;
+
+  // Safe Location String Resolver (Prevents Object Render Crash when location is an object)
+  const propertyLocation = useMemo(() => {
+    if (!property) return "Metro Manila, Philippines";
+    if (typeof property.location === 'string' && property.location.trim()) {
+      return property.location;
+    }
+    if (property.location && typeof property.location === 'object') {
+      const parts = [
+        property.location.address,
+        property.location.subdivisionName,
+        property.location.city,
+        property.location.state || property.location.stateOrProvince
+      ].filter(Boolean);
+      if (parts.length > 0) return parts.join(', ');
+      if (property.location.city) return property.location.city;
+    }
+    if (property.address || property.city) {
+      return [property.address, property.city, property.state].filter(Boolean).join(', ');
+    }
+    return "Rolling Hills Subdivision, New Manila, Quezon City";
+  }, [property]);
+
+  // Safe Data Extraction & Null Guards (RESO 2.0 & TypeScript Schema Compliance)
+  const standardStatus = property?.StandardStatus || property?.standardStatus || property?.standard_status || property?.status || property?.listing_status || 'Active';
+  const listingId = property?.ListingId || property?.listingId || property?.listing_id || property?.ListingKey || property?.listingKey || property?.ref_code || property?.id || 'RESO-2026-0042';
   
-  const rawPrice = property.ListPrice ?? property.price_raw ?? null;
-  const formattedPrice = rawPrice != null && !isNaN(rawPrice)
+  const rawPrice = property?.ListPrice ?? property?.price_raw ?? (typeof property?.price === 'number' ? property.price : null);
+  const formattedPrice = property?.formattedPrice || (rawPrice != null && !isNaN(rawPrice)
     ? `₱${Number(rawPrice).toLocaleString('en-PH')}`
-    : (property.price || 'Price on Request');
+    : (typeof property?.price === 'string' && property.price.trim() ? property.price : 'Price on Request'));
 
-  const bedrooms = property.BedroomsTotal ?? property.bedrooms ?? property.beds ?? null;
-  const bathrooms = property.BathroomsTotalInteger ?? property.bathrooms ?? property.baths ?? null;
+  const bedrooms = property?.BedroomsTotal ?? property?.bedroomsTotal ?? property?.specs?.bedroomsTotal ?? property?.specs?.beds ?? property?.bedrooms ?? property?.beds ?? null;
+  const bathrooms = property?.BathroomsTotalInteger ?? property?.bathroomsTotalInteger ?? property?.specs?.bathroomsTotalInteger ?? property?.specs?.baths ?? property?.bathrooms ?? property?.baths ?? null;
   
-  const livingAreaNumeric = property.LivingArea ?? property.floor_area ?? (property.sqm ? parseFloat(property.sqm) : null);
-  const livingAreaFormatted = property.LivingArea != null
-    ? `${property.LivingArea} ${property.LivingAreaUnits || 'sqm'}`
-    : (property.sqm || property.area || (property.floor_area != null ? `${property.floor_area} sqm` : null));
+  const livingAreaNumeric = property?.LivingArea ?? property?.livingArea ?? property?.living_area ?? property?.specs?.livingArea ?? property?.specs?.sqft ?? property?.floor_area ?? (property?.sqm ? parseFloat(property.sqm) : null);
+  const livingAreaFormatted = property?.LivingArea != null
+    ? `${property.LivingArea} ${property.LivingAreaUnits || property.livingAreaUnits || 'sqm'}`
+    : (property?.livingArea != null
+      ? `${property.livingArea} ${property.livingAreaUnits || 'sqm'}`
+      : (property?.living_area != null
+        ? `${property.living_area} ${property.livingAreaUnits || 'sqm'}`
+        : (property?.specs?.livingArea != null
+          ? `${property.specs.livingArea} ${property.specs.livingAreaUnits || property.livingAreaUnits || 'sqm'}`
+          : (property?.specs?.sqft != null
+            ? `${property.specs.sqft} sqft`
+            : (property?.sqm || property?.area || (property?.floor_area != null ? `${property.floor_area} sqm` : null))))));
 
-  const lotSize = property.LotSizeArea ?? property.lot_area ?? null;
-  const lotSizeUnits = property.LotSizeUnits || 'sqm';
+  const lotSize = property?.LotSizeArea ?? property?.lotSizeArea ?? property?.lot_size_area ?? property?.specs?.lotSizeArea ?? property?.lot_area ?? null;
+  const lotSizeUnits = property?.LotSizeUnits || property?.lotSizeUnits || property?.lot_size_units || property?.specs?.lotSizeUnits || 'sqm';
   const lotSizeFormatted = lotSize != null ? `${lotSize} ${lotSizeUnits}` : null;
 
-  const hoaFee = property.AssociationFee ?? property.association_fee ?? null;
+  const hoaFee = property?.AssociationFee ?? property?.associationFee ?? property?.association_fee ?? null;
   const hoaFeeFormatted = hoaFee != null && !isNaN(hoaFee) ? `₱${Number(hoaFee).toLocaleString('en-PH')}` : null;
 
-  const yearBuilt = property.YearBuilt ?? property.year_built ?? null;
-  const unitNumber = property.UnitNumber || null;
-  const listOfficeName = property.ListOfficeName || property.agent?.brokerage || 'Nordic Architectural Realty Group';
-  const publicRemarks = property.PublicRemarks || property.description || '';
+  const yearBuilt = property?.YearBuilt ?? property?.yearBuilt ?? property?.year_built ?? property?.specs?.yearBuilt ?? null;
+  const unitNumber = property?.UnitNumber || property?.unitNumber || null;
+  const listOfficeName = property?.ListOfficeName || property?.listOfficeName || property?.agent?.brokerage || 'Nordic Architectural Realty Group';
+  const publicRemarks = property?.PublicRemarks || property?.publicRemarks || property?.description || '';
 
-  // Extract photos safely
+  // Extract photos safely supporting RESO Media array and images list
   const photos = useMemo(() => {
-    if (property.Media && Array.isArray(property.Media) && property.Media.length > 0) {
-      return property.Media.map(m => m.MediaURL || m.url).filter(Boolean);
+    if (!property) return [];
+    let list = [];
+    const mediaList = property.Media || property.media;
+    if (Array.isArray(mediaList) && mediaList.length > 0) {
+      const extracted = mediaList.map(m => m.MediaURL || m.mediaUrl || m.url).filter(Boolean);
+      if (extracted.length > 0) list = extracted;
+    } else if (Array.isArray(property.images) && property.images.length > 0) {
+      list = property.images;
+    } else if (Array.isArray(property.gallery) && property.gallery.length > 0) {
+      list = property.gallery;
+    } else {
+      list = [
+        property.mainImage || property.image || "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80",
+        "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+      ];
     }
-    if (property.images && Array.isArray(property.images) && property.images.length > 0) {
-      return property.images;
-    }
-    if (property.gallery && Array.isArray(property.gallery) && property.gallery.length > 0) {
-      return property.gallery;
-    }
-    return [
-      property.mainImage || property.image || "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80",
-      "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-    ];
+    return list.map(resolveDriveImageUrl);
   }, [property]);
 
   // Derived Title & Location
-  const propertyTitle = property.title || property.name || "Modern Duplex in Rolling Hills";
-  const propertyLocation = property.location || (property.address ? `${property.address}, ${property.city || ''}` : "Rolling Hills Subdivision, New Manila, Quezon City");
-  const propertyCoords = useMemo(() => getPropertyCoordinates(property), [property]);
+  const propertyTitle = property?.title || property?.name || "Modern Duplex in Rolling Hills";
+  const propertyCoords = useMemo(() => property ? getPropertyCoordinates(property) : null, [property]);
   const pricePerSqm = (rawPrice && livingAreaNumeric) ? `~₱${Math.round(rawPrice / livingAreaNumeric).toLocaleString('en-PH')} / sqm` : "~₱83,820 / sqm";
 
   // Dynamic Mortgage Calculator
@@ -92,47 +171,70 @@ export default function PropertyListingView() {
     return Math.round(monthlyPayment);
   }, [rawPrice, downPaymentPercent, loanTermYears]);
 
+  // Dynamic Similar Properties (derived from real catalog)
+  const similarList = useMemo(() => {
+    const currentId = String(property?.id || id);
+    const currentType = (property?.PropertyType || property?.propertyType || property?.property_type || '').toLowerCase();
+
+    const candidates = mockProperties.filter(p => {
+      if (String(p.id) === currentId || p.ListingId === currentId || p.ref_code === currentId) return false;
+      if (String(p.id).startsWith('reso-fixture-')) return false;
+      return true;
+    });
+
+    candidates.sort((a, b) => {
+      const aType = (a.PropertyType || a.propertyType || a.property_type || '').toLowerCase();
+      const bType = (b.PropertyType || b.propertyType || b.property_type || '').toLowerCase();
+      const aMatch = (aType && aType === currentType) ? 1 : 0;
+      const bMatch = (bType && bType === currentType) ? 1 : 0;
+      return bMatch - aMatch;
+    });
+
+    return candidates.slice(0, 3);
+  }, [property, id]);
+
+  if (!property) {
+    if (isLoading) {
+      return (
+        <div className="min-h-screen bg-[#FBFBF9] font-sans text-[#141717] flex items-center justify-center p-6">
+          <div className="text-sm font-semibold text-[#0D4446] flex items-center gap-2">
+            <span className="material-symbols-outlined animate-spin">progress_activity</span>
+            Loading property details...
+          </div>
+        </div>
+      );
+    }
+    return (
+      <div className="min-h-screen bg-[#FBFBF9] font-sans text-[#141717] flex items-center justify-center p-6">
+        <div className="max-w-md w-full text-center space-y-4 bg-white p-8 rounded-2xl border border-[#D8DFDF] shadow-sm">
+          <span className="material-symbols-outlined text-4xl text-[#0D4446]">apartment</span>
+          <h2 className="text-xl font-bold font-display text-[#141717]">Listing Not Found</h2>
+          <p className="text-sm text-[#5C6768]">No property details are currently available for this listing.</p>
+          <Link
+            to="/properties"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0D4446] text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-[#083335] transition-colors"
+          >
+            Browse Properties
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#FBFBF9] font-sans text-[#141717] pb-24 antialiased selection:bg-[#0D4446] selection:text-white">
       
-      {/* 1. TOP NAVIGATION HEADER */}
-      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-[#E5EBEB] shadow-sm transition-all">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-[76px] flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Link to="/" className="font-['Manrope'] font-bold text-xl text-[#0D4446] flex items-center gap-2.5 tracking-tight">
-              <span className="w-7 h-7 bg-[#0D4446] text-white rounded flex items-center justify-center font-extrabold text-sm">N</span>
-              NordicEstate
-            </Link>
-            <nav className="hidden md:flex items-center gap-6 text-sm font-semibold text-[#5C6768]">
-              <Link to="/properties" className="text-[#0D4446]">Buy</Link>
-              <Link to="/rent" className="hover:text-[#0D4446] transition-colors">Rent</Link>
-              <Link to="/commercial" className="hover:text-[#0D4446] transition-colors">Commercial</Link>
-            </nav>
-          </div>
-          <div className="flex items-center gap-3 text-sm font-semibold">
-            <button 
-              onClick={() => setInViewingList(!inViewingList)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-colors ${
-                inViewingList 
-                  ? 'bg-emerald-50 border-emerald-300 text-emerald-800' 
-                  : 'text-[#5C6768] border-[#D8DFDF] hover:bg-[#F4F5F4]'
-              }`}
-            >
-              <span className="material-symbols-outlined text-[18px]">
-                {inViewingList ? 'bookmark_added' : 'bookmark'}
-              </span>
-              {inViewingList ? 'In Viewing List' : 'Add to Viewing List'}
-            </button>
-            <Link to="/login" className="px-4 py-2 bg-[#0D4446] hover:bg-[#083335] text-white text-xs font-bold rounded-lg transition-colors shadow-sm">
-              Log In
-            </Link>
-          </div>
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-[300] bg-[#0D4446] text-white px-5 py-3 rounded-xl shadow-2xl text-xs font-semibold flex items-center gap-2 border border-teal-500/30 animate-in fade-in slide-in-from-bottom-2">
+          <span className="material-symbols-outlined text-[18px] text-teal-300">check_circle</span>
+          {toastMessage}
         </div>
-      </header>
+      )}
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-7">
         
-        {/* BREADCRUMB & METADATA BAR (With Property Listing Details Eyebrow) */}
+        {/* BREADCRUMB & ACTION BAR */}
         <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-[#5C6768]">
           <nav className="flex items-center gap-1.5 flex-wrap">
             <Link to="/" className="hover:text-[#0D4446]">Home</Link>
@@ -145,22 +247,35 @@ export default function PropertyListingView() {
           </nav>
 
           <div className="flex flex-wrap items-center gap-3 font-medium">
+            <button 
+              onClick={() => {
+                toggleViewingList(property);
+                setToastMessage(inViewingList ? 'Removed from viewing list' : 'Added to viewing list');
+                setTimeout(() => setToastMessage(null), 3000);
+              }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-colors ${
+                inViewingList 
+                  ? 'bg-emerald-50 border-emerald-300 text-emerald-800' 
+                  : 'text-[#5C6768] border-[#D8DFDF] hover:bg-[#F4F5F4]'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[16px]">
+                {inViewingList ? 'bookmark_added' : 'bookmark'}
+              </span>
+              {inViewingList ? 'In Viewing List' : 'Add to Viewing List'}
+            </button>
+            <span className="w-1 h-1 rounded-full bg-[#D8DFDF]"></span>
             <span className="font-mono uppercase tracking-wider text-[11px] text-[#8E9A9B]">
               Ref: {property.ref_code || ''} {property.id ? `(${property.id})` : ''} • ID: <span data-testid="reso-listing-id">{listingId}</span>
             </span>
-            <span className="w-1 h-1 rounded-full bg-[#D8DFDF]"></span>
-            <span className="text-[#0D4446] font-semibold flex items-center gap-1">
-              <span className="material-symbols-outlined text-[14px]">schedule</span>
-              Updated: Sep 27, 2026 (Today)
-            </span>
-            <span className="w-1 h-1 rounded-full bg-[#D8DFDF]"></span>
-            <span>Listed: Sep 15, 2026</span>
           </div>
         </div>
+      </main>
 
-        {/* 2. IMMERSIVE PHOTO GALLERY (65% / 35% Split) */}
-        <section className="relative rounded-2xl overflow-hidden bg-white shadow-sm border border-[#E5EBEB]">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-2.5 h-[420px] sm:h-[480px] lg:h-[520px]">
+      {/* 2. DYNAMIC FULL-WIDTH IMMERSIVE PHOTO GALLERY (Device Width edge-to-edge with inner responsive container) */}
+      <section className="w-full relative overflow-hidden bg-white shadow-xs border-y border-[#E5EBEB] my-6">
+        <div className="w-full max-w-[1920px] mx-auto px-0 sm:px-4 lg:px-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-1.5 sm:gap-2.5 h-[340px] sm:h-[460px] md:h-[540px] lg:h-[620px] sm:rounded-2xl overflow-hidden">
             
             {/* Primary Hero Photo (Left 8 Cols) */}
             <div 
@@ -257,7 +372,11 @@ export default function PropertyListingView() {
             </div>
 
           </div>
-        </section>
+        </div>
+      </section>
+
+      {/* 3. MAIN CONTENT CONTAINER (Rest of Page) */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
 
         {/* 3. OVERVIEW & KEY FACTS STRIP */}
         <section className="bg-white rounded-2xl p-6 sm:p-8 shadow-[0_12px_32px_rgba(13,68,70,0.05)] border border-[#E5EBEB]">
@@ -371,14 +490,20 @@ export default function PropertyListingView() {
             
             {/* SECTION A: Property Details */}
             <section className="bg-white rounded-2xl p-6 sm:p-8 shadow-[0_12px_32px_rgba(13,68,70,0.05)] border border-[#E5EBEB]">
-              <div className="flex items-center justify-between mb-6 pb-4 border-b border-[#E5EBEB]">
+              <div className="flex flex-wrap items-center justify-between gap-3 mb-6 pb-4 border-b border-[#E5EBEB]">
                 <h2 className="font-['Manrope'] text-xl font-bold text-[#0D4446] flex items-center gap-2">
                   <span className="material-symbols-outlined text-[20px]">list_alt</span>
                   Property Details
                 </h2>
-                <span className="text-[11px] font-mono text-[#0D4446] bg-[#0D4446]/5 border border-[#0D4446]/10 px-2.5 py-1 rounded">
-                  Updated: Sep 27, 2026
-                </span>
+                <div className="flex flex-wrap items-center gap-2 text-xs">
+                  <span className="text-[11px] font-mono text-[#0D4446] bg-[#0D4446]/5 border border-[#0D4446]/10 px-2.5 py-1 rounded flex items-center gap-1 font-semibold">
+                    <span className="material-symbols-outlined text-[13px]">schedule</span>
+                    Updated: Sep 27, 2026 (Today)
+                  </span>
+                  <span className="text-[11px] font-mono text-[#5C6768] bg-[#F4F5F4] border border-[#E5EBEB] px-2.5 py-1 rounded">
+                    Listed: Sep 15, 2026
+                  </span>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-3.5 text-sm">
@@ -978,58 +1103,43 @@ export default function PropertyListingView() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[
-              {
-                id: 'sim-1',
-                price: '₱26,800,000',
-                title: 'Modern Townhouse in San Juan',
-                location: 'San Juan City',
-                specs: '3 Beds • 4 Baths • 280 sqm',
-                img: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80'
-              },
-              {
-                id: 'sim-2',
-                price: '₱31,000,000',
-                title: 'Corner Architectural Villa',
-                location: 'New Manila, Quezon City',
-                specs: '4 Beds • 5 Baths • 380 sqm',
-                img: 'https://images.unsplash.com/photo-1613490908677-742a17088b68?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80'
-              },
-              {
-                id: 'sim-3',
-                price: '₱29,500,000',
-                title: 'Contemporary Duplex Residence',
-                location: 'Scout Area, Quezon City',
-                specs: '4 Beds • 4 Baths • 320 sqm',
-                img: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80'
-              }
-            ].map((item) => (
-              <div 
-                key={item.id} 
-                className="bg-white rounded-2xl overflow-hidden border border-[#E5EBEB] shadow-sm hover:shadow-md transition-all group cursor-pointer"
-                onClick={() => alert(`Navigating to ${item.title}...`)}
-              >
-                <div className="h-48 overflow-hidden relative">
-                  <img 
-                    src={item.img} 
-                    alt={item.title} 
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                  />
-                  <span className="absolute top-3 left-3 bg-white/95 text-[#0D4446] text-[10px] font-bold px-2 py-1 rounded shadow-xs">
-                    Ready for Occupancy
-                  </span>
-                </div>
-                <div className="p-5">
-                  <div className="font-['Manrope'] font-extrabold text-lg text-[#0D4446] mb-1">{item.price}</div>
-                  <div className="text-sm font-bold text-[#141717] truncate">{item.title}</div>
-                  <div className="text-xs text-[#5C6768] mt-1">{item.specs}</div>
-                  <div className="text-xs text-[#8E9A9B] flex items-center gap-1 mt-3 pt-3 border-t border-[#E5EBEB]">
-                    <span className="material-symbols-outlined text-[14px]">location_on</span>
-                    {item.location}
+            {similarList.map((item) => {
+              const itemPrice = item.formattedPrice || (item.ListPrice ? `₱${Number(item.ListPrice).toLocaleString('en-PH')}` : (item.price || 'Price on Request'));
+              const itemBeds = item.BedroomsTotal ?? item.bedroomsTotal ?? item.specs?.beds ?? item.beds ?? 3;
+              const itemBaths = item.BathroomsTotalInteger ?? item.bathroomsTotalInteger ?? item.specs?.baths ?? item.baths ?? 2;
+              const itemArea = item.LivingArea ?? item.livingArea ?? item.sqm ?? item.floor_area ?? 180;
+              const itemImg = (item.images && item.images[0]) || item.mainImage || item.image || "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=600&q=80";
+              const itemLocation = typeof item.location === 'string' ? item.location : (item.city || 'Metro Manila');
+
+              return (
+                <Link 
+                  key={item.id} 
+                  to={`/properties/${item.id}`}
+                  onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                  className="bg-white rounded-2xl overflow-hidden border border-[#E5EBEB] shadow-sm hover:shadow-md transition-all group cursor-pointer block"
+                >
+                  <div className="h-48 overflow-hidden relative">
+                    <img 
+                      src={itemImg} 
+                      alt={item.title || item.name} 
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                    />
+                    <span className="absolute top-3 left-3 bg-white/95 text-[#0D4446] text-[10px] font-bold px-2 py-1 rounded shadow-xs">
+                      {item.unit_status || 'Ready for Occupancy'}
+                    </span>
                   </div>
-                </div>
-              </div>
-            ))}
+                  <div className="p-5">
+                    <div className="font-['Manrope'] font-extrabold text-lg text-[#0D4446] mb-1">{itemPrice}</div>
+                    <div className="text-sm font-bold text-[#141717] truncate">{item.title || item.name}</div>
+                    <div className="text-xs text-[#5C6768] mt-1">{itemBeds} Beds • {itemBaths} Baths • {itemArea} sqm</div>
+                    <div className="text-xs text-[#8E9A9B] flex items-center gap-1 mt-3 pt-3 border-t border-[#E5EBEB]">
+                      <span className="material-symbols-outlined text-[14px]">location_on</span>
+                      {itemLocation}
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </section>
 
@@ -1069,52 +1179,15 @@ export default function PropertyListingView() {
       )}
 
       {/* 7. SCHEDULE SITE VIEWING MODAL */}
-      {showScheduleModal && (
-        <div className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-2xl relative border border-[#E5EBEB]">
-            <button 
-              onClick={() => setShowScheduleModal(false)}
-              className="absolute top-4 right-4 text-[#5C6768] hover:text-[#141717] text-2xl font-bold"
-            >
-              &times;
-            </button>
-            <h3 className="font-['Manrope'] text-xl font-bold text-[#0D4446] mb-2">Schedule Free Site Viewing</h3>
-            <p className="text-xs text-[#5C6768] mb-4">Coordinate directly with our licensed property specialist.</p>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="text-xs font-bold text-[#141717] block mb-1">Target Move-In Window</label>
-                <select className="w-full text-xs font-medium p-2.5 border border-[#D8DFDF] rounded-lg outline-none focus:border-[#0D4446]">
-                  <option>Immediate (Within 30 Days)</option>
-                  <option>1 - 3 Months</option>
-                  <option>3 - 6 Months</option>
-                  <option>Investment / Exploring</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-[#141717] block mb-1">Full Name</label>
-                <input type="text" placeholder="Your name" className="w-full text-xs p-2.5 border border-[#D8DFDF] rounded-lg outline-none focus:border-[#0D4446]" />
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-[#141717] block mb-1">Contact Number</label>
-                <input type="tel" placeholder="+63 9XX XXX XXXX" className="w-full text-xs p-2.5 border border-[#D8DFDF] rounded-lg outline-none focus:border-[#0D4446]" />
-              </div>
-
-              <button 
-                onClick={() => {
-                  alert('Viewing schedule confirmed! Our broker will contact you to coordinate.');
-                  setShowScheduleModal(false);
-                }}
-                className="w-full py-3 bg-[#E76F51] hover:bg-[#D65C3E] text-white font-bold text-xs rounded-lg transition-colors shadow-sm"
-              >
-                Confirm Viewing Schedule
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <InspectionScheduleModal
+        isOpen={showScheduleModal}
+        onClose={() => setShowScheduleModal(false)}
+        property={property}
+        onScheduleSuccess={() => {
+          setToastMessage('Inspection appointment requested successfully!');
+          setTimeout(() => setToastMessage(null), 4000);
+        }}
+      />
 
     </div>
   );

@@ -1,45 +1,33 @@
-import React, { useState, useMemo } from 'react';
-import { IconEye, IconEyeOff } from '@tabler/icons-react';
+import React, { useState } from 'react';
+import { IconDeviceFloppy, IconCheck, IconArrowRight, IconFileUpload } from '@tabler/icons-react';
 
 export default function RegisterForm({ onSubmitRegistration }) {
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    brokerageName: '',
+    prcLicense: '',
+    licenseExpiry: '',
+    dhsudNumber: '',
+  });
   const [acceptedTerms, setAcceptedTerms] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  const calculateStrength = (pass) => {
-    let score = 0;
-    if (pass.length > 7) score += 1;
-    if (/[a-z]/.test(pass) && /[A-Z]/.test(pass)) score += 1;
-    if (/\d/.test(pass)) score += 1;
-    if (/[^a-zA-Z\d]/.test(pass)) score += 1;
-    return score;
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
-
-  const strengthScore = useMemo(() => calculateStrength(password), [password]);
-
-  const strengthLabels = ['Weak', 'Weak', 'Fair', 'Good', 'Strong'];
-  const strengthColors = ['bg-[#D8DFDF]', 'bg-[#E76F51]', 'bg-[#F4A261]', 'bg-[#E9C46A]', 'bg-[#2A9D8F]'];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     
-    if (password !== confirmPassword) {
-      setError('Passphrases do not match');
-      return;
-    }
-
     setIsSubmitting(true);
     try {
       await onSubmitRegistration({
-        fullName,
-        email,
-        password,
+        ...formData,
         acceptedTerms
       });
     } catch (err) {
@@ -50,119 +38,219 @@ export default function RegisterForm({ onSubmitRegistration }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-6 w-full max-w-3xl mx-auto p-8 bg-white shadow-[0_16px_36px_rgba(13,68,70,0.06)] rounded-[14px]">
+      <div className="flex flex-col gap-1 mb-2">
+        <h3 className="text-[24px] font-semibold font-manrope text-[#141717]">Applicant Details</h3>
+        <p className="text-[16px] font-inter text-[#5C6768]">Provide your personal and licensing credentials for expedited verification.</p>
+      </div>
+
       {error && (
         <div className="p-3 bg-[#E76F51]/10 border border-[#E76F51]/30 text-[#E76F51] text-[14px] font-medium rounded-md">
           {error}
         </div>
       )}
 
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="fullName" className="text-[14px] font-semibold font-inter text-[#141717]">
-          Full Name
-        </label>
-        <input
-          id="fullName"
-          type="text"
-          value={fullName}
-          onChange={(e) => setFullName(e.target.value)}
-          className="h-[54px] w-full rounded-md border border-[#D8DFDF] bg-[rgba(255,255,255,0.90)] px-4 text-[16px] text-[#141717] outline-none focus:border-[#0D4446] focus:ring-1 focus:ring-[#0D4446] transition-colors"
-          required
-        />
-      </div>
-
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="email" className="text-[14px] font-semibold font-inter text-[#141717]">
-          Email
-        </label>
-        <input
-          id="email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="h-[54px] w-full rounded-md border border-[#D8DFDF] bg-[rgba(255,255,255,0.90)] px-4 text-[16px] text-[#141717] outline-none focus:border-[#0D4446] focus:ring-1 focus:ring-[#0D4446] transition-colors"
-          required
-        />
-      </div>
-
-      <div className="flex flex-col gap-1.5 relative">
-        <label htmlFor="password" className="text-[14px] font-semibold font-inter text-[#141717]">
-          Password
-        </label>
-        <div className="relative">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* FIRST NAME */}
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="firstName" className="text-[12px] font-semibold font-inter text-[#141717] uppercase tracking-widest">
+            First Name <span className="text-[#E76F51]">*</span>
+          </label>
           <input
-            id="password"
-            type={showPassword ? 'text' : 'password'}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="h-[54px] w-full rounded-md border border-[#D8DFDF] bg-[rgba(255,255,255,0.90)] pl-4 pr-12 text-[16px] text-[#141717] outline-none focus:border-[#0D4446] focus:ring-1 focus:ring-[#0D4446] transition-colors"
+            id="firstName"
+            name="firstName"
+            type="text"
+            placeholder="Joaquin"
+            value={formData.firstName}
+            onChange={handleChange}
+            className="h-[54px] w-full rounded-md border border-[#D8DFDF] bg-[#F4F5F4] px-4 text-[16px] text-[#141717] outline-none focus:border-[#0D4446] focus:ring-1 focus:ring-[#0D4446] transition-colors placeholder:text-[#8E9A9B]"
             required
           />
-          <button
-            type="button"
-            aria-label="Toggle password visibility"
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8E9A9B] hover:text-[#0D4446] transition-colors"
-          >
-            {showPassword ? <IconEyeOff size={20} /> : <IconEye size={20} />}
-          </button>
         </div>
-        
-        {/* Password Strength Meter */}
-        <div className="mt-1 flex flex-col gap-1.5">
-          <div className="flex gap-1 h-1.5 w-full">
-            {[1, 2, 3, 4].map((level) => (
-              <div 
-                key={level} 
-                className={`flex-1 rounded-full transition-colors duration-300 ${strengthScore >= level ? strengthColors[strengthScore] : 'bg-[#D8DFDF]'}`}
-              />
-            ))}
-          </div>
-          <span className={`text-[12px] font-medium transition-colors duration-300 ${strengthScore > 0 ? (strengthScore < 3 ? 'text-[#E76F51]' : 'text-[#2A9D8F]') : 'text-[#8E9A9B]'}`}>
-            {password ? strengthLabels[strengthScore] : 'Enter a password'}
-          </span>
+
+        {/* LAST NAME */}
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="lastName" className="text-[12px] font-semibold font-inter text-[#141717] uppercase tracking-widest">
+            Last Name <span className="text-[#E76F51]">*</span>
+          </label>
+          <input
+            id="lastName"
+            name="lastName"
+            type="text"
+            placeholder="Del Rosario"
+            value={formData.lastName}
+            onChange={handleChange}
+            className="h-[54px] w-full rounded-md border border-[#D8DFDF] bg-[#F4F5F4] px-4 text-[16px] text-[#141717] outline-none focus:border-[#0D4446] focus:ring-1 focus:ring-[#0D4446] transition-colors placeholder:text-[#8E9A9B]"
+            required
+          />
+        </div>
+
+        {/* EMAIL ADDRESS */}
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="email" className="text-[12px] font-semibold font-inter text-[#141717] uppercase tracking-widest">
+            Email Address <span className="text-[#E76F51]">*</span>
+          </label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            placeholder="joaquin@delrosariorealty.ph"
+            value={formData.email}
+            onChange={handleChange}
+            className="h-[54px] w-full rounded-md border border-[#D8DFDF] bg-[#F4F5F4] px-4 text-[16px] text-[#141717] outline-none focus:border-[#0D4446] focus:ring-1 focus:ring-[#0D4446] transition-colors placeholder:text-[#8E9A9B]"
+            required
+          />
+        </div>
+
+        {/* PHONE NUMBER */}
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="phone" className="text-[12px] font-semibold font-inter text-[#141717] uppercase tracking-widest">
+            Phone Number <span className="text-[#E76F51]">*</span>
+          </label>
+          <input
+            id="phone"
+            name="phone"
+            type="text"
+            placeholder="+63 917 842 9011"
+            value={formData.phone}
+            onChange={handleChange}
+            className="h-[54px] w-full rounded-md border border-[#D8DFDF] bg-[#F4F5F4] px-4 text-[16px] text-[#141717] outline-none focus:border-[#0D4446] focus:ring-1 focus:ring-[#0D4446] transition-colors placeholder:text-[#8E9A9B]"
+            required
+          />
         </div>
       </div>
 
-      <div className="flex flex-col gap-1.5 relative">
-        <label htmlFor="confirmPassword" className="text-[14px] font-semibold font-inter text-[#141717]">
-          Confirm Password
+      {/* BROKERAGE */}
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="brokerageName" className="text-[12px] font-semibold font-inter text-[#141717] uppercase tracking-widest">
+          Brokerage / Real Estate Firm Name
         </label>
         <input
-          id="confirmPassword"
-          type={showPassword ? 'text' : 'password'}
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          className="h-[54px] w-full rounded-md border border-[#D8DFDF] bg-[rgba(255,255,255,0.90)] px-4 text-[16px] text-[#141717] outline-none focus:border-[#0D4446] focus:ring-1 focus:ring-[#0D4446] transition-colors"
+          id="brokerageName"
+          name="brokerageName"
+          type="text"
+          placeholder="Del Rosario Prime Properties Inc. (or Independent)"
+          value={formData.brokerageName}
+          onChange={handleChange}
+          className="h-[54px] w-full rounded-md border border-[#D8DFDF] bg-[#F4F5F4] px-4 text-[16px] text-[#141717] outline-none focus:border-[#0D4446] focus:ring-1 focus:ring-[#0D4446] transition-colors placeholder:text-[#8E9A9B]"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* PRC LICENSE */}
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="prcLicense" className="text-[12px] font-semibold font-inter text-[#141717] uppercase tracking-widest">
+            PRC License Number <span className="text-[#E76F51]">*</span>
+          </label>
+          <input
+            id="prcLicense"
+            name="prcLicense"
+            type="text"
+            placeholder="0029415"
+            value={formData.prcLicense}
+            onChange={handleChange}
+            className="h-[54px] w-full rounded-md border border-[#D8DFDF] bg-[#F4F5F4] px-4 text-[16px] text-[#141717] outline-none focus:border-[#0D4446] focus:ring-1 focus:ring-[#0D4446] transition-colors placeholder:text-[#8E9A9B]"
+            required
+          />
+        </div>
+
+        {/* EXPIRY DATE */}
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="licenseExpiry" className="text-[12px] font-semibold font-inter text-[#141717] uppercase tracking-widest">
+            License Expiry Date <span className="text-[#E76F51]">*</span>
+          </label>
+          <div className="relative">
+            <input
+              id="licenseExpiry"
+              name="licenseExpiry"
+              type="date"
+              value={formData.licenseExpiry}
+              onChange={handleChange}
+              className="h-[54px] w-full rounded-md border border-[#D8DFDF] bg-[#F4F5F4] px-4 text-[16px] text-[#141717] outline-none focus:border-[#0D4446] focus:ring-1 focus:ring-[#0D4446] transition-colors"
+              required
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* DHSUD */}
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="dhsudNumber" className="text-[12px] font-semibold font-inter text-[#141717] uppercase tracking-widest">
+          DHSUD Registration Number <span className="text-[#E76F51]">*</span>
+        </label>
+        <input
+          id="dhsudNumber"
+          name="dhsudNumber"
+          type="text"
+          placeholder="NCR-B-11/2023-0982"
+          value={formData.dhsudNumber}
+          onChange={handleChange}
+          className="h-[54px] w-full rounded-md border border-[#D8DFDF] bg-[#F4F5F4] px-4 text-[16px] text-[#141717] outline-none focus:border-[#0D4446] focus:ring-1 focus:ring-[#0D4446] transition-colors placeholder:text-[#8E9A9B]"
           required
         />
       </div>
 
-      <div className="flex items-start gap-2 mt-2">
+      {/* UPLOAD FILE */}
+      <div className="flex flex-col gap-1.5">
+        <div className="flex justify-between items-center mb-1">
+          <label className="text-[12px] font-semibold font-inter text-[#141717] uppercase tracking-widest">
+            License or ID Upload <span className="text-[#E76F51]">*</span>
+          </label>
+          <span className="text-[10px] font-bold font-inter text-[#5C6768] uppercase tracking-widest">
+            PDF, JPG, PNG • Max 10MB
+          </span>
+        </div>
+        <div className="border border-dashed border-[#D8DFDF] bg-[#F4F5F4] rounded-md h-[160px] flex flex-col items-center justify-center cursor-pointer hover:border-[#0D4446] hover:bg-[#F4F5F4]/80 transition-colors">
+          <div className="w-12 h-12 bg-white rounded-md flex items-center justify-center shadow-[0_4px_16px_rgba(13,68,70,0.04)] mb-3">
+            <IconFileUpload size={24} className="text-[#0D4446]" />
+          </div>
+          <p className="text-[16px] font-semibold font-inter text-[#141717]">Upload PRC License or DHSUD ID</p>
+          <p className="text-[14px] font-inter text-[#5C6768] mt-1">Click or drag your scanned document here</p>
+        </div>
+      </div>
+
+      {/* CHECKBOX */}
+      <div className="flex items-start gap-3 mt-4">
         <input
           id="acceptedTerms"
           type="checkbox"
           checked={acceptedTerms}
           onChange={(e) => setAcceptedTerms(e.target.checked)}
-          className="mt-1 h-4 w-4 rounded border-[#D8DFDF] text-[#0D4446] focus:ring-[#0D4446]"
+          className="mt-1 h-[18px] w-[18px] rounded border-[#D8DFDF] text-[#0D4446] focus:ring-[#0D4446] cursor-pointer"
           required
         />
-        <label htmlFor="acceptedTerms" className="text-[14px] leading-tight font-medium font-inter text-[#5C6768]">
-          I agree to the Terms of Service and Privacy Policy
+        <label htmlFor="acceptedTerms" className="text-[14px] leading-relaxed font-medium font-inter text-[#5C6768] cursor-pointer">
+          I agree to the <a href="#" className="text-[#0D4446] underline decoration-[#0D4446]/40 underline-offset-4 hover:decoration-[#0D4446]">Terms of Accreditation</a> and confirm that the submitted details are valid and active.
         </label>
       </div>
 
-      <button
-        type="submit"
-        disabled={isSubmitting || !acceptedTerms}
-        className="mt-4 h-[54px] w-full rounded-md bg-[#0D4446] text-white font-semibold font-inter text-[16px] hover:bg-[#083335] active:scale-[0.98] transition-all disabled:opacity-70 disabled:active:scale-100 flex items-center justify-center gap-2"
-      >
-        {isSubmitting ? (
-          <span className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-        ) : (
-          'Create Account'
-        )}
-      </button>
+      {/* BUTTONS */}
+      <div className="flex items-center justify-between mt-6 pt-2">
+        <button
+          type="button"
+          className="flex items-center gap-2 text-[#5C6768] hover:text-[#141717] font-semibold font-inter text-[15px] transition-colors"
+        >
+          <IconDeviceFloppy size={20} stroke={1.5} />
+          Save Draft
+        </button>
+        
+        <button
+          type="submit"
+          disabled={isSubmitting || !acceptedTerms}
+          className="h-[54px] px-6 rounded-md bg-[#0D4446] text-white font-semibold font-inter text-[16px] hover:bg-[#083335] active:scale-[0.98] transition-all disabled:opacity-70 disabled:active:scale-100 flex items-center justify-center gap-2"
+        >
+          {isSubmitting ? (
+            <span className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          ) : (
+            <>
+              <IconCheck size={20} stroke={2.5} />
+              Submit Broker Application
+              <IconArrowRight size={20} stroke={2} className="ml-1" />
+            </>
+          )}
+        </button>
+      </div>
     </form>
   );
 }
+

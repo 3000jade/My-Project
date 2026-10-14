@@ -12,7 +12,8 @@ export default function DataTable({
   selectable = false,
   selectedKeys = new Set(),
   onToggleSelect,
-  onToggleSelectAll
+  onToggleSelectAll,
+  stickyFirstColumn = false
 }) {
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -23,20 +24,36 @@ export default function DataTable({
   const isAllSelected = currentData.length > 0 && currentData.every(row => selectedKeys.has(row[keyField]));
   const isSomeSelected = currentData.some(row => selectedKeys.has(row[keyField])) && !isAllSelected;
 
+  const getPageNumbers = () => {
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+    if (currentPage <= 4) {
+      return [1, 2, 3, 4, 5, '...', totalPages];
+    }
+    if (currentPage >= totalPages - 3) {
+      return [1, '...', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+    }
+    return [1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages];
+  };
+
   return (
-    <div className="bg-white rounded-xl border border-[#E5EBEB] shadow-2xs overflow-hidden flex flex-col">
+    <div className="bg-white rounded-lg border border-[#E2E8F0] shadow-2xs overflow-hidden flex flex-col">
       <div className="overflow-x-auto custom-scrollbar">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="bg-[#FBFBF9] border-b border-[#E5EBEB]">
+            <tr className="bg-[#F8FAFC] border-b border-[#E2E8F0]">
               {selectable && (
-                <th className="w-10 px-4 py-3 text-center">
+                <th className={cn(
+                  "w-10 px-3 py-3.5 text-center shrink-0",
+                  stickyFirstColumn && "sticky left-0 z-20 bg-[#F8FAFC]"
+                )}>
                   <input
                     type="checkbox"
                     checked={isAllSelected}
                     ref={el => { if (el) el.indeterminate = isSomeSelected; }}
                     onChange={() => onToggleSelectAll && onToggleSelectAll(currentData.map(r => r[keyField]))}
-                    className="w-4 h-4 rounded border-[#D8DFDF] text-[#0D4446] focus:ring-[#0D4446] cursor-pointer"
+                    className="w-4 h-4 rounded border-[#CBD5E1] text-[#0F766E] focus:ring-[#0F766E] cursor-pointer"
                   />
                 </th>
               )}
@@ -44,7 +61,11 @@ export default function DataTable({
                 <th
                   key={idx}
                   className={cn(
-                    "px-4 py-3 text-xs font-semibold text-slate-700",
+                    "px-3 py-3.5 text-xs font-semibold text-[#1E293B]",
+                    stickyFirstColumn && idx === 0 && cn(
+                      selectable ? "sticky left-10 z-20 bg-[#F8FAFC]" : "sticky left-0 z-20 bg-[#F8FAFC]",
+                      "shadow-[1px_0_0_#E2E8F0]"
+                    ),
                     col.className
                   )}
                 >
@@ -53,7 +74,7 @@ export default function DataTable({
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#E5EBEB] text-xs">
+          <tbody className="divide-y divide-[#E2E8F0] text-xs">
             {currentData.length > 0 ? (
               currentData.map((row, rowIdx) => {
                 const rowKey = row[keyField] || rowIdx;
@@ -64,28 +85,42 @@ export default function DataTable({
                     key={rowKey}
                     onClick={() => onRowClick && onRowClick(row)}
                     className={cn(
-                      "transition-colors",
-                      isSelected ? "bg-[#0D4446]/5" : "hover:bg-[#FBFBF9]",
+                      "group transition-colors",
+                      isSelected ? "bg-[#0F766E]/5" : "hover:bg-[#F8FAFC]/80",
                       onRowClick && "cursor-pointer"
                     )}
                   >
                     {selectable && (
                       <td 
-                        className="w-10 px-4 py-3 text-center"
+                        className={cn(
+                          "w-10 px-3 py-3.5 text-center shrink-0",
+                          stickyFirstColumn && cn(
+                            "sticky left-0 z-10",
+                            isSelected ? "bg-[#F3F8F8]" : "bg-white group-hover:bg-[#F8FAFC]"
+                          )
+                        )}
                         onClick={(e) => e.stopPropagation()}
                       >
                         <input
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => onToggleSelect && onToggleSelect(rowKey)}
-                          className="w-4 h-4 rounded border-[#D8DFDF] text-[#0D4446] focus:ring-[#0D4446] cursor-pointer"
+                          className="w-4 h-4 rounded border-[#CBD5E1] text-[#0F766E] focus:ring-[#0F766E] cursor-pointer"
                         />
                       </td>
                     )}
                     {columns.map((col, colIdx) => (
                       <td
                         key={colIdx}
-                        className={cn("px-4 py-3 text-slate-600 align-middle", col.className)}
+                        className={cn(
+                          "px-3 py-3.5 text-[#1E293B] align-middle",
+                          stickyFirstColumn && colIdx === 0 && cn(
+                            selectable ? "sticky left-10 z-10" : "sticky left-0 z-10",
+                            "shadow-[1px_0_0_#E2E8F0]",
+                            isSelected ? "bg-[#F3F8F8]" : "bg-white group-hover:bg-[#F8FAFC]"
+                          ),
+                          col.className
+                        )}
                       >
                         {col.render ? col.render(row) : row[col.accessor]}
                       </td>
@@ -110,39 +145,61 @@ export default function DataTable({
         </table>
       </div>
 
-      {/* Pagination Controls */}
-      {totalPages > 1 && (
-        <div className="px-4 py-3 border-t border-[#E5EBEB] bg-[#FBFBF9]/60 flex items-center justify-between text-xs text-slate-500">
-          <div>
-            Showing <span className="font-semibold text-[#0F172A]">{startIndex + 1}</span> to{" "}
-            <span className="font-semibold text-[#0F172A]">
-              {Math.min(startIndex + pageSize, data.length)}
-            </span>{" "}
-            of <span className="font-semibold text-[#0F172A]">{data.length}</span> results
-          </div>
-          <div className="flex items-center gap-1.5">
+      {/* Numbered Pagination Controls Matching Mockup */}
+      <div className="px-4 py-3.5 border-t border-[#E2E8F0] bg-white flex items-center justify-between text-xs text-[#64748B]">
+        <div>
+          Showing <span className="font-semibold text-[#1E293B]">{data.length > 0 ? startIndex + 1 : 0}</span> to{" "}
+          <span className="font-semibold text-[#1E293B]">
+            {Math.min(startIndex + pageSize, data.length)}
+          </span>{" "}
+          of <span className="font-semibold text-[#1E293B]">{data.length}</span> results
+        </div>
+        {totalPages > 1 && (
+          <div className="flex items-center gap-1">
             <button
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              className="p-1 rounded-md border border-[#D8DFDF] bg-white hover:bg-[#F4F5F4] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="w-7 h-7 rounded-md border border-[#E2E8F0] bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center text-slate-500 cursor-pointer shadow-2xs"
               title="Previous page"
+              aria-label="Previous page"
             >
               <ChevronLeft className="w-3.5 h-3.5" />
             </button>
-            <span className="px-2 font-mono text-[11px] text-slate-600">
-              {currentPage} / {totalPages}
-            </span>
+            
+            {getPageNumbers().map((num, i) =>
+              num === '...' ? (
+                <span key={`dots-${i}`} className="w-7 h-7 flex items-center justify-center text-slate-400">
+                  ...
+                </span>
+              ) : (
+                <button
+                  key={`page-${num}`}
+                  onClick={() => setCurrentPage(num)}
+                  className={cn(
+                    "w-7 h-7 rounded-md text-xs font-medium flex items-center justify-center transition-colors cursor-pointer",
+                    currentPage === num
+                      ? "bg-[#0F766E] text-white font-semibold shadow-xs"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                  )}
+                  aria-label={`Page ${num}`}
+                >
+                  {num}
+                </button>
+              )
+            )}
+
             <button
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
-              className="p-1 rounded-md border border-[#D8DFDF] bg-white hover:bg-[#F4F5F4] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="w-7 h-7 rounded-md border border-[#E2E8F0] bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center text-slate-500 cursor-pointer shadow-2xs"
               title="Next page"
+              aria-label="Next page"
             >
               <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

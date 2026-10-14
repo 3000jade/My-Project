@@ -2,47 +2,49 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #0D4446;
-  --color-primary-hover: #083335;
+  --color-primary: #0F766E;
+  --color-primary-hover: #115E59;
   --color-on-primary: #ffffff;
-  --color-primary-container: #185E60;
-  --color-on-primary-container: #D2F2F3;
-  --color-secondary: #2A5B5D;
+  --color-primary-container: #134E4A;
+  --color-on-primary-container: #CCFBF1;
+  --color-secondary: #14B8A6;
   --color-on-secondary: #ffffff;
-  --color-secondary-container: #CBE8E9;
-  --color-accent: #E76F51;
-  --color-accent-hover: #D65C3E;
-  --color-accent-container: #FDF0EC;
-  --color-on-accent: #ffffff;
-  --color-background: #FBFBF9;
-  --color-on-background: #141717;
-  --color-surface: #FBFBF9;
-  --color-on-surface: #141717;
-  --color-surface-variant: #EBEEED;
-  --color-on-surface-variant: #434E4F;
-  --color-outline: #6B7B7C;
-  --color-outline-variant: #D0D9D9;
-  --color-surface-container: #EBEEED;
-  --color-surface-container-high: #DFE4E3;
-  --color-surface-container-low: #F4F5F4;
+  --color-secondary-container: #99F6E4;
+  --color-accent: #FF6B6B;
+  --color-accent-hover: #EE5A5A;
+  --color-accent-container: #FEE2E2;
+  --color-on-accent: #1E293B;
+  --color-background: #F8FAFC;
+  --color-on-background: #1E293B;
+  --color-surface: #FFFFFF;
+  --color-on-surface: #1E293B;
+  --color-surface-variant: #F1F5F9;
+  --color-on-surface-variant: #64748B;
+  --color-outline: #E2E8F0;
+  --color-outline-variant: #CBD5E1;
+  --color-surface-container: #F8FAFC;
+  --color-surface-container-high: #F1F5F9;
+  --color-surface-container-low: #FFFFFF;
   --color-surface-container-lowest: #FFFFFF;
-  --color-tertiary: #0A2829;
+  --color-tertiary: #0F766E;
   --color-on-tertiary: #ffffff;
-  --color-tertiary-container: #185E60;
-  --color-on-tertiary-container: #D2F2F3;
+  --color-tertiary-container: #CCFBF1;
+  --color-on-tertiary-container: #115E59;
 
-  --color-coral: #E76F51;
-  --color-on-coral: #ffffff;
+  --color-coral: #FF6B6B;
+  --color-on-coral: #1E293B;
 
-  --radius-DEFAULT: 1rem;
-  --radius-lg: 1rem;
+  --radius-sm: 0.25rem;
+  --radius-DEFAULT: 0.5rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
   --radius-xl: 1rem;
-  --radius-2xl: 1rem;
+  --radius-2xl: 1.25rem;
   --radius-full: 9999px;
 
-  /* Geometric Modernist (Bauhaus Precision) */
-  --font-sans: "Manrope", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-display: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+  /* Modern SaaS System Typography */
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: "JetBrains Mono", monospace;
   --font-label: "Inter", sans-serif;
 }
@@ -51,23 +53,23 @@
 
 @layer base {
   :root {
-    --theme-canvas: #FBFBF9;
+    --theme-canvas: #F8FAFC;
     --theme-surface: #FFFFFF;
-    --theme-primary: #0D4446;
-    --theme-accent: #E76F51;
-    --theme-ink: #141717;
-    --theme-ink-muted: #5C6768;
-    --theme-border: #D8DFDF;
-    --font-sans: "Manrope", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    --font-display: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+    --theme-primary: #0F766E;
+    --theme-accent: #FF6B6B;
+    --theme-ink: #1E293B;
+    --theme-ink-muted: #64748B;
+    --theme-border: #E2E8F0;
+    --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-display: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     --font-mono: "JetBrains Mono", monospace;
     --font-label: "Inter", sans-serif;
   }
 
   html,
   body {
-    background-color: #FBFBF9;
-    color: #141717;
+    background-color: #F8FAFC;
+    color: #1E293B;
   }
 
   html,
@@ -77,15 +79,7 @@
   select,
   textarea {
     font-family: var(--font-sans);
-    font-size: 18px;
-  }
-
-
-
-  *,
-  *::before,
-  *::after {
-    outline: none !important;
+    font-size: 16px;
   }
 
   /* Force tracking adjustments on uppercase metadata labels */

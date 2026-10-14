@@ -57,10 +57,6 @@ export default function BrokerNotifications() {
       <PageHeader
         title="Notifications & System Alerts"
         subtitle="Operational event feed for client inquiries, agent accreditation filings, and transaction milestones."
-        breadcrumbs={[
-          { label: "Dashboard", to: "/broker/dashboard" },
-          { label: "Notifications" }
-        ]}
         actions={
           <div className="flex items-center gap-3">
             <button

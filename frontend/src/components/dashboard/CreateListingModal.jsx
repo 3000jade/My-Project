@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import DashboardModal from './DashboardModal';
 import { mockAgents } from '../../mockData/mockAgents';
+import { driveService, isDriveUrl, resolveDriveImageUrl } from '../../services/driveService';
 
 const PROPERTY_TYPES = [
   'House & Lot',
@@ -78,7 +79,10 @@ export default function CreateListingModal({
   const [images, setImages] = useState([DEFAULT_COVER_IMAGE]);
   const [imageUrlInput, setImageUrlInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState(null);
   const [error, setError] = useState(null);
+  const fileInputRef = useRef(null);
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -96,8 +100,31 @@ export default function CreateListingModal({
   const handleAddImage = () => {
     const trimmed = imageUrlInput.trim();
     if (trimmed) {
-      setImages((prev) => [...prev, trimmed]);
+      const resolved = resolveDriveImageUrl(trimmed);
+      setImages((prev) => [...prev, resolved]);
       setImageUrlInput('');
+    }
+  };
+
+  const handleFileUpload = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+
+    setIsUploading(true);
+    setUploadError(null);
+    try {
+      for (const file of files) {
+        const uploaded = await driveService.uploadFile(file, 'new', 'Photos');
+        if (uploaded?.directImageUrl) {
+          setImages((prev) => [...prev, uploaded.directImageUrl]);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to upload to Google Drive:', err);
+      setUploadError(err.message || 'Google Drive upload failed');
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -503,35 +530,73 @@ export default function CreateListingModal({
 
         {/* Section 5: Media Assets */}
         <div className="p-5 sm:p-6 bg-[#F1F0EC]/40 rounded-2xl border border-gray-200/80 space-y-4">
-          <div className="flex items-center gap-2 pb-3 border-b border-gray-200/80">
-            <span className="material-symbols-outlined text-[#266F71]">photo_camera</span>
-            <h4 className="font-display font-bold text-sm uppercase tracking-wider text-[#174849]">
-              5. Photography & Media
-            </h4>
+          <div className="flex items-center justify-between pb-3 border-b border-gray-200/80">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-[#266F71]">photo_camera</span>
+              <h4 className="font-display font-bold text-sm uppercase tracking-wider text-[#174849]">
+                5. Photography & Media
+              </h4>
+            </div>
+            <span className="text-[11px] font-mono font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Google Drive Cloud Storage Active
+            </span>
           </div>
 
+          {/* Hidden File Input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept="image/*"
+            onChange={handleFileUpload}
+            className="hidden"
+          />
+
           <div className="flex flex-col sm:flex-row gap-3">
-            <input
-              type="url"
-              placeholder="Paste high-resolution image URL (https://...)"
-              value={imageUrlInput}
-              onChange={(e) => setImageUrlInput(e.target.value)}
-              className="flex-1 h-[54px] px-4 bg-white border border-gray-200/80 rounded-xl text-sm font-sans focus:border-[#266F71] outline-none"
-            />
             <button
               type="button"
-              onClick={handleAddImage}
-              className="h-[54px] px-6 bg-[#174849] hover:bg-[#266F71] text-white rounded-xl text-xs font-bold font-sans uppercase tracking-wider transition-colors cursor-pointer shrink-0"
+              disabled={isUploading}
+              onClick={() => fileInputRef.current?.click()}
+              className="h-[54px] px-5 bg-[#0D4446] hover:bg-[#174849] text-white rounded-xl text-xs font-bold font-sans uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 shrink-0 shadow-xs"
             >
-              Add Photo
+              <span className={`material-symbols-outlined text-[18px] ${isUploading ? 'animate-spin' : ''}`}>
+                {isUploading ? 'sync' : 'cloud_upload'}
+              </span>
+              <span>{isUploading ? 'Uploading to Drive...' : 'Upload to Google Drive'}</span>
             </button>
+
+            <div className="flex-1 flex gap-2">
+              <input
+                type="url"
+                placeholder="Paste high-resolution image URL or Google Drive link (https://...)"
+                value={imageUrlInput}
+                onChange={(e) => setImageUrlInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddImage(); } }}
+                className="flex-1 h-[54px] px-4 bg-white border border-gray-200/80 rounded-xl text-sm font-sans focus:border-[#266F71] outline-none"
+              />
+              <button
+                type="button"
+                onClick={handleAddImage}
+                className="h-[54px] px-5 bg-white hover:bg-gray-50 text-[#174849] border border-gray-200 rounded-xl text-xs font-bold font-sans uppercase tracking-wider transition-colors cursor-pointer shrink-0"
+              >
+                Add Photo
+              </button>
+            </div>
           </div>
+
+          {uploadError && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs font-sans flex items-center gap-2">
+              <span className="material-symbols-outlined text-[16px]">error</span>
+              <span>{uploadError}</span>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
             {images.map((img, idx) => (
               <div
                 key={idx}
-                className="relative group rounded-xl overflow-hidden aspect-video border border-gray-200 bg-gray-100"
+                className="relative group rounded-xl overflow-hidden aspect-video border border-gray-200 bg-gray-100 shadow-2xs"
               >
                 <img
                   src={img}
@@ -541,20 +606,29 @@ export default function CreateListingModal({
                     e.target.src = DEFAULT_COVER_IMAGE;
                   }}
                 />
+                <div className="absolute top-2 left-2 flex flex-col gap-1 z-10">
+                  {idx === 0 && (
+                    <span className="bg-[#0D4446] text-white text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded shadow-sm">
+                      Cover
+                    </span>
+                  )}
+                  {isDriveUrl(img) && (
+                    <span className="bg-emerald-600/90 backdrop-blur-xs text-white text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded shadow-sm flex items-center gap-0.5">
+                      <span className="material-symbols-outlined text-[10px]">cloud_done</span>
+                      Drive
+                    </span>
+                  )}
+                </div>
+
                 {images.length > 1 && (
                   <button
                     type="button"
                     onClick={() => handleRemoveImage(idx)}
-                    className="absolute top-2 right-2 w-7 h-7 rounded-full bg-red-600/90 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer shadow-md"
+                    className="absolute top-2 right-2 w-7 h-7 rounded-full bg-red-600/90 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer shadow-md z-10"
                     title="Remove Photo"
                   >
                     <span className="material-symbols-outlined text-[16px]">delete</span>
                   </button>
-                )}
-                {idx === 0 && (
-                  <span className="absolute bottom-2 left-2 bg-[#266F71] text-white text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded shadow-sm">
-                    Main Cover
-                  </span>
                 )}
               </div>
             ))}

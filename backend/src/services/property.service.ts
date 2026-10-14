@@ -1,12 +1,12 @@
 import { supabase, supabaseAdmin, isSupabaseConfigured } from '../config/supabase';
 import logger from '../utils/logger';
 import { NominatimService } from './nominatim.service';
-import { ResoQueryParser, ParsedFilterCondition } from './resoQueryParser';
+import { AgentEligibilityService } from './agentEligibility.service';
 import { 
-  ResoStandardStatus, 
-  ResoMediaItem, 
-  ResoRoomItem, 
-  ResoConfidentialItem 
+  StandardStatus, 
+  MediaItem, 
+  RoomItem, 
+  ConfidentialItem 
 } from '../../../shared/types/property';
 
 export interface PropertyFilterQuery {
@@ -23,14 +23,12 @@ export interface PropertyFilterQuery {
   search?: string;
   page?: number;
   limit?: number;
-  // RESO OData query parameters
   $filter?: string;
   $select?: string;
   $expand?: string;
   $top?: number;
   $skip?: number;
   $orderby?: string;
-  $count?: boolean;
 }
 
 export interface PropertyItem {
@@ -74,22 +72,30 @@ export interface PropertyItem {
     lotSizeArea?: number;
     lotSizeUnits?: string;
     propertyType: string;
+    propertyTypeId?: number;
     propertySubType?: string;
     yearBuilt?: number;
     parkingTotal?: number;
+    parkingCovered?: number;
+    parkingOpen?: number;
+    transactionType?: string;
+    propertyCondition?: string;
   };
+  propertyTypeId?: number;
   features: string[];
   interiorFeatures?: string[];
   exteriorFeatures?: string[];
   images: string[];
-  media?: ResoMediaItem[];
-  rooms?: ResoRoomItem[];
-  confidential?: ResoConfidentialItem;
+  media?: MediaItem[];
+  rooms?: RoomItem[];
+  confidential?: ConfidentialItem;
   publicRemarks?: string;
+  customAttributes?: Record<string, unknown>;
   customResoAttributes?: Record<string, unknown>;
   architecturalStyle?: string;
-  standardStatus?: ResoStandardStatus;
+  standardStatus?: StandardStatus;
   status: 'available' | 'pending' | 'sold';
+  isFeatured?: boolean;
   createdAt: string;
   updatedAt: string;
   createdBy?: string;
@@ -265,10 +271,37 @@ const SEED_PROPERTIES: PropertyItem[] = [
 ];
 
 let localPropertiesState = [...SEED_PROPERTIES];
+let localEditRequestsState: any[] = [];
+let localAuditLogsState: any[] = [];
+
 
 export class PropertyService {
   /**
-   * Query properties with filtering, searching, OData parsing, and pagination
+   * Redacts sensitive confidential fields for non-privileged callers
+   */
+  public static redactConfidential<T extends Record<string, any>>(
+    property: T,
+    userRole?: string
+  ): T {
+    const isAuthorized = userRole && ['agent', 'broker', 'admin'].includes(userRole);
+    if (isAuthorized) return property;
+
+    const sanitized = { ...property };
+    delete sanitized.confidential;
+    delete sanitized.private_remarks;
+    delete sanitized.lockbox_code;
+    delete sanitized.lockbox_type;
+    delete sanitized.lockbox_location;
+    delete sanitized.showing_instructions;
+    delete sanitized.buyer_agency_compensation;
+    delete sanitized.seller_direct_phone;
+    delete sanitized.seller_direct_email;
+
+    return sanitized;
+  }
+
+  /**
+   * Query properties with filtering, searching, and pagination
    */
   public static async findProperties(
     query: PropertyFilterQuery = {},
@@ -281,17 +314,7 @@ export class PropertyService {
     totalPages: number;
   }> {
     const page = Math.max(1, Number(query.page) || 1);
-    const limit = Math.max(1, Math.min(100, Number(query.limit) || Number(query.$top) || 10));
-
-    // Parse RESO OData query parameters
-    const parsedOData = ResoQueryParser.parseOData({
-      $filter: query.$filter,
-      $select: query.$select,
-      $expand: query.$expand,
-      $top: query.$top,
-      $skip: query.$skip,
-      $orderby: query.$orderby,
-    });
+    const limit = Math.max(1, Math.min(100, Number(query.limit) || 10));
 
     if (isSupabaseConfigured) {
       try {
@@ -303,6 +326,9 @@ export class PropertyService {
         }
         if (query.propertyType) {
           dbQuery = dbQuery.ilike('property_type', `%${query.propertyType}%`);
+        }
+        if (query.propertyTypeId || query.property_type_id) {
+          dbQuery = dbQuery.eq('property_type_id', query.propertyTypeId || query.property_type_id);
         }
         if (query.status) {
           dbQuery = dbQuery.eq('status', query.status);
@@ -329,46 +355,17 @@ export class PropertyService {
           dbQuery = dbQuery.or(`title.ilike.%${query.search}%,address.ilike.%${query.search}%,city.ilike.%${query.search}%`);
         }
 
-        // Apply OData $filter conditions
-        for (const cond of parsedOData.conditions) {
-          switch (cond.operator) {
-            case 'eq':
-              dbQuery = dbQuery.eq(cond.column, cond.value);
-              break;
-            case 'ne':
-              dbQuery = dbQuery.neq(cond.column, cond.value);
-              break;
-            case 'gt':
-              dbQuery = dbQuery.gt(cond.column, cond.value);
-              break;
-            case 'gte':
-              dbQuery = dbQuery.gte(cond.column, cond.value);
-              break;
-            case 'lt':
-              dbQuery = dbQuery.lt(cond.column, cond.value);
-              break;
-            case 'lte':
-              dbQuery = dbQuery.lte(cond.column, cond.value);
-              break;
-          }
-        }
-
         const from = (page - 1) * limit;
         const to = from + limit - 1;
         dbQuery = dbQuery.range(from, to);
-
-        if (parsedOData.orderBy) {
-          dbQuery = dbQuery.order(parsedOData.orderBy.column, { ascending: parsedOData.orderBy.ascending });
-        } else {
-          dbQuery = dbQuery.order('created_at', { ascending: false });
-        }
+        dbQuery = dbQuery.order('created_at', { ascending: false });
 
         const { data, count, error } = await dbQuery;
 
         if (error) {
           logger.warn('[PropertyService] Supabase query failed, using local fixtures:', error.message);
-        } else if (data) {
-          const total = count || 0;
+        } else if (data && data.length > 0) {
+          const total = count || data.length;
           const mapped: PropertyItem[] = data.map((row: any) => {
             const item: PropertyItem = {
               id: row.id,
@@ -407,17 +404,24 @@ export class PropertyService {
                 livingAreaUnits: row.living_area_units || 'Square Meters',
                 lotSizeArea: row.lot_size_area,
                 lotSizeUnits: row.lot_size_units || 'Square Meters',
-                propertyType: row.property_type,
+                propertyType: row.property_type || 'Residential',
+                propertyTypeId: row.property_type_id || 1,
                 propertySubType: row.property_sub_type,
                 yearBuilt: row.year_built,
                 parkingTotal: row.parking_total,
+                parkingCovered: row.parking_covered || 0,
+                parkingOpen: row.parking_open || 0,
+                transactionType: row.transaction_type || 'For Sale',
+                propertyCondition: row.property_condition,
               },
+              propertyTypeId: row.property_type_id || 1,
+              isFeatured: row.is_featured ?? false,
               features: row.features || [],
               interiorFeatures: row.interior_features || [],
               exteriorFeatures: row.exterior_features || [],
               images: row.images || [],
               publicRemarks: row.public_remarks,
-              customResoAttributes: row.custom_reso_attributes,
+              customAttributes: row.custom_reso_attributes,
               architecturalStyle: row.architectural_style,
               standardStatus: row.standard_status || (row.status === 'available' ? 'Active' : row.status === 'pending' ? 'Pending' : 'Closed'),
               status: row.status,
@@ -429,7 +433,7 @@ export class PropertyService {
               agentId: row.created_by || 'agent-1',
             };
 
-            return ResoQueryParser.redactConfidential(item, userRole);
+            return this.redactConfidential(item, userRole);
           });
 
           return {
@@ -445,7 +449,7 @@ export class PropertyService {
       }
     }
 
-    // Local in-memory filter fallback with OData support
+    // Local in-memory filter fallback
     let filtered = [...localPropertiesState];
 
     // Standard filters
@@ -487,52 +491,8 @@ export class PropertyService {
       );
     }
 
-    // OData $filter conditions evaluated in-memory
-    for (const cond of parsedOData.conditions) {
-      filtered = filtered.filter((p) => {
-        let val: any;
-        if (cond.column === 'city') val = p.location.city;
-        else if (cond.column === 'price') val = p.price;
-        else if (cond.column === 'standard_status') val = p.standardStatus;
-        else if (cond.column === 'property_type') val = p.specs.propertyType;
-        else if (cond.column === 'bedrooms_total' || cond.column === 'beds') val = p.specs.bedroomsTotal ?? p.specs.beds;
-        else if (cond.column === 'bathrooms_total_integer' || cond.column === 'baths') val = p.specs.bathroomsTotalInteger ?? p.specs.baths;
-        else if (cond.column === 'living_area') val = p.specs.livingArea ?? p.specs.sqft;
-        else if (cond.column === 'listing_id') val = p.listingId;
-        else if (cond.column === 'listing_key') val = p.listingKey;
-
-        if (val === undefined || val === null) return true;
-
-        if (typeof val === 'string' && typeof cond.value === 'string') {
-          if (cond.operator === 'eq') return val.toLowerCase() === cond.value.toLowerCase();
-          if (cond.operator === 'ne') return val.toLowerCase() !== cond.value.toLowerCase();
-        }
-
-        const numVal = Number(val);
-        const numCond = Number(cond.value);
-        if (!isNaN(numVal) && !isNaN(numCond)) {
-          if (cond.operator === 'eq') return numVal === numCond;
-          if (cond.operator === 'ne') return numVal !== numCond;
-          if (cond.operator === 'gt') return numVal > numCond;
-          if (cond.operator === 'gte') return numVal >= numCond;
-          if (cond.operator === 'lt') return numVal < numCond;
-          if (cond.operator === 'lte') return numVal <= numCond;
-        }
-
-        return true;
-      });
-    }
-
     // Confidential field redaction for client requests
-    filtered = filtered.map((item) => {
-      const sanitized = ResoQueryParser.redactConfidential(item, userRole);
-      // Strip media/rooms if not requested via $expand
-      if (parsedOData.expandRelations.length > 0) {
-        if (!parsedOData.expandRelations.includes('media')) delete (sanitized as any).media;
-        if (!parsedOData.expandRelations.includes('rooms')) delete (sanitized as any).rooms;
-      }
-      return sanitized;
-    });
+    filtered = filtered.map((item) => this.redactConfidential(item, userRole));
 
     const total = filtered.length;
     const startIndex = (page - 1) * limit;
@@ -609,11 +569,18 @@ export class PropertyService {
               livingAreaUnits: data.living_area_units || 'Square Meters',
               lotSizeArea: data.lot_size_area,
               lotSizeUnits: data.lot_size_units || 'Square Meters',
-              propertyType: data.property_type,
+              propertyType: data.property_type || 'Residential',
+              propertyTypeId: data.property_type_id || 1,
               propertySubType: data.property_sub_type,
               yearBuilt: data.year_built,
               parkingTotal: data.parking_total,
+              parkingCovered: data.parking_covered || 0,
+              parkingOpen: data.parking_open || 0,
+              transactionType: data.transaction_type || 'For Sale',
+              propertyCondition: data.property_condition,
             },
+            propertyTypeId: data.property_type_id || 1,
+            isFeatured: data.is_featured ?? false,
             features: data.features || [],
             interiorFeatures: data.interior_features || [],
             exteriorFeatures: data.exterior_features || [],
@@ -671,7 +638,7 @@ export class PropertyService {
             }
           }
 
-          return ResoQueryParser.redactConfidential(item, userRole);
+          return this.redactConfidential(item, userRole);
         }
       } catch (err: any) {
         logger.warn('[PropertyService] DB getById exception:', err.message);
@@ -683,22 +650,24 @@ export class PropertyService {
     );
     if (!found) return null;
 
-    return ResoQueryParser.redactConfidential({ ...found }, userRole);
+    return this.redactConfidential({ ...found }, userRole);
   }
 
   /**
-   * Create a new property listing with RESO Data Dictionary attributes
+   * Create a new property listing
    */
   public static async createProperty(
     data: any,
     userId?: string,
     userRole?: string
   ): Promise<PropertyItem> {
+    if (userRole === 'agent') {
+      throw new Error('Forbidden: Agents cannot create property listings (verified or unverified). Creation is restricted to authorized brokers and administrators.');
+    }
+
     const isBrokerOrAdmin = userRole && ['broker', 'admin'].includes(userRole);
-    // Gating rule: Agents default to Draft or Pending Approval; only broker/admin can direct-publish Active
-    const initialStatus = (data.standardStatus === 'Active' && !isBrokerOrAdmin)
-      ? 'Pending Approval'
-      : (data.standardStatus || 'Draft');
+    // Gating rule: Only broker/admin can create listings; standard status defaults to Draft or Active
+    const initialStatus = data.standardStatus || 'Active';
 
     let coordinates = data.location?.coordinates;
     let resolvedPostal = data.location?.postalCode || '1000';
@@ -767,10 +736,17 @@ export class PropertyService {
         lotSizeArea: data.specs?.lotSizeArea ? Number(data.specs.lotSizeArea) : undefined,
         lotSizeUnits: data.specs?.lotSizeUnits || 'Square Meters',
         propertyType: data.specs?.propertyType || 'Residential',
+        propertyTypeId: Number(data.propertyTypeId || data.property_type_id || data.specs?.propertyTypeId || data.specs?.property_type_id || 1),
         propertySubType: data.specs?.propertySubType || 'Single Family Residence',
         yearBuilt: data.specs?.yearBuilt || new Date().getFullYear(),
         parkingTotal: Number(data.specs?.parkingTotal) || 0,
+        parkingCovered: Number(data.specs?.parkingCovered) || 0,
+        parkingOpen: Number(data.specs?.parkingOpen) || 0,
+        transactionType: data.specs?.transactionType || 'For Sale',
+        propertyCondition: data.specs?.propertyCondition,
       },
+      propertyTypeId: Number(data.propertyTypeId || data.property_type_id || data.specs?.propertyTypeId || data.specs?.property_type_id || 1),
+      isFeatured: data.isFeatured ?? false,
       features: data.features || [],
       interiorFeatures: data.interiorFeatures || [],
       exteriorFeatures: data.exteriorFeatures || [],
@@ -788,7 +764,7 @@ export class PropertyService {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       createdBy: userId,
-      listAgentKey: userId,
+      listAgentKey: data.listAgentKey || (data as any).agentId || userId,
     };
 
     if (isSupabaseConfigured) {
@@ -802,11 +778,7 @@ export class PropertyService {
             tagline: newProperty.tagline,
             price: newProperty.price,
             formatted_price: newProperty.formattedPrice,
-            list_price_currency: newProperty.listPriceCurrency,
-            original_list_price: newProperty.originalListPrice,
-            association_fee: newProperty.associationFee,
             association_fee_frequency: newProperty.associationFeeFrequency,
-            tax_annual_amount: newProperty.taxAnnualAmount,
             address: newProperty.location.address,
             unparsed_address: newProperty.location.unparsedAddress,
             subdivision_name: newProperty.location.subdivisionName,
@@ -828,21 +800,22 @@ export class PropertyService {
             living_area_units: newProperty.specs.livingAreaUnits,
             lot_size_area: newProperty.specs.lotSizeArea,
             lot_size_units: newProperty.specs.lotSizeUnits,
-            property_type: newProperty.specs.propertyType,
+            property_type_id: newProperty.propertyTypeId || 1,
             property_sub_type: newProperty.specs.propertySubType,
             year_built: newProperty.specs.yearBuilt,
             parking_total: newProperty.specs.parkingTotal,
+            parking_covered: newProperty.specs.parkingCovered || 0,
+            parking_open: newProperty.specs.parkingOpen || 0,
             architectural_style: newProperty.architecturalStyle,
-            features: newProperty.features,
-            interior_features: newProperty.interiorFeatures,
-            exterior_features: newProperty.exteriorFeatures,
-            images: newProperty.images,
             public_remarks: newProperty.publicRemarks,
-            custom_reso_attributes: newProperty.customResoAttributes,
+            custom_reso_attributes: newProperty.customResoAttributes || {},
             standard_status: newProperty.standardStatus,
             status: newProperty.status,
+            is_featured: newProperty.isFeatured ?? false,
+            transaction_type: newProperty.specs.transactionType || 'For Sale',
+            property_condition: newProperty.specs.propertyCondition,
             created_by: userId,
-            list_agent_key: userId,
+            list_agent_key: newProperty.listAgentKey,
           })
           .select()
           .single();
@@ -884,6 +857,10 @@ export class PropertyService {
     userId?: string,
     userRole?: string
   ): Promise<PropertyItem | null> {
+    if (userRole === 'agent') {
+      throw new Error('Forbidden: Agents cannot directly mutate property listings. Please submit an edit proposal for broker review.');
+    }
+
     const existing = await this.findPropertyById(id);
     if (!existing) return null;
 
@@ -951,6 +928,365 @@ export class PropertyService {
 
     localPropertiesState = localPropertiesState.filter((p) => p.id !== id);
     return true;
+  }
+
+  /**
+   * Propose an edit to an assigned property (Agent Workflow)
+   */
+  public static async proposeEdit(
+    propertyId: string,
+    agentId: string,
+    payload: { proposedChanges: Record<string, any>; agentNotes?: string }
+  ): Promise<any> {
+    const existingProperty = await this.findPropertyById(propertyId);
+    if (!existingProperty) {
+      throw new Error(`Property with id '${propertyId}' not found.`);
+    }
+
+    // Verify agent eligibility to propose edits
+    const eligibility = await AgentEligibilityService.evaluate(agentId, 'edit_listing');
+    if (!eligibility.allowed) {
+      throw new Error(`Forbidden: Agent is not eligible to propose edits (${eligibility.reason}).`);
+    }
+
+    // Verify property assignment (defense-in-depth)
+    const assignedAgentId = existingProperty.listAgentKey || existingProperty.createdBy || existingProperty.agentId;
+    if (assignedAgentId && assignedAgentId !== agentId) {
+      throw new Error('Forbidden: You can only propose changes to properties assigned to you.');
+    }
+
+    // Strip forbidden system-managed keys
+    const FORBIDDEN_PROPOSAL_KEYS = ['id', 'listing_key', 'listing_id', 'created_by', 'created_at', 'updated_at', 'is_featured'];
+    const sanitizedChanges: Record<string, any> = {};
+    for (const [key, val] of Object.entries(payload.proposedChanges)) {
+      if (!FORBIDDEN_PROPOSAL_KEYS.includes(key)) {
+        sanitizedChanges[key] = val;
+      }
+    }
+
+    if (Object.keys(sanitizedChanges).length === 0) {
+      throw new Error('Proposed changes must contain at least one valid business field.');
+    }
+
+    // Check single pending request rule
+    if (isSupabaseConfigured) {
+      const { data: existingPending } = await supabaseAdmin
+        .from('property_edit_requests')
+        .select('id, request_status')
+        .eq('property_id', propertyId)
+        .eq('request_status', 'PENDING')
+        .maybeSingle();
+
+      if (existingPending) {
+        throw new Error('Conflict: A pending edit request for this property already exists awaiting review.');
+      }
+    } else {
+      const localPending = localEditRequestsState.find(
+        (r) => r.property_id === propertyId && r.request_status === 'PENDING'
+      );
+      if (localPending) {
+        throw new Error('Conflict: A pending edit request for this property already exists awaiting review.');
+      }
+    }
+
+    const newRequest = {
+      id: `req-${Date.now()}`,
+      property_id: propertyId,
+      agent_id: agentId,
+      request_status: 'PENDING',
+      proposed_changes: sanitizedChanges,
+      original_snapshot: existingProperty,
+      base_version: 1,
+      agent_notes: payload.agentNotes || null,
+      reviewed_by: null,
+      reviewed_at: null,
+      review_notes: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    if (isSupabaseConfigured) {
+      try {
+        const { data: inserted, error } = await supabaseAdmin
+          .from('property_edit_requests')
+          .insert({
+            property_id: propertyId,
+            agent_id: agentId,
+            request_status: 'PENDING',
+            proposed_changes: sanitizedChanges,
+            original_snapshot: existingProperty,
+            agent_notes: payload.agentNotes || null,
+          })
+          .select()
+          .single();
+
+        if (error) {
+          if (error.code === '23505') {
+            throw new Error('Conflict: A pending edit request for this property already exists awaiting review.');
+          }
+          throw new Error(error.message);
+        }
+        if (inserted) {
+          newRequest.id = inserted.id;
+          newRequest.created_at = inserted.created_at;
+          newRequest.updated_at = inserted.updated_at;
+        }
+      } catch (err: any) {
+        if (err.message?.includes('Conflict')) throw err;
+        logger.warn('[PropertyService] proposeEdit DB error:', err.message);
+      }
+    }
+
+    localEditRequestsState.unshift(newRequest);
+    return newRequest;
+  }
+
+  /**
+   * List edit requests with optional status, property, and agent filters
+   */
+  public static async getEditRequests(filters: {
+    status?: string;
+    propertyId?: string;
+    agentId?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<{ requests: any[]; total: number; page: number; limit: number; totalPages: number }> {
+    const page = filters.page || 1;
+    const limit = filters.limit || 20;
+
+    if (isSupabaseConfigured) {
+      try {
+        let query = supabaseAdmin
+          .from('property_edit_requests')
+          .select(`
+            *,
+            property:properties(id, title, price, address, city, standard_status, list_agent_key),
+            agent:profiles!property_edit_requests_agent_id_fkey(id, full_name, email)
+          `, { count: 'exact' });
+
+        if (filters.status) query = query.eq('request_status', filters.status);
+        if (filters.propertyId) query = query.eq('property_id', filters.propertyId);
+        if (filters.agentId) query = query.eq('agent_id', filters.agentId);
+
+        const from = (page - 1) * limit;
+        const to = from + limit - 1;
+        const { data, count, error } = await query
+          .order('created_at', { ascending: false })
+          .range(from, to);
+
+        if (!error && data) {
+          return {
+            requests: data,
+            total: count || data.length,
+            page,
+            limit,
+            totalPages: Math.ceil((count || data.length) / limit) || 1,
+          };
+        }
+      } catch (err: any) {
+        logger.warn('[PropertyService] getEditRequests DB error:', err.message);
+      }
+    }
+
+    // Local fallback
+    let filtered = [...localEditRequestsState];
+    if (filters.status) filtered = filtered.filter((r) => r.request_status === filters.status);
+    if (filters.propertyId) filtered = filtered.filter((r) => r.property_id === filters.propertyId);
+    if (filters.agentId) filtered = filtered.filter((r) => r.agent_id === filters.agentId);
+
+    const total = filtered.length;
+    const start = (page - 1) * limit;
+    const paginated = filtered.slice(start, start + limit);
+
+    return {
+      requests: paginated,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit) || 1,
+    };
+  }
+
+  /**
+   * Get single edit request by ID
+   */
+  public static async getEditRequestById(
+    requestId: string,
+    userId?: string,
+    userRole?: string
+  ): Promise<any | null> {
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabaseAdmin
+          .from('property_edit_requests')
+          .select(`
+            *,
+            property:properties(*),
+            agent:profiles!property_edit_requests_agent_id_fkey(id, full_name, email)
+          `)
+          .eq('id', requestId)
+          .single();
+
+        if (!error && data) {
+          if (userRole === 'agent' && data.agent_id !== userId) {
+            throw new Error('Forbidden: You can only view edit requests submitted by you.');
+          }
+          return data;
+        }
+      } catch (err: any) {
+        if (err.message?.startsWith('Forbidden')) throw err;
+        logger.warn('[PropertyService] getEditRequestById DB error:', err.message);
+      }
+    }
+
+    const found = localEditRequestsState.find((r) => r.id === requestId);
+    if (!found) return null;
+    if (userRole === 'agent' && found.agent_id !== userId) {
+      throw new Error('Forbidden: You can only view edit requests submitted by you.');
+    }
+    return found;
+  }
+
+  /**
+   * Approve an edit request via database stored procedure (Broker/Admin)
+   */
+  public static async approveEditRequest(
+    requestId: string,
+    brokerId: string,
+    reviewNotes?: string
+  ): Promise<any> {
+    if (isSupabaseConfigured) {
+      const { data, error } = await supabaseAdmin.rpc('apply_property_edit_request', {
+        p_request_id: requestId,
+        p_broker_id: brokerId,
+        p_review_notes: reviewNotes || null,
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+      return data;
+    }
+
+    // Local fallback simulation
+    const reqIndex = localEditRequestsState.findIndex((r) => r.id === requestId);
+    if (reqIndex === -1) {
+      throw new Error(`Edit request '${requestId}' not found.`);
+    }
+
+    const req = localEditRequestsState[reqIndex];
+    if (req.request_status !== 'PENDING') {
+      throw new Error(`Cannot approve request: status is already '${req.request_status}'.`);
+    }
+
+    req.request_status = 'APPROVED';
+    req.reviewed_by = brokerId;
+    req.reviewed_at = new Date().toISOString();
+    req.review_notes = reviewNotes || null;
+    req.updated_at = new Date().toISOString();
+
+    // Apply to local property
+    const propIndex = localPropertiesState.findIndex((p) => p.id === req.property_id);
+    if (propIndex !== -1) {
+      localPropertiesState[propIndex] = {
+        ...localPropertiesState[propIndex],
+        ...req.proposed_changes,
+        updatedAt: new Date().toISOString(),
+      };
+    }
+
+    return {
+      success: true,
+      request_id: requestId,
+      property_id: req.property_id,
+      status: 'APPROVED',
+      applied_at: new Date().toISOString(),
+    };
+  }
+
+  /**
+   * Reject an edit request with mandatory remarks (Broker/Admin)
+   */
+  public static async rejectEditRequest(
+    requestId: string,
+    brokerId: string,
+    rejectionReason: string
+  ): Promise<any> {
+    if (!rejectionReason || rejectionReason.trim().length === 0) {
+      throw new Error('Rejection reason is required.');
+    }
+
+    if (isSupabaseConfigured) {
+      const { data, error } = await supabaseAdmin.rpc('reject_property_edit_request', {
+        p_request_id: requestId,
+        p_broker_id: brokerId,
+        p_rejection_reason: rejectionReason.trim(),
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+      return data;
+    }
+
+    // Local fallback simulation
+    const reqIndex = localEditRequestsState.findIndex((r) => r.id === requestId);
+    if (reqIndex === -1) {
+      throw new Error(`Edit request '${requestId}' not found.`);
+    }
+
+    const req = localEditRequestsState[reqIndex];
+    if (req.request_status !== 'PENDING') {
+      throw new Error(`Cannot reject request: status is already '${req.request_status}'.`);
+    }
+
+    req.request_status = 'REJECTED';
+    req.reviewed_by = brokerId;
+    req.reviewed_at = new Date().toISOString();
+    req.review_notes = rejectionReason.trim();
+    req.updated_at = new Date().toISOString();
+
+    return {
+      success: true,
+      request_id: requestId,
+      status: 'REJECTED',
+      rejected_at: new Date().toISOString(),
+    };
+  }
+
+  /**
+   * Cancel a pending edit request (Agent)
+   */
+  public static async cancelEditRequest(
+    requestId: string,
+    agentId: string
+  ): Promise<any> {
+    if (isSupabaseConfigured) {
+      const { data, error } = await supabaseAdmin
+        .from('property_edit_requests')
+        .update({
+          request_status: 'CANCELLED',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', requestId)
+        .eq('agent_id', agentId)
+        .eq('request_status', 'PENDING')
+        .select()
+        .single();
+
+      if (error || !data) {
+        throw new Error('Could not cancel edit request. Either request does not exist, is not pending, or is not owned by you.');
+      }
+      return data;
+    }
+
+    const req = localEditRequestsState.find((r) => r.id === requestId && r.agent_id === agentId);
+    if (!req || req.request_status !== 'PENDING') {
+      throw new Error('Could not cancel edit request. Either request does not exist, is not pending, or is not owned by you.');
+    }
+    req.request_status = 'CANCELLED';
+    req.updated_at = new Date().toISOString();
+    return req;
   }
 }
 

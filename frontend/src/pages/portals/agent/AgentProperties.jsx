@@ -1,26 +1,67 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import PageHeader from '../../../components/dashboard/PageHeader';
 import SearchAndFilterBar from '../../../components/dashboard/SearchAndFilterBar';
 import StatusBadge from '../../../components/dashboard/StatusBadge';
 import DataTable from '../../../components/dashboard/DataTable';
 import EmptyState from '../../../components/dashboard/EmptyState';
+import propertyService from '../../../services/propertyService';
+import { useAuth } from '../../../context/AuthContext';
 import { mockProperties } from '../../../mockData/mockProperties';
+import { Building2, Clock, CheckCircle2 } from 'lucide-react';
 
 export default function AgentProperties() {
   const navigate = useNavigate();
-  const [properties, setProperties] = useState(mockProperties.filter(p => p.agent_id === 'agent-1'));
+  const { user } = useAuth();
+  const [properties, setProperties] = useState([]);
+  const [pendingPropertyIds, setPendingPropertyIds] = useState(new Set());
+  const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [typeFilter, setTypeFilter] = useState('ALL');
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'table'
 
+  useEffect(() => {
+    async function loadAgentProperties() {
+      setIsLoading(true);
+      try {
+        const [propsRes, editsRes] = await Promise.allSettled([
+          propertyService.getProperties({ agentId: user?.id }),
+          propertyService.getEditRequests({ status: 'PENDING' }),
+        ]);
+
+        if (propsRes.status === 'fulfilled' && propsRes.value?.data?.length > 0) {
+          setProperties(propsRes.value.data);
+        } else {
+          // Fallback to mock properties filtered for agent
+          setProperties(mockProperties.filter(p => p.agent_id === (user?.id || 'agent-1')));
+        }
+
+        if (editsRes.status === 'fulfilled' && editsRes.value?.data) {
+          const rawEdits = Array.isArray(editsRes.value.data) ? editsRes.value.data : editsRes.value.data.requests || [];
+          const ids = new Set(rawEdits.map(e => e.property_id || e.propertyId));
+          setPendingPropertyIds(ids);
+        }
+      } catch (err) {
+        console.warn('Error loading agent properties:', err);
+        setProperties(mockProperties.filter(p => p.agent_id === (user?.id || 'agent-1')));
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadAgentProperties();
+  }, [user?.id]);
+
   // Filtering
   const filtered = properties.filter(item => {
-    const matchesSearch = item.title.toLowerCase().includes(search.toLowerCase()) ||
-                          item.location.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = statusFilter === 'ALL' || item.status === statusFilter;
-    const matchesType = typeFilter === 'ALL' || item.property_type === typeFilter;
+    const title = (item.title || item.name || '').toLowerCase();
+    const loc = (typeof item.location === 'string' ? item.location : item.location?.address || '').toLowerCase();
+    const q = search.toLowerCase();
+    const matchesSearch = title.includes(q) || loc.includes(q);
+    const matchesStatus = statusFilter === 'ALL' || (item.status || '').toUpperCase() === statusFilter.toUpperCase();
+    const itemType = item.property_type || item.propertyType || item.specs?.propertyType || '';
+    const matchesType = typeFilter === 'ALL' || itemType.toLowerCase() === typeFilter.toLowerCase();
     return matchesSearch && matchesStatus && matchesType;
   });
 
@@ -30,32 +71,46 @@ export default function AgentProperties() {
       render: (row) => (
         <div className="flex items-center gap-3">
           <img
-            src={row.mainImage}
+            src={row.mainImage || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=200'}
             alt={row.title}
-            className="w-12 h-12 rounded-xl object-cover border border-gray-200"
+            className="w-12 h-12 rounded-lg object-cover border border-[#E2E8F0]"
           />
           <div>
-            <p className="font-bold text-[#174849] font-sans">{row.title}</p>
-            <p className="text-xs text-gray-400 font-sans">{row.location}</p>
+            <div className="flex items-center gap-2">
+              <p className="font-semibold text-[#1E293B] text-sm">{row.title}</p>
+              {pendingPropertyIds.has(row.id) && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                  <Clock className="w-3 h-3 text-amber-600" />
+                  Edit Pending
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-[#64748B]">{typeof row.location === 'string' ? row.location : row.location?.address || 'Metro Manila'}</p>
           </div>
         </div>
       )
     },
     {
       header: "Type",
-      accessor: "property_type"
+      render: (row) => (
+        <span className="text-xs text-slate-700 font-medium">
+          {row.property_type || row.propertyType || row.specs?.propertyType || 'Residential'}
+        </span>
+      )
     },
     {
       header: "Price",
       render: (row) => (
-        <span className="font-bold text-[#266F71]">{row.price}</span>
+        <span className="font-mono font-bold text-sm text-[#0F766E]">
+          {row.price || (row.price_raw ? `₱${row.price_raw.toLocaleString()}` : 'Price on Request')}
+        </span>
       )
     },
     {
       header: "Specs",
       render: (row) => (
-        <span className="text-xs text-gray-500">
-          {row.bedrooms} Beds • {row.bathrooms} Baths • {row.sqm}
+        <span className="text-xs font-mono text-slate-500">
+          {row.bedrooms ?? row.specs?.beds ?? 0} Beds • {row.bathrooms ?? row.specs?.baths ?? 0} Baths • {row.sqm || (row.specs?.livingArea ? `${row.specs.livingArea} sqm` : '—')}
         </span>
       )
     },
@@ -64,23 +119,15 @@ export default function AgentProperties() {
       render: (row) => <StatusBadge status={row.status} />
     },
     {
-      header: "Published",
-      render: (row) => (
-        <span className={`text-xs font-bold ${row.is_published ? 'text-[#266F71]' : 'text-gray-400'}`}>
-          {row.is_published ? '● Published' : '○ Draft'}
-        </span>
-      )
-    },
-    {
       header: "Actions",
       className: "text-right",
       render: (row) => (
         <div className="flex items-center justify-end gap-2">
           <Link
             to={`/agent/properties/${row.id}`}
-            className="px-3 py-1.5 rounded-lg bg-[#F1F0EC] hover:bg-[#266F71] hover:text-white text-xs font-bold font-sans uppercase tracking-wider transition-colors"
+            className="px-3 py-1.5 rounded-lg border border-[#CBD5E1] bg-white hover:bg-[#0F766E] hover:text-white hover:border-[#0F766E] text-xs font-semibold text-[#1E293B] transition-colors shadow-2xs"
           >
-            View
+            View Details
           </Link>
         </div>
       )
@@ -91,16 +138,7 @@ export default function AgentProperties() {
     <div className="space-y-6">
       <PageHeader
         title="Assigned Properties"
-        subtitle="Manage and monitor your exclusive property inventory and sales statuses."
-        actions={
-          <Link
-            to="/agent/properties/create"
-            className="h-[46px] px-5 bg-[#266F71] hover:bg-[#174849] text-white rounded-xl text-xs font-bold font-sans uppercase tracking-wider flex items-center gap-2 shadow-sm transition-all"
-          >
-            <span className="material-symbols-outlined text-[18px]">add_home</span>
-            Create New Property
-          </Link>
-        }
+        subtitle="Review your exclusive property inventory. To make changes, submit an edit proposal for broker review."
       />
 
       {/* Filter and View Mode Toolbar */}
@@ -134,24 +172,24 @@ export default function AgentProperties() {
           }
         ]}
         extraActions={
-          <div className="flex items-center h-[54px] bg-white border border-gray-200/80 rounded-xl p-1 gap-1">
+          <div className="flex items-center h-[46px] bg-white border border-[#CBD5E1] rounded-lg p-1 gap-1 shadow-2xs">
             <button
               onClick={() => setViewMode('grid')}
-              className={`h-full px-3 rounded-lg flex items-center justify-center transition-colors ${
-                viewMode === 'grid' ? 'bg-[#266F71] text-white' : 'text-gray-500 hover:text-gray-800'
+              className={`h-full px-3 rounded-md flex items-center justify-center transition-colors cursor-pointer ${
+                viewMode === 'grid' ? 'bg-[#0F766E] text-white shadow-2xs' : 'text-slate-500 hover:text-slate-800'
               }`}
               title="Grid View"
             >
-              <span className="material-symbols-outlined text-[20px]">grid_view</span>
+              <span className="material-symbols-outlined text-[18px]">grid_view</span>
             </button>
             <button
               onClick={() => setViewMode('table')}
-              className={`h-full px-3 rounded-lg flex items-center justify-center transition-colors ${
-                viewMode === 'table' ? 'bg-[#266F71] text-white' : 'text-gray-500 hover:text-gray-800'
+              className={`h-full px-3 rounded-md flex items-center justify-center transition-colors cursor-pointer ${
+                viewMode === 'table' ? 'bg-[#0F766E] text-white shadow-2xs' : 'text-slate-500 hover:text-slate-800'
               }`}
               title="Table View"
             >
-              <span className="material-symbols-outlined text-[20px]">table_rows</span>
+              <span className="material-symbols-outlined text-[18px]">table_rows</span>
             </button>
           </div>
         }
@@ -166,7 +204,7 @@ export default function AgentProperties() {
           action={
             <button
               onClick={() => { setSearch(''); setStatusFilter('ALL'); setTypeFilter('ALL'); }}
-              className="px-4 py-2 bg-[#266F71] text-white rounded-xl text-xs font-bold uppercase tracking-wider font-sans"
+              className="px-4 py-2 bg-[#0F766E] hover:bg-[#115E59] text-white rounded-lg text-xs font-semibold shadow-xs cursor-pointer transition-colors"
             >
               Reset Filters
             </button>
@@ -184,20 +222,26 @@ export default function AgentProperties() {
           {filtered.map((item) => (
             <div
               key={item.id}
-              className="bg-white rounded-2xl border border-gray-200/80 shadow-sm overflow-hidden hover:shadow-md transition-all flex flex-col group"
+              className="bg-white rounded-lg border border-[#E2E8F0] shadow-xs hover:shadow-md transition-all flex flex-col group overflow-hidden"
             >
               {/* Image & Status Badges */}
-              <div className="relative h-48 sm:h-52 overflow-hidden bg-gray-100">
+              <div className="relative h-48 sm:h-52 overflow-hidden bg-slate-100">
                 <img
-                  src={item.mainImage}
+                  src={item.mainImage || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=600'}
                   alt={item.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
-                <div className="absolute top-3 left-3">
+                <div className="absolute top-3 left-3 flex flex-col gap-1.5">
                   <StatusBadge status={item.status} />
+                  {pendingPropertyIds.has(item.id) && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500 text-white shadow-xs">
+                      <Clock className="w-3 h-3 text-white" />
+                      Pending Broker Review
+                    </span>
+                  )}
                 </div>
-                <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-sm text-white px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider font-sans">
-                  {item.property_type}
+                <div className="absolute top-3 right-3 bg-slate-900/75 backdrop-blur-xs text-white px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wider">
+                  {item.property_type || item.propertyType || item.specs?.propertyType || 'Residential'}
                 </div>
               </div>
 
@@ -205,36 +249,36 @@ export default function AgentProperties() {
               <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold uppercase tracking-wider text-gray-400 font-sans">
-                      {item.is_published ? 'Published' : 'Draft Only'}
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">
+                      {item.is_published ? 'Published' : 'Draft / Unlisted'}
                     </span>
-                    <span className="text-lg font-bold font-display text-[#266F71]">
-                      {item.price}
+                    <span className="text-base font-bold font-mono text-[#0F766E]">
+                      {item.price || (item.price_raw ? `₱${item.price_raw.toLocaleString()}` : 'Price on Request')}
                     </span>
                   </div>
-                  <h3 className="font-display font-bold text-lg text-[#174849] line-clamp-1">
+                  <h3 className="font-semibold text-base text-[#1E293B] line-clamp-1 group-hover:text-[#0F766E] transition-colors">
                     {item.title}
                   </h3>
-                  <p className="text-xs text-gray-500 font-sans flex items-center gap-1 line-clamp-1">
-                    <span className="material-symbols-outlined text-[15px] text-gray-400">location_on</span>
-                    {item.location}
+                  <p className="text-xs text-[#64748B] flex items-center gap-1 line-clamp-1">
+                    <span className="material-symbols-outlined text-[15px] text-slate-400">location_on</span>
+                    {typeof item.location === 'string' ? item.location : item.location?.address || 'Metro Manila'}
                   </p>
                 </div>
 
-                <div className="pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500 font-sans">
-                  <span>{item.bedrooms} Beds</span>
+                <div className="pt-3 border-t border-[#E2E8F0] flex items-center justify-between text-xs font-mono text-[#64748B]">
+                  <span>{item.bedrooms ?? item.specs?.beds ?? 0} Beds</span>
                   <span>•</span>
-                  <span>{item.bathrooms} Baths</span>
+                  <span>{item.bathrooms ?? item.specs?.baths ?? 0} Baths</span>
                   <span>•</span>
-                  <span>{item.sqm}</span>
+                  <span>{item.sqm || (item.specs?.livingArea ? `${item.specs.livingArea} sqm` : '—')}</span>
                 </div>
 
                 <div className="pt-2 flex items-center gap-2">
                   <Link
                     to={`/agent/properties/${item.id}`}
-                    className="flex-1 py-2.5 bg-[#266F71] hover:bg-[#174849] text-white text-center rounded-xl text-xs font-bold font-sans uppercase tracking-wider transition-colors shadow-xs"
+                    className="flex-1 py-2.5 bg-[#0F766E] hover:bg-[#115E59] text-white text-center rounded-lg text-xs font-semibold transition-colors shadow-2xs"
                   >
-                    View Details
+                    View & Propose Edits
                   </Link>
                 </div>
               </div>

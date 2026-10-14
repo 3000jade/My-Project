@@ -9,6 +9,8 @@ export const createPropertySchema = z.object({
   price: z
     .number()
     .positive('Price must be greater than zero.'),
+  propertyTypeId: z.number().int().positive().optional().default(1),
+  property_type_id: z.number().int().positive().optional(),
   listPriceCurrency: z.enum(['PHP', 'USD', 'EUR', 'GBP', 'SGD', 'JPY']).optional().default('PHP'),
   originalListPrice: z.number().positive().optional(),
   associationFee: z.number().nonnegative().optional(),
@@ -46,6 +48,8 @@ export const createPropertySchema = z.object({
       lotSizeArea: z.number().nonnegative().optional(),
       lotSizeUnits: z.string().optional(),
       propertyType: z.string().optional(),
+      propertyTypeId: z.number().int().positive().optional(),
+      property_type_id: z.number().int().positive().optional(),
       transactionType: z.enum(['For Sale', 'For Rent']).optional(),
       propertyCondition: z.string().optional(),
       propertySubType: z.string().optional(),
@@ -86,7 +90,7 @@ export const createPropertySchema = z.object({
     expirationDate: z.string().optional(),
   }).optional(),
   publicRemarks: z.string().optional(),
-  customResoAttributes: z.record(z.unknown()).optional(),
+  customResoAttributes: z.record(z.string(), z.unknown()).optional(),
   architecturalStyle: z.string().optional(),
   standardStatus: z.enum(['Draft', 'Pending Approval', 'Active', 'Active Under Contract', 'Pending', 'Closed', 'Canceled', 'Expired']).optional(),
   status: z.enum(['available', 'pending', 'sold']).optional().default('available'),
@@ -96,6 +100,8 @@ export const createPropertySchema = z.object({
 export const queryPropertySchema = z.object({
   city: z.string().trim().optional(),
   propertyType: z.string().trim().optional(),
+  propertyTypeId: z.coerce.number().int().positive().optional(),
+  property_type_id: z.coerce.number().int().positive().optional(),
   transactionType: z.string().trim().optional(),
   minPrice: z.coerce.number().nonnegative().optional(),
   maxPrice: z.coerce.number().nonnegative().optional(),
@@ -120,3 +126,35 @@ export const queryPropertySchema = z.object({
 
 export type CreatePropertyInput = z.infer<typeof createPropertySchema>;
 export type QueryPropertyInput = z.infer<typeof queryPropertySchema>;
+
+export const proposePropertyEditSchema = z.object({
+  proposedChanges: z.record(z.string(), z.unknown()).refine((val) => Object.keys(val).length > 0, {
+    message: 'Proposed changes must contain at least one field.',
+  }),
+  agentNotes: z.string().trim().max(2000).optional(),
+});
+export type ProposePropertyEditInput = z.infer<typeof proposePropertyEditSchema>;
+
+export const approveEditRequestSchema = z.object({
+  reviewNotes: z.string().trim().max(2000).optional(),
+});
+export type ApproveEditRequestInput = z.infer<typeof approveEditRequestSchema>;
+
+export const rejectEditRequestSchema = z.object({
+  rejectionReason: z
+    .string()
+    .trim()
+    .min(3, 'Rejection reason must be at least 3 characters.')
+    .max(2000),
+});
+export type RejectEditRequestInput = z.infer<typeof rejectEditRequestSchema>;
+
+export const queryEditRequestsSchema = z.object({
+  status: z.enum(['PENDING', 'APPROVED', 'REJECTED', 'CANCELLED', 'CONFLICT']).optional(),
+  propertyId: z.string().uuid().optional(),
+  agentId: z.string().uuid().optional(),
+  page: z.coerce.number().int().positive().optional().default(1),
+  limit: z.coerce.number().int().positive().max(100).optional().default(20),
+});
+export type QueryEditRequestsInput = z.infer<typeof queryEditRequestsSchema>;
+

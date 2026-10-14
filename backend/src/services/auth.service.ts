@@ -76,13 +76,15 @@ export class AuthService {
     password: string,
     metadata: { fullName?: string; role?: string } = {}
   ): Promise<AuthResult> {
+    const assignedRole = 'client';
+
     if (!isSupabaseConfigured) {
       logger.warn('[AuthService] Supabase not configured. Returning local development mock registration.');
       return {
         user: {
           id: 'dev-mock-uid-registered',
           email,
-          role: metadata.role || 'agent',
+          role: assignedRole,
           fullName: metadata.fullName || 'New User',
         },
         token: 'dev-mock-jwt-token-registered',
@@ -95,7 +97,7 @@ export class AuthService {
       options: {
         data: {
           full_name: metadata.fullName,
-          role: metadata.role || 'agent',
+          role: assignedRole,
         },
       },
     });
@@ -104,11 +106,24 @@ export class AuthService {
       throw new Error(error?.message || 'Registration failed.');
     }
 
+    // Ensure profile has client role
+    try {
+      await supabaseAdmin.from('profiles').upsert({
+        id: data.user.id,
+        email,
+        full_name: metadata.fullName || 'Client User',
+        role: assignedRole,
+        updated_at: new Date().toISOString(),
+      });
+    } catch (err: any) {
+      logger.warn('[AuthService] Failed to upsert client profile:', err.message);
+    }
+
     return {
       user: {
         id: data.user.id,
         email: data.user.email,
-        role: metadata.role || 'agent',
+        role: assignedRole,
         fullName: metadata.fullName,
       },
       token: data.session?.access_token,

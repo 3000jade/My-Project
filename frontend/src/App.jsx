@@ -17,11 +17,10 @@ const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'mock-client-i
 const PropertiesPage = lazy(() => import('./pages/public/PropertiesPage'));
 const PropertyListingView = lazy(() => import('./pages/public/PropertyListingView'));
 const AboutPage = lazy(() => import('./pages/public/AboutPage'));
-const HowWeWorkPage = lazy(() => import('./pages/public/HowWeWorkPage'));
-const PartnerPage = lazy(() => import('./pages/public/PartnerPage'));
 const ContactPage = lazy(() => import('./pages/public/ContactPage'));
 const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
 const RegisterPage = lazy(() => import('./pages/auth/RegisterPage'));
+const AgentRegisterPage = lazy(() => import('./pages/auth/AgentRegisterPage'));
 const UnauthorizedPage = lazy(() => import('./pages/public/UnauthorizedPage'));
 const DemoApiPage = lazy(() => import('./pages/public/DemoApiPage'));
 
@@ -64,10 +63,18 @@ import BrokerInquiryDetail from './pages/portals/broker/BrokerInquiryDetail';
 import BrokerAppointments from './pages/portals/broker/BrokerAppointments';
 import BrokerAgents from './pages/portals/broker/BrokerAgents';
 import BrokerAgentDetail from './pages/portals/broker/BrokerAgentDetail';
+import BrokerInviteAgent from './pages/portals/broker/BrokerInviteAgent';
+import BrokerAgentEdit from './pages/portals/broker/BrokerAgentEdit';
 import BrokerSales from './pages/portals/broker/BrokerSales';
 import BrokerReports from './pages/portals/broker/BrokerReports';
 import BrokerNotifications from './pages/portals/broker/BrokerNotifications';
 import BrokerProfile from './pages/portals/broker/BrokerProfile';
+
+// Client Portal Pages
+const ClientDashboard = lazy(() => import('./pages/portals/client/ClientDashboard'));
+const ClientProfile = lazy(() => import('./pages/portals/client/ClientProfile'));
+const ClientSavedProperties = lazy(() => import('./pages/portals/client/ClientSavedProperties'));
+const ClientInquiries = lazy(() => import('./pages/portals/client/ClientInquiries'));
 
 function ScrollToTop() {
   const { pathname, hash } = useLocation();
@@ -105,9 +112,9 @@ function ScrollToTop() {
 
 function AppRoutes({ isAppLoading }) {
   const location = useLocation();
-  const isDashboardRoute = location.pathname.startsWith('/agent') || location.pathname.startsWith('/broker');
+  const isDashboardRoute = location.pathname.startsWith('/agent') || location.pathname.startsWith('/broker') || location.pathname.startsWith('/client');
 
-  // If on Agent or Broker portals, render dashboard layouts without Client Header/Footer/ChatWidget
+  // If on Agent, Broker, or Client portals, render dashboard layouts without Public Header/Footer/ChatWidget
   if (isDashboardRoute) {
     return (
       <Routes>
@@ -123,7 +130,6 @@ function AppRoutes({ isAppLoading }) {
           <Route index element={<Navigate to="/agent/dashboard" replace />} />
           <Route path="dashboard" element={<AgentDashboard />} />
           <Route path="properties" element={<AgentProperties />} />
-          <Route path="properties/create" element={<AgentPropertyCreate />} />
           <Route path="properties/:id" element={<AgentPropertyDetail />} />
           <Route path="inquiries" element={<AgentInquiries />} />
           <Route path="inquiries/:id" element={<AgentInquiryDetail />} />
@@ -138,34 +144,45 @@ function AppRoutes({ isAppLoading }) {
           path="/broker"
           element={
             <ProtectedRoute allowedRoles={['broker', 'admin']}>
-              <DashboardLayout role="broker" title="Broker Executive Workspace" />
+              <DashboardLayout role="broker" title="Dashboard" />
             </ProtectedRoute>
           }
         >
           <Route index element={<Navigate to="/broker/dashboard" replace />} />
           <Route path="dashboard" element={<BrokerDashboard />} />
           <Route path="properties" element={<BrokerProperties />} />
+          <Route path="properties/create" element={<BrokerCreateListings />} />
+          <Route path="properties/:id/edit" element={<BrokerCreateListings />} />
           <Route path="properties/:id" element={<BrokerPropertyDetail />} />
           <Route path="inquiries" element={<BrokerInquiries />} />
           <Route path="inquiries/:id" element={<BrokerInquiryDetail />} />
           <Route path="appointments" element={<BrokerAppointments />} />
           <Route path="agents" element={<BrokerAgents />} />
+          <Route path="agents/invite" element={<BrokerInviteAgent />} />
           <Route path="agents/:id" element={<BrokerAgentDetail />} />
+          <Route path="agents/:id/edit" element={<BrokerAgentEdit />} />
           <Route path="sales" element={<BrokerSales />} />
           <Route path="reports" element={<BrokerReports />} />
           <Route path="notifications" element={<BrokerNotifications />} />
           <Route path="profile" element={<BrokerProfile />} />
         </Route>
-
-        {/* Dedicated Full-Bleed Content Studio */}
+        {/* Client Routes (Protected for Client, Broker & Admin) */}
         <Route
-          path="/broker/properties/:id/edit"
+          path="/client"
           element={
-            <ProtectedRoute allowedRoles={['broker', 'admin']}>
-              <BrokerCreateListings />
-            </ProtectedRoute>
+            <Suspense fallback={<div className="min-h-screen bg-[#FBFBF9] flex items-center justify-center text-xs font-mono text-[#0D4446]">Loading Client Portal...</div>}>
+              <ProtectedRoute allowedRoles={['client', 'broker', 'agent', 'admin']}>
+                <DashboardLayout role="client" title="Client Portal" />
+              </ProtectedRoute>
+            </Suspense>
           }
-        />
+        >
+          <Route index element={<Navigate to="/client/dashboard" replace />} />
+          <Route path="dashboard" element={<ClientDashboard />} />
+          <Route path="saved-properties" element={<ClientSavedProperties />} />
+          <Route path="inquiries" element={<ClientInquiries />} />
+          <Route path="profile" element={<ClientProfile />} />
+        </Route>
       </Routes>
     );
   }
@@ -200,7 +217,7 @@ function AppRoutes({ isAppLoading }) {
     );
   }
 
-  const isAuthRoute = location.pathname === '/login' || location.pathname === '/register';
+  const isAuthRoute = location.pathname === '/login' || location.pathname === '/registration-form' || location.pathname.startsWith('/register');
 
   // Client Application Structure (Preserved with lazy loading and 3D duplex route)
   return (
@@ -214,11 +231,11 @@ function AppRoutes({ isAppLoading }) {
             <Route path="/properties/:id" element={<PropertyListingView />} />
             <Route path="/listing/:id" element={<PropertyListingView />} />
             <Route path="/about" element={<AboutPage />} />
-            <Route path="/how-we-work" element={<HowWeWorkPage />} />
-            <Route path="/our-partner" element={<PartnerPage />} />
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/register/agent" element={<AgentRegisterPage />} />
+            <Route path="/registration-form" element={<RegisterPage />} />
             <Route path="/unauthorized" element={<UnauthorizedPage />} />
             <Route path="/demo-api" element={<DemoApiPage />} />
           </Routes>

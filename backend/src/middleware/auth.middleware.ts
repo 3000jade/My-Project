@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { User } from '@supabase/supabase-js';
-import { supabase } from '../config/supabase';
+import { supabase, supabaseAdmin } from '../config/supabase';
 import type { ApiResponse } from '../types/api';
 
 export interface AuthenticatedRequest extends Request {
@@ -29,20 +29,6 @@ export const requireAuth = async (
 
     const token = authHeader.split(' ')[1];
 
-    // Development / mock fallback token handling
-    if (token.startsWith('dev-mock-jwt-token')) {
-      req.user = {
-        id: 'dev-mock-uid-12345',
-        email: token.includes('broker') ? 'broker@pt.com' : 'agent@pt.com',
-        role: token.includes('broker') ? 'broker' : 'agent',
-        user_metadata: {
-          role: token.includes('broker') ? 'broker' : 'agent',
-        },
-      } as any;
-      next();
-      return;
-    }
-
     const { data, error } = await supabase.auth.getUser(token);
 
     if (error || !data.user) {
@@ -54,8 +40,26 @@ export const requireAuth = async (
       return;
     }
 
+    // Authoritative profile loading from database
+    const { data: profile, error: profileErr } = await supabaseAdmin
+      .from('profiles')
+      .select('id, role, full_name, email, verification_status')
+      .eq('id', data.user.id)
+      .single();
+
+    if (profileErr || !profile) {
+      res.status(503).json({
+        success: false,
+        error: 'Service Unavailable: Unable to load authoritative profile.',
+        timestamp: new Date().toISOString(),
+      });
+      return;
+    }
+
     const userObj = data.user as any;
-    userObj.role = userObj.user_metadata?.role || 'agent';
+    userObj.role = profile.role || 'client';
+    userObj.profile = profile;
+    userObj.verification_status = profile.verification_status;
     req.user = userObj;
     next();
   } catch (err: any) {
@@ -81,22 +85,18 @@ export const optionalAuth = async (
 
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.split(' ')[1];
-      if (token.startsWith('dev-mock-jwt-token')) {
-        req.user = {
-          id: token.includes('broker') ? 'user-broker-1' : 'user-agent-1',
-          email: token.includes('broker') ? 'broker@pt.com' : 'agent@pt.com',
-          role: token.includes('broker') ? 'broker' : 'agent',
-          user_metadata: {
-            role: token.includes('broker') ? 'broker' : 'agent',
-          },
-        } as any;
-        next();
-        return;
-      }
       const { data } = await supabase.auth.getUser(token);
       if (data?.user) {
+        const { data: profile } = await supabaseAdmin
+          .from('profiles')
+          .select('id, role, full_name, email, verification_status')
+          .eq('id', data.user.id)
+          .single();
+
         const userObj = data.user as any;
-        userObj.role = userObj.user_metadata?.role || 'agent';
+        userObj.role = profile?.role || 'client';
+        userObj.profile = profile;
+        userObj.verification_status = profile?.verification_status;
         req.user = userObj;
       }
     }

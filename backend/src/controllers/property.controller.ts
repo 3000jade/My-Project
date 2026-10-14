@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { PropertyService } from '../services/property.service';
+import { AgentService } from '../services/agent.service';
 import { GoogleDriveService } from '../services/googleDrive.service';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
 import type { ApiResponse, PaginatedResponse } from '../types/api';
@@ -152,6 +153,17 @@ export class PropertyController {
 
       const userId = req.user?.id;
       const userRole = req.user?.role;
+
+      // Agents are strictly prohibited from creating property listings
+      if (userRole === 'agent') {
+        res.status(403).json({
+          success: false,
+          error: 'Forbidden: Agents cannot create property listings (verified or unverified). Creation is restricted to authorized brokers and administrators.',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
       const created = await PropertyService.createProperty(req.body, userId, userRole);
 
       res.status(201).json({
@@ -180,6 +192,17 @@ export class PropertyController {
       const id = String(req.params.id);
       const userId = req.user?.id;
       const userRole = req.user?.role;
+
+      // Agents are strictly prohibited from direct property mutations
+      if (userRole === 'agent') {
+        res.status(403).json({
+          success: false,
+          error: 'Forbidden: Agents cannot directly mutate property listings. Please submit an edit proposal for broker review.',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
       const updated = await PropertyService.updateProperty(id, req.body, userId, userRole);
 
       if (!updated) {
@@ -279,6 +302,266 @@ export class PropertyController {
       res.status(500).json({
         success: false,
         error: err.message || 'Could not delete property.',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
+  /**
+   * POST /api/properties/:id/propose-edit
+   * Proposes modifications to an assigned property listing (Agent only)
+   */
+  public static async proposeEdit(
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse>
+  ): Promise<void> {
+    try {
+      const propertyId = String(req.params.id);
+      const agentId = req.user?.id;
+
+      if (!agentId) {
+        res.status(401).json({
+          success: false,
+          error: 'Unauthorized: User session required.',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const proposal = await PropertyService.proposeEdit(propertyId, agentId, {
+        proposedChanges: req.body.proposedChanges,
+        agentNotes: req.body.agentNotes,
+      });
+
+      res.status(201).json({
+        success: true,
+        data: proposal,
+        message: 'Property edit proposal submitted successfully for broker review.',
+        timestamp: new Date().toISOString(),
+      });
+    } catch (err: any) {
+      const isConflict = err.message?.includes('Conflict');
+      const isForbidden = err.message?.startsWith('Forbidden');
+      const statusCode = isConflict ? 409 : isForbidden ? 403 : 400;
+
+      res.status(statusCode).json({
+        success: false,
+        error: err.message || 'Could not submit property edit proposal.',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
+  /**
+   * GET /api/properties/edit-requests
+   * Lists edit requests with filtering
+   */
+  public static async getEditRequests(
+    req: AuthenticatedRequest,
+    res: Response<PaginatedResponse>
+  ): Promise<void> {
+    try {
+      const { status, propertyId, agentId, page, limit } = req.query;
+      const userRole = req.user?.role;
+      const userId = req.user?.id;
+
+      // If caller is an agent, restrict query strictly to their own requests
+      const effectiveAgentId = userRole === 'agent' ? userId : (agentId as string);
+
+      const result = await PropertyService.getEditRequests({
+        status: status as string,
+        propertyId: propertyId as string,
+        agentId: effectiveAgentId,
+        page: page ? Number(page) : undefined,
+        limit: limit ? Number(limit) : undefined,
+      });
+
+      res.status(200).json({
+        success: true,
+        data: result.requests,
+        page: result.page,
+        limit: result.limit,
+        total: result.total,
+        totalPages: result.totalPages,
+        message: 'Edit requests retrieved successfully.',
+        timestamp: new Date().toISOString(),
+      });
+    } catch (err: any) {
+      res.status(500).json({
+        success: false,
+        error: err.message || 'Failed to retrieve edit requests.',
+        timestamp: new Date().toISOString(),
+      } as any);
+    }
+  }
+
+  /**
+   * GET /api/properties/edit-requests/:requestId
+   * Retrieves single edit request with details
+   */
+  public static async getEditRequestById(
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse>
+  ): Promise<void> {
+    try {
+      const requestId = String(req.params.requestId);
+      const userId = req.user?.id;
+      const userRole = req.user?.role;
+
+      const request = await PropertyService.getEditRequestById(requestId, userId, userRole);
+
+      if (!request) {
+        res.status(404).json({
+          success: false,
+          error: `Edit request with id '${requestId}' not found.`,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      res.status(200).json({
+        success: true,
+        data: request,
+        message: 'Edit request retrieved successfully.',
+        timestamp: new Date().toISOString(),
+      });
+    } catch (err: any) {
+      const statusCode = err.message?.startsWith('Forbidden') ? 403 : 500;
+      res.status(statusCode).json({
+        success: false,
+        error: err.message || 'Error fetching edit request.',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
+  /**
+   * POST /api/properties/edit-requests/:requestId/approve
+   * Approves an edit request and atomically updates live listing (Broker/Admin)
+   */
+  public static async approveEditRequest(
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse>
+  ): Promise<void> {
+    try {
+      const requestId = String(req.params.requestId);
+      const brokerId = req.user?.id;
+
+      if (!brokerId) {
+        res.status(401).json({
+          success: false,
+          error: 'Unauthorized: User session required.',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const result = await PropertyService.approveEditRequest(
+        requestId,
+        brokerId,
+        req.body.reviewNotes
+      );
+
+      res.status(200).json({
+        success: true,
+        data: result,
+        message: 'Property edit request approved and published successfully.',
+        timestamp: new Date().toISOString(),
+      });
+    } catch (err: any) {
+      res.status(400).json({
+        success: false,
+        error: err.message || 'Could not approve edit request.',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
+  /**
+   * POST /api/properties/edit-requests/:requestId/reject
+   * Rejects an edit request with required remarks (Broker/Admin)
+   */
+  public static async rejectEditRequest(
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse>
+  ): Promise<void> {
+    try {
+      const requestId = String(req.params.requestId);
+      const brokerId = req.user?.id;
+      const { rejectionReason } = req.body;
+
+      if (!brokerId) {
+        res.status(401).json({
+          success: false,
+          error: 'Unauthorized: User session required.',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      if (!rejectionReason || !rejectionReason.trim()) {
+        res.status(400).json({
+          success: false,
+          error: 'Rejection reason is required.',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const result = await PropertyService.rejectEditRequest(
+        requestId,
+        brokerId,
+        rejectionReason
+      );
+
+      res.status(200).json({
+        success: true,
+        data: result,
+        message: 'Property edit request rejected successfully.',
+        timestamp: new Date().toISOString(),
+      });
+    } catch (err: any) {
+      res.status(400).json({
+        success: false,
+        error: err.message || 'Could not reject edit request.',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
+  /**
+   * POST /api/properties/edit-requests/:requestId/cancel
+   * Cancels a pending edit request (Agent)
+   */
+  public static async cancelEditRequest(
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse>
+  ): Promise<void> {
+    try {
+      const requestId = String(req.params.requestId);
+      const agentId = req.user?.id;
+
+      if (!agentId) {
+        res.status(401).json({
+          success: false,
+          error: 'Unauthorized: User session required.',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const result = await PropertyService.cancelEditRequest(requestId, agentId);
+
+      res.status(200).json({
+        success: true,
+        data: result,
+        message: 'Property edit request cancelled successfully.',
+        timestamp: new Date().toISOString(),
+      });
+    } catch (err: any) {
+      res.status(400).json({
+        success: false,
+        error: err.message || 'Could not cancel edit request.',
         timestamp: new Date().toISOString(),
       });
     }

@@ -119,10 +119,6 @@ export default function BrokerInquiries() {
       <PageHeader
         title="Firm Inquiry Management & Triage"
         subtitle="Monitor incoming client requests, oversee consultant communication, and streamline deal triage."
-        breadcrumbs={[
-          { label: "Dashboard", to: "/broker/dashboard" },
-          { label: "Inquiries" }
-        ]}
         actions={
           <button
             onClick={loadInquiries}

@@ -20,10 +20,6 @@ export default function BrokerReports() {
       <PageHeader
         title="Broker Operations & Sales Reports"
         subtitle="Executive analytical summaries across historical closed sales, consultant rankings, and client engagement."
-        breadcrumbs={[
-          { label: "Dashboard", to: "/broker/dashboard" },
-          { label: "Reports & Analytics" }
-        ]}
       />
 
       {/* High-level Summary KPI Cards */}

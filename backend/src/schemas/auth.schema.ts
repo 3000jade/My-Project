@@ -35,7 +35,7 @@ export const registerSchema = z.object({
     .max(100, 'Full name cannot exceed 100 characters.')
     .trim()
     .optional(),
-  role: z.enum(['agent', 'broker', 'client']).optional().default('agent'),
+  role: z.literal('client').optional().default('client'),
 });
 
 export type LoginInput = z.infer<typeof loginSchema>;
@@ -47,3 +47,33 @@ export const googleAuthSchema = z.object({
 });
 
 export type GoogleAuthInput = z.infer<typeof googleAuthSchema>;
+
+export const registerAgentSchema = z.object({
+  token: z.string().min(16, 'Valid invitation token is required.'),
+  password: z
+    .string()
+    .min(8, 'Password must be at least 8 characters long.')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter.')
+    .regex(/[0-9]/, 'Password must contain at least one number.')
+    .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character.'),
+  fullName: z.string().min(2, 'Full name is required.').max(100).trim(),
+  phone: z.string().min(7, 'Valid contact number is required.').max(20).trim(),
+  prcLicenseNo: z.string().min(5, 'PRC license number is required.').trim(),
+  prcValidity: z.string().min(4, 'PRC validity date is required.'),
+  dhsudAccreditationNo: z.string().min(5, 'DHSUD accreditation number is required.').trim(),
+  dhsudValidity: z.string().min(4, 'DHSUD validity date is required.'),
+  documents: z
+    .array(
+      z.object({
+        name: z.string(),
+        fileId: z.string().optional(),
+        webViewLink: z.string().optional(),
+        mimeType: z.string().optional(),
+      })
+    )
+    .optional()
+    .default([]),
+});
+
+export type RegisterAgentInput = z.infer<typeof registerAgentSchema>;
+

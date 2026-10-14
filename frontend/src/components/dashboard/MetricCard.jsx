@@ -7,6 +7,7 @@ export default function MetricCard({
   subtitle,
   icon: Icon,
   trend,
+  accent,
   onClick,
   className = ""
 }) {
@@ -24,33 +25,39 @@ export default function MetricCard({
     <div
       onClick={onClick}
       className={cn(
-        "bg-white rounded-xl p-5 border border-[#E5EBEB] transition-all duration-200 shadow-2xs hover:border-[#D8DFDF] hover:shadow-xs",
+        "bg-white rounded-lg p-5 sm:p-6 border border-[#E2E8F0] transition-all duration-200 shadow-xs hover:border-slate-300",
+        accent && "border-teal-300 ring-1 ring-teal-100",
         onClick && "cursor-pointer",
         className
       )}
     >
-      <div className="flex items-start justify-between">
-        <div className="space-y-1">
-          <p className="text-xs font-medium text-slate-500">
+      <div className="flex items-start justify-between gap-3">
+        <div className="space-y-1.5">
+          <p className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-[#64748B]">
             {title}
           </p>
-          <p className="text-2xl font-mono font-bold text-[#0D4446] tracking-tight">
+          <p className="text-3xl sm:text-4xl font-bold text-[#1E293B] tracking-tight">
             {value}
           </p>
         </div>
 
         {Icon && (
-          <div className="w-9 h-9 rounded-lg bg-[#0D4446]/5 text-[#0D4446] flex items-center justify-center shrink-0 border border-[#0D4446]/10">
+          <div className={cn(
+            "w-11 h-11 rounded-lg flex items-center justify-center shrink-0 transition-colors",
+            accent 
+              ? "bg-[#0F766E] text-white" 
+              : "bg-teal-50 text-[#0F766E] border border-teal-100"
+          )}>
             {renderIcon()}
           </div>
         )}
       </div>
 
       {(subtitle || trend) && (
-        <div className="mt-3 pt-3 border-t border-[#E5EBEB] flex items-center justify-between text-[11px] font-mono text-slate-400">
+        <div className="mt-4 pt-3.5 border-t border-[#E2E8F0] flex items-center justify-between text-xs sm:text-sm text-[#64748B]">
           <span>{subtitle}</span>
           {trend && (
-            <span className={cn("font-medium", trend.startsWith('+') ? "text-emerald-800" : "text-slate-500")}>
+            <span className={cn("font-medium", trend.startsWith('+') ? "text-emerald-600 font-semibold" : "text-[#64748B]")}>
               {trend}
             </span>
           )}

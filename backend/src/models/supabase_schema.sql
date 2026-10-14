@@ -25,7 +25,64 @@ ALTER TABLE public.profiles
   ADD COLUMN IF NOT EXISTS full_name TEXT,
   ADD COLUMN IF NOT EXISTS avatar_url TEXT,
   ADD COLUMN IF NOT EXISTS role TEXT NOT NULL DEFAULT 'agent',
-  ADD COLUMN IF NOT EXISTS phone TEXT;
+  ADD COLUMN IF NOT EXISTS phone TEXT,
+  ADD COLUMN IF NOT EXISTS prc_license_no TEXT,
+  ADD COLUMN IF NOT EXISTS prc_validity DATE,
+  ADD COLUMN IF NOT EXISTS dhsud_accreditation_no TEXT,
+  ADD COLUMN IF NOT EXISTS dhsud_validity DATE,
+  ADD COLUMN IF NOT EXISTS verification_status VARCHAR(20) NOT NULL DEFAULT 'VERIFIED',
+  ADD COLUMN IF NOT EXISTS supporting_documents JSONB DEFAULT '[]'::jsonb,
+  ADD COLUMN IF NOT EXISTS rejection_remarks TEXT,
+  ADD COLUMN IF NOT EXISTS experience_years INTEGER DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS bio TEXT,
+  ADD COLUMN IF NOT EXISTS suspension_reason TEXT,
+  ADD COLUMN IF NOT EXISTS suspension_notes TEXT,
+  ADD COLUMN IF NOT EXISTS suspended_by UUID REFERENCES auth.users(id),
+  ADD COLUMN IF NOT EXISTS suspended_at TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS verified_by UUID REFERENCES auth.users(id),
+  ADD COLUMN IF NOT EXISTS verified_at TIMESTAMPTZ;
+
+-- ==============================================================================
+-- 1B. AGENT INVITATIONS TABLE (Closed Single-Use Invitation Pipeline)
+-- ==============================================================================
+CREATE TABLE IF NOT EXISTS public.agent_invitations (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  email TEXT NOT NULL,
+  token VARCHAR(64) UNIQUE NOT NULL DEFAULT encode(gen_random_bytes(32), 'hex'),
+  status VARCHAR(20) NOT NULL DEFAULT 'pending' 
+    CHECK (status IN ('pending', 'used', 'revoked', 'expired')),
+  expires_at TIMESTAMPTZ NOT NULL DEFAULT (now() + interval '72 hours'),
+  invited_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  full_name TEXT,
+  phone TEXT,
+  role TEXT DEFAULT 'agent',
+  broker_agency TEXT,
+  message TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
+);
+
+CREATE INDEX IF NOT EXISTS idx_agent_invitations_token ON public.agent_invitations(token);
+CREATE INDEX IF NOT EXISTS idx_agent_invitations_email ON public.agent_invitations(email);
+
+ALTER TABLE public.agent_invitations ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Admins and brokers can manage invitations" ON public.agent_invitations;
+CREATE POLICY "Admins and brokers can manage invitations"
+  ON public.agent_invitations FOR ALL
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles 
+      WHERE id = auth.uid() AND role IN ('admin', 'broker')
+    )
+  );
+
+DROP POLICY IF EXISTS "Public token validation for active invitations" ON public.agent_invitations;
+CREATE POLICY "Public token validation for active invitations"
+  ON public.agent_invitations FOR SELECT
+  TO anon
+  USING (status = 'pending' AND expires_at > now());
 
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
@@ -77,95 +134,113 @@ CREATE TRIGGER on_auth_user_created
 
 
 -- ==============================================================================
--- 2. PROPERTIES TABLE (RESO Data Dictionary 2.0 Enhanced)
+-- 1C. PROPERTY TYPES REFERENCE TABLE
 -- ==============================================================================
-CREATE TABLE IF NOT EXISTS public.properties (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  listing_key VARCHAR(64) UNIQUE NOT NULL DEFAULT ('KEY-' || gen_random_uuid()),
-  listing_id VARCHAR(32) UNIQUE NOT NULL DEFAULT ('MLS-' || upper(substr(md5(gen_random_uuid()::text), 1, 8))),
-  title TEXT NOT NULL,
-  tagline TEXT,
-  standard_status VARCHAR(32) NOT NULL DEFAULT 'Draft' 
-    CHECK (standard_status IN ('Draft', 'Pending Approval', 'Active', 'Active Under Contract', 'Pending', 'Closed', 'Canceled', 'Expired')),
-  property_type TEXT NOT NULL,
-  transaction_type VARCHAR(32) DEFAULT 'For Sale' CHECK (transaction_type IN ('For Sale', 'For Rent')),
-  property_condition VARCHAR(32),
-  property_sub_type VARCHAR(64) DEFAULT 'Residential Condominium',
-  price NUMERIC(15, 2) NOT NULL,
-  formatted_price TEXT,
-  list_price_currency VARCHAR(3) DEFAULT 'PHP' CHECK (list_price_currency IN ('PHP', 'USD', 'EUR', 'GBP', 'SGD', 'JPY')),
-  original_list_price NUMERIC(15, 2),
-  association_fee NUMERIC(12, 2) DEFAULT 0.00,
-  association_fee_frequency VARCHAR(20) DEFAULT 'Monthly',
-  tax_annual_amount NUMERIC(12, 2),
-  address TEXT NOT NULL,
-  unparsed_address TEXT,
-  subdivision_name VARCHAR(128),
-  city TEXT NOT NULL,
-  state TEXT,
-  state_or_province VARCHAR(64),
-  postal_code VARCHAR(20) DEFAULT '1000',
-  latitude DOUBLE PRECISION,
-  longitude DOUBLE PRECISION,
-  beds INTEGER NOT NULL DEFAULT 1,
-  baths INTEGER NOT NULL DEFAULT 1,
-  bedrooms_total SMALLINT DEFAULT 1,
-  bathrooms_total_integer SMALLINT DEFAULT 1,
-  bathrooms_full SMALLINT DEFAULT 1,
-  bathrooms_half SMALLINT DEFAULT 0,
-  stories_total SMALLINT DEFAULT 1,
-  sqft NUMERIC(10, 2) NOT NULL,
-  living_area NUMERIC(10, 2),
-  living_area_units VARCHAR(20) DEFAULT 'Square Meters',
-  lot_size_area NUMERIC(12, 2),
-  lot_size_units VARCHAR(20) DEFAULT 'Square Meters',
-  year_built INTEGER,
-  architectural_style TEXT,
-  features TEXT[] DEFAULT '{}',
-  interior_features TEXT[] DEFAULT '{}',
-  exterior_features TEXT[] DEFAULT '{}',
-  parking_total SMALLINT DEFAULT 0,
-  parking_covered SMALLINT DEFAULT 0,
-  parking_open SMALLINT DEFAULT 0,
-  images TEXT[] DEFAULT '{}',
-  public_remarks TEXT,
-  custom_reso_attributes JSONB DEFAULT '{}'::jsonb,
-  status TEXT NOT NULL DEFAULT 'available' CHECK (status IN ('available', 'pending', 'sold')),
-  is_featured BOOLEAN DEFAULT FALSE,
-  list_agent_key UUID REFERENCES public.profiles(id),
-  created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
+CREATE TABLE IF NOT EXISTS public.property_types (
+  id BIGSERIAL PRIMARY KEY,
+  name TEXT NOT NULL UNIQUE,
+  description TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
 );
 
--- Ensure all RESO 2.0 columns exist non-destructively if the table already existed
-ALTER TABLE public.properties
-  ADD COLUMN IF NOT EXISTS listing_key VARCHAR(64) UNIQUE,
-  ADD COLUMN IF NOT EXISTS listing_id VARCHAR(32) UNIQUE,
-  ADD COLUMN IF NOT EXISTS standard_status VARCHAR(32) NOT NULL DEFAULT 'Draft',
-  ADD COLUMN IF NOT EXISTS is_featured BOOLEAN DEFAULT FALSE,
-  ADD COLUMN IF NOT EXISTS transaction_type VARCHAR(32) DEFAULT 'For Sale',
-  ADD COLUMN IF NOT EXISTS property_condition VARCHAR(32),
-  ADD COLUMN IF NOT EXISTS property_sub_type VARCHAR(64) DEFAULT 'Residential Condominium',
-  ADD COLUMN IF NOT EXISTS list_price_currency VARCHAR(3) DEFAULT 'PHP',
-  ADD COLUMN IF NOT EXISTS original_list_price NUMERIC(15, 2),
-  ADD COLUMN IF NOT EXISTS association_fee NUMERIC(12, 2) DEFAULT 0.00,
-  ADD COLUMN IF NOT EXISTS association_fee_frequency VARCHAR(20) DEFAULT 'Monthly',
-  ADD COLUMN IF NOT EXISTS tax_annual_amount NUMERIC(12, 2),
-  ADD COLUMN IF NOT EXISTS living_area NUMERIC(10, 2),
-  ADD COLUMN IF NOT EXISTS living_area_units VARCHAR(20) DEFAULT 'Square Meters',
-  ADD COLUMN IF NOT EXISTS lot_size_area NUMERIC(12, 2),
-  ADD COLUMN IF NOT EXISTS lot_size_units VARCHAR(20) DEFAULT 'Square Meters',
-  ADD COLUMN IF NOT EXISTS bedrooms_total SMALLINT DEFAULT 1,
-  ADD COLUMN IF NOT EXISTS bathrooms_total_integer SMALLINT DEFAULT 1,
-  ADD COLUMN IF NOT EXISTS bathrooms_full SMALLINT DEFAULT 1,
-  ADD COLUMN IF NOT EXISTS bathrooms_half SMALLINT DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS stories_total SMALLINT DEFAULT 1,
-  ADD COLUMN IF NOT EXISTS interior_features TEXT[] DEFAULT '{}',
-  ADD COLUMN IF NOT EXISTS exterior_features TEXT[] DEFAULT '{}',
-  ADD COLUMN IF NOT EXISTS parking_total SMALLINT DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS parking_covered SMALLINT DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS parking_open SMALLINT DEFAULT 0,
+-- Seed default property types if empty
+INSERT INTO public.property_types (id, name, description) VALUES 
+  (1, 'Residential Condominium', 'High-rise & mid-rise condominium residences'),
+  (2, 'Single Family Residence', 'Detached residential home & lot'),
+  (3, 'Townhouse', 'Multi-level attached urban residence'),
+  (4, 'Villa / Estate', 'Sprawling luxury estate / private villa'),
+  (5, 'Commercial', 'Commercial & retail spaces')
+ON CONFLICT (id) DO NOTHING;
+
+-- ==============================================================================
+-- 2. PROPERTIES TABLE (Human Shelter Realty Schema)
+-- ==============================================================================
+CREATE TABLE IF NOT EXISTS public.properties (
+  id UUID NOT NULL DEFAULT gen_random_uuid(),
+  title TEXT NOT NULL,
+  tagline TEXT NULL,
+  price NUMERIC(15, 2) NOT NULL,
+  formatted_price TEXT NULL,
+  address TEXT NOT NULL,
+  city TEXT NOT NULL,
+  state TEXT NULL,
+  latitude DOUBLE PRECISION NULL,
+  longitude DOUBLE PRECISION NULL,
+  beds INTEGER NOT NULL DEFAULT 1,
+  baths INTEGER NOT NULL DEFAULT 1,
+  sqft NUMERIC(10, 2) NOT NULL,
+  year_built INTEGER NULL,
+  architectural_style TEXT NULL,
+  status TEXT NOT NULL DEFAULT 'available'::TEXT,
+  created_by UUID NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::TEXT, now()),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::TEXT, now()),
+  listing_key VARCHAR(64) NULL,
+  listing_id VARCHAR(32) NULL,
+  standard_status VARCHAR(32) NOT NULL DEFAULT 'Draft'::VARCHAR,
+  property_sub_type VARCHAR(64) NULL DEFAULT 'Residential Condominium'::VARCHAR,
+  association_fee_frequency VARCHAR(20) NULL DEFAULT 'Monthly'::VARCHAR,
+  living_area NUMERIC(10, 2) NULL,
+  living_area_units VARCHAR(20) NULL DEFAULT 'Square Meters'::VARCHAR,
+  lot_size_area NUMERIC(12, 2) NULL,
+  lot_size_units VARCHAR(20) NULL DEFAULT 'Square Meters'::VARCHAR,
+  bedrooms_total SMALLINT NULL DEFAULT 1,
+  bathrooms_total_integer SMALLINT NULL DEFAULT 1,
+  bathrooms_full SMALLINT NULL DEFAULT 1,
+  bathrooms_half SMALLINT NULL DEFAULT 0,
+  stories_total SMALLINT NULL DEFAULT 1,
+  parking_total SMALLINT NULL DEFAULT 0,
+  unparsed_address TEXT NULL,
+  subdivision_name VARCHAR(128) NULL,
+  state_or_province VARCHAR(64) NULL,
+  postal_code VARCHAR(20) NULL DEFAULT '1000'::VARCHAR,
+  public_remarks TEXT NULL,
+  custom_reso_attributes JSONB NULL DEFAULT '{}'::JSONB,
+  list_agent_key UUID NULL,
+  is_featured BOOLEAN NULL DEFAULT false,
+  transaction_type VARCHAR(32) NULL DEFAULT 'For Sale'::VARCHAR,
+  property_condition VARCHAR(32) NULL,
+  parking_covered SMALLINT NULL DEFAULT 0,
+  parking_open SMALLINT NULL DEFAULT 0,
+  property_type_id BIGINT NOT NULL DEFAULT 1,
+  CONSTRAINT properties_pkey PRIMARY KEY (id),
+  CONSTRAINT properties_listing_id_key UNIQUE (listing_id),
+  CONSTRAINT properties_listing_key_key UNIQUE (listing_key),
+  CONSTRAINT properties_created_by_fkey FOREIGN KEY (created_by) REFERENCES auth.users (id) ON DELETE SET NULL,
+  CONSTRAINT properties_list_agent_key_fkey FOREIGN KEY (list_agent_key) REFERENCES public.profiles (id),
+  CONSTRAINT properties_property_type_id_fkey FOREIGN KEY (property_type_id) REFERENCES public.property_types (id),
+  CONSTRAINT properties_status_check CHECK (
+    status = ANY (ARRAY['available'::TEXT, 'pending'::TEXT, 'sold'::TEXT])
+  )
+);
+
+-- Target Indexes
+CREATE INDEX IF NOT EXISTS idx_properties_city ON public.properties USING btree (city);
+CREATE INDEX IF NOT EXISTS idx_properties_price ON public.properties USING btree (price);
+CREATE INDEX IF NOT EXISTS idx_properties_status ON public.properties USING btree (status);
+CREATE INDEX IF NOT EXISTS idx_properties_fts ON public.properties USING gin (
+  to_tsvector(
+    'english'::regconfig,
+    (
+      (
+        (
+          (
+            (
+              (
+                (
+                  (COALESCE(title, ''::TEXT) || ' '::TEXT) || COALESCE(unparsed_address, ''::TEXT)
+                ) || ' '::TEXT
+              ) || COALESCE(city, ''::TEXT)
+            ) || ' '::TEXT
+          ) || (COALESCE(subdivision_name, ''::VARCHAR))::TEXT
+        ) || ' '::TEXT
+      ) || COALESCE(public_remarks, ''::TEXT)
+    )
+  )
+);
+CREATE INDEX IF NOT EXISTS idx_properties_custom_reso ON public.properties USING gin (custom_reso_attributes);
+CREATE INDEX IF NOT EXISTS idx_properties_property_type ON public.properties USING btree (property_type_id);
+CREATE INDEX IF NOT EXISTS idx_properties_client_search ON public.properties USING btree (standard_status, city, price, property_type_id);
   ADD COLUMN IF NOT EXISTS unparsed_address TEXT,
   ADD COLUMN IF NOT EXISTS subdivision_name VARCHAR(128),
   ADD COLUMN IF NOT EXISTS state_or_province VARCHAR(64),

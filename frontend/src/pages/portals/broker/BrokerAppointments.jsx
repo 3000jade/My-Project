@@ -106,10 +106,6 @@ export default function BrokerAppointments() {
       <PageHeader
         title="Firm-Wide Appointment Monitoring"
         subtitle="Supervise client ocular inspections, online video presentations, and contract execution schedules."
-        breadcrumbs={[
-          { label: "Dashboard", to: "/broker/dashboard" },
-          { label: "Appointments" }
-        ]}
         actions={
           <button
             onClick={loadAppointments}

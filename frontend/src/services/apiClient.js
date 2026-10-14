@@ -20,10 +20,7 @@ export const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
   (config) => {
     try {
-      let token = localStorage.getItem('cp_auth_token');
-      if (!token && (import.meta.env?.DEV || process.env.NODE_ENV === 'development')) {
-        token = 'dev-mock-jwt-token-broker';
-      }
+      const token = localStorage.getItem('cp_auth_token');
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }

@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { AuthService } from '../services/auth.service';
 import { GoogleAuthService } from '../services/googleAuth.service';
+import { AgentRegistrationService } from '../services/agentRegistration.service';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
 import type { ApiResponse } from '../types/api';
 
@@ -99,6 +100,29 @@ export class AuthController {
       res.status(400).json({
         success: false,
         error: err.message || 'Registration failed.',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
+  /**
+   * Handle invited agent registration
+   * POST /api/auth/register-agent
+   */
+  public static async registerAgent(req: Request, res: Response<ApiResponse>): Promise<void> {
+    try {
+      const result = await AgentRegistrationService.registerInvitedAgent(req.body);
+
+      res.status(201).json({
+        success: true,
+        data: result,
+        message: result.message,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (err: any) {
+      res.status(400).json({
+        success: false,
+        error: err.message || 'Agent registration failed.',
         timestamp: new Date().toISOString(),
       });
     }

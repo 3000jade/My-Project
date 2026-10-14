@@ -8,6 +8,8 @@ export interface DriveUploadResult {
   fileName: string;
   webViewLink: string;
   webContentLink: string;
+  directImageUrl?: string;
+  thumbnailUrl?: string;
   mimeType: string;
   size: number;
 }

@@ -9,6 +9,7 @@ import {
   IconDimensions,
   IconArrowRight 
 } from '@tabler/icons-react';
+import { resolveDriveImageUrl } from '../../../services/driveService';
 
 export default function PropertyCard({ property, variant = 'vertical', variants }) {
   const navigate = useNavigate();
@@ -69,9 +70,12 @@ export default function PropertyCard({ property, variant = 'vertical', variants 
       <div>
         <div className="relative h-64 sm:h-72 overflow-hidden bg-stone-900">
           <img
-            src={property.image}
+            src={resolveDriveImageUrl(property.image || property.mainImage || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1200&auto=format&fit=crop')}
             alt={propertyTitle}
             loading="lazy"
+            onError={(e) => {
+              e.currentTarget.src = 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1200&auto=format&fit=crop';
+            }}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent pointer-events-none" />

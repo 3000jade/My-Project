@@ -1,7 +1,14 @@
 import { useEffect, useState, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { IconChevronDown, IconUser, IconLogout, IconLayoutDashboard } from '@tabler/icons-react';
+import { 
+  IconChevronDown, 
+  IconUser, 
+  IconLogout, 
+  IconLayoutDashboard,
+  IconBookmark,
+  IconMail
+} from '@tabler/icons-react';
 import { useAuth } from '../../context/AuthContext';
 
 export default function Header() {
@@ -86,7 +93,8 @@ export default function Header() {
     const role = (user.role || '').toLowerCase();
     if (role === 'broker' || role === 'admin') return '/broker/dashboard';
     if (role === 'agent') return '/agent/dashboard';
-    return '/';
+    if (role === 'client') return '/client/dashboard';
+    return '/client/dashboard';
   };
 
   const getLinkColor = (path) => {
@@ -132,12 +140,6 @@ export default function Header() {
             </Link>
             <Link className={`text-[11px] uppercase tracking-widest font-sans nav-link transition-all duration-500 ${getLinkColor('/properties')}`} to="/properties">
               Properties
-            </Link>
-            <Link className={`text-[11px] uppercase tracking-widest font-sans nav-link transition-all duration-500 ${getLinkColor('/how-we-work')}`} to="/how-we-work">
-              How We Work
-            </Link>
-            <Link className={`text-[11px] uppercase tracking-widest font-sans nav-link transition-all duration-500 ${getLinkColor('/our-partner')}`} to="/our-partner">
-              Partner
             </Link>
             <Link className={`text-[11px] uppercase tracking-widest font-sans nav-link transition-all duration-500 ${getLinkColor('/contact')}`} to="/contact">
               Contact
@@ -190,6 +192,37 @@ export default function Header() {
                       >
                         <IconLayoutDashboard size={16} className="text-[#0D4446]" />
                         <span>Dashboard</span>
+                      </Link>
+
+                      {(user?.role || '').toLowerCase() === 'client' && (
+                        <>
+                          <Link
+                            to="/client/saved-properties"
+                            onClick={() => setUserMenuOpen(false)}
+                            className="flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-[#141717] hover:bg-[#F4F5F4] transition-colors"
+                          >
+                            <IconBookmark size={16} className="text-[#0D4446]" />
+                            <span>Saved Properties</span>
+                          </Link>
+
+                          <Link
+                            to="/client/inquiries"
+                            onClick={() => setUserMenuOpen(false)}
+                            className="flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-[#141717] hover:bg-[#F4F5F4] transition-colors"
+                          >
+                            <IconMail size={16} className="text-[#0D4446]" />
+                            <span>My Inquiries</span>
+                          </Link>
+                        </>
+                      )}
+
+                      <Link
+                        to={(user?.role || '').toLowerCase() === 'client' ? '/client/profile' : `${getDashboardPath().replace('/dashboard', '')}/profile`}
+                        onClick={() => setUserMenuOpen(false)}
+                        className="flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-[#141717] hover:bg-[#F4F5F4] transition-colors"
+                      >
+                        <IconUser size={16} className="text-[#0D4446]" />
+                        <span>My Profile</span>
                       </Link>
 
                       <button

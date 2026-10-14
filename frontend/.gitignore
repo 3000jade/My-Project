@@ -26,6 +26,8 @@ dist-ssr
 
 # Coverage / Testing
 coverage/
+playwright-report/
+test-results/
 
 # Editor & OS directories and files
 .vscode/*

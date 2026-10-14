@@ -5,6 +5,7 @@ import propertyRoutes from './property.routes';
 import valuationRoutes from './valuation.routes';
 import inquiryRoutes from './inquiry.routes';
 import agentRoutes from './agent.routes';
+import invitationRoutes from './invitation.routes';
 import appointmentRoutes from './appointment.routes';
 import chatRoutes from './chat.routes';
 import profileRoutes from './profile.routes';
@@ -15,6 +16,7 @@ import driveRoutes from './drive.routes';
 import mailRoutes from './mail.routes';
 import whatsappRoutes from './whatsapp.routes';
 import mapsRoutes from './maps.routes';
+import agentCredentialsRoutes from './agentCredentials.routes';
 
 const router = Router();
 
@@ -25,6 +27,8 @@ router.use('/properties', propertyRoutes);
 router.use('/valuations', valuationRoutes);
 router.use('/inquiries', inquiryRoutes);
 router.use('/agents', agentRoutes);
+router.use('/invitations', invitationRoutes);
+router.use('/agent-credentials', agentCredentialsRoutes);
 router.use('/appointments', appointmentRoutes);
 router.use('/chat', chatRoutes);
 router.use('/profile', profileRoutes);

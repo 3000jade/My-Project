@@ -38,7 +38,7 @@ export default function PartnersSection() {
           </div>
           
           <Link
-            to="/our-partner"
+            to="/contact"
             className="self-start lg:self-auto h-[48px] px-6 rounded-full border border-[#0D4446]/30 text-[#0D4446] hover:bg-[#0D4446]/5 text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer group shrink-0"
           >
             <span>Learn About Partnerships</span>

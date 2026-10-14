@@ -24,6 +24,14 @@ router.post('/upload', requireAuth, upload.single('file'), DriveController.uploa
 router.get('/listing/:propertyId', DriveController.listFiles);
 
 /**
+ * GET /api/drive/media/:fileId
+ * GET /api/drive/files/:fileId/stream
+ * Public streaming proxy for Google Drive photos and assets
+ */
+router.get('/media/:fileId', DriveController.streamFile);
+router.get('/files/:fileId/stream', DriveController.streamFile);
+
+/**
  * DELETE /api/drive/files/:fileId
  * Delete file from Google Drive
  */

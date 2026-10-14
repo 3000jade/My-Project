@@ -1,22 +1,51 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  IconEye, 
-  IconEyeOff, 
+import {
+  IconEye,
+  IconEyeOff,
   IconAlertCircle,
-  IconCheck, 
+  IconCheck,
   IconRefresh
 } from '@tabler/icons-react';
+import { GoogleLogin, useGoogleOAuth } from '@react-oauth/google';
 import { useAuth } from '../../context/AuthContext';
+
+function GoogleOAuthSafe({ onSuccess, onError, fallback }) {
+  let hasProvider = false;
+  try {
+    const context = useGoogleOAuth();
+    hasProvider = Boolean(context?.clientId);
+  } catch {
+    hasProvider = false;
+  }
+
+  if (!hasProvider) return fallback;
+
+  return (
+    <div className="w-full flex justify-center overflow-hidden rounded-xl border border-[#e1e5df] hover:border-[#c2c9bf] transition-colors">
+      <GoogleLogin
+        onSuccess={onSuccess}
+        onError={onError}
+        useOneTap={false}
+        theme="outline"
+        size="large"
+        shape="rectangular"
+        width="100%"
+        text="signup_with"
+      />
+    </div>
+  );
+}
 
 export default function RegisterPage() {
   const navigate = useNavigate();
-  const { register } = useAuth();
+  const { register, googleLogin } = useAuth();
 
   // State
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -24,6 +53,7 @@ export default function RegisterPage() {
   const [agreeTerms, setAgreeTerms] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [authError, setAuthError] = useState('');
+  const [role, setRole] = useState('agent');
 
   // Password Rules & Validation
   const passwordRules = [
@@ -61,8 +91,10 @@ export default function RegisterPage() {
     setIsSubmitting(true);
 
     try {
-      await register(email, password, { fullName, role: 'agent' });
-      navigate('/agent/dashboard');
+      const payload = { fullName, role };
+      if (phone) payload.phone = phone;
+      await register(email, password, payload);
+      navigate(`/${role}/dashboard`);
     } catch (err) {
       setAuthError(err.message || 'Unable to complete registration. Please try again.');
     } finally {
@@ -70,18 +102,41 @@ export default function RegisterPage() {
     }
   };
 
+  const handleGoogleSuccess = async (credentialResponse) => {
+    if (!credentialResponse?.credential) {
+      setAuthError('Google registration did not provide valid credentials.');
+      return;
+    }
+
+    setAuthError('');
+    setIsSubmitting(true);
+    try {
+      const authData = await googleLogin(credentialResponse.credential, role);
+      const targetRole = authData?.user?.role || role;
+      navigate(`/${targetRole}/dashboard`);
+    } catch (err) {
+      setAuthError(err.message || 'Google authentication failed. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    setAuthError('Google authentication was cancelled or failed.');
+  };
+
   return (
     <>
       <main className="w-full min-h-screen lg:h-screen flex flex-col lg:flex-row m-0 p-0 overflow-x-hidden font-sans selection:bg-[#c4683c] selection:text-white bg-[#ffffff]">
-        
+
         {/* =========================================================================
             LEFT: ARCHITECTURAL SHOWCASE (100% full bleed on wide screens, 50% width)
             ========================================================================= */}
         <section className="w-full lg:w-1/2 h-[340px] sm:h-[420px] lg:h-full relative shrink-0 bg-[#183d3b] text-white border-0 overflow-hidden group">
           {/* Full bleed photo extending to the far left monitor edge */}
-          <img 
-            src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1800&q=88" 
-            alt="Scandinavian Modernist Architecture" 
+          <img
+            src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1800&q=88"
+            alt="Scandinavian Modernist Architecture"
             className="absolute inset-0 w-full h-full object-cover object-center filter brightness-[0.76] contrast-[1.06] group-hover:scale-105 transition-transform duration-1000 ease-out"
           />
 
@@ -90,7 +145,7 @@ export default function RegisterPage() {
 
           {/* Direct positioning in left lower corner without limiting container */}
           <div className="relative z-10 w-full h-full p-6 sm:p-10 lg:p-14 xl:p-16 flex flex-col justify-end border-0">
-            
+
             {/* Bottom: Editorial Slogan & 3-Pill Carousel Indicator in Lower Left Corner */}
             <div className="max-w-[480px] space-y-4">
               <div className="space-y-2">
@@ -115,11 +170,11 @@ export default function RegisterPage() {
             RIGHT: ELEVATED DAYLIGHT AUTH CONSOLE (100% full bleed to right monitor edge)
             ========================================================================= */}
         <section className="w-full lg:w-1/2 min-h-full lg:h-full bg-[#ffffff] relative flex flex-col justify-center items-center px-6 py-12 sm:px-12 lg:px-16 xl:px-24 overflow-y-auto border-0">
-          
+
           {/* Back to Home Button in the Upper Left Corner of White Background (Out from the container) */}
           <div className="absolute top-6 left-6 sm:top-8 sm:left-8 z-20">
-            <button 
-              type="button" 
+            <button
+              type="button"
               onClick={() => navigate('/')}
               className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[#f4f5f2] hover:bg-[#e1e5df] border border-[#e1e5df] hover:border-[#c2c9bf] rounded-full text-xs font-medium text-[#183d3b] transition-all hover:-translate-x-0.5 shadow-sm cursor-pointer"
             >
@@ -138,8 +193,8 @@ export default function RegisterPage() {
               </h2>
               <p className="font-sans text-xs sm:text-sm text-[#5f6b6f]">
                 Already have an account?{' '}
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={() => navigate('/login')}
                   className="text-[#183d3b] hover:text-[#c4683c] font-semibold underline underline-offset-4 ml-1 cursor-pointer transition-colors"
                 >
@@ -151,7 +206,7 @@ export default function RegisterPage() {
             {/* Inline Error Banner */}
             <AnimatePresence>
               {authError && (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, y: -6 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -6 }}
@@ -165,7 +220,7 @@ export default function RegisterPage() {
 
             {/* Registration Form */}
             <form onSubmit={handleRegister} className="space-y-3.5 sm:space-y-4">
-              
+
               {/* Full Name with Header Label (Uniform h-[54px]) */}
               <div className="space-y-1.5 text-left">
                 <label htmlFor="reg-fullname" className="block font-sans text-xs font-semibold text-[#1c2224] tracking-wide">
@@ -177,8 +232,8 @@ export default function RegisterPage() {
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     className="w-full h-[54px] px-4 bg-transparent text-xs sm:text-sm text-[#1c2224] placeholder-[#7a868a] outline-none font-sans"
-                    placeholder="Enter your full name" 
-                    type="text" 
+                    placeholder="Enter your full name"
+                    type="text"
                     autoComplete="name"
                     required
                   />
@@ -196,10 +251,28 @@ export default function RegisterPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full h-[54px] px-4 bg-transparent text-xs sm:text-sm text-[#1c2224] placeholder-[#7a868a] outline-none font-sans"
-                    placeholder="name@domain.com" 
-                    type="email" 
+                    placeholder="name@domain.com"
+                    type="email"
                     autoComplete="email"
                     required
+                  />
+                </div>
+              </div>
+
+              {/* Contact Number with Header Label (Uniform h-[54px]) */}
+              <div className="space-y-1.5 text-left">
+                <label htmlFor="reg-phone" className="block font-sans text-xs font-semibold text-[#1c2224] tracking-wide">
+                  Contact Number
+                </label>
+                <div className="relative bg-[#f4f5f2] border border-[#e1e5df] focus-within:border-[#183d3b] focus-within:ring-2 focus-within:ring-[#183d3b]/10 focus-within:bg-white rounded-xl transition-all overflow-hidden">
+                  <input
+                    id="reg-phone"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="w-full h-[54px] px-4 bg-transparent text-xs sm:text-sm text-[#1c2224] placeholder-[#7a868a] outline-none font-sans"
+                    placeholder="+63 917 000 0000"
+                    type="tel"
+                    autoComplete="tel"
                   />
                 </div>
               </div>
@@ -215,8 +288,8 @@ export default function RegisterPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full h-[54px] px-4 bg-transparent text-xs sm:text-sm text-[#1c2224] placeholder-[#7a868a] outline-none font-sans"
-                    placeholder="Create secure passphrase" 
-                    type={showPassword ? "text" : "password"} 
+                    placeholder="Create secure passphrase"
+                    type={showPassword ? "text" : "password"}
                     autoComplete="new-password"
                     required
                   />
@@ -242,8 +315,8 @@ export default function RegisterPage() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     className="w-full h-[54px] px-4 bg-transparent text-xs sm:text-sm text-[#1c2224] placeholder-[#7a868a] outline-none font-sans"
-                    placeholder="Re-enter passphrase" 
-                    type={showConfirmPassword ? "text" : "password"} 
+                    placeholder="Re-enter passphrase"
+                    type={showConfirmPassword ? "text" : "password"}
                     autoComplete="new-password"
                     required
                   />
@@ -271,11 +344,10 @@ export default function RegisterPage() {
                 <div className="p-3 bg-[#f4f5f2] border border-[#e1e5df] rounded-xl space-y-2.5">
                   <div className="flex items-center gap-1.5">
                     {[1, 2, 3, 4].map((step) => (
-                      <div 
+                      <div
                         key={step}
-                        className={`h-1 flex-1 rounded-full transition-colors duration-300 ${
-                          metRulesCount >= step ? strengthColors[metRulesCount] : 'bg-[#e1e5df]'
-                        }`}
+                        className={`h-1 flex-1 rounded-full transition-colors duration-300 ${metRulesCount >= step ? strengthColors[metRulesCount] : 'bg-[#e1e5df]'
+                          }`}
                       />
                     ))}
                     <span className="font-mono text-[9px] text-[#7a868a] uppercase ml-1">
@@ -285,11 +357,10 @@ export default function RegisterPage() {
 
                   <div className="grid grid-cols-2 gap-1.5 text-[11px] font-sans">
                     {passwordRules.map((rule) => (
-                      <div 
+                      <div
                         key={rule.id}
-                        className={`flex items-center gap-1.5 transition-colors ${
-                          rule.met ? 'text-[#2d6a4f] font-medium' : 'text-[#7a868a]'
-                        }`}
+                        className={`flex items-center gap-1.5 transition-colors ${rule.met ? 'text-[#2d6a4f] font-medium' : 'text-[#7a868a]'
+                          }`}
                       >
                         {rule.met ? (
                           <IconCheck className="w-3.5 h-3.5 text-[#2d6a4f] shrink-0" />
@@ -306,12 +377,12 @@ export default function RegisterPage() {
               {/* Agreement Checkbox */}
               <div className="pt-0.5">
                 <label className="flex items-start gap-2.5 cursor-pointer select-none">
-                  <input 
-                    type="checkbox" 
+                  <input
+                    type="checkbox"
                     aria-label="I agree to the Terms of Service and Privacy Policy"
                     checked={agreeTerms}
                     onChange={(e) => setAgreeTerms(e.target.checked)}
-                    className="w-4 h-4 mt-0.5 rounded text-[#183d3b] accent-[#183d3b] cursor-pointer shrink-0" 
+                    className="w-4 h-4 mt-0.5 rounded text-[#183d3b] accent-[#183d3b] cursor-pointer shrink-0"
                   />
                   <span className="font-sans text-xs sm:text-[13px] text-[#5f6b6f] leading-snug">
                     I agree to the <span className="text-[#183d3b] font-semibold hover:underline">Terms of Service</span> and <span className="text-[#183d3b] font-semibold hover:underline">Privacy Policy</span>.
@@ -321,9 +392,9 @@ export default function RegisterPage() {
 
               {/* Submit Button (Uniform h-[54px]) */}
               <div className="pt-1.5">
-                <motion.button 
+                <motion.button
                   whileTap={{ scale: 0.99 }}
-                  type="submit" 
+                  type="submit"
                   disabled={isSubmitting || !passwordsMatch}
                   className="w-full h-[54px] bg-[#183d3b] hover:bg-[#122e2c] text-white font-sans text-xs sm:text-sm font-semibold tracking-wider uppercase rounded-xl transition-all duration-300 flex items-center justify-center gap-2.5 shadow-[0_10px_25px_-5px_rgba(24,61,59,0.35)] hover:shadow-[0_14px_28px_-5px_rgba(24,61,59,0.45)] cursor-pointer disabled:opacity-50"
                 >
@@ -349,22 +420,27 @@ export default function RegisterPage() {
               <div className="h-[1px] bg-[#e1e5df] flex-1" />
             </div>
 
-            {/* Social SSO Button (Full width Google Button, Uniform h-[54px]) */}
+            {/* Social SSO Button (Google OAuth One-Tap & Button) */}
             <div className="w-full pt-0.5">
-              <button 
-                type="button" 
-                onClick={() => handleAction('OAUTH_GOOGLE', {}, '/api/auth/google')}
-                className="w-full h-[54px] px-4 rounded-xl border border-[#e1e5df] bg-[#ffffff] hover:bg-[#f4f5f2] font-sans text-xs sm:text-sm font-semibold text-[#1c2224] flex items-center justify-center gap-2.5 transition-all cursor-pointer shadow-sm hover:border-[#c2c9bf]"
-              >
-                {/* Google G Logo */}
-                <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
-                  <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.65v3.03h3.88c2.27-2.09 3.665-5.17 3.665-9.12z"/>
-                  <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.03c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.24v3.13C3.26 21.43 7.31 24 12 24z"/>
-                  <path fill="#FBBC05" d="M5.28 14.29c-.25-.72-.38-1.49-.38-2.29s.13-1.57.38-2.29V6.58H1.24C.45 8.15 0 9.99 0 12s.45 3.85 1.24 5.42l4.04-3.13z"/>
-                  <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.57 1.24 6.58l4.04 3.13c.95-2.83 3.6-4.96 6.72-4.96z"/>
-                </svg>
-                <span>Google</span>
-              </button>
+              <GoogleOAuthSafe
+                onSuccess={handleGoogleSuccess}
+                onError={handleGoogleError}
+                fallback={
+                  <button
+                    type="button"
+                    onClick={() => setAuthError('Google authentication requires an active Google Client ID.')}
+                    className="w-full h-[54px] px-4 rounded-xl border border-[#e1e5df] bg-[#ffffff] hover:bg-[#f4f5f2] font-sans text-xs sm:text-sm font-semibold text-[#1c2224] flex items-center justify-center gap-2.5 transition-all cursor-pointer shadow-sm hover:border-[#c2c9bf]"
+                  >
+                    <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+                      <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.65v3.03h3.88c2.27-2.09 3.665-5.17 3.665-9.12z" />
+                      <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.03c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.24v3.13C3.26 21.43 7.31 24 12 24z" />
+                      <path fill="#FBBC05" d="M5.28 14.29c-.25-.72-.38-1.49-.38-2.29s.13-1.57.38-2.29V6.58H1.24C.45 8.15 0 9.99 0 12s.45 3.85 1.24 5.42l4.04-3.13z" />
+                      <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.57 1.24 6.58l4.04 3.13c.95-2.83 3.6-4.96 6.72-4.96z" />
+                    </svg>
+                    <span>Google</span>
+                  </button>
+                }
+              />
             </div>
 
           </div>

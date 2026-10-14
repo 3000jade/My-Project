@@ -1,8 +1,8 @@
 /**
- * RESO (Real Estate Standards Organization) Data Dictionary 2.0 Types & Shared Contracts
+ * Standard Property Types & Shared Contracts
  */
 
-export type ResoStandardStatus = 
+export type StandardStatus = 
   | 'Draft'
   | 'Pending Approval'
   | 'Active'
@@ -12,14 +12,14 @@ export type ResoStandardStatus =
   | 'Canceled'
   | 'Expired';
 
-export type ResoPropertyType = 
+export type PropertyType = 
   | 'Residential'
   | 'Commercial Sale'
   | 'Commercial Lease'
   | 'Land'
   | 'Residential Income';
 
-export interface ResoMediaItem {
+export interface MediaItem {
   id?: string;
   mediaKey: string;
   mediaUrl: string;
@@ -29,7 +29,7 @@ export interface ResoMediaItem {
   mimeType?: string;
 }
 
-export interface ResoRoomItem {
+export interface RoomItem {
   id?: string;
   roomType: 'Primary Bedroom' | 'Bedroom' | 'Bathroom' | 'Living Room' | 'Dining Room' | 'Kitchen' | 'Home Office' | 'Balcony' | 'Laundry' | string;
   roomLevel?: 'Main' | 'Second' | 'Third' | 'Basement' | 'Penthouse' | 'Upper' | 'Lower' | string;
@@ -39,7 +39,7 @@ export interface ResoRoomItem {
   roomFeatures?: string[];
 }
 
-export interface ResoConfidentialItem {
+export interface ConfidentialItem {
   privateRemarks?: string;
   showingInstructions?: string;
   lockboxType?: string;
@@ -50,6 +50,13 @@ export interface ResoConfidentialItem {
   sellerDirectEmail?: string;
   expirationDate?: string;
 }
+
+// Backward compatibility aliases
+export type ResoStandardStatus = StandardStatus;
+export type ResoPropertyType = PropertyType;
+export type ResoMediaItem = MediaItem;
+export type ResoRoomItem = RoomItem;
+export type ResoConfidentialItem = ConfidentialItem;
 
 export interface Property {
   id: string | number;
@@ -91,21 +98,30 @@ export interface Property {
     lotSizeArea?: number;
     lotSizeUnits?: 'Square Meters' | 'Square Feet' | 'Acres' | 'Hectares' | string;
     propertyType: string;
+    propertyTypeId?: number;
     propertySubType?: string;
     yearBuilt?: number;
     parkingTotal?: number;
+    parkingCovered?: number;
+    parkingOpen?: number;
+    transactionType?: string;
+    propertyCondition?: string;
   };
+  propertyTypeId?: number;
+  property_type_id?: number;
+  isFeatured?: boolean;
   features: string[];
   interiorFeatures?: string[];
   exteriorFeatures?: string[];
   images: string[];
-  media?: ResoMediaItem[];
-  rooms?: ResoRoomItem[];
-  confidential?: ResoConfidentialItem;
+  media?: MediaItem[];
+  rooms?: RoomItem[];
+  confidential?: ConfidentialItem;
   publicRemarks?: string;
+  customAttributes?: Record<string, unknown>;
   customResoAttributes?: Record<string, unknown>;
   architecturalStyle?: string;
-  standardStatus?: ResoStandardStatus;
+  standardStatus?: StandardStatus;
   status: 'available' | 'pending' | 'sold';
   listAgentKey?: string;
   createdBy?: string;
@@ -129,14 +145,4 @@ export interface PropertyItem extends Property {
   financingTerms?: string[];
   communityRules?: string[];
   tenureType?: 'Perpetual / Freehold' | 'Leasehold' | 'Clean Title';
-}
-
-export interface ResoODataParams {
-  $filter?: string;
-  $select?: string;
-  $expand?: string;
-  $top?: number;
-  $skip?: number;
-  $orderby?: string;
-  $count?: boolean;
 }

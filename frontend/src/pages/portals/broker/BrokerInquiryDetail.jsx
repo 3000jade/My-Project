@@ -84,14 +84,7 @@ export default function BrokerInquiryDetail() {
   if (error || !inquiry) {
     return (
       <div className="space-y-6 max-w-6xl mx-auto">
-        <PageHeader
-          title="Inquiry Not Found"
-          breadcrumbs={[
-            { label: "Dashboard", to: "/broker/dashboard" },
-            { label: "Inquiries", to: "/broker/inquiries" },
-            { label: "Error" }
-          ]}
-        />
+        <PageHeader title="Inquiry Not Found" />
         <div className="p-8 bg-rose-50 border border-rose-200 rounded-2xl text-center space-y-4">
           <span className="material-symbols-outlined text-4xl text-rose-600">error</span>
           <h2 className="text-lg font-bold text-[#174849] font-display">Inquiry Record Unavailable</h2>
@@ -114,20 +107,24 @@ export default function BrokerInquiryDetail() {
       <PageHeader
         title={`Inquiry Review: ${inquiry.client_name}`}
         subtitle={`Firm Triage • Inbound Ref: ${inquiry.id}`}
-        breadcrumbs={[
-          { label: "Dashboard", to: "/broker/dashboard" },
-          { label: "Inquiries", to: "/broker/inquiries" },
-          { label: inquiry.client_name }
-        ]}
         badge={<StatusBadge status={inquiry.status} />}
         actions={
-          <button
-            onClick={() => setReassignModalOpen(true)}
-            className="h-[46px] px-5 bg-[#266F71] hover:bg-[#174849] text-white rounded-xl text-xs font-bold font-sans uppercase tracking-wider flex items-center gap-2 shadow-sm transition-all"
-          >
-            <span className="material-symbols-outlined text-[18px]">person_add</span>
-            Reassign Agent
-          </button>
+          <div className="flex items-center gap-2">
+            <Link
+              to="/broker/inquiries"
+              className="h-[46px] px-4 bg-white hover:bg-gray-50 text-[#174849] border border-gray-200 rounded-xl text-xs font-bold font-sans uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-xs"
+            >
+              <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+              Back
+            </Link>
+            <button
+              onClick={() => setReassignModalOpen(true)}
+              className="h-[46px] px-5 bg-[#266F71] hover:bg-[#174849] text-white rounded-xl text-xs font-bold font-sans uppercase tracking-wider flex items-center gap-2 shadow-sm transition-all"
+            >
+              <span className="material-symbols-outlined text-[18px]">person_add</span>
+              Reassign Agent
+            </button>
+          </div>
         }
       />
 

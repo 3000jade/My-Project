@@ -3,7 +3,7 @@ import { getPropertyCoordinates } from '../utils/propertyCoordinates';
 
 export function usePropertyFilterEngine(initialProperties = []) {
   const [filters, setFilters] = useState({
-    transactionType: 'For Sale',
+    transactionType: 'All',
     keyword: '',
     district: '',
     propertyType: '',

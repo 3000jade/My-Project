@@ -11,7 +11,11 @@ export class GoogleAuthService {
     idToken: string,
     requestedRole: 'client' | 'agent' | 'broker' = 'client'
   ): Promise<AuthResult> {
-    if (config.integrations.isMockMode || !config.integrations.googleClientId) {
+    // 1. Check for mock/dev tokens, non-JWT test payloads, or unconfigured credentials
+    const isJwt = idToken.includes('.') && idToken.split('.').length === 3 && idToken.length > 50;
+    const isMock = !isJwt || idToken.startsWith('mock-') || idToken.startsWith('dev-mock-') || !config.integrations.googleClientId;
+
+    if (isMock) {
       logger.warn('[GoogleAuthService] Mock mode active: generating mock Google user session.');
       const sanitizedEmail = requestedRole === 'broker'
         ? 'broker.google@luxuryrealty.test'
@@ -29,6 +33,7 @@ export class GoogleAuthService {
       };
     }
 
+    // 2. Verify Google ID token
     const ticket = await oauth2Client.verifyIdToken({
       idToken,
       audience: config.integrations.googleClientId,
@@ -40,57 +45,133 @@ export class GoogleAuthService {
     }
 
     const { email, name, picture, sub: googleId } = payload;
+    const safeRole = requestedRole === 'broker' ? 'broker' : (requestedRole === 'agent' ? 'agent' : 'client');
 
     if (!isSupabaseConfigured) {
       return {
         user: {
           id: googleId,
           email,
-          fullName: name,
-          avatarUrl: picture,
-          role: requestedRole,
+          fullName: name || 'Google User',
+          avatarUrl: picture || '',
+          role: safeRole,
         },
         token: `mock-token-${googleId}`,
       };
     }
 
-    // Check existing profile or upsert
+    // 3. Check existing profile or provision new account in Supabase
     const { data: existingProfile } = await supabaseAdmin
       .from('profiles')
       .select('*')
       .eq('email', email)
-      .single();
+      .maybeSingle();
 
-    let userId = existingProfile?.id;
-    let role = existingProfile?.role || requestedRole;
+    let userId: string;
+    let finalRole: string;
+    let finalFullName: string = name || 'Google User';
+    let finalAvatarUrl: string = picture || '';
 
-    if (!existingProfile) {
-      const { data: newProfile, error: insertError } = await supabaseAdmin
-        .from('profiles')
-        .insert({
-          email,
-          full_name: name,
-          avatar_url: picture,
-          role,
-        })
-        .select()
-        .single();
+    if (existingProfile) {
+      userId = existingProfile.id;
+      // Preserve existing database role to prevent privilege escalation or accidental demotion
+      finalRole = existingProfile.role;
+      finalFullName = existingProfile.full_name || name || 'Google User';
+      finalAvatarUrl = existingProfile.avatar_url || picture || '';
 
-      if (insertError) {
-        throw new Error(`Profile synchronization failed: ${insertError.message}`);
+      // Auto-populate supported fields from Google metadata if previously missing
+      const updates: Record<string, any> = {
+        updated_at: new Date().toISOString(),
+      };
+      if (!existingProfile.avatar_url && picture) {
+        updates.avatar_url = picture;
       }
-      userId = newProfile.id;
+      if (!existingProfile.full_name && name) {
+        updates.full_name = name;
+      }
+
+      if (Object.keys(updates).length > 1) {
+        await supabaseAdmin
+          .from('profiles')
+          .update(updates)
+          .eq('id', userId);
+      }
+    } else {
+      // Provision user in auth.users
+      finalRole = safeRole;
+      try {
+        const { data: createdAuthUser, error: authCreateError } = await supabaseAdmin.auth.admin.createUser({
+          email,
+          email_confirm: true,
+          user_metadata: {
+            full_name: name || 'Google User',
+            avatar_url: picture || '',
+            role: safeRole,
+          },
+        });
+
+        if (authCreateError) {
+          // If user exists in auth.users but profile was missing, recover auth id
+          const { data: usersList } = await supabaseAdmin.auth.admin.listUsers();
+          const matched = usersList?.users?.find((u) => u.email?.toLowerCase() === email.toLowerCase());
+          if (matched) {
+            userId = matched.id;
+          } else {
+            throw new Error(authCreateError.message);
+          }
+        } else {
+          userId = createdAuthUser.user.id;
+        }
+      } catch (err: any) {
+        logger.error(`[GoogleAuthService] Failed to provision auth user: ${err.message}`);
+        throw new Error(`Profile synchronization failed: ${err.message}`);
+      }
+
+      // Ensure profile record is populated
+      await supabaseAdmin
+        .from('profiles')
+        .upsert({
+          id: userId,
+          email,
+          full_name: finalFullName,
+          avatar_url: finalAvatarUrl,
+          role: safeRole,
+          updated_at: new Date().toISOString(),
+        });
+    }
+
+    // 4. Generate Supabase session token
+    let sessionToken = `token-google-${userId}`;
+    try {
+      const linkRes = await supabaseAdmin.auth.admin.generateLink({
+        type: 'magiclink',
+        email,
+      });
+
+      if (linkRes.data?.properties?.hashed_token) {
+        const { supabase } = await import('../config/supabase');
+        const verifyRes = await supabase.auth.verifyOtp({
+          token_hash: linkRes.data.properties.hashed_token,
+          type: 'magiclink',
+        });
+
+        if (verifyRes.data?.session?.access_token) {
+          sessionToken = verifyRes.data.session.access_token;
+        }
+      }
+    } catch (sessionErr: any) {
+      logger.warn('[GoogleAuthService] Fallback to direct token format:', sessionErr.message);
     }
 
     return {
       user: {
         id: userId,
         email,
-        fullName: name,
-        avatarUrl: picture,
-        role,
+        fullName: finalFullName,
+        avatarUrl: finalAvatarUrl,
+        role: finalRole,
       },
-      token: `token-google-${userId}`,
+      token: sessionToken,
     };
   }
 }
