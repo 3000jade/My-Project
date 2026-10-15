@@ -648,8 +648,8 @@ export class PropertyService {
             agentId: data.created_by || 'agent-1',
           };
 
-          // Fetch property_images (Photos)
-          const { data: imageRows } = await supabase
+          // Fetch property_images (Photos) using supabaseAdmin to ensure visibility across all user roles
+          const { data: imageRows } = await supabaseAdmin
             .from('property_images')
             .select('*')
             .eq('property_id', data.id)
@@ -667,12 +667,12 @@ export class PropertyService {
           }
 
           // Fetch property_media (FloorPlan, Video, VirtualTour, Document)
-          const { data: mediaRows } = await supabase
+          const { data: mediaRows } = await supabaseAdmin
             .from('property_media')
             .select('*')
             .eq('property_id', data.id)
             .order('order_index', { ascending: true });
-          if (mediaRows) {
+          if (mediaRows && mediaRows.length > 0) {
             item.media = mediaRows.map((m: any) => ({
               id: m.id,
               mediaKey: m.media_key,
@@ -682,10 +682,12 @@ export class PropertyService {
               shortDescription: m.short_description,
               mimeType: m.mime_type,
             }));
+          } else if (data.custom_reso_attributes?.media && Array.isArray(data.custom_reso_attributes.media)) {
+            item.media = data.custom_reso_attributes.media;
           }
 
           // Fetch rooms
-          const { data: roomRows } = await supabase
+          const { data: roomRows } = await supabaseAdmin
             .from('property_rooms')
             .select('*')
             .eq('property_id', data.id);
@@ -702,7 +704,7 @@ export class PropertyService {
           }
 
           // Fetch property_pricing
-          const { data: pricingRow } = await supabase
+          const { data: pricingRow } = await supabaseAdmin
             .from('property_pricing')
             .select('*')
             .eq('property_id', data.id)
@@ -721,6 +723,18 @@ export class PropertyService {
             item.listPriceCurrency = pricingRow.currency || item.listPriceCurrency;
             item.associationFee = pricingRow.association_fee ? Number(pricingRow.association_fee) : item.associationFee;
             item.associationFeeFrequency = pricingRow.association_fee_frequency || item.associationFeeFrequency;
+          } else if (data.custom_reso_attributes?.pricing) {
+            (item as any).pricing = data.custom_reso_attributes.pricing;
+          }
+
+          if ((!item.features || item.features.length === 0) && data.custom_reso_attributes?.features) {
+            item.features = data.custom_reso_attributes.features;
+          }
+          if ((!item.interiorFeatures || item.interiorFeatures.length === 0) && data.custom_reso_attributes?.interiorFeatures) {
+            item.interiorFeatures = data.custom_reso_attributes.interiorFeatures;
+          }
+          if ((!item.exteriorFeatures || item.exteriorFeatures.length === 0) && data.custom_reso_attributes?.exteriorFeatures) {
+            item.exteriorFeatures = data.custom_reso_attributes.exteriorFeatures;
           }
 
           // Fetch confidential if expanded AND authorized
@@ -877,7 +891,14 @@ export class PropertyService {
       rooms: data.rooms || [],
       confidential: data.confidential,
       publicRemarks: data.publicRemarks,
-      customResoAttributes: data.customResoAttributes,
+      customResoAttributes: {
+        ...(data.customResoAttributes || {}),
+        media: data.media || [],
+        pricing: data.pricing || {},
+        features: data.features || [],
+        interiorFeatures: data.interiorFeatures || [],
+        exteriorFeatures: data.exteriorFeatures || [],
+      },
       architecturalStyle: data.architecturalStyle || 'Modern Architectural',
       standardStatus: initialStatus,
       status: initialStatus === 'Active' ? 'available' : 'pending',
@@ -983,15 +1004,55 @@ export class PropertyService {
 
           // Insert rooms into property_rooms if present
           if (Array.isArray(data.rooms) && data.rooms.length > 0) {
-            const roomRows = data.rooms.map((r: any) => ({
-              property_id: inserted.id,
-              room_type: r.roomType || r.room_type || 'Bedroom',
-              room_level: r.roomLevel || r.room_level || null,
-              room_length: r.roomLength ?? r.room_length ?? null,
-              room_width: r.roomWidth ?? r.room_width ?? null,
-              room_dimensions_units: r.roomDimensionsUnits || r.room_dimensions_units || 'Meters',
-              room_features: Array.isArray(r.roomFeatures || r.room_features) ? (r.roomFeatures || r.room_features) : [],
-            }));
+            const validRoomTypes = new Set(['Primary Bedroom', 'Bedroom', 'Bathroom', 'Living Room', 'Dining Room', 'Kitchen', 'Home Office', 'Balcony', 'Laundry']);
+            const roomTypeMap: Record<string, string> = {
+              'Den / Home Office': 'Home Office',
+              'Balcony / Terrace': 'Balcony',
+              'Laundry / Utility Room': 'Laundry',
+              'Family Room': 'Living Room',
+              'Entertainment Room': 'Living Room',
+              'Gym / Fitness Room': 'Home Office',
+              'Dirty Kitchen / Auxiliary Kitchen': 'Kitchen',
+              "Maid's Room": 'Bedroom',
+              "Driver's Quarters": 'Bedroom',
+              'Storage Room': 'Home Office',
+            };
+
+            const validRoomLevels = new Set(['Main', 'Second', 'Third', 'Basement', 'Penthouse', 'Upper', 'Lower']);
+            const roomLevelMap: Record<string, string> = {
+              'Ground Floor': 'Main',
+              '1st Floor': 'Main',
+              '2nd Floor': 'Second',
+              '3rd Floor': 'Third',
+              '4th Floor': 'Upper',
+              'Penthouse Level': 'Penthouse',
+              'Mezzanine': 'Second',
+              'Roof Deck': 'Upper',
+              'Attic': 'Upper',
+            };
+
+            const roomRows = data.rooms.map((r: any) => {
+              const rawType = r.roomType || r.room_type || 'Bedroom';
+              const rawLevel = r.roomLevel || r.room_level || 'Main';
+
+              const normalizedType = validRoomTypes.has(rawType)
+                ? rawType
+                : (roomTypeMap[rawType] || 'Bedroom');
+
+              const normalizedLevel = validRoomLevels.has(rawLevel)
+                ? rawLevel
+                : (roomLevelMap[rawLevel] || 'Main');
+
+              return {
+                property_id: inserted.id,
+                room_type: normalizedType,
+                room_level: normalizedLevel,
+                room_length: r.roomLength ?? r.room_length ?? null,
+                room_width: r.roomWidth ?? r.room_width ?? null,
+                room_dimensions_units: (r.roomDimensionsUnits || r.room_dimensions_units) === 'Feet' ? 'Feet' : 'Meters',
+                room_features: Array.isArray(r.roomFeatures || r.room_features) ? (r.roomFeatures || r.room_features) : [],
+              };
+            });
             await supabaseAdmin.from('property_rooms').insert(roomRows);
           }
 

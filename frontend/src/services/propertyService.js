@@ -258,6 +258,7 @@ export function toApiPayload(item = {}) {
     originalListPrice: numericOriginalPrice,
     associationFee: numericAssocFee,
     associationFeeFrequency: item.associationFeeFrequency || item.association_fee_frequency || 'Monthly',
+    taxAnnualAmount: numericTax,
     isFeatured: item.is_featured !== undefined ? Boolean(item.is_featured) : (item.isFeatured !== undefined ? Boolean(item.isFeatured) : false),
     is_featured: item.is_featured !== undefined ? Boolean(item.is_featured) : (item.isFeatured !== undefined ? Boolean(item.isFeatured) : false),
     standardStatus: item.standardStatus || item.standard_status || (item.status === 'AVAILABLE' ? 'Active' : item.status === 'UNDER CONTRACT' ? 'Active Under Contract' : item.status === 'SOLD' ? 'Closed' : 'Draft'),

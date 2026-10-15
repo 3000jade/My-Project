@@ -87,4 +87,75 @@ describe('propertyService RESO 2.0 Adapters', () => {
     expect(payload.confidential.sellerDirectPhone).toBe('+63 917 123 4567');
     expect(payload.confidential.privateRemarks).toContain('Lockbox code 4821');
   });
+
+  it('correctly serializes Section 6 Media & Documentation items (Photos, FloorPlans, Videos, VirtualTours, Documents)', () => {
+    const rawMediaState = {
+      title: 'Modern Architecture Pavilion',
+      price: '85000000',
+      property_images: [
+        { imageUrl: 'https://images.unsplash.com/photo-1.jpg', displayOrder: 1 },
+        { imageUrl: 'https://images.unsplash.com/photo-2.jpg', displayOrder: 2 },
+      ],
+      media: [
+        {
+          mediaUrl: 'https://images.unsplash.com/photo-1.jpg',
+          mediaCategory: 'Photo',
+          orderIndex: 1,
+          shortDescription: 'Primary Architectural Facade',
+          mimeType: 'image/jpeg',
+        },
+        {
+          mediaUrl: 'https://drive.google.com/file/d/sample-blueprint/view',
+          mediaCategory: 'FloorPlan',
+          orderIndex: 2,
+          shortDescription: 'Ground Level Blueprint',
+          mimeType: 'application/pdf',
+        },
+        {
+          mediaUrl: 'https://www.youtube.com/watch?v=droneTour',
+          mediaCategory: 'Video',
+          orderIndex: 3,
+          shortDescription: 'Aerial Drone Tour',
+          mimeType: 'video/mp4',
+        },
+        {
+          mediaUrl: 'https://my.matterport.com/show/?m=sampleMatterport',
+          mediaCategory: 'VirtualTour',
+          orderIndex: 4,
+          shortDescription: '3D Matterport Digital Twin',
+          mimeType: 'text/html',
+        },
+        {
+          mediaUrl: 'https://drive.google.com/file/d/sample-cct-title/view',
+          mediaCategory: 'Document',
+          orderIndex: 5,
+          shortDescription: 'Certified Condominium Certificate of Title',
+          mimeType: 'application/pdf',
+        },
+      ],
+    };
+
+    const payload = toApiPayload(rawMediaState);
+
+    expect(payload.propertyImages).toHaveLength(2);
+    expect(payload.propertyImages[0].imageUrl).toBe('https://images.unsplash.com/photo-1.jpg');
+    expect(payload.media).toBeDefined();
+    expect(payload.media).toHaveLength(5);
+
+    const categories = payload.media.map(m => m.mediaCategory);
+    expect(categories).toEqual(['Photo', 'FloorPlan', 'Video', 'VirtualTour', 'Document']);
+
+    const floorPlan = payload.media.find(m => m.mediaCategory === 'FloorPlan');
+    expect(floorPlan.mediaUrl).toBe('https://drive.google.com/file/d/sample-blueprint/view');
+    expect(floorPlan.mimeType).toBe('application/pdf');
+
+    const video = payload.media.find(m => m.mediaCategory === 'Video');
+    expect(video.mediaUrl).toContain('youtube.com');
+
+    const virtualTour = payload.media.find(m => m.mediaCategory === 'VirtualTour');
+    expect(virtualTour.mediaUrl).toContain('matterport.com');
+
+    const document = payload.media.find(m => m.mediaCategory === 'Document');
+    expect(document.shortDescription).toBe('Certified Condominium Certificate of Title');
+  });
 });
