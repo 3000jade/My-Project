@@ -2,7 +2,7 @@ import { supabase, supabaseAdmin, isSupabaseConfigured } from '../config/supabas
 import logger from '../utils/logger';
 import { NominatimService } from './nominatim.service';
 import { AgentEligibilityService } from './agentEligibility.service';
-import { 
+import type { 
   StandardStatus, 
   MediaItem, 
   RoomItem, 
@@ -12,6 +12,8 @@ import {
 export interface PropertyFilterQuery {
   city?: string;
   propertyType?: string;
+  propertyTypeId?: number;
+  property_type_id?: number;
   transactionType?: string;
   minPrice?: number;
   maxPrice?: number;
@@ -47,12 +49,20 @@ export interface PropertyItem {
   mainImage?: string;
   location: {
     address: string;
-    unparsedAddress?: string;
-    subdivisionName?: string;
+    unparsedAddress?: string | null;
+    subdivisionName?: string | null;
+    buildingName?: string | null;
+    building_name?: string | null;
     city: string;
-    state?: string;
-    stateOrProvince?: string;
-    postalCode?: string;
+    state?: string | null;
+    stateOrProvince?: string | null;
+    postalCode?: string | null;
+    region?: string | null;
+    region_psgc_code?: string | null;
+    province_psgc_code?: string | null;
+    city_psgc_code?: string | null;
+    barangay?: string | null;
+    barangay_psgc_code?: string | null;
     coordinates?: {
       lat: number;
       lng: number;
@@ -102,6 +112,17 @@ export interface PropertyItem {
   listAgentKey?: string;
   agentName?: string;
   agentId?: string;
+}
+
+/**
+ * Validates and normalizes PSGC code according to properties table CHECK constraint:
+ * Must be NULL or exactly 10 digits (^[0-9]{10}$).
+ * Non-10-digit codes or empty strings are safely sanitized to null.
+ */
+function normalizePsgc(val: any): string | null {
+  if (!val || typeof val !== 'string') return null;
+  const trimmed = val.trim();
+  return /^[0-9]{10}$/.test(trimmed) ? trimmed : null;
 }
 
 // In-memory fallback seed fixtures enriched with RESO Data Dictionary 2.0
@@ -326,9 +347,18 @@ export class PropertyService {
         }
         if (query.propertyType) {
           dbQuery = dbQuery.ilike('property_type', `%${query.propertyType}%`);
-        }
-        if (query.propertyTypeId || query.property_type_id) {
-          dbQuery = dbQuery.eq('property_type_id', query.propertyTypeId || query.property_type_id);
+        } else if (query.propertyTypeId || query.property_type_id) {
+          const typeMap: Record<number, string> = {
+            1: 'Residential',
+            2: 'Single Family Residence',
+            3: 'Townhouse',
+            4: 'Villa / Estate',
+            5: 'Commercial',
+          };
+          const targetType = typeMap[Number(query.propertyTypeId || query.property_type_id)];
+          if (targetType) {
+            dbQuery = dbQuery.ilike('property_type', `%${targetType}%`);
+          }
         }
         if (query.status) {
           dbQuery = dbQuery.eq('status', query.status);
@@ -385,11 +415,21 @@ export class PropertyService {
                 address: row.address,
                 unparsedAddress: row.unparsed_address || row.address,
                 subdivisionName: row.subdivision_name,
+                buildingName: row.building_name,
+                building_name: row.building_name,
                 city: row.city,
                 state: row.state,
                 stateOrProvince: row.state_or_province || row.state,
                 postalCode: row.postal_code,
-                coordinates: { lat: row.latitude, lng: row.longitude },
+                region: row.region,
+                region_psgc_code: row.region_psgc_code,
+                province_psgc_code: row.province_psgc_code,
+                city_psgc_code: row.city_psgc_code,
+                barangay: row.barangay,
+                barangay_psgc_code: row.barangay_psgc_code,
+                coordinates: (row.latitude !== null && row.latitude !== undefined && row.longitude !== null && row.longitude !== undefined) 
+                  ? { lat: Number(row.latitude), lng: Number(row.longitude) } 
+                  : undefined,
               },
               specs: {
                 beds: row.beds,
@@ -550,11 +590,21 @@ export class PropertyService {
               address: data.address,
               unparsedAddress: data.unparsed_address || data.address,
               subdivisionName: data.subdivision_name,
+              buildingName: data.building_name,
+              building_name: data.building_name,
               city: data.city,
               state: data.state,
               stateOrProvince: data.state_or_province || data.state,
               postalCode: data.postal_code,
-              coordinates: { lat: data.latitude, lng: data.longitude },
+              region: data.region,
+              region_psgc_code: data.region_psgc_code,
+              province_psgc_code: data.province_psgc_code,
+              city_psgc_code: data.city_psgc_code,
+              barangay: data.barangay,
+              barangay_psgc_code: data.barangay_psgc_code,
+              coordinates: (data.latitude !== null && data.latitude !== undefined && data.longitude !== null && data.longitude !== undefined)
+                ? { lat: Number(data.latitude), lng: Number(data.longitude) }
+                : undefined,
             },
             specs: {
               beds: data.beds,
@@ -598,22 +648,79 @@ export class PropertyService {
             agentId: data.created_by || 'agent-1',
           };
 
-          // Fetch media if expanded
-          if (expand?.includes('media')) {
-            const { data: mediaRows } = await supabase
-              .from('property_media')
-              .select('*')
-              .eq('property_id', data.id)
-              .order('order_index', { ascending: true });
-            if (mediaRows) {
-              item.media = mediaRows.map((m: any) => ({
-                mediaKey: m.media_key,
-                mediaUrl: m.media_url,
-                orderIndex: m.order_index,
-                mediaCategory: m.media_category,
-                shortDescription: m.short_description,
-              }));
+          // Fetch property_images (Photos)
+          const { data: imageRows } = await supabase
+            .from('property_images')
+            .select('*')
+            .eq('property_id', data.id)
+            .order('display_order', { ascending: true });
+          if (imageRows && imageRows.length > 0) {
+            (item as any).property_images = imageRows.map((img: any) => ({
+              id: img.id,
+              imageUrl: img.image_url,
+              displayOrder: img.display_order,
+            }));
+            item.images = imageRows.map((img: any) => img.image_url);
+            if (imageRows[0]?.image_url) {
+              item.mainImage = imageRows[0].image_url;
             }
+          }
+
+          // Fetch property_media (FloorPlan, Video, VirtualTour, Document)
+          const { data: mediaRows } = await supabase
+            .from('property_media')
+            .select('*')
+            .eq('property_id', data.id)
+            .order('order_index', { ascending: true });
+          if (mediaRows) {
+            item.media = mediaRows.map((m: any) => ({
+              id: m.id,
+              mediaKey: m.media_key,
+              mediaUrl: m.media_url,
+              orderIndex: m.order_index,
+              mediaCategory: m.media_category,
+              shortDescription: m.short_description,
+              mimeType: m.mime_type,
+            }));
+          }
+
+          // Fetch rooms
+          const { data: roomRows } = await supabase
+            .from('property_rooms')
+            .select('*')
+            .eq('property_id', data.id);
+          if (roomRows) {
+            item.rooms = roomRows.map((r: any) => ({
+              id: r.id,
+              roomType: r.room_type,
+              roomLevel: r.room_level,
+              roomLength: r.room_length,
+              roomWidth: r.room_width,
+              roomDimensionsUnits: r.room_dimensions_units,
+              roomFeatures: r.room_features,
+            }));
+          }
+
+          // Fetch property_pricing
+          const { data: pricingRow } = await supabase
+            .from('property_pricing')
+            .select('*')
+            .eq('property_id', data.id)
+            .single();
+          if (pricingRow) {
+            (item as any).pricing = {
+              currency: pricingRow.currency,
+              rentFrequency: pricingRow.rent_frequency,
+              leaseTerm: pricingRow.lease_term,
+              associationFee: pricingRow.association_fee ? Number(pricingRow.association_fee) : 0,
+              associationFeeFrequency: pricingRow.association_fee_frequency,
+              associationFeeIncludes: pricingRow.association_fee_includes || [],
+              securityDeposit: pricingRow.security_deposit ? Number(pricingRow.security_deposit) : undefined,
+              advanceRent: pricingRow.advance_rent ? Number(pricingRow.advance_rent) : undefined,
+            };
+            item.listPriceCurrency = pricingRow.currency || item.listPriceCurrency;
+            item.associationFee = pricingRow.association_fee ? Number(pricingRow.association_fee) : item.associationFee;
+            item.associationFeeFrequency = pricingRow.association_fee_frequency || item.associationFeeFrequency;
           }
 
           // Fetch confidential if expanded AND authorized
@@ -670,28 +777,33 @@ export class PropertyService {
     const initialStatus = data.standardStatus || 'Active';
 
     let coordinates = data.location?.coordinates;
-    let resolvedPostal = data.location?.postalCode || '1000';
-    let resolvedSubdivision = data.location?.subdivisionName;
-    let resolvedCity = data.location?.city || 'Metro Manila';
+    let resolvedPostal = data.location?.postalCode || data.location?.postal_code || null;
+    let resolvedSubdivision = data.location?.subdivisionName || data.location?.subdivision_name || null;
+    let resolvedBuilding = data.location?.buildingName || data.location?.building_name || null;
+    let resolvedCity = data.location?.city || '';
+    let resolvedProvince = data.location?.stateOrProvince || data.location?.state_or_province || data.location?.state || null;
+    let resolvedState = resolvedProvince || null;
 
-    // Auto-resolve geocoordinates via Nominatim OSM if not provided or default
-    const isMissingCoords = !coordinates || (!coordinates.lat && !coordinates.lng) || (coordinates.lat === 14.55 && coordinates.lng === 121.05);
+    // Auto-resolve geocoordinates via Nominatim OSM if not provided
+    const isMissingCoords = !coordinates || (coordinates.lat === undefined && coordinates.lng === undefined);
     const hasAddress = data.location?.address && data.location.address !== 'Address pending';
 
     if (isMissingCoords && hasAddress) {
       try {
         const queryStr = [
           data.location.address,
-          data.location.subdivisionName,
-          data.location.city,
+          resolvedBuilding,
+          resolvedSubdivision,
+          resolvedCity,
+          resolvedProvince
         ].filter(Boolean).join(', ');
 
         const geo = await NominatimService.geocode(queryStr, { countryCode: 'ph' });
         if (geo && geo.latitude && geo.longitude) {
           coordinates = { lat: geo.latitude, lng: geo.longitude };
-          if (geo.postalCode && resolvedPostal === '1000') resolvedPostal = geo.postalCode;
+          if (geo.postalCode && !resolvedPostal) resolvedPostal = geo.postalCode;
           if (geo.subdivision && !resolvedSubdivision) resolvedSubdivision = geo.subdivision;
-          if (geo.city && resolvedCity === 'Metro Manila') resolvedCity = geo.city;
+          if (geo.city && !resolvedCity) resolvedCity = geo.city;
         }
       } catch (err: any) {
         logger.warn(`[PropertyService] Nominatim auto-geocode skipped: ${err.message}`);
@@ -714,13 +826,21 @@ export class PropertyService {
       taxAnnualAmount: data.taxAnnualAmount ? Number(data.taxAnnualAmount) : undefined,
       location: {
         address: data.location?.address || 'Address pending',
-        unparsedAddress: data.location?.unparsedAddress || data.location?.address || 'Address pending',
+        unparsedAddress: data.location?.unparsedAddress || data.location?.unparsed_address || data.location?.address || 'Address pending',
         subdivisionName: resolvedSubdivision,
+        buildingName: resolvedBuilding,
+        building_name: resolvedBuilding,
         city: resolvedCity,
-        state: data.location?.state || 'Philippines',
-        stateOrProvince: data.location?.stateOrProvince || data.location?.state || 'Metro Manila',
+        state: resolvedState,
+        stateOrProvince: resolvedProvince,
         postalCode: resolvedPostal,
-        coordinates: coordinates || { lat: 14.55, lng: 121.05 },
+        region: data.location?.region || null,
+        region_psgc_code: normalizePsgc(data.location?.regionPsgcCode || data.location?.region_psgc_code),
+        province_psgc_code: normalizePsgc(data.location?.provincePsgcCode || data.location?.province_psgc_code),
+        city_psgc_code: normalizePsgc(data.location?.cityPsgcCode || data.location?.city_psgc_code),
+        barangay: data.location?.barangay || null,
+        barangay_psgc_code: normalizePsgc(data.location?.barangayPsgcCode || data.location?.barangay_psgc_code),
+        coordinates: (coordinates && coordinates.lat !== undefined && coordinates.lng !== undefined) ? coordinates : undefined,
       },
       specs: {
         beds: Number(data.specs?.beds) || 1,
@@ -735,7 +855,7 @@ export class PropertyService {
         livingAreaUnits: data.specs?.livingAreaUnits || 'Square Meters',
         lotSizeArea: data.specs?.lotSizeArea ? Number(data.specs.lotSizeArea) : undefined,
         lotSizeUnits: data.specs?.lotSizeUnits || 'Square Meters',
-        propertyType: data.specs?.propertyType || 'Residential',
+        propertyType: data.specs?.propertyType || data.propertyType || 'Residential',
         propertyTypeId: Number(data.propertyTypeId || data.property_type_id || data.specs?.propertyTypeId || data.specs?.property_type_id || 1),
         propertySubType: data.specs?.propertySubType || 'Single Family Residence',
         yearBuilt: data.specs?.yearBuilt || new Date().getFullYear(),
@@ -767,8 +887,16 @@ export class PropertyService {
       listAgentKey: data.listAgentKey || (data as any).agentId || userId,
     };
 
+    const isValidUuid = (val?: string): boolean => {
+      if (!val || typeof val !== 'string') return false;
+      return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
+    };
+
     if (isSupabaseConfigured) {
       try {
+        const resolvedCreatedBy = isValidUuid(userId) ? userId : null;
+        const resolvedListAgentKey = isValidUuid(newProperty.listAgentKey) ? newProperty.listAgentKey : null;
+
         const { data: inserted, error } = await supabaseAdmin
           .from('properties')
           .insert({
@@ -782,10 +910,17 @@ export class PropertyService {
             address: newProperty.location.address,
             unparsed_address: newProperty.location.unparsedAddress,
             subdivision_name: newProperty.location.subdivisionName,
+            building_name: newProperty.location.buildingName || newProperty.location.building_name || null,
             city: newProperty.location.city,
             state: newProperty.location.state,
             state_or_province: newProperty.location.stateOrProvince,
             postal_code: newProperty.location.postalCode,
+            region: newProperty.location.region,
+            region_psgc_code: newProperty.location.region_psgc_code,
+            province_psgc_code: newProperty.location.province_psgc_code,
+            city_psgc_code: newProperty.location.city_psgc_code,
+            barangay: newProperty.location.barangay,
+            barangay_psgc_code: newProperty.location.barangay_psgc_code,
             latitude: newProperty.location.coordinates?.lat,
             longitude: newProperty.location.coordinates?.lng,
             beds: newProperty.specs.beds,
@@ -800,7 +935,7 @@ export class PropertyService {
             living_area_units: newProperty.specs.livingAreaUnits,
             lot_size_area: newProperty.specs.lotSizeArea,
             lot_size_units: newProperty.specs.lotSizeUnits,
-            property_type_id: newProperty.propertyTypeId || 1,
+            property_type: newProperty.specs.propertyType || 'Residential',
             property_sub_type: newProperty.specs.propertySubType,
             year_built: newProperty.specs.yearBuilt,
             parking_total: newProperty.specs.parkingTotal,
@@ -814,13 +949,20 @@ export class PropertyService {
             is_featured: newProperty.isFeatured ?? false,
             transaction_type: newProperty.specs.transactionType || 'For Sale',
             property_condition: newProperty.specs.propertyCondition,
-            created_by: userId,
-            list_agent_key: newProperty.listAgentKey,
+            created_by: resolvedCreatedBy,
+            list_agent_key: resolvedListAgentKey,
           })
           .select()
           .single();
 
-        if (!error && inserted) {
+        if (error) {
+          logger.error('[PropertyService] Supabase properties insert failed:', {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code,
+          });
+        } else if (inserted) {
           newProperty.id = inserted.id;
 
           // Insert confidential record if present
@@ -837,6 +979,77 @@ export class PropertyService {
               seller_direct_email: data.confidential.sellerDirectEmail,
               expiration_date: data.confidential.expirationDate,
             });
+          }
+
+          // Insert rooms into property_rooms if present
+          if (Array.isArray(data.rooms) && data.rooms.length > 0) {
+            const roomRows = data.rooms.map((r: any) => ({
+              property_id: inserted.id,
+              room_type: r.roomType || r.room_type || 'Bedroom',
+              room_level: r.roomLevel || r.room_level || null,
+              room_length: r.roomLength ?? r.room_length ?? null,
+              room_width: r.roomWidth ?? r.room_width ?? null,
+              room_dimensions_units: r.roomDimensionsUnits || r.room_dimensions_units || 'Meters',
+              room_features: Array.isArray(r.roomFeatures || r.room_features) ? (r.roomFeatures || r.room_features) : [],
+            }));
+            await supabaseAdmin.from('property_rooms').insert(roomRows);
+          }
+
+          // Save property_images if provided (accept propertyImages, property_images, or images)
+          const rawImages = data.propertyImages || (data as any).property_images || (Array.isArray(data.images) && data.images.length > 0 ? data.images : null);
+          if (Array.isArray(rawImages) && rawImages.length > 0) {
+            const imgRows = rawImages.map((img: any, idx: number) => ({
+              property_id: inserted.id,
+              image_url: typeof img === 'string' ? img : (img.imageUrl || img.image_url || img),
+              display_order: typeof img === 'object' && img ? (img.displayOrder || img.display_order || (idx + 1)) : (idx + 1),
+            }));
+            await supabaseAdmin.from('property_images').insert(imgRows);
+
+            // Also mirror photos to property_media with media_category = 'Photo'
+            const photoMediaRows = imgRows.map((img: any, idx: number) => ({
+              property_id: inserted.id,
+              media_url: img.image_url,
+              media_category: 'Photo',
+              order_index: img.display_order || (idx + 1),
+              short_description: 'Listing Photo',
+              mime_type: 'image/jpeg',
+            }));
+            await supabaseAdmin.from('property_media').insert(photoMediaRows);
+          }
+
+          // Save property_media (FloorPlan, Video, VirtualTour, Document) if provided
+          if (Array.isArray(data.media || (data as any).property_media)) {
+            const rawMedia = ((data.media || (data as any).property_media) as any[]).filter(
+              (m: any) => (m.mediaCategory || m.media_category) !== 'Photo'
+            );
+            if (rawMedia.length > 0) {
+              const mediaRows = rawMedia.map((m: any, idx: number) => ({
+                property_id: inserted.id,
+                media_url: m.mediaUrl || m.media_url,
+                media_category: m.mediaCategory || m.media_category || 'Document',
+                order_index: m.orderIndex ?? m.order_index ?? (idx + 1),
+                short_description: m.shortDescription || m.short_description || null,
+                mime_type: m.mimeType || m.mime_type || 'application/octet-stream',
+              }));
+              await supabaseAdmin.from('property_media').insert(mediaRows);
+            }
+          }
+
+          // Insert property_pricing (if table is available)
+          const pricingData = data.pricing || {};
+          const { error: pricingError } = await supabaseAdmin.from('property_pricing').upsert({
+            property_id: inserted.id,
+            currency: pricingData.currency || data.listPriceCurrency || 'PHP',
+            rent_frequency: pricingData.rentFrequency || null,
+            lease_term: pricingData.leaseTerm || null,
+            association_fee: pricingData.associationFee ?? data.associationFee ?? null,
+            association_fee_frequency: pricingData.associationFeeFrequency || data.associationFeeFrequency || 'Monthly',
+            association_fee_includes: Array.isArray(pricingData.associationFeeIncludes) ? pricingData.associationFeeIncludes : [],
+            security_deposit: pricingData.securityDeposit ?? null,
+            advance_rent: pricingData.advanceRent ?? null,
+          });
+          if (pricingError) {
+            logger.warn('[PropertyService] property_pricing insert note:', pricingError.message);
           }
         }
       } catch (err: any) {
@@ -873,11 +1086,66 @@ export class PropertyService {
       }
     }
 
+    // Prepare location merging distinguishing omitted vs explicit clearing
+    const existingLoc = existing.location || {} as any;
+    const reqLoc = data.location;
+    let mergedLocation = { ...existingLoc };
+
+    if (reqLoc) {
+      const hasProp = (k: string) => Object.prototype.hasOwnProperty.call(reqLoc, k);
+      
+      const newAddress = hasProp('address') ? (reqLoc.address || '') : existingLoc.address;
+      const newUnparsed = hasProp('unparsedAddress') ? reqLoc.unparsedAddress : (hasProp('unparsed_address') ? reqLoc.unparsed_address : existingLoc.unparsedAddress);
+      const newSubdivision = hasProp('subdivisionName') ? reqLoc.subdivisionName : (hasProp('subdivision_name') ? reqLoc.subdivision_name : existingLoc.subdivisionName);
+      const newBuilding = hasProp('buildingName') ? reqLoc.buildingName : (hasProp('building_name') ? reqLoc.building_name : (existingLoc.buildingName || existingLoc.building_name));
+      const newCity = hasProp('city') ? (reqLoc.city || '') : existingLoc.city;
+      
+      const hasProv = hasProp('stateOrProvince') || hasProp('state_or_province');
+      const provVal = hasProp('stateOrProvince') ? reqLoc.stateOrProvince : reqLoc.state_or_province;
+      const newStateOrProv = hasProv ? provVal : existingLoc.stateOrProvince;
+      // Sync legacy state when province or state is explicitly updated
+      const newState = hasProp('state') ? reqLoc.state : (hasProv ? provVal : existingLoc.state);
+
+      const newPostal = hasProp('postalCode') ? reqLoc.postalCode : (hasProp('postal_code') ? reqLoc.postal_code : existingLoc.postalCode);
+      const newRegion = hasProp('region') ? reqLoc.region : existingLoc.region;
+      const newRegionPsgc = hasProp('regionPsgcCode') ? reqLoc.regionPsgcCode : (hasProp('region_psgc_code') ? reqLoc.region_psgc_code : existingLoc.region_psgc_code);
+      const newProvPsgc = hasProp('provincePsgcCode') ? reqLoc.provincePsgcCode : (hasProp('province_psgc_code') ? reqLoc.province_psgc_code : existingLoc.province_psgc_code);
+      const newCityPsgc = hasProp('cityPsgcCode') ? reqLoc.cityPsgcCode : (hasProp('city_psgc_code') ? reqLoc.city_psgc_code : existingLoc.city_psgc_code);
+      const newBarangay = hasProp('barangay') ? reqLoc.barangay : existingLoc.barangay;
+      const newBarangayPsgc = hasProp('barangayPsgcCode') ? reqLoc.barangayPsgcCode : (hasProp('barangay_psgc_code') ? reqLoc.barangay_psgc_code : existingLoc.barangay_psgc_code);
+      
+      let newCoords = existingLoc.coordinates;
+      if (hasProp('coordinates')) {
+        newCoords = reqLoc.coordinates ? { lat: Number(reqLoc.coordinates.lat), lng: Number(reqLoc.coordinates.lng) } : undefined;
+      }
+
+      mergedLocation = {
+        address: newAddress,
+        unparsedAddress: newUnparsed || null,
+        subdivisionName: newSubdivision || null,
+        buildingName: newBuilding || null,
+        building_name: newBuilding || null,
+        city: newCity,
+        state: newState || null,
+        stateOrProvince: newStateOrProv || null,
+        postalCode: newPostal || null,
+        region: newRegion || null,
+        region_psgc_code: normalizePsgc(newRegionPsgc),
+        province_psgc_code: normalizePsgc(newProvPsgc),
+        city_psgc_code: normalizePsgc(newCityPsgc),
+        barangay: newBarangay || null,
+        barangay_psgc_code: normalizePsgc(newBarangayPsgc),
+        coordinates: newCoords,
+      };
+    }
+
     const updated: PropertyItem = {
       ...existing,
       ...data,
       specs: { ...existing.specs, ...(data.specs || {}) },
-      location: { ...existing.location, ...(data.location || {}) },
+      architecturalStyle: data.architecturalStyle ?? existing.architecturalStyle,
+      rooms: data.rooms ?? existing.rooms,
+      location: mergedLocation,
       standardStatus: data.standardStatus || existing.standardStatus,
       status: (data.standardStatus === 'Active' ? 'available' : existing.status),
       updatedAt: new Date().toISOString(),
@@ -894,14 +1162,125 @@ export class PropertyService {
             standard_status: updated.standardStatus,
             status: updated.status,
             address: updated.location.address,
+            unparsed_address: updated.location.unparsedAddress,
+            subdivision_name: updated.location.subdivisionName,
+            building_name: updated.location.buildingName || updated.location.building_name || null,
             city: updated.location.city,
+            state: updated.location.state,
+            state_or_province: updated.location.stateOrProvince,
+            postal_code: updated.location.postalCode,
+            region: updated.location.region,
+            region_psgc_code: updated.location.region_psgc_code,
+            province_psgc_code: updated.location.province_psgc_code,
+            city_psgc_code: updated.location.city_psgc_code,
+            barangay: updated.location.barangay,
+            barangay_psgc_code: updated.location.barangay_psgc_code,
+            latitude: (updated.location.coordinates?.lat !== undefined && updated.location.coordinates?.lat !== null) ? Number(updated.location.coordinates.lat) : null,
+            longitude: (updated.location.coordinates?.lng !== undefined && updated.location.coordinates?.lng !== null) ? Number(updated.location.coordinates.lng) : null,
             beds: updated.specs.beds,
             baths: updated.specs.baths,
+            bedrooms_total: updated.specs.bedroomsTotal,
+            bathrooms_total_integer: updated.specs.bathroomsTotalInteger,
+            bathrooms_full: updated.specs.bathroomsFull,
+            bathrooms_half: updated.specs.bathroomsHalf,
+            stories_total: updated.specs.storiesTotal,
+            parking_total: updated.specs.parkingTotal,
+            parking_covered: updated.specs.parkingCovered,
+            parking_open: updated.specs.parkingOpen,
+            property_type: updated.specs.propertyType || 'Residential',
+            property_sub_type: updated.specs.propertySubType,
+            year_built: updated.specs.yearBuilt,
+            architectural_style: updated.architecturalStyle,
+            property_condition: updated.specs.propertyCondition,
             sqft: updated.specs.sqft,
             living_area: updated.specs.livingArea,
+            living_area_units: updated.specs.livingAreaUnits,
+            lot_size_area: updated.specs.lotSizeArea,
+            lot_size_units: updated.specs.lotSizeUnits,
+            is_featured: data.is_featured !== undefined ? Boolean(data.is_featured) : (data.isFeatured !== undefined ? Boolean(data.isFeatured) : updated.isFeatured),
             updated_at: updated.updatedAt,
           })
           .eq('id', id);
+
+        // Update rooms if provided
+        if (Array.isArray(data.rooms)) {
+          await supabaseAdmin.from('property_rooms').delete().eq('property_id', id);
+          if (data.rooms.length > 0) {
+            const roomRows = data.rooms.map((r: any) => ({
+              property_id: id,
+              room_type: r.roomType || r.room_type || 'Bedroom',
+              room_level: r.roomLevel || r.room_level || null,
+              room_length: r.roomLength ?? r.room_length ?? null,
+              room_width: r.roomWidth ?? r.room_width ?? null,
+              room_dimensions_units: r.roomDimensionsUnits || r.room_dimensions_units || 'Meters',
+              room_features: Array.isArray(r.roomFeatures || r.room_features) ? (r.roomFeatures || r.room_features) : [],
+            }));
+            await supabaseAdmin.from('property_rooms').insert(roomRows);
+          }
+        }
+
+        // Sync property_images if provided (accept propertyImages, property_images, or images)
+        const rawImages = data.propertyImages || (data as any).property_images || (Array.isArray(data.images) ? data.images : null);
+        if (Array.isArray(rawImages)) {
+          await supabaseAdmin.from('property_images').delete().eq('property_id', id);
+          if (rawImages.length > 0) {
+            const imgRows = rawImages.map((img: any, idx: number) => ({
+              property_id: id,
+              image_url: typeof img === 'string' ? img : (img.imageUrl || img.image_url || img),
+              display_order: typeof img === 'object' && img ? (img.displayOrder || img.display_order || (idx + 1)) : (idx + 1),
+            }));
+            await supabaseAdmin.from('property_images').insert(imgRows);
+          }
+        }
+
+        // Sync property_media (FloorPlan, Video, VirtualTour, Document) if provided
+        if (Array.isArray(data.media || (data as any).property_media)) {
+          const rawMedia = (data.media || (data as any).property_media) as any[];
+          await supabaseAdmin.from('property_media').delete().eq('property_id', id);
+          if (rawMedia.length > 0) {
+            const mediaRows = rawMedia.map((m: any, idx: number) => ({
+              property_id: id,
+              media_url: m.mediaUrl || m.media_url,
+              media_category: m.mediaCategory || m.media_category || 'Document',
+              order_index: m.orderIndex ?? m.order_index ?? (idx + 1),
+              short_description: m.shortDescription || m.short_description || null,
+              mime_type: m.mimeType || m.mime_type || 'application/octet-stream',
+            }));
+            await supabaseAdmin.from('property_media').insert(mediaRows);
+          }
+        }
+
+        // Upsert property_pricing
+        if (data.pricing || data.associationFee !== undefined || data.associationFeeFrequency !== undefined) {
+          const pricingData = data.pricing || {};
+          await supabaseAdmin.from('property_pricing').upsert({
+            property_id: id,
+            currency: pricingData.currency || data.listPriceCurrency || 'PHP',
+            rent_frequency: pricingData.rentFrequency || null,
+            lease_term: pricingData.leaseTerm || null,
+            association_fee: pricingData.associationFee ?? data.associationFee ?? null,
+            association_fee_frequency: pricingData.associationFeeFrequency || data.associationFeeFrequency || 'Monthly',
+            association_fee_includes: Array.isArray(pricingData.associationFeeIncludes) ? pricingData.associationFeeIncludes : [],
+            security_deposit: pricingData.securityDeposit ?? null,
+            advance_rent: pricingData.advanceRent ?? null,
+          });
+        }
+
+        // Upsert property_confidential
+        if (data.confidential) {
+          await supabaseAdmin.from('property_confidential').upsert({
+            property_id: id,
+            private_remarks: data.confidential.privateRemarks || null,
+            showing_instructions: data.confidential.showingInstructions || null,
+            lockbox_type: data.confidential.lockboxType || null,
+            lockbox_location: data.confidential.lockboxLocation || null,
+            lockbox_code: data.confidential.lockboxCode || null,
+            buyer_agency_compensation: data.confidential.buyerAgencyCompensation || null,
+            seller_direct_phone: data.confidential.sellerDirectPhone || null,
+            seller_direct_email: data.confidential.sellerDirectEmail || null,
+            expiration_date: data.confidential.expirationDate || null,
+          });
+        }
       } catch (err: any) {
         logger.warn('[PropertyService] DB update exception:', err.message);
       }

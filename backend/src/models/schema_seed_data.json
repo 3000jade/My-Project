@@ -1,0 +1,367 @@
+{
+  "profiles": [
+    {
+      "id": "e0a1b2c3-d4e5-4f60-8a1b-2c3d4e5f6001",
+      "email": "maria.santos@humanshelter.ph",
+      "full_name": "Maria Santos",
+      "avatar_url": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80",
+      "role": "broker",
+      "phone": "+63 917 555 0101",
+      "prc_license_no": "PRC-REB-0019283",
+      "prc_validity": "2027-10-31",
+      "dhsud_accreditation_no": "DHSUD-NCR-B-08/23-1102",
+      "dhsud_validity": "2027-12-31",
+      "verification_status": "VERIFIED",
+      "supporting_documents": [
+        {
+          "title": "PRC Real Estate Broker License",
+          "file_url": "https://storage.humanshelter.ph/credentials/maria_prc.pdf",
+          "issued_date": "2021-10-15"
+        }
+      ],
+      "experience_years": 12,
+      "bio": "Principal Managing Broker at Human Shelter Realty specializing in Forbes Park, Dasmariñas Village, and BGC luxury estates.",
+      "created_at": "2024-01-15T08:00:00Z",
+      "updated_at": "2024-01-15T08:00:00Z"
+    },
+    {
+      "id": "e0a1b2c3-d4e5-4f60-8a1b-2c3d4e5f6002",
+      "email": "elena.rossi@humanshelter.ph",
+      "full_name": "Elena Rossi",
+      "avatar_url": "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=400&q=80",
+      "role": "agent",
+      "phone": "+63 917 555 0192",
+      "prc_license_no": "PRC-RES-0048192",
+      "prc_validity": "2026-06-30",
+      "dhsud_accreditation_no": "DHSUD-NCR-A-04/24-5519",
+      "dhsud_validity": "2026-12-31",
+      "verification_status": "VERIFIED",
+      "supporting_documents": [],
+      "experience_years": 7,
+      "bio": "Senior Property Consultant focusing on contemporary brutalist villas and branded prime high-rise residences.",
+      "created_at": "2024-02-01T09:30:00Z",
+      "updated_at": "2024-02-01T09:30:00Z"
+    }
+  ],
+  "property_types": [
+    { "id": 1, "name": "Residential Condominium" },
+    { "id": 2, "name": "Single Family Residence" },
+    { "id": 3, "name": "Townhouse" },
+    { "id": 4, "name": "Villa / Estate" },
+    { "id": 5, "name": "Commercial" }
+  ],
+  "features": [
+    { "id": 1, "category": "general", "name": "24/7 Gated Security" },
+    { "id": 2, "category": "general", "name": "Clubhouse & Function Hall" },
+    { "id": 3, "category": "general", "name": "Solar Panel Array" },
+    { "id": 4, "category": "interior", "name": "Double-Height Ceilings" },
+    { "id": 5, "category": "interior", "name": "Wine Cellar" },
+    { "id": 6, "category": "interior", "name": "Smart Home Automation" },
+    { "id": 7, "category": "exterior", "name": "Lap Pool" },
+    { "id": 8, "category": "exterior", "name": "Sculpture Lawn" },
+    { "id": 9, "category": "exterior", "name": "Covered Lanai" }
+  ],
+  "properties": [
+    {
+      "id": "a1111111-1111-1111-1111-111111111111",
+      "title": "Ayala Alabang Estate",
+      "tagline": "Refined Brutalist Modernism and Tropical Sanctuary",
+      "price": 185000000.00,
+      "formatted_price": "₱185,000,000",
+      "address": "123 Narra Street",
+      "city": "Muntinlupa",
+      "state": "Metro Manila",
+      "latitude": 14.4261,
+      "longitude": 121.0315,
+      "beds": 5,
+      "baths": 6,
+      "sqft": 850.00,
+      "year_built": 2024,
+      "architectural_style": "Modern Tropical Brutalism",
+      "status": "available",
+      "created_by": "e0a1b2c3-d4e5-4f60-8a1b-2c3d4e5f6001",
+      "created_at": "2024-03-01T10:00:00Z",
+      "updated_at": "2024-03-01T10:00:00Z",
+      "listing_key": "KEY-a1111111-0001",
+      "listing_id": "MLS-AA-001",
+      "standard_status": "Active",
+      "property_sub_type": "Single Family Residence",
+      "association_fee_frequency": "Monthly",
+      "living_area": 850.00,
+      "living_area_units": "Square Meters",
+      "lot_size_area": 1200.00,
+      "lot_size_units": "Square Meters",
+      "bedrooms_total": 5,
+      "bathrooms_total_integer": 6,
+      "bathrooms_full": 5,
+      "bathrooms_half": 1,
+      "stories_total": 2,
+      "parking_total": 6,
+      "unparsed_address": "123 Narra Street, Ayala Alabang Village, Brgy. Ayala Alabang, Muntinlupa, Metro Manila, 1780, Philippines",
+      "subdivision_name": "Ayala Alabang Village",
+      "state_or_province": "Metro Manila",
+      "postal_code": "1780",
+      "public_remarks": "An architectural masterwork merging raw board-formed concrete with refined natural hardwoods. Designed around a central light well, creating a seamless connection to the private courtyard garden and lap pool.",
+      "custom_reso_attributes": {
+        "viewType": "Garden & Courtyard",
+        "furnishing": "Fully Fitted",
+        "cooling": "VRF Centralized"
+      },
+      "list_agent_key": "e0a1b2c3-d4e5-4f60-8a1b-2c3d4e5f6002",
+      "is_featured": true,
+      "transaction_type": "For Sale",
+      "property_condition": "Brand New",
+      "parking_covered": 4,
+      "parking_open": 2,
+      "property_type_id": 2,
+      "region": "National Capital Region (NCR)",
+      "region_psgc_code": "1300000000",
+      "province_psgc_code": null,
+      "city_psgc_code": "1376030000",
+      "barangay": "Ayala Alabang",
+      "barangay_psgc_code": "1376030010",
+      "building_name": null
+    },
+    {
+      "id": "b2222222-2222-2222-2222-222222222222",
+      "title": "The Grand Penthouse at Horizon Tower",
+      "tagline": "Panoramic Sky Sanctuary Above Bonifacio Global City",
+      "price": 285000000.00,
+      "formatted_price": "₱285,000,000",
+      "address": "26th Street corner 5th Avenue",
+      "city": "Taguig",
+      "state": "Metro Manila",
+      "latitude": 14.5492,
+      "longitude": 121.0489,
+      "beds": 4,
+      "baths": 5,
+      "sqft": 520.00,
+      "year_built": 2023,
+      "architectural_style": "Contemporary Minimalist High-Rise",
+      "status": "available",
+      "created_by": "e0a1b2c3-d4e5-4f60-8a1b-2c3d4e5f6001",
+      "created_at": "2024-03-05T11:30:00Z",
+      "updated_at": "2024-03-05T11:30:00Z",
+      "listing_key": "KEY-b2222222-0002",
+      "listing_id": "MLS-BGC-002",
+      "standard_status": "Active",
+      "property_sub_type": "Residential Condominium",
+      "association_fee_frequency": "Monthly",
+      "living_area": 520.00,
+      "living_area_units": "Square Meters",
+      "lot_size_area": null,
+      "lot_size_units": null,
+      "bedrooms_total": 4,
+      "bathrooms_total_integer": 5,
+      "bathrooms_full": 4,
+      "bathrooms_half": 1,
+      "stories_total": 1,
+      "parking_total": 4,
+      "unparsed_address": "Horizon Tower, 26th Street corner 5th Avenue, Bonifacio Global City, Brgy. Fort Bonifacio, Taguig, Metro Manila, 1634, Philippines",
+      "subdivision_name": "Bonifacio Global City",
+      "state_or_province": "Metro Manila",
+      "postal_code": "1634",
+      "public_remarks": "Unobstructed 360-degree skyline vistas across Manila Golf Course and Laguna de Bay. Features private elevator foyer, Italian travertine floors, Boffi kitchen, and wrap-around viewing terrace.",
+      "custom_reso_attributes": {
+        "viewType": "Manila Golf Course & City Skyline",
+        "elevator": "Private Foyer Direct Access",
+        "hoaFeeMonthly": 68000
+      },
+      "list_agent_key": "e0a1b2c3-d4e5-4f60-8a1b-2c3d4e5f6002",
+      "is_featured": true,
+      "transaction_type": "For Sale",
+      "property_condition": "Newly Renovated",
+      "parking_covered": 4,
+      "parking_open": 0,
+      "property_type_id": 1,
+      "region": "National Capital Region (NCR)",
+      "region_psgc_code": "1300000000",
+      "province_psgc_code": null,
+      "city_psgc_code": "1376070000",
+      "barangay": "Fort Bonifacio",
+      "barangay_psgc_code": "1376070010",
+      "building_name": "Horizon Tower"
+    }
+  ],
+  "property_features": [
+    { "property_id": "a1111111-1111-1111-1111-111111111111", "feature_id": 1 },
+    { "property_id": "a1111111-1111-1111-1111-111111111111", "feature_id": 3 },
+    { "property_id": "a1111111-1111-1111-1111-111111111111", "feature_id": 5 },
+    { "property_id": "a1111111-1111-1111-1111-111111111111", "feature_id": 6 },
+    { "property_id": "a1111111-1111-1111-1111-111111111111", "feature_id": 7 },
+    { "property_id": "b2222222-2222-2222-2222-222222222222", "feature_id": 1 },
+    { "property_id": "b2222222-2222-2222-2222-222222222222", "feature_id": 4 },
+    { "property_id": "b2222222-2222-2222-2222-222222222222", "feature_id": 6 }
+  ],
+  "property_images": [
+    {
+      "id": "c1111111-1111-1111-1111-111111111111",
+      "property_id": "a1111111-1111-1111-1111-111111111111",
+      "image_url": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1200&auto=format&fit=crop",
+      "display_order": 1
+    },
+    {
+      "id": "c1111111-1111-1111-1111-111111111112",
+      "property_id": "a1111111-1111-1111-1111-111111111111",
+      "image_url": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=1200&auto=format&fit=crop",
+      "display_order": 2
+    },
+    {
+      "id": "c2222222-2222-2222-2222-222222222221",
+      "property_id": "b2222222-2222-2222-2222-222222222222",
+      "image_url": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1200&auto=format&fit=crop",
+      "display_order": 1
+    }
+  ],
+  "property_media": [
+    {
+      "id": "d1111111-1111-1111-1111-111111111111",
+      "property_id": "a1111111-1111-1111-1111-111111111111",
+      "media_key": "MED-AA-FP-01",
+      "media_url": "https://storage.humanshelter.ph/media/ayala_alabang_floorplan.pdf",
+      "media_category": "FloorPlan",
+      "order_index": 1,
+      "short_description": "Architectural Layout & Floor Dimensions",
+      "mime_type": "application/pdf",
+      "created_at": "2024-03-01T10:00:00Z"
+    },
+    {
+      "id": "d2222222-2222-2222-2222-222222222221",
+      "property_id": "b2222222-2222-2222-2222-222222222222",
+      "media_key": "MED-BGC-DOC-01",
+      "media_url": "https://storage.humanshelter.ph/media/horizon_penthouse_brochure.pdf",
+      "media_category": "Document",
+      "order_index": 1,
+      "short_description": "Exclusive Buyer Dossier & Specifications",
+      "mime_type": "application/pdf",
+      "created_at": "2024-03-05T11:30:00Z"
+    }
+  ],
+  "property_rooms": [
+    {
+      "id": "f1111111-1111-1111-1111-111111111111",
+      "property_id": "a1111111-1111-1111-1111-111111111111",
+      "room_type": "Primary Bedroom",
+      "room_level": "Second",
+      "room_length": 8.50,
+      "room_width": 6.20,
+      "room_dimensions_units": "Meters",
+      "room_features": ["Walk-in Dressing Suite", "En-suite Spa Bath", "Private Balcony"],
+      "created_at": "2024-03-01T10:00:00Z"
+    },
+    {
+      "id": "f1111111-1111-1111-1111-111111111112",
+      "property_id": "a1111111-1111-1111-1111-111111111111",
+      "room_type": "Living Room",
+      "room_level": "Main",
+      "room_length": 11.00,
+      "room_width": 7.50,
+      "room_dimensions_units": "Meters",
+      "room_features": ["Double-Height Ceilings", "Courtyard Access", "Motorized Sunscreens"],
+      "created_at": "2024-03-01T10:00:00Z"
+    }
+  ],
+  "property_confidential": [
+    {
+      "property_id": "a1111111-1111-1111-1111-111111111111",
+      "private_remarks": "Owner requires 24-hour advance notice. Guard house requires driver's license deposit for entry.",
+      "showing_instructions": "Contact listing broker directly via WhatsApp before arrival.",
+      "lockbox_type": "Digital Keypad",
+      "lockbox_location": "Gate side column behind decorative panel",
+      "lockbox_code": "9182",
+      "buyer_agency_compensation": "3.0% Professional Fee",
+      "seller_direct_phone": "+63 917 888 1234",
+      "seller_direct_email": "owner.narra@private.ph",
+      "expiration_date": "2026-12-31",
+      "created_at": "2024-03-01T10:00:00Z",
+      "updated_at": "2024-03-01T10:00:00Z"
+    }
+  ],
+  "property_edit_requests": [
+    {
+      "id": "71111111-1111-1111-1111-111111111111",
+      "property_id": "a1111111-1111-1111-1111-111111111111",
+      "agent_id": "e0a1b2c3-d4e5-4f60-8a1b-2c3d4e5f6002",
+      "request_status": "PENDING",
+      "proposed_changes": {
+        "price": 182000000,
+        "tagline": "Price Adjustment: Modern Brutalist Sanctuary"
+      },
+      "original_snapshot": {
+        "price": 185000000,
+        "tagline": "Refined Brutalist Modernism and Tropical Sanctuary"
+      },
+      "base_version": 1,
+      "agent_notes": "Seller agreed to slight price adjustment to match prospective cash buyer offer.",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_notes": null,
+      "created_at": "2024-03-10T14:00:00Z",
+      "updated_at": "2024-03-10T14:00:00Z"
+    }
+  ],
+  "property_audit_log": [
+    {
+      "id": "81111111-1111-1111-1111-111111111111",
+      "property_id": "a1111111-1111-1111-1111-111111111111",
+      "request_id": null,
+      "actor_id": "e0a1b2c3-d4e5-4f60-8a1b-2c3d4e5f6001",
+      "action_type": "CREATED",
+      "changed_fields": ["title", "price", "address", "city", "status", "standard_status"],
+      "previous_data": {},
+      "new_data": {
+        "title": "Ayala Alabang Estate",
+        "price": 185000000,
+        "standard_status": "Active"
+      },
+      "audit_notes": "Initial property creation and active publication.",
+      "created_at": "2024-03-01T10:00:00Z"
+    }
+  ],
+  "inquiries": [
+    {
+      "id": "91111111-1111-1111-1111-111111111111",
+      "property_id": "a1111111-1111-1111-1111-111111111111",
+      "name": "David Tan",
+      "email": "david.tan@example.com",
+      "phone": "+63 918 555 7788",
+      "message": "Interested in scheduling a weekend walk-through with my architect.",
+      "preferred_date": "2026-10-24",
+      "type": "tour",
+      "status": "new",
+      "created_at": "2024-03-12T09:15:00Z",
+      "updated_at": "2024-03-12T09:15:00Z"
+    }
+  ],
+  "appointments": [
+    {
+      "id": "01111111-1111-1111-1111-111111111111",
+      "property_id": "a1111111-1111-1111-1111-111111111111",
+      "agent_id": "e0a1b2c3-d4e5-4f60-8a1b-2c3d4e5f6002",
+      "client_name": "David Tan",
+      "client_email": "david.tan@example.com",
+      "client_phone": "+63 918 555 7788",
+      "appointment_time": "2026-10-24T10:00:00Z",
+      "status": "confirmed",
+      "notes": "Client requested inspection accompanied by their structural designer.",
+      "created_at": "2024-03-12T10:00:00Z",
+      "updated_at": "2024-03-12T10:30:00Z"
+    }
+  ],
+  "sales": [
+    {
+      "id": "SALE-2024-001",
+      "property_id": "a1111111-1111-1111-1111-111111111111",
+      "property_title": "Ayala Alabang Estate",
+      "property_location": "Ayala Alabang Village, Muntinlupa",
+      "client_name": "Robert Sy",
+      "agent_id": "e0a1b2c3-d4e5-4f60-8a1b-2c3d4e5f6002",
+      "agent_name": "Elena Rossi",
+      "sale_date": "2024-02-15",
+      "property_value": 185000000.00,
+      "status": "COMPLETED",
+      "notes": "Cash transaction with full escrow release.",
+      "created_at": "2024-02-15T16:00:00Z"
+    }
+  ]
+}

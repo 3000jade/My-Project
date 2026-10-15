@@ -73,12 +73,20 @@ export interface Property {
   taxAnnualAmount?: number;
   location: {
     address: string;
-    unparsedAddress?: string;
-    subdivisionName?: string;
+    unparsedAddress?: string | null;
+    subdivisionName?: string | null;
+    buildingName?: string | null;
+    building_name?: string | null;
     city: string;
-    state?: string;
-    stateOrProvince?: string;
-    postalCode?: string;
+    state?: string | null;
+    stateOrProvince?: string | null;
+    postalCode?: string | null;
+    region?: string | null;
+    region_psgc_code?: string | null;
+    province_psgc_code?: string | null;
+    city_psgc_code?: string | null;
+    barangay?: string | null;
+    barangay_psgc_code?: string | null;
     coordinates?: {
       lat: number;
       lng: number;

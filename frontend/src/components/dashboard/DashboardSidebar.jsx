@@ -18,7 +18,8 @@ export default function DashboardSidebar({
     { to: '/broker/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/broker/properties', label: 'Properties', icon: Building2 },
     { to: '/broker/inquiries', label: 'Inquiries', icon: MessageSquare },
-    { to: '/broker/agents', label: 'Clients', icon: Users },
+    { to: '/broker/clients', label: 'Clients', icon: Users },
+    { to: '/broker/agents', label: 'Agents', icon: User },
     { to: '/broker/appointments', label: 'Appointments', icon: Calendar },
     { to: '/broker/notifications', label: 'Tasks', icon: CheckSquare },
     { to: '/broker/reports', label: 'Reports', icon: FileText },
@@ -78,7 +79,7 @@ export default function DashboardSidebar({
                 HUMAN SHELTER REALTY
               </span>
               <span className="font-sans text-[9px] text-teal-300/80 block uppercase tracking-widest truncate font-medium">
-                PROPERTY MANAGEMENT
+                {role === 'broker' ? 'BROKER DASHBOARD' : 'PROPERTY MANAGEMENT'}
               </span>
             </div>
           </Link>
@@ -112,15 +113,37 @@ export default function DashboardSidebar({
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs transition-colors font-medium",
                   isActive
-                    ? "bg-[#0F766E]/40 text-white font-semibold shadow-xs"
+                    ? "bg-[#0F766E] text-white font-semibold shadow-xs"
                     : "text-teal-100/70 hover:text-white hover:bg-white/5"
                 )}
               >
-                <Icon className={cn("w-4 h-4 shrink-0", isActive ? "text-teal-300" : "text-teal-200/70")} />
+                <Icon className={cn("w-4 h-4 shrink-0", isActive ? "text-white" : "text-teal-200/70")} />
                 <span className="truncate">{link.label}</span>
               </NavLink>
             );
           })}
+
+          {/* Divider & Settings for Broker matching mockup */}
+          {role === 'broker' && (
+            <>
+              <div className="pt-2 pb-1">
+                <div className="h-px bg-teal-900/50 w-full" />
+              </div>
+              <NavLink
+                to="/broker/profile"
+                onClick={onClose}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs transition-colors font-medium",
+                  location.pathname === '/broker/profile'
+                    ? "bg-[#0F766E] text-white font-semibold shadow-xs"
+                    : "text-teal-100/70 hover:text-white hover:bg-white/5"
+                )}
+              >
+                <HelpCircle className="w-4 h-4 shrink-0 text-teal-200/70 rotate-90" />
+                <span className="truncate">Settings</span>
+              </NavLink>
+            </>
+          )}
         </div>
 
         {/* Bottom "Need Help?" Card matching mockup */}

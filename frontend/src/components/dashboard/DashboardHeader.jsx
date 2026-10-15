@@ -1,16 +1,49 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
-import { Bell, Search, Menu, CheckCheck, ChevronDown } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useLocation, Link, useNavigate } from 'react-router-dom';
+import { Bell, Search, Menu, CheckCheck, ChevronDown, User, LogOut, Home, LayoutDashboard } from 'lucide-react';
 import { notificationService } from '../../services/notificationService';
+import { useAuth } from '../../context/AuthContext';
 import { cn } from '@/utils/cn';
 
 export default function DashboardHeader({
   role = 'broker',
   onMenuClick,
 }) {
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+
+  const notificationRef = useRef(null);
+  const userMenuRef = useRef(null);
+
+  // Close menus on outside click or escape
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+        setShowNotifications(false);
+      }
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+        setShowUserMenu(false);
+      }
+    }
+
+    function handleKeyDown(e) {
+      if (e.key === 'Escape') {
+        setShowNotifications(false);
+        setShowUserMenu(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
 
   const loadNotifications = useCallback(async () => {
     try {
@@ -49,9 +82,28 @@ export default function DashboardHeader({
     }
   };
 
+  const handleLogout = async () => {
+    setShowUserMenu(false);
+    try {
+      if (logout) {
+        await logout();
+      }
+    } catch (err) {
+      console.warn('Logout failed:', err);
+    } finally {
+      navigate('/login');
+    }
+  };
+
+  const defaultName = role === 'client' ? 'Valued Client' : role === 'agent' ? 'Associate Agent' : 'Maria Santos';
+  const effectiveUserName = user?.fullName || user?.full_name || user?.name || defaultName;
   const roleLabel = role === 'client' ? 'Client' : role === 'agent' ? 'Sales Agent' : 'Administrator';
-  const roleInitials = role === 'client' ? 'CL' : role === 'agent' ? 'AG' : 'MS';
-  const userName = role === 'client' ? 'Valued Client' : role === 'agent' ? 'Associate Agent' : 'Maria Santos';
+  const roleInitials = effectiveUserName
+    ? effectiveUserName.split(' ').filter(Boolean).map(n => n[0]).join('').slice(0, 2).toUpperCase()
+    : (role === 'client' ? 'CL' : role === 'agent' ? 'AG' : 'MS');
+
+  const profilePath = role === 'client' ? '/client/profile' : role === 'agent' ? '/agent/profile' : '/broker/profile';
+  const dashboardPath = role === 'client' ? '/client/dashboard' : role === 'agent' ? '/agent/dashboard' : '/broker/dashboard';
 
   return (
     <header className="h-16 bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 select-none gap-4">
@@ -82,11 +134,15 @@ export default function DashboardHeader({
       {/* Right: Notifications & User Avatar Profile */}
       <div className="flex items-center gap-3 shrink-0">
         {/* Notification Bell */}
-        <div className="relative">
+        <div className="relative" ref={notificationRef}>
           <button
-            onClick={() => setShowNotifications(!showNotifications)}
+            onClick={() => {
+              setShowNotifications(!showNotifications);
+              setShowUserMenu(false);
+            }}
             className="w-9 h-9 rounded-lg text-slate-500 hover:text-[#1E293B] hover:bg-slate-100 flex items-center justify-center transition-colors relative cursor-pointer"
             aria-label="Notifications"
+            aria-expanded={showNotifications}
           >
             <Bell className="w-4 h-4" />
             <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#FF6B6B] ring-2 ring-white" />
@@ -142,16 +198,85 @@ export default function DashboardHeader({
           )}
         </div>
 
-        {/* User Avatar Badge matching mockup */}
-        <div className="flex items-center gap-2.5 pl-2 border-l border-[#E2E8F0] cursor-pointer hover:opacity-90 transition-opacity">
-          <div className="w-8 h-8 rounded-full bg-[#0F766E] text-white font-bold flex items-center justify-center text-xs tracking-tight shadow-xs">
-            {roleInitials}
-          </div>
-          <div className="hidden sm:block text-left leading-tight">
-            <span className="block text-xs font-semibold text-[#1E293B]">{userName}</span>
-            <span className="block text-[10px] text-[#64748B]">{roleLabel}</span>
-          </div>
-          <ChevronDown className="w-3.5 h-3.5 text-slate-400 ml-0.5" />
+        {/* User Avatar Profile & Dropdown */}
+        <div className="relative" ref={userMenuRef}>
+          <button
+            type="button"
+            onClick={() => {
+              setShowUserMenu(!showUserMenu);
+              setShowNotifications(false);
+            }}
+            className="flex items-center gap-2.5 pl-2 border-l border-[#E2E8F0] cursor-pointer hover:opacity-90 transition-opacity text-left select-none"
+            aria-label="User navigation menu"
+            aria-expanded={showUserMenu}
+          >
+            <div className="w-8 h-8 rounded-full bg-[#0F766E] text-white font-bold flex items-center justify-center text-xs tracking-tight shadow-xs">
+              {roleInitials}
+            </div>
+            <div className="hidden sm:block text-left leading-tight">
+              <span className="block text-xs font-semibold text-[#1E293B]">{effectiveUserName}</span>
+              <span className="block text-[10px] text-[#64748B]">{roleLabel}</span>
+            </div>
+            <ChevronDown className={cn("w-3.5 h-3.5 text-slate-400 ml-0.5 transition-transform duration-200", showUserMenu && "rotate-180")} />
+          </button>
+
+          {/* User Profile Popover Menu */}
+          {showUserMenu && (
+            <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-[#E2E8F0] py-1.5 z-50 animate-in fade-in duration-150 font-sans">
+              {/* Profile Card Header */}
+              <div className="px-4 py-2.5 border-b border-[#E2E8F0]">
+                <p className="text-xs font-semibold text-[#1E293B] truncate">{effectiveUserName}</p>
+                <p className="text-[11px] text-[#64748B] truncate mt-0.5">{user?.email || (role === 'broker' ? 'broker@pt.com' : role === 'agent' ? 'agent@pt.com' : 'client@pt.com')}</p>
+                <div className="mt-2 flex items-center gap-1.5">
+                  <span className="px-2 py-0.5 bg-[#0F766E]/10 text-[#0F766E] font-semibold text-[10px] rounded-full uppercase tracking-wider">
+                    {roleLabel}
+                  </span>
+                </div>
+              </div>
+
+              {/* Navigation Links */}
+              <div className="py-1">
+                <Link
+                  to={profilePath}
+                  onClick={() => setShowUserMenu(false)}
+                  className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-[#1E293B] hover:bg-[#F8FAFC] hover:text-[#0F766E] transition-colors"
+                >
+                  <User className="w-4 h-4 text-slate-400" />
+                  <span>Broker Profile</span>
+                </Link>
+
+                <Link
+                  to={dashboardPath}
+                  onClick={() => setShowUserMenu(false)}
+                  className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-[#1E293B] hover:bg-[#F8FAFC] hover:text-[#0F766E] transition-colors"
+                >
+                  <LayoutDashboard className="w-4 h-4 text-slate-400" />
+                  <span>Dashboard</span>
+                </Link>
+
+                <Link
+                  to="/"
+                  onClick={() => setShowUserMenu(false)}
+                  className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-[#1E293B] hover:bg-[#F8FAFC] hover:text-[#0F766E] transition-colors"
+                >
+                  <Home className="w-4 h-4 text-slate-400" />
+                  <span>Public Home Page</span>
+                </Link>
+              </div>
+
+              {/* Sign Out / Logout Action */}
+              <div className="pt-1 border-t border-[#E2E8F0]">
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors text-left cursor-pointer"
+                >
+                  <LogOut className="w-4 h-4 text-rose-500" />
+                  <span>Sign Out</span>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

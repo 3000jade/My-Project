@@ -765,11 +765,11 @@ export default function BrokerProperties() {
           
           <Link
             to="/broker/properties/create"
-            className="h-10 px-4 rounded-lg bg-[#FF6B6B] hover:bg-[#EE5A5A] text-[#1E293B] text-xs font-semibold shadow-2xs transition-colors cursor-pointer flex items-center gap-1.5"
+            className="h-10 px-4 rounded-lg bg-[#EB0028] hover:bg-[#D00223] active:bg-[#B3021E] text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer flex items-center gap-1.5"
             aria-label="New Listing / Add New Property"
           >
-            <Plus className="w-4 h-4 stroke-[2.5]" />
-            <span>+ Add New Property</span>
+            <Plus className="w-4 h-4 stroke-[2.5] text-white" />
+            <span className="text-white font-medium">Add New Property</span>
           </Link>
         </div>
       </div>

@@ -1,13 +1,18 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import PageHeader from '../../../components/dashboard/PageHeader';
 import StatusBadge from '../../../components/dashboard/StatusBadge';
 import DashboardModal from '../../../components/dashboard/DashboardModal';
 import { profileService, mockDefaultProfiles } from '../../../services/profileService';
+import { useAuth } from '../../../context/AuthContext';
 
 export default function BrokerProfile() {
+  const navigate = useNavigate();
+  const { logout } = useAuth();
   const [profile, setProfile] = useState(mockDefaultProfiles.broker);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
   const [error, setError] = useState(null);
 
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -56,29 +61,59 @@ export default function BrokerProfile() {
     }
   };
 
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    try {
+      if (logout) {
+        await logout();
+      }
+    } catch (err) {
+      console.warn('Logout error:', err.message);
+    } finally {
+      navigate('/login');
+    }
+  };
+
   return (
     <div className="space-y-8 max-w-5xl mx-auto">
       <PageHeader
         title="Broker Executive Profile"
         subtitle="Principal broker credentials, firm regulatory registrations, and administrative settings."
         actions={
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <Link
+              to="/"
+              className="h-[42px] px-3.5 bg-white hover:bg-slate-50 text-[#1E293B] border border-[#E2E8F0] rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs"
+              title="Return to Public Site"
+            >
+              <span className="material-symbols-outlined text-[17px] text-slate-500">home</span>
+              <span>Home Page</span>
+            </Link>
             <button
               onClick={loadProfile}
               disabled={loading}
-              className="h-[46px] px-4 bg-white hover:bg-gray-50 text-[#174849] border border-gray-200 rounded-xl text-xs font-bold font-sans uppercase tracking-wider flex items-center gap-2 transition-all shadow-xs cursor-pointer"
+              className="h-[42px] px-3.5 bg-white hover:bg-slate-50 text-[#174849] border border-[#E2E8F0] rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
             >
-              <span className={`material-symbols-outlined text-[18px] ${loading ? 'animate-spin' : ''}`}>
+              <span className={`material-symbols-outlined text-[17px] ${loading ? 'animate-spin' : ''}`}>
                 refresh
               </span>
               <span>Refresh</span>
             </button>
             <button
               onClick={handleOpenEdit}
-              className="h-[46px] px-5 bg-[#266F71] hover:bg-[#174849] text-white rounded-xl text-xs font-bold font-sans uppercase tracking-wider flex items-center gap-2 shadow-sm transition-all cursor-pointer"
+              className="h-[42px] px-4 bg-[#0F766E] hover:bg-[#115E59] text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
             >
-              <span className="material-symbols-outlined text-[18px]">edit</span>
-              Edit Profile
+              <span className="material-symbols-outlined text-[17px]">edit</span>
+              <span>Edit Profile</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleLogout}
+              disabled={loggingOut}
+              className="h-[42px] px-3.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer disabled:opacity-60"
+            >
+              <span className="material-symbols-outlined text-[17px] text-rose-600">logout</span>
+              <span>{loggingOut ? 'Signing out...' : 'Logout'}</span>
             </button>
           </div>
         }
@@ -136,6 +171,44 @@ export default function BrokerProfile() {
                 <span className="text-gray-400 block text-[10px] font-bold uppercase tracking-wider">Operating Entity</span>
                 <span className="font-semibold text-gray-800">{profile.firm_name}</span>
               </div>
+            </div>
+
+            {/* Quick Navigation & Session Panel */}
+            <div className="w-full pt-5 border-t border-gray-100 flex flex-col gap-2 font-sans">
+              <span className="text-gray-400 block text-[10px] font-bold uppercase tracking-wider text-left">
+                Navigation & Session
+              </span>
+              <Link
+                to="/"
+                className="w-full py-2 px-3 rounded-lg bg-[#F8FAFC] hover:bg-slate-100 text-[#1E293B] text-xs font-medium flex items-center justify-between border border-[#E2E8F0] transition-colors"
+              >
+                <span className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[16px] text-[#0F766E]">home</span>
+                  Public Home Page
+                </span>
+                <span className="material-symbols-outlined text-[16px] text-slate-400">arrow_forward</span>
+              </Link>
+
+              <Link
+                to="/broker/dashboard"
+                className="w-full py-2 px-3 rounded-lg bg-[#F8FAFC] hover:bg-slate-100 text-[#1E293B] text-xs font-medium flex items-center justify-between border border-[#E2E8F0] transition-colors"
+              >
+                <span className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[16px] text-[#0F766E]">dashboard</span>
+                  Broker Dashboard
+                </span>
+                <span className="material-symbols-outlined text-[16px] text-slate-400">arrow_forward</span>
+              </Link>
+
+              <button
+                type="button"
+                onClick={handleLogout}
+                disabled={loggingOut}
+                className="w-full mt-1 py-2 px-3 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold flex items-center justify-center gap-2 border border-rose-200 transition-colors cursor-pointer disabled:opacity-60"
+              >
+                <span className="material-symbols-outlined text-[16px] text-rose-600">logout</span>
+                <span>{loggingOut ? 'Signing out...' : 'Sign Out of Session'}</span>
+              </button>
             </div>
           </div>
 

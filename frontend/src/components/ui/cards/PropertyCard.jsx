@@ -5,189 +5,227 @@ import {
   IconMapPin, 
   IconBed, 
   IconBath, 
-  IconCar, 
   IconDimensions,
-  IconArrowRight 
+  IconArrowRight,
+  IconBookmark,
+  IconBookmarkFilled
 } from '@tabler/icons-react';
 import { resolveDriveImageUrl } from '../../../services/driveService';
+import useViewingList from '../../../hooks/useViewingList';
 
-export default function PropertyCard({ property, variant = 'vertical', variants }) {
+export default function PropertyCard({ property = {}, variant = 'vertical', variants }) {
   const navigate = useNavigate();
+  const { isInViewingList, toggleViewingList } = useViewingList();
   
-  // Common animation config if 'variants' is not provided by parent
+  // Animation config
   const cardAnimation = variants || {
-    hidden: { opacity: 0, y: 40 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } }
+    hidden: { opacity: 0, y: 24 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] } }
   };
 
-  const getFinancingInfo = (item) => {
-    const isRent = item.priceSuffix || (item.status && item.status.toLowerCase().includes('rent'));
-    const rawPrice = item.price ? item.price.toString().replace(/,/g, '') : '0';
-    const numPrice = parseInt(rawPrice, 10);
-    
-    if (isRent) {
-      return {
-        label: 'Monthly Lease',
-        monthly: `₱${numPrice.toLocaleString()}/mo`,
-        tcp: `₱${numPrice.toLocaleString()} / month`
-      };
+  // Safe Property Identification & Navigation Target
+  const propertyId = property.id || property.ListingKey || property.listingKey || property.ListingId || property.listingId || property.ref_code || '';
+  const isSaved = propertyId ? isInViewingList(propertyId) : false;
+
+  // Title mapping (Name -> properties.title)
+  const propertyTitle = property.title || property.name || 'Untitled Property';
+
+  // Transaction classification & Badge: For Sale / For Rent
+  const transactionType = property.transaction_type || property.transactionType || property.specs?.transactionType || '';
+  const isRent = Boolean(
+    property.rent_frequency ||
+    property.priceSuffix ||
+    (transactionType && transactionType.toLowerCase().includes('rent')) ||
+    (property.status && property.status.toLowerCase().includes('rent'))
+  );
+  const typeBadgeLabel = isRent ? 'For Rent' : 'For Sale';
+  const isFeatured = Boolean(property.is_featured || property.isFeatured);
+
+  // Property Type
+  const propertyType = property.property_type || property.propertyType || property.specs?.propertyType || property.PropertyType || 'Residential';
+
+  // Price formatting
+  const rawPrice = property.price_raw ?? (typeof property.price === 'number' ? property.price : Number(String(property.price || '0').replace(/[^0-9.-]+/g, '')) || 0);
+  const rentFreq = property.rent_frequency || property.pricing?.rentFrequency || (property.priceSuffix ? property.priceSuffix.replace(/^\s*\/?\s*/, '') : 'mo');
+  
+  let formattedPriceDisplay = '';
+  if (property.formattedPrice) {
+    formattedPriceDisplay = property.formattedPrice;
+  } else if (rawPrice > 0) {
+    formattedPriceDisplay = `₱${rawPrice.toLocaleString('en-PH')}`;
+  } else if (typeof property.price === 'string' && property.price.trim()) {
+    formattedPriceDisplay = property.price;
+  } else {
+    formattedPriceDisplay = 'Price on Request';
+  }
+
+  const priceWithFrequency = isRent && !formattedPriceDisplay.includes('/') && !formattedPriceDisplay.toLowerCase().includes('mo')
+    ? `${formattedPriceDisplay} / ${rentFreq}`
+    : formattedPriceDisplay;
+
+  // Location mapping (City / Municipality, Province)
+  const city = property.city || property.location_raw?.city || property.location?.city || '';
+  const province = property.state_or_province || property.province || property.location_raw?.stateOrProvince || property.location?.state || property.location?.stateOrProvince || '';
+  const displayLocation = [city, province].filter(Boolean).join(', ') || (typeof property.location === 'string' ? property.location : 'Metro Manila, Philippines');
+
+  // Specs: Bedrooms, Bathrooms, Floor Area with unit
+  const beds = property.bedrooms_total ?? property.bedroomsTotal ?? property.beds ?? property.specs?.beds ?? property.specs?.bedroomsTotal ?? null;
+  const baths = property.bathrooms_total_integer ?? property.bathroomsTotalInteger ?? property.baths ?? property.specs?.baths ?? property.specs?.bathroomsTotalInteger ?? null;
+  
+  const floorAreaValue = property.living_area ?? property.livingArea ?? property.specs?.livingArea ?? property.sqm ?? property.floor_area ?? property.sqft ?? null;
+  const floorAreaUnits = property.living_area_units || property.livingAreaUnits || property.specs?.livingAreaUnits || (property.sqm ? 'sqm' : (property.sqft ? 'sqft' : 'sqm'));
+  const floorAreaFormatted = floorAreaValue != null ? `${floorAreaValue} ${floorAreaUnits}` : null;
+
+  // Cover photo with fallback
+  const rawImage = (Array.isArray(property.images) && property.images[0]) ||
+    (Array.isArray(property.property_images) && property.property_images[0]?.image_url) ||
+    property.mainImage ||
+    property.image ||
+    'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1200&auto=format&fit=crop';
+  const coverImage = resolveDriveImageUrl(rawImage);
+
+  const handleNavigate = () => {
+    if (propertyId) {
+      navigate(`/properties/${propertyId}`);
     }
-    
-    const loanAmount = numPrice * 0.80;
-    const r = 0.075 / 12;
-    const n = 15 * 12;
-    const monthlyAmort = loanAmount * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
-    
-    return {
-      label: 'Est. Monthly',
-      monthly: `₱${Math.round(monthlyAmort).toLocaleString()}/mo`,
-      tcp: `TCP: ₱${numPrice.toLocaleString()}`
-    };
   };
 
-  const finance = getFinancingInfo(property);
-  const propertyTitle = property.name || property.title;
-  const propertyBeds = property.beds ? String(property.beds) : (property.specs ? property.specs.split(' • ')[0].replace(' Beds', '').replace(' Bed', '') : '0');
-  const propertyBaths = property.baths ? String(property.baths) : (property.specs ? property.specs.split(' • ')[1].replace(' Baths', '').replace(' Bath', '') : '0');
-  const propertyParking = property.parking ? String(property.parking).replace(' Cars', '') : '0';
+  const handleSaveToggle = (e) => {
+    e.stopPropagation();
+    toggleViewingList(property);
+  };
 
   return (
-    <motion.div
+    <motion.article
       variants={cardAnimation}
-      onClick={() => navigate(`/properties/${property.id}`)}
-      className="relative bg-white rounded-[10px] border border-[#D1D5DB] shadow-[0_8px_30px_rgba(0,0,0,0.06)] hover:shadow-[0_20px_40px_rgba(13,68,70,0.12)] hover:border-[#0D4446]/40 hover:-translate-y-1.5 transition-all duration-700 ease-out group cursor-pointer overflow-hidden flex flex-col justify-between h-full w-full z-10"
+      onClick={handleNavigate}
+      className="group relative bg-[#FFFFFF] rounded-lg border border-[#E2E8F0] shadow-xs hover:shadow-md hover:border-[#0F766E]/40 hover:-translate-y-1 transition-all duration-300 ease-out cursor-pointer overflow-hidden flex flex-col justify-between h-full w-full select-none"
       tabIndex={0}
       role="button"
       aria-label={`View details for ${propertyTitle}`}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate(`/properties/${property.id}`); }}
+      onKeyDown={(e) => { 
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleNavigate();
+        }
+      }}
     >
-      {/* Dynamic Top Accent Border */}
-      <div 
-        className="absolute top-0 left-0 right-0 h-[3px] bg-transparent group-hover:bg-[#E76F51] transition-colors duration-500 z-10" 
-      />
-
-      {/* Upper Image Section with Badges, Reference Code, Title, and Location */}
       <div>
-        <div className="relative h-64 sm:h-72 overflow-hidden bg-stone-900">
+        {/* Cover Photo Container */}
+        <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
           <img
-            src={resolveDriveImageUrl(property.image || property.mainImage || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1200&auto=format&fit=crop')}
+            src={coverImage}
             alt={propertyTitle}
             loading="lazy"
             onError={(e) => {
               e.currentTarget.src = 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1200&auto=format&fit=crop';
             }}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+            className="w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-500 ease-out"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent pointer-events-none" />
 
-          {/* Top Badges: Single Status Pill */}
-          <div className="absolute top-3 left-3 z-10">
-            <span className="backdrop-blur-md bg-white/95 text-[#0D4446] text-[10px] sm:text-[11px] font-bold uppercase tracking-wider px-3.5 py-1.5 rounded-full shadow-xs border border-white/40">
-              {property.badge || property.status || (property.priceSuffix ? 'For Rent' : 'For Sale')}
+          {/* Badges: For Sale/Rent + Featured */}
+          <div className="absolute top-3 left-3 flex items-center gap-1.5 z-10">
+            <span className="backdrop-blur-md bg-white/95 text-[#0F766E] text-[11px] font-bold px-2.5 py-1 rounded shadow-xs border border-[#E2E8F0]/80 uppercase tracking-wide">
+              {typeBadgeLabel}
             </span>
+            {isFeatured && (
+              <span className="backdrop-blur-md bg-[#FF6B6B] text-white text-[11px] font-bold px-2.5 py-1 rounded shadow-xs uppercase tracking-wide">
+                Featured
+              </span>
+            )}
           </div>
 
-          {/* Title and Location overlaid on image bottom */}
-          <div className="absolute bottom-3 left-3.5 right-3.5 z-10">
-            <h3 className="text-lg sm:text-xl font-bold font-display text-white line-clamp-1 leading-snug drop-shadow-sm group-hover:text-white transition-colors">
+          {/* Independent Save / Favorite Action */}
+          <button
+            type="button"
+            onClick={handleSaveToggle}
+            aria-label={isSaved ? 'Remove from saved properties' : 'Save property'}
+            className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 backdrop-blur-md hover:bg-white text-slate-700 hover:text-[#0F766E] shadow-sm flex items-center justify-center transition-all duration-200 z-10 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#0F766E]"
+          >
+            {isSaved ? (
+              <IconBookmarkFilled size={16} className="text-[#0F766E]" />
+            ) : (
+              <IconBookmark size={16} stroke={2} />
+            )}
+          </button>
+
+          {/* Property Type Tag at bottom edge of image */}
+          <div className="absolute bottom-3 left-3 z-10">
+            <span className="backdrop-blur-sm bg-slate-900/80 text-white text-[10px] font-medium px-2 py-0.5 rounded tracking-wide">
+              {propertyType}
+            </span>
+          </div>
+        </div>
+
+        {/* Card Body */}
+        <div className="p-4 sm:p-5 flex flex-col gap-3">
+          {/* Price */}
+          <div className="flex items-baseline justify-between gap-2">
+            <div className="text-xl sm:text-2xl font-extrabold text-[#0F766E] font-sans tracking-tight leading-tight">
+              {priceWithFrequency}
+            </div>
+          </div>
+
+          {/* Property Name & Location */}
+          <div>
+            <h3 className="text-base sm:text-lg font-bold text-[#1E293B] group-hover:text-[#0F766E] transition-colors line-clamp-1 leading-snug">
               {propertyTitle}
             </h3>
-            <p className="flex items-center gap-1 text-xs text-stone-300 font-sans mt-0.5">
-              <IconMapPin size={14} stroke={2} className="shrink-0 text-stone-400" />
-              <span className="truncate">{property.location}</span>
+            <p className="flex items-center gap-1 text-xs text-[#64748B] mt-1">
+              <IconMapPin size={14} stroke={2} className="shrink-0 text-[#0F766E]" />
+              <span className="truncate">{displayLocation}</span>
             </p>
           </div>
-        </div>
 
-        {/* Body Content: Price + Metrics */}
-        <div className="p-4 sm:p-5 flex flex-col gap-4">
-          {/* Price Heading */}
-          <div>
-            <span className="text-[11px] sm:text-xs uppercase text-[#E76F51] font-mono font-bold block leading-none mb-1">
-              {finance.label}
-            </span>
-            <div className="text-2xl sm:text-3xl font-extrabold text-[#141717] font-sans tracking-tight leading-tight">
-              {finance.monthly}
-            </div>
-            <div className="text-[11px] sm:text-xs font-mono text-[#5C6768] mt-1 tracking-wide">
-              {finance.tcp}
-            </div>
-          </div>
-
-          {/* 4 Metric Cards with Icons */}
-          <div className="grid grid-cols-4 gap-2 sm:gap-2.5 pb-2 border-b border-transparent text-center">
-            <div className="py-2 px-1.5 bg-[#F4F5F4] rounded-[6px] flex flex-col items-center justify-center">
-              <span className="text-[9px] uppercase font-mono text-[#5C6768] flex items-center justify-center gap-0.5">
-                <IconDimensions size={16} stroke={2} className="text-[#0D4446]" />
-                Area
-              </span>
-              <p className="text-[13px] sm:text-[14px] font-bold text-[#0D4446] font-mono mt-1 text-center leading-tight">
-                {property.area}
-              </p>
-            </div>
-            <div className="py-2 px-1.5 bg-[#F4F5F4] rounded-[6px] flex flex-col items-center justify-center">
-              <span className="text-[9px] uppercase font-mono text-[#5C6768] flex items-center justify-center gap-0.5">
-                <IconBed size={16} stroke={2} className="text-[#0D4446]" />
+          {/* Key Specs Pill Bar */}
+          <div className="grid grid-cols-3 gap-2 py-2.5 px-3 bg-[#F8FAFC] rounded-lg border border-[#E2E8F0] text-center">
+            {/* Bedrooms */}
+            <div className="flex flex-col items-center justify-center">
+              <span className="text-[10px] uppercase font-semibold text-[#64748B] flex items-center gap-1">
+                <IconBed size={14} stroke={2} className="text-[#0F766E]" />
                 Beds
               </span>
-              <p className="text-[13px] sm:text-[14px] font-bold text-[#0D4446] font-mono mt-1 text-center leading-tight">
-                {propertyBeds}
-              </p>
+              <span className="text-xs sm:text-sm font-bold text-[#1E293B] mt-0.5">
+                {beds != null ? beds : '—'}
+              </span>
             </div>
-            <div className="py-2 px-1.5 bg-[#F4F5F4] rounded-[6px] flex flex-col items-center justify-center">
-              <span className="text-[9px] uppercase font-mono text-[#5C6768] flex items-center justify-center gap-0.5">
-                <IconBath size={16} stroke={2} className="text-[#0D4446]" />
+
+            {/* Bathrooms */}
+            <div className="flex flex-col items-center justify-center border-x border-[#E2E8F0]">
+              <span className="text-[10px] uppercase font-semibold text-[#64748B] flex items-center gap-1">
+                <IconBath size={14} stroke={2} className="text-[#0F766E]" />
                 Baths
               </span>
-              <p className="text-[13px] sm:text-[14px] font-bold text-[#0D4446] font-mono mt-1 text-center leading-tight">
-                {propertyBaths}
-              </p>
-            </div>
-            <div className="py-2 px-1.5 bg-[#F4F5F4] rounded-[6px] flex flex-col items-center justify-center">
-              <span className="text-[9px] uppercase font-mono text-[#5C6768] flex items-center justify-center gap-0.5">
-                <IconCar size={16} stroke={2} className="text-[#0D4446]" />
-                Parking
+              <span className="text-xs sm:text-sm font-bold text-[#1E293B] mt-0.5">
+                {baths != null ? baths : '—'}
               </span>
-              <p className="text-[13px] sm:text-[14px] font-bold text-[#0D4446] font-mono mt-1 text-center leading-tight">
-                {propertyParking}
-              </p>
+            </div>
+
+            {/* Floor Area */}
+            <div className="flex flex-col items-center justify-center">
+              <span className="text-[10px] uppercase font-semibold text-[#64748B] flex items-center gap-1">
+                <IconDimensions size={14} stroke={2} className="text-[#0F766E]" />
+                Area
+              </span>
+              <span className="text-xs sm:text-sm font-bold text-[#1E293B] mt-0.5 truncate max-w-full px-1">
+                {floorAreaFormatted || '—'}
+              </span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Lower Stage: Agent Redesign + Inspect Action */}
-      <div className="px-4 sm:px-5 pb-4 sm:pb-5 pt-3.5 flex items-center justify-between border-t border-stone-200/80 mt-1">
-        {/* Redesigned Agent Profile */}
-        <div className="flex items-center gap-3 group/agent cursor-pointer">
-          <div className="relative">
-            <img 
-              src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=100&h=100" 
-              alt="Listing Agent" 
-              className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm ring-1 ring-stone-200 transition-transform duration-300 group-hover/agent:scale-105" 
-            />
-            {/* Online Status Indicator */}
-            <div className="absolute bottom-0.5 right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white shadow-sm" />
-          </div>
-          <div className="flex flex-col justify-center">
-            <span className="text-[13px] sm:text-sm font-bold text-[#0D4446] leading-none group-hover/agent:text-[#E76F51] transition-colors duration-300">Elena Silva</span>
-          </div>
-        </div>
-
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            navigate(`/properties/${property.id}`);
-          }}
-          className="btn-shine px-3 py-1.5 bg-[#0D4446] hover:bg-[#082b2d] text-white rounded-[5px] text-[10px] font-bold uppercase tracking-widest transition-all duration-300 cursor-pointer flex items-center justify-center gap-1 shadow-sm relative overflow-hidden group/btn"
-        >
-          {/* Subtle shine effect wrapper */}
-          <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover/btn:animate-[shine_1.5s_ease-in-out_infinite]" />
-          <span className="relative z-10">View Details</span>
-          <IconArrowRight size={12} stroke={3} className="shrink-0 group-hover/btn:translate-x-1 transition-transform duration-300 relative z-10" />
-        </button>
+      {/* Card Footer: View Details Action */}
+      <div className="px-4 sm:px-5 py-3 border-t border-[#E2E8F0] bg-white flex items-center justify-between">
+        <span className="text-xs font-semibold text-[#0F766E] group-hover:text-[#115E59] transition-colors flex items-center gap-1">
+          View Details
+          <IconArrowRight size={14} stroke={2.5} className="group-hover:translate-x-1 transition-transform" />
+        </span>
+        <span className="text-[11px] font-mono text-[#64748B]">
+          {property.listing_id || property.ref_code || ''}
+        </span>
       </div>
-    </motion.div>
+    </motion.article>
   );
 }

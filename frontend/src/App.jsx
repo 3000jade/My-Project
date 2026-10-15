@@ -157,6 +157,7 @@ function AppRoutes({ isAppLoading }) {
           <Route path="inquiries" element={<BrokerInquiries />} />
           <Route path="inquiries/:id" element={<BrokerInquiryDetail />} />
           <Route path="appointments" element={<BrokerAppointments />} />
+          <Route path="clients" element={<Navigate to="/broker/inquiries" replace />} />
           <Route path="agents" element={<BrokerAgents />} />
           <Route path="agents/invite" element={<BrokerInviteAgent />} />
           <Route path="agents/:id" element={<BrokerAgentDetail />} />

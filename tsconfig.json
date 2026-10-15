@@ -11,5 +11,5 @@
       "axios": ["./backend/node_modules/axios"]
     }
   },
-  "include": ["src/**/*"]
+  "include": ["shared/**/*", "backend/src/**/*"]
 }

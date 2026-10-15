@@ -3,9 +3,9 @@ import { PropertyController } from '../controllers/property.controller';
 import { requireAuth } from '../middleware/auth.middleware';
 import { requireRole } from '../middleware/role.middleware';
 import { validateBody, validateQuery } from '../middleware/validate.middleware';
-import { 
-  createPropertySchema, 
-  queryPropertySchema, 
+import {
+  createPropertySchema,
+  queryPropertySchema,
   proposePropertyEditSchema,
   approveEditRequestSchema,
   rejectEditRequestSchema,
@@ -13,7 +13,7 @@ import {
 } from '../schemas/property.schema';
 import multer from 'multer';
 
-const upload = multer({ 
+const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 50 * 1024 * 1024 } // 50MB per file
 });

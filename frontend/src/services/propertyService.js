@@ -54,6 +54,27 @@ export function normalizeProperty(rawItem = {}) {
     images,
     location: locationString,
     location_raw: rawItem.location,
+    address: rawItem.address || rawItem.location?.address || '',
+    city: rawItem.city || rawItem.location?.city || '',
+    state: rawItem.state || rawItem.location?.state || rawItem.state_or_province || rawItem.location?.stateOrProvince || '',
+    state_or_province: rawItem.state_or_province || rawItem.location?.stateOrProvince || rawItem.state || rawItem.location?.state || '',
+    province: rawItem.state_or_province || rawItem.location?.stateOrProvince || rawItem.state || rawItem.location?.state || '',
+    subdivision_name: rawItem.subdivision_name || rawItem.location?.subdivisionName || rawItem.subdivisionName || '',
+    subdivisionName: rawItem.subdivision_name || rawItem.location?.subdivisionName || rawItem.subdivisionName || '',
+    building_name: rawItem.building_name || rawItem.location?.buildingName || rawItem.location?.building_name || rawItem.buildingName || '',
+    buildingName: rawItem.building_name || rawItem.location?.buildingName || rawItem.location?.building_name || rawItem.buildingName || '',
+    postal_code: rawItem.postal_code || rawItem.location?.postalCode || rawItem.postalCode || '',
+    postalCode: rawItem.postal_code || rawItem.location?.postalCode || rawItem.postalCode || '',
+    region: rawItem.region || rawItem.location?.region || '',
+    region_psgc_code: rawItem.region_psgc_code || rawItem.location?.region_psgc_code || rawItem.location?.regionPsgcCode || '',
+    province_psgc_code: rawItem.province_psgc_code || rawItem.location?.province_psgc_code || rawItem.location?.provincePsgcCode || '',
+    city_psgc_code: rawItem.city_psgc_code || rawItem.location?.city_psgc_code || rawItem.location?.cityPsgcCode || '',
+    barangay: rawItem.barangay || rawItem.location?.barangay || '',
+    barangay_psgc_code: rawItem.barangay_psgc_code || rawItem.location?.barangay_psgc_code || rawItem.location?.barangayPsgcCode || '',
+    unparsed_address: rawItem.unparsed_address || rawItem.location?.unparsedAddress || rawItem.location?.unparsed_address || '',
+    unparsedAddress: rawItem.unparsed_address || rawItem.location?.unparsedAddress || rawItem.location?.unparsed_address || '',
+    latitude: rawItem.latitude ?? rawItem.location?.coordinates?.lat ?? '',
+    longitude: rawItem.longitude ?? rawItem.location?.coordinates?.lng ?? '',
     price: displayPrice,
     price_raw: rawNumericPrice,
     formattedPrice: displayPrice,
@@ -78,20 +99,49 @@ export function normalizeProperty(rawItem = {}) {
     listing_key: rawItem.listing_key || rawItem.listingKey || `KEY-${rawItem.id}`,
     standard_status: rawItem.standard_status || rawItem.standardStatus || (normalizedStatus === 'AVAILABLE' ? 'Active' : normalizedStatus === 'RESERVED' || normalizedStatus === 'UNDER CONTRACT' ? 'Active Under Contract' : normalizedStatus === 'SOLD' ? 'Closed' : normalizedStatus),
     standardStatus: rawItem.standard_status || rawItem.standardStatus || (normalizedStatus === 'AVAILABLE' ? 'Active' : normalizedStatus === 'RESERVED' || normalizedStatus === 'UNDER CONTRACT' ? 'Active Under Contract' : normalizedStatus === 'SOLD' ? 'Closed' : normalizedStatus),
-    association_fee: rawItem.association_fee ?? rawItem.associationFee ?? 0,
-    associationFee: rawItem.association_fee ?? rawItem.associationFee ?? 0,
-    association_fee_frequency: rawItem.association_fee_frequency || rawItem.associationFeeFrequency || 'Monthly',
-    associationFeeFrequency: rawItem.association_fee_frequency || rawItem.associationFeeFrequency || 'Monthly',
+    association_fee: rawItem.pricing?.associationFee ?? rawItem.pricing?.association_fee ?? rawItem.association_fee ?? rawItem.associationFee ?? 0,
+    associationFee: rawItem.pricing?.associationFee ?? rawItem.pricing?.association_fee ?? rawItem.association_fee ?? rawItem.associationFee ?? 0,
+    association_fee_frequency: rawItem.pricing?.associationFeeFrequency ?? rawItem.pricing?.association_fee_frequency ?? rawItem.association_fee_frequency ?? rawItem.associationFeeFrequency ?? 'Monthly',
+    associationFeeFrequency: rawItem.pricing?.associationFeeFrequency ?? rawItem.pricing?.association_fee_frequency ?? rawItem.association_fee_frequency ?? rawItem.associationFeeFrequency ?? 'Monthly',
+    currency: rawItem.pricing?.currency || rawItem.currency || rawItem.listPriceCurrency || rawItem.list_price_currency || 'PHP',
+    rent_frequency: rawItem.pricing?.rentFrequency || rawItem.pricing?.rent_frequency || rawItem.rent_frequency || 'Monthly',
+    lease_term: rawItem.pricing?.leaseTerm || rawItem.pricing?.lease_term || rawItem.lease_term || '12 Months',
+    association_fee_includes: Array.isArray(rawItem.pricing?.associationFeeIncludes || rawItem.pricing?.association_fee_includes || rawItem.association_fee_includes)
+      ? (rawItem.pricing?.associationFeeIncludes || rawItem.pricing?.association_fee_includes || rawItem.association_fee_includes)
+      : [],
+    security_deposit: rawItem.pricing?.securityDeposit ?? rawItem.pricing?.security_deposit ?? rawItem.security_deposit ?? '',
+    advance_rent: rawItem.pricing?.advanceRent ?? rawItem.pricing?.advance_rent ?? rawItem.advance_rent ?? '',
+    pricing: rawItem.pricing || {},
     tax_annual_amount: rawItem.tax_annual_amount ?? rawItem.taxAnnualAmount ?? null,
     taxAnnualAmount: rawItem.tax_annual_amount ?? rawItem.taxAnnualAmount ?? null,
-    living_area: rawItem.living_area ?? rawItem.livingArea ?? rawItem.sqft ?? rawItem.specs?.livingArea ?? 100,
-    livingArea: rawItem.living_area ?? rawItem.livingArea ?? rawItem.sqft ?? rawItem.specs?.livingArea ?? 100,
-    living_area_units: rawItem.living_area_units || rawItem.livingAreaUnits || 'Square Meters',
-    livingAreaUnits: rawItem.living_area_units || rawItem.livingAreaUnits || 'Square Meters',
-    lot_size_area: rawItem.lot_size_area ?? rawItem.lotSizeArea ?? null,
-    lotSizeArea: rawItem.lot_size_area ?? rawItem.lotSizeArea ?? null,
-    lot_size_units: rawItem.lot_size_units || rawItem.lotSizeUnits || 'Square Meters',
-    lotSizeUnits: rawItem.lot_size_units || rawItem.lotSizeUnits || 'Square Meters',
+    living_area: rawItem.living_area ?? rawItem.livingArea ?? rawItem.specs?.livingArea ?? rawItem.floor_area ?? rawItem.sqft ?? '',
+    livingArea: rawItem.living_area ?? rawItem.livingArea ?? rawItem.specs?.livingArea ?? rawItem.floor_area ?? rawItem.sqft ?? '',
+    living_area_units: rawItem.living_area_units || rawItem.livingAreaUnits || rawItem.specs?.livingAreaUnits || 'Square Meters',
+    livingAreaUnits: rawItem.living_area_units || rawItem.livingAreaUnits || rawItem.specs?.livingAreaUnits || 'Square Meters',
+    lot_size_area: rawItem.lot_size_area ?? rawItem.lotSizeArea ?? rawItem.specs?.lotSizeArea ?? rawItem.lot_area ?? '',
+    lotSizeArea: rawItem.lot_size_area ?? rawItem.lotSizeArea ?? rawItem.specs?.lotSizeArea ?? rawItem.lot_area ?? '',
+    lot_size_units: rawItem.lot_size_units || rawItem.lotSizeUnits || rawItem.specs?.lotSizeUnits || 'Square Meters',
+    lotSizeUnits: rawItem.lot_size_units || rawItem.lotSizeUnits || rawItem.specs?.lotSizeUnits || 'Square Meters',
+    bedrooms_total: rawItem.bedrooms_total ?? rawItem.bedroomsTotal ?? rawItem.specs?.bedroomsTotal ?? rawItem.beds ?? '',
+    bathrooms_total_integer: rawItem.bathrooms_total_integer ?? rawItem.bathroomsTotalInteger ?? rawItem.specs?.bathroomsTotalInteger ?? rawItem.baths ?? '',
+    bathrooms_full: rawItem.bathrooms_full ?? rawItem.bathroomsFull ?? rawItem.specs?.bathroomsFull ?? '',
+    bathrooms_half: rawItem.bathrooms_half ?? rawItem.bathroomsHalf ?? rawItem.specs?.bathroomsHalf ?? '',
+    stories_total: rawItem.stories_total ?? rawItem.storiesTotal ?? rawItem.specs?.storiesTotal ?? '',
+    parking_total: rawItem.parking_total ?? rawItem.parkingTotal ?? rawItem.specs?.parkingTotal ?? '',
+    parking_covered: rawItem.parking_covered ?? rawItem.parkingCovered ?? rawItem.specs?.parkingCovered ?? '',
+    parking_open: rawItem.parking_open ?? rawItem.parkingOpen ?? rawItem.specs?.parkingOpen ?? '',
+    year_built: rawItem.year_built ?? rawItem.yearBuilt ?? rawItem.specs?.yearBuilt ?? '',
+    architectural_style: rawItem.architectural_style ?? rawItem.architecturalStyle ?? rawItem.specs?.architecturalStyle ?? '',
+    property_condition: rawItem.property_condition ?? rawItem.propertyCondition ?? rawItem.specs?.propertyCondition ?? '',
+    rooms: Array.isArray(rawItem.rooms) ? rawItem.rooms.map((r, idx) => ({
+      id: r.id || `room-${idx}-${Date.now()}`,
+      room_type: r.room_type || r.roomType || 'Bedroom',
+      room_level: r.room_level || r.roomLevel || 'Ground Floor',
+      room_length: r.room_length ?? r.roomLength ?? '',
+      room_width: r.room_width ?? r.roomWidth ?? '',
+      room_dimensions_units: r.room_dimensions_units || r.roomDimensionsUnits || 'Meters',
+      room_features: Array.isArray(r.room_features) ? r.room_features : (Array.isArray(r.roomFeatures) ? r.roomFeatures : (typeof (r.room_features || r.roomFeatures) === 'string' ? (r.room_features || r.roomFeatures).split(',').map(s => s.trim()).filter(Boolean) : []))
+    })) : [],
     subdivision_name: rawItem.subdivision_name || rawItem.subdivisionName || rawItem.location?.subdivisionName || '',
     subdivisionName: rawItem.subdivision_name || rawItem.subdivisionName || rawItem.location?.subdivisionName || '',
     confidential: rawItem.confidential || {
@@ -100,8 +150,27 @@ export function normalizeProperty(rawItem = {}) {
       showingInstructions: rawItem.showing_instructions || '',
       lockboxCode: rawItem.lockbox_code || '',
     },
+    property_images: Array.isArray(rawItem.property_images) ? rawItem.property_images : [],
     media: Array.isArray(rawItem.media) ? rawItem.media : [],
   };
+}
+
+/**
+ * Helper to parse a nonnegative number, returning undefined if empty or invalid
+ */
+function parseNonnegativeNumber(val) {
+  if (val === undefined || val === null || val === '') return undefined;
+  const num = Number(val);
+  return isNaN(num) ? undefined : Math.max(0, num);
+}
+
+/**
+ * Helper to parse a nonnegative integer, returning undefined if empty or invalid
+ */
+function parseNonnegativeInt(val) {
+  if (val === undefined || val === null || val === '') return undefined;
+  const num = parseInt(val, 10);
+  return isNaN(num) ? undefined : Math.max(0, num);
 }
 
 /**
@@ -133,6 +202,52 @@ export function toApiPayload(item = {}) {
     lng: Number(item.longitude)
   } : undefined);
 
+  // Specifications calculation & mapping
+  const bedroomsTotal = parseNonnegativeInt(item.bedrooms_total ?? item.bedroomsTotal ?? item.bedrooms ?? item.beds);
+  const bathroomsTotalInteger = parseNonnegativeInt(item.bathrooms_total_integer ?? item.bathroomsTotalInteger ?? item.bathrooms ?? item.baths);
+  const bathroomsFull = parseNonnegativeInt(item.bathrooms_full ?? item.bathroomsFull);
+  const bathroomsHalf = parseNonnegativeInt(item.bathrooms_half ?? item.bathroomsHalf);
+
+  const livingArea = parseNonnegativeNumber(item.living_area ?? item.livingArea ?? item.floor_area);
+  const livingAreaUnits = item.living_area_units || item.livingAreaUnits || 'Square Meters';
+
+  // Compute required sqft from living area conversion
+  let computedSqft = undefined;
+  if (livingArea !== undefined && livingArea > 0) {
+    if (livingAreaUnits === 'Square Meters') {
+      computedSqft = Math.round(livingArea * 10.7639);
+    } else {
+      computedSqft = Math.round(livingArea);
+    }
+  } else if (item.sqft) {
+    computedSqft = Number(item.sqft);
+  }
+
+  const lotSizeArea = parseNonnegativeNumber(item.lot_size_area ?? item.lotSizeArea ?? item.lot_area);
+  const lotSizeUnits = item.lot_size_units || item.lotSizeUnits || 'Square Meters';
+
+  const storiesTotal = parseNonnegativeInt(item.stories_total ?? item.storiesTotal ?? item.stories);
+  const parkingTotal = parseNonnegativeInt(item.parking_total ?? item.parkingTotal ?? item.parking);
+  const parkingCovered = parseNonnegativeInt(item.parking_covered ?? item.parkingCovered);
+  const parkingOpen = parseNonnegativeInt(item.parking_open ?? item.parkingOpen);
+  const yearBuilt = parseNonnegativeInt(item.year_built ?? item.yearBuilt);
+
+  // Format rooms array
+  const formattedRooms = Array.isArray(item.rooms) ? item.rooms.map(room => ({
+    roomType: room.room_type || room.roomType || 'Bedroom',
+    roomLevel: room.room_level || room.roomLevel || undefined,
+    roomLength: parseNonnegativeNumber(room.room_length ?? room.roomLength),
+    roomWidth: parseNonnegativeNumber(room.room_width ?? room.roomWidth),
+    roomDimensionsUnits: (room.room_dimensions_units || room.roomDimensionsUnits || 'Meters') === 'Feet' ? 'Feet' : 'Meters',
+    roomFeatures: Array.isArray(room.room_features) 
+      ? room.room_features 
+      : (Array.isArray(room.roomFeatures) 
+          ? room.roomFeatures 
+          : (typeof (room.room_features || room.roomFeatures) === 'string' 
+              ? (room.room_features || room.roomFeatures).split(',').map(s => s.trim()).filter(Boolean) 
+              : []))
+  })) : undefined;
+
   return {
     title: (item.title || 'Untitled Luxury Property').trim(),
     tagline: item.tagline || '',
@@ -143,53 +258,80 @@ export function toApiPayload(item = {}) {
     originalListPrice: numericOriginalPrice,
     associationFee: numericAssocFee,
     associationFeeFrequency: item.associationFeeFrequency || item.association_fee_frequency || 'Monthly',
-    taxAnnualAmount: numericTax,
+    isFeatured: item.is_featured !== undefined ? Boolean(item.is_featured) : (item.isFeatured !== undefined ? Boolean(item.isFeatured) : false),
+    is_featured: item.is_featured !== undefined ? Boolean(item.is_featured) : (item.isFeatured !== undefined ? Boolean(item.isFeatured) : false),
     standardStatus: item.standardStatus || item.standard_status || (item.status === 'AVAILABLE' ? 'Active' : item.status === 'UNDER CONTRACT' ? 'Active Under Contract' : item.status === 'SOLD' ? 'Closed' : 'Draft'),
     status: (item.status || 'available').toLowerCase(),
     publicRemarks: item.publicRemarks || item.description || '',
     location: {
-      address: item.address || item.location || 'Metro Manila',
-      unparsedAddress: item.address || item.location || 'Metro Manila',
-      subdivisionName: item.subdivisionName || item.subdivision_name || item.subdivision || '',
-      city: item.city || item.location || 'Metro Manila',
-      state: item.state || item.province || 'Metro Manila',
-      stateOrProvince: item.stateOrProvince || item.province || item.state || 'Metro Manila',
-      postalCode: item.postalCode || item.postal_code || '1000',
+      address: (item.address || item.location || '').trim(),
+      unparsedAddress: item.unparsedAddress || item.unparsed_address || undefined,
+      subdivisionName: (item.subdivisionName || item.subdivision_name || item.subdivision || '').trim() || undefined,
+      buildingName: (item.buildingName || item.building_name || '').trim() || undefined,
+      building_name: (item.buildingName || item.building_name || '').trim() || undefined,
+      city: (item.city || item.location || '').trim(),
+      state: (item.state || item.province || item.state_or_province || item.stateOrProvince || '').trim() || undefined,
+      stateOrProvince: (item.stateOrProvince || item.state_or_province || item.province || item.state || '').trim() || undefined,
+      postalCode: (item.postalCode || item.postal_code || '').trim() || undefined,
+      region: item.region || undefined,
+      regionPsgcCode: item.region_psgc_code || item.regionPsgcCode || undefined,
+      region_psgc_code: item.region_psgc_code || item.regionPsgcCode || undefined,
+      provincePsgcCode: item.province_psgc_code || item.provincePsgcCode || undefined,
+      province_psgc_code: item.province_psgc_code || item.provincePsgcCode || undefined,
+      cityPsgcCode: item.city_psgc_code || item.cityPsgcCode || undefined,
+      city_psgc_code: item.city_psgc_code || item.cityPsgcCode || undefined,
+      barangay: item.barangay || undefined,
+      barangayPsgcCode: item.barangay_psgc_code || item.barangayPsgcCode || undefined,
+      barangay_psgc_code: item.barangay_psgc_code || item.barangayPsgcCode || undefined,
       coordinates: resolvedCoordinates,
     },
     specs: {
-      beds: Number(item.bedrooms || item.beds) || 1,
-      baths: Number(item.bathrooms || item.baths) || 1,
-      bedroomsTotal: Number(item.bedrooms || item.beds) || 1,
-      bathroomsTotalInteger: Number(item.bathrooms || item.baths) || 1,
-      bathroomsFull: Number(item.bathroomsFull || item.bathrooms_full || item.specs?.bathroomsFull) || 1,
-      bathroomsHalf: Number(item.bathroomsHalf || item.bathrooms_half || item.specs?.bathroomsHalf) || 0,
-      storiesTotal: Number(item.stories || item.stories_total) || 1,
-      parkingTotal: Number(item.parking || item.parking_total) || 0,
-      parkingCovered: Number(item.parkingCovered || item.parking_covered || item.specs?.parkingCovered) || 0,
-      parkingOpen: Number(item.parkingOpen || item.parking_open || item.specs?.parkingOpen) || 0,
-      sqft: Number(item.livingArea || item.living_area || item.floor_area || item.sqft) || 100,
-      livingArea: Number(item.livingArea || item.living_area || item.floor_area || item.sqft) || 100,
-      livingAreaUnits: item.livingAreaUnits || item.living_area_units || 'Square Meters',
-      lotSizeArea: item.lotSizeArea || item.lot_area ? Number(item.lotSizeArea || item.lot_area) : undefined,
-      lotSizeUnits: item.lotSizeUnits || item.lot_area_unit || 'Square Meters',
+      beds: bedroomsTotal ?? 1,
+      baths: bathroomsTotalInteger ?? 1,
+      bedroomsTotal: bedroomsTotal ?? 1,
+      bathroomsTotalInteger: bathroomsTotalInteger ?? 1,
+      bathroomsFull: bathroomsFull,
+      bathroomsHalf: bathroomsHalf,
+      storiesTotal: storiesTotal,
+      sqft: computedSqft || 100,
+      livingArea: livingArea,
+      livingAreaUnits: livingAreaUnits,
+      lotSizeArea: lotSizeArea,
+      lotSizeUnits: lotSizeUnits,
       propertyType: item.propertyType || item.property_type || 'Estate',
       propertyTypeId: Number(item.property_type_id || item.propertyTypeId || item.specs?.propertyTypeId || 1),
       propertySubType: item.propertySubType || item.property_sub_type || '',
-      propertyCondition: item.propertyCondition || item.property_condition || 'RFO',
+      propertyCondition: item.propertyCondition || item.property_condition || undefined,
       transactionType: item.transactionType || item.transaction_type || 'For Sale',
-      yearBuilt: item.yearBuilt ? Number(item.yearBuilt) : new Date().getFullYear(),
+      yearBuilt: yearBuilt,
+      parkingTotal: parkingTotal,
+      parkingCovered: parkingCovered,
+      parkingOpen: parkingOpen,
     },
+    architecturalStyle: item.architectural_style || item.architecturalStyle || undefined,
+    rooms: formattedRooms && formattedRooms.length > 0 ? formattedRooms : undefined,
     features: Array.isArray(item.features) ? item.features : (Array.isArray(item.amenities) ? item.amenities : []),
     interiorFeatures: Array.isArray(item.interiorFeatures) ? item.interiorFeatures : (Array.isArray(item.interior_features) ? item.interior_features : []),
     exteriorFeatures: Array.isArray(item.exteriorFeatures) ? item.exteriorFeatures : (Array.isArray(item.exterior_features) ? item.exterior_features : []),
     images: item.coverImage ? [item.coverImage, ...(item.galleryImages || [])] : (item.images || []),
+    propertyImages: Array.isArray(item.property_images) ? item.property_images : (Array.isArray(item.propertyImages) ? item.propertyImages : undefined),
+    media: Array.isArray(item.media) ? item.media : undefined,
     confidential: {
       buyerAgencyCompensation: item.buyerAgencyCompensation || item.buyerBrokerCommission || item.commissionSplit || item.confidential?.buyerAgencyCompensation || '',
       privateRemarks: item.privateRemarks || item.privateNotes || item.confidential?.privateRemarks || '',
       showingInstructions: item.showingInstructions || item.confidential?.showingInstructions || '',
       lockboxCode: item.lockboxCode || item.confidential?.lockboxCode || '',
       sellerDirectPhone: item.sellerDirectPhone || item.seller_direct_phone || item.confidential?.sellerDirectPhone || '',
+    },
+    pricing: {
+      currency: item.currency || item.listPriceCurrency || 'PHP',
+      rentFrequency: item.transaction_type === 'For Rent' || item.transactionType === 'For Rent' ? (item.rent_frequency || item.rentFrequency || 'Monthly') : undefined,
+      leaseTerm: item.transaction_type === 'For Rent' || item.transactionType === 'For Rent' ? (item.lease_term || item.leaseTerm || '12 Months') : undefined,
+      associationFee: parseNonnegativeNumber(item.association_fee ?? item.associationFee),
+      associationFeeFrequency: item.association_fee_frequency || item.associationFeeFrequency || 'Monthly',
+      associationFeeIncludes: Array.isArray(item.association_fee_includes) ? item.association_fee_includes : (Array.isArray(item.associationFeeIncludes) ? item.associationFeeIncludes : []),
+      securityDeposit: parseNonnegativeNumber(item.security_deposit ?? item.securityDeposit),
+      advanceRent: parseNonnegativeNumber(item.advance_rent ?? item.advanceRent),
     },
   };
 }
@@ -214,6 +356,14 @@ export const propertyService = {
       limit: response?.limit ?? 10,
       totalPages: response?.totalPages ?? 1,
     };
+  },
+
+  /**
+   * Fetch total count of properties matching optional query filters
+   */
+  async countProperties(params = {}) {
+    const response = await apiClient.get('/properties/count', { params });
+    return response?.count ?? response?.data?.count ?? 0;
   },
 
   /**
