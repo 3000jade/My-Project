@@ -1,0 +1,572 @@
+[
+  {
+    "id": "070739d6-9fa5-4297-906d-d57034daac54",
+    "title": "Bespoke Rockwell Sky Penthouse",
+    "fields": {
+      "thumbnail": {
+        "db": null,
+        "backend": null,
+        "rendered": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1200&auto=format&fit=crop",
+        "eval": "Defect: Hardcoded Unsplash fallback in propertyService overrides null image; Building2 icon never renders"
+      },
+      "propertyName": {
+        "db": "Bespoke Rockwell Sky Penthouse",
+        "backend": "Bespoke Rockwell Sky Penthouse",
+        "rendered": "Bespoke Rockwell Sky Penthouse",
+        "eval": "Passed"
+      },
+      "listingCode": {
+        "dbListingId": "MLS-0C39KDW",
+        "dbListingKey": "KEY-1792095601039",
+        "backendListingId": "MLS-0C39KDW",
+        "backendListingKey": "KEY-1792095601039",
+        "rendered": "ID: KEY-1792095601039",
+        "eval": "Passed (Displays ID: KEY-...; Intended code verified as listing_key fallback)"
+      },
+      "city": {
+        "db": "Makati",
+        "backend": "Makati",
+        "rendered": "Makati",
+        "eval": "Passed"
+      },
+      "addressSubtitle": {
+        "dbState": "Rockwell Drive",
+        "backendState": "Rockwell Drive",
+        "rendered": "Rockwell Drive",
+        "eval": "Passed"
+      },
+      "propertyType": {
+        "db": "Residential",
+        "backend": "Residential",
+        "rendered": "Residential",
+        "eval": "Passed"
+      },
+      "propertySubtype": {
+        "db": "Single Family Residence",
+        "backend": "Single Family Residence",
+        "rendered": "Single Family Residence",
+        "eval": "Passed"
+      },
+      "floorArea": {
+        "db": "100 Square Meters",
+        "backend": "100 Square Meters",
+        "rendered": "100 m²",
+        "eval": "Passed"
+      },
+      "bedrooms": {
+        "dbBedroomsTotal": 1,
+        "dbBeds": 1,
+        "backendBedsTotal": 1,
+        "backendBeds": 1,
+        "rendered": "1",
+        "eval": "Passed"
+      },
+      "bathrooms": {
+        "dbBathroomsTotal": 1,
+        "dbBaths": 1,
+        "backendBathsTotal": 1,
+        "backendBaths": 1,
+        "rendered": "1",
+        "eval": "Passed"
+      },
+      "price": {
+        "dbPrice": 125000000,
+        "dbFormattedPrice": "₱125,000,000",
+        "backendPrice": 125000000,
+        "backendFormattedPrice": "₱125,000,000",
+        "rendered": "₱125,000,000",
+        "eval": "Passed"
+      },
+      "listingStatus": {
+        "dbStatus": "available",
+        "dbStandardStatus": "Active",
+        "backendStatus": "available",
+        "backendStandardStatus": "Active",
+        "rendered": "Active",
+        "eval": "Passed"
+      },
+      "dateAdded": {
+        "dbCreatedAt": "2026-10-15T20:20:04.021695+00:00",
+        "backendCreatedAt": "2026-10-15T20:20:04.021695+00:00",
+        "renderedCalendar": "Oct 16, 2026",
+        "renderedRelative": "Today",
+        "eval": "Verified"
+      }
+    }
+  },
+  {
+    "id": "330e8ef6-f9ae-4cb9-9aff-0d48be3d2fd3",
+    "title": "Bespoke Rockwell Sky Penthouse",
+    "fields": {
+      "thumbnail": {
+        "db": null,
+        "backend": null,
+        "rendered": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1200&auto=format&fit=crop",
+        "eval": "Defect: Hardcoded Unsplash fallback in propertyService overrides null image; Building2 icon never renders"
+      },
+      "propertyName": {
+        "db": "Bespoke Rockwell Sky Penthouse",
+        "backend": "Bespoke Rockwell Sky Penthouse",
+        "rendered": "Bespoke Rockwell Sky Penthouse",
+        "eval": "Passed"
+      },
+      "listingCode": {
+        "dbListingId": "MLS-MLW6IGN",
+        "dbListingKey": "KEY-1792094979317",
+        "backendListingId": "MLS-MLW6IGN",
+        "backendListingKey": "KEY-1792094979317",
+        "rendered": "ID: KEY-1792094979317",
+        "eval": "Passed (Displays ID: KEY-...; Intended code verified as listing_key fallback)"
+      },
+      "city": {
+        "db": "Makati",
+        "backend": "Makati",
+        "rendered": "Makati",
+        "eval": "Passed"
+      },
+      "addressSubtitle": {
+        "dbState": "Rockwell Drive",
+        "backendState": "Rockwell Drive",
+        "rendered": "Rockwell Drive",
+        "eval": "Passed"
+      },
+      "propertyType": {
+        "db": "Residential",
+        "backend": "Residential",
+        "rendered": "Residential",
+        "eval": "Passed"
+      },
+      "propertySubtype": {
+        "db": "Single Family Residence",
+        "backend": "Single Family Residence",
+        "rendered": "Single Family Residence",
+        "eval": "Passed"
+      },
+      "floorArea": {
+        "db": "100 Square Meters",
+        "backend": "100 Square Meters",
+        "rendered": "100 m²",
+        "eval": "Passed"
+      },
+      "bedrooms": {
+        "dbBedroomsTotal": 1,
+        "dbBeds": 1,
+        "backendBedsTotal": 1,
+        "backendBeds": 1,
+        "rendered": "1",
+        "eval": "Passed"
+      },
+      "bathrooms": {
+        "dbBathroomsTotal": 1,
+        "dbBaths": 1,
+        "backendBathsTotal": 1,
+        "backendBaths": 1,
+        "rendered": "1",
+        "eval": "Passed"
+      },
+      "price": {
+        "dbPrice": 125000000,
+        "dbFormattedPrice": "₱125,000,000",
+        "backendPrice": 125000000,
+        "backendFormattedPrice": "₱125,000,000",
+        "rendered": "₱125,000,000",
+        "eval": "Passed"
+      },
+      "listingStatus": {
+        "dbStatus": "available",
+        "dbStandardStatus": "Active",
+        "backendStatus": "available",
+        "backendStandardStatus": "Active",
+        "rendered": "Active",
+        "eval": "Passed"
+      },
+      "dateAdded": {
+        "dbCreatedAt": "2026-10-15T20:09:42.332432+00:00",
+        "backendCreatedAt": "2026-10-15T20:09:42.332432+00:00",
+        "renderedCalendar": "Oct 16, 2026",
+        "renderedRelative": "Today",
+        "eval": "Verified"
+      }
+    }
+  },
+  {
+    "id": "8230e25e-db5f-49e6-9edd-13a84351b905",
+    "title": "Bespoke Rockwell Sky Penthouse",
+    "fields": {
+      "thumbnail": {
+        "db": null,
+        "backend": null,
+        "rendered": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1200&auto=format&fit=crop",
+        "eval": "Defect: Hardcoded Unsplash fallback in propertyService overrides null image; Building2 icon never renders"
+      },
+      "propertyName": {
+        "db": "Bespoke Rockwell Sky Penthouse",
+        "backend": "Bespoke Rockwell Sky Penthouse",
+        "rendered": "Bespoke Rockwell Sky Penthouse",
+        "eval": "Passed"
+      },
+      "listingCode": {
+        "dbListingId": "MLS-XQC7DVM",
+        "dbListingKey": "KEY-1792092839862",
+        "backendListingId": "MLS-XQC7DVM",
+        "backendListingKey": "KEY-1792092839862",
+        "rendered": "ID: KEY-1792092839862",
+        "eval": "Passed (Displays ID: KEY-...; Intended code verified as listing_key fallback)"
+      },
+      "city": {
+        "db": "Makati",
+        "backend": "Makati",
+        "rendered": "Makati",
+        "eval": "Passed"
+      },
+      "addressSubtitle": {
+        "dbState": "Rockwell Drive",
+        "backendState": "Rockwell Drive",
+        "rendered": "Rockwell Drive",
+        "eval": "Passed"
+      },
+      "propertyType": {
+        "db": "Residential",
+        "backend": "Residential",
+        "rendered": "Residential",
+        "eval": "Passed"
+      },
+      "propertySubtype": {
+        "db": "Single Family Residence",
+        "backend": "Single Family Residence",
+        "rendered": "Single Family Residence",
+        "eval": "Passed"
+      },
+      "floorArea": {
+        "db": "100 Square Meters",
+        "backend": "100 Square Meters",
+        "rendered": "100 m²",
+        "eval": "Passed"
+      },
+      "bedrooms": {
+        "dbBedroomsTotal": 1,
+        "dbBeds": 1,
+        "backendBedsTotal": 1,
+        "backendBeds": 1,
+        "rendered": "1",
+        "eval": "Passed"
+      },
+      "bathrooms": {
+        "dbBathroomsTotal": 1,
+        "dbBaths": 1,
+        "backendBathsTotal": 1,
+        "backendBaths": 1,
+        "rendered": "1",
+        "eval": "Passed"
+      },
+      "price": {
+        "dbPrice": 125000000,
+        "dbFormattedPrice": "₱125,000,000",
+        "backendPrice": 125000000,
+        "backendFormattedPrice": "₱125,000,000",
+        "rendered": "₱125,000,000",
+        "eval": "Passed"
+      },
+      "listingStatus": {
+        "dbStatus": "available",
+        "dbStandardStatus": "Active",
+        "backendStatus": "available",
+        "backendStandardStatus": "Active",
+        "rendered": "Active",
+        "eval": "Passed"
+      },
+      "dateAdded": {
+        "dbCreatedAt": "2026-10-15T19:34:02.89812+00:00",
+        "backendCreatedAt": "2026-10-15T19:34:02.89812+00:00",
+        "renderedCalendar": "Oct 16, 2026",
+        "renderedRelative": "Today",
+        "eval": "Verified"
+      }
+    }
+  },
+  {
+    "id": "0e52d08c-ece7-429d-b85f-2b63662adc30",
+    "title": "koo",
+    "fields": {
+      "thumbnail": {
+        "db": null,
+        "backend": null,
+        "rendered": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1200&auto=format&fit=crop",
+        "eval": "Defect: Hardcoded Unsplash fallback in propertyService overrides null image; Building2 icon never renders"
+      },
+      "propertyName": {
+        "db": "koo",
+        "backend": "koo",
+        "rendered": "koo",
+        "eval": "Passed"
+      },
+      "listingCode": {
+        "dbListingId": "MLS-D2K3H3O",
+        "dbListingKey": "KEY-1792089413650",
+        "backendListingId": "MLS-D2K3H3O",
+        "backendListingKey": "KEY-1792089413650",
+        "rendered": "ID: KEY-1792089413650",
+        "eval": "Passed (Displays ID: KEY-...; Intended code verified as listing_key fallback)"
+      },
+      "city": {
+        "db": "Basco (Capital)",
+        "backend": "Basco (Capital)",
+        "rendered": "Basco (Capital)",
+        "eval": "Passed"
+      },
+      "addressSubtitle": {
+        "dbState": "Batanes",
+        "backendState": "Batanes",
+        "rendered": "Batanes",
+        "eval": "Passed"
+      },
+      "propertyType": {
+        "db": "Residential",
+        "backend": "Residential",
+        "rendered": "Residential",
+        "eval": "Passed"
+      },
+      "propertySubtype": {
+        "db": "Single Family Residence",
+        "backend": "Single Family Residence",
+        "rendered": "Single Family Residence",
+        "eval": "Passed"
+      },
+      "floorArea": {
+        "db": "122 Square Meters",
+        "backend": "122 Square Meters",
+        "rendered": "122 m²",
+        "eval": "Passed"
+      },
+      "bedrooms": {
+        "dbBedroomsTotal": 3,
+        "dbBeds": 3,
+        "backendBedsTotal": 3,
+        "backendBeds": 3,
+        "rendered": "3",
+        "eval": "Passed"
+      },
+      "bathrooms": {
+        "dbBathroomsTotal": 3,
+        "dbBaths": 3,
+        "backendBathsTotal": 3,
+        "backendBaths": 3,
+        "rendered": "3",
+        "eval": "Passed"
+      },
+      "price": {
+        "dbPrice": 32323,
+        "dbFormattedPrice": "₱32,323",
+        "backendPrice": 32323,
+        "backendFormattedPrice": "₱32,323",
+        "rendered": "₱32,323",
+        "eval": "Passed"
+      },
+      "listingStatus": {
+        "dbStatus": "available",
+        "dbStandardStatus": "Active",
+        "backendStatus": "available",
+        "backendStandardStatus": "Active",
+        "rendered": "Active",
+        "eval": "Passed"
+      },
+      "dateAdded": {
+        "dbCreatedAt": "2026-10-15T18:36:55.805665+00:00",
+        "backendCreatedAt": "2026-10-15T18:36:55.805665+00:00",
+        "renderedCalendar": "Oct 16, 2026",
+        "renderedRelative": "Today",
+        "eval": "Verified"
+      }
+    }
+  },
+  {
+    "id": "2508da67-08a2-4fdd-bde2-ea49567f2c8c",
+    "title": "test 2",
+    "fields": {
+      "thumbnail": {
+        "db": null,
+        "backend": null,
+        "rendered": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1200&auto=format&fit=crop",
+        "eval": "Defect: Hardcoded Unsplash fallback in propertyService overrides null image; Building2 icon never renders"
+      },
+      "propertyName": {
+        "db": "test 2",
+        "backend": "test 2",
+        "rendered": "test 2",
+        "eval": "Passed"
+      },
+      "listingCode": {
+        "dbListingId": "MLS-ETPMEQL",
+        "dbListingKey": "KEY-1792089033706",
+        "backendListingId": "MLS-ETPMEQL",
+        "backendListingKey": "KEY-1792089033706",
+        "rendered": "ID: KEY-1792089033706",
+        "eval": "Passed (Displays ID: KEY-...; Intended code verified as listing_key fallback)"
+      },
+      "city": {
+        "db": "Banayoyo",
+        "backend": "Banayoyo",
+        "rendered": "Banayoyo",
+        "eval": "Passed"
+      },
+      "addressSubtitle": {
+        "dbState": "Ilocos Sur",
+        "backendState": "Ilocos Sur",
+        "rendered": "Ilocos Sur",
+        "eval": "Passed"
+      },
+      "propertyType": {
+        "db": "Residential",
+        "backend": "Residential",
+        "rendered": "Residential",
+        "eval": "Passed"
+      },
+      "propertySubtype": {
+        "db": "Single Family Residence",
+        "backend": "Single Family Residence",
+        "rendered": "Single Family Residence",
+        "eval": "Passed"
+      },
+      "floorArea": {
+        "db": "100 Square Meters",
+        "backend": "100 Square Meters",
+        "rendered": "100 m²",
+        "eval": "Passed"
+      },
+      "bedrooms": {
+        "dbBedroomsTotal": 3,
+        "dbBeds": 3,
+        "backendBedsTotal": 3,
+        "backendBeds": 3,
+        "rendered": "3",
+        "eval": "Passed"
+      },
+      "bathrooms": {
+        "dbBathroomsTotal": 3,
+        "dbBaths": 3,
+        "backendBathsTotal": 3,
+        "backendBaths": 3,
+        "rendered": "3",
+        "eval": "Passed"
+      },
+      "price": {
+        "dbPrice": 2341241341,
+        "dbFormattedPrice": "₱2,341,241,341",
+        "backendPrice": 2341241341,
+        "backendFormattedPrice": "₱2,341,241,341",
+        "rendered": "₱2,341,241,341",
+        "eval": "Passed"
+      },
+      "listingStatus": {
+        "dbStatus": "available",
+        "dbStandardStatus": "Active",
+        "backendStatus": "available",
+        "backendStandardStatus": "Active",
+        "rendered": "Active",
+        "eval": "Passed"
+      },
+      "dateAdded": {
+        "dbCreatedAt": "2026-10-15T18:30:35.871799+00:00",
+        "backendCreatedAt": "2026-10-15T18:30:35.871799+00:00",
+        "renderedCalendar": "Oct 16, 2026",
+        "renderedRelative": "Today",
+        "eval": "Verified"
+      }
+    }
+  },
+  {
+    "id": "35bef646-dc64-4537-9b20-a9f521eddb51",
+    "title": "Test",
+    "fields": {
+      "thumbnail": {
+        "db": null,
+        "backend": null,
+        "rendered": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1200&auto=format&fit=crop",
+        "eval": "Defect: Hardcoded Unsplash fallback in propertyService overrides null image; Building2 icon never renders"
+      },
+      "propertyName": {
+        "db": "Test",
+        "backend": "Test",
+        "rendered": "Test",
+        "eval": "Passed"
+      },
+      "listingCode": {
+        "dbListingId": "MLS-Q5IFQMS",
+        "dbListingKey": "KEY-1792087810002",
+        "backendListingId": "MLS-Q5IFQMS",
+        "backendListingKey": "KEY-1792087810002",
+        "rendered": "ID: KEY-1792087810002",
+        "eval": "Passed (Displays ID: KEY-...; Intended code verified as listing_key fallback)"
+      },
+      "city": {
+        "db": "Adams",
+        "backend": "Adams",
+        "rendered": "Adams",
+        "eval": "Passed"
+      },
+      "addressSubtitle": {
+        "dbState": "Ilocos Norte",
+        "backendState": "Ilocos Norte",
+        "rendered": "Ilocos Norte",
+        "eval": "Passed"
+      },
+      "propertyType": {
+        "db": "Residential",
+        "backend": "Residential",
+        "rendered": "Residential",
+        "eval": "Passed"
+      },
+      "propertySubtype": {
+        "db": "Single Family Residence",
+        "backend": "Single Family Residence",
+        "rendered": "Single Family Residence",
+        "eval": "Passed"
+      },
+      "floorArea": {
+        "db": "100 Square Meters",
+        "backend": "100 Square Meters",
+        "rendered": "100 m²",
+        "eval": "Passed"
+      },
+      "bedrooms": {
+        "dbBedroomsTotal": 3,
+        "dbBeds": 3,
+        "backendBedsTotal": 3,
+        "backendBeds": 3,
+        "rendered": "3",
+        "eval": "Passed"
+      },
+      "bathrooms": {
+        "dbBathroomsTotal": 3,
+        "dbBaths": 3,
+        "backendBathsTotal": 3,
+        "backendBaths": 3,
+        "rendered": "3",
+        "eval": "Passed"
+      },
+      "price": {
+        "dbPrice": 700000,
+        "dbFormattedPrice": "₱700,000",
+        "backendPrice": 700000,
+        "backendFormattedPrice": "₱700,000",
+        "rendered": "₱700,000",
+        "eval": "Passed"
+      },
+      "listingStatus": {
+        "dbStatus": "available",
+        "dbStandardStatus": "Active",
+        "backendStatus": "available",
+        "backendStandardStatus": "Active",
+        "rendered": "Active",
+        "eval": "Passed"
+      },
+      "dateAdded": {
+        "dbCreatedAt": "2026-10-15T18:10:12.143147+00:00",
+        "backendCreatedAt": "2026-10-15T18:10:12.143147+00:00",
+        "renderedCalendar": "Oct 16, 2026",
+        "renderedRelative": "Today",
+        "eval": "Verified"
+      }
+    }
+  }
+]

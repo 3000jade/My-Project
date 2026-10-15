@@ -3,26 +3,29 @@
 > **System**: CP_kerby Luxury Architectural Real Estate Platform  
 > **Pattern**: Decoupled Full-Stack Monorepo (Option 1)  
 > **Classification**: Master Architectural Blueprint & Source of Truth  
-> **Last Updated**: 2026-09-14  
+> **Last Updated**: 2026-10-16  
 
 ---
 
 ## 1. High-Level System Overview
 
-The **CP_kerby** platform is structured as an enterprise-grade decoupled monorepo. It cleanly separates the client-facing presentation layer (`frontend/`), the server API and domain logic layer (`backend/`), and shared type contracts (`shared/`).
+The **CP_kerby** platform is structured as an enterprise-grade decoupled monorepo. It cleanly separates the client-facing presentation layer (`frontend/`), the server API and domain logic layer (`backend/`), and shared cross-stack type contracts (`shared/`).
 
 ```text
 CP_kerby/
 ├── frontend/                   # Client-side SPA (React 19, Vite 8, Tailwind CSS v4, Framer Motion)
-├── backend/                    # Server-side API (Node.js, Express v5, TypeScript, Supabase)
+├── backend/                    # Server-side API (Node.js, Express v5, TypeScript, Supabase PostgreSQL)
 ├── test files/                 # Unified test suite directory (ignored by git; frontend/ & backend/)
-├── shared/                     # Cross-cutting types and data contracts
+├── shared/                     # Universal cross-cutting types and data contracts
 ├── docs/                       # Specifications, plans, and architectural design docs
-├── .agents/                    # Agent behaviors, prompt engineering rules, and skills
+├── notes/                      # Technical memos, feature checklists, and design reviews
+├── .agents/                    # Agent behaviors, prompt engineering rules, and custom skills
 ├── .env.example                # Unified environment variable template
-├── ARCHITECTURE_MAP.md         # Canonical project directory map (this document)
+├── ARCHITECTURE_MAP.md         # Canonical project directory map & blueprint (this document)
+├── DATABASE_SCHEMA.md          # Master PostgreSQL schema catalog, constraints, and tables
+├── DATABASE_GUIDE.md           # Database setup, migrations, and connection diagnostic guide
 ├── TECHSTACK.md                # Comprehensive technology stack & dependency inventory
-└── design.md                   # Visual design philosophy ("The Monolith & The Void")
+└── design.md                   # Visual design philosophy ("The Monolith & The Void") & tokens
 ```
 
 ---
@@ -33,16 +36,19 @@ CP_kerby/
 
 | Path | Responsibility / Purpose |
 | :--- | :--- |
-| `frontend/` | Complete user interface application, animation engines, and client routers. |
-| `backend/` | RESTful API server, health monitoring, business services, and database schemas. |
-| `test files/` | Unified test repository (`frontend/` & `backend/`), excluded from git tracking while executing via Vitest. |
-| `shared/` | Full-stack TypeScript interfaces, shared DTOs, and API contract envelopes. |
-| `docs/` | Architecture specs (`docs/superpowers/specs/`), plans, and module documentation (`docs/system-modules/`). |
-| `.agents/` | Antigravity AI agent rules (`AGENTS.md`) and specialized skills. |
+| `frontend/` | Complete user interface application, animation engines, portal views, and client routers. |
+| `backend/` | RESTful API server, Supabase persistence, background scripts, schemas, and services. |
+| `shared/` | Universal full-stack TypeScript interfaces, shared DTOs, and API contract envelopes. |
+| `test files/` | Unified test repository (`frontend/` & `backend/`), executed with Vitest. |
+| `docs/` | Architecture specifications (`docs/specs/`), implementation task trackers, and guides. |
+| `notes/` | Tactical implementation memos, modal workflows, and feature design scratchpads. |
+| `.agents/` | Antigravity AI rules (`AGENTS.md`, `rules/`), tool configurations, and specialized skills. |
 | `.env.example` | Root template documenting required environment variables for client and server. |
-| `ARCHITECTURE_MAP.md` | Living blueprint defining structural conventions and code locations. |
+| `ARCHITECTURE_MAP.md` | Canonical living blueprint defining structural conventions and code locations. |
+| `DATABASE_SCHEMA.md` | Detailed database schema reference, foreign keys, enums, and column definitions. |
+| `DATABASE_GUIDE.md` | Practical guide for Supabase setup, migrations, and local/cloud connections. |
 | `TECHSTACK.md` | Complete technology stack, dependency versions, and architectural runtime roles. |
-| `design.md` | "The Monolith & The Void" design manifesto and mathematical token formulas. |
+| `design.md` | Modern SaaS & "The Monolith & The Void" design system manifesto and mathematical tokens. |
 
 ---
 
@@ -66,25 +72,29 @@ frontend/
 │   │       ├── search/         # Advanced search bar & faceted filter engine (AdvancedSearchBox)
 │   │       └── sections/       # Production marketing sections & calculators (Hero, BrandHeritage, Financial)
 │   ├── context/                # React global state providers (AuthContext.jsx)
+│   ├── data/                   # Packaged client-side datasets
+│   │   └── geo/                # Philippine Standard Geographic Code (PSGC) geo datasets:
+│   │                           # regions.json, provinces.json, cities.json, barangays.json, zipcodes.json
 │   ├── hooks/                  # Custom reusable React hooks (useLenis, filter engines, viewing list)
 │   ├── mockData/               # High-fidelity mock property datasets, user fixtures, and about content
 │   ├── modules/                # Self-contained feature slices (e.g., modules/Chat/ChatWidget.jsx)
 │   ├── pages/                  # Route page views
 │   │   ├── auth/               # Authentication views (LoginPage.jsx, RegisterPage.jsx)
 │   │   ├── portals/            # Multi-tenant operational role portals:
-│   │   │   ├── agent/          # 10 Agent workflow pages
-│   │   │   ├── broker/         # 12 Broker executive pages
+│   │   │   ├── agent/          # 10 Agent workflow pages (Dashboard, Properties, Create, Inquiries, Sales)
+│   │   │   ├── broker/         # 12 Broker executive pages (Dashboard, CreateListings, Agents, Detail, Reports)
 │   │   │   ├── client/         # Client buyer/investor dashboard (.gitkeep)
 │   │   │   └── super-admin/    # Platform administration (.gitkeep)
-│   │   └── public/             # Public guest & marketing routes (Home, Properties, About, Contact)
+│   │   └── public/             # Public guest & marketing routes (Home, Properties, Detail, About, Contact)
 │   ├── sandbox/                # 🧪 100% Self-Contained Experimental Staging Lab
 │   │   ├── assets/             # Test plates, vector layers, and experimental media
 │   │   ├── components/         # Experimental UI Showcases (Catwalk, Editorial, Parallax, Anime, HUD)
 │   │   ├── layout/             # Lab shell chrome (SandboxHeader, SandboxLayout, SandboxPinnedButton)
 │   │   └── pages/              # Isolated staging routes (DemoUIUXPage, ParallaxLabPage, SandboxHubPage)
-│   ├── services/               # HTTP client layer & API service integrations (apiClient.js)
+│   ├── services/               # HTTP client layer & domain service integrations:
+│   │                           # apiClient.js, propertyService.js, phLocationService.js, agentService.js
 │   ├── types/                  # Frontend-specific UI prop types and local interfaces
-│   ├── utils/                  # Helper formatters (currency, measurement conversions)
+│   ├── utils/                  # Helper formatters (currency, measurement conversions, PSGC helpers)
 │   ├── App.jsx                 # Application entry, router table, and Lenis smooth-scroll provider
 │   ├── main.jsx                # DOM root mount
 │   └── index.css               # Tailwind CSS v4 directives and design tokens
@@ -94,21 +104,22 @@ frontend/
 
 #### Frontend Layer Rules:
 1. **Layout (`components/layout/`)**:
-   - Houses global structural elements that wrap views: `Header.jsx`, `Footer.jsx`.
+   - Houses global structural chrome wrapping routes: `Header.jsx`, `Footer.jsx`.
    - Must export through `components/layout/index.js`.
 2. **Production UI Library (`components/ui/`)**:
-   - Strictly reserved for production-grade UI components. Experimental or lab-only prototypes must NEVER be stored here.
+   - Strictly reserved for production-grade UI components. Experimental prototypes belong in `sandbox/`.
    - Decomposed into `core/` (primitives), `cards/` (entity cards), `modals/` (dialogs), `search/` (search tools), and `sections/` (page sections).
    - Must export through `components/ui/index.js` to enable clean, decoupled imports.
-   - Must adhere strictly to the uniform baseline height (`h-[54px]`) and concentric corner radius rules ($R_{\text{inner}} = R_{\text{outer}} - \text{Padding}$).
+   - Must adhere strictly to uniform baseline height (`h-[54px]`) and concentric corner radius rules ($R_{\text{inner}} = R_{\text{outer}} - \text{Padding}$).
 3. **Role Portals (`pages/portals/`)**:
-   - All role-specific operational dashboard screens reside in `pages/portals/{agent,broker,client,super-admin}`.
+   - Operational dashboard screens reside in `pages/portals/{agent,broker,client,super-admin}`.
 4. **Public Routes (`pages/public/`)**:
    - Public guest-facing marketing, listings, and informational pages reside in `pages/public/`.
 5. **Experimental Sandbox (`sandbox/`)**:
-   - 100% self-contained staging ground. All experimental UI showcases, multi-plate raster layers, and lab routes reside strictly in `sandbox/components/`, `sandbox/assets/`, and `sandbox/pages/`.
-6. **Services (`services/`)**:
-   - All network requests go through `services/apiClient.js`. Never invoke raw `fetch` or `axios` directly within UI components.
+   - 100% self-contained staging ground. All experimental UI showcases and lab routes reside strictly in `sandbox/components/`, `sandbox/assets/`, and `sandbox/pages/`.
+6. **Services Layer (`services/`)**:
+   - Network requests go through `services/apiClient.js` or domain services (`propertyService.js`, `agentService.js`).
+   - Local location and PSGC geography transformations run via `services/phLocationService.js`. Never invoke raw `axios` or `fetch` directly in UI components.
 
 ---
 
@@ -117,13 +128,18 @@ frontend/
 ```text
 backend/
 ├── src/
-│   ├── config/                 # Environment validation and server configuration (config/index.ts)
-│   ├── controllers/            # HTTP handlers: request validation and HTTP status dispatching
-│   ├── middleware/             # Express middlewares (error handling, auth, security guards)
-│   ├── models/                 # Domain models and database entity schemas
+│   ├── config/                 # Environment validation and server configuration (config/index.ts, supabase.ts)
+│   ├── controllers/            # HTTP handlers: request validation, service invocation, and status codes
+│   ├── middleware/             # Express middlewares (error handling, auth guards, rate limiters, upload)
+│   ├── models/                 # Database DDL migration SQL files, seed JSON, and TypeScript domain entities
+│   │                           # (supabase_schema.sql, location_psgc_migration.sql, property_pricing_migration.sql)
 │   ├── routes/                 # Express router definitions and route mapping (routes/index.ts)
-│   ├── services/               # Pure business logic and database queries
-│   ├── utils/                  # Logging (utils/logger.ts), string helpers, date formatters
+│   ├── schemas/                # Zod request validation schemas (property, auth, agent, invitation, inquiry)
+│   ├── scripts/                # Diagnostic CLI, migration runners, and seed scripts (migrate.ts, test-db.ts)
+│   ├── services/               # Pure business logic, external API integrations, and Supabase client queries
+│   ├── templates/              # Transactional email and notification HTML/text templates (emailTemplates.ts)
+│   ├── types/                  # Backend-specific types and Express Request augmentations
+│   ├── utils/                  # Structured logging (utils/logger.ts), formatters, and utility helpers
 │   └── index.ts                # Application bootstrap, middleware registration, port listener
 ├── dist/                       # Compiled production JavaScript (output from tsc)
 ├── tsconfig.json               # Backend TypeScript compiler options
@@ -132,14 +148,18 @@ backend/
 
 #### Backend Layer Rules:
 1. **Controller-Service Separation**:
-   - **Controllers (`controllers/`)**: Accept Express `(req, res, next)`, parse query/body params, call services, and return standard JSON. No SQL, ORM, or database queries in controllers.
-   - **Services (`services/`)**: Contain pure business logic, calculations, and database calls. Return raw data or throw domain errors.
-2. **Standardized Middleware (`middleware/`)**:
-   - All global exception handlers, auth guards, rate limiters, and CORS configurations live here.
-3. **Central Configuration (`config/`)**:
-   - Access `process.env` exclusively through `config/index.ts`. Never spread raw `process.env` calls across controller or service files.
-4. **Master Router (`routes/index.ts`)**:
-   - Aggregates sub-routers (e.g. `health.routes.ts`, `property.routes.ts`) and mounts onto `/api`.
+   - **Controllers (`controllers/`)**: Accept Express `(req, res, next)`, parse params with Zod schemas, call services, and return standard JSON. No raw SQL or direct DB queries in controllers.
+   - **Services (`services/`)**: Contain pure domain logic, calculations, and Supabase client queries. Return raw data or throw domain errors.
+2. **Strict Request Validation (`schemas/`)**:
+   - All HTTP endpoint payloads must be validated against a dedicated Zod schema in `src/schemas/` before passing to services.
+3. **Database Schema & Migrations (`models/`)**:
+   - Master schema resides in `supabase_schema.sql`.
+   - Discrete, repeatable feature migrations reside as individual SQL scripts (e.g., `location_psgc_migration.sql`, `property_pricing_migration.sql`, `agent_invitations_migration.sql`).
+   - Must strictly maintain database invariants (e.g. `property_type TEXT`, not non-existent `property_type_id`).
+4. **Maintenance & Diagnostics (`scripts/`)**:
+   - DB connection checks, user provisioning, invitation resends, and migration runners belong in `src/scripts/`.
+5. **Central Configuration (`config/`)**:
+   - Access `process.env` exclusively through `config/index.ts` and `config/supabase.ts`.
 
 ---
 
@@ -149,7 +169,12 @@ backend/
 shared/
 └── types/
     ├── api.ts                  # Standardized ApiResponse<T> and PaginatedResponse<T> envelopes
-    ├── property.ts             # Universal Property, ValuationEstimate, and Listing definitions
+    ├── property.ts             # Universal Property, ValuationEstimate, Media, and Room definitions
+    ├── agent.ts                # Agent profile, license, accreditation, and invitation contracts
+    ├── auth.ts                 # Auth credentials, session payloads, and user roles
+    ├── chat.ts                 # Real estate AI concierge conversation contracts
+    ├── integrations.ts         # Google Drive, Maps, and WhatsApp webhook contracts
+    ├── maps.ts                 # Geocoding, coordinates, and reverse-lookup contracts
     └── index.ts                # Central barrel export
 ```
 
@@ -168,6 +193,24 @@ shared/
 
 ---
 
+### 2.5 Agent & Governance Layer (`.agents/`)
+
+```text
+.agents/
+├── AGENTS.md                   # Superpowers engineering methodology, hard gates, and design rules
+├── mcp_config.json             # Model Context Protocol server configurations
+├── rules/                      # Systemic design and architectural invariant rules:
+│   └── database-schema-invariants.md # Schema caching, column mapping, and database rules
+└── skills/                     # Antigravity operational skill blueprints:
+    ├── brainstorming/          # Design intent & user requirement discovery
+    ├── systematic-debugging/   # 4-phase root cause analysis
+    ├── modern-saas-design/     # Design token compliance & 6-step UI workflow
+    ├── git-push/               # Controlled GitHub push pipeline
+    └── supabase/               # Supabase database & storage lifecycle
+```
+
+---
+
 ## 3. Decision Matrix: Where Does My Code Belong?
 
 | If you are adding / editing: | Place it in: | Example File |
@@ -179,22 +222,29 @@ shared/
 | Advanced search bar or faceted filter engine | `frontend/src/components/ui/search/` | `AdvancedSearchBox.jsx` |
 | Curated page section or calculator | `frontend/src/components/ui/sections/` | `HeroVisualAnchor.jsx`, `BrandHeritageSection.jsx` |
 | Shared multi-role dashboard table, card, sidebar | `frontend/src/components/dashboard/` | `DashboardSidebar.jsx`, `DataTable.jsx` |
+| Geographic reference datasets (PSGC regions, cities) | `frontend/src/data/geo/` | `regions.json`, `cities.json`, `barangays.json` |
+| Client-side location & PSGC resolver | `frontend/src/services/` | `phLocationService.js` |
 | Experimental motion showcase, animation lab, vector demo | `frontend/src/sandbox/components/` | `CatwalkHorizontalShowcase.jsx`, `VectorHUDOverlay.jsx` |
 | Staged sandbox route or lab playground | `frontend/src/sandbox/pages/` | `DemoUIUXPage.jsx`, `ParallaxLabPage.jsx` |
 | 3D canvas, Three.js scene, or WebGL shader | `frontend/src/components/3d/` | `CinematicPropertyViewer.jsx` |
-| Public guest route (Home, Properties, About, Contact) | `frontend/src/pages/public/` | `Home.jsx`, `PropertiesPage.jsx` |
-| Role-specific workspace page (Agent, Broker, Client, SuperAdmin) | `frontend/src/pages/portals/<role>/` | `AgentDashboard.jsx`, `BrokerReports.jsx` |
+| Public guest route (Home, Properties, About, Contact) | `frontend/src/pages/public/` | `Home.jsx`, `PropertyListingView.jsx` |
+| Role-specific workspace page (Agent, Broker, Client, SuperAdmin) | `frontend/src/pages/portals/<role>/` | `BrokerCreateListings.jsx`, `AgentDashboard.jsx` |
 | Authentication page (Login, Register) | `frontend/src/pages/auth/` | `LoginPage.jsx`, `RegisterPage.jsx` |
 | HTTP request call, endpoint fetcher, or REST client | `frontend/src/services/` | `apiClient.js`, `propertyService.js` |
 | Custom React hook (scroll sentinel, state tween, filters) | `frontend/src/hooks/` | `useLenisScroll.js`, `usePropertyFilterEngine.js` |
 | Mock data fixtures or seed lists | `frontend/src/mockData/` | `mockProperties.js` |
-| Backend HTTP endpoint handler | `backend/src/controllers/` | `property.controller.ts` |
-| Backend business logic or database query | `backend/src/services/` | `property.service.ts` |
-| Express route definitions | `backend/src/routes/` | `property.routes.ts` |
-| Express middleware (auth, error, headers) | `backend/src/middleware/` | `error.middleware.ts` |
-| Environment variable parsing or app config | `backend/src/config/` | `index.ts` |
-| Shared data interface or DTO used by both sides | `shared/types/` | `property.ts`, `api.ts` |
-| Automated unit/integration test file | `test files/frontend/` or `test files/backend/` | `PropertyCard.test.jsx`, `chat.controller.test.ts` |
+| Backend HTTP endpoint handler | `backend/src/controllers/` | `property.controller.ts`, `agent.controller.ts` |
+| Request payload validation (Zod schema) | `backend/src/schemas/` | `property.schema.ts`, `auth.schema.ts` |
+| Backend business logic or Supabase queries | `backend/src/services/` | `property.service.ts`, `agent.service.ts` |
+| Express route definitions | `backend/src/routes/` | `property.routes.ts`, `agent.routes.ts` |
+| Express middleware (auth, error, headers, upload) | `backend/src/middleware/` | `error.middleware.ts`, `auth.middleware.ts` |
+| SQL migration script or DDL schema | `backend/src/models/` | `location_psgc_migration.sql`, `supabase_schema.sql` |
+| CLI diagnostics, seeders, or database maintenance | `backend/src/scripts/` | `test-db-connection.ts`, `seed.ts`, `migrate.ts` |
+| Transactional email templates (HTML/text) | `backend/src/templates/` | `emailTemplates.ts` |
+| Environment variable parsing or app config | `backend/src/config/` | `index.ts`, `supabase.ts` |
+| Shared data interface or DTO used by both sides | `shared/types/` | `property.ts`, `agent.ts`, `api.ts` |
+| AI rules, architectural invariants, or constraints | `.agents/rules/` | `database-schema-invariants.md` |
+| Automated unit/integration test file | `test files/frontend/` or `test files/backend/` | `BrokerCreateListings.test.jsx`, `property.controller.test.ts` |
 
 ---
 

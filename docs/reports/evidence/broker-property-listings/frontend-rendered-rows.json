@@ -1,0 +1,475 @@
+{
+  "initialRows": [
+    {
+      "rowIndex": 0,
+      "property": {
+        "title": "Bespoke Rockwell Sky Penthouse",
+        "listingCodeText": "ID: KEY-1792095601039",
+        "hasImage": true,
+        "imageSrc": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1200&auto=format&fit=crop",
+        "hasFallbackIcon": false
+      },
+      "location": {
+        "primary": "Makati",
+        "secondary": "Rockwell Drive"
+      },
+      "propertyType": {
+        "type": "Residential",
+        "subtype": "Single Family Residence"
+      },
+      "specs": {
+        "areaText": "100 m²",
+        "bedsText": "1",
+        "bathsText": "1"
+      },
+      "price": {
+        "priceText": "₱125,000,000",
+        "hoaText": null
+      },
+      "status": {
+        "badgeText": "Active",
+        "hasApproveButton": false,
+        "badgeClass": "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/60"
+      },
+      "dateAdded": {
+        "calendarText": "Oct 16, 2026",
+        "relativeText": "Today"
+      },
+      "actions": {
+        "editHref": "/broker/properties/070739d6-9fa5-4297-906d-d57034daac54/edit"
+      }
+    },
+    {
+      "rowIndex": 1,
+      "property": {
+        "title": "Bespoke Rockwell Sky Penthouse",
+        "listingCodeText": "ID: KEY-1792094979317",
+        "hasImage": true,
+        "imageSrc": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1200&auto=format&fit=crop",
+        "hasFallbackIcon": false
+      },
+      "location": {
+        "primary": "Makati",
+        "secondary": "Rockwell Drive"
+      },
+      "propertyType": {
+        "type": "Residential",
+        "subtype": "Single Family Residence"
+      },
+      "specs": {
+        "areaText": "100 m²",
+        "bedsText": "1",
+        "bathsText": "1"
+      },
+      "price": {
+        "priceText": "₱125,000,000",
+        "hoaText": null
+      },
+      "status": {
+        "badgeText": "Active",
+        "hasApproveButton": false,
+        "badgeClass": "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/60"
+      },
+      "dateAdded": {
+        "calendarText": "Oct 16, 2026",
+        "relativeText": "Today"
+      },
+      "actions": {
+        "editHref": "/broker/properties/330e8ef6-f9ae-4cb9-9aff-0d48be3d2fd3/edit"
+      }
+    },
+    {
+      "rowIndex": 2,
+      "property": {
+        "title": "Bespoke Rockwell Sky Penthouse",
+        "listingCodeText": "ID: KEY-1792092839862",
+        "hasImage": true,
+        "imageSrc": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1200&auto=format&fit=crop",
+        "hasFallbackIcon": false
+      },
+      "location": {
+        "primary": "Makati",
+        "secondary": "Rockwell Drive"
+      },
+      "propertyType": {
+        "type": "Residential",
+        "subtype": "Single Family Residence"
+      },
+      "specs": {
+        "areaText": "100 m²",
+        "bedsText": "1",
+        "bathsText": "1"
+      },
+      "price": {
+        "priceText": "₱125,000,000",
+        "hoaText": null
+      },
+      "status": {
+        "badgeText": "Active",
+        "hasApproveButton": false,
+        "badgeClass": "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/60"
+      },
+      "dateAdded": {
+        "calendarText": "Oct 16, 2026",
+        "relativeText": "Today"
+      },
+      "actions": {
+        "editHref": "/broker/properties/8230e25e-db5f-49e6-9edd-13a84351b905/edit"
+      }
+    },
+    {
+      "rowIndex": 3,
+      "property": {
+        "title": "koo",
+        "listingCodeText": "ID: KEY-1792089413650",
+        "hasImage": true,
+        "imageSrc": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1200&auto=format&fit=crop",
+        "hasFallbackIcon": false
+      },
+      "location": {
+        "primary": "Basco (Capital)",
+        "secondary": "Batanes"
+      },
+      "propertyType": {
+        "type": "Residential",
+        "subtype": "Single Family Residence"
+      },
+      "specs": {
+        "areaText": "122 m²",
+        "bedsText": "3",
+        "bathsText": "3"
+      },
+      "price": {
+        "priceText": "₱32,323",
+        "hoaText": null
+      },
+      "status": {
+        "badgeText": "Active",
+        "hasApproveButton": false,
+        "badgeClass": "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/60"
+      },
+      "dateAdded": {
+        "calendarText": "Oct 16, 2026",
+        "relativeText": "Today"
+      },
+      "actions": {
+        "editHref": "/broker/properties/0e52d08c-ece7-429d-b85f-2b63662adc30/edit"
+      }
+    },
+    {
+      "rowIndex": 4,
+      "property": {
+        "title": "test 2",
+        "listingCodeText": "ID: KEY-1792089033706",
+        "hasImage": true,
+        "imageSrc": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1200&auto=format&fit=crop",
+        "hasFallbackIcon": false
+      },
+      "location": {
+        "primary": "Banayoyo",
+        "secondary": "Ilocos Sur"
+      },
+      "propertyType": {
+        "type": "Residential",
+        "subtype": "Single Family Residence"
+      },
+      "specs": {
+        "areaText": "100 m²",
+        "bedsText": "3",
+        "bathsText": "3"
+      },
+      "price": {
+        "priceText": "₱2,341,241,341",
+        "hoaText": null
+      },
+      "status": {
+        "badgeText": "Active",
+        "hasApproveButton": false,
+        "badgeClass": "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/60"
+      },
+      "dateAdded": {
+        "calendarText": "Oct 16, 2026",
+        "relativeText": "Today"
+      },
+      "actions": {
+        "editHref": "/broker/properties/2508da67-08a2-4fdd-bde2-ea49567f2c8c/edit"
+      }
+    },
+    {
+      "rowIndex": 5,
+      "property": {
+        "title": "Test",
+        "listingCodeText": "ID: KEY-1792087810002",
+        "hasImage": true,
+        "imageSrc": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1200&auto=format&fit=crop",
+        "hasFallbackIcon": false
+      },
+      "location": {
+        "primary": "Adams",
+        "secondary": "Ilocos Norte"
+      },
+      "propertyType": {
+        "type": "Residential",
+        "subtype": "Single Family Residence"
+      },
+      "specs": {
+        "areaText": "100 m²",
+        "bedsText": "3",
+        "bathsText": "3"
+      },
+      "price": {
+        "priceText": "₱700,000",
+        "hoaText": null
+      },
+      "status": {
+        "badgeText": "Active",
+        "hasApproveButton": false,
+        "badgeClass": "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/60"
+      },
+      "dateAdded": {
+        "calendarText": "Oct 16, 2026",
+        "relativeText": "Today"
+      },
+      "actions": {
+        "editHref": "/broker/properties/35bef646-dc64-4537-9b20-a9f521eddb51/edit"
+      }
+    }
+  ],
+  "refreshedRows": [
+    {
+      "rowIndex": 0,
+      "property": {
+        "title": "Bespoke Rockwell Sky Penthouse",
+        "listingCodeText": "ID: KEY-1792095601039",
+        "hasImage": true,
+        "imageSrc": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1200&auto=format&fit=crop",
+        "hasFallbackIcon": false
+      },
+      "location": {
+        "primary": "Makati",
+        "secondary": "Rockwell Drive"
+      },
+      "propertyType": {
+        "type": "Residential",
+        "subtype": "Single Family Residence"
+      },
+      "specs": {
+        "areaText": "100 m²",
+        "bedsText": "1",
+        "bathsText": "1"
+      },
+      "price": {
+        "priceText": "₱125,000,000",
+        "hoaText": null
+      },
+      "status": {
+        "badgeText": "Active",
+        "hasApproveButton": false,
+        "badgeClass": "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/60"
+      },
+      "dateAdded": {
+        "calendarText": "Oct 16, 2026",
+        "relativeText": "Today"
+      },
+      "actions": {
+        "editHref": "/broker/properties/070739d6-9fa5-4297-906d-d57034daac54/edit"
+      }
+    },
+    {
+      "rowIndex": 1,
+      "property": {
+        "title": "Bespoke Rockwell Sky Penthouse",
+        "listingCodeText": "ID: KEY-1792094979317",
+        "hasImage": true,
+        "imageSrc": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1200&auto=format&fit=crop",
+        "hasFallbackIcon": false
+      },
+      "location": {
+        "primary": "Makati",
+        "secondary": "Rockwell Drive"
+      },
+      "propertyType": {
+        "type": "Residential",
+        "subtype": "Single Family Residence"
+      },
+      "specs": {
+        "areaText": "100 m²",
+        "bedsText": "1",
+        "bathsText": "1"
+      },
+      "price": {
+        "priceText": "₱125,000,000",
+        "hoaText": null
+      },
+      "status": {
+        "badgeText": "Active",
+        "hasApproveButton": false,
+        "badgeClass": "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/60"
+      },
+      "dateAdded": {
+        "calendarText": "Oct 16, 2026",
+        "relativeText": "Today"
+      },
+      "actions": {
+        "editHref": "/broker/properties/330e8ef6-f9ae-4cb9-9aff-0d48be3d2fd3/edit"
+      }
+    },
+    {
+      "rowIndex": 2,
+      "property": {
+        "title": "Bespoke Rockwell Sky Penthouse",
+        "listingCodeText": "ID: KEY-1792092839862",
+        "hasImage": true,
+        "imageSrc": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1200&auto=format&fit=crop",
+        "hasFallbackIcon": false
+      },
+      "location": {
+        "primary": "Makati",
+        "secondary": "Rockwell Drive"
+      },
+      "propertyType": {
+        "type": "Residential",
+        "subtype": "Single Family Residence"
+      },
+      "specs": {
+        "areaText": "100 m²",
+        "bedsText": "1",
+        "bathsText": "1"
+      },
+      "price": {
+        "priceText": "₱125,000,000",
+        "hoaText": null
+      },
+      "status": {
+        "badgeText": "Active",
+        "hasApproveButton": false,
+        "badgeClass": "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/60"
+      },
+      "dateAdded": {
+        "calendarText": "Oct 16, 2026",
+        "relativeText": "Today"
+      },
+      "actions": {
+        "editHref": "/broker/properties/8230e25e-db5f-49e6-9edd-13a84351b905/edit"
+      }
+    },
+    {
+      "rowIndex": 3,
+      "property": {
+        "title": "koo",
+        "listingCodeText": "ID: KEY-1792089413650",
+        "hasImage": true,
+        "imageSrc": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1200&auto=format&fit=crop",
+        "hasFallbackIcon": false
+      },
+      "location": {
+        "primary": "Basco (Capital)",
+        "secondary": "Batanes"
+      },
+      "propertyType": {
+        "type": "Residential",
+        "subtype": "Single Family Residence"
+      },
+      "specs": {
+        "areaText": "122 m²",
+        "bedsText": "3",
+        "bathsText": "3"
+      },
+      "price": {
+        "priceText": "₱32,323",
+        "hoaText": null
+      },
+      "status": {
+        "badgeText": "Active",
+        "hasApproveButton": false,
+        "badgeClass": "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/60"
+      },
+      "dateAdded": {
+        "calendarText": "Oct 16, 2026",
+        "relativeText": "Today"
+      },
+      "actions": {
+        "editHref": "/broker/properties/0e52d08c-ece7-429d-b85f-2b63662adc30/edit"
+      }
+    },
+    {
+      "rowIndex": 4,
+      "property": {
+        "title": "test 2",
+        "listingCodeText": "ID: KEY-1792089033706",
+        "hasImage": true,
+        "imageSrc": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1200&auto=format&fit=crop",
+        "hasFallbackIcon": false
+      },
+      "location": {
+        "primary": "Banayoyo",
+        "secondary": "Ilocos Sur"
+      },
+      "propertyType": {
+        "type": "Residential",
+        "subtype": "Single Family Residence"
+      },
+      "specs": {
+        "areaText": "100 m²",
+        "bedsText": "3",
+        "bathsText": "3"
+      },
+      "price": {
+        "priceText": "₱2,341,241,341",
+        "hoaText": null
+      },
+      "status": {
+        "badgeText": "Active",
+        "hasApproveButton": false,
+        "badgeClass": "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/60"
+      },
+      "dateAdded": {
+        "calendarText": "Oct 16, 2026",
+        "relativeText": "Today"
+      },
+      "actions": {
+        "editHref": "/broker/properties/2508da67-08a2-4fdd-bde2-ea49567f2c8c/edit"
+      }
+    },
+    {
+      "rowIndex": 5,
+      "property": {
+        "title": "Test",
+        "listingCodeText": "ID: KEY-1792087810002",
+        "hasImage": true,
+        "imageSrc": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1200&auto=format&fit=crop",
+        "hasFallbackIcon": false
+      },
+      "location": {
+        "primary": "Adams",
+        "secondary": "Ilocos Norte"
+      },
+      "propertyType": {
+        "type": "Residential",
+        "subtype": "Single Family Residence"
+      },
+      "specs": {
+        "areaText": "100 m²",
+        "bedsText": "3",
+        "bathsText": "3"
+      },
+      "price": {
+        "priceText": "₱700,000",
+        "hoaText": null
+      },
+      "status": {
+        "badgeText": "Active",
+        "hasApproveButton": false,
+        "badgeClass": "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/60"
+      },
+      "dateAdded": {
+        "calendarText": "Oct 16, 2026",
+        "relativeText": "Today"
+      },
+      "actions": {
+        "editHref": "/broker/properties/35bef646-dc64-4537-9b20-a9f521eddb51/edit"
+      }
+    }
+  ],
+  "isConsistent": true
+}

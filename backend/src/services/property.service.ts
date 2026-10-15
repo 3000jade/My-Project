@@ -727,6 +727,23 @@ export class PropertyService {
             (item as any).pricing = data.custom_reso_attributes.pricing;
           }
 
+          // Fallbacks for pricing attributes if not set on main table or pricing relation
+          if (item.originalListPrice === undefined && (data.custom_reso_attributes?.originalListPrice !== undefined || data.custom_reso_attributes?.pricing?.originalListPrice !== undefined)) {
+            item.originalListPrice = Number(data.custom_reso_attributes.originalListPrice ?? data.custom_reso_attributes.pricing.originalListPrice);
+          }
+          if ((item.associationFee === undefined || item.associationFee === 0) && (data.custom_reso_attributes?.associationFee !== undefined || data.custom_reso_attributes?.pricing?.associationFee !== undefined)) {
+            item.associationFee = Number(data.custom_reso_attributes.associationFee ?? data.custom_reso_attributes.pricing.associationFee);
+          }
+          if (!item.associationFeeFrequency && (data.custom_reso_attributes?.associationFeeFrequency || data.custom_reso_attributes?.pricing?.associationFeeFrequency)) {
+            item.associationFeeFrequency = data.custom_reso_attributes.associationFeeFrequency || data.custom_reso_attributes.pricing.associationFeeFrequency;
+          }
+          if (item.taxAnnualAmount === undefined && data.custom_reso_attributes?.taxAnnualAmount !== undefined) {
+            item.taxAnnualAmount = Number(data.custom_reso_attributes.taxAnnualAmount);
+          }
+          if ((!item.listPriceCurrency || item.listPriceCurrency === 'PHP') && (data.custom_reso_attributes?.listPriceCurrency || data.custom_reso_attributes?.pricing?.currency)) {
+            item.listPriceCurrency = data.custom_reso_attributes.listPriceCurrency || data.custom_reso_attributes.pricing.currency || 'PHP';
+          }
+
           if ((!item.features || item.features.length === 0) && data.custom_reso_attributes?.features) {
             item.features = data.custom_reso_attributes.features;
           }
@@ -739,7 +756,7 @@ export class PropertyService {
 
           // Fetch confidential if expanded AND authorized
           if (expand?.includes('confidential') && userRole && ['agent', 'broker', 'admin'].includes(userRole)) {
-            const { data: confRow } = await supabase
+            const { data: confRow } = await supabaseAdmin
               .from('property_confidential')
               .select('*')
               .eq('property_id', data.id)
@@ -756,6 +773,8 @@ export class PropertyService {
                 sellerDirectEmail: confRow.seller_direct_email,
                 expirationDate: confRow.expiration_date,
               };
+            } else if (data.custom_reso_attributes?.confidential) {
+              item.confidential = data.custom_reso_attributes.confidential;
             }
           }
 
@@ -825,19 +844,26 @@ export class PropertyService {
     }
 
     const generatedId = `prop-${Date.now()}`;
+    const numericPrice = Number(data.price) || 0;
+    const resolvedOriginalListPrice = data.originalListPrice ? Number(data.originalListPrice) : (data.pricing?.originalListPrice ? Number(data.pricing.originalListPrice) : numericPrice);
+    const resolvedAssocFee = data.associationFee !== undefined ? Number(data.associationFee) : (data.pricing?.associationFee !== undefined ? Number(data.pricing.associationFee) : 0);
+    const resolvedAssocFeeFrequency = data.associationFeeFrequency || data.pricing?.associationFeeFrequency || 'Monthly';
+    const resolvedCurrency = data.listPriceCurrency || data.pricing?.currency || 'PHP';
+    const resolvedTaxAnnualAmount = data.taxAnnualAmount ? Number(data.taxAnnualAmount) : undefined;
+
     const newProperty: PropertyItem = {
       id: generatedId,
       listingKey: data.listingKey || `KEY-${Date.now()}`,
       listingId: data.listingId || `MLS-${Math.random().toString(36).substring(2, 9).toUpperCase()}`,
       title: data.title || 'Untitled Luxury Property',
       tagline: data.tagline || '',
-      price: Number(data.price) || 0,
-      formattedPrice: `₱${(Number(data.price) || 0).toLocaleString()}`,
-      listPriceCurrency: data.listPriceCurrency || 'PHP',
-      originalListPrice: data.originalListPrice ? Number(data.originalListPrice) : Number(data.price) || 0,
-      associationFee: Number(data.associationFee) || 0,
-      associationFeeFrequency: data.associationFeeFrequency || 'Monthly',
-      taxAnnualAmount: data.taxAnnualAmount ? Number(data.taxAnnualAmount) : undefined,
+      price: numericPrice,
+      formattedPrice: `₱${numericPrice.toLocaleString()}`,
+      listPriceCurrency: resolvedCurrency,
+      originalListPrice: resolvedOriginalListPrice,
+      associationFee: resolvedAssocFee,
+      associationFeeFrequency: resolvedAssocFeeFrequency,
+      taxAnnualAmount: resolvedTaxAnnualAmount,
       location: {
         address: data.location?.address || 'Address pending',
         unparsedAddress: data.location?.unparsedAddress || data.location?.unparsed_address || data.location?.address || 'Address pending',
@@ -895,6 +921,14 @@ export class PropertyService {
         ...(data.customResoAttributes || {}),
         media: data.media || [],
         pricing: data.pricing || {},
+        originalListPrice: resolvedOriginalListPrice,
+        taxAnnualAmount: resolvedTaxAnnualAmount,
+        associationFee: resolvedAssocFee,
+        associationFeeFrequency: resolvedAssocFeeFrequency,
+        listPriceCurrency: resolvedCurrency,
+        confidential: data.confidential || {},
+        furnishing: data.specs?.furnishing || data.furnishing || data.customResoAttributes?.furnishing,
+        lotFrontage: data.lot_frontage || data.lotFrontage || data.customResoAttributes?.lotFrontage,
         features: data.features || [],
         interiorFeatures: data.interiorFeatures || [],
         exteriorFeatures: data.exteriorFeatures || [],

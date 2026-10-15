@@ -19,17 +19,26 @@ describe('propertyService RESO 2.0 Adapters', () => {
       city: 'Muntinlupa',
       beds: 5,
       baths: 6,
+      furnishing: 'Semi-Furnished',
+      lot_frontage: '18m',
+      floor_level: '2nd Floor',
+      tower_name: 'Pavilion North',
     };
 
     const normalized = normalizeProperty(rawDbRecord);
 
     expect(normalized.id).toBe('prop-uuid-123');
     expect(normalized.listing_id).toBe('MLS-PH-8123');
+    expect(normalized.cadastralLotId).toBe('KEY-1234');
     expect(normalized.standard_status).toBe('Active');
     expect(normalized.living_area).toBe(850);
     expect(normalized.association_fee).toBe(12500);
     expect(normalized.subdivision_name).toBe('Ayala Alabang Village');
     expect(normalized.price_raw).toBe(185000000);
+    expect(normalized.furnishing).toBe('Semi-Furnished');
+    expect(normalized.lot_frontage).toBe('18m');
+    expect(normalized.floor_level).toBe('2nd Floor');
+    expect(normalized.tower_name).toBe('Pavilion North');
   });
 
   it('converts flat studio form state into structured API payload (toApiPayload)', () => {
@@ -54,6 +63,11 @@ describe('propertyService RESO 2.0 Adapters', () => {
       amenities: ['24/7 Security'],
       coverImage: 'https://images.unsplash.com/photo-1.jpg',
       galleryImages: ['https://images.unsplash.com/photo-2.jpg'],
+      cadastralLotId: 'CAD-MAK-4821',
+      furnishing: 'Fully Furnished',
+      lot_frontage: '25m',
+      floor_level: '45th Floor',
+      tower_name: 'Tower One',
       buyerBrokerCommission: '3.0%',
       sellerDirectPhone: '+63 917 123 4567',
       privateRemarks: 'Lockbox code 4821. Call broker before showing.',
@@ -65,17 +79,25 @@ describe('propertyService RESO 2.0 Adapters', () => {
 
     expect(payload.title).toBe('Grand Penthouse Horizon');
     expect(payload.price).toBe(250000000);
+    expect(payload.listingKey).toBe('CAD-MAK-4821');
     expect(payload.standardStatus).toBe('Pending Approval');
     expect(payload.location.city).toBe('Makati');
     expect(payload.location.subdivisionName).toBe('Forbes Park');
+    expect(payload.location.towerName).toBe('Tower One');
     expect(payload.location.coordinates).toEqual({ lat: 14.5501, lng: 121.0502 });
     expect(payload.specs.beds).toBe(4);
     expect(payload.specs.livingArea).toBe(620);
     expect(payload.specs.yearBuilt).toBe(2024);
     expect(payload.specs.propertyCondition).toBe('RFO');
+    expect(payload.specs.furnishing).toBe('Fully Furnished');
+    expect(payload.specs.lotFrontage).toBe('25m');
+    expect(payload.specs.floorLevel).toBe('45th Floor');
     expect(payload.specs.transactionType).toBe('For Sale');
     expect(payload.associationFee).toBe(25000);
     expect(payload.taxAnnualAmount).toBe(45000);
+    expect(payload.customResoAttributes.cadastralLotId).toBe('CAD-MAK-4821');
+    expect(payload.customResoAttributes.furnishing).toBe('Fully Furnished');
+    expect(payload.customResoAttributes.lotFrontage).toBe('25m');
     expect(payload.interiorFeatures).toEqual(['Smart Home Automation', 'Wine Cellar']);
     expect(payload.exteriorFeatures).toEqual(['Private Swimming Pool', 'Covered Garage']);
     expect(payload.features).toEqual(['24/7 Security']);
