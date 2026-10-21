@@ -6,6 +6,7 @@ import { validateBody, validateQuery } from '../middleware/validate.middleware';
 import {
   createAppointmentSchema,
   updateAppointmentSchema,
+  reassignAppointmentSchema,
   queryAppointmentSchema,
 } from '../schemas/appointment.schema';
 
@@ -19,7 +20,7 @@ router.post(
   AppointmentController.create
 );
 
-// Authenticated list: agents see assigned, brokers see firm-wide
+// Authenticated list: agents see assigned, brokers see firm-wide, clients see own
 router.get(
   '/',
   requireAuth,
@@ -36,6 +37,15 @@ router.put(
   requireAuth,
   validateBody(updateAppointmentSchema),
   AppointmentController.update
+);
+
+// Reassign appointment to another agent or Unassigned Queue (Brokers & Admins)
+router.patch(
+  '/:id/reassign',
+  requireAuth,
+  requireRole(['broker', 'admin']),
+  validateBody(reassignAppointmentSchema),
+  AppointmentController.reassign
 );
 
 // Delete appointment (Brokers & Admins)

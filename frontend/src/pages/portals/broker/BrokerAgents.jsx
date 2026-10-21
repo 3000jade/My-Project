@@ -1,20 +1,57 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import {
   Users, ShieldCheck, Clock, Send, UserPlus, RotateCw, Download,
   Search, SlidersHorizontal, ChevronRight, ChevronDown, MoreVertical,
   Check, CheckCircle2, AlertCircle, ArrowUpRight, ArrowDownRight,
-  ExternalLink, Mail, Phone, Eye, FileText, Copy
+  ExternalLink, Mail, Phone, Eye, FileText, Copy, Calendar
 } from 'lucide-react';
 import DataTable from '../../../components/dashboard/DataTable';
 import EmptyState from '../../../components/dashboard/EmptyState';
 import DashboardModal from '../../../components/dashboard/DashboardModal';
+import AgentScheduleCalendar from '../../../components/dashboard/AgentScheduleCalendar';
 import { agentService } from '../../../services/agentService';
 import { invitationService } from '../../../services/invitationService';
 import { cn } from '../../../utils/cn';
 
+function AgentAvatar({ src, name, size = "w-8 h-8", textSize = "text-xs" }) {
+  const [imgError, setImgError] = useState(false);
+  const initials = (name || 'Agent')
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(w => w[0].toUpperCase())
+    .join('') || 'A';
+
+  if (src && !imgError) {
+    return (
+      <img
+        src={src}
+        alt={name || 'Agent'}
+        onError={() => setImgError(true)}
+        className={cn(size, "rounded-full object-cover border border-[#E2E8F0]")}
+      />
+    );
+  }
+
+  return (
+    <div
+      className={cn(
+        size,
+        "rounded-full bg-slate-100 border border-[#E2E8F0] flex items-center justify-center font-bold text-slate-600 select-none",
+        textSize
+      )}
+      title={name || 'Agent'}
+    >
+      {initials}
+    </div>
+  );
+}
+
 export default function BrokerAgents() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const initialTab = searchParams.get('tab') === 'calendar' ? 'calendar' : 'roster';
   const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -25,16 +62,22 @@ export default function BrokerAgents() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [roleFilter, setRoleFilter] = useState('ALL');
+  const [teamFilter, setTeamFilter] = useState('ALL');
   const [sortBy, setSortBy] = useState('newest');
 
   // Popover menu state for row options
   const [activeMenuRowId, setActiveMenuRowId] = useState(null);
   const menuRef = useRef(null);
 
-  // Invitation state
-  const [activeTab, setActiveTab] = useState('roster'); // 'roster' | 'invitations'
+  // Invitation & Teams state
+  const [activeTab, setActiveTab] = useState(initialTab); // 'roster' | 'invitations' | 'teams' | 'calendar'
   const [invitationsFilter, setInvitationsFilter] = useState('ALL');
   const [invitations, setInvitations] = useState([]);
+  const [teams, setTeams] = useState([]);
+  const [recentAudits, setRecentAudits] = useState([]);
+  const [newTeamName, setNewTeamName] = useState('');
+  const [newTeamBranch, setNewTeamBranch] = useState('Manila Head Office');
+  const [creatingTeam, setCreatingTeam] = useState(false);
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteAgency, setInviteAgency] = useState('Human Shelter Realty Manila');
@@ -66,10 +109,17 @@ export default function BrokerAgents() {
     setLoading(true);
     setError(null);
     try {
-      const data = await agentService.getAgents();
+      const [data, teamData, auditData] = await Promise.all([
+        agentService.getAgents(),
+        Promise.resolve(agentService.getTeams?.()).catch(() => []),
+        Promise.resolve(agentService.getAuditEvents?.({ limit: 5 })).catch(() => []),
+      ]);
       setAgents(Array.isArray(data) ? data : []);
+      setTeams(Array.isArray(teamData) ? teamData : []);
+      setRecentAudits(Array.isArray(auditData) ? auditData : []);
     } catch (err) {
       console.warn('Agent loading error:', err);
+      setError(`Failed to load consultant directory: ${err?.message || 'Connection error'}`);
       setAgents([]);
     } finally {
       setLoading(false);
@@ -95,6 +145,25 @@ export default function BrokerAgents() {
     await Promise.all([loadAgents(), loadInvitations()]);
     setIsRefreshing(false);
     showToast('Agent directory refreshed');
+  };
+
+  const handleCreateTeam = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    if (!newTeamName.trim()) return;
+    setCreatingTeam(true);
+    try {
+      await agentService.createTeam({
+        name: newTeamName.trim(),
+        locationBranch: newTeamBranch.trim() || 'Manila',
+      });
+      setNewTeamName('');
+      await loadAgents();
+      showToast(`Created team "${newTeamName.trim()}"`);
+    } catch (err) {
+      showToast(err?.message || 'Failed to create team');
+    } finally {
+      setCreatingTeam(false);
+    }
   };
 
   const handleSendInvite = async (e, allowReissue = false) => {
@@ -207,8 +276,10 @@ export default function BrokerAgents() {
   const totalAgents = agents.length;
   const verifiedCount = agents.filter(a => (a.verification_status || '').toUpperCase() === 'VERIFIED').length;
   const pendingCount = agents.filter(a => (a.verification_status || '').toUpperCase() === 'PENDING').length;
-  const invitedCount = agents.filter(a => (a.verification_status || '').toUpperCase() === 'INVITED').length || 1;
   const suspendedCount = agents.filter(a => (a.verification_status || '').toUpperCase() === 'SUSPENDED').length;
+  const activeInvitationsCount = (invitations || []).filter(
+    i => (i.status || '').toLowerCase() === 'pending' && new Date(i.expires_at).getTime() > Date.now()
+  ).length;
 
   // Filter & Sort Logic
   const filteredAndSortedAgents = useMemo(() => {
@@ -229,7 +300,12 @@ export default function BrokerAgents() {
         roleFilter === 'ALL' ||
         (ag.role || '').toLowerCase() === roleFilter.toLowerCase();
 
-      return matchesSearch && matchesStatus && matchesRole;
+      const matchesTeam =
+        teamFilter === 'ALL' ||
+        ag.team_id === teamFilter ||
+        ag.team_name === teamFilter;
+
+      return matchesSearch && matchesStatus && matchesRole && matchesTeam;
     });
 
     if (sortBy === 'name') {
@@ -241,7 +317,7 @@ export default function BrokerAgents() {
     }
 
     return result;
-  }, [agents, search, statusFilter, roleFilter, sortBy]);
+  }, [agents, search, statusFilter, roleFilter, teamFilter, sortBy]);
 
   // Invitations Filter Logic (Screen 8)
   const filteredInvitations = useMemo(() => {
@@ -363,6 +439,14 @@ export default function BrokerAgents() {
         </span>
       );
     }
+    if (status === 'DEPARTED') {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200">
+          <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+          Departed
+        </span>
+      );
+    }
     return (
       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
         <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
@@ -381,10 +465,10 @@ export default function BrokerAgents() {
         </span>
       );
     }
-    if (lic === 'FOR_REVIEW' || lic === 'FOR REVIEW') {
+    if (lic === 'EXPIRING_SOON') {
       return (
         <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-          For Review
+          Expiring Soon
         </span>
       );
     }
@@ -392,6 +476,13 @@ export default function BrokerAgents() {
       return (
         <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">
           Expired
+        </span>
+      );
+    }
+    if (lic === 'UNKNOWN' || lic === 'FOR_REVIEW' || lic === 'FOR REVIEW') {
+      return (
+        <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+          Validity unknown
         </span>
       );
     }
@@ -406,10 +497,11 @@ export default function BrokerAgents() {
       render: (row) => (
         <div className="flex items-center gap-2.5">
           <div className="relative shrink-0">
-            <img
+            <AgentAvatar
               src={row.avatar}
-              alt={row.name}
-              className="w-8 h-8 rounded-full object-cover border border-[#E2E8F0]"
+              name={row.name}
+              size="w-8 h-8"
+              textSize="text-xs"
             />
             {row.verification_status === 'VERIFIED' && (
               <span className="absolute bottom-0 right-0 w-2 h-2 bg-emerald-500 border-2 border-white rounded-full"></span>
@@ -417,7 +509,14 @@ export default function BrokerAgents() {
           </div>
           <div className="min-w-0">
             <p className="font-semibold text-[#1E293B] text-xs leading-snug truncate">{row.name}</p>
-            <p className="text-[11px] text-[#64748B]">{row.role || 'Agent'}</p>
+            <p className="text-[11px] text-[#64748B] capitalize">
+              {row.role || 'Agent'}
+              {row.routing_availability && row.routing_availability !== 'available' && (
+                <span className="ml-1.5 text-[10px] font-semibold text-amber-600 uppercase">
+                  • {row.routing_availability}
+                </span>
+              )}
+            </p>
           </div>
         </div>
       )
@@ -427,7 +526,7 @@ export default function BrokerAgents() {
       className: "min-w-[135px]",
       render: (row) => (
         <div>
-          <p className="text-xs text-[#1E293B] font-medium leading-snug">{row.phone || '—'}</p>
+          <p className="text-xs text-[#1E293B] font-medium leading-snug">{row.phone || 'Not provided'}</p>
           <p className="text-[11px] text-[#64748B] truncate">{row.email}</p>
         </div>
       )
@@ -566,16 +665,14 @@ export default function BrokerAgents() {
   ];
 
   // Donut chart calculations
-  const totalForDonut = totalAgents || 12;
-  const verifiedPct = Math.round((verifiedCount / totalForDonut) * 100) || 67;
-  const pendingPct = Math.round((pendingCount / totalForDonut) * 100) || 25;
-  const invitedPct = Math.round((invitedCount / totalForDonut) * 100) || 8;
-  const suspendedPct = Math.round((suspendedCount / totalForDonut) * 100) || 8;
+  const verifiedPct = totalAgents > 0 ? Math.round((verifiedCount / totalAgents) * 100) : 0;
+  const pendingPct = totalAgents > 0 ? Math.round((pendingCount / totalAgents) * 100) : 0;
+  const suspendedPct = totalAgents > 0 ? Math.round((suspendedCount / totalAgents) * 100) : 0;
 
   const circumference = 251.327; // 2 * Math.PI * 40
   const verifiedStroke = (verifiedPct / 100) * circumference;
   const pendingStroke = (pendingPct / 100) * circumference;
-  const invitedStroke = (invitedPct / 100) * circumference;
+  const suspendedStroke = (suspendedPct / 100) * circumference;
 
   return (
     <div className="space-y-6">
@@ -599,7 +696,7 @@ export default function BrokerAgents() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-[#1E293B] tracking-tight">
-              Agent Management
+              Agent Management — Agent Directory & Credential Verification
             </h1>
             <p className="text-xs sm:text-sm text-[#64748B] mt-0.5">
               Manage agent profiles, review submitted credentials, send invitations, and monitor agent activity.
@@ -662,6 +759,34 @@ export default function BrokerAgents() {
               {displayInvitations.length}
             </span>
           </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('calendar')}
+            className={cn(
+              "pb-2.5 border-b-2 transition-colors cursor-pointer flex items-center gap-2",
+              activeTab === 'calendar'
+                ? "border-[#0F766E] text-[#0F766E]"
+                : "border-transparent text-[#64748B] hover:text-[#1E293B]"
+            )}
+          >
+            <Calendar className="w-3.5 h-3.5" />
+            <span>Calendar & Appointments</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('teams')}
+            className={cn(
+              "pb-2.5 border-b-2 transition-colors cursor-pointer flex items-center gap-2",
+              activeTab === 'teams'
+                ? "border-[#0F766E] text-[#0F766E]"
+                : "border-transparent text-[#64748B] hover:text-[#1E293B]"
+            )}
+          >
+            <span>Teams</span>
+            <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-slate-100 text-[#64748B] font-mono">
+              {teams.length}
+            </span>
+          </button>
         </div>
       </div>
 
@@ -678,7 +803,7 @@ export default function BrokerAgents() {
               <div className="bg-white rounded-lg border border-[#E2E8F0] p-4 shadow-2xs flex flex-col justify-between">
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="text-xs font-semibold text-[#64748B]">Total Agents</p>
+                    <p className="text-xs font-semibold text-[#64748B]">Total Consultants</p>
                     <p className="text-2xl font-bold text-[#1E293B] mt-1">{totalAgents}</p>
                   </div>
                   <div className="w-9 h-9 rounded-full bg-teal-50 flex items-center justify-center text-[#0F766E] shrink-0">
@@ -707,7 +832,7 @@ export default function BrokerAgents() {
               <div className="bg-white rounded-lg border border-[#E2E8F0] p-4 shadow-2xs flex flex-col justify-between">
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="text-xs font-semibold text-[#64748B]">Verified Agents</p>
+                    <p className="text-xs font-semibold text-[#64748B]">Verified Active</p>
                     <p className="text-2xl font-bold text-[#1E293B] mt-1">{verifiedCount}</p>
                   </div>
                   <div className="w-9 h-9 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 shrink-0">
@@ -766,7 +891,7 @@ export default function BrokerAgents() {
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-xs font-semibold text-[#64748B]">Active Invitations</p>
-                    <p className="text-2xl font-bold text-[#1E293B] mt-1">{invitedCount}</p>
+                    <p className="text-2xl font-bold text-[#1E293B] mt-1">{activeInvitationsCount}</p>
                   </div>
                   <div className="w-9 h-9 rounded-full bg-sky-50 flex items-center justify-center text-sky-600 shrink-0">
                     <Send className="w-4 h-4" />
@@ -774,7 +899,7 @@ export default function BrokerAgents() {
                 </div>
                 <div className="mt-3 flex items-center justify-between">
                   <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#64748B] bg-slate-100 px-1.5 py-0.5 rounded">
-                    0% vs last month
+                    Pending onboarding
                   </span>
                   <svg className="w-12 sm:w-14 h-5 text-sky-600 hidden sm:block" viewBox="0 0 60 20" fill="none">
                     <polyline
@@ -800,7 +925,7 @@ export default function BrokerAgents() {
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search by name, email, or license..."
+                  placeholder="Search agent name, email, or license..."
                   className="w-full h-10 pl-10 pr-4 bg-white border border-[#E2E8F0] rounded-lg text-xs text-[#1E293B] placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#0F766E] focus:border-[#0F766E] transition-all shadow-2xs"
                 />
               </div>
@@ -819,6 +944,7 @@ export default function BrokerAgents() {
                     <option value="PENDING">Pending</option>
                     <option value="INVITED">Invited</option>
                     <option value="SUSPENDED">Suspended</option>
+                    <option value="DEPARTED">Departed</option>
                   </select>
                   <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 </div>
@@ -836,6 +962,23 @@ export default function BrokerAgents() {
                   </select>
                   <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 </div>
+
+                {/* Teams Dropdown */}
+                {teams.length > 0 && (
+                  <div className="relative flex-1 sm:flex-none min-w-[110px] sm:min-w-[130px]">
+                    <select
+                      value={teamFilter}
+                      onChange={(e) => setTeamFilter(e.target.value)}
+                      className="w-full h-10 pl-3.5 pr-8 bg-white border border-[#E2E8F0] rounded-lg text-xs font-medium text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-[#0F766E] focus:border-[#0F766E] transition-all appearance-none cursor-pointer shadow-2xs"
+                    >
+                      <option value="ALL">All Teams</option>
+                      {teams.map((t) => (
+                        <option key={t.id} value={t.id}>{t.name}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  </div>
+                )}
 
                 {/* Sort Dropdown */}
                 <div className="relative flex-1 sm:flex-none min-w-[135px] sm:min-w-[145px]">
@@ -859,6 +1002,7 @@ export default function BrokerAgents() {
                     setSearch('');
                     setStatusFilter('ALL');
                     setRoleFilter('ALL');
+                    setTeamFilter('ALL');
                     setSortBy('newest');
                   }}
                   className="h-10 w-10 flex items-center justify-center rounded-lg border border-[#E2E8F0] bg-white hover:bg-slate-50 text-[#64748B] hover:text-[#1E293B] transition-colors cursor-pointer shadow-2xs shrink-0"
@@ -869,6 +1013,23 @@ export default function BrokerAgents() {
                 </button>
               </div>
             </div>
+
+            {/* Error State with Retry */}
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-xs text-red-700 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+                  <span>{error}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={loadAgents}
+                  className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-semibold cursor-pointer shrink-0 shadow-2xs"
+                >
+                  Retry
+                </button>
+              </div>
+            )}
 
             {/* Table / Mobile Cards View */}
             {loading ? (
@@ -908,14 +1069,15 @@ export default function BrokerAgents() {
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-center gap-3">
-                          <img
+                          <AgentAvatar
                             src={ag.avatar}
-                            alt={ag.name}
-                            className="w-10 h-10 rounded-full object-cover border border-[#E2E8F0] shrink-0"
+                            name={ag.name}
+                            size="w-10 h-10"
+                            textSize="text-sm"
                           />
                           <div>
-                            <p className="font-semibold text-[#1E293B] text-sm">{ag.name}</p>
-                            <p className="text-xs text-[#64748B]">{ag.role || 'Agent'}</p>
+                            <p className="font-semibold text-[#1E293B] text-sm">Consultant: {ag.name}</p>
+                            <p className="text-xs text-[#64748B] capitalize">{ag.role || 'Agent'}</p>
                           </div>
                         </div>
                         <div onClick={(e) => e.stopPropagation()}>
@@ -926,7 +1088,7 @@ export default function BrokerAgents() {
                       <div className="pt-2 border-t border-[#F1F5F9] grid grid-cols-2 gap-2 text-xs">
                         <div>
                           <span className="text-[10px] text-[#64748B] uppercase font-semibold block">Contact</span>
-                          <p className="text-[#1E293B] font-medium">{ag.phone || '—'}</p>
+                          <p className="text-[#1E293B] font-medium">{ag.phone || 'Not provided'}</p>
                           <p className="text-[#64748B] text-[11px] truncate">{ag.email}</p>
                         </div>
                         <div>
@@ -1050,17 +1212,6 @@ export default function BrokerAgents() {
                     strokeDasharray={`${pendingStroke} ${circumference}`}
                     strokeDashoffset={`-${verifiedStroke}`}
                   />
-                  {/* Invited Segment (Sky) */}
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="40"
-                    fill="transparent"
-                    stroke="#0284C7"
-                    strokeWidth="10"
-                    strokeDasharray={`${invitedStroke} ${circumference}`}
-                    strokeDashoffset={`-${verifiedStroke + pendingStroke}`}
-                  />
                   {/* Suspended Segment (Slate) */}
                   <circle
                     cx="50"
@@ -1069,8 +1220,8 @@ export default function BrokerAgents() {
                     fill="transparent"
                     stroke="#94A3B8"
                     strokeWidth="10"
-                    strokeDasharray={`${(suspendedPct / 100) * circumference} ${circumference}`}
-                    strokeDashoffset={`-${verifiedStroke + pendingStroke + invitedStroke}`}
+                    strokeDasharray={`${suspendedStroke} ${circumference}`}
+                    strokeDashoffset={`-${verifiedStroke + pendingStroke}`}
                   />
                 </svg>
 
@@ -1082,34 +1233,27 @@ export default function BrokerAgents() {
               </div>
 
               {/* Donut Legend */}
-              <div className="grid grid-cols-2 gap-y-2 gap-x-4 pt-2 border-t border-[#F1F5F9] text-xs">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
+              <div className="grid grid-cols-3 gap-2 pt-2 border-t border-[#F1F5F9] text-xs">
+                <div className="flex flex-col items-center text-center">
+                  <div className="flex items-center gap-1">
                     <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                    <span className="text-[#64748B]">Verified</span>
+                    <span className="text-[#64748B] text-[11px]">Verified</span>
                   </div>
-                  <span className="font-semibold text-[#1E293B]">{verifiedCount} ({verifiedPct}%)</span>
+                  <span className="font-semibold text-[#1E293B] mt-0.5">{verifiedCount} ({verifiedPct}%)</span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
+                <div className="flex flex-col items-center text-center">
+                  <div className="flex items-center gap-1">
                     <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-                    <span className="text-[#64748B]">Pending</span>
+                    <span className="text-[#64748B] text-[11px]">Pending</span>
                   </div>
-                  <span className="font-semibold text-[#1E293B]">{pendingCount} ({pendingPct}%)</span>
+                  <span className="font-semibold text-[#1E293B] mt-0.5">{pendingCount} ({pendingPct}%)</span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-sky-500"></span>
-                    <span className="text-[#64748B]">Invited</span>
-                  </div>
-                  <span className="font-semibold text-[#1E293B]">{invitedCount} ({invitedPct}%)</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
+                <div className="flex flex-col items-center text-center">
+                  <div className="flex items-center gap-1">
                     <span className="w-2 h-2 rounded-full bg-slate-400"></span>
-                    <span className="text-[#64748B]">Suspended</span>
+                    <span className="text-[#64748B] text-[11px]">Suspended</span>
                   </div>
-                  <span className="font-semibold text-[#1E293B]">{suspendedCount} ({suspendedPct}%)</span>
+                  <span className="font-semibold text-[#1E293B] mt-0.5">{suspendedCount} ({suspendedPct}%)</span>
                 </div>
               </div>
             </div>
@@ -1118,165 +1262,99 @@ export default function BrokerAgents() {
             <div className="bg-white rounded-lg border border-[#E2E8F0] p-5 shadow-2xs">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-bold text-[#1E293B]">Recent Activities</h3>
-                <button
-                  type="button"
-                  onClick={() => showToast('Opening activity history log...')}
-                  className="text-xs text-[#0F766E] hover:text-[#115E59] font-medium inline-flex items-center gap-0.5 cursor-pointer"
-                >
-                  View all <ArrowUpRight className="w-3 h-3" />
-                </button>
               </div>
 
-              <div className="space-y-3.5">
-                <div className="flex items-start gap-3">
-                  <img
-                    src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80"
-                    alt="Elena Rossi"
-                    className="w-7 h-7 rounded-full object-cover border border-[#E2E8F0] mt-0.5"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-[#1E293B] leading-tight">
-                      <span className="font-semibold">Elena Rossi</span> updated profile information
-                    </p>
-                    <p className="text-[11px] text-[#64748B] mt-0.5">2 hours ago</p>
-                  </div>
+              {recentAudits && recentAudits.length > 0 ? (
+                <div className="space-y-3 text-xs">
+                  {recentAudits.slice(0, 5).map((ev, idx) => (
+                    <div key={ev.id || idx} className="flex items-start gap-2.5">
+                      <span className="w-2 h-2 rounded-full bg-[#0F766E] mt-1.5 shrink-0"></span>
+                      <div className="min-w-0">
+                        <p className="font-semibold text-[#1E293B] truncate">{ev.action}</p>
+                        {ev.notes && <p className="text-[11px] text-[#64748B] truncate">{ev.notes}</p>}
+                        <p className="text-[10px] text-[#94A3B8]">
+                          {ev.created_at ? new Date(ev.created_at).toLocaleString() : 'Just now'}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-
-                <div className="flex items-start gap-3">
-                  <img
-                    src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=400&q=80"
-                    alt="Marcus Tan"
-                    className="w-7 h-7 rounded-full object-cover border border-[#E2E8F0] mt-0.5"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-[#1E293B] leading-tight">
-                      <span className="font-semibold">Marcus Tan</span> submitted PRC license
-                    </p>
-                    <p className="text-[11px] text-[#64748B] mt-0.5">4 hours ago</p>
-                  </div>
+              ) : (
+                <div className="text-center py-6 px-4 bg-slate-50/50 rounded-lg border border-dashed border-[#E2E8F0]">
+                  <Clock className="w-6 h-6 text-slate-300 mx-auto mb-2" />
+                  <p className="text-xs font-medium text-[#64748B]">No recent audit events recorded</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">Lifecycle transitions, transfers, and approvals will appear here.</p>
                 </div>
-
-                <div className="flex items-start gap-3">
-                  <img
-                    src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80"
-                    alt="Sophia Lim"
-                    className="w-7 h-7 rounded-full object-cover border border-[#E2E8F0] mt-0.5"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-[#1E293B] leading-tight">
-                      <span className="font-semibold">Sophia Lim</span> accepted invitation
-                    </p>
-                    <p className="text-[11px] text-[#64748B] mt-0.5">1 day ago</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <img
-                    src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80"
-                    alt="Rafael Mendoza"
-                    className="w-7 h-7 rounded-full object-cover border border-[#E2E8F0] mt-0.5"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-[#1E293B] leading-tight">
-                      <span className="font-semibold">Rafael Mendoza</span> license expired
-                    </p>
-                    <p className="text-[11px] text-rose-500 font-medium mt-0.5">1 day ago</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <img
-                    src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80"
-                    alt="Daniel Cruz"
-                    className="w-7 h-7 rounded-full object-cover border border-[#E2E8F0] mt-0.5"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-[#1E293B] leading-tight">
-                      <span className="font-semibold">Daniel Cruz</span> invitation resent
-                    </p>
-                    <p className="text-[11px] text-[#64748B] mt-0.5">2 days ago</p>
-                  </div>
-                </div>
-              </div>
+              )}
             </div>
 
             {/* Widget 3: Agent Onboarding Checklist */}
             <div className="bg-white rounded-lg border border-[#E2E8F0] p-5 shadow-2xs md:col-span-2 lg:col-span-1">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-bold text-[#1E293B]">Agent Onboarding Checklist</h3>
-                <button
-                  type="button"
-                  onClick={() => showToast('Opening compliance pipeline...')}
-                  className="text-xs text-[#0F766E] hover:text-[#115E59] font-medium inline-flex items-center gap-0.5 cursor-pointer"
-                >
-                  View all <ArrowUpRight className="w-3 h-3" />
-                </button>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3.5">
                 <div>
                   <div className="flex items-center justify-between text-xs mb-1">
-                    <span className="text-[#1E293B] font-medium">Invited Agents</span>
-                    <span className="text-[#64748B] font-semibold">1/3</span>
+                    <span className="text-[#1E293B] font-medium">Profile Information</span>
+                    <span className="text-[#64748B] font-semibold">{totalAgents > 0 ? `${totalAgents}/${totalAgents}` : '0/0'}</span>
                   </div>
                   <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-[#0F766E] rounded-full" style={{ width: '33%' }}></div>
+                    <div className="h-full bg-[#0F766E] rounded-full" style={{ width: totalAgents > 0 ? '100%' : '0%' }}></div>
                   </div>
                 </div>
 
                 <div>
                   <div className="flex items-center justify-between text-xs mb-1">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[#1E293B] font-medium">Profile Information</span>
-                      <Check className="w-3.5 h-3.5 text-emerald-600" />
-                    </div>
-                    <span className="text-emerald-600 font-semibold">5/5</span>
+                    <span className="text-[#1E293B] font-medium">PRC License Submitted</span>
+                    <span className="text-[#64748B] font-semibold">
+                      {agents.filter(a => a.prc_license_no && a.prc_license_no.trim() !== '' && a.prc_license_no !== 'N/A').length}/{totalAgents}
+                    </span>
                   </div>
                   <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-emerald-500 rounded-full" style={{ width: '100%' }}></div>
+                    <div
+                      className="h-full bg-[#0F766E] rounded-full"
+                      style={{
+                        width: totalAgents > 0
+                          ? `${Math.round((agents.filter(a => a.prc_license_no && a.prc_license_no.trim() !== '' && a.prc_license_no !== 'N/A').length / totalAgents) * 100)}%`
+                          : '0%'
+                      }}
+                    ></div>
                   </div>
                 </div>
 
                 <div>
                   <div className="flex items-center justify-between text-xs mb-1">
-                    <span className="text-[#1E293B] font-medium">PRC License</span>
-                    <span className="text-[#64748B] font-semibold">8/12</span>
+                    <span className="text-[#1E293B] font-medium">DHSUD Accreditation Submitted</span>
+                    <span className="text-[#64748B] font-semibold">
+                      {agents.filter(a => a.dhsud_accreditation_no && a.dhsud_accreditation_no.trim() !== '' && a.dhsud_accreditation_no !== 'N/A').length}/{totalAgents}
+                    </span>
                   </div>
                   <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-[#0F766E] rounded-full" style={{ width: '67%' }}></div>
+                    <div
+                      className="h-full bg-[#0F766E] rounded-full"
+                      style={{
+                        width: totalAgents > 0
+                          ? `${Math.round((agents.filter(a => a.dhsud_accreditation_no && a.dhsud_accreditation_no.trim() !== '' && a.dhsud_accreditation_no !== 'N/A').length / totalAgents) * 100)}%`
+                          : '0%'
+                      }}
+                    ></div>
                   </div>
                 </div>
 
                 <div>
                   <div className="flex items-center justify-between text-xs mb-1">
-                    <span className="text-[#1E293B] font-medium">DHSUD Accreditation</span>
-                    <span className="text-[#64748B] font-semibold">6/12</span>
+                    <span className="text-[#1E293B] font-medium">Account Verified</span>
+                    <span className="text-[#64748B] font-semibold">{verifiedCount}/{totalAgents}</span>
                   </div>
                   <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-[#0F766E] rounded-full" style={{ width: '50%' }}></div>
+                    <div
+                      className="h-full bg-emerald-500 rounded-full"
+                      style={{ width: totalAgents > 0 ? `${verifiedPct}%` : '0%' }}
+                    ></div>
                   </div>
                 </div>
-
-                <div>
-                  <div className="flex items-center justify-between text-xs mb-1">
-                    <span className="text-[#1E293B] font-medium">Background Review</span>
-                    <span className="text-[#64748B] font-semibold">3/12</span>
-                  </div>
-                  <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-[#0F766E] rounded-full" style={{ width: '25%' }}></div>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between text-xs mb-1">
-                    <span className="text-[#1E293B] font-medium">Account Activation</span>
-                    <span className="text-[#64748B] font-semibold">8/12</span>
-                  </div>
-                  <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-[#0F766E] rounded-full" style={{ width: '67%' }}></div>
-                  </div>
-                </div>
-
               </div>
             </div>
 
@@ -1331,6 +1409,91 @@ export default function BrokerAgents() {
             pageSize={8}
           />
         </div>
+      )}
+
+      {/* Teams Management Tab */}
+      {activeTab === 'teams' && (
+        <div className="bg-white rounded-lg border border-[#E2E8F0] p-6 shadow-2xs space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-bold text-[#1E293B]">Brokerage Teams</h2>
+              <p className="text-xs text-[#64748B] mt-0.5">
+                Organize agents into specialized branches or sales teams for routing and performance tracking.
+              </p>
+            </div>
+            <form onSubmit={handleCreateTeam} className="flex flex-wrap items-center gap-2">
+              <input
+                type="text"
+                required
+                value={newTeamName}
+                onChange={(e) => setNewTeamName(e.target.value)}
+                placeholder="New team name (e.g. Luxury BGC)"
+                className="h-9 px-3 bg-white border border-[#E2E8F0] rounded-lg text-xs text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
+              />
+              <input
+                type="text"
+                value={newTeamBranch}
+                onChange={(e) => setNewTeamBranch(e.target.value)}
+                placeholder="Branch / Location"
+                className="h-9 px-3 bg-white border border-[#E2E8F0] rounded-lg text-xs text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
+              />
+              <button
+                type="submit"
+                disabled={creatingTeam}
+                className="h-9 px-4 bg-[#0F766E] hover:bg-[#115E59] text-white rounded-lg text-xs font-semibold uppercase tracking-wider cursor-pointer transition-colors shadow-2xs disabled:opacity-50"
+              >
+                {creatingTeam ? 'Creating...' : '+ Create Team'}
+              </button>
+            </form>
+          </div>
+
+          {teams.length === 0 ? (
+            <div className="p-8 text-center bg-[#F8FAFC] border border-dashed border-[#E2E8F0] rounded-lg">
+              <p className="text-xs font-semibold text-[#1E293B]">No teams created yet</p>
+              <p className="text-[11px] text-[#64748B] mt-1">Create your first team above to group agents by specialty or branch.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {teams.map((t) => {
+                const memberCount = agents.filter(a => a.team_id === t.id || a.team_name === t.name).length;
+                return (
+                  <div key={t.id} className="p-4 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] flex flex-col justify-between gap-3">
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-sm font-bold text-[#1E293B]">{t.name}</h3>
+                        <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-teal-50 text-[#0F766E] border border-teal-200">
+                          {memberCount} {memberCount === 1 ? 'Agent' : 'Agents'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-[#64748B] mt-1">{t.location_branch || 'General Branch'}</p>
+                    </div>
+                    <div className="pt-2 border-t border-[#E2E8F0] flex items-center justify-between text-xs">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setTeamFilter(t.id);
+                          setActiveTab('roster');
+                        }}
+                        className="text-[#0F766E] font-semibold hover:underline cursor-pointer"
+                      >
+                        Filter Roster →
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Calendar & Appointments Unified Sub-Tab */}
+      {activeTab === 'calendar' && (
+        <AgentScheduleCalendar
+          role="broker"
+          title="Firm-Wide Schedule & Appointment Calendar"
+          subtitle="Coordinate agent viewings, online consultations, document signings, and blocked periods across the brokerage."
+        />
       )}
 
       {/* Issue Agent Invitation Modal */}

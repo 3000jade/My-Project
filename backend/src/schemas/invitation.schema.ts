@@ -6,6 +6,9 @@ export const createInvitationSchema = z.object({
   phone: z.string().min(7, 'Contact number is invalid').max(25).trim().optional(),
   role: z.enum(['agent', 'broker']).optional().default('agent'),
   brokerAgency: z.string().max(120).trim().optional(),
+  brokerageId: z.string().optional(),
+  teamId: z.string().nullable().optional(),
+  canCreateListings: z.boolean().optional(),
   message: z.string().max(500).trim().optional(),
   allowReissue: z.boolean().optional(),
 });

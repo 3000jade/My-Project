@@ -1,9 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { mockProperties } from '../../../mockData/mockProperties';
-import { mockAgents } from '../../../mockData/mockAgents';
 import propertyService, { normalizeProperty } from '../../../services/propertyService';
-import { driveService, isDriveUrl } from '../../../services/driveService';
+import { driveService, isDriveUrl, resolveDriveImageUrl, getDriveProxyUrl } from '../../../services/driveService';
 import {
   ArrowLeft,
   ChevronLeft,
@@ -47,27 +45,9 @@ import {
   Navigation
 } from 'lucide-react';
 
-const DEFAULT_PROPERTY_PHOTOS = [
-  'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1200',
-  'https://images.unsplash.com/photo-1576013551627-0cc20b96c2a7?q=80&w=800',
-  'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=800',
-  'https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?q=80&w=800',
-  'https://images.unsplash.com/photo-1600585154526-990dced4db0d?q=80&w=800',
-  'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=800',
-  'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=800',
-  'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=800',
-  'https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?q=80&w=800',
-  'https://images.unsplash.com/photo-1600585152220-90363fe7e115?q=80&w=800',
-  'https://images.unsplash.com/photo-1513694203232-719a280e022f?q=80&w=800',
-  'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?q=80&w=800'
-];
-
 export default function BrokerPropertyDetail() {
   const { id } = useParams();
-  const [property, setProperty] = useState(() => {
-    const fallback = mockProperties.find(p => p.id === id) || mockProperties[0];
-    return fallback ? normalizeProperty(fallback) : null;
-  });
+  const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeImgIdx, setActiveImgIdx] = useState(0);
   const [activeTab, setActiveTab] = useState('Overview');
@@ -80,25 +60,25 @@ export default function BrokerPropertyDetail() {
   const [editFormData, setEditFormData] = useState({
     title: '',
     tagline: '',
-    price: 12500000,
-    bedrooms: 4,
-    bathrooms: 3,
-    livingArea: 180,
-    lotArea: 250,
-    stories: 2,
-    parking: '3 (2 Covered, 1 Open)',
-    address: 'Block 12 Lot 5, Avida Settings Nuvali',
-    city: 'Sta. Rosa',
-    subdivision: 'Avida Settings Nuvali',
-    state: 'Laguna',
-    postalCode: '4026',
-    latitude: '14.2250',
-    longitude: '121.0483',
-    yearBuilt: 2022,
-    condition: 'Excellent',
-    architecturalStyle: 'Modern Contemporary',
-    propertyType: 'House and Lot',
-    propertySubType: 'Single Detached',
+    price: 0,
+    bedrooms: 0,
+    bathrooms: 0,
+    livingArea: 0,
+    lotArea: 0,
+    stories: 1,
+    parking: '',
+    address: '',
+    city: '',
+    subdivision: '',
+    state: '',
+    postalCode: '',
+    latitude: '',
+    longitude: '',
+    yearBuilt: new Date().getFullYear(),
+    condition: '',
+    architecturalStyle: '',
+    propertyType: '',
+    propertySubType: '',
     transactionType: 'For Sale',
     description: '',
   });
@@ -116,57 +96,33 @@ export default function BrokerPropertyDetail() {
 
   const handleStartEditCard = (cardKey) => {
     setEditFormData({
-      title: property?.title || 'Modern Family House in Nuvali',
-      tagline: property?.tagline || 'Spacious and modern home in a secure community',
-      price: property?.price_raw || property?.price || 12500000,
-      bedrooms: property?.bedrooms || property?.beds || 4,
-      bathrooms: property?.bathrooms || property?.baths || 3,
-      livingArea: property?.livingArea || property?.living_area || property?.floor_area || property?.sqft || 180,
-      lotArea: property?.lotArea || property?.lot_area || property?.lot_size_area || 250,
-      stories: property?.stories || 2,
-      parking: property?.parking || '3 (2 Covered, 1 Open)',
-      address: property?.address || 'Block 12 Lot 5, Avida Settings Nuvali',
-      city: property?.city || 'Sta. Rosa',
-      subdivision: property?.subdivision_name || property?.subdivision || 'Avida Settings Nuvali',
-      state: property?.state || 'Laguna',
-      postalCode: property?.postal_code || '4026',
-      latitude: property?.latitude || '14.2250',
-      longitude: property?.longitude || '121.0483',
-      yearBuilt: property?.yearBuilt || property?.year_built || 2022,
-      condition: property?.property_condition || property?.condition || 'Excellent',
-      architecturalStyle: property?.architectural_style || property?.architecturalStyle || 'Modern Contemporary',
-      propertyType: property?.property_type || property?.propertyType || 'House and Lot',
-      propertySubType: property?.property_sub_type || property?.propertySubType || 'Single Detached',
-      transactionType: property?.transaction_type || 'For Sale',
+      title: property?.title || '',
+      tagline: property?.tagline || '',
+      price: property?.price_raw || property?.price || 0,
+      bedrooms: property?.bedrooms ?? property?.beds ?? property?.specs?.beds ?? 0,
+      bathrooms: property?.bathrooms ?? property?.baths ?? property?.specs?.baths ?? 0,
+      livingArea: property?.livingArea || property?.living_area || property?.floor_area || property?.sqft || property?.specs?.livingArea || 0,
+      lotArea: property?.lotArea || property?.lot_area || property?.lot_size_area || property?.specs?.lotSizeArea || 0,
+      stories: property?.stories || property?.stories_total || property?.specs?.storiesTotal || 1,
+      parking: property?.parking || '',
+      address: property?.address || property?.location?.address || '',
+      city: property?.city || property?.location?.city || '',
+      subdivision: property?.subdivision_name || property?.subdivision || property?.location?.subdivisionName || '',
+      state: property?.state || property?.location?.state || '',
+      postalCode: property?.postal_code || property?.location?.postalCode || '',
+      latitude: property?.latitude || property?.location?.coordinates?.lat || '',
+      longitude: property?.longitude || property?.location?.coordinates?.lng || '',
+      yearBuilt: property?.yearBuilt || property?.year_built || property?.specs?.yearBuilt || '',
+      condition: property?.property_condition || property?.condition || property?.specs?.propertyCondition || '',
+      architecturalStyle: property?.architectural_style || property?.architecturalStyle || property?.specs?.architecturalStyle || '',
+      propertyType: property?.property_type || property?.propertyType || property?.specs?.propertyType || '',
+      propertySubType: property?.property_sub_type || property?.propertySubType || property?.specs?.propertySubType || '',
+      transactionType: property?.transaction_type || property?.specs?.transactionType || 'For Sale',
       description: property?.description || property?.publicRemarks || property?.public_remarks || '',
-      generalAmenities: property?.general_amenities?.join('\n') || [
-        'Clubhouse',
-        'Swimming Pool',
-        'Parks and Green Spaces',
-        '24/7 Security',
-        'Jogging Trails'
-      ].join('\n'),
-      interiorAmenities: property?.interior_amenities?.join('\n') || [
-        'Living Area',
-        'Dining Area',
-        'Kitchen Area',
-        'Balcony',
-        'Maids Room'
-      ].join('\n'),
-      exteriorAmenities: property?.exterior_amenities?.join('\n') || [
-        'Garden',
-        'Lanai',
-        'Service Area',
-        'Carport',
-        'Fence'
-      ].join('\n'),
-      nearbyEstablishments: property?.nearby_establishments?.join('\n') || [
-        'Nuvali Town Center',
-        'Schools',
-        'Hospitals',
-        'Shopping Centers',
-        'Lifestyle Destinations'
-      ].join('\n'),
+      generalAmenities: property?.general_amenities?.join('\n') || '',
+      interiorAmenities: property?.interior_amenities?.join('\n') || '',
+      exteriorAmenities: property?.exterior_amenities?.join('\n') || '',
+      nearbyEstablishments: property?.nearby_establishments?.join('\n') || '',
     });
     setEditingCard(cardKey);
   };
@@ -250,14 +206,26 @@ export default function BrokerPropertyDetail() {
         }
       }
       if (newUrls.length > 0) {
-        const updatedImages = [...(property?.images || DEFAULT_PROPERTY_PHOTOS), ...newUrls];
+        const existingImages = Array.isArray(property?.images) ? property.images : [];
+        const updatedImages = [...existingImages, ...newUrls];
+        const primaryImage = property?.mainImage || property?.main_image || updatedImages[0];
+
+        // Persist to database via propertyService
+        await propertyService.updateProperty(property?.id || id, {
+          images: updatedImages,
+          main_image: primaryImage,
+          mainImage: primaryImage,
+          property_images: updatedImages.map((u, i) => ({ imageUrl: u, displayOrder: i + 1 })),
+        });
+
         setProperty(prev => ({
           ...prev,
           images: updatedImages,
-          mainImage: prev?.mainImage || newUrls[0]
+          mainImage: primaryImage,
+          main_image: primaryImage,
         }));
-        setActiveImgIdx(updatedImages.length - newUrls.length);
-        showToast(`Uploaded ${newUrls.length} photo(s) to Google Drive`);
+        setActiveImgIdx(updatedImages.length - 1);
+        showToast(`Uploaded ${newUrls.length} photo(s) to Google Drive and saved to database`);
       }
     } catch (err) {
       console.error('[BrokerPropertyDetail] Drive upload error:', err);
@@ -288,10 +256,31 @@ export default function BrokerPropertyDetail() {
   }, [fetchDetail]);
 
   const imagesList = (property?.images && property.images.length > 0)
-    ? property.images
-    : DEFAULT_PROPERTY_PHOTOS;
+    ? property.images.map(img => resolveDriveImageUrl(img)).filter(Boolean)
+    : (property?.mainImage || property?.main_image 
+        ? [resolveDriveImageUrl(property.mainImage || property.main_image)]
+        : []);
 
-  const currentActiveImg = imagesList[activeImgIdx] || imagesList[0];
+  const hasPhotos = imagesList.length > 0;
+  const currentActiveImg = hasPhotos ? resolveDriveImageUrl(imagesList[activeImgIdx] || imagesList[0]) : null;
+
+  const handleImageError = (e, failedSrc, index = 0) => {
+    const target = e.currentTarget;
+    if (!target) return;
+
+    // Phase 1: If it's a Google Drive asset, try the backend streaming proxy directly
+    if (failedSrc && isDriveUrl(failedSrc)) {
+      const proxyUrl = getDriveProxyUrl(failedSrc);
+      if (target.src !== proxyUrl && !target.dataset.triedProxy) {
+        target.dataset.triedProxy = 'true';
+        target.src = proxyUrl;
+        return;
+      }
+    }
+
+    // Phase 2: If proxy also failed or non-drive image failed, hide broken image cleanly
+    target.style.opacity = '0';
+  };
 
   const handlePrevImg = () => {
     setActiveImgIdx(prev => (prev === 0 ? imagesList.length - 1 : prev - 1));
@@ -301,9 +290,15 @@ export default function BrokerPropertyDetail() {
     setActiveImgIdx(prev => (prev === imagesList.length - 1 ? 0 : prev + 1));
   };
 
-  const assignedAgent = property 
-    ? (mockAgents.find(a => a.id === property.agent_id || a.id === property.list_agent_key) || property.agent || mockAgents[0]) 
-    : mockAgents[0];
+  const assignedAgent = property?.agent || (property?.agent_name ? {
+    id: property.agent_id || property.list_agent_key,
+    name: property.agent_name,
+    email: property.agent_email || '',
+    phone: property.agent_phone || property.seller_direct_phone || '',
+    role: 'Assigned Agent',
+    avatar: property.agent_avatar || null,
+    licenseNo: property.agent_license_no || property.prc_license_no || '',
+  } : null);
 
   const handleStatusChange = async (newStatus) => {
     if (!property) return;
@@ -386,62 +381,35 @@ export default function BrokerPropertyDetail() {
 
   const formattedPrice = property.formattedPrice || (property.price 
     ? (typeof property.price === 'number' ? `₱${property.price.toLocaleString()}` : String(property.price))
-    : (property.price_raw ? `₱${Number(property.price_raw).toLocaleString()}` : '₱12,500,000'));
+    : (property.price_raw ? `₱${Number(property.price_raw).toLocaleString()}` : 'Price upon request'));
 
-  const generalAmenitiesList = property.general_amenities || [
-    'Clubhouse',
-    'Swimming Pool',
-    'Parks and Green Spaces',
-    '24/7 Security',
-    'Jogging Trails'
-  ];
+  const generalAmenitiesList = property.general_amenities || [];
+  const interiorAmenitiesList = property.interior_amenities || [];
+  const exteriorAmenitiesList = property.exterior_amenities || [];
+  const nearbyEstablishmentsList = property.nearby_establishments || [];
 
-  const interiorAmenitiesList = property.interior_amenities || [
-    'Living Area',
-    'Dining Area',
-    'Kitchen Area',
-    'Balcony',
-    'Maids Room'
-  ];
+  const commissionSplit = property.commissionSplit || property.confidential?.buyerAgencyCompensation || 'N/A';
+  const lockboxCode = property.lockboxCode || property.confidential?.lockboxCode || 'N/A';
+  const showingInstructions = property.showingInstructions || property.confidential?.showingInstructions || 'Contact listing broker for showing instructions.';
+  const sellerDirectPhone = property.seller_direct_phone || property.confidential?.sellerDirectPhone || 'N/A';
 
-  const exteriorAmenitiesList = property.exterior_amenities || [
-    'Garden',
-    'Lanai',
-    'Service Area',
-    'Carport',
-    'Fence'
-  ];
-
-  const nearbyEstablishmentsList = property.nearby_establishments || [
-    'Nuvali Town Center',
-    'Schools',
-    'Hospitals',
-    'Shopping Centers',
-    'Lifestyle Destinations'
-  ];
-
-  const commissionSplit = property.commissionSplit || property.confidential?.buyerAgencyCompensation || '3.5%';
-  const lockboxCode = property.lockboxCode || property.confidential?.lockboxCode || '9842';
-  const showingInstructions = property.showingInstructions || property.confidential?.showingInstructions || 'Call listing agent 24 hours prior. Gate passcode required.';
-  const sellerDirectPhone = property.seller_direct_phone || property.confidential?.sellerDirectPhone || '+63 917 111 2222';
-
-  const bedroomsCount = property.bedrooms || property.beds || property.specs?.beds || '4';
-  const bathroomsCount = property.bathrooms || property.baths || property.specs?.baths || '3';
-  const floorAreaValue = property.floor_area || property.livingArea || property.living_area || property.sqft || property.sqm || property.specs?.livingArea || '180';
-  const lotAreaValue = property.lot_area || property.lotSizeArea || property.lot_size_area || property.specs?.lotSizeArea || '250';
-  const storiesValue = property.stories || 2;
-  const yearBuiltValue = property.year_built || property.yearBuilt || property.specs?.yearBuilt || '2022';
-  const conditionValue = property.property_condition || property.propertyCondition || property.specs?.propertyCondition || 'Excellent';
-  const archStyleValue = property.architectural_style || property.architecturalStyle || property.specs?.architecturalStyle || 'Modern Contemporary';
-  const listingIdVal = property.listing_id || property.listingKey || property.id || 'HBR-2024-000123';
-  const listingKeyVal = property.listingKey || 'HBRN-00123';
-  const subdivisionVal = property.subdivision_name || property.subdivisionName || property.location?.subdivisionName || 'Avida Settings Nuvali';
-  const cityVal = property.city || property.location?.city || property.location || 'Sta. Rosa';
-  const stateVal = property.state || property.location?.state || property.state_or_province || 'Laguna';
-  const postalCodeVal = property.postal_code || property.location?.postalCode || '4026';
-  const streetAddressVal = property.address || property.location?.address || 'Block 12 Lot 5, Avida Settings Nuvali, Sta. Rosa, Laguna 4026';
-  const latitudeVal = property.latitude || '14.2250';
-  const longitudeVal = property.longitude || '121.0483';
+  const bedroomsCount = property.bedrooms ?? property.beds ?? property.specs?.beds ?? 0;
+  const bathroomsCount = property.bathrooms ?? property.baths ?? property.specs?.baths ?? 0;
+  const floorAreaValue = property.floor_area || property.livingArea || property.living_area || property.sqft || property.sqm || property.specs?.livingArea || 0;
+  const lotAreaValue = property.lot_area || property.lotSizeArea || property.lot_size_area || property.specs?.lotSizeArea || 0;
+  const storiesValue = property.stories || property.stories_total || property.specs?.storiesTotal || 1;
+  const yearBuiltValue = property.year_built || property.yearBuilt || property.specs?.yearBuilt || 'N/A';
+  const conditionValue = property.property_condition || property.propertyCondition || property.specs?.propertyCondition || 'N/A';
+  const archStyleValue = property.architectural_style || property.architecturalStyle || property.specs?.architecturalStyle || 'N/A';
+  const listingIdVal = property.listing_id || property.listingKey || property.id || 'N/A';
+  const listingKeyVal = property.listingKey || property.listing_key || 'N/A';
+  const subdivisionVal = property.subdivision_name || property.subdivisionName || property.location?.subdivisionName || '';
+  const cityVal = property.city || property.location?.city || property.location || '';
+  const stateVal = property.state || property.location?.state || property.state_or_province || '';
+  const postalCodeVal = property.postal_code || property.location?.postalCode || '';
+  const streetAddressVal = property.address || property.location?.address || '';
+  const latitudeVal = property.latitude || property.location?.coordinates?.lat || '';
+  const longitudeVal = property.longitude || property.location?.coordinates?.lng || '';
 
   const tabs = ['Overview', 'Details', 'Location', 'Amenities', 'Gallery', 'Agent', 'Activity'];
 
@@ -486,94 +454,129 @@ export default function BrokerPropertyDetail() {
           <div className="bg-white rounded-xl border border-[#E2E8F0] p-5 sm:p-6 shadow-2xs">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
               
-              {/* Left Side: Photo Carousel & 5-Slot Filmstrip */}
+              {/* Left Side: Photo Carousel & 5-Slot Filmstrip or Database Empty State */}
               <div className="space-y-3">
-                <div className="relative aspect-[16/11] rounded-lg overflow-hidden bg-slate-100 border border-[#E2E8F0] group">
-                  <img
-                    src={currentActiveImg}
-                    alt={property.title || 'Modern Family House in Nuvali'}
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-102"
-                  />
+                {hasPhotos ? (
+                  <>
+                    <div className="relative aspect-[16/11] rounded-lg overflow-hidden bg-slate-100 border border-[#E2E8F0] group">
+                      <img
+                        src={currentActiveImg}
+                        alt={property.title || 'Property photo'}
+                        referrerPolicy="no-referrer"
+                        onError={(e) => handleImageError(e, currentActiveImg, activeImgIdx)}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-102"
+                      />
 
-                  {/* Overlaid Badges (Top Left) */}
-                  <div className="absolute top-3 left-3 flex items-center gap-1.5 z-10">
-                    <span className="px-2.5 py-0.5 rounded text-[11px] font-bold bg-[#10B981] text-white shadow-xs">
-                      Available
-                    </span>
-                    <span className="px-2.5 py-0.5 rounded text-[11px] font-bold bg-[#1E293B]/90 text-white backdrop-blur-xs shadow-xs">
-                      For Sale
-                    </span>
+                      {/* Overlaid Badges (Top Left) */}
+                      <div className="absolute top-3 left-3 flex items-center gap-1.5 z-10">
+                        <span className="px-2.5 py-0.5 rounded text-[11px] font-bold bg-[#10B981] text-white shadow-xs">
+                          Available
+                        </span>
+                        <span className="px-2.5 py-0.5 rounded text-[11px] font-bold bg-[#1E293B]/90 text-white backdrop-blur-xs shadow-xs">
+                          For Sale
+                        </span>
+                      </div>
+
+                      {/* Carousel Left / Right Arrows */}
+                      {imagesList.length > 1 && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={handlePrevImg}
+                            className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center transition-colors cursor-pointer shadow-xs backdrop-blur-xs"
+                            aria-label="Previous image"
+                          >
+                            <ChevronLeft className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleNextImg}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center transition-colors cursor-pointer shadow-xs backdrop-blur-xs"
+                            aria-label="Next image"
+                          >
+                            <ChevronRight className="w-4 h-4" />
+                          </button>
+                        </>
+                      )}
+
+                      {/* Photo Counter Pill */}
+                      <div className="absolute bottom-3 left-3 px-2.5 py-1 rounded-md bg-black/60 backdrop-blur-xs text-white text-[11px] font-medium flex items-center gap-1.5 shadow-xs">
+                        <Camera className="w-3.5 h-3.5" />
+                        <span>{activeImgIdx + 1} / {imagesList.length}</span>
+                      </div>
+
+                      {/* Google Drive Indicator if applicable */}
+                      {isDriveUrl(currentActiveImg) && (
+                        <span className="absolute top-3 right-3 bg-emerald-700/90 text-white text-[9px] font-mono font-bold px-1.5 py-0.5 rounded shadow-xs">
+                          Drive Sync
+                        </span>
+                      )}
+                    </div>
+
+                    {/* 5-Slot Thumbnail Filmstrip matching Mockup */}
+                    {imagesList.length > 1 && (
+                      <div className="grid grid-cols-5 gap-2">
+                        {imagesList.slice(0, 5).map((img, idx) => {
+                          const isLastSlot = idx === 4;
+                          const remainingCount = Math.max(0, imagesList.length - 4);
+
+                          return (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => {
+                                if (isLastSlot) {
+                                  setActiveTab('Gallery');
+                                } else {
+                                  setActiveImgIdx(idx);
+                                }
+                              }}
+                              className={`relative aspect-[4/3] rounded-md overflow-hidden border transition-all cursor-pointer ${
+                                activeImgIdx === idx && !isLastSlot
+                                  ? 'border-[#0F766E] ring-2 ring-[#0F766E]/20 shadow-xs'
+                                  : 'border-[#CBD5E1] opacity-90 hover:opacity-100'
+                              }`}
+                            >
+                              <img
+                                src={img}
+                                alt={`Thumbnail ${idx + 1}`}
+                                referrerPolicy="no-referrer"
+                                onError={(e) => handleImageError(e, img, idx)}
+                                className="w-full h-full object-cover"
+                              />
+                              {isLastSlot && (
+                                <div className="absolute inset-0 bg-black/65 flex items-center justify-center text-white text-xs font-bold">
+                                  +{remainingCount || 1}
+                                </div>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="relative aspect-[16/11] rounded-lg overflow-hidden bg-[#F8FAFC] border border-dashed border-[#CBD5E1] flex flex-col items-center justify-center p-6 text-center space-y-3 group hover:border-[#0F766E] transition-colors">
+                    <div className="w-12 h-12 rounded-full bg-teal-50 border border-teal-100 flex items-center justify-center text-[#0F766E]">
+                      <CloudUpload className="w-6 h-6 text-[#0F766E]" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-bold text-[#1E293B]">No Photos In Database</p>
+                      <p className="text-xs text-[#64748B] max-w-xs">
+                        Upload listing photos to save them to Google Drive and link them to this property record.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={uploadingPhoto}
+                      onClick={() => fileInputRef.current?.click()}
+                      className="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+                    >
+                      <Camera className="w-3.5 h-3.5" />
+                      <span>{uploadingPhoto ? 'Uploading to Drive...' : 'Upload Photos to Drive'}</span>
+                    </button>
                   </div>
-
-                  {/* Carousel Left / Right Arrows */}
-                  {imagesList.length > 1 && (
-                    <>
-                      <button
-                        type="button"
-                        onClick={handlePrevImg}
-                        className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center transition-colors cursor-pointer shadow-xs backdrop-blur-xs"
-                        aria-label="Previous image"
-                      >
-                        <ChevronLeft className="w-4 h-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleNextImg}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center transition-colors cursor-pointer shadow-xs backdrop-blur-xs"
-                        aria-label="Next image"
-                      >
-                        <ChevronRight className="w-4 h-4" />
-                      </button>
-                    </>
-                  )}
-
-                  {/* Photo Counter Pill (Bottom Left matching mockup) */}
-                  <div className="absolute bottom-3 left-3 px-2.5 py-1 rounded-md bg-black/60 backdrop-blur-xs text-white text-[11px] font-medium flex items-center gap-1.5 shadow-xs">
-                    <Camera className="w-3.5 h-3.5" />
-                    <span>{activeImgIdx + 1} / {imagesList.length}</span>
-                  </div>
-
-                  {/* Google Drive Indicator if applicable */}
-                  {isDriveUrl(currentActiveImg) && (
-                    <span className="absolute top-3 right-3 bg-emerald-700/90 text-white text-[9px] font-mono font-bold px-1.5 py-0.5 rounded shadow-xs">
-                      Drive Sync
-                    </span>
-                  )}
-                </div>
-
-                {/* 5-Slot Thumbnail Filmstrip matching Mockup */}
-                <div className="grid grid-cols-5 gap-2">
-                  {imagesList.slice(0, 5).map((img, idx) => {
-                    const isLastSlot = idx === 4;
-                    const remainingCount = Math.max(0, imagesList.length - 4);
-
-                    return (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => {
-                          if (isLastSlot) {
-                            setActiveTab('Gallery');
-                          } else {
-                            setActiveImgIdx(idx);
-                          }
-                        }}
-                        className={`relative aspect-[4/3] rounded-md overflow-hidden border transition-all cursor-pointer ${
-                          activeImgIdx === idx && !isLastSlot
-                            ? 'border-[#0F766E] ring-2 ring-[#0F766E]/20 shadow-xs'
-                            : 'border-[#CBD5E1] opacity-90 hover:opacity-100'
-                        }`}
-                      >
-                        <img src={img} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
-                        {isLastSlot && (
-                          <div className="absolute inset-0 bg-black/65 flex items-center justify-center text-white text-xs font-bold">
-                            +{remainingCount || 8}
-                          </div>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
+                )}
               </div>
 
               {/* Right Side: Headline, Location, Tags, Price, and 6-Item Metrics Grid */}
@@ -597,14 +600,14 @@ export default function BrokerPropertyDetail() {
                         </div>
                       ) : (
                         <h1 className="text-xl sm:text-2xl font-bold text-[#1E293B] tracking-tight leading-snug">
-                          {property.title || 'Modern Family House in Nuvali'}
+                          {property.title || 'Untitled Property'}
                         </h1>
                       )}
 
                       {/* Location Subtitle */}
                       <div className="flex items-center gap-1.5 text-xs text-[#64748B] mt-1 font-medium">
                         <MapPin className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                        <span>Nuvali, Sta. Rosa, Laguna</span>
+                        <span>{[property.address, property.city, property.state].filter(Boolean).join(', ') || 'Location unassigned'}</span>
                       </div>
                     </div>
 
@@ -770,7 +773,6 @@ export default function BrokerPropertyDetail() {
                         <div>
                           <p className="font-bold text-sm text-[#1E293B] leading-none">{bathroomsCount}</p>
                           <p className="text-[11px] text-[#64748B] mt-0.5">Bathrooms</p>
-                          <p className="text-[10px] text-[#94A3B8] leading-none mt-0.5">(2 Full + 1 Half)</p>
                         </div>
                       </div>
 
@@ -902,13 +904,13 @@ export default function BrokerPropertyDetail() {
                   <div className="flex items-center justify-between py-1.5 border-b border-slate-100">
                     <span>Association Fee:</span>
                     <span className="font-semibold text-[#1E293B]">
-                      {property.associationFee ? `₱${property.associationFee} / ${property.associationFeeFrequency || 'Monthly'}` : '₱4,500 / Monthly'}
+                      {property.associationFee ? `₱${property.associationFee} / ${property.associationFeeFrequency || 'Monthly'}` : 'N/A'}
                     </span>
                   </div>
                   <div className="flex items-center justify-between py-1.5 border-b border-slate-100">
                     <span>Annual Real Property Tax:</span>
                     <span className="font-semibold text-[#1E293B]">
-                      {property.taxAnnualAmount ? `₱${property.taxAnnualAmount} / yr` : '₱28,000 / yr'}
+                      {property.taxAnnualAmount ? `₱${property.taxAnnualAmount} / yr` : 'N/A'}
                     </span>
                   </div>
                   <div className="flex items-center justify-between py-1.5 border-b border-slate-100">
@@ -973,8 +975,7 @@ export default function BrokerPropertyDetail() {
                   />
                 ) : (
                   <p className="text-xs text-[#475569] leading-relaxed whitespace-pre-line">
-                    {property.description || property.publicRemarks || 
-                      'A modern and spacious house and lot located in the prestigious Nuvali community. This property offers a perfect blend of comfort, functionality, and modern design, ideal for families seeking a peaceful and secure environment with easy access to schools, commercial centers, and lifestyle destinations.'}
+                    {property.description || property.publicRemarks || 'No description provided for this property.'}
                   </p>
                 )}
               </div>
@@ -1184,7 +1185,7 @@ export default function BrokerPropertyDetail() {
                       </div>
                       <div>
                         <p className="text-[10px] text-[#64748B] font-medium leading-none">Property Type</p>
-                        <p className="text-xs font-bold text-[#1E293B] mt-1">{property.property_type || 'House and Lot'}</p>
+                        <p className="text-xs font-bold text-[#1E293B] mt-1">{property.property_type || property.propertyType || 'N/A'}</p>
                       </div>
                     </div>
 
@@ -1195,7 +1196,7 @@ export default function BrokerPropertyDetail() {
                       </div>
                       <div>
                         <p className="text-[10px] text-[#64748B] font-medium leading-none">Property Subtype</p>
-                        <p className="text-xs font-bold text-[#1E293B] mt-1">{property.property_sub_type || 'Single Detached'}</p>
+                        <p className="text-xs font-bold text-[#1E293B] mt-1">{property.property_sub_type || property.propertySubType || 'N/A'}</p>
                       </div>
                     </div>
 
@@ -1261,7 +1262,7 @@ export default function BrokerPropertyDetail() {
                       </div>
                       <div>
                         <p className="text-[10px] text-[#64748B] font-medium leading-none">Bathrooms</p>
-                        <p className="text-xs font-bold text-[#1E293B] mt-1">{bathroomsCount} (2 Full + 1 Half)</p>
+                        <p className="text-xs font-bold text-[#1E293B] mt-1">{bathroomsCount} Bathrooms</p>
                       </div>
                     </div>
 
@@ -1294,7 +1295,7 @@ export default function BrokerPropertyDetail() {
                       </div>
                       <div>
                         <p className="text-[10px] text-[#64748B] font-medium leading-none">Parking</p>
-                        <p className="text-xs font-bold text-[#1E293B] mt-1">{property.parking || '3 (2 Covered, 1 Open)'}</p>
+                        <p className="text-xs font-bold text-[#1E293B] mt-1">{property.parking || 'None'}</p>
                       </div>
                     </div>
 
@@ -1358,7 +1359,7 @@ export default function BrokerPropertyDetail() {
                       <iframe
                         title="Property Map Location"
                         className="w-full h-full border-0 pointer-events-none opacity-90"
-                        src={`https://maps.google.com/maps?q=${encodeURIComponent(editFormData.address || 'Avida Settings Nuvali, Sta. Rosa, Laguna')}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
+                        src={`https://maps.google.com/maps?q=${encodeURIComponent([editFormData.address || property.address, editFormData.city || property.city, editFormData.state || property.state].filter(Boolean).join(', ') || 'Philippines')}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
                       />
                       
                       {/* Teardrop Pin Marker & Card */}
@@ -1368,8 +1369,8 @@ export default function BrokerPropertyDetail() {
                             <MapPin className="w-3 h-3 fill-white" />
                           </div>
                           <div>
-                            <p className="font-bold text-[#1E293B] leading-none">{editFormData.city || 'Nuvali'}</p>
-                            <p className="text-[10px] text-[#64748B] mt-0.5 leading-none">{editFormData.state || 'Sta. Rosa, Laguna'}</p>
+                            <p className="font-bold text-[#1E293B] leading-none">{editFormData.city || property.city || property.address || 'Location'}</p>
+                            <p className="text-[10px] text-[#64748B] mt-0.5 leading-none">{editFormData.state || property.state || ''}</p>
                           </div>
                         </div>
                       </div>
@@ -1655,14 +1656,18 @@ export default function BrokerPropertyDetail() {
                         <SlidersHorizontal className="w-4 h-4 text-slate-600" />
                         <span>General Amenities</span>
                       </div>
-                      <ul className="space-y-2 text-[#475569]">
-                        {generalAmenitiesList.map((item, idx) => (
-                          <li key={idx} className="flex items-center gap-2">
-                            <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-                            <span>{item}</span>
-                          </li>
-                        ))}
-                      </ul>
+                      {generalAmenitiesList.length > 0 ? (
+                        <ul className="space-y-2 text-[#475569]">
+                          {generalAmenitiesList.map((item, idx) => (
+                            <li key={idx} className="flex items-center gap-2">
+                              <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-[#94A3B8] italic text-[11px]">None listed</p>
+                      )}
                     </div>
 
                     {/* Column 2: Interior Amenities */}
@@ -1671,14 +1676,18 @@ export default function BrokerPropertyDetail() {
                         <Home className="w-4 h-4 text-slate-600" />
                         <span>Interior Amenities</span>
                       </div>
-                      <ul className="space-y-2 text-[#475569]">
-                        {interiorAmenitiesList.map((item, idx) => (
-                          <li key={idx} className="flex items-center gap-2">
-                            <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-                            <span>{item}</span>
-                          </li>
-                        ))}
-                      </ul>
+                      {interiorAmenitiesList.length > 0 ? (
+                        <ul className="space-y-2 text-[#475569]">
+                          {interiorAmenitiesList.map((item, idx) => (
+                            <li key={idx} className="flex items-center gap-2">
+                              <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-[#94A3B8] italic text-[11px]">None listed</p>
+                      )}
                     </div>
 
                     {/* Column 3: Exterior Amenities */}
@@ -1687,14 +1696,18 @@ export default function BrokerPropertyDetail() {
                         <Trees className="w-4 h-4 text-slate-600" />
                         <span>Exterior Amenities</span>
                       </div>
-                      <ul className="space-y-2 text-[#475569]">
-                        {exteriorAmenitiesList.map((item, idx) => (
-                          <li key={idx} className="flex items-center gap-2">
-                            <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-                            <span>{item}</span>
-                          </li>
-                        ))}
-                      </ul>
+                      {exteriorAmenitiesList.length > 0 ? (
+                        <ul className="space-y-2 text-[#475569]">
+                          {exteriorAmenitiesList.map((item, idx) => (
+                            <li key={idx} className="flex items-center gap-2">
+                              <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-[#94A3B8] italic text-[11px]">None listed</p>
+                      )}
                     </div>
 
                     {/* Column 4: Nearby Establishments */}
@@ -1703,14 +1716,18 @@ export default function BrokerPropertyDetail() {
                         <MapPin className="w-4 h-4 text-slate-600" />
                         <span>Nearby Establishments</span>
                       </div>
-                      <ul className="space-y-2 text-[#475569]">
-                        {nearbyEstablishmentsList.map((place, idx) => (
-                          <li key={idx} className="flex items-center gap-2">
-                            <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-                            <span>{place}</span>
-                          </li>
-                        ))}
-                      </ul>
+                      {nearbyEstablishmentsList.length > 0 ? (
+                        <ul className="space-y-2 text-[#475569]">
+                          {nearbyEstablishmentsList.map((place, idx) => (
+                            <li key={idx} className="flex items-center gap-2">
+                              <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                              <span>{place}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-[#94A3B8] italic text-[11px]">None listed</p>
+                      )}
                     </div>
                   </div>
                 )}
@@ -1742,28 +1759,42 @@ export default function BrokerPropertyDetail() {
                   className="hidden"
                 />
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2.5">
-                  {imagesList.slice(0, 6).map((img, idx) => (
-                    <div
-                      key={idx}
-                      onClick={() => setActiveImgIdx(idx)}
-                      className={`relative aspect-[4/3] rounded-lg overflow-hidden border cursor-pointer group ${
-                        activeImgIdx === idx ? 'border-[#0F766E] ring-2 ring-[#0F766E]/20' : 'border-[#CBD5E1]'
-                      }`}
-                    >
-                      <img src={img} alt={`Gallery Photo ${idx + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                    </div>
-                  ))}
+                {hasPhotos ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2.5">
+                    {imagesList.slice(0, 6).map((img, idx) => (
+                      <div
+                        key={idx}
+                        onClick={() => setActiveImgIdx(idx)}
+                        className={`relative aspect-[4/3] rounded-lg overflow-hidden border cursor-pointer group ${
+                          activeImgIdx === idx ? 'border-[#0F766E] ring-2 ring-[#0F766E]/20' : 'border-[#CBD5E1]'
+                        }`}
+                      >
+                        <img
+                          src={img}
+                          alt={`Gallery Photo ${idx + 1}`}
+                          referrerPolicy="no-referrer"
+                          onError={(e) => handleImageError(e, img, idx)}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                        />
+                      </div>
+                    ))}
 
-                  {/* 7th Card: +8 View All Overlay */}
-                  <div
-                    onClick={() => setActiveTab('Gallery')}
-                    className="relative aspect-[4/3] rounded-lg overflow-hidden border border-[#CBD5E1] bg-slate-900 cursor-pointer flex flex-col items-center justify-center text-white group hover:opacity-95 transition-opacity"
-                  >
-                    <span className="text-xl font-bold">+8</span>
-                    <span className="text-[11px] text-slate-300 font-medium mt-0.5">View All</span>
+                    {imagesList.length > 6 && (
+                      <div
+                        onClick={() => setActiveTab('Gallery')}
+                        className="relative aspect-[4/3] rounded-lg overflow-hidden border border-[#CBD5E1] bg-slate-900 cursor-pointer flex flex-col items-center justify-center text-white group hover:opacity-95 transition-opacity"
+                      >
+                        <span className="text-xl font-bold">+{imagesList.length - 6}</span>
+                        <span className="text-[11px] text-slate-300 font-medium mt-0.5">View All</span>
+                      </div>
+                    )}
                   </div>
-                </div>
+                ) : (
+                  <div className="p-8 text-center bg-[#F8FAFC] rounded-lg border border-dashed border-[#CBD5E1] space-y-2">
+                    <p className="text-xs font-semibold text-[#1E293B]">No gallery photos uploaded to database yet</p>
+                    <p className="text-[11px] text-[#64748B]">Click &ldquo;Manage Photos&rdquo; above to upload property photos to Google Drive.</p>
+                  </div>
+                )}
               </div>
 
               {/* Section 6: Activity Timeline matching Mockup */}
@@ -1783,65 +1814,50 @@ export default function BrokerPropertyDetail() {
                 </div>
 
                 <div className="space-y-3 text-xs">
-                  {/* Event 1 */}
-                  <div className="flex items-start gap-3 p-3 rounded-lg bg-[#F8FAFC] border border-slate-100">
-                    <div className="w-7 h-7 rounded-full bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 shrink-0 mt-0.5">
-                      <Edit3 className="w-3.5 h-3.5" />
+                  {property.updated_at && (
+                    <div className="flex items-start gap-3 p-3 rounded-lg bg-[#F8FAFC] border border-slate-100">
+                      <div className="w-7 h-7 rounded-full bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 shrink-0 mt-0.5">
+                        <RefreshCw className="w-3.5 h-3.5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-[#1E293B]">Record updated</p>
+                        <p className="text-[#64748B]">Listing details and specifications were updated.</p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="text-[#64748B] text-[11px]">{new Date(property.updated_at).toLocaleString()}</p>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-bold text-[#1E293B]">Property updated</p>
-                      <p className="text-[#64748B]">Listing details were updated.</p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <p className="text-[#64748B] text-[11px]">Oct 01, 2024 06:25 PM</p>
-                      <p className="text-[#94A3B8] text-[10px]">by John Dela Cruz</p>
-                    </div>
-                  </div>
+                  )}
 
-                  {/* Event 2 */}
                   <div className="flex items-start gap-3 p-3 rounded-lg bg-[#F8FAFC] border border-slate-100">
                     <div className="w-7 h-7 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 shrink-0 mt-0.5">
                       <CheckCircle2 className="w-3.5 h-3.5" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-bold text-[#1E293B]">Status changed to Published</p>
-                      <p className="text-[#64748B]">The property is now live and visible to clients.</p>
+                      <p className="font-bold text-[#1E293B]">Listing Status: {property.status || 'AVAILABLE'}</p>
+                      <p className="text-[#64748B]">Property listing is recorded in the central database.</p>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="text-[#64748B] text-[11px]">Sep 28, 2024 11:14 AM</p>
-                      <p className="text-[#94A3B8] text-[10px]">by John Dela Cruz</p>
+                      <p className="text-[#64748B] text-[11px]">
+                        {property.created_at ? new Date(property.created_at).toLocaleString() : 'Active'}
+                      </p>
                     </div>
                   </div>
 
-                  {/* Event 3 */}
-                  <div className="flex items-start gap-3 p-3 rounded-lg bg-[#F8FAFC] border border-slate-100">
-                    <div className="w-7 h-7 rounded-full bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 shrink-0 mt-0.5">
-                      <Camera className="w-3.5 h-3.5" />
+                  {property.created_at && (
+                    <div className="flex items-start gap-3 p-3 rounded-lg bg-[#F8FAFC] border border-slate-100">
+                      <div className="w-7 h-7 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 shrink-0 mt-0.5">
+                        <Lock className="w-3.5 h-3.5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-[#1E293B]">Property created</p>
+                        <p className="text-[#64748B]">Initial property record was registered.</p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="text-[#64748B] text-[11px]">{new Date(property.created_at).toLocaleString()}</p>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-bold text-[#1E293B]">Photos updated</p>
-                      <p className="text-[#64748B]">8 new photos were added to the gallery.</p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <p className="text-[#64748B] text-[11px]">Sep 20, 2024 03:42 PM</p>
-                      <p className="text-[#94A3B8] text-[10px]">by Maria Santos</p>
-                    </div>
-                  </div>
-
-                  {/* Event 4 */}
-                  <div className="flex items-start gap-3 p-3 rounded-lg bg-[#F8FAFC] border border-slate-100">
-                    <div className="w-7 h-7 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 shrink-0 mt-0.5">
-                      <Lock className="w-3.5 h-3.5" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-bold text-[#1E293B]">Property created</p>
-                      <p className="text-[#64748B]">Listing was created in the system.</p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <p className="text-[#64748B] text-[11px]">Jan 15, 2024 10:30 AM</p>
-                      <p className="text-[#94A3B8] text-[10px]">by John Dela Cruz</p>
-                    </div>
-                  </div>
+                  )}
                 </div>
               </div>
 
@@ -1865,13 +1881,13 @@ export default function BrokerPropertyDetail() {
                 <iframe
                   title="Full Property Map"
                   className="w-full h-full border-0"
-                  src={`https://maps.google.com/maps?q=${encodeURIComponent('Avida Settings Nuvali, Sta. Rosa, Laguna')}&t=&z=16&ie=UTF8&iwloc=&output=embed`}
+                  src={`https://maps.google.com/maps?q=${encodeURIComponent([streetAddressVal, subdivisionVal, cityVal, stateVal].filter(Boolean).join(', ') || 'Philippines')}&t=&z=16&ie=UTF8&iwloc=&output=embed`}
                 />
               </div>
 
               <div className="p-3.5 bg-[#F8FAFC] rounded-lg border border-[#CBD5E1] text-xs space-y-1">
-                <p className="font-semibold text-[#1E293B]">{streetAddressVal}</p>
-                <p className="text-[#64748B]">{subdivisionVal}, {cityVal}, {stateVal} {postalCodeVal}</p>
+                <p className="font-semibold text-[#1E293B]">{streetAddressVal || 'Address not specified'}</p>
+                <p className="text-[#64748B]">{[subdivisionVal, cityVal, stateVal, postalCodeVal].filter(Boolean).join(', ') || 'No additional regional metadata'}</p>
               </div>
             </div>
           )}
@@ -1914,19 +1930,48 @@ export default function BrokerPropertyDetail() {
                 className="hidden"
               />
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                {imagesList.map((img, idx) => (
-                  <div
-                    key={idx}
-                    onClick={() => setActiveImgIdx(idx)}
-                    className={`relative aspect-[4/3] rounded-lg overflow-hidden border cursor-pointer group ${
-                      activeImgIdx === idx ? 'border-[#0F766E] ring-2 ring-[#0F766E]/20' : 'border-[#CBD5E1]'
-                    }`}
-                  >
-                    <img src={img} alt={`Photo ${idx + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+              {hasPhotos ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                  {imagesList.map((img, idx) => (
+                    <div
+                      key={idx}
+                      onClick={() => setActiveImgIdx(idx)}
+                      className={`relative aspect-[4/3] rounded-lg overflow-hidden border cursor-pointer group ${
+                        activeImgIdx === idx ? 'border-[#0F766E] ring-2 ring-[#0F766E]/20' : 'border-[#CBD5E1]'
+                      }`}
+                    >
+                      <img
+                        src={img}
+                        alt={`Photo ${idx + 1}`}
+                        referrerPolicy="no-referrer"
+                        onError={(e) => handleImageError(e, img, idx)}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-12 text-center bg-[#F8FAFC] rounded-lg border border-dashed border-[#CBD5E1] space-y-3">
+                  <div className="w-12 h-12 rounded-full bg-teal-50 border border-teal-100 flex items-center justify-center text-[#0F766E] mx-auto">
+                    <Camera className="w-6 h-6 text-[#0F766E]" />
                   </div>
-                ))}
-              </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-bold text-[#1E293B]">Gallery is Empty</p>
+                    <p className="text-xs text-[#64748B] max-w-sm mx-auto">
+                      No photos found for this property in the database. Upload photos to sync them with Google Drive.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={uploadingPhoto}
+                    onClick={() => fileInputRef.current?.click()}
+                    className="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+                  >
+                    <Camera className="w-3.5 h-3.5" />
+                    <span>{uploadingPhoto ? 'Syncing...' : 'Upload Photos to Drive'}</span>
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -1937,34 +1982,58 @@ export default function BrokerPropertyDetail() {
                 Licensed Property Consultant & Assigned Broker
               </h3>
               
-              <div className="flex items-start gap-4 p-4 rounded-lg bg-[#F8FAFC] border border-[#CBD5E1]">
-                {assignedAgent.avatar ? (
-                  <img
-                    src={assignedAgent.avatar}
-                    alt={assignedAgent.name}
-                    className="w-16 h-16 rounded-full object-cover border border-[#CBD5E1]"
-                  />
-                ) : (
-                  <div className="w-16 h-16 rounded-full bg-slate-200 border border-[#CBD5E1] flex items-center justify-center text-slate-500">
-                    <User className="w-8 h-8" />
+              {assignedAgent ? (
+                <>
+                  <div className="flex items-start gap-4 p-4 rounded-lg bg-[#F8FAFC] border border-[#CBD5E1]">
+                    {assignedAgent.avatar ? (
+                      <img
+                        src={assignedAgent.avatar}
+                        alt={assignedAgent.name}
+                        referrerPolicy="no-referrer"
+                        className="w-16 h-16 rounded-full object-cover border border-[#CBD5E1]"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 rounded-full bg-slate-200 border border-[#CBD5E1] flex items-center justify-center text-slate-500">
+                        <User className="w-8 h-8" />
+                      </div>
+                    )}
+                    
+                    <div className="space-y-1">
+                      <h4 className="text-base font-bold text-[#1E293B]">{assignedAgent.name}</h4>
+                      {assignedAgent.licenseNo && (
+                        <p className="text-xs font-medium text-[#0F766E]">{assignedAgent.licenseNo}</p>
+                      )}
+                      {assignedAgent.email && (
+                        <p className="text-xs text-[#64748B]">{assignedAgent.email}</p>
+                      )}
+                      {assignedAgent.phone && (
+                        <p className="text-xs text-[#64748B]">{assignedAgent.phone}</p>
+                      )}
+                    </div>
                   </div>
-                )}
-                
-                <div className="space-y-1">
-                  <h4 className="text-base font-bold text-[#1E293B]">{assignedAgent.name}</h4>
-                  <p className="text-xs font-medium text-[#0F766E]">{assignedAgent.prc_license_no || 'Licensed Real Estate Broker'}</p>
-                  <p className="text-xs text-[#64748B]">{assignedAgent.email}</p>
-                  <p className="text-xs text-[#64748B]">{assignedAgent.phone || '+63 917 555 0192'}</p>
-                </div>
-              </div>
 
-              <Link
-                to={`/broker/agents/${assignedAgent.id || 'agent-1'}`}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0F766E] hover:text-[#115E59]"
-              >
-                <span>View Full Agent Dossier</span>
-                <span>&rarr;</span>
-              </Link>
+                  {assignedAgent.id && (
+                    <Link
+                      to={`/broker/agents/${assignedAgent.id}`}
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0F766E] hover:text-[#115E59]"
+                    >
+                      <span>View Full Agent Dossier</span>
+                      <span>&rarr;</span>
+                    </Link>
+                  )}
+                </>
+              ) : (
+                <div className="p-8 text-center bg-[#F8FAFC] rounded-lg border border-dashed border-[#CBD5E1] space-y-2">
+                  <p className="text-xs font-semibold text-[#1E293B]">No Agent Assigned</p>
+                  <p className="text-[11px] text-[#64748B]">This listing does not have an assigned agent yet.</p>
+                  <Link
+                    to="/broker/agents"
+                    className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md bg-[#0F766E] text-white text-xs font-semibold hover:bg-[#115E59] transition-colors mt-2"
+                  >
+                    <span>Assign an Agent</span>
+                  </Link>
+                </div>
+              )}
             </div>
           )}
 
@@ -1980,14 +2049,14 @@ export default function BrokerPropertyDetail() {
                     <Sparkles className="w-4 h-4 text-[#0F766E]" />
                     <span className="font-semibold text-[#1E293B]">Listing Created</span>
                   </div>
-                  <span className="text-[#64748B]">{property.created_at || 'Jan 15, 2024'}</span>
+                  <span className="text-[#64748B]">{property.created_at ? new Date(property.created_at).toLocaleDateString() : 'N/A'}</span>
                 </div>
                 <div className="p-3 bg-[#F8FAFC] rounded-lg border border-slate-200 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <RefreshCw className="w-4 h-4 text-[#0F766E]" />
                     <span className="font-semibold text-[#1E293B]">Last Record Modification</span>
                   </div>
-                  <span className="text-[#64748B]">{property.updated_at || 'Oct 01, 2024'}</span>
+                  <span className="text-[#64748B]">{property.updated_at ? new Date(property.updated_at).toLocaleDateString() : 'N/A'}</span>
                 </div>
               </div>
             </div>
@@ -2055,11 +2124,11 @@ export default function BrokerPropertyDetail() {
               </div>
               <div className="flex items-center justify-between">
                 <span>Created</span>
-                <span className="font-semibold text-[#1E293B]">{property.created_at || 'Jan 15, 2024 10:30 AM'}</span>
+                <span className="font-semibold text-[#1E293B]">{property.created_at ? new Date(property.created_at).toLocaleString() : 'N/A'}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span>Last Updated</span>
-                <span className="font-semibold text-[#1E293B]">{property.updated_at || 'Oct 01, 2024 06:25 PM'}</span>
+                <span className="font-semibold text-[#1E293B]">{property.updated_at ? new Date(property.updated_at).toLocaleString() : 'N/A'}</span>
               </div>
 
               {/* Featured Property Toggle Switch */}
@@ -2083,37 +2152,54 @@ export default function BrokerPropertyDetail() {
             </div>
           </div>
 
-          {/* Card 2: Assigned Agent matching Mockup */}
+          {/* Card 2: Assigned Agent */}
           <div className="bg-white rounded-xl border border-[#E2E8F0] p-5 shadow-2xs space-y-4">
             <h3 className="text-sm font-bold text-[#1E293B] tracking-tight">
               Assigned Agent
             </h3>
 
-            <div className="flex items-center gap-3">
-              {assignedAgent.avatar ? (
-                <img
-                  src={assignedAgent.avatar}
-                  alt={assignedAgent.name}
-                  className="w-12 h-12 rounded-full object-cover border border-[#CBD5E1]"
-                />
-              ) : (
-                <div className="w-12 h-12 rounded-full bg-slate-100 border border-[#CBD5E1] flex items-center justify-center text-slate-500">
-                  <User className="w-6 h-6" />
+            {assignedAgent ? (
+              <>
+                <div className="flex items-center gap-3">
+                  {assignedAgent.avatar ? (
+                    <img
+                      src={assignedAgent.avatar}
+                      alt={assignedAgent.name}
+                      referrerPolicy="no-referrer"
+                      className="w-12 h-12 rounded-full object-cover border border-[#CBD5E1]"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-full bg-slate-100 border border-[#CBD5E1] flex items-center justify-center text-slate-500">
+                      <User className="w-6 h-6" />
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="font-bold text-sm text-[#1E293B] truncate">{assignedAgent.name}</p>
+                    <p className="text-xs text-[#64748B] truncate">{assignedAgent.role || 'Licensed Real Estate Agent'}</p>
+                  </div>
                 </div>
-              )}
-              <div className="min-w-0 flex-1">
-                <p className="font-bold text-sm text-[#1E293B] truncate">{assignedAgent.name || 'Maria Santos'}</p>
-                <p className="text-xs text-[#64748B] truncate">Licensed Real Estate Agent</p>
-              </div>
-            </div>
 
-            <Link
-              to={`/broker/agents/${assignedAgent.id || 'agent-1'}`}
-              className="w-full h-9 rounded-lg border border-[#CBD5E1] bg-white hover:bg-slate-50 text-xs font-semibold text-[#1E293B] flex items-center justify-center gap-1.5 transition-colors shadow-2xs"
-            >
-              <span>View Profile</span>
-              <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-            </Link>
+                {assignedAgent.id && (
+                  <Link
+                    to={`/broker/agents/${assignedAgent.id}`}
+                    className="w-full h-9 rounded-lg border border-[#CBD5E1] bg-white hover:bg-slate-50 text-xs font-semibold text-[#1E293B] flex items-center justify-center gap-1.5 transition-colors shadow-2xs"
+                  >
+                    <span>View Profile</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                  </Link>
+                )}
+              </>
+            ) : (
+              <div className="text-center py-2 space-y-2">
+                <p className="text-xs text-[#64748B]">No agent currently assigned</p>
+                <Link
+                  to="/broker/agents"
+                  className="w-full h-9 rounded-lg border border-[#0F766E] bg-white hover:bg-teal-50/50 text-xs font-semibold text-[#0F766E] flex items-center justify-center gap-1.5 transition-colors shadow-2xs"
+                >
+                  <span>Assign an Agent</span>
+                </Link>
+              </div>
+            )}
           </div>
 
         </div>

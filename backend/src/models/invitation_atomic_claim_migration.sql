@@ -10,9 +10,14 @@ ALTER TABLE public.agent_invitations
   ADD COLUMN IF NOT EXISTS claim_expires_at TIMESTAMPTZ,
   ADD COLUMN IF NOT EXISTS delivery_status VARCHAR(20) DEFAULT 'sent';
 
--- Compute digests for existing plain tokens if digest is null
+-- Widen status constraint to support claiming, revoked, used, and accepted
+ALTER TABLE public.agent_invitations DROP CONSTRAINT IF EXISTS agent_invitations_status_check;
+ALTER TABLE public.agent_invitations ADD CONSTRAINT agent_invitations_status_check
+  CHECK (status IN ('pending', 'claiming', 'accepted', 'used', 'expired', 'revoked'));
+
+-- Compute digests for existing plain tokens using built-in sha256(bytea)
 UPDATE public.agent_invitations
-SET token_digest = encode(digest(token, 'sha256'), 'hex')
+SET token_digest = encode(sha256(convert_to(token, 'UTF8')), 'hex')
 WHERE token_digest IS NULL AND token IS NOT NULL;
 
 CREATE INDEX IF NOT EXISTS idx_agent_invitations_token_digest ON public.agent_invitations(token_digest);
@@ -31,6 +36,7 @@ RETURNS TABLE (
 )
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public
 AS $$
 BEGIN
   RETURN QUERY

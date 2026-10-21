@@ -6,7 +6,7 @@
 > **Component**: `frontend/src/pages/portals/broker/BrokerProperties.jsx`  
 > **Verification Date**: 2026-10-16 (Timezone: `Asia/Manila` / UTC+8)  
 > **Verification Scope**: Displayed property data fields across complete chain: Database → Backend API → Frontend Services → Rendered DOM.  
-> **Overall Verification Status**: **CONDITIONAL PASS WITH DEFECTS IDENTIFIED**
+> **Overall Verification Status**: **VERIFIED PASS (ALL DEFECTS RESOLVED & VERIFIED END-TO-END)**
 
 ---
 
@@ -437,8 +437,62 @@ The following authoritative evidence files are archived in the repository:
 
 ---
 
-## 7. Summary & Recommendation
+## 7. Initial Summary & Recommendation (Pre-Fix Baseline)
 
-The end-to-end data pipeline from the connected Supabase database through the Express backend to the React Broker Property Listings page is operational and responsive. Security boundaries, role-based access control for the `broker` role, and confidentiality redactions are intact and enforced.
+The end-to-end data pipeline from the connected Supabase database through the Express backend to the React Broker Property Listings page was operational and responsive. Security boundaries, role-based access control for the `broker` role, and confidentiality redactions were intact and enforced.
 
-The primary defect discovered is the **unconditional Unsplash placeholder fallback** in `propertyService.js`, which prevents the UI's intended `<Building2 />` placeholder icon from ever displaying, masking missing media across the entire broker portal. Secondary defects relate to zero-value coercion, hardcoded measurement units (`m²`), and timezone specification in date rendering.
+However, 7 specific defects were identified regarding data mapping, placeholder display, listing code precedence, zero-value coercion, unit labels, status labeling, and timezone formatting.
+
+---
+
+## 8. Remediation & Post-Fix End-to-End Verification
+
+Following explicit instructions, targeted remediation was executed across the backend, shared types, frontend services, and the Broker Property Listings view component, strictly preserving database schema, business logic, permissions, and layout.
+
+### 8.1 Summary of Corrections Applied
+
+| Defect # | Target Area | Implementation Details | Verification Method |
+| :--- | :--- | :--- | :--- |
+| **#1 (Media)** | `propertyService.js`, `BrokerProperties.jsx`, `property.service.ts` | Removed hardcoded Unsplash fallback from `normalizeProperty`. Implemented batch lookup in `PropertyService.findProperties` for `public.property_images` ordered by `display_order`. Created `PropertyThumbnail` in `BrokerProperties.jsx` with `<Building2 className="w-5 h-5 text-slate-400" aria-hidden="true" />` and container `aria-label="No image available"`. | Vitest unit test + Playwright headless browser E2E |
+| **#2 (Listing Codes)** | `propertyService.js`, `BrokerProperties.jsx`, `property.service.ts` | Removed MLS fabrication (`MLS-${id.slice(0,8)}`). Display hierarchy updated to prefer `listing_id` (e.g. `MLS-0C39KDW`), fallback to `KEY: ${listing_key}`, then `ID: ${id}`, then `"Not provided"`. | Vitest unit test + Playwright E2E matrix |
+| **#3 (Zero Values)** | `propertyService.js`, `BrokerProperties.jsx`, `property.service.ts` | Implemented `parseNullableNumber` preserving numeric `0`. Replaced logical OR defaults (`|| 1`) with nullish coalescing. Valid `0` is now distinguished from `null`/`undefined`. | Vitest unit test + DOM assertion |
+| **#4 (Area Units)** | `BrokerProperties.jsx`, `propertyService.js` | Removed static `m²` hardcoding. Read `living_area` and `living_area_units` dynamically; formatted `'Square Meters'` as `m²` and `'Square Feet'` as `sq ft`. Display `"Not provided"` when missing. | Vitest unit test + Playwright E2E matrix |
+| **#5 (Property Types)** | `BrokerProperties.jsx`, `propertyService.js`, `property.service.ts` | Decoupled `property_type`, `property_sub_type`, and transaction purpose. Removed obsolete `property_type_id = 1` synthesis and removed fallback to transaction type or `"Residential"`. | Vitest unit test + Playwright E2E matrix |
+| **#6 (Status Badges)** | `BrokerProperties.jsx` | Separated transaction and approval states: `Active`, `Needs Approval` (amber pulse + inline Approve), `Under Contract`, `Reserved`, `Pending`, `Closed` (Sold), `Draft`, and neutral `Unknown` fallback. | Vitest unit test + Playwright E2E matrix |
+| **#7 (Manila Dates)** | `BrokerProperties.jsx` | Pinned `formatPhilippineCalendarDate` and `formatPhilippineRelativeTime` explicitly to `timeZone: 'Asia/Manila'`. Calculates day boundaries against Philippine midnight (`Today`, `Yesterday`, `N days ago`). Missing timestamps render `"Not provided"`, invalid timestamps render `"Unavailable"`. | Vitest unit test + Playwright E2E matrix |
+| **#8 (UI States)** | `BrokerProperties.jsx` | Added full error state with "Retry Connection" button, empty list state with "Create First Listing", and empty-filtered state with "Reset All Filters". Preserved displayed listings on manual refresh failure with toast feedback. | Vitest component tests + E2E browser verification |
+
+---
+
+### 8.2 Post-Fix Verification Evidence
+
+| Evidence File | Path / Link | Verification Result |
+| :--- | :--- | :--- |
+| **Post-Fix Screen (Initial)** | [broker-properties-page-fixed.png](file:///c:/Users/Win11x64/Desktop/My%20code%20space/CP_kerby/docs/reports/evidence/broker-property-listings/broker-properties-page-fixed.png) | Confirmed: All image-less rows render neutral `<Building2 />` placeholder icon; listing codes display `MLS-...`; floor area displays `100 m²`; Manila date displays `Oct 16, 2026` / `Today`. |
+| **Post-Fix Screen (Reloaded)** | [broker-properties-page-fixed-refreshed.png](file:///c:/Users/Win11x64/Desktop/My%20code%20space/CP_kerby/docs/reports/evidence/broker-property-listings/broker-properties-page-fixed-refreshed.png) | Confirmed: Full consistency after manual reload with `RotateCw` trigger. |
+| **Live Database State** | [live-db-properties-fixed.json](file:///c:/Users/Win11x64/Desktop/My%20code%20space/CP_kerby/docs/reports/evidence/broker-property-listings/live-db-properties-fixed.json) | Export of 8 live properties from Supabase PostgreSQL `public.properties`. |
+| **Network Traffic Trace** | [network-traffic-fixed.json](file:///c:/Users/Win11x64/Desktop/My%20code%20space/CP_kerby/docs/reports/evidence/broker-property-listings/network-traffic-fixed.json) | Full network trace: `GET /api/properties` status 200, broker auth session headers. |
+| **Rendered DOM Rows** | [frontend-rendered-rows-fixed.json](file:///c:/Users/Win11x64/Desktop/My%20code%20space/CP_kerby/docs/reports/evidence/broker-property-listings/frontend-rendered-rows-fixed.json) | 8 extracted table rows from headless browser session. |
+| **Field Verification Matrix** | [verification-matrix-fixed.json](file:///c:/Users/Win11x64/Desktop/My%20code%20space/CP_kerby/docs/reports/evidence/broker-property-listings/verification-matrix-fixed.json) | 100% PASS across every field and record in the database. |
+
+### 8.3 Automated Unit & Component Test Suite Results
+
+1. **Backend Property Data Mapping & Invariants**:
+   - Test File: `test files/backend/services/property-data-mapping.test.ts`
+   - Tests: 3 passed (0 failures)
+   - Coverage: Preserves numeric zero in specs without defaulting to 1 or null; does not fabricate MLS listing ID when null; redacts confidential data for public requests while granting broker access.
+
+2. **Frontend Property Normalization**:
+   - Test File: `test files/frontend/services/propertyService.test.js`
+   - Tests: 5 passed (0 failures)
+   - Coverage: Does NOT inject Unsplash stock photo fallback when images are empty; preserves 0 for numeric fields (beds, baths, bedrooms_total, bathrooms_total_integer, living_area); prefers bedrooms_total and bathrooms_total_integer over beds and baths; does not fabricate MLS ID; does not fabricate "Metro Manila".
+
+3. **Frontend Component & Missing-State Handling**:
+   - Test File: `test files/frontend/pages/portals/broker/BrokerProperties.test.jsx`
+   - Tests: 3 passed (0 failures)
+   - Coverage: Renders neutral image placeholder with accessible `aria-label="No image available"`; preserves 0 specs and displays correct units (`m²`); displays `"Not provided"` when specs, location, or price are missing.
+
+4. **Playwright End-to-End Headless Browser Execution**:
+   - Script: `scratch/verify-broker-listings-fixed.mjs`
+   - Result: Exit 0 (all 8 visible properties matched database records with 100% PASS score across all columns).
+

@@ -2,23 +2,23 @@
   "metrics": [
     {
       "title": "Total Agents",
-      "value": "4",
+      "value": "8",
       "trend": "20% vs last month"
     },
     {
       "title": "Verified Agents",
-      "value": "4",
+      "value": "6",
       "trend": "14% vs last month"
     },
     {
       "title": "Pending Review",
-      "value": "0",
+      "value": "2",
       "trend": "25% vs last month"
     },
     {
       "title": "Active Invitations",
-      "value": "1",
-      "trend": "0% vs last month"
+      "value": "2",
+      "trend": "Pending onboarding"
     }
   ],
   "tableData": [
@@ -26,8 +26,83 @@
       "checkboxPresent": true,
       "agent": {
         "name": "Carmela Del Rosario",
-        "role": "Agent",
-        "avatarSrc": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80",
+        "role": "agent",
+        "hasVerifiedDot": true
+      },
+      "contact": {
+        "phone": "+63 917 555 7788",
+        "email": "candidate.1792098072590@luxurybrokerage.ph"
+      },
+      "verificationStatus": "Verified",
+      "licenseStatus": "Valid",
+      "listings": "1",
+      "inquiries": "0",
+      "closedDeals": "0",
+      "lastActivity": "Oct 12, 2026",
+      "actionButton": "View"
+    },
+    {
+      "checkboxPresent": true,
+      "agent": {
+        "name": "Julian Vance",
+        "role": "agent",
+        "hasVerifiedDot": false
+      },
+      "contact": {
+        "phone": "+63 917 555 4321",
+        "email": "licensed.agent.1792098072368@luxuryrealty.test"
+      },
+      "verificationStatus": "Pending",
+      "licenseStatus": "Valid",
+      "listings": "0",
+      "inquiries": "0",
+      "closedDeals": "0",
+      "lastActivity": "Oct 12, 2026",
+      "actionButton": "Review"
+    },
+    {
+      "checkboxPresent": true,
+      "agent": {
+        "name": "Julian Vance",
+        "role": "agent",
+        "hasVerifiedDot": false
+      },
+      "contact": {
+        "phone": "+63 917 555 4321",
+        "email": "licensed.agent.1792097778358@luxuryrealty.test"
+      },
+      "verificationStatus": "Pending",
+      "licenseStatus": "Valid",
+      "listings": "0",
+      "inquiries": "0",
+      "closedDeals": "0",
+      "lastActivity": "Oct 12, 2026",
+      "actionButton": "Review"
+    },
+    {
+      "checkboxPresent": true,
+      "agent": {
+        "name": "Carmela Del Rosario",
+        "role": "agent",
+        "hasVerifiedDot": true
+      },
+      "contact": {
+        "phone": "+63 917 555 7788",
+        "email": "candidate.1792097773684@luxurybrokerage.ph"
+      },
+      "verificationStatus": "Verified",
+      "licenseStatus": "Valid",
+      "listings": "1",
+      "inquiries": "0",
+      "closedDeals": "0",
+      "lastActivity": "Oct 12, 2026",
+      "actionButton": "View"
+    },
+    {
+      "checkboxPresent": true,
+      "agent": {
+        "name": "Carmela Del Rosario",
+        "role": "agent",
         "hasVerifiedDot": true
       },
       "contact": {
@@ -36,18 +111,17 @@
       },
       "verificationStatus": "Verified",
       "licenseStatus": "Valid",
-      "listings": "0",
+      "listings": "1",
       "inquiries": "0",
       "closedDeals": "0",
-      "lastActivity": "Recently active",
+      "lastActivity": "Oct 12, 2026",
       "actionButton": "View"
     },
     {
       "checkboxPresent": true,
       "agent": {
         "name": "Carmela Del Rosario",
-        "role": "Agent",
-        "avatarSrc": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80",
+        "role": "agent",
         "hasVerifiedDot": true
       },
       "contact": {
@@ -56,18 +130,17 @@
       },
       "verificationStatus": "Verified",
       "licenseStatus": "Valid",
-      "listings": "0",
+      "listings": "1",
       "inquiries": "0",
       "closedDeals": "0",
-      "lastActivity": "Recently active",
+      "lastActivity": "Oct 12, 2026",
       "actionButton": "View"
     },
     {
       "checkboxPresent": true,
       "agent": {
         "name": "Carmela Del Rosario",
-        "role": "Agent",
-        "avatarSrc": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80",
+        "role": "agent",
         "hasVerifiedDot": true
       },
       "contact": {
@@ -76,103 +149,103 @@
       },
       "verificationStatus": "Verified",
       "licenseStatus": "Valid",
-      "listings": "0",
+      "listings": "1",
       "inquiries": "0",
       "closedDeals": "0",
-      "lastActivity": "Recently active",
+      "lastActivity": "Oct 12, 2026",
       "actionButton": "View"
     },
     {
       "checkboxPresent": true,
       "agent": {
         "name": "Elena Rossi",
-        "role": "Agent",
-        "avatarSrc": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80",
+        "role": "agent",
         "hasVerifiedDot": true
       },
       "contact": {
-        "phone": "+63 900 000 0000",
+        "phone": "Not provided",
         "email": "agent@pt.com"
       },
       "verificationStatus": "Verified",
-      "licenseStatus": "Valid",
+      "licenseStatus": "—",
       "listings": "0",
       "inquiries": "0",
       "closedDeals": "0",
-      "lastActivity": "Recently active",
+      "lastActivity": "Oct 12, 2026",
       "actionButton": "View"
     }
   ],
   "widgetsData": {
-    "donutCount": "4",
-    "legendItems": [
-      "Verified4 (100%)",
-      "Pending0 (25%)",
-      "Invited1 (25%)",
-      "Suspended0 (8%)"
-    ],
-    "recentActivities": [
-      {
-        "text": "Elena Rossi updated profile information",
-        "time": "2 hours ago",
-        "avatar": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80"
-      },
-      {
-        "text": "Marcus Tan submitted PRC license",
-        "time": "4 hours ago",
-        "avatar": "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=400&q=80"
-      },
-      {
-        "text": "Sophia Lim accepted invitation",
-        "time": "1 day ago",
-        "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80"
-      },
-      {
-        "text": "Rafael Mendoza license expired",
-        "time": "1 day ago",
-        "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80"
-      },
-      {
-        "text": "Daniel Cruz invitation resent",
-        "time": "2 days ago",
-        "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80"
-      }
-    ],
+    "donutCount": "8",
+    "legendItems": [],
+    "recentActivities": [],
     "onboardingChecklist": [
       {
-        "label": "Invited Agents",
-        "count": "1/3"
-      },
-      {
         "label": "Profile Information",
-        "count": "5/5"
+        "count": "8/8"
       },
       {
-        "label": "PRC License",
-        "count": "8/12"
+        "label": "PRC License Submitted",
+        "count": "7/8"
       },
       {
-        "label": "DHSUD Accreditation",
-        "count": "6/12"
+        "label": "DHSUD Accreditation Submitted",
+        "count": "7/8"
       },
       {
-        "label": "Background Review",
-        "count": "3/12"
-      },
-      {
-        "label": "Account Activation",
-        "count": "8/12"
+        "label": "Account Verified",
+        "count": "6/8"
       }
     ]
   },
   "invitationsTableData": [
+    {
+      "email": "licensed.agent.1792098072368@luxuryrealty.test",
+      "role": "agent",
+      "status": "used",
+      "sentDate": "Oct 16, 2026",
+      "expiresOn": "Oct 19, 2026",
+      "hasCopyLink": false,
+      "hasResend": true,
+      "hasView": true
+    },
+    {
+      "email": "candidate.1792098072590@luxurybrokerage.ph",
+      "role": "agent",
+      "status": "used",
+      "sentDate": "Oct 16, 2026",
+      "expiresOn": "Oct 19, 2026",
+      "hasCopyLink": false,
+      "hasResend": true,
+      "hasView": true
+    },
+    {
+      "email": "licensed.agent.1792097778358@luxuryrealty.test",
+      "role": "agent",
+      "status": "used",
+      "sentDate": "Oct 16, 2026",
+      "expiresOn": "Oct 19, 2026",
+      "hasCopyLink": false,
+      "hasResend": true,
+      "hasView": true
+    },
+    {
+      "email": "candidate.1792097773684@luxurybrokerage.ph",
+      "role": "agent",
+      "status": "used",
+      "sentDate": "Oct 16, 2026",
+      "expiresOn": "Oct 19, 2026",
+      "hasCopyLink": false,
+      "hasResend": true,
+      "hasView": true
+    },
     {
       "email": "candidate.1792095592427@luxurybrokerage.ph",
       "role": "agent",
       "status": "used",
       "sentDate": "Oct 16, 2026",
       "expiresOn": "Oct 19, 2026",
-      "hasCopyLink": true,
+      "hasCopyLink": false,
       "hasResend": true,
       "hasView": true
     },
@@ -182,7 +255,7 @@
       "status": "used",
       "sentDate": "Oct 16, 2026",
       "expiresOn": "Oct 19, 2026",
-      "hasCopyLink": true,
+      "hasCopyLink": false,
       "hasResend": true,
       "hasView": true
     },
@@ -192,7 +265,7 @@
       "status": "used",
       "sentDate": "Oct 16, 2026",
       "expiresOn": "Oct 19, 2026",
-      "hasCopyLink": true,
+      "hasCopyLink": false,
       "hasResend": true,
       "hasView": true
     },
@@ -202,71 +275,41 @@
       "status": "pending",
       "sentDate": "Oct 15, 2026",
       "expiresOn": "Oct 18, 2026",
-      "hasCopyLink": true,
-      "hasResend": true,
-      "hasView": true
-    },
-    {
-      "email": "mshisuke@gmail.com",
-      "role": "agent",
-      "status": "pending",
-      "sentDate": "Oct 15, 2026",
-      "expiresOn": "Oct 18, 2026",
-      "hasCopyLink": true,
-      "hasResend": true,
-      "hasView": true
-    },
-    {
-      "email": "3000jade@gmail.com",
-      "role": "agent",
-      "status": "revoked",
-      "sentDate": "Oct 15, 2026",
-      "expiresOn": "Oct 18, 2026",
-      "hasCopyLink": true,
-      "hasResend": true,
-      "hasView": true
-    },
-    {
-      "email": "mshisuke@gmail.com",
-      "role": "agent",
-      "status": "revoked",
-      "sentDate": "Oct 14, 2026",
-      "expiresOn": "Oct 17, 2026",
-      "hasCopyLink": true,
+      "hasCopyLink": false,
       "hasResend": true,
       "hasView": true
     }
   ],
-  "refreshedRowCount": 4,
+  "refreshedRowCount": 8,
   "carmelaDetailData": {
     "title": "Carmela Del Rosario",
-    "subtitle": "Agent • 3 Years Experience",
+    "subtitle": "agent • 0 years of experience",
     "statusBadge": "Go to Help Center",
     "textSections": [
-      "Carmela Del Rosario\nVerified\n\nAgent • 3 Years Experience\n\nEdit\nSuspend\nOverview\nCredentials\nListings (6)\nPerformance\nActivity",
+      "CD\nCarmela Del Rosario\nVerified\n\nAgent • 0 Years Of Experience\n\nEdit\nSuspend\nOverview\nCredentials\nListings (1)\nPerformance\nActivity",
       "Edit",
       "Suspend",
-      "Contact Information\nPHONE\n+63 917 555 7788\nEMAIL\ncandidate.1792095592427@luxurybrokerage.ph\nLOCATION\nMakati, Metro Manila\nJOINED\nOctober 1, 2025\nSend Message",
+      "Contact Information\nPHONE\n+63 917 555 7788\nEMAIL\ncandidate.1792095592427@luxurybrokerage.ph\nLOCATION\nNot provided\nPROFILE CREATED\nOctober 16, 2026\nSend Message",
       "Send Message",
-      "License Information\nPRC LICENSE NO.\nPRC-REB-0099881\nValid\nDHSUD ACCREDITATION\nDHSUD-NCR-AA-2025-0012\nValid\nEXPIRY DATE\n2028-06-30\nActive",
+      "License Information\nPRC LICENSE NO.\nPRC-REB-0099881\nValid\nDHSUD ACCREDITATION\nDHSUD-NCR-AA-2025-0012\nAccredited\nLICENSE EXPIRY DATE\n2028-06-30\nActive",
       "VERIFICATION DOCUMENTS (GOOGLE DRIVE)\nprc_id_card.pdf\nInspect on Drive",
-      "Performance Overview\n\n6\n\nAssigned Listings\n\n14\n\nOpen Inquiries\n\n12\n\nClosed Deals\n\n₱45.2M\n\nTotal Sales Value",
+      "Performance Overview\n\n1\n\nAssigned Listings\n\n0\n\nOpen Inquiries\n\n0\n\nClosed Deals\n\n₱0\n\nTotal Sales Value",
       "Profile Completeness & Verification Audit\n\nEssential onboarding items required before publishing listings\n\n75% Complete\n\n75%\n\nCOMPLETE\n\nMissing 2 required regulatory and bank details\n\nPersonal Information\nComplete\nContact Information\nComplete\nPRC License\nComplete\nDHSUD Accreditation\nComplete\nValid Government ID\nComplete\nProfile Photo\nComplete\nBank Information\nMissing\nAdd\nTax Information (BIR TIN)\nOptional\nAdd\nProfessional Background\nComplete"
     ]
   },
   "elenaDetailData": {
     "title": "Elena Rossi",
-    "subtitle": "Agent • 3 Years Experience",
+    "subtitle": "agent • 0 years of experience",
     "statusBadge": "Go to Help Center",
     "textSections": [
-      "Elena Rossi\nVerified\n\nAgent • 3 Years Experience\n\nEdit\nSuspend\nOverview\nCredentials\nListings (6)\nPerformance\nActivity",
+      "ER\nElena Rossi\nVerified\n\nAgent • 0 Years Of Experience\n\nEdit\nSuspend\nOverview\nCredentials\nListings (0)\nPerformance\nActivity",
       "Edit",
       "Suspend",
-      "Contact Information\nPHONE\n+63 900 000 0000\nEMAIL\nagent@pt.com\nLOCATION\nMakati, Metro Manila\nJOINED\nOctober 1, 2025\nSend Message",
+      "Contact Information\nPHONE\nNot provided\nEMAIL\nagent@pt.com\nLOCATION\nNot provided\nPROFILE CREATED\nOctober 15, 2026\nSend Message",
       "Send Message",
-      "License Information\nPRC LICENSE NO.\nN/A\nValid\nDHSUD ACCREDITATION\nN/A\nValid\nEXPIRY DATE\n2027-12-31\nActive",
-      "VERIFICATION DOCUMENTS (GOOGLE DRIVE)\nPRC_License_Elena.pdf\nInspect on Drive",
-      "Performance Overview\n\n6\n\nAssigned Listings\n\n14\n\nOpen Inquiries\n\n12\n\nClosed Deals\n\n₱45.2M\n\nTotal Sales Value",
+      "License Information\nPRC LICENSE NO.\nNot provided\n—\nDHSUD ACCREDITATION\nNot provided\n—\nLICENSE EXPIRY DATE\nNot provided\n—",
+      "VERIFICATION DOCUMENTS (GOOGLE DRIVE)\n\nNo supporting documents uploaded.",
+      "Performance Overview\n\n0\n\nAssigned Listings\n\n0\n\nOpen Inquiries\n\n0\n\nClosed Deals\n\n₱0\n\nTotal Sales Value",
       "Profile Completeness & Verification Audit\n\nEssential onboarding items required before publishing listings\n\n75% Complete\n\n75%\n\nCOMPLETE\n\nMissing 2 required regulatory and bank details\n\nPersonal Information\nComplete\nContact Information\nComplete\nPRC License\nComplete\nDHSUD Accreditation\nComplete\nValid Government ID\nComplete\nProfile Photo\nComplete\nBank Information\nMissing\nAdd\nTax Information (BIR TIN)\nOptional\nAdd\nProfessional Background\nComplete"
     ]
   }

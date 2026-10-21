@@ -117,6 +117,7 @@ export default function PropertyCard({ property = {}, variant = 'vertical', vari
             src={coverImage}
             alt={propertyTitle}
             loading="lazy"
+            referrerPolicy="no-referrer"
             onError={(e) => {
               e.currentTarget.src = 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1200&auto=format&fit=crop';
             }}

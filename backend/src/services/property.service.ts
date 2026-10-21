@@ -22,6 +22,8 @@ export interface PropertyFilterQuery {
   status?: string;
   standardStatus?: string;
   agentId?: string;
+  list_agent_key?: string;
+  listAgentKey?: string;
   search?: string;
   page?: number;
   limit?: number;
@@ -46,7 +48,7 @@ export interface PropertyItem {
   associationFee?: number;
   associationFeeFrequency?: string;
   taxAnnualAmount?: number;
-  mainImage?: string;
+  mainImage?: string | null;
   location: {
     address: string;
     unparsedAddress?: string | null;
@@ -69,27 +71,27 @@ export interface PropertyItem {
     };
   };
   specs: {
-    beds: number;
-    baths: number;
-    bedroomsTotal?: number;
-    bathroomsTotalInteger?: number;
-    bathroomsFull?: number;
-    bathroomsHalf?: number;
-    storiesTotal?: number;
-    sqft: number;
-    livingArea?: number;
+    beds?: number | null;
+    baths?: number | null;
+    bedroomsTotal?: number | null;
+    bathroomsTotalInteger?: number | null;
+    bathroomsFull?: number | null;
+    bathroomsHalf?: number | null;
+    storiesTotal?: number | null;
+    sqft?: number | null;
+    livingArea?: number | null;
     livingAreaUnits?: string;
-    lotSizeArea?: number;
+    lotSizeArea?: number | null;
     lotSizeUnits?: string;
     propertyType: string;
     propertyTypeId?: number;
-    propertySubType?: string;
-    yearBuilt?: number;
-    parkingTotal?: number;
-    parkingCovered?: number;
-    parkingOpen?: number;
+    propertySubType?: string | null;
+    yearBuilt?: number | null;
+    parkingTotal?: number | null;
+    parkingCovered?: number | null;
+    parkingOpen?: number | null;
     transactionType?: string;
-    propertyCondition?: string;
+    propertyCondition?: string | null;
   };
   propertyTypeId?: number;
   features: string[];
@@ -322,6 +324,118 @@ export class PropertyService {
   }
 
   /**
+   * Maps a raw Supabase database row to a standardized PropertyItem DTO,
+   * cleanly handling nulls, zeros, and property image thumbnails.
+   */
+  public static mapDatabaseRow(row: any, imageMap: Record<string, string[]> = {}): PropertyItem {
+    const imagesFromMap = (imageMap && imageMap[row.id]) || [];
+    const imagesFromRow = Array.isArray(row.images) ? row.images : [];
+    const imagesFromMain = row.main_image ? [row.main_image] : [];
+    const propertyImages = Array.from(new Set([...imagesFromMap, ...imagesFromRow, ...imagesFromMain])).filter(Boolean);
+    const mainImage = (propertyImages && propertyImages.length > 0) ? propertyImages[0] : (row.main_image || null);
+
+    const bedroomsTotal = row.bedrooms_total !== null && row.bedrooms_total !== undefined
+      ? Number(row.bedrooms_total)
+      : (row.beds !== null && row.beds !== undefined ? Number(row.beds) : null);
+
+    const bathroomsTotalInteger = row.bathrooms_total_integer !== null && row.bathrooms_total_integer !== undefined
+      ? Number(row.bathrooms_total_integer)
+      : (row.baths !== null && row.baths !== undefined ? Number(row.baths) : null);
+
+    const beds = row.beds !== null && row.beds !== undefined
+      ? Number(row.beds)
+      : bedroomsTotal;
+
+    const baths = row.baths !== null && row.baths !== undefined
+      ? Number(row.baths)
+      : bathroomsTotalInteger;
+
+    const livingArea = row.living_area !== null && row.living_area !== undefined
+      ? Number(row.living_area)
+      : null;
+
+    const sqft = row.sqft !== null && row.sqft !== undefined
+      ? Number(row.sqft)
+      : (livingArea !== null ? livingArea : null);
+
+    return {
+      id: row.id,
+      listingKey: row.listing_key || null,
+      listingId: row.listing_id || null,
+      title: row.title || 'Untitled property',
+      tagline: row.tagline || '',
+      price: Number(row.price) || 0,
+      formattedPrice: row.formatted_price || (row.price !== null && row.price !== undefined ? `₱${Number(row.price).toLocaleString()}` : undefined),
+      listPriceCurrency: row.list_price_currency || 'PHP',
+      originalListPrice: row.original_list_price !== null && row.original_list_price !== undefined ? Number(row.original_list_price) : undefined,
+      associationFee: row.association_fee !== null && row.association_fee !== undefined ? Number(row.association_fee) : 0,
+      associationFeeFrequency: row.association_fee_frequency || 'Monthly',
+      taxAnnualAmount: row.tax_annual_amount !== null && row.tax_annual_amount !== undefined ? Number(row.tax_annual_amount) : undefined,
+      mainImage,
+      location: {
+        address: row.address || '',
+        unparsedAddress: row.unparsed_address || row.address || null,
+        subdivisionName: row.subdivision_name || null,
+        buildingName: row.building_name || null,
+        building_name: row.building_name || null,
+        city: row.city || '',
+        state: row.state || null,
+        stateOrProvince: row.state_or_province || row.state || null,
+        postalCode: row.postal_code || null,
+        region: row.region || null,
+        region_psgc_code: row.region_psgc_code || null,
+        province_psgc_code: row.province_psgc_code || null,
+        city_psgc_code: row.city_psgc_code || null,
+        barangay: row.barangay || null,
+        barangay_psgc_code: row.barangay_psgc_code || null,
+        coordinates: (row.latitude !== null && row.latitude !== undefined && row.longitude !== null && row.longitude !== undefined)
+          ? { lat: Number(row.latitude), lng: Number(row.longitude) }
+          : undefined,
+      },
+      specs: {
+        beds,
+        baths,
+        bedroomsTotal,
+        bathroomsTotalInteger,
+        bathroomsFull: row.bathrooms_full !== null && row.bathrooms_full !== undefined ? Number(row.bathrooms_full) : null,
+        bathroomsHalf: row.bathrooms_half !== null && row.bathrooms_half !== undefined ? Number(row.bathrooms_half) : null,
+        storiesTotal: row.stories_total !== null && row.stories_total !== undefined ? Number(row.stories_total) : null,
+        sqft: sqft !== null ? sqft : 0,
+        livingArea,
+        livingAreaUnits: row.living_area_units || 'Square Meters',
+        lotSizeArea: row.lot_size_area !== null && row.lot_size_area !== undefined ? Number(row.lot_size_area) : null,
+        lotSizeUnits: row.lot_size_units || 'Square Meters',
+        propertyType: row.property_type || 'Residential',
+        propertyTypeId: row.property_type_id || undefined,
+        propertySubType: row.property_sub_type || null,
+        yearBuilt: row.year_built !== null && row.year_built !== undefined ? Number(row.year_built) : null,
+        parkingTotal: row.parking_total !== null && row.parking_total !== undefined ? Number(row.parking_total) : 0,
+        parkingCovered: row.parking_covered !== null && row.parking_covered !== undefined ? Number(row.parking_covered) : 0,
+        parkingOpen: row.parking_open !== null && row.parking_open !== undefined ? Number(row.parking_open) : 0,
+        transactionType: row.transaction_type || 'For Sale',
+        propertyCondition: row.property_condition || null,
+      },
+      propertyTypeId: row.property_type_id || undefined,
+      isFeatured: row.is_featured ?? false,
+      features: row.features || [],
+      interiorFeatures: row.interior_features || [],
+      exteriorFeatures: row.exterior_features || [],
+      images: propertyImages,
+      publicRemarks: row.public_remarks || null,
+      customAttributes: row.custom_reso_attributes || {},
+      architecturalStyle: row.architectural_style || null,
+      standardStatus: row.standard_status || (row.status === 'available' ? 'Active' : row.status === 'pending' ? 'Pending' : 'Closed'),
+      status: row.status || 'available',
+      createdAt: row.created_at || new Date().toISOString(),
+      updatedAt: row.updated_at || new Date().toISOString(),
+      createdBy: row.created_by || null,
+      listAgentKey: row.list_agent_key || null,
+      agentName: 'Elena Rossi',
+      agentId: row.created_by || 'agent-1',
+    };
+  }
+
+  /**
    * Query properties with filtering, searching, and pagination
    */
   public static async findProperties(
@@ -369,6 +483,10 @@ export class PropertyService {
         if (query.agentId) {
           dbQuery = dbQuery.eq('created_by', query.agentId);
         }
+        const assignedKey = query.list_agent_key || query.listAgentKey;
+        if (assignedKey) {
+          dbQuery = dbQuery.eq('list_agent_key', assignedKey);
+        }
         if (query.minPrice) {
           dbQuery = dbQuery.gte('price', query.minPrice);
         }
@@ -394,85 +512,67 @@ export class PropertyService {
 
         if (error) {
           logger.warn('[PropertyService] Supabase query failed, using local fixtures:', error.message);
-        } else if (data && data.length > 0) {
-          const total = count || data.length;
-          const mapped: PropertyItem[] = data.map((row: any) => {
-            const item: PropertyItem = {
-              id: row.id,
-              listingKey: row.listing_key || `KEY-${row.id}`,
-              listingId: row.listing_id || `MLS-${String(row.id).slice(0, 8).toUpperCase()}`,
-              title: row.title,
-              tagline: row.tagline,
-              price: Number(row.price),
-              formattedPrice: row.formatted_price || `₱${Number(row.price).toLocaleString()}`,
-              listPriceCurrency: row.list_price_currency || 'PHP',
-              originalListPrice: row.original_list_price ? Number(row.original_list_price) : undefined,
-              associationFee: row.association_fee ? Number(row.association_fee) : 0,
-              associationFeeFrequency: row.association_fee_frequency || 'Monthly',
-              taxAnnualAmount: row.tax_annual_amount ? Number(row.tax_annual_amount) : undefined,
-              mainImage: (row.images && row.images[0]) || '',
-              location: {
-                address: row.address,
-                unparsedAddress: row.unparsed_address || row.address,
-                subdivisionName: row.subdivision_name,
-                buildingName: row.building_name,
-                building_name: row.building_name,
-                city: row.city,
-                state: row.state,
-                stateOrProvince: row.state_or_province || row.state,
-                postalCode: row.postal_code,
-                region: row.region,
-                region_psgc_code: row.region_psgc_code,
-                province_psgc_code: row.province_psgc_code,
-                city_psgc_code: row.city_psgc_code,
-                barangay: row.barangay,
-                barangay_psgc_code: row.barangay_psgc_code,
-                coordinates: (row.latitude !== null && row.latitude !== undefined && row.longitude !== null && row.longitude !== undefined) 
-                  ? { lat: Number(row.latitude), lng: Number(row.longitude) } 
-                  : undefined,
-              },
-              specs: {
-                beds: row.beds,
-                baths: row.baths,
-                bedroomsTotal: row.bedrooms_total || row.beds,
-                bathroomsTotalInteger: row.bathrooms_total_integer || row.baths,
-                bathroomsFull: row.bathrooms_full,
-                bathroomsHalf: row.bathrooms_half,
-                storiesTotal: row.stories_total,
-                sqft: row.sqft,
-                livingArea: row.living_area || row.sqft,
-                livingAreaUnits: row.living_area_units || 'Square Meters',
-                lotSizeArea: row.lot_size_area,
-                lotSizeUnits: row.lot_size_units || 'Square Meters',
-                propertyType: row.property_type || 'Residential',
-                propertyTypeId: row.property_type_id || 1,
-                propertySubType: row.property_sub_type,
-                yearBuilt: row.year_built,
-                parkingTotal: row.parking_total,
-                parkingCovered: row.parking_covered || 0,
-                parkingOpen: row.parking_open || 0,
-                transactionType: row.transaction_type || 'For Sale',
-                propertyCondition: row.property_condition,
-              },
-              propertyTypeId: row.property_type_id || 1,
-              isFeatured: row.is_featured ?? false,
-              features: row.features || [],
-              interiorFeatures: row.interior_features || [],
-              exteriorFeatures: row.exterior_features || [],
-              images: row.images || [],
-              publicRemarks: row.public_remarks,
-              customAttributes: row.custom_reso_attributes,
-              architecturalStyle: row.architectural_style,
-              standardStatus: row.standard_status || (row.status === 'available' ? 'Active' : row.status === 'pending' ? 'Pending' : 'Closed'),
-              status: row.status,
-              createdAt: row.created_at,
-              updatedAt: row.updated_at,
-              createdBy: row.created_by,
-              listAgentKey: row.list_agent_key,
-              agentName: 'Elena Rossi',
-              agentId: row.created_by || 'agent-1',
-            };
+        } else if (data) {
+          const total = count ?? data.length;
 
+          if (data.length === 0) {
+            return {
+              properties: [],
+              total: 0,
+              page,
+              limit,
+              totalPages: 1,
+            };
+          }
+
+          // Batch retrieve thumbnails from property_images and property_media ordered by display_order
+          const propertyIds = data.map((r: any) => r.id).filter(Boolean);
+          const imageMap: Record<string, string[]> = {};
+          if (propertyIds.length > 0) {
+            try {
+              const { data: imagesData } = await supabaseAdmin
+                .from('property_images')
+                .select('property_id, image_url, display_order')
+                .in('property_id', propertyIds)
+                .order('display_order', { ascending: true });
+
+              if (imagesData) {
+                for (const img of imagesData) {
+                  if (img.image_url) {
+                    if (!imageMap[img.property_id]) imageMap[img.property_id] = [];
+                    imageMap[img.property_id].push(img.image_url);
+                  }
+                }
+              }
+            } catch (imgErr: any) {
+              logger.warn('[PropertyService] Failed to batch fetch property_images:', imgErr.message);
+            }
+
+            try {
+              const { data: mediaData } = await supabaseAdmin
+                .from('property_media')
+                .select('property_id, media_url, order_index, media_category')
+                .in('property_id', propertyIds)
+                .eq('media_category', 'Photo')
+                .order('order_index', { ascending: true });
+
+              if (mediaData) {
+                for (const m of mediaData) {
+                  if (m.media_url) {
+                    if (!imageMap[m.property_id]) imageMap[m.property_id] = [];
+                    if (!imageMap[m.property_id].includes(m.media_url)) {
+                      imageMap[m.property_id].push(m.media_url);
+                    }
+                  }
+                }
+              }
+            } catch (mediaErr: any) {
+              logger.warn('[PropertyService] Failed to batch fetch property_media:', mediaErr.message);
+            }
+          }
+
+          const mapped: PropertyItem[] = data.map((row: any) => {
+            const item = PropertyService.mapDatabaseRow(row, imageMap);
             return this.redactConfidential(item, userRole);
           });
 
@@ -511,6 +611,10 @@ export class PropertyService {
     }
     if (query.agentId) {
       filtered = filtered.filter((p) => p.createdBy === query.agentId || p.agentId === query.agentId);
+    }
+    const localAssignedKey = query.list_agent_key || query.listAgentKey;
+    if (localAssignedKey) {
+      filtered = filtered.filter((p) => p.listAgentKey === localAssignedKey);
     }
     if (query.minPrice) {
       filtered = filtered.filter((p) => p.price >= Number(query.minPrice));
@@ -585,7 +689,7 @@ export class PropertyService {
             associationFee: data.association_fee ? Number(data.association_fee) : 0,
             associationFeeFrequency: data.association_fee_frequency || 'Monthly',
             taxAnnualAmount: data.tax_annual_amount ? Number(data.tax_annual_amount) : undefined,
-            mainImage: (data.images && data.images[0]) || '',
+            mainImage: (data as any).main_image || (data.images && data.images[0]) || '',
             location: {
               address: data.address,
               unparsedAddress: data.unparsed_address || data.address,
@@ -682,6 +786,18 @@ export class PropertyService {
               shortDescription: m.short_description,
               mimeType: m.mime_type,
             }));
+
+            // Include Photo category items from property_media in item.images if not already present
+            const photoUrls = mediaRows
+              .filter((m: any) => (m.media_category === 'Photo' || m.mediaCategory === 'Photo') && (m.media_url || m.mediaUrl))
+              .map((m: any) => m.media_url || m.mediaUrl);
+            if (photoUrls.length > 0) {
+              const currentImages = Array.isArray(item.images) ? item.images : [];
+              item.images = Array.from(new Set([...currentImages, ...photoUrls]));
+              if (!item.mainImage && item.images.length > 0) {
+                item.mainImage = item.images[0];
+              }
+            }
           } else if (data.custom_reso_attributes?.media && Array.isArray(data.custom_reso_attributes.media)) {
             item.media = data.custom_reso_attributes.media;
           }
@@ -1006,6 +1122,8 @@ export class PropertyService {
             property_condition: newProperty.specs.propertyCondition,
             created_by: resolvedCreatedBy,
             list_agent_key: resolvedListAgentKey,
+            ...(Array.isArray(newProperty.images) && newProperty.images.length > 0 ? { images: newProperty.images } : {}),
+            ...(newProperty.mainImage ? { main_image: newProperty.mainImage } : {}),
           })
           .select()
           .single();
@@ -1293,6 +1411,8 @@ export class PropertyService {
             lot_size_area: updated.specs.lotSizeArea,
             lot_size_units: updated.specs.lotSizeUnits,
             is_featured: data.is_featured !== undefined ? Boolean(data.is_featured) : (data.isFeatured !== undefined ? Boolean(data.isFeatured) : updated.isFeatured),
+            ...(Array.isArray(data.images) ? { images: data.images } : {}),
+            ...(data.main_image || data.mainImage ? { main_image: data.main_image || data.mainImage } : {}),
             updated_at: updated.updatedAt,
           })
           .eq('id', id);
@@ -1314,7 +1434,7 @@ export class PropertyService {
           }
         }
 
-        // Sync property_images if provided (accept propertyImages, property_images, or images)
+        // Sync property_images and property_media if provided (accept propertyImages, property_images, or images)
         const rawImages = data.propertyImages || (data as any).property_images || (Array.isArray(data.images) ? data.images : null);
         if (Array.isArray(rawImages)) {
           await supabaseAdmin.from('property_images').delete().eq('property_id', id);
@@ -1325,6 +1445,18 @@ export class PropertyService {
               display_order: typeof img === 'object' && img ? (img.displayOrder || img.display_order || (idx + 1)) : (idx + 1),
             }));
             await supabaseAdmin.from('property_images').insert(imgRows);
+
+            // Also mirror to property_media with media_category = 'Photo'
+            const photoMediaRows = imgRows.map((img: any, idx: number) => ({
+              property_id: id,
+              media_url: img.image_url,
+              media_category: 'Photo',
+              order_index: img.display_order || (idx + 1),
+              short_description: 'Listing Photo',
+              mime_type: 'image/jpeg',
+            }));
+            await supabaseAdmin.from('property_media').delete().eq('property_id', id).eq('media_category', 'Photo');
+            await supabaseAdmin.from('property_media').insert(photoMediaRows);
           }
         }
 

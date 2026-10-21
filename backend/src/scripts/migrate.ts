@@ -6,7 +6,6 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 async function runMigrations() {
-  // Use a default or the env var
   const connectionString = process.env.SUPABASE_DB_URL || 'postgresql://postgres:postgres@localhost:54322/postgres';
   const client = new Client({ connectionString });
   
@@ -21,6 +20,8 @@ async function runMigrations() {
       'invitation_atomic_claim_migration.sql',
       'agent_audit_events_migration.sql',
       'agent_credential_documents_migration.sql',
+      'inquiries_module_migration.sql',
+      'agent_management_v2_migration.sql',
     ];
 
     for (const file of files) {
@@ -33,6 +34,7 @@ async function runMigrations() {
     }
   } catch (error) {
     console.error('❌ Migration failed:', error);
+    process.exitCode = 1;
   } finally {
     await client.end();
   }

@@ -133,6 +133,16 @@ export const clientUserService = {
    * Get client submitted inquiries
    */
   async getClientInquiries() {
+    try {
+      const { inquiryService } = await import('./inquiryService');
+      const liveList = await inquiryService.getMyInquiries();
+      if (Array.isArray(liveList) && liveList.length > 0) {
+        return liveList;
+      }
+    } catch (err) {
+      console.warn('[clientUserService] Live inquiry fetch failed, using stored inquiries:', err);
+    }
+
     const stored = safeGetStorage(CLIENT_STORAGE_KEYS.INQUIRIES, null);
     if (Array.isArray(stored)) {
       return stored;
@@ -156,6 +166,22 @@ export const clientUserService = {
    * Append a client message or reply to an inquiry thread
    */
   async addInquiryMessage(inquiryId, messageText) {
+    try {
+      const { inquiryService } = await import('./inquiryService');
+      const reply = await inquiryService.addMessage(inquiryId, messageText);
+      if (reply) {
+        const inquiries = await this.getClientInquiries();
+        const target = inquiries.find((i) => String(i.id) === String(inquiryId));
+        if (target) {
+          target.messages = [...(target.messages || []), reply];
+          target.last_message = messageText;
+          return target;
+        }
+      }
+    } catch (err) {
+      console.warn('[clientUserService] Live addMessage failed, storing locally:', err);
+    }
+
     const inquiries = await this.getClientInquiries();
     const target = inquiries.find((i) => String(i.id) === String(inquiryId));
     if (!target) {

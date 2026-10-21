@@ -7,7 +7,7 @@ import logger from '../utils/logger';
 export interface AgentInvitation {
   id: string;
   email: string;
-  token: string;
+  token?: string;
   token_digest?: string;
   registration_attempt_id?: string;
   claim_expires_at?: string;
@@ -15,6 +15,9 @@ export interface AgentInvitation {
   status: 'pending' | 'used' | 'revoked' | 'expired';
   expires_at: string;
   invited_by?: string;
+  brokerage_id?: string;
+  team_id?: string | null;
+  can_create_listings?: boolean;
   full_name?: string;
   phone?: string;
   role?: string;
@@ -30,6 +33,9 @@ export interface CreateInvitationPayload {
   phone?: string;
   role?: string;
   brokerAgency?: string;
+  brokerageId?: string;
+  teamId?: string | null;
+  canCreateListings?: boolean;
   message?: string;
   allowReissue?: boolean;
 }
@@ -39,6 +45,9 @@ export interface ValidateTokenResult {
   email?: string;
   id?: string;
   role?: string;
+  brokerage_id?: string;
+  team_id?: string | null;
+  can_create_listings?: boolean;
   reason?: 'EXPIRED' | 'USED' | 'REVOKED' | 'NOT_FOUND';
 }
 
@@ -72,6 +81,12 @@ export class InvitationService {
     const phone = typeof payload === 'object' ? payload.phone : undefined;
     const role = typeof payload === 'object' ? payload.role || 'agent' : 'agent';
     const brokerAgency = typeof payload === 'object' ? payload.brokerAgency : undefined;
+    const brokerageId =
+      typeof payload === 'object' && payload.brokerageId
+        ? payload.brokerageId
+        : '00000000-0000-0000-0000-000000000001';
+    const teamId = typeof payload === 'object' ? payload.teamId ?? null : null;
+    const canCreateListings = typeof payload === 'object' ? Boolean(payload.canCreateListings) : false;
     const message = typeof payload === 'object' ? payload.message : undefined;
     const allowReissue = typeof payload === 'object' ? Boolean(payload.allowReissue) : false;
 
@@ -110,6 +125,9 @@ export class InvitationService {
       status: 'pending',
       expires_at: expiresAt.toISOString(),
       invited_by: safeInvitedBy || undefined,
+      brokerage_id: brokerageId,
+      team_id: teamId,
+      can_create_listings: canCreateListings,
       full_name: fullName,
       phone,
       role,
@@ -201,7 +219,7 @@ export class InvitationService {
       try {
         const { data, error } = await supabaseAdmin
           .from('agent_invitations')
-          .select('*')
+          .select('id, email, status, expires_at, invited_by, full_name, phone, role, broker_agency, message, created_at, updated_at')
           .order('created_at', { ascending: false });
 
         if (error) {
@@ -215,7 +233,8 @@ export class InvitationService {
             if (status === 'pending' && new Date(inv.expires_at).getTime() < Date.now()) {
               status = 'expired';
             }
-            return { ...inv, status };
+            const { token, token_digest, registration_attempt_id, ...safeInv } = inv;
+            return { ...safeInv, status } as AgentInvitation;
           });
         }
       } catch (err: any) {
@@ -230,7 +249,8 @@ export class InvitationService {
         if (status === 'pending' && new Date(localInv.expires_at).getTime() < Date.now()) {
           status = 'expired';
         }
-        return { ...localInv, status };
+        const { token, token_digest, registration_attempt_id, ...safeInv } = localInv;
+        return { ...safeInv, status } as AgentInvitation;
       });
     }
     list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());

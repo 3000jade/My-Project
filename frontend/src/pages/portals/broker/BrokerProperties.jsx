@@ -11,32 +11,84 @@ import ProposalReviewDrawer from '../../../components/cms/ProposalReviewDrawer';
 import propertyService, { normalizeProperty } from '../../../services/propertyService';
 import { cn } from '../../../utils/cn';
 
-function formatRelativeTime(dateStr) {
-  if (!dateStr) return '—';
+function formatPhilippineRelativeTime(dateStr) {
+  if (!dateStr) return 'Not provided';
   try {
     const date = new Date(dateStr);
-    if (isNaN(date.getTime())) return '—';
-    const diffMs = Date.now() - date.getTime();
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    if (diffDays <= 0) return 'Today';
+    if (isNaN(date.getTime())) return 'Unavailable';
+    
+    const manilaFmt = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Manila',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
+    
+    const nowParts = manilaFmt.format(new Date());
+    const itemParts = manilaFmt.format(date);
+    
+    const [nowY, nowM, nowD] = nowParts.split('-').map(Number);
+    const [itemY, itemM, itemD] = itemParts.split('-').map(Number);
+    
+    const nowDate = Date.UTC(nowY, nowM - 1, nowD);
+    const itemDate = Date.UTC(itemY, itemM - 1, itemD);
+    
+    const diffDays = Math.round((nowDate - itemDate) / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return 'Today';
     if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 0) return 'Future date';
     if (diffDays < 30) return `${diffDays} days ago`;
     const diffMonths = Math.floor(diffDays / 30);
     return `${diffMonths} month${diffMonths > 1 ? 's' : ''} ago`;
   } catch {
-    return '—';
+    return 'Unavailable';
   }
 }
 
-function formatCalendarDate(dateStr) {
-  if (!dateStr) return '—';
+function formatPhilippineCalendarDate(dateStr) {
+  if (!dateStr) return 'Not provided';
   try {
     const date = new Date(dateStr);
-    if (isNaN(date.getTime())) return '—';
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    if (isNaN(date.getTime())) return 'Unavailable';
+    return new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Manila',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    }).format(date);
   } catch {
-    return '—';
+    return 'Unavailable';
   }
+}
+
+function PropertyThumbnail({ image, title }) {
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    setHasError(false);
+  }, [image]);
+
+  const showPlaceholder = !image || hasError;
+
+  return (
+    <div
+      className="w-14 h-10 rounded-md bg-slate-100 overflow-hidden border border-[#E2E8F0] shrink-0 shadow-2xs flex items-center justify-center"
+      aria-label={showPlaceholder ? "No image available" : (title || "Property photo")}
+    >
+      {showPlaceholder ? (
+        <Building2 className="w-5 h-5 text-slate-400" aria-hidden="true" />
+      ) : (
+        <img
+          src={image}
+          alt={title || "Property photo"}
+          referrerPolicy="no-referrer"
+          className="w-full h-full object-cover"
+          onError={() => setHasError(true)}
+        />
+      )}
+    </div>
+  );
 }
 
 export default function BrokerProperties() {
@@ -68,9 +120,12 @@ export default function BrokerProperties() {
 
   // Strictly Live API Fetch (No Fake / Mock Fallback Records)
   const fetchProperties = useCallback(async (isManualRefresh = false) => {
-    if (isManualRefresh) setIsRefreshing(true);
-    else setLoading(true);
-    setError(null);
+    if (isManualRefresh) {
+      setIsRefreshing(true);
+    } else {
+      setLoading(true);
+      setError(null);
+    }
 
     try {
       const response = await propertyService.getProperties();
@@ -80,10 +135,15 @@ export default function BrokerProperties() {
         ? response
         : [];
       setProperties(rawList.map(normalizeProperty));
+      setError(null);
     } catch (err) {
       console.warn('API fetch failed:', err);
-      setError('Unable to load property listings from the database.');
-      setProperties([]);
+      if (isManualRefresh) {
+        showToast('Refresh failed. Preserving previously loaded property listings.');
+      } else {
+        setError('Unable to load property listings from the database.');
+        setProperties([]);
+      }
     } finally {
       setLoading(false);
       setIsRefreshing(false);
@@ -399,26 +459,24 @@ export default function BrokerProperties() {
       header: "Property",
       className: "min-w-[280px]",
       render: (row) => {
-        const listingCode = row.listingId || row.listing_id || row.listingKey || (row.id ? `ID: ${row.id}` : '—');
+        const title = row.title || 'Untitled property';
+        const listingCode = row.listing_id || row.listingId || (row.listing_key || row.listingKey ? `KEY: ${row.listing_key || row.listingKey}` : (row.id ? `ID: ${row.id}` : 'Not provided'));
+        const thumbnailImg = row.mainImage || (Array.isArray(row.images) && row.images.length > 0 ? row.images[0] : null) || row.thumbnail || row.image || (Array.isArray(row.property_images) && row.property_images[0] ? (row.property_images[0].imageUrl || row.property_images[0].image_url) : null);
         return (
           <div className="flex items-center gap-3">
-            <div className="w-14 h-10 rounded-md bg-slate-100 overflow-hidden border border-[#E2E8F0] shrink-0 shadow-2xs flex items-center justify-center">
-              {row.mainImage || row.image ? (
-                <img
-                  src={row.mainImage || row.image}
-                  alt={row.title}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <Building2 className="w-5 h-5 text-slate-400" />
-              )}
-            </div>
-            <div className="min-w-0">
-              <span className="font-semibold text-[#1E293B] block truncate text-xs hover:text-[#0F766E] transition-colors">
-                {row.title}
+            <PropertyThumbnail image={thumbnailImg} title={title} />
+            <div className="min-w-0 flex-1">
+              <span
+                className="font-semibold text-[#1E293B] block truncate text-xs hover:text-[#0F766E] transition-colors"
+                title={title}
+              >
+                {title}
               </span>
-              <span className="text-[11px] text-[#64748B] font-mono block mt-0.5">
-                {row.listingKey ? `ID: ${row.listingKey}` : listingCode}
+              <span
+                className="text-[11px] text-[#64748B] font-mono block mt-0.5 truncate"
+                title={listingCode}
+              >
+                {listingCode}
               </span>
             </div>
           </div>
@@ -429,18 +487,26 @@ export default function BrokerProperties() {
       header: "Location",
       className: "min-w-[190px]",
       render: (row) => {
-        const primaryLoc = row.city || row.subdivision_name || row.address || row.location || "—";
-        const secondaryLoc = row.state_or_province || row.state || (row.city ? row.address : "Metro Manila");
+        const primaryLoc = row.city || row.subdivision_name || row.address || row.location || "Location not provided";
+        const secondaryLoc = row.state_or_province || (row.city && row.address && row.address !== row.city ? row.address : null);
         return (
           <div className="flex items-start gap-1.5">
-            <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
+            <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" aria-hidden="true" />
             <div className="min-w-0">
-              <p className="text-xs text-[#1E293B] font-medium leading-snug truncate">
+              <p
+                className="text-xs text-[#1E293B] font-medium leading-snug truncate"
+                title={primaryLoc}
+              >
                 {primaryLoc}
               </p>
-              <p className="text-[11px] text-[#64748B] leading-tight truncate">
-                {secondaryLoc}
-              </p>
+              {secondaryLoc && (
+                <p
+                  className="text-[11px] text-[#64748B] leading-tight truncate"
+                  title={secondaryLoc}
+                >
+                  {secondaryLoc}
+                </p>
+              )}
             </div>
           </div>
         );
@@ -450,18 +516,26 @@ export default function BrokerProperties() {
       header: "Property Type",
       className: "min-w-[150px]",
       render: (row) => {
-        const type = row.property_type || row.propertyType || "Condominium";
-        const subtype = row.property_sub_type || row.propertySubType || row.transaction_type || "Residential";
+        const type = row.property_type || row.propertyType || "Type not provided";
+        const subtype = row.property_sub_type || row.propertySubType || null;
         return (
           <div className="flex items-start gap-1.5">
-            <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
+            <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" aria-hidden="true" />
             <div className="min-w-0">
-              <p className="text-xs text-[#1E293B] font-medium leading-snug truncate">
+              <p
+                className="text-xs text-[#1E293B] font-medium leading-snug truncate"
+                title={type}
+              >
                 {type}
               </p>
-              <p className="text-[11px] text-[#64748B] leading-tight truncate">
-                {subtype}
-              </p>
+              {subtype && (
+                <p
+                  className="text-[11px] text-[#64748B] leading-tight truncate"
+                  title={subtype}
+                >
+                  {subtype}
+                </p>
+              )}
             </div>
           </div>
         );
@@ -471,23 +545,36 @@ export default function BrokerProperties() {
       header: "Specs",
       className: "min-w-[130px] text-xs",
       render: (row) => {
-        const area = row.livingArea || row.living_area || row.sqft || row.specs?.livingArea;
-        const beds = row.bedrooms || row.beds || row.specs?.beds;
-        const baths = row.bathrooms || row.baths || row.specs?.baths;
+        const rawArea = row.livingArea ?? row.living_area ?? row.sqft ?? row.specs?.livingArea;
+        const hasArea = rawArea !== null && rawArea !== undefined && rawArea !== '';
+        let unitLabel = 'm²';
+        const units = (row.living_area_units || row.livingAreaUnits || '').toLowerCase();
+        if (units.includes('foot') || units.includes('feet') || units === 'sqft') {
+          unitLabel = 'sq ft';
+        } else if (units.includes('meter') || units === 'sqm') {
+          unitLabel = 'm²';
+        }
+        const areaDisplay = hasArea ? `${rawArea} ${unitLabel}` : 'Not provided';
+
+        const beds = row.bedrooms_total ?? row.bedroomsTotal ?? row.beds ?? row.specs?.bedroomsTotal ?? row.specs?.beds;
+        const baths = row.bathrooms_total_integer ?? row.bathroomsTotalInteger ?? row.baths ?? row.specs?.bathroomsTotalInteger ?? row.specs?.baths;
+        const bedsDisplay = beds !== null && beds !== undefined && beds !== '' ? beds : '—';
+        const bathsDisplay = baths !== null && baths !== undefined && baths !== '' ? baths : '—';
+
         return (
           <div>
-            <div className="flex items-center gap-1 font-mono text-xs text-[#1E293B]">
-              <Maximize2 className="w-3 h-3 text-slate-400" />
-              <span>{area ? `${area} m²` : '—'}</span>
+            <div className="flex items-center gap-1 font-mono text-xs text-[#1E293B]" title={`Floor Area: ${areaDisplay}`}>
+              <Maximize2 className="w-3 h-3 text-slate-400" aria-hidden="true" />
+              <span>{areaDisplay}</span>
             </div>
             <div className="flex items-center gap-2.5 text-[11px] text-[#64748B] mt-0.5">
-              <span className="flex items-center gap-1">
-                <Bed className="w-3 h-3 text-slate-400" />
-                <span>{beds ?? '—'}</span>
+              <span className="flex items-center gap-1" title={`Bedrooms: ${bedsDisplay}`} aria-label={`Bedrooms: ${bedsDisplay}`}>
+                <Bed className="w-3 h-3 text-slate-400" aria-hidden="true" />
+                <span>{bedsDisplay}</span>
               </span>
-              <span className="flex items-center gap-1">
-                <Bath className="w-3 h-3 text-slate-400" />
-                <span>{baths ?? '—'}</span>
+              <span className="flex items-center gap-1" title={`Bathrooms: ${bathsDisplay}`} aria-label={`Bathrooms: ${bathsDisplay}`}>
+                <Bath className="w-3 h-3 text-slate-400" aria-hidden="true" />
+                <span>{bathsDisplay}</span>
               </span>
             </div>
           </div>
@@ -498,16 +585,23 @@ export default function BrokerProperties() {
       header: "Price",
       className: "min-w-[130px] text-xs",
       render: (row) => {
-        const rawPrice = row.price_raw || row.price || 0;
-        const formatted = rawPrice > 0 ? `₱${Number(rawPrice).toLocaleString()}` : (row.formattedPrice || '—');
+        const rawPrice = row.price_raw ?? (typeof row.price === 'number' ? row.price : null);
+        const hasValidPrice = rawPrice !== null && rawPrice !== undefined && Number(rawPrice) > 0;
+        const formatted = hasValidPrice
+          ? `₱${Number(rawPrice).toLocaleString()}`
+          : (typeof row.price === 'string' && row.price.startsWith('₱') ? row.price : 'Price not provided');
+
+        const assocFee = row.association_fee ?? row.associationFee;
+        const hasAssocFee = assocFee !== null && assocFee !== undefined && Number(assocFee) > 0;
+
         return (
           <div>
-            <span className="font-bold text-[#0F766E] block text-xs font-mono">
+            <span className="font-bold text-[#0F766E] block text-xs font-mono truncate" title={formatted}>
               {formatted}
             </span>
-            {(row.association_fee || row.associationFee) ? (
-              <span className="text-[10px] text-[#64748B] block">
-                +₱{Number(row.association_fee || row.associationFee).toLocaleString()}/mo HOA
+            {hasAssocFee ? (
+              <span className="text-[10px] text-[#64748B] block truncate" title={`+₱${Number(assocFee).toLocaleString()}/mo HOA`}>
+                +₱{Number(assocFee).toLocaleString()}/mo HOA
               </span>
             ) : null}
           </div>
@@ -521,9 +615,13 @@ export default function BrokerProperties() {
         const std = String(row.standard_status || row.standardStatus || row.status || '').toUpperCase();
         const isPendingApproval = std === 'PENDING APPROVAL';
         const isActive = std === 'ACTIVE' || std === 'AVAILABLE';
-        const isContract = std === 'ACTIVE UNDER CONTRACT' || std === 'RESERVED' || std === 'UNDER CONTRACT' || std === 'PENDING';
+        const isUnderContract = std === 'ACTIVE UNDER CONTRACT' || std === 'UNDER CONTRACT';
+        const isReserved = std === 'RESERVED';
+        const isPending = std === 'PENDING';
         const isClosed = std === 'CLOSED' || std === 'SOLD';
-        
+        const isDraft = std === 'DRAFT' || std === 'INACTIVE';
+        const isKnown = isActive || isPendingApproval || isUnderContract || isReserved || isPending || isClosed || isDraft;
+
         return (
           <div className="flex items-center gap-2">
             {isActive && (
@@ -538,10 +636,22 @@ export default function BrokerProperties() {
                 Needs Approval
               </span>
             )}
-            {isContract && (
+            {isUnderContract && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 text-amber-700 border border-amber-200/60">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                Under Contract
+              </span>
+            )}
+            {isReserved && (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 text-amber-700 border border-amber-200/60">
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
                 Reserved
+              </span>
+            )}
+            {isPending && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 text-amber-700 border border-amber-200/60">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                Pending
               </span>
             )}
             {isClosed && (
@@ -550,10 +660,16 @@ export default function BrokerProperties() {
                 Sold
               </span>
             )}
-            {!isActive && !isPendingApproval && !isContract && !isClosed && (
+            {isDraft && (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60">
                 <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
                 Draft
+              </span>
+            )}
+            {!isKnown && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200" aria-label="Unknown status">
+                <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                Unknown
               </span>
             )}
 
@@ -576,13 +692,15 @@ export default function BrokerProperties() {
       className: "min-w-[130px]",
       render: (row) => {
         const rawDate = row.created_at || row.createdAt;
+        const calDate = formatPhilippineCalendarDate(rawDate);
+        const relDate = formatPhilippineRelativeTime(rawDate);
         return (
           <div>
-            <p className="text-xs text-[#1E293B] font-medium leading-snug">
-              {formatCalendarDate(rawDate)}
+            <p className="text-xs text-[#1E293B] font-medium leading-snug" title={`Philippine Standard Time: ${calDate}`}>
+              {calDate}
             </p>
-            <p className="text-[11px] text-[#64748B] leading-tight">
-              {formatRelativeTime(rawDate)}
+            <p className="text-[11px] text-[#64748B] leading-tight" title={relDate}>
+              {relDate}
             </p>
           </div>
         );
@@ -597,7 +715,7 @@ export default function BrokerProperties() {
             to={`/broker/properties/${row.id || row.listingKey}/edit`}
             className="p-1.5 rounded-lg text-slate-400 hover:text-[#0F766E] hover:bg-slate-100 transition-colors cursor-pointer"
             title="Edit Property"
-            aria-label="Edit"
+            aria-label="Edit Property"
           >
             <Edit3 className="w-4 h-4" />
           </Link>
@@ -605,7 +723,7 @@ export default function BrokerProperties() {
             onClick={(e) => handleDuplicate(e, row)}
             className="p-1.5 rounded-lg text-slate-400 hover:text-[#0F766E] hover:bg-slate-100 transition-colors cursor-pointer"
             title="Duplicate Property"
-            aria-label="Duplicate"
+            aria-label="Duplicate Property"
           >
             <Copy className="w-4 h-4" />
           </button>
@@ -680,7 +798,7 @@ export default function BrokerProperties() {
     {
       header: "Submitted",
       className: "min-w-[120px] text-xs font-mono text-[#64748B]",
-      render: (row) => formatRelativeTime(row.created_at)
+      render: (row) => formatPhilippineRelativeTime(row.created_at)
     },
     {
       header: "Review Actions",
@@ -955,6 +1073,26 @@ export default function BrokerProperties() {
             Querying Firm Architectural Database...
           </p>
         </div>
+      ) : error && properties.length === 0 ? (
+        <div className="bg-white rounded-lg border border-red-200 bg-red-50/20 p-12 text-center space-y-4 shadow-xs">
+          <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto text-red-600">
+            <AlertCircle className="w-6 h-6" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-[#1E293B]">Failed to load property listings</h3>
+            <p className="text-xs text-[#64748B] mt-1 max-w-sm mx-auto">
+              {error}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => fetchProperties()}
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-semibold rounded-lg shadow-2xs transition-colors cursor-pointer"
+          >
+            <RotateCw className="w-4 h-4" />
+            <span>Retry Connection</span>
+          </button>
+        </div>
       ) : properties.length === 0 ? (
         <div className="bg-white rounded-lg border border-[#E2E8F0] p-12 text-center space-y-4 shadow-xs">
           <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto text-slate-400">
@@ -973,6 +1111,26 @@ export default function BrokerProperties() {
             <Plus className="w-4 h-4" />
             <span>Create First Listing</span>
           </Link>
+        </div>
+      ) : filteredProperties.length === 0 ? (
+        <div className="bg-white rounded-lg border border-[#E2E8F0] p-12 text-center space-y-4 shadow-xs">
+          <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto text-slate-400">
+            <Search className="w-6 h-6" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-[#1E293B]">No properties match your filter criteria</h3>
+            <p className="text-xs text-[#64748B] mt-1 max-w-sm mx-auto">
+              Try adjusting or clearing your search term and filters to see available listings.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleClearFilters}
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-[#1E293B] text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+          >
+            <SlidersHorizontal className="w-4 h-4" />
+            <span>Reset All Filters</span>
+          </button>
         </div>
       ) : (
         <DataTable

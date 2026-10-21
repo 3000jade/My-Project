@@ -25,6 +25,8 @@ export class PropertyController {
         status,
         standardStatus,
         agentId,
+        list_agent_key,
+        listAgentKey,
         search,
         page,
         limit,
@@ -50,6 +52,8 @@ export class PropertyController {
           status: status as string,
           standardStatus: standardStatus as string,
           agentId: agentId as string,
+          list_agent_key: (list_agent_key || listAgentKey) as string,
+          listAgentKey: (list_agent_key || listAgentKey) as string,
           search: search as string,
           page: page ? Number(page) : undefined,
           limit: limit ? Number(limit) : undefined,
@@ -154,14 +158,17 @@ export class PropertyController {
       const userId = req.user?.id;
       const userRole = req.user?.role;
 
-      // Agents are strictly prohibited from creating property listings
+      // Agents are prohibited from creating property listings unless explicitly granted can_create_listings === true by their Broker
       if (userRole === 'agent') {
-        res.status(403).json({
-          success: false,
-          error: 'Forbidden: Agents cannot create property listings (verified or unverified). Creation is restricted to authorized brokers and administrators.',
-          timestamp: new Date().toISOString(),
-        });
-        return;
+        const agentProfile = userId ? await AgentService.getAgentById(userId) : null;
+        if (!agentProfile || agentProfile.can_create_listings !== true || agentProfile.verification_status !== 'VERIFIED') {
+          res.status(403).json({
+            success: false,
+            error: 'Forbidden: Agents cannot create property listings (verified or unverified). Creation is restricted to authorized brokers and administrators.',
+            timestamp: new Date().toISOString(),
+          });
+          return;
+        }
       }
 
       const created = await PropertyService.createProperty(req.body, userId, userRole);

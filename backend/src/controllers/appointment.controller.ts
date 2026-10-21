@@ -12,23 +12,47 @@ export class AppointmentController {
     try {
       const status = req.query.status as string | undefined;
       const search = req.query.search as string | undefined;
+      const propertyId = req.query.propertyId as string | undefined;
+      const startDate = req.query.startDate as string | undefined;
+      const endDate = req.query.endDate as string | undefined;
       let agentId = req.query.agentId as string | undefined;
+      let clientId = req.query.clientId as string | undefined;
+      let clientEmail: string | undefined;
+      let brokerageId: string | undefined;
 
-      // Role check: If authenticated user is an agent, filter to their own appointments unless explicitly specified
       const user = (req as any).user;
-      if (user && user.role === 'agent' && !agentId) {
-        agentId = user.id || 'agent-1';
+      if (user) {
+        if (user.role === 'agent') {
+          agentId = user.id || agentId || 'agent-1';
+          if (user.brokerage_id) brokerageId = user.brokerage_id;
+        } else if (user.role === 'broker' || user.role === 'admin') {
+          if (user.brokerage_id) brokerageId = user.brokerage_id;
+        } else if (user.role === 'client') {
+          clientId = user.id;
+          clientEmail = user.email;
+        }
       }
 
       const appointments = await AppointmentService.listAppointments({
         status,
         agentId,
+        clientId,
+        clientEmail,
+        brokerageId,
+        propertyId,
+        startDate,
+        endDate,
         search,
       });
 
+      const data =
+        user && user.role === 'client'
+          ? appointments.map((a) => AppointmentService.sanitizeForClient(a))
+          : appointments;
+
       res.status(200).json({
         success: true,
-        data: appointments,
+        data,
         message: 'Appointments retrieved successfully.',
         timestamp: new Date().toISOString(),
       });
@@ -58,9 +82,39 @@ export class AppointmentController {
         return;
       }
 
+      const user = (req as any).user;
+      if (user) {
+        if (user.role === 'agent' && appointment.agent_id !== user.id) {
+          res.status(403).json({
+            success: false,
+            error: 'Agents may only view appointments assigned to them.',
+            timestamp: new Date().toISOString(),
+          });
+          return;
+        }
+        if (
+          (user.role === 'broker' || user.role === 'admin') &&
+          user.brokerage_id &&
+          appointment.brokerage_id &&
+          appointment.brokerage_id !== user.brokerage_id
+        ) {
+          res.status(403).json({
+            success: false,
+            error: 'Cross-brokerage appointment access is forbidden.',
+            timestamp: new Date().toISOString(),
+          });
+          return;
+        }
+      }
+
+      const data =
+        user && user.role === 'client'
+          ? AppointmentService.sanitizeForClient(appointment)
+          : appointment;
+
       res.status(200).json({
         success: true,
-        data: appointment,
+        data,
         message: 'Appointment retrieved successfully.',
         timestamp: new Date().toISOString(),
       });
@@ -89,7 +143,13 @@ export class AppointmentController {
         return;
       }
 
-      const appointment = await AppointmentService.createAppointment(req.body);
+      const user = (req as any).user;
+      const payload = { ...req.body };
+      if (user && user.role === 'client' && !payload.client_id) {
+        payload.client_id = user.id;
+      }
+
+      const appointment = await AppointmentService.createAppointment(payload, { actor: user });
 
       // Asynchronous notification dispatch via Gmail API
       void GmailService.sendTourConfirmation({
@@ -98,17 +158,23 @@ export class AppointmentController {
         propertyTitle: appointment.property_title || 'Exclusive Residence',
         address: appointment.property_address || 'Metropolitan Luxury Cadastre',
         appointmentTime: `${appointment_date}T${appointment_time}`,
-        agentName: 'Estate Concierge',
+        agentName: appointment.agent_name || 'Estate Concierge',
       }).catch((err) => logger.warn('[AppointmentController] Gmail tour confirmation warning:', err.message));
 
       res.status(201).json({
         success: true,
-        data: appointment,
+        data:
+          user && user.role === 'client'
+            ? AppointmentService.sanitizeForClient(appointment)
+            : appointment,
         message: 'Appointment booked successfully.',
         timestamp: new Date().toISOString(),
       });
     } catch (err: any) {
-      res.status(500).json({
+      const isConflict = /conflict|overlap|buffer|working hours|blocked|blackout|unavailable/i.test(
+        err.message || ''
+      );
+      res.status(isConflict ? 409 : 500).json({
         success: false,
         error: err.message || 'Error booking appointment.',
         timestamp: new Date().toISOString(),
@@ -122,9 +188,9 @@ export class AppointmentController {
   public static async update(req: Request, res: Response<ApiResponse>): Promise<void> {
     try {
       const id = String(req.params.id);
-      const updated = await AppointmentService.updateAppointment(id, req.body);
+      const existing = await AppointmentService.getAppointmentById(id);
 
-      if (!updated) {
+      if (!existing) {
         res.status(404).json({
           success: false,
           error: `Appointment with ID "${id}" was not found.`,
@@ -133,16 +199,125 @@ export class AppointmentController {
         return;
       }
 
+      const user = (req as any).user;
+      if (user) {
+        if (user.role === 'agent' && existing.agent_id !== user.id) {
+          res.status(403).json({
+            success: false,
+            error: 'Agents can only modify appointments assigned to them.',
+            timestamp: new Date().toISOString(),
+          });
+          return;
+        }
+        if (
+          user.role === 'client' &&
+          existing.client_id !== user.id &&
+          (!user.email || existing.client_email.toLowerCase() !== user.email.toLowerCase())
+        ) {
+          res.status(403).json({
+            success: false,
+            error: 'Clients can only modify their own appointments.',
+            timestamp: new Date().toISOString(),
+          });
+          return;
+        }
+        if (
+          (user.role === 'broker' || user.role === 'admin') &&
+          user.brokerage_id &&
+          existing.brokerage_id &&
+          existing.brokerage_id !== user.brokerage_id
+        ) {
+          res.status(403).json({
+            success: false,
+            error: 'Cross-brokerage appointment modification is forbidden.',
+            timestamp: new Date().toISOString(),
+          });
+          return;
+        }
+      }
+
+      const updated = await AppointmentService.updateAppointment(id, req.body, user);
+
       res.status(200).json({
         success: true,
-        data: updated,
+        data:
+          user && user.role === 'client' && updated
+            ? AppointmentService.sanitizeForClient(updated)
+            : updated,
         message: 'Appointment updated successfully.',
         timestamp: new Date().toISOString(),
       });
     } catch (err: any) {
-      res.status(500).json({
+      const isConflictOrCutoff = /conflict|overlap|buffer|working hours|blocked|blackout|2 hours|cutoff/i.test(
+        err.message || ''
+      );
+      res.status(isConflictOrCutoff ? 400 : 500).json({
         success: false,
         error: err.message || 'Error updating appointment.',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
+  /**
+   * PATCH /api/appointments/:id/reassign
+   */
+  public static async reassign(req: Request, res: Response<ApiResponse>): Promise<void> {
+    try {
+      const id = String(req.params.id);
+      const user = (req as any).user;
+
+      if (user && user.role !== 'broker' && user.role !== 'admin') {
+        res.status(403).json({
+          success: false,
+          error: 'Only Brokers or Admins can reassign appointments.',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const existing = await AppointmentService.getAppointmentById(id);
+      if (!existing) {
+        res.status(404).json({
+          success: false,
+          error: `Appointment with ID "${id}" was not found.`,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      if (
+        user?.brokerage_id &&
+        existing.brokerage_id &&
+        existing.brokerage_id !== user.brokerage_id
+      ) {
+        res.status(403).json({
+          success: false,
+          error: 'Cross-brokerage appointment reassignment is forbidden.',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const updated = await AppointmentService.reassignAppointment(
+        id,
+        {
+          target_agent_id: req.body.target_agent_id ?? null,
+          reason: req.body.reason || 'Broker reassignment',
+        },
+        user
+      );
+
+      res.status(200).json({
+        success: true,
+        data: updated,
+        message: 'Appointment reassigned successfully.',
+        timestamp: new Date().toISOString(),
+      });
+    } catch (err: any) {
+      res.status(400).json({
+        success: false,
+        error: err.message || 'Error reassigning appointment.',
         timestamp: new Date().toISOString(),
       });
     }

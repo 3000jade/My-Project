@@ -134,6 +134,8 @@ export const queryPropertySchema = z.object({
   standardStatus: z.string().optional(),
   isFeatured: z.preprocess((val) => val === 'true' || val === true, z.boolean().optional()),
   agentId: z.string().trim().optional(),
+  list_agent_key: z.string().trim().optional(),
+  listAgentKey: z.string().trim().optional(),
   search: z.string().trim().optional(),
   page: z.coerce.number().int().positive().optional().default(1),
   limit: z.coerce.number().int().positive().max(100).optional().default(10),

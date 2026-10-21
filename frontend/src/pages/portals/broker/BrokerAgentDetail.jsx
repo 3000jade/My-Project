@@ -8,67 +8,44 @@ import {
   BarChart2, PieChart, Info, AlertCircle, X, Shield, UserX
 } from 'lucide-react';
 import DashboardModal from '../../../components/dashboard/DashboardModal';
+import AgentScheduleCalendar from '../../../components/dashboard/AgentScheduleCalendar';
 import { agentService } from '../../../services/agentService';
-import { mockProperties } from '../../../mockData/mockProperties';
+import { propertyService } from '../../../services/propertyService';
 import { cn } from '../../../utils/cn';
 
-// Sample fallback properties for listings tab matching Mockup Screen 6
-const SAMPLE_AGENT_LISTINGS = [
-  {
-    id: 'prop-1',
-    title: 'Modern House at BGC',
-    location: 'Taguig City',
-    status: 'ACTIVE',
-    date_added: 'Oct 12, 2026',
-    price: '₱85,000,000',
-    image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=400&q=80'
-  },
-  {
-    id: 'prop-2',
-    title: 'Rockwell Condo Unit',
-    location: 'Makati',
-    status: 'ACTIVE',
-    date_added: 'Oct 10, 2026',
-    price: '₱42,500,000',
-    image: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=400&q=80'
-  },
-  {
-    id: 'prop-3',
-    title: 'Dasmariñas Village Lot',
-    location: 'Makati',
-    status: 'UNDER_CONTRACT',
-    date_added: 'Oct 08, 2026',
-    price: '₱195,000,000',
-    image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=400&q=80'
-  },
-  {
-    id: 'prop-4',
-    title: 'Antipolo Family Home',
-    location: 'Antipolo',
-    status: 'ACTIVE',
-    date_added: 'Oct 05, 2026',
-    price: '₱28,000,000',
-    image: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=400&q=80'
-  },
-  {
-    id: 'prop-5',
-    title: 'Greenfield Townhouse',
-    location: 'Mandaluyong',
-    status: 'NEEDS_APPROVAL',
-    date_added: 'Oct 13, 2026',
-    price: '₱22,000,000',
-    image: 'https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?auto=format&fit=crop&w=400&q=80'
-  },
-  {
-    id: 'prop-6',
-    title: 'Forbes Park Luxury Estate',
-    location: 'Makati',
-    status: 'SOLD',
-    date_added: 'Sep 22, 2026',
-    price: '₱320,000,000',
-    image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=400&q=80'
+function AgentAvatar({ src, name, size = "w-16 h-16", textSize = "text-lg" }) {
+  const [imgError, setImgError] = useState(false);
+  const initials = (name || 'Agent')
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(w => w[0].toUpperCase())
+    .join('') || 'A';
+
+  if (src && !imgError) {
+    return (
+      <img
+        src={src}
+        alt={name || 'Agent'}
+        onError={() => setImgError(true)}
+        className={cn(size, "rounded-full object-cover border-2 border-[#E2E8F0] shadow-2xs")}
+      />
+    );
   }
-];
+
+  return (
+    <div
+      className={cn(
+        size,
+        "rounded-full bg-slate-100 border-2 border-[#E2E8F0] flex items-center justify-center font-bold text-slate-600 select-none shadow-2xs",
+        textSize
+      )}
+      title={name || 'Agent'}
+    >
+      {initials}
+    </div>
+  );
+}
 
 export default function BrokerAgentDetail() {
   const { id } = useParams();
@@ -89,6 +66,14 @@ export default function BrokerAgentDetail() {
   const [suspendModalOpen, setSuspendModalOpen] = useState(false);
   const [suspendReason, setSuspendReason] = useState('License expired or invalid');
   const [suspendNotes, setSuspendNotes] = useState('');
+  const [transferModalOpen, setTransferModalOpen] = useState(false);
+  const [departModalOpen, setDepartModalOpen] = useState(false);
+  const [responsibilityPreview, setResponsibilityPreview] = useState(null);
+  const [rosterAgents, setRosterAgents] = useState([]);
+  const [targetAgentId, setTargetAgentId] = useState('');
+  const [transferNotes, setTransferNotes] = useState('Broker manual workload reassignment');
+  const [departureReason, setDepartureReason] = useState('Voluntary resignation / brokerage transfer');
+  const [auditEvents, setAuditEvents] = useState([]);
   const [updating, setUpdating] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
@@ -103,8 +88,18 @@ export default function BrokerAgentDetail() {
       setLoading(true);
       setError(null);
       try {
-        const data = await agentService.getAgentById(id);
+        const [data, events, allAgents] = await Promise.all([
+          agentService.getAgentById(id),
+          Promise.resolve(agentService.getAuditEvents?.(id)).catch(() => []),
+          Promise.resolve(agentService.getAgents?.()).catch(() => []),
+        ]);
         if (mounted) {
+          setAuditEvents(Array.isArray(events) ? events : []);
+          setRosterAgents(
+            Array.isArray(allAgents)
+              ? allAgents.filter((a) => String(a.id) !== String(id))
+              : []
+          );
           if (data) {
             setAgent(data);
             if (data.rejection_remarks) {
@@ -128,11 +123,58 @@ export default function BrokerAgentDetail() {
     };
   }, [id]);
 
-  const assignedProps = agent
-    ? (mockProperties.filter(p => p.agent_id === agent.id || p.created_by === agent.id).length > 0
-        ? mockProperties.filter(p => p.agent_id === agent.id || p.created_by === agent.id)
-        : SAMPLE_AGENT_LISTINGS)
-    : SAMPLE_AGENT_LISTINGS;
+  const [assignedProps, setAssignedProps] = useState([]);
+  const [listingsLoading, setListingsLoading] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    async function loadListings() {
+      if (!id) return;
+      setListingsLoading(true);
+      try {
+        const res = await propertyService.getProperties({ list_agent_key: id });
+        if (mounted) {
+          const list = Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : []);
+          setAssignedProps(list);
+        }
+      } catch (err) {
+        console.warn('Failed to load agent listings:', err.message);
+        if (mounted) setAssignedProps([]);
+      } finally {
+        if (mounted) setListingsLoading(false);
+      }
+    }
+    loadListings();
+    return () => {
+      mounted = false;
+    };
+  }, [id]);
+
+  const renderLicenseBadge = (licenseStr) => {
+    const lic = (licenseStr || '').toUpperCase();
+    if (lic === 'VALID') {
+      return (
+        <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+          Valid
+        </span>
+      );
+    }
+    if (lic === 'EXPIRED') {
+      return (
+        <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+          Expired
+        </span>
+      );
+    }
+    if (lic === 'UNKNOWN' || lic === 'FOR_REVIEW' || lic === 'FOR REVIEW') {
+      return (
+        <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+          Validity unknown
+        </span>
+      );
+    }
+    return <span className="text-[#94A3B8] text-xs font-mono">—</span>;
+  };
 
   const handleApplyAction = async (status) => {
     if (!agent) return;
@@ -168,17 +210,108 @@ export default function BrokerAgentDetail() {
       setAgent(prev => ({ 
         ...prev, 
         verification_status: 'SUSPENDED',
+        membership_status: 'suspended',
+        routing_availability: 'paused',
         suspension_reason: suspendReason,
         suspension_notes: suspendNotes,
       }));
       showToast(`Agent account suspended successfully`);
     } catch (err) {
       console.warn('Suspend error fallback:', err.message);
-      setAgent(prev => ({ ...prev, verification_status: 'SUSPENDED' }));
+      setAgent(prev => ({ ...prev, verification_status: 'SUSPENDED', membership_status: 'suspended' }));
       showToast(`Agent account marked as suspended`);
     } finally {
       setUpdating(false);
       setSuspendModalOpen(false);
+    }
+  };
+
+  const handleOpenTransferOrDepart = async (mode = 'transfer') => {
+    if (!agent) return;
+    try {
+      const preview = await agentService.previewResponsibilities(agent.id);
+      setResponsibilityPreview(preview);
+    } catch {
+      setResponsibilityPreview({
+        agent_id: agent.id,
+        agent_name: agent.name,
+        counts: {
+          listings: assignedProps.length || agent.assigned_properties_count || 0,
+          inquiries: agent.active_inquiries_count || 0,
+          appointments: agent.upcoming_appointments_count || 0,
+        },
+        eligible_target_agents: [],
+      });
+    }
+    if (mode === 'depart') {
+      setDepartModalOpen(true);
+    } else {
+      setTransferModalOpen(true);
+    }
+  };
+
+  const handleConfirmTransfer = async () => {
+    if (!agent) return;
+    setUpdating(true);
+    try {
+      await agentService.transferResponsibilities(agent.id, {
+        targetAgentId: targetAgentId || null,
+        scopes: ['listings', 'inquiries', 'appointments'],
+        triggerType: 'manual',
+        notes: transferNotes || 'Broker manual workload reassignment',
+      });
+      setAssignedProps([]);
+      setAgent(prev => ({
+        ...prev,
+        assigned_properties_count: 0,
+        active_inquiries_count: 0,
+        upcoming_appointments_count: 0,
+      }));
+      showToast(
+        targetAgentId
+          ? 'All active responsibilities transferred to selected agent.'
+          : 'Responsibilities routed to Brokerage Unassigned Queue.'
+      );
+    } catch (err) {
+      showToast(err.message || 'Responsibilities reassigned.');
+    } finally {
+      setUpdating(false);
+      setTransferModalOpen(false);
+    }
+  };
+
+  const handleConfirmDepart = async () => {
+    if (!agent) return;
+    setUpdating(true);
+    try {
+      const res = await agentService.departAgent(agent.id, {
+        targetAgentId: targetAgentId || null,
+        departureReason,
+        notes: transferNotes,
+      });
+      setAssignedProps([]);
+      setAgent(prev => ({
+        ...prev,
+        ...(res?.agent || {}),
+        verification_status: 'SUSPENDED',
+        membership_status: 'departed',
+        routing_availability: 'paused',
+        assigned_properties_count: 0,
+        active_inquiries_count: 0,
+        upcoming_appointments_count: 0,
+      }));
+      showToast('Agent offboarded as Departed. Closed sales attribution preserved.');
+    } catch (err) {
+      setAgent(prev => ({
+        ...prev,
+        verification_status: 'SUSPENDED',
+        membership_status: 'departed',
+        routing_availability: 'paused',
+      }));
+      showToast('Agent marked as Departed.');
+    } finally {
+      setUpdating(false);
+      setDepartModalOpen(false);
     }
   };
 
@@ -279,25 +412,54 @@ export default function BrokerAgentDetail() {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="flex items-center gap-4">
               <div className="relative shrink-0">
-                <img
+                <AgentAvatar
                   src={agent.avatar}
-                  alt={agent.name}
-                  className="w-16 h-16 rounded-full object-cover border-2 border-[#E2E8F0] shadow-2xs"
+                  name={agent.name}
+                  size="w-16 h-16"
+                  textSize="text-xl"
                 />
                 {agent.verification_status === 'VERIFIED' && (
                   <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full"></span>
                 )}
               </div>
               <div>
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-2.5 flex-wrap">
                   <h1 className="text-xl sm:text-2xl font-bold text-[#1E293B] tracking-tight">
-                    {agent.name}
+                    Review Consultant: {agent.name}
                   </h1>
                   {renderStatusBadge(agent.verification_status)}
+                  {agent.team_name && (
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-teal-50 text-[#0F766E] border border-teal-200">
+                      Team: {agent.team_name}
+                    </span>
+                  )}
                 </div>
-                <p className="text-xs sm:text-sm text-[#64748B] mt-0.5">
-                  {agent.role || 'Senior Real Estate Agent'} • {agent.experience_years || 5} Years Experience
+                <p className="text-xs sm:text-sm text-[#64748B] mt-0.5 capitalize">
+                  {agent.role || 'Agent'} • {
+                    agent.experience_years === 0
+                      ? '0 years of experience'
+                      : agent.experience_years
+                        ? `${agent.experience_years} years of experience`
+                        : 'Experience not provided'
+                  }
                 </p>
+                {/* 3-Dimensional Lifecycle Status Strip */}
+                <div className="flex items-center flex-wrap gap-2 mt-2.5">
+                  <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-[#F8FAFC] text-[#1E293B] border border-[#E2E8F0]">
+                    Membership: <strong className="uppercase">{agent.membership_status || 'active'}</strong>
+                  </span>
+                  <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-[#F8FAFC] text-[#0F766E] border border-[#E2E8F0]">
+                    Onboarding: <strong className="uppercase">{(agent.onboarding_status || 'complete').replace('_', ' ')}</strong>
+                  </span>
+                  <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-[#F8FAFC] text-[#1E293B] border border-[#E2E8F0]">
+                    Routing: <strong className="uppercase">{agent.routing_availability || 'available'}</strong>
+                  </span>
+                  {agent.can_create_listings && (
+                    <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      Direct Listing Creator
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -311,6 +473,26 @@ export default function BrokerAgentDetail() {
                 <Edit3 className="w-3.5 h-3.5 text-[#64748B]" />
                 <span>Edit</span>
               </button>
+
+              <button
+                type="button"
+                onClick={() => handleOpenTransferOrDepart('transfer')}
+                className="h-9 px-3.5 bg-white hover:bg-slate-50 text-[#1E293B] border border-[#E2E8F0] rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+              >
+                <Send className="w-3.5 h-3.5 text-[#0F766E]" />
+                <span>Transfer Work</span>
+              </button>
+
+              {agent.membership_status !== 'departed' && (
+                <button
+                  type="button"
+                  onClick={() => handleOpenTransferOrDepart('depart')}
+                  className="h-9 px-3.5 bg-white hover:bg-rose-50 text-rose-700 border border-rose-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+                >
+                  <UserX className="w-3.5 h-3.5 text-rose-600" />
+                  <span>Depart Agent</span>
+                </button>
+              )}
 
               {agent.verification_status !== 'SUSPENDED' ? (
                 <button
@@ -352,6 +534,7 @@ export default function BrokerAgentDetail() {
               { id: 'credentials', label: 'Credentials' },
               { id: 'listings', label: `Listings (${assignedProps.length})` },
               { id: 'performance', label: 'Performance' },
+              { id: 'schedule', label: 'Schedule & Calendar' },
               { id: 'activity', label: 'Activity' }
             ].map(tab => (
               <button
@@ -401,7 +584,7 @@ export default function BrokerAgentDetail() {
                   </div>
                   <div>
                     <span className="text-[10px] text-[#64748B] uppercase font-semibold block">Phone</span>
-                    <span className="font-medium text-[#1E293B]">{agent.phone || '+63 917 555 0192'}</span>
+                    <span className="font-medium text-[#1E293B]">{agent.phone || 'Not provided'}</span>
                   </div>
                 </div>
 
@@ -411,7 +594,7 @@ export default function BrokerAgentDetail() {
                   </div>
                   <div>
                     <span className="text-[10px] text-[#64748B] uppercase font-semibold block">Email</span>
-                    <span className="font-medium text-[#1E293B]">{agent.email || 'elena@hsr.com'}</span>
+                    <span className="font-medium text-[#1E293B]">{agent.email || 'Not provided'}</span>
                   </div>
                 </div>
 
@@ -421,7 +604,7 @@ export default function BrokerAgentDetail() {
                   </div>
                   <div>
                     <span className="text-[10px] text-[#64748B] uppercase font-semibold block">Location</span>
-                    <span className="font-medium text-[#1E293B]">{agent.location || 'Makati, Metro Manila'}</span>
+                    <span className="font-medium text-[#1E293B]">{agent.location || 'Not provided'}</span>
                   </div>
                 </div>
 
@@ -430,20 +613,39 @@ export default function BrokerAgentDetail() {
                     <Calendar className="w-4 h-4" />
                   </div>
                   <div>
-                    <span className="text-[10px] text-[#64748B] uppercase font-semibold block">Joined</span>
-                    <span className="font-medium text-[#1E293B]">October 1, 2025</span>
+                    <span className="text-[10px] text-[#64748B] uppercase font-semibold block">Profile Created</span>
+                    <span className="font-medium text-[#1E293B]">
+                      {agent.created_at
+                        ? new Intl.DateTimeFormat('en-US', {
+                            timeZone: 'Asia/Manila',
+                            month: 'long',
+                            day: 'numeric',
+                            year: 'numeric'
+                          }).format(new Date(agent.created_at))
+                        : 'Not provided'}
+                    </span>
                   </div>
                 </div>
               </div>
 
               <div className="pt-3 border-t border-[#E2E8F0]">
-                <a
-                  href={`mailto:${agent.email}`}
-                  className="w-full h-10 bg-white hover:bg-slate-50 text-[#1E293B] border border-[#E2E8F0] rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-colors shadow-2xs"
-                >
-                  <Send className="w-4 h-4 text-[#0F766E]" />
-                  <span>Send Message</span>
-                </a>
+                {agent.email ? (
+                  <a
+                    href={`mailto:${agent.email}`}
+                    className="w-full h-10 bg-white hover:bg-slate-50 text-[#1E293B] border border-[#E2E8F0] rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-colors shadow-2xs"
+                  >
+                    <Send className="w-4 h-4 text-[#0F766E]" />
+                    <span>Send Message</span>
+                  </a>
+                ) : (
+                  <button
+                    disabled
+                    className="w-full h-10 bg-slate-100 text-slate-400 border border-[#E2E8F0] rounded-lg text-xs font-semibold flex items-center justify-center gap-2 cursor-not-allowed"
+                  >
+                    <Send className="w-4 h-4" />
+                    <span>Contact Not Available</span>
+                  </button>
+                )}
               </div>
             </div>
 
@@ -455,29 +657,35 @@ export default function BrokerAgentDetail() {
                 <div className="p-3 bg-[#F8FAFC] rounded-lg border border-[#E2E8F0] flex items-center justify-between">
                   <div>
                     <span className="text-[10px] text-[#64748B] uppercase font-semibold block">PRC License No.</span>
-                    <span className="font-mono font-bold text-[#1E293B]">{agent.prc_license_no || '1234567'}</span>
+                    <span className="font-mono font-bold text-[#1E293B]">{agent.prc_license_no || 'Not provided'}</span>
                   </div>
-                  <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    Valid
-                  </span>
+                  {renderLicenseBadge(agent.license_status)}
                 </div>
 
                 <div className="p-3 bg-[#F8FAFC] rounded-lg border border-[#E2E8F0] flex items-center justify-between">
                   <div>
                     <span className="text-[10px] text-[#64748B] uppercase font-semibold block">DHSUD Accreditation</span>
-                    <span className="font-mono font-bold text-[#1E293B]">{agent.dhsud_accreditation_no || 'NCR-2025-1234'}</span>
+                    <span className="font-mono font-bold text-[#1E293B]">{agent.dhsud_accreditation_no || 'Not provided'}</span>
                   </div>
-                  <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    Valid
-                  </span>
+                  {agent.dhsud_accreditation_no ? (
+                    <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      Accredited
+                    </span>
+                  ) : (
+                    <span className="text-[#94A3B8] text-xs font-mono">—</span>
+                  )}
                 </div>
 
                 <div className="p-3 bg-[#F8FAFC] rounded-lg border border-[#E2E8F0] flex items-center justify-between">
                   <div>
-                    <span className="text-[10px] text-[#64748B] uppercase font-semibold block">Expiry Date</span>
-                    <span className="font-semibold text-[#1E293B]">{agent.prc_validity || 'Dec 31, 2026'}</span>
+                    <span className="text-[10px] text-[#64748B] uppercase font-semibold block">License Expiry Date</span>
+                    <span className="font-semibold text-[#1E293B]">
+                      {agent.prc_validity ? agent.prc_validity.split('T')[0] : 'Not provided'}
+                    </span>
                   </div>
-                  <span className="text-xs text-[#64748B]">Active</span>
+                  <span className="text-xs text-[#64748B]">
+                    {agent.license_status === 'VALID' ? 'Active' : agent.license_status === 'EXPIRED' ? 'Expired' : '—'}
+                  </span>
                 </div>
               </div>
             </div>
@@ -511,21 +719,7 @@ export default function BrokerAgentDetail() {
                   ))}
                 </div>
               ) : (
-                <div className="flex items-center justify-between p-2.5 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] text-xs">
-                  <div className="flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-[#0F766E]" />
-                    <span className="font-medium text-[#1E293B]">PRC_License_Elena.pdf</span>
-                  </div>
-                  <a
-                    href="https://drive.google.com/file/d/test1"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="px-2.5 py-1 bg-white hover:bg-slate-50 text-[#0F766E] border border-[#E2E8F0] rounded text-xs font-semibold font-mono transition-colors shadow-2xs flex items-center gap-1"
-                  >
-                    <span>Inspect on Drive</span>
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
-                </div>
+                <p className="text-xs text-[#64748B] italic">No supporting documents uploaded.</p>
               )}
             </div>
           </div>
@@ -543,29 +737,29 @@ export default function BrokerAgentDetail() {
                   <p className="text-xs font-medium text-[#64748B] mt-1">Assigned Listings</p>
                 </div>
                 <div className="p-4 bg-[#F8FAFC] rounded-lg border border-[#E2E8F0] text-center">
-                  <p className="text-2xl font-bold text-[#1E293B]">14</p>
+                  <p className="text-2xl font-bold text-[#1E293B]">{agent.active_inquiries_count ?? 0}</p>
                   <p className="text-xs font-medium text-[#64748B] mt-1">Open Inquiries</p>
                 </div>
                 <div className="p-4 bg-[#F8FAFC] rounded-lg border border-[#E2E8F0] text-center">
-                  <p className="text-2xl font-bold text-[#1E293B]">12</p>
+                  <p className="text-2xl font-bold text-[#1E293B]">{agent.recorded_sales_count ?? 0}</p>
                   <p className="text-xs font-medium text-[#64748B] mt-1">Closed Deals</p>
                 </div>
                 <div className="p-4 bg-teal-50/50 rounded-lg border border-teal-100 text-center">
-                  <p className="text-2xl font-bold text-[#0F766E]">₱45.2M</p>
+                  <p className="text-2xl font-bold text-[#0F766E]">₱{(agent.total_sales_value || 0).toLocaleString()}</p>
                   <p className="text-xs font-medium text-[#0F766E] mt-1">Total Sales Value</p>
                 </div>
               </div>
             </div>
 
-            {/* Validation Checklist / Profile Completeness (Screen 10) */}
+            {/* Validation Checklist / Profile Completeness (Dynamic) */}
             <div className="bg-white rounded-lg border border-[#E2E8F0] p-5 shadow-2xs space-y-5">
               <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
                 <div>
                   <h3 className="text-sm font-bold text-[#1E293B]">Profile Completeness & Verification Audit</h3>
-                  <p className="text-xs text-[#64748B]">Essential onboarding items required before publishing listings</p>
+                  <p className="text-xs text-[#64748B]">Dynamic onboarding checklist computed from agent profile and regulatory credentials</p>
                 </div>
-                <span className="text-xs font-bold text-[#0F766E] bg-teal-50 px-2.5 py-1 rounded-full border border-teal-200">
-                  75% Complete
+                <span className="text-xs font-bold font-mono text-[#0F766E] bg-teal-50 px-2.5 py-1 rounded-full border border-teal-200">
+                  {agent.completeness?.percent ?? 100}% Complete
                 </span>
               </div>
 
@@ -583,58 +777,48 @@ export default function BrokerAgentDetail() {
                         stroke="#0F766E"
                         strokeWidth="10"
                         strokeDasharray={251.327}
-                        strokeDashoffset={251.327 * 0.25}
+                        strokeDashoffset={251.327 * (1 - (agent.completeness?.percent ?? 100) / 100)}
                         strokeLinecap="round"
                       />
                     </svg>
                     <div className="absolute text-center">
-                      <p className="text-xl font-bold text-[#1E293B]">75%</p>
+                      <p className="text-xl font-bold font-mono text-[#1E293B]">{agent.completeness?.percent ?? 100}%</p>
                       <p className="text-[10px] text-[#64748B] uppercase font-semibold">Complete</p>
                     </div>
                   </div>
                   <p className="text-[11px] text-[#64748B] text-center mt-3">
-                    Missing 2 required regulatory and bank details
+                    {(agent.completeness?.missingFields?.length || 0) === 0
+                      ? 'All required onboarding fields verified'
+                      : `Missing ${agent.completeness.missingFields.length} required onboarding item(s)`}
                   </p>
                 </div>
 
-                {/* Itemized Checklist (Right ~70%) */}
+                {/* Itemized Dynamic Checklist (Right ~70%) */}
                 <div className="md:col-span-8 space-y-2 text-xs">
-                  {[
-                    { label: 'Personal Information', status: 'Complete', color: 'emerald' },
-                    { label: 'Contact Information', status: 'Complete', color: 'emerald' },
-                    { label: 'PRC License', status: 'Complete', color: 'emerald' },
-                    { label: 'DHSUD Accreditation', status: 'Complete', color: 'emerald' },
-                    { label: 'Valid Government ID', status: 'Complete', color: 'emerald' },
-                    { label: 'Profile Photo', status: 'Complete', color: 'emerald' },
-                    { label: 'Bank Information', status: 'Missing', color: 'rose', action: 'Add' },
-                    { label: 'Tax Information (BIR TIN)', status: 'Optional', color: 'slate', action: 'Add' },
-                    { label: 'Professional Background', status: 'Complete', color: 'emerald' }
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-center justify-between p-2 rounded-md hover:bg-slate-50 transition-colors">
+                  {(agent.completeness?.checklist || []).map((item) => (
+                    <div key={item.key} className="flex items-center justify-between p-2 rounded-md hover:bg-slate-50 transition-colors">
                       <div className="flex items-center gap-2">
-                        {item.status === 'Complete' ? (
+                        {item.completed ? (
                           <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                         ) : (
-                          <AlertCircle className={cn("w-4 h-4 shrink-0", item.color === 'rose' ? "text-rose-500" : "text-slate-400")} />
+                          <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
                         )}
                         <span className="font-medium text-[#1E293B]">{item.label}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className={cn(
                           "px-2 py-0.5 rounded text-[10px] font-semibold",
-                          item.color === 'emerald' && "bg-emerald-50 text-emerald-700",
-                          item.color === 'rose' && "bg-rose-50 text-rose-700",
-                          item.color === 'slate' && "bg-slate-100 text-slate-600"
+                          item.completed ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"
                         )}>
-                          {item.status}
+                          {item.completed ? 'Complete' : 'Missing'}
                         </span>
-                        {item.action && (
+                        {!item.completed && (
                           <button
                             type="button"
                             onClick={() => navigate(`/broker/agents/${agent.id}/edit`)}
                             className="text-[#0F766E] font-semibold hover:underline cursor-pointer"
                           >
-                            {item.action}
+                            Add
                           </button>
                         )}
                       </div>
@@ -726,25 +910,26 @@ export default function BrokerAgentDetail() {
                   </div>
 
                   <div className="flex gap-4 items-center">
-                    <img
+                    <AgentAvatar
                       src={agent.avatar}
-                      alt={agent.name}
-                      className="w-20 h-24 rounded-md object-cover border border-[#CBD5E1] shrink-0"
+                      name={agent.name}
+                      size="w-20 h-24"
+                      textSize="text-2xl"
                     />
                     <div className="space-y-1 text-xs">
                       <p className="text-[10px] text-[#64748B] uppercase">Full Name</p>
                       <p className="font-bold text-[#1E293B] text-sm">{agent.name}</p>
                       <p className="text-[10px] text-[#64748B] uppercase mt-2">Registration No.</p>
-                      <p className="font-mono font-bold text-[#0F766E]">{agent.prc_license_no || 'PRC-REB-0028491'}</p>
+                      <p className="font-mono font-bold text-[#0F766E]">{agent.prc_license_no || 'Not provided'}</p>
                       <p className="text-[10px] text-[#64748B] uppercase mt-2">Designation</p>
-                      <p className="font-medium text-[#1E293B]">Real Estate Broker</p>
+                      <p className="font-medium text-[#1E293B] capitalize">{agent.role || 'Agent'}</p>
                     </div>
                   </div>
 
                   <div className="flex items-center justify-between pt-2 border-t border-slate-200 text-[11px] text-[#64748B]">
-                    <span>Valid Until: <strong>{agent.prc_validity || 'Dec 31, 2026'}</strong></span>
+                    <span>Valid Until: <strong>{agent.prc_validity ? agent.prc_validity.split('T')[0] : 'Not provided'}</strong></span>
                     <span className="font-semibold text-emerald-600 flex items-center gap-1">
-                      <CheckCircle2 className="w-3.5 h-3.5" /> Official Hologram
+                      {renderLicenseBadge(agent.license_status)}
                     </span>
                   </div>
                 </div>
@@ -760,8 +945,8 @@ export default function BrokerAgentDetail() {
                   </div>
                   <div className="space-y-2 text-xs">
                     <p className="text-sm font-bold text-[#1E293B]">{agent.name}</p>
-                    <p className="text-[#64748B]">Accreditation ID: <span className="font-mono font-bold text-[#1E293B]">{agent.dhsud_accreditation_no || 'DHSUD-NCR-AA-2023-0182'}</span></p>
-                    <p className="text-[#64748B]">Expiry: <span className="font-semibold text-[#1E293B]">{agent.dhsud_validity || 'Dec 31, 2026'}</span></p>
+                    <p className="text-[#64748B]">Accreditation ID: <span className="font-mono font-bold text-[#1E293B]">{agent.dhsud_accreditation_no || 'Not provided'}</span></p>
+                    <p className="text-[#64748B]">Expiry: <span className="font-semibold text-[#1E293B]">{agent.dhsud_validity ? agent.dhsud_validity.split('T')[0] : 'Not provided'}</span></p>
                   </div>
                 </div>
               )}
@@ -769,8 +954,8 @@ export default function BrokerAgentDetail() {
               {credentialSubTab === 'valid_id' && (
                 <div className="w-full max-w-md bg-white rounded-xl border border-[#CBD5E1] shadow-md p-5 text-center space-y-2 text-xs">
                   <ShieldCheck className="w-10 h-10 text-teal-600 mx-auto" />
-                  <p className="font-bold text-[#1E293B]">Philippine Unified Multi-Purpose ID (UMID)</p>
-                  <p className="text-[#64748B]">CRN: 0111-4829104-9 • Verified on submission</p>
+                  <p className="font-bold text-[#1E293B]">Government Issued ID</p>
+                  <p className="text-[#64748B]">Verified during broker onboarding review</p>
                 </div>
               )}
 
@@ -798,18 +983,9 @@ export default function BrokerAgentDetail() {
                       </div>
                     ))
                   ) : (
-                    <div className="p-3 bg-white rounded-lg border border-[#CBD5E1] text-xs flex items-center justify-between">
-                      <span className="font-medium text-[#1E293B]">PRC_License_Elena.pdf</span>
-                      <a
-                        href="https://drive.google.com/file/d/test1"
-                        target="_blank"
-                        rel="noreferrer"
-                        className="px-3 py-1 bg-white hover:bg-slate-50 text-[#0F766E] border border-[#CBD5E1] rounded text-xs font-semibold flex items-center gap-1 shadow-2xs"
-                      >
-                        <span>Inspect on Drive</span>
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
-                    </div>
+                    <p className="p-3 text-xs text-[#64748B] italic bg-white rounded-lg border border-[#CBD5E1] text-center">
+                      No supporting documents uploaded.
+                    </p>
                   )}
                 </div>
               )}
@@ -821,40 +997,46 @@ export default function BrokerAgentDetail() {
                 <span className="text-[10px] text-[#64748B] uppercase font-bold tracking-wider block">Licensure Details</span>
                 <div>
                   <span className="text-[10px] text-[#64748B] block">PRC Registration No.</span>
-                  <span className="font-mono font-bold text-sm text-[#1E293B]">{agent.prc_license_no || 'PRC-REB-0028491'}</span>
+                  <span className="font-mono font-bold text-sm text-[#1E293B]">{agent.prc_license_no || 'Not provided'}</span>
                 </div>
                 <div>
                   <span className="text-[10px] text-[#64748B] block">Valid Until</span>
-                  <span className="font-semibold text-[#1E293B]">{agent.prc_validity || 'Dec 31, 2026'}</span>
+                  <span className="font-semibold text-[#1E293B]">{agent.prc_validity ? agent.prc_validity.split('T')[0] : 'Not provided'}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-[#64748B] block">License Type</span>
-                  <span className="font-semibold text-[#1E293B]">Real Estate Broker</span>
+                  <span className="text-[10px] text-[#64748B] block">Role Designation</span>
+                  <span className="font-semibold text-[#1E293B] capitalize">{agent.role || 'Agent'}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-[#64748B] block">Status</span>
+                  <span className="text-[10px] text-[#64748B] block">Verification Status</span>
                   <span className="mt-1 inline-block">{renderStatusBadge(agent.verification_status)}</span>
                 </div>
               </div>
 
-              {/* Supporting Document List (Ensuring Unit Test Passes) */}
+              {/* Supporting Document List */}
               <div className="bg-white rounded-lg border border-[#E2E8F0] p-4 space-y-2">
                 <span className="font-bold text-[#1E293B] uppercase tracking-wider text-[11px] block">
                   Document Attachments
                 </span>
                 <div className="space-y-1.5">
-                  <div className="flex items-center justify-between p-2 rounded bg-[#F8FAFC] border border-[#E2E8F0] text-xs">
-                    <span className="font-medium text-[#1E293B]">PRC_License_Elena.pdf</span>
-                    <a
-                      href={agent.supporting_documents?.[0]?.viewUrl || (agent.supporting_documents?.[0]?.id ? `/api/agent-credentials/${agent.supporting_documents[0].id}/content` : (agent.supporting_documents?.[0]?.webViewLink || 'https://drive.google.com/file/d/test1'))}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-[#0F766E] font-semibold flex items-center gap-1 hover:underline text-[11px]"
-                    >
-                      <span>Inspect on Drive</span>
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
-                  </div>
+                  {agent.supporting_documents && agent.supporting_documents.length > 0 ? (
+                    agent.supporting_documents.map((doc, idx) => (
+                      <div key={idx} className="flex items-center justify-between p-2 rounded bg-[#F8FAFC] border border-[#E2E8F0] text-xs">
+                        <span className="font-medium text-[#1E293B]">{doc.name || `Document #${idx + 1}`}</span>
+                        <a
+                          href={doc.viewUrl || (doc.id ? `/api/agent-credentials/${doc.id}/content` : doc.webViewLink) || '#'}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-[#0F766E] font-semibold flex items-center gap-1 hover:underline text-[11px]"
+                        >
+                          <span>Inspect on Drive</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-xs text-[#64748B] italic">No document attachments uploaded.</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -909,59 +1091,82 @@ export default function BrokerAgentDetail() {
           </div>
 
           {/* Listings Table Matching Screen 6 */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="border-b border-[#E2E8F0] text-[#64748B] font-semibold bg-[#F8FAFC]">
-                  <th className="py-3 px-4">Property</th>
-                  <th className="py-3 px-4">Location</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4">Price</th>
-                  <th className="py-3 px-4">Date Added</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#E2E8F0]">
-                {filteredListings.map(prop => (
-                  <tr key={prop.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="py-3.5 px-4">
-                      <div className="flex items-center gap-3">
-                        <img
-                          src={prop.image || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=400&q=80'}
-                          alt={prop.title}
-                          className="w-10 h-10 rounded-lg object-cover border border-[#E2E8F0] shrink-0"
-                        />
-                        <span className="font-semibold text-[#1E293B]">{prop.title}</span>
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-4 text-[#64748B]">{prop.location}</td>
-                    <td className="py-3.5 px-4">
-                      <span className={cn(
-                        "px-2 py-0.5 rounded text-[11px] font-semibold",
-                        prop.status === 'ACTIVE' && "bg-emerald-50 text-emerald-700 border border-emerald-200",
-                        prop.status === 'UNDER_CONTRACT' && "bg-sky-50 text-sky-700 border border-sky-200",
-                        prop.status === 'NEEDS_APPROVAL' && "bg-amber-50 text-amber-700 border border-amber-200",
-                        prop.status === 'SOLD' && "bg-slate-100 text-slate-700 border border-slate-200"
-                      )}>
-                        {prop.status.replace('_', ' ')}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 font-mono font-bold text-[#0F766E]">{prop.price}</td>
-                    <td className="py-3.5 px-4 text-[#64748B]">{prop.date_added}</td>
-                    <td className="py-3.5 px-4 text-right">
-                      <button
-                        type="button"
-                        onClick={() => navigate(`/broker/properties`)}
-                        className="px-2.5 py-1 bg-white hover:bg-slate-50 text-[#1E293B] border border-[#E2E8F0] rounded text-xs font-semibold shadow-2xs"
-                      >
-                        View
-                      </button>
-                    </td>
+          {listingsLoading ? (
+            <div className="text-center py-12 px-4 space-y-2">
+              <div className="inline-block animate-spin rounded-full h-6 w-6 border-2 border-[#0F766E] border-t-transparent"></div>
+              <p className="text-xs text-[#64748B]">Loading assigned properties...</p>
+            </div>
+          ) : filteredListings.length === 0 ? (
+            <div className="text-center py-12 px-4 bg-slate-50/50 rounded-lg border border-dashed border-[#E2E8F0] space-y-2">
+              <Building2 className="w-8 h-8 text-slate-300 mx-auto" />
+              <p className="text-sm font-semibold text-[#1E293B]">No Assigned Properties</p>
+              <p className="text-xs text-[#64748B]">There are currently no listings assigned to this agent in this category.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="border-b border-[#E2E8F0] text-[#64748B] font-semibold bg-[#F8FAFC]">
+                    <th className="py-3 px-4">Property</th>
+                    <th className="py-3 px-4">Location</th>
+                    <th className="py-3 px-4">Status</th>
+                    <th className="py-3 px-4">Price</th>
+                    <th className="py-3 px-4">Date Added</th>
+                    <th className="py-3 px-4 text-right">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-[#E2E8F0]">
+                  {filteredListings.map(prop => (
+                    <tr key={prop.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="py-3.5 px-4">
+                        <div className="flex items-center gap-3">
+                          {prop.mainImage || prop.image ? (
+                            <img
+                              src={prop.mainImage || prop.image}
+                              alt={prop.title}
+                              className="w-10 h-10 rounded-lg object-cover border border-[#E2E8F0] shrink-0"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-lg bg-slate-100 border border-[#E2E8F0] flex items-center justify-center shrink-0 text-[#64748B]">
+                              <Building2 className="w-5 h-5" />
+                            </div>
+                          )}
+                          <span className="font-semibold text-[#1E293B]">{prop.title}</span>
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4 text-[#64748B]">{prop.location || prop.city || '—'}</td>
+                      <td className="py-3.5 px-4">
+                        <span className={cn(
+                          "px-2 py-0.5 rounded text-[11px] font-semibold",
+                          (prop.status || '').toUpperCase() === 'ACTIVE' || (prop.status || '').toUpperCase() === 'AVAILABLE' ? "bg-emerald-50 text-emerald-700 border border-emerald-200" :
+                          (prop.status || '').toUpperCase() === 'UNDER_CONTRACT' || (prop.status || '').toUpperCase() === 'UNDER CONTRACT' ? "bg-sky-50 text-sky-700 border border-sky-200" :
+                          (prop.status || '').toUpperCase() === 'NEEDS_APPROVAL' ? "bg-amber-50 text-amber-700 border border-amber-200" :
+                          "bg-slate-100 text-slate-700 border border-slate-200"
+                        )}>
+                          {String(prop.status || 'AVAILABLE').replace(/_/g, ' ')}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 font-mono font-bold text-[#0F766E]">{prop.price || '—'}</td>
+                      <td className="py-3.5 px-4 text-[#64748B]">
+                        {prop.created_at
+                          ? new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Manila', month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(prop.created_at))
+                          : (prop.date_added || '—')}
+                      </td>
+                      <td className="py-3.5 px-4 text-right">
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/broker/properties`)}
+                          className="px-2.5 py-1 bg-white hover:bg-slate-50 text-[#1E293B] border border-[#E2E8F0] rounded text-xs font-semibold shadow-2xs"
+                        >
+                          View
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
 
@@ -992,9 +1197,9 @@ export default function BrokerAgentDetail() {
             <div className="bg-white rounded-lg border border-[#E2E8F0] p-5 shadow-2xs flex items-center justify-between">
               <div>
                 <p className="text-xs font-semibold text-[#64748B]">Open Inquiries</p>
-                <p className="text-2xl font-bold text-[#1E293B] mt-1">14</p>
-                <span className="text-[11px] font-semibold text-emerald-600 flex items-center gap-1 mt-1">
-                  <TrendingUp className="w-3 h-3" /> +12% vs last period
+                <p className="text-2xl font-bold text-[#1E293B] mt-1">{agent.active_inquiries_count ?? 0}</p>
+                <span className="text-[11px] font-medium text-[#64748B] flex items-center gap-1 mt-1">
+                  Active assigned inquiries
                 </span>
               </div>
               <div className="w-10 h-10 rounded-full bg-teal-50 flex items-center justify-center text-[#0F766E]">
@@ -1005,9 +1210,9 @@ export default function BrokerAgentDetail() {
             <div className="bg-white rounded-lg border border-[#E2E8F0] p-5 shadow-2xs flex items-center justify-between">
               <div>
                 <p className="text-xs font-semibold text-[#64748B]">Closed Deals</p>
-                <p className="text-2xl font-bold text-[#1E293B] mt-1">12</p>
-                <span className="text-[11px] font-semibold text-emerald-600 flex items-center gap-1 mt-1">
-                  <TrendingUp className="w-3 h-3" /> +20% vs last period
+                <p className="text-2xl font-bold text-[#1E293B] mt-1">{agent.recorded_sales_count ?? 0}</p>
+                <span className="text-[11px] font-medium text-[#64748B] flex items-center gap-1 mt-1">
+                  {agent.recorded_sales_count > 0 ? `${agent.recorded_sales_count} verified transactions` : 'No closed transactions on record'}
                 </span>
               </div>
               <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
@@ -1018,9 +1223,9 @@ export default function BrokerAgentDetail() {
             <div className="bg-white rounded-lg border border-[#E2E8F0] p-5 shadow-2xs flex items-center justify-between">
               <div>
                 <p className="text-xs font-semibold text-[#64748B]">Total Sales Value</p>
-                <p className="text-2xl font-bold text-[#0F766E] mt-1">₱45.2M</p>
-                <span className="text-[11px] font-semibold text-emerald-600 flex items-center gap-1 mt-1">
-                  <TrendingUp className="w-3 h-3" /> +18% vs last period
+                <p className="text-2xl font-bold text-[#0F766E] mt-1">₱{(agent.total_sales_value || 0).toLocaleString()}</p>
+                <span className="text-[11px] font-medium text-[#64748B] flex items-center gap-1 mt-1">
+                  {agent.total_sales_value > 0 ? 'Completed sales total' : 'No recorded sales value'}
                 </span>
               </div>
               <div className="w-10 h-10 rounded-full bg-sky-50 flex items-center justify-center text-sky-600">
@@ -1158,14 +1363,20 @@ export default function BrokerAgentDetail() {
       {/* ========================================================================= */}
       {activeTab === 'activity' && (
         <div className="bg-white rounded-lg border border-[#E2E8F0] p-6 shadow-2xs space-y-4">
-          <h2 className="text-lg font-bold text-[#1E293B]">Agent Activity Log</h2>
+          <h2 className="text-lg font-bold text-[#1E293B]">Agent Activity & Audit Log</h2>
           <div className="space-y-4 pt-2">
-            {[
-              { time: '2 hours ago', text: 'Updated profile information and mobile contact number.' },
-              { time: '1 day ago', text: 'Assigned new luxury listing "Modern House at BGC".' },
-              { time: '3 days ago', text: 'Submitted updated PRC license renewal documentation.' },
-              { time: '1 week ago', text: 'Recorded closed sale for "Forbes Park Luxury Estate".' }
-            ].map((act, idx) => (
+            {(auditEvents && auditEvents.length > 0
+              ? auditEvents.map((ev) => ({
+                  time: ev.created_at ? new Date(ev.created_at).toLocaleString() : 'Recent',
+                  text: `${ev.action || 'Event'}${ev.notes ? ` — ${ev.notes}` : ''}`,
+                }))
+              : [
+                  { time: '2 hours ago', text: 'Updated profile information and mobile contact number.' },
+                  { time: '1 day ago', text: 'Assigned new luxury listing "Modern House at BGC".' },
+                  { time: '3 days ago', text: 'Submitted updated PRC license renewal documentation.' },
+                  { time: '1 week ago', text: 'Recorded closed sale for "Forbes Park Luxury Estate".' }
+                ]
+            ).map((act, idx) => (
               <div key={idx} className="flex items-start gap-3 text-xs">
                 <span className="w-2 h-2 rounded-full bg-[#0F766E] mt-1.5 shrink-0"></span>
                 <div>
@@ -1177,6 +1388,200 @@ export default function BrokerAgentDetail() {
           </div>
         </div>
       )}
+
+      {/* ========================================================================= */}
+      {activeTab === 'schedule' && (
+        <AgentScheduleCalendar
+          role="broker"
+          fixedAgentId={agent.id}
+          fixedAgentName={agent.name}
+          title={`${agent.name} — Schedule & Appointment Calendar`}
+          subtitle="Manage this consultant's property tours, online consultations, signing dates, and blocked periods."
+        />
+      )}
+
+      {/* TRANSFER WORK MODAL                                                       */}
+      {/* ========================================================================= */}
+      <DashboardModal
+        isOpen={transferModalOpen}
+        onClose={() => setTransferModalOpen(false)}
+        title="Transfer Active Work"
+        subtitle="Reassign active listings, open inquiries, and upcoming viewings while preserving closed deal attribution."
+        actions={
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setTransferModalOpen(false)}
+              className="px-4 py-2 text-xs font-semibold uppercase tracking-wider text-[#64748B] hover:text-[#1E293B] cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleConfirmTransfer}
+              disabled={updating}
+              className="px-4 py-2 bg-[#0F766E] hover:bg-[#115E59] text-white rounded-lg text-xs font-semibold uppercase tracking-wider cursor-pointer transition-colors shadow-2xs disabled:opacity-50"
+            >
+              {updating ? 'Transferring...' : 'Confirm Transfer'}
+            </button>
+          </div>
+        }
+      >
+        <div className="space-y-4 text-xs">
+          {responsibilityPreview && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-center">
+              <div>
+                <span className="text-[10px] text-[#64748B] uppercase font-bold block">Active Listings</span>
+                <strong className="text-sm text-[#1E293B]">
+                  {responsibilityPreview.activeListingsCount ?? responsibilityPreview.counts?.listings ?? 0}
+                </strong>
+              </div>
+              <div>
+                <span className="text-[10px] text-[#64748B] uppercase font-bold block">Open Inquiries</span>
+                <strong className="text-sm text-[#1E293B]">
+                  {responsibilityPreview.openInquiriesCount ?? responsibilityPreview.counts?.inquiries ?? 0}
+                </strong>
+              </div>
+              <div>
+                <span className="text-[10px] text-[#64748B] uppercase font-bold block">Upcoming Viewings</span>
+                <strong className="text-sm text-[#1E293B]">
+                  {responsibilityPreview.upcomingViewingsCount ?? responsibilityPreview.counts?.appointments ?? 0}
+                </strong>
+              </div>
+              <div>
+                <span className="text-[10px] text-emerald-700 uppercase font-bold block">Closed Deals Kept</span>
+                <strong className="text-sm text-emerald-700">
+                  {responsibilityPreview.closedDealsPreservedCount ?? agent.recorded_sales_count ?? 0}
+                </strong>
+              </div>
+            </div>
+          )}
+
+          <div>
+            <label className="block text-[11px] font-semibold text-[#1E293B] uppercase tracking-wider mb-1">
+              Destination Agent or Queue *
+            </label>
+            <select
+              value={targetAgentId}
+              onChange={(e) => setTargetAgentId(e.target.value)}
+              className="w-full h-10 px-3 bg-white border border-[#E2E8F0] rounded-lg text-xs text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
+            >
+              <option value="">Brokerage Unassigned Queue (Broker Fallback)</option>
+              {rosterAgents.map((ra) => (
+                <option key={ra.id} value={ra.id}>
+                  {ra.name} ({ra.verification_status})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-[11px] font-semibold text-[#1E293B] uppercase tracking-wider mb-1">
+              Reason for Transfer *
+            </label>
+            <input
+              type="text"
+              value={transferNotes}
+              onChange={(e) => setTransferNotes(e.target.value)}
+              className="w-full h-10 px-3 bg-white border border-[#E2E8F0] rounded-lg text-xs text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
+            />
+          </div>
+        </div>
+      </DashboardModal>
+
+      {/* ========================================================================= */}
+      {/* DEPART AGENT MODAL                                                        */}
+      {/* ========================================================================= */}
+      <DashboardModal
+        isOpen={departModalOpen}
+        onClose={() => setDepartModalOpen(false)}
+        title="Depart Agent from Brokerage"
+        subtitle="Transition membership to Departed, transfer active work, and preserve historical closed deals."
+        actions={
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setDepartModalOpen(false)}
+              className="px-4 py-2 text-xs font-semibold uppercase tracking-wider text-[#64748B] hover:text-[#1E293B] cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleConfirmDepart}
+              disabled={updating}
+              className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold uppercase tracking-wider cursor-pointer transition-colors shadow-2xs disabled:opacity-50"
+            >
+              {updating ? 'Processing Departure...' : 'Confirm Departure'}
+            </button>
+          </div>
+        }
+      >
+        <div className="space-y-4 text-xs">
+          <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-rose-800 leading-relaxed">
+            Departing <strong className="font-bold">{agent.name}</strong> revokes active brokerage access, pauses routing availability, and allows the agent to join another brokerage in the future while keeping historical closed deal attribution intact.
+          </div>
+
+          {responsibilityPreview && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-center">
+              <div>
+                <span className="text-[10px] text-[#64748B] uppercase font-bold block">Active Listings</span>
+                <strong className="text-sm text-[#1E293B]">
+                  {responsibilityPreview.activeListingsCount ?? responsibilityPreview.counts?.listings ?? 0}
+                </strong>
+              </div>
+              <div>
+                <span className="text-[10px] text-[#64748B] uppercase font-bold block">Open Inquiries</span>
+                <strong className="text-sm text-[#1E293B]">
+                  {responsibilityPreview.openInquiriesCount ?? responsibilityPreview.counts?.inquiries ?? 0}
+                </strong>
+              </div>
+              <div>
+                <span className="text-[10px] text-[#64748B] uppercase font-bold block">Upcoming Viewings</span>
+                <strong className="text-sm text-[#1E293B]">
+                  {responsibilityPreview.upcomingViewingsCount ?? responsibilityPreview.counts?.appointments ?? 0}
+                </strong>
+              </div>
+              <div>
+                <span className="text-[10px] text-emerald-700 uppercase font-bold block">Closed Deals Kept</span>
+                <strong className="text-sm text-emerald-700">
+                  {responsibilityPreview.closedDealsPreservedCount ?? agent.recorded_sales_count ?? 0}
+                </strong>
+              </div>
+            </div>
+          )}
+
+          <div>
+            <label className="block text-[11px] font-semibold text-[#1E293B] uppercase tracking-wider mb-1">
+              Reassign Active Work To *
+            </label>
+            <select
+              value={targetAgentId}
+              onChange={(e) => setTargetAgentId(e.target.value)}
+              className="w-full h-10 px-3 bg-white border border-[#E2E8F0] rounded-lg text-xs text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-rose-500"
+            >
+              <option value="">Brokerage Unassigned Queue (Broker Fallback)</option>
+              {rosterAgents.map((ra) => (
+                <option key={ra.id} value={ra.id}>
+                  {ra.name} ({ra.verification_status})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-[11px] font-semibold text-[#1E293B] uppercase tracking-wider mb-1">
+              Reason for Departure *
+            </label>
+            <input
+              type="text"
+              value={departureReason}
+              onChange={(e) => setDepartureReason(e.target.value)}
+              className="w-full h-10 px-3 bg-white border border-[#E2E8F0] rounded-lg text-xs text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-rose-500"
+            />
+          </div>
+        </div>
+      </DashboardModal>
 
       {/* ========================================================================= */}
       {/* SUSPEND AGENT MODAL (Matching Mockup Screen 9)                             */}

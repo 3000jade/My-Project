@@ -33,7 +33,25 @@ export function extractDriveFileId(input) {
     return trimmed;
   }
 
+  // Pattern 6: Mock file IDs: drive-mock-... or mock-...
+  const mockMatch = trimmed.match(/(?:drive-)?mock-[0-9a-zA-Z_-]+/);
+  if (mockMatch) return mockMatch[0];
+
   return null;
+}
+
+/**
+ * Returns the backend streaming proxy URL for a Google Drive asset.
+ */
+export function getDriveProxyUrl(url) {
+  if (!url || typeof url !== 'string') return url;
+  const fileId = extractDriveFileId(url);
+  if (fileId) {
+    const rawBaseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api').trim().replace(/\/+$/, '');
+    const apiBase = rawBaseUrl.endsWith('/api') ? rawBaseUrl : `${rawBaseUrl}/api`;
+    return `${apiBase}/drive/media/${fileId}`;
+  }
+  return url;
 }
 
 /**
@@ -45,6 +63,10 @@ export function resolveDriveImageUrl(url, options = { sz: 'w1600' }) {
 
   const fileId = extractDriveFileId(url);
   if (fileId) {
+    // If it's a mock ID, route to backend streaming proxy so local buffer is served
+    if (fileId.startsWith('mock-') || fileId.startsWith('drive-mock-')) {
+      return getDriveProxyUrl(fileId);
+    }
     // Return direct Google CDN image URL
     return `https://lh3.googleusercontent.com/d/${fileId}`;
   }
@@ -58,6 +80,9 @@ export function resolveDriveImageUrl(url, options = { sz: 'w1600' }) {
 export function getDriveThumbnailUrl(url, size = 1600) {
   const fileId = extractDriveFileId(url);
   if (fileId) {
+    if (fileId.startsWith('mock-') || fileId.startsWith('drive-mock-')) {
+      return getDriveProxyUrl(fileId);
+    }
     return `https://drive.google.com/thumbnail?id=${fileId}&sz=w${size}`;
   }
   return url;

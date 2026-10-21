@@ -24,6 +24,7 @@ export default function BrokerAgentEdit() {
   const [error, setError] = useState('');
   const [toastMessage, setToastMessage] = useState('');
 
+  const [teams, setTeams] = useState([]);
   const [formData, setFormData] = useState({
     name: '',
     role: 'Real Estate Agent',
@@ -37,12 +38,14 @@ export default function BrokerAgentEdit() {
     prc_validity: '',
     dhsud_accreditation_no: '',
     dhsud_validity: '',
-    accessTier: 'standard',
+    team_id: '',
+    can_create_listings: false,
+    accessTier: 'standard_agent',
     commissionTier: '4.0%',
     experience_years: 5,
-    bankName: 'BDO Unibank',
-    bankAccountNo: '0012-3456-7890',
-    tin: '123-456-789-000',
+    emergencyContactName: '',
+    emergencyContactPhone: '',
+    internalNotes: '',
     bio: ''
   });
 
@@ -56,7 +59,13 @@ export default function BrokerAgentEdit() {
     async function loadData() {
       setLoading(true);
       try {
-        const data = await agentService.getAgentById(id);
+        const [data, teamList] = await Promise.all([
+          agentService.getAgentById(id),
+          agentService.getTeams().catch(() => []),
+        ]);
+        if (mounted) {
+          setTeams(Array.isArray(teamList) ? teamList : []);
+        }
         if (mounted && data) {
           setFormData(prev => ({
             ...prev,
@@ -66,10 +75,18 @@ export default function BrokerAgentEdit() {
             email: data.email || '',
             phone: data.phone || '',
             avatar: data.avatar || '',
+            location: data.location_branch || data.location || 'Makati, Metro Manila',
             prc_license_no: data.prc_license_no || '',
             prc_validity: data.prc_validity || '2026-12-31',
             dhsud_accreditation_no: data.dhsud_accreditation_no || '',
             dhsud_validity: data.dhsud_validity || '2026-12-31',
+            team_id: data.team_id || '',
+            can_create_listings: Boolean(data.can_create_listings),
+            accessTier: data.access_tier || 'standard_agent',
+            commissionTier: data.commission_tier || '4.0%',
+            emergencyContactName: data.emergency_contact_name || '',
+            emergencyContactPhone: data.emergency_contact_phone || '',
+            internalNotes: data.internal_notes || '',
             bio: data.bio || ''
           }));
         }
@@ -103,8 +120,16 @@ export default function BrokerAgentEdit() {
         dhsud_accreditation_no: formData.dhsud_accreditation_no,
         dhsud_validity: formData.dhsud_validity,
         experience_years: Number(formData.experience_years || 0),
+        team_id: formData.team_id || null,
+        can_create_listings: Boolean(formData.can_create_listings),
+        access_tier: formData.accessTier || 'standard_agent',
+        commission_tier: formData.commissionTier || null,
+        location_branch: formData.location || null,
+        emergency_contact_name: formData.emergencyContactName || null,
+        emergency_contact_phone: formData.emergencyContactPhone || null,
+        internal_notes: formData.internalNotes || null,
       });
-      showToast('Agent profile changes saved successfully.');
+      showToast('Agent profile & governance settings saved.');
       setTimeout(() => {
         navigate(`/broker/agents/${id}`);
       }, 1000);
@@ -443,8 +468,43 @@ export default function BrokerAgentEdit() {
           {activeSection === 'access' && (
             <div className="space-y-5">
               <div className="pb-3 border-b border-[#E2E8F0]">
-                <h2 className="text-base font-bold text-[#1E293B]">Role and Access Permissions</h2>
-                <p className="text-xs text-[#64748B]">Configure access scope, commission split, and administrative status.</p>
+                <h2 className="text-base font-bold text-[#1E293B]">Role, Team & Access Permissions</h2>
+                <p className="text-xs text-[#64748B]">Configure brokerage team assignment, listing creation privileges, access tier, and commission split.</p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-[#1E293B] mb-1">
+                    Assigned Brokerage Team
+                  </label>
+                  <select
+                    value={formData.team_id || ''}
+                    onChange={(e) => handleChange('team_id', e.target.value)}
+                    className="w-full h-10 px-3.5 bg-white border border-[#E2E8F0] rounded-lg text-xs font-medium text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
+                  >
+                    <option value="">Unassigned / General Brokerage Pool</option>
+                    {teams.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-[#1E293B] mb-1">
+                    Access & Seniority Tier
+                  </label>
+                  <select
+                    value={formData.accessTier || 'standard_agent'}
+                    onChange={(e) => handleChange('accessTier', e.target.value)}
+                    className="w-full h-10 px-3.5 bg-white border border-[#E2E8F0] rounded-lg text-xs font-medium text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
+                  >
+                    <option value="standard_agent">Standard Agent</option>
+                    <option value="senior_agent">Senior Agent</option>
+                    <option value="team_lead">Team Lead / Associate Broker</option>
+                  </select>
+                </div>
               </div>
 
               <div>
@@ -461,6 +521,23 @@ export default function BrokerAgentEdit() {
                   <option value="4.0%">Senior 4.0%</option>
                   <option value="5.0%">Executive 5.0%</option>
                 </select>
+              </div>
+
+              <div className="p-4 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-xs font-bold text-[#1E293B]">
+                    Direct Property Listing Creation Privilege
+                  </p>
+                  <p className="text-[11px] text-[#64748B] mt-0.5">
+                    By default, only Brokers create listings and agents submit edit proposals. Enable this flag to allow this verified agent to create new property listings directly.
+                  </p>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={Boolean(formData.can_create_listings)}
+                  onChange={(e) => handleChange('can_create_listings', e.target.checked)}
+                  className="w-5 h-5 accent-[#0F766E] cursor-pointer shrink-0"
+                />
               </div>
             </div>
           )}

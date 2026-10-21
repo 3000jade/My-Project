@@ -7,23 +7,46 @@ import apiClient from './apiClient';
 import { resolveDriveImageUrl } from './driveService';
 
 /**
+ * Helper to parse a nullable number, preserving 0 while returning null for null/undefined/empty string
+ */
+function parseNullableNumber(val) {
+  if (val === undefined || val === null || val === '') return null;
+  const num = Number(val);
+  return isNaN(num) ? null : num;
+}
+
+/**
  * Normalizes raw property items from Supabase / Express backend or mock fixtures
  * into a consistent, UI-safe format.
  */
 export function normalizeProperty(rawItem = {}) {
-  const rawImages = Array.isArray(rawItem.images) && rawItem.images.length > 0
-    ? rawItem.images
-    : [rawItem.mainImage || rawItem.image || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1200&auto=format&fit=crop'];
+  const mediaPhotos = Array.isArray(rawItem.media)
+    ? rawItem.media.filter(m => (m.mediaCategory === 'Photo' || m.media_category === 'Photo') && (m.mediaUrl || m.media_url)).map(m => m.mediaUrl || m.media_url)
+    : (Array.isArray(rawItem.property_media)
+        ? rawItem.property_media.filter(m => (m.media_category === 'Photo' || m.mediaCategory === 'Photo') && (m.media_url || m.mediaUrl)).map(m => m.media_url || m.mediaUrl)
+        : []);
 
-  const images = rawImages.map(resolveDriveImageUrl);
-  const mainImage = resolveDriveImageUrl(rawItem.mainImage || rawItem.image) || images[0];
+  const propertyImagesPhotos = Array.isArray(rawItem.property_images)
+    ? rawItem.property_images.map(img => img.imageUrl || img.image_url).filter(Boolean)
+    : [];
 
-  let locationString = 'Metro Manila';
+  const combinedRawImages = Array.from(new Set([
+    ...(rawItem.mainImage || rawItem.main_image ? [rawItem.mainImage || rawItem.main_image] : []),
+    ...(Array.isArray(rawItem.images) ? rawItem.images : []),
+    ...propertyImagesPhotos,
+    ...mediaPhotos,
+    ...(rawItem.image || rawItem.cover_image ? [rawItem.image || rawItem.cover_image] : [])
+  ])).filter(Boolean);
+
+  const images = combinedRawImages.map(resolveDriveImageUrl).filter(Boolean);
+  const mainImage = resolveDriveImageUrl(rawItem.mainImage || rawItem.main_image) || (images.length > 0 ? images[0] : null);
+
+  let locationString = '';
   if (typeof rawItem.location === 'string' && rawItem.location.trim()) {
     locationString = rawItem.location;
   } else if (rawItem.location && typeof rawItem.location === 'object') {
     const parts = [rawItem.location.address, rawItem.location.city, rawItem.location.state].filter(Boolean);
-    locationString = parts.length > 0 ? parts.join(', ') : (rawItem.location.city || 'Metro Manila');
+    locationString = parts.length > 0 ? parts.join(', ') : (rawItem.location.city || '');
   } else if (rawItem.address || rawItem.city) {
     locationString = [rawItem.address, rawItem.city, rawItem.state].filter(Boolean).join(', ');
   }
@@ -34,7 +57,7 @@ export function normalizeProperty(rawItem = {}) {
 
   const displayPrice = rawItem.formattedPrice ||
     (typeof rawItem.price === 'string' && rawItem.price.startsWith('₱') ? rawItem.price : null) ||
-    (rawNumericPrice > 0 ? `₱${rawNumericPrice.toLocaleString()}` : 'Price on Request');
+    (rawNumericPrice > 0 ? `₱${rawNumericPrice.toLocaleString()}` : null);
 
   const normalizedStatus = (rawItem.status || 'AVAILABLE').toUpperCase();
 
@@ -45,12 +68,24 @@ export function normalizeProperty(rawItem = {}) {
   const agentName = rawItem.agent_name || rawItem.agentName || rawItem.agent?.name || '';
   const agentId = rawItem.agent_id || rawItem.agentId || rawItem.createdBy || '';
 
+  const bedroomsTotal = parseNullableNumber(rawItem.bedrooms_total ?? rawItem.bedroomsTotal ?? rawItem.specs?.bedroomsTotal ?? rawItem.beds ?? rawItem.specs?.beds ?? rawItem.bedrooms);
+  const bathroomsTotal = parseNullableNumber(rawItem.bathrooms_total_integer ?? rawItem.bathroomsTotalInteger ?? rawItem.specs?.bathroomsTotalInteger ?? rawItem.baths ?? rawItem.specs?.baths ?? rawItem.bathrooms);
+  const livingArea = parseNullableNumber(rawItem.living_area ?? rawItem.livingArea ?? rawItem.specs?.livingArea ?? rawItem.floor_area ?? rawItem.sqft);
+  const livingAreaUnits = rawItem.living_area_units || rawItem.livingAreaUnits || rawItem.specs?.livingAreaUnits || 'Square Meters';
+  const lotSizeArea = parseNullableNumber(rawItem.lot_size_area ?? rawItem.lotSizeArea ?? rawItem.specs?.lotSizeArea ?? rawItem.lot_area);
+  const lotSizeUnits = rawItem.lot_size_units || rawItem.lotSizeUnits || rawItem.specs?.lotSizeUnits || 'Square Meters';
+
+  const listingId = rawItem.listing_id || rawItem.listingId || null;
+  const listingKey = rawItem.listing_key || rawItem.listingKey || (rawItem.id ? `KEY-${rawItem.id}` : null);
+
   return {
     ...rawItem,
     id: String(rawItem.id || `prop-${Date.now()}`),
     title: rawItem.title || rawItem.name || 'Untitled Property',
     tagline: rawItem.tagline || '',
     mainImage,
+    image: mainImage || (images.length > 0 ? images[0] : null),
+    thumbnail: mainImage || (images.length > 0 ? images[0] : null),
     images,
     location: locationString,
     location_raw: rawItem.location,
@@ -78,27 +113,29 @@ export function normalizeProperty(rawItem = {}) {
     price: displayPrice,
     price_raw: rawNumericPrice,
     formattedPrice: displayPrice,
-    property_type: rawItem.property_type || rawItem.specs?.propertyType || rawItem.propertyType || 'Residential',
-    propertyType: rawItem.property_type || rawItem.specs?.propertyType || rawItem.propertyType || 'Residential',
-    property_type_id: Number(rawItem.property_type_id || rawItem.propertyTypeId || rawItem.specs?.propertyTypeId || 1),
-    propertyTypeId: Number(rawItem.property_type_id || rawItem.propertyTypeId || rawItem.specs?.propertyTypeId || 1),
-    property_sub_type: rawItem.property_sub_type || rawItem.propertySubType || rawItem.specs?.propertySubType || 'Residential',
-    propertySubType: rawItem.property_sub_type || rawItem.propertySubType || rawItem.specs?.propertySubType || 'Residential',
+    property_type: rawItem.property_type || rawItem.specs?.propertyType || rawItem.propertyType || '',
+    propertyType: rawItem.property_type || rawItem.specs?.propertyType || rawItem.propertyType || '',
+    property_type_id: rawItem.property_type_id ?? rawItem.propertyTypeId ?? rawItem.specs?.propertyTypeId ?? null,
+    propertyTypeId: rawItem.property_type_id ?? rawItem.propertyTypeId ?? rawItem.specs?.propertyTypeId ?? null,
+    property_sub_type: rawItem.property_sub_type || rawItem.propertySubType || rawItem.specs?.propertySubType || '',
+    propertySubType: rawItem.property_sub_type || rawItem.propertySubType || rawItem.specs?.propertySubType || '',
     status: normalizedStatus,
     is_published: isPublished,
     agent_id: agentId,
     agent_name: agentName,
     agent: rawItem.agent || (agentName ? { id: agentId, name: agentName } : null),
+    list_agent_key: rawItem.list_agent_key || rawItem.listAgentKey || null,
+    listAgentKey: rawItem.list_agent_key || rawItem.listAgentKey || null,
     created_at: rawItem.created_at || rawItem.createdAt || null,
     createdAt: rawItem.createdAt || rawItem.created_at || null,
-    beds: rawItem.beds || rawItem.specs?.beds || rawItem.bedrooms || 1,
-    baths: rawItem.baths || rawItem.specs?.baths || rawItem.bathrooms || 1,
-    sqft: rawItem.sqft || rawItem.specs?.sqft || rawItem.floor_area || 0,
+    beds: bedroomsTotal,
+    baths: bathroomsTotal,
+    sqft: rawItem.sqft || rawItem.specs?.sqft || null,
     features: Array.isArray(rawItem.features) ? rawItem.features : [],
-    listing_id: rawItem.listing_id || rawItem.listingId || `MLS-${String(rawItem.id || '').slice(0, 8).toUpperCase() || 'PH-8123'}`,
-    listing_key: rawItem.listing_key || rawItem.listingKey || `KEY-${rawItem.id}`,
-    standard_status: rawItem.standard_status || rawItem.standardStatus || (normalizedStatus === 'AVAILABLE' ? 'Active' : normalizedStatus === 'RESERVED' || normalizedStatus === 'UNDER CONTRACT' ? 'Active Under Contract' : normalizedStatus === 'SOLD' ? 'Closed' : normalizedStatus),
-    standardStatus: rawItem.standard_status || rawItem.standardStatus || (normalizedStatus === 'AVAILABLE' ? 'Active' : normalizedStatus === 'RESERVED' || normalizedStatus === 'UNDER CONTRACT' ? 'Active Under Contract' : normalizedStatus === 'SOLD' ? 'Closed' : normalizedStatus),
+    listing_id: listingId,
+    listing_key: listingKey,
+    standard_status: rawItem.standard_status || rawItem.standardStatus || (normalizedStatus === 'AVAILABLE' ? 'Active' : normalizedStatus === 'RESERVED' ? 'Reserved' : normalizedStatus === 'UNDER CONTRACT' ? 'Active Under Contract' : normalizedStatus === 'SOLD' ? 'Closed' : normalizedStatus),
+    standardStatus: rawItem.standard_status || rawItem.standardStatus || (normalizedStatus === 'AVAILABLE' ? 'Active' : normalizedStatus === 'RESERVED' ? 'Reserved' : normalizedStatus === 'UNDER CONTRACT' ? 'Active Under Contract' : normalizedStatus === 'SOLD' ? 'Closed' : normalizedStatus),
     association_fee: rawItem.pricing?.associationFee ?? rawItem.pricing?.association_fee ?? rawItem.association_fee ?? rawItem.associationFee ?? 0,
     associationFee: rawItem.pricing?.associationFee ?? rawItem.pricing?.association_fee ?? rawItem.association_fee ?? rawItem.associationFee ?? 0,
     association_fee_frequency: rawItem.pricing?.associationFeeFrequency ?? rawItem.pricing?.association_fee_frequency ?? rawItem.association_fee_frequency ?? rawItem.associationFeeFrequency ?? 'Monthly',
@@ -114,26 +151,26 @@ export function normalizeProperty(rawItem = {}) {
     pricing: rawItem.pricing || {},
     tax_annual_amount: rawItem.tax_annual_amount ?? rawItem.taxAnnualAmount ?? null,
     taxAnnualAmount: rawItem.tax_annual_amount ?? rawItem.taxAnnualAmount ?? null,
-    living_area: rawItem.living_area ?? rawItem.livingArea ?? rawItem.specs?.livingArea ?? rawItem.floor_area ?? rawItem.sqft ?? '',
-    livingArea: rawItem.living_area ?? rawItem.livingArea ?? rawItem.specs?.livingArea ?? rawItem.floor_area ?? rawItem.sqft ?? '',
-    living_area_units: rawItem.living_area_units || rawItem.livingAreaUnits || rawItem.specs?.livingAreaUnits || 'Square Meters',
-    livingAreaUnits: rawItem.living_area_units || rawItem.livingAreaUnits || rawItem.specs?.livingAreaUnits || 'Square Meters',
-    lot_size_area: rawItem.lot_size_area ?? rawItem.lotSizeArea ?? rawItem.specs?.lotSizeArea ?? rawItem.lot_area ?? '',
-    lotSizeArea: rawItem.lot_size_area ?? rawItem.lotSizeArea ?? rawItem.specs?.lotSizeArea ?? rawItem.lot_area ?? '',
-    lot_size_units: rawItem.lot_size_units || rawItem.lotSizeUnits || rawItem.specs?.lotSizeUnits || 'Square Meters',
-    lotSizeUnits: rawItem.lot_size_units || rawItem.lotSizeUnits || rawItem.specs?.lotSizeUnits || 'Square Meters',
-    bedrooms_total: rawItem.bedrooms_total ?? rawItem.bedroomsTotal ?? rawItem.specs?.bedroomsTotal ?? rawItem.beds ?? '',
-    bathrooms_total_integer: rawItem.bathrooms_total_integer ?? rawItem.bathroomsTotalInteger ?? rawItem.specs?.bathroomsTotalInteger ?? rawItem.baths ?? '',
-    bathrooms_full: rawItem.bathrooms_full ?? rawItem.bathroomsFull ?? rawItem.specs?.bathroomsFull ?? '',
-    bathrooms_half: rawItem.bathrooms_half ?? rawItem.bathroomsHalf ?? rawItem.specs?.bathroomsHalf ?? '',
-    stories_total: rawItem.stories_total ?? rawItem.storiesTotal ?? rawItem.specs?.storiesTotal ?? '',
-    parking_total: rawItem.parking_total ?? rawItem.parkingTotal ?? rawItem.specs?.parkingTotal ?? '',
-    parking_covered: rawItem.parking_covered ?? rawItem.parkingCovered ?? rawItem.specs?.parkingCovered ?? '',
-    parking_open: rawItem.parking_open ?? rawItem.parkingOpen ?? rawItem.specs?.parkingOpen ?? '',
-    year_built: rawItem.year_built ?? rawItem.yearBuilt ?? rawItem.specs?.yearBuilt ?? '',
+    living_area: livingArea,
+    livingArea: livingArea,
+    living_area_units: livingAreaUnits,
+    livingAreaUnits: livingAreaUnits,
+    lot_size_area: lotSizeArea,
+    lotSizeArea: lotSizeArea,
+    lot_size_units: lotSizeUnits,
+    lotSizeUnits: lotSizeUnits,
+    bedrooms_total: bedroomsTotal,
+    bathrooms_total_integer: bathroomsTotal,
+    bathrooms_full: rawItem.bathrooms_full ?? rawItem.bathroomsFull ?? rawItem.specs?.bathroomsFull ?? null,
+    bathrooms_half: rawItem.bathrooms_half ?? rawItem.bathroomsHalf ?? rawItem.specs?.bathroomsHalf ?? null,
+    stories_total: rawItem.stories_total ?? rawItem.storiesTotal ?? rawItem.specs?.storiesTotal ?? null,
+    parking_total: rawItem.parking_total ?? rawItem.parkingTotal ?? rawItem.specs?.parkingTotal ?? null,
+    parking_covered: rawItem.parking_covered ?? rawItem.parkingCovered ?? rawItem.specs?.parkingCovered ?? null,
+    parking_open: rawItem.parking_open ?? rawItem.parkingOpen ?? rawItem.specs?.parkingOpen ?? null,
+    year_built: rawItem.year_built ?? rawItem.yearBuilt ?? rawItem.specs?.yearBuilt ?? null,
     architectural_style: rawItem.architectural_style ?? rawItem.architecturalStyle ?? rawItem.specs?.architecturalStyle ?? '',
     property_condition: rawItem.property_condition ?? rawItem.propertyCondition ?? rawItem.specs?.propertyCondition ?? '',
-    furnishing: rawItem.furnishing || rawItem.specs?.furnishing || rawItem.custom_reso_attributes?.furnishing || rawItem.customResoAttributes?.furnishing || 'Fully Furnished',
+    furnishing: rawItem.furnishing || rawItem.specs?.furnishing || rawItem.custom_reso_attributes?.furnishing || rawItem.customResoAttributes?.furnishing || '',
     lot_frontage: rawItem.lot_frontage || rawItem.lotFrontage || rawItem.specs?.lotFrontage || rawItem.custom_reso_attributes?.lotFrontage || rawItem.customResoAttributes?.lotFrontage || '',
     floor_level: rawItem.floor_level || rawItem.floorLevel || rawItem.specs?.floorLevel || rawItem.custom_reso_attributes?.floorLevel || rawItem.customResoAttributes?.floorLevel || '',
     tower_name: rawItem.tower_name || rawItem.towerName || rawItem.location?.towerName || rawItem.custom_reso_attributes?.towerName || rawItem.customResoAttributes?.towerName || '',

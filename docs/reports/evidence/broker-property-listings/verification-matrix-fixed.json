@@ -1,0 +1,490 @@
+[
+  {
+    "propertyUuid": "8f2a4470-b5e2-431c-974f-1d805ff3465b",
+    "title": {
+      "db": "Bespoke Rockwell Sky Penthouse",
+      "api": "Bespoke Rockwell Sky Penthouse",
+      "rendered": "Bespoke Rockwell Sky Penthouse",
+      "verdict": "PASS"
+    },
+    "code": {
+      "dbListingId": "MLS-IDKMSMM",
+      "dbListingKey": "KEY-1792098082396",
+      "rendered": "MLS-IDKMSMM",
+      "verdict": "PASS"
+    },
+    "thumbnail": {
+      "hasDbImages": false,
+      "renderedPlaceholder": true,
+      "hasImage": false,
+      "verdict": "PASS"
+    },
+    "location": {
+      "dbCity": "Makati",
+      "renderedPrimary": "Makati",
+      "renderedSecondary": "Rockwell Drive",
+      "verdict": "PASS"
+    },
+    "propertyType": {
+      "dbType": "Residential",
+      "dbSubtype": "Single Family Residence",
+      "renderedType": "Residential",
+      "renderedSubtype": "Single Family Residence",
+      "verdict": "PASS"
+    },
+    "specs": {
+      "dbLivingArea": 100,
+      "dbLivingAreaUnits": "Square Meters",
+      "renderedFloorArea": "100 m²",
+      "dbBeds": 1,
+      "renderedBeds": "1",
+      "dbBaths": 1,
+      "renderedBaths": "1",
+      "verdict": "PASS"
+    },
+    "price": {
+      "dbPrice": 125000000,
+      "renderedPrice": "₱125,000,000",
+      "verdict": "PASS"
+    },
+    "status": {
+      "dbStatus": "available",
+      "dbStandardStatus": "Active",
+      "renderedStatus": "Active",
+      "verdict": "PASS"
+    },
+    "dateAdded": {
+      "dbCreatedAt": "2026-10-15T21:01:25.324863+00:00",
+      "renderedCalendarDate": "Oct 16, 2026",
+      "renderedRelativeDate": "Today",
+      "verdict": "PASS"
+    }
+  },
+  {
+    "propertyUuid": "7a451fe2-80e6-461c-825e-a301ce536771",
+    "title": {
+      "db": "Bespoke Rockwell Sky Penthouse",
+      "api": "Bespoke Rockwell Sky Penthouse",
+      "rendered": "Bespoke Rockwell Sky Penthouse",
+      "verdict": "PASS"
+    },
+    "code": {
+      "dbListingId": "MLS-NFNZ23F",
+      "dbListingKey": "KEY-1792097783826",
+      "rendered": "MLS-NFNZ23F",
+      "verdict": "PASS"
+    },
+    "thumbnail": {
+      "hasDbImages": false,
+      "renderedPlaceholder": true,
+      "hasImage": false,
+      "verdict": "PASS"
+    },
+    "location": {
+      "dbCity": "Makati",
+      "renderedPrimary": "Makati",
+      "renderedSecondary": "Rockwell Drive",
+      "verdict": "PASS"
+    },
+    "propertyType": {
+      "dbType": "Residential",
+      "dbSubtype": "Single Family Residence",
+      "renderedType": "Residential",
+      "renderedSubtype": "Single Family Residence",
+      "verdict": "PASS"
+    },
+    "specs": {
+      "dbLivingArea": 100,
+      "dbLivingAreaUnits": "Square Meters",
+      "renderedFloorArea": "100 m²",
+      "dbBeds": 1,
+      "renderedBeds": "1",
+      "dbBaths": 1,
+      "renderedBaths": "1",
+      "verdict": "PASS"
+    },
+    "price": {
+      "dbPrice": 125000000,
+      "renderedPrice": "₱125,000,000",
+      "verdict": "PASS"
+    },
+    "status": {
+      "dbStatus": "available",
+      "dbStandardStatus": "Active",
+      "renderedStatus": "Active",
+      "verdict": "PASS"
+    },
+    "dateAdded": {
+      "dbCreatedAt": "2026-10-15T20:56:26.770735+00:00",
+      "renderedCalendarDate": "Oct 16, 2026",
+      "renderedRelativeDate": "Today",
+      "verdict": "PASS"
+    }
+  },
+  {
+    "propertyUuid": "070739d6-9fa5-4297-906d-d57034daac54",
+    "title": {
+      "db": "Bespoke Rockwell Sky Penthouse",
+      "api": "Bespoke Rockwell Sky Penthouse",
+      "rendered": "Bespoke Rockwell Sky Penthouse",
+      "verdict": "PASS"
+    },
+    "code": {
+      "dbListingId": "MLS-0C39KDW",
+      "dbListingKey": "KEY-1792095601039",
+      "rendered": "MLS-0C39KDW",
+      "verdict": "PASS"
+    },
+    "thumbnail": {
+      "hasDbImages": false,
+      "renderedPlaceholder": true,
+      "hasImage": false,
+      "verdict": "PASS"
+    },
+    "location": {
+      "dbCity": "Makati",
+      "renderedPrimary": "Makati",
+      "renderedSecondary": "Rockwell Drive",
+      "verdict": "PASS"
+    },
+    "propertyType": {
+      "dbType": "Residential",
+      "dbSubtype": "Single Family Residence",
+      "renderedType": "Residential",
+      "renderedSubtype": "Single Family Residence",
+      "verdict": "PASS"
+    },
+    "specs": {
+      "dbLivingArea": 100,
+      "dbLivingAreaUnits": "Square Meters",
+      "renderedFloorArea": "100 m²",
+      "dbBeds": 1,
+      "renderedBeds": "1",
+      "dbBaths": 1,
+      "renderedBaths": "1",
+      "verdict": "PASS"
+    },
+    "price": {
+      "dbPrice": 125000000,
+      "renderedPrice": "₱125,000,000",
+      "verdict": "PASS"
+    },
+    "status": {
+      "dbStatus": "available",
+      "dbStandardStatus": "Active",
+      "renderedStatus": "Active",
+      "verdict": "PASS"
+    },
+    "dateAdded": {
+      "dbCreatedAt": "2026-10-15T20:20:04.021695+00:00",
+      "renderedCalendarDate": "Oct 16, 2026",
+      "renderedRelativeDate": "Today",
+      "verdict": "PASS"
+    }
+  },
+  {
+    "propertyUuid": "330e8ef6-f9ae-4cb9-9aff-0d48be3d2fd3",
+    "title": {
+      "db": "Bespoke Rockwell Sky Penthouse",
+      "api": "Bespoke Rockwell Sky Penthouse",
+      "rendered": "Bespoke Rockwell Sky Penthouse",
+      "verdict": "PASS"
+    },
+    "code": {
+      "dbListingId": "MLS-MLW6IGN",
+      "dbListingKey": "KEY-1792094979317",
+      "rendered": "MLS-MLW6IGN",
+      "verdict": "PASS"
+    },
+    "thumbnail": {
+      "hasDbImages": false,
+      "renderedPlaceholder": true,
+      "hasImage": false,
+      "verdict": "PASS"
+    },
+    "location": {
+      "dbCity": "Makati",
+      "renderedPrimary": "Makati",
+      "renderedSecondary": "Rockwell Drive",
+      "verdict": "PASS"
+    },
+    "propertyType": {
+      "dbType": "Residential",
+      "dbSubtype": "Single Family Residence",
+      "renderedType": "Residential",
+      "renderedSubtype": "Single Family Residence",
+      "verdict": "PASS"
+    },
+    "specs": {
+      "dbLivingArea": 100,
+      "dbLivingAreaUnits": "Square Meters",
+      "renderedFloorArea": "100 m²",
+      "dbBeds": 1,
+      "renderedBeds": "1",
+      "dbBaths": 1,
+      "renderedBaths": "1",
+      "verdict": "PASS"
+    },
+    "price": {
+      "dbPrice": 125000000,
+      "renderedPrice": "₱125,000,000",
+      "verdict": "PASS"
+    },
+    "status": {
+      "dbStatus": "available",
+      "dbStandardStatus": "Active",
+      "renderedStatus": "Active",
+      "verdict": "PASS"
+    },
+    "dateAdded": {
+      "dbCreatedAt": "2026-10-15T20:09:42.332432+00:00",
+      "renderedCalendarDate": "Oct 16, 2026",
+      "renderedRelativeDate": "Today",
+      "verdict": "PASS"
+    }
+  },
+  {
+    "propertyUuid": "8230e25e-db5f-49e6-9edd-13a84351b905",
+    "title": {
+      "db": "Bespoke Rockwell Sky Penthouse",
+      "api": "Bespoke Rockwell Sky Penthouse",
+      "rendered": "Bespoke Rockwell Sky Penthouse",
+      "verdict": "PASS"
+    },
+    "code": {
+      "dbListingId": "MLS-XQC7DVM",
+      "dbListingKey": "KEY-1792092839862",
+      "rendered": "MLS-XQC7DVM",
+      "verdict": "PASS"
+    },
+    "thumbnail": {
+      "hasDbImages": false,
+      "renderedPlaceholder": true,
+      "hasImage": false,
+      "verdict": "PASS"
+    },
+    "location": {
+      "dbCity": "Makati",
+      "renderedPrimary": "Makati",
+      "renderedSecondary": "Rockwell Drive",
+      "verdict": "PASS"
+    },
+    "propertyType": {
+      "dbType": "Residential",
+      "dbSubtype": "Single Family Residence",
+      "renderedType": "Residential",
+      "renderedSubtype": "Single Family Residence",
+      "verdict": "PASS"
+    },
+    "specs": {
+      "dbLivingArea": 100,
+      "dbLivingAreaUnits": "Square Meters",
+      "renderedFloorArea": "100 m²",
+      "dbBeds": 1,
+      "renderedBeds": "1",
+      "dbBaths": 1,
+      "renderedBaths": "1",
+      "verdict": "PASS"
+    },
+    "price": {
+      "dbPrice": 125000000,
+      "renderedPrice": "₱125,000,000",
+      "verdict": "PASS"
+    },
+    "status": {
+      "dbStatus": "available",
+      "dbStandardStatus": "Active",
+      "renderedStatus": "Active",
+      "verdict": "PASS"
+    },
+    "dateAdded": {
+      "dbCreatedAt": "2026-10-15T19:34:02.89812+00:00",
+      "renderedCalendarDate": "Oct 16, 2026",
+      "renderedRelativeDate": "Today",
+      "verdict": "PASS"
+    }
+  },
+  {
+    "propertyUuid": "0e52d08c-ece7-429d-b85f-2b63662adc30",
+    "title": {
+      "db": "koo",
+      "api": "koo",
+      "rendered": "koo",
+      "verdict": "PASS"
+    },
+    "code": {
+      "dbListingId": "MLS-D2K3H3O",
+      "dbListingKey": "KEY-1792089413650",
+      "rendered": "MLS-D2K3H3O",
+      "verdict": "PASS"
+    },
+    "thumbnail": {
+      "hasDbImages": false,
+      "renderedPlaceholder": true,
+      "hasImage": false,
+      "verdict": "PASS"
+    },
+    "location": {
+      "dbCity": "Basco (Capital)",
+      "renderedPrimary": "Basco (Capital)",
+      "renderedSecondary": "Batanes",
+      "verdict": "PASS"
+    },
+    "propertyType": {
+      "dbType": "Residential",
+      "dbSubtype": "Single Family Residence",
+      "renderedType": "Residential",
+      "renderedSubtype": "Single Family Residence",
+      "verdict": "PASS"
+    },
+    "specs": {
+      "dbLivingArea": 122,
+      "dbLivingAreaUnits": "Square Meters",
+      "renderedFloorArea": "122 m²",
+      "dbBeds": 3,
+      "renderedBeds": "3",
+      "dbBaths": 3,
+      "renderedBaths": "3",
+      "verdict": "PASS"
+    },
+    "price": {
+      "dbPrice": 32323,
+      "renderedPrice": "₱32,323",
+      "verdict": "PASS"
+    },
+    "status": {
+      "dbStatus": "available",
+      "dbStandardStatus": "Active",
+      "renderedStatus": "Active",
+      "verdict": "PASS"
+    },
+    "dateAdded": {
+      "dbCreatedAt": "2026-10-15T18:36:55.805665+00:00",
+      "renderedCalendarDate": "Oct 16, 2026",
+      "renderedRelativeDate": "Today",
+      "verdict": "PASS"
+    }
+  },
+  {
+    "propertyUuid": "2508da67-08a2-4fdd-bde2-ea49567f2c8c",
+    "title": {
+      "db": "test 2",
+      "api": "test 2",
+      "rendered": "test 2",
+      "verdict": "PASS"
+    },
+    "code": {
+      "dbListingId": "MLS-ETPMEQL",
+      "dbListingKey": "KEY-1792089033706",
+      "rendered": "MLS-ETPMEQL",
+      "verdict": "PASS"
+    },
+    "thumbnail": {
+      "hasDbImages": false,
+      "renderedPlaceholder": true,
+      "hasImage": false,
+      "verdict": "PASS"
+    },
+    "location": {
+      "dbCity": "Banayoyo",
+      "renderedPrimary": "Banayoyo",
+      "renderedSecondary": "Ilocos Sur",
+      "verdict": "PASS"
+    },
+    "propertyType": {
+      "dbType": "Residential",
+      "dbSubtype": "Single Family Residence",
+      "renderedType": "Residential",
+      "renderedSubtype": "Single Family Residence",
+      "verdict": "PASS"
+    },
+    "specs": {
+      "dbLivingArea": 100,
+      "dbLivingAreaUnits": "Square Meters",
+      "renderedFloorArea": "100 m²",
+      "dbBeds": 3,
+      "renderedBeds": "3",
+      "dbBaths": 3,
+      "renderedBaths": "3",
+      "verdict": "PASS"
+    },
+    "price": {
+      "dbPrice": 2341241341,
+      "renderedPrice": "₱2,341,241,341",
+      "verdict": "PASS"
+    },
+    "status": {
+      "dbStatus": "available",
+      "dbStandardStatus": "Active",
+      "renderedStatus": "Active",
+      "verdict": "PASS"
+    },
+    "dateAdded": {
+      "dbCreatedAt": "2026-10-15T18:30:35.871799+00:00",
+      "renderedCalendarDate": "Oct 16, 2026",
+      "renderedRelativeDate": "Today",
+      "verdict": "PASS"
+    }
+  },
+  {
+    "propertyUuid": "35bef646-dc64-4537-9b20-a9f521eddb51",
+    "title": {
+      "db": "Test",
+      "api": "Test",
+      "rendered": "Test",
+      "verdict": "PASS"
+    },
+    "code": {
+      "dbListingId": "MLS-Q5IFQMS",
+      "dbListingKey": "KEY-1792087810002",
+      "rendered": "MLS-Q5IFQMS",
+      "verdict": "PASS"
+    },
+    "thumbnail": {
+      "hasDbImages": false,
+      "renderedPlaceholder": true,
+      "hasImage": false,
+      "verdict": "PASS"
+    },
+    "location": {
+      "dbCity": "Adams",
+      "renderedPrimary": "Adams",
+      "renderedSecondary": "Ilocos Norte",
+      "verdict": "PASS"
+    },
+    "propertyType": {
+      "dbType": "Residential",
+      "dbSubtype": "Single Family Residence",
+      "renderedType": "Residential",
+      "renderedSubtype": "Single Family Residence",
+      "verdict": "PASS"
+    },
+    "specs": {
+      "dbLivingArea": 100,
+      "dbLivingAreaUnits": "Square Meters",
+      "renderedFloorArea": "100 m²",
+      "dbBeds": 3,
+      "renderedBeds": "3",
+      "dbBaths": 3,
+      "renderedBaths": "3",
+      "verdict": "PASS"
+    },
+    "price": {
+      "dbPrice": 700000,
+      "renderedPrice": "₱700,000",
+      "verdict": "PASS"
+    },
+    "status": {
+      "dbStatus": "available",
+      "dbStandardStatus": "Active",
+      "renderedStatus": "Active",
+      "verdict": "PASS"
+    },
+    "dateAdded": {
+      "dbCreatedAt": "2026-10-15T18:10:12.143147+00:00",
+      "renderedCalendarDate": "Oct 16, 2026",
+      "renderedRelativeDate": "Today",
+      "verdict": "PASS"
+    }
+  }
+]

@@ -112,22 +112,21 @@ export class GoogleDriveService {
 
     if (isMock) {
       logger.warn(`[GoogleDriveService] Mock mode active: uploading ${file.originalname} (private=${isPrivate})`);
-      const mockId = `mock-${Date.now()}`;
-      const urls = isPrivate ? { directImageUrl: undefined, thumbnailUrl: undefined, proxyUrl: undefined } : this.getDirectImageUrls(mockId);
+      const mockId = `mock-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
       const mockResult: DriveUploadResult = {
-        fileId: `drive-mock-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        fileId: mockId,
         fileName: file.originalname,
-        webViewLink: isPrivate ? undefined : `https://drive.google.com/file/d/${mockId}/view`,
-        webContentLink: isPrivate ? undefined : `https://drive.google.com/uc?export=download&id=${mockId}`,
-        directImageUrl: urls.directImageUrl,
-        thumbnailUrl: urls.thumbnailUrl,
+        webViewLink: isPrivate ? undefined : `/api/drive/media/${mockId}`,
+        webContentLink: isPrivate ? undefined : `/api/drive/media/${mockId}`,
+        directImageUrl: `/api/drive/media/${mockId}`,
+        thumbnailUrl: `/api/drive/media/${mockId}`,
         mimeType: file.mimetype,
         size: file.size,
       };
 
       if (file.buffer) {
-        mockFileBuffers.set(mockResult.fileId, {
+        mockFileBuffers.set(mockId, {
           buffer: file.buffer,
           mimeType: file.mimetype,
           fileName: file.originalname,

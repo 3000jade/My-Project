@@ -20,7 +20,6 @@ export default function DashboardSidebar({
     { to: '/broker/inquiries', label: 'Inquiries', icon: MessageSquare },
     { to: '/broker/clients', label: 'Clients', icon: Users },
     { to: '/broker/agents', label: 'Agents', icon: User },
-    { to: '/broker/appointments', label: 'Appointments', icon: Calendar },
     { to: '/broker/notifications', label: 'Tasks', icon: CheckSquare },
     { to: '/broker/reports', label: 'Reports', icon: FileText },
   ];
@@ -29,7 +28,7 @@ export default function DashboardSidebar({
     { to: '/agent/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/agent/properties', label: 'Properties', icon: Building2 },
     { to: '/agent/inquiries', label: 'Inquiries', icon: MessageSquare },
-    { to: '/agent/appointments', label: 'Appointments', icon: Calendar },
+    { to: '/agent/availability', label: 'Schedule & Availability', icon: Calendar },
     { to: '/agent/sales', label: 'Sales', icon: FileText },
   ];
 
@@ -101,8 +100,11 @@ export default function DashboardSidebar({
           {links.map((link) => {
             const Icon = link.icon;
             const isProperties = link.label === 'Properties';
+            const isAgents = link.label === 'Agents';
             const isActive = isProperties
               ? location.pathname.includes('/properties')
+              : isAgents
+              ? location.pathname.startsWith('/broker/agents') || location.pathname.startsWith('/broker/appointments')
               : location.pathname === link.to;
 
             return (
