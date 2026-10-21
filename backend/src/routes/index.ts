@@ -17,6 +17,7 @@ import mailRoutes from './mail.routes';
 import whatsappRoutes from './whatsapp.routes';
 import mapsRoutes from './maps.routes';
 import agentCredentialsRoutes from './agentCredentials.routes';
+import auditRoutes from './audit.routes';
 
 const router = Router();
 
@@ -26,6 +27,7 @@ router.use('/auth', authRoutes);
 router.use('/properties', propertyRoutes);
 router.use('/valuations', valuationRoutes);
 router.use('/inquiries', inquiryRoutes);
+router.use('/audit-events', auditRoutes);
 router.use('/agents', agentRoutes);
 router.use('/invitations', invitationRoutes);
 router.use('/agent-credentials', agentCredentialsRoutes);

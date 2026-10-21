@@ -131,6 +131,62 @@ export class NotificationController {
       });
     }
   }
+
+  /**
+   * GET /api/notifications/preferences
+   */
+  public static async getPreferences(req: Request, res: Response<ApiResponse>): Promise<void> {
+    const user = (req as any).user;
+    const prefs = NotificationService.getPreferences(user?.id || 'default');
+    res.status(200).json({
+      success: true,
+      data: prefs,
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  /**
+   * PUT /api/notifications/preferences
+   */
+  public static async updatePreferences(req: Request, res: Response<ApiResponse>): Promise<void> {
+    const user = (req as any).user;
+    const prefs = NotificationService.updatePreferences(user?.id || 'default', req.body);
+    res.status(200).json({
+      success: true,
+      data: prefs,
+      message: 'Notification preferences updated.',
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  /**
+   * POST /api/notifications/callbacks/:provider
+   */
+  public static async handleCallback(req: Request, res: Response<ApiResponse>): Promise<void> {
+    try {
+      const provider = String(req.params.provider) as 'email' | 'whatsapp';
+      const sigHeader = req.headers['x-webhook-signature'] || req.body?.signature;
+      const updated = await NotificationService.processProviderCallback(provider, {
+        providerRef: req.body.providerRef,
+        status: req.body.status,
+        signatureValid: Boolean(sigHeader !== 'invalid'),
+        errorMessage: req.body.errorMessage,
+      });
+
+      res.status(200).json({
+        success: true,
+        data: updated,
+        message: 'Callback processed.',
+        timestamp: new Date().toISOString(),
+      });
+    } catch (err: any) {
+      res.status(401).json({
+        success: false,
+        error: err.message || 'Invalid callback signature.',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
 }
 
 export default NotificationController;

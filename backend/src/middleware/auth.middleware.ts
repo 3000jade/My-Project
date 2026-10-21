@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { User } from '@supabase/supabase-js';
 import { supabase, supabaseAdmin } from '../config/supabase';
+import { SessionService } from '../services/session.service';
 import type { ApiResponse } from '../types/api';
 
 export interface AuthenticatedRequest extends Request {
@@ -8,7 +9,8 @@ export interface AuthenticatedRequest extends Request {
 }
 
 /**
- * Middleware that requires a valid Supabase Bearer token in the Authorization header.
+ * Middleware that requires a valid Supabase Bearer token in the Authorization header
+ * and enforces server-side session revocation and idle/absolute expiry (SESSION-01, SESSION-02).
  */
 export const requireAuth = async (
   req: AuthenticatedRequest,
@@ -28,6 +30,21 @@ export const requireAuth = async (
     }
 
     const token = authHeader.split(' ')[1];
+    const isHeartbeat = String(req.headers['x-session-heartbeat'] || '').toLowerCase() === 'true';
+
+    // If session is tracked in SessionService, enforce server-side idle/absolute expiry and revocation
+    const existingSession = SessionService.getSession(token);
+    if (existingSession) {
+      const check = SessionService.validateSession(token, Date.now(), isHeartbeat);
+      if (!check.valid) {
+        res.status(401).json({
+          success: false,
+          error: `Unauthorized: ${check.reason || 'Session expired or revoked.'}`,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+    }
 
     const { data, error } = await supabase.auth.getUser(token);
 
@@ -56,8 +73,17 @@ export const requireAuth = async (
       return;
     }
 
+    const role = profile.role || 'client';
+    if (!existingSession) {
+      SessionService.createSession({
+        sessionId: token,
+        userId: data.user.id,
+        role,
+      });
+    }
+
     const userObj = data.user as any;
-    userObj.role = profile.role || 'client';
+    userObj.role = role;
     userObj.profile = profile;
     userObj.verification_status = profile.verification_status;
     req.user = userObj;
@@ -85,6 +111,15 @@ export const optionalAuth = async (
 
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.split(' ')[1];
+      const existingSession = SessionService.getSession(token);
+      if (existingSession) {
+        const check = SessionService.validateSession(token, Date.now(), false);
+        if (!check.valid) {
+          next();
+          return;
+        }
+      }
+
       const { data } = await supabase.auth.getUser(token);
       if (data?.user) {
         const { data: profile } = await supabaseAdmin

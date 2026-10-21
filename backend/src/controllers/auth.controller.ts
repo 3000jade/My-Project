@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { AuthService } from '../services/auth.service';
 import { GoogleAuthService } from '../services/googleAuth.service';
 import { AgentRegistrationService } from '../services/agentRegistration.service';
+import { SessionService } from '../services/session.service';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
 import type { ApiResponse } from '../types/api';
 
@@ -56,6 +57,13 @@ export class AuthController {
       }
 
       const authData = await AuthService.signIn(email, password);
+      if (authData?.token && authData?.user?.id) {
+        SessionService.createSession({
+          sessionId: authData.token,
+          userId: authData.user.id,
+          role: authData.user.role || 'client',
+        });
+      }
 
       res.status(200).json({
         success: true,
@@ -170,6 +178,9 @@ export class AuthController {
     try {
       const authHeader = req.headers.authorization;
       const token = authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : undefined;
+      if (token) {
+        SessionService.revokeSession(token, 'user_logout');
+      }
       await AuthService.signOut(token);
 
       res.status(200).json({
@@ -184,6 +195,48 @@ export class AuthController {
         timestamp: new Date().toISOString(),
       });
     }
+  }
+
+  /**
+   * POST /api/auth/heartbeat
+   * Informational presence heartbeat (does not reset idle timeout)
+   */
+  public static async heartbeat(req: AuthenticatedRequest, res: Response<ApiResponse>): Promise<void> {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : '';
+    const userId = req.user?.id || 'anonymous';
+    const valid = SessionService.recordHeartbeat(token, userId);
+
+    res.status(valid ? 200 : 401).json({
+      success: valid,
+      data: { online: valid },
+      message: valid ? 'Presence heartbeat recorded.' : 'Session expired.',
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  /**
+   * POST /api/auth/revoke-all
+   * All-device session revocation path
+   */
+  public static async revokeAllSessions(req: AuthenticatedRequest, res: Response<ApiResponse>): Promise<void> {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        error: 'Authentication required.',
+        timestamp: new Date().toISOString(),
+      });
+      return;
+    }
+
+    const revokedCount = SessionService.revokeAllUserSessions(userId, 'user_revoke_all_devices');
+    res.status(200).json({
+      success: true,
+      data: { revokedCount },
+      message: 'All device sessions revoked.',
+      timestamp: new Date().toISOString(),
+    });
   }
 }
 

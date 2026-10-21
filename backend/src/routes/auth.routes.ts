@@ -7,40 +7,13 @@ import { loginSchema, registerSchema, googleAuthSchema, registerAgentSchema } fr
 
 const router = Router();
 
-/**
- * POST /api/auth/google
- * Google OAuth SSO token verification and profile synchronization
- */
 router.post('/google', authRateLimiter, validateBody(googleAuthSchema), AuthController.googleAuth);
-
-/**
- * POST /api/auth/login
- * Rate limited to 10 attempts/15min, payload validated via Zod loginSchema
- */
 router.post('/login', authRateLimiter, validateBody(loginSchema), AuthController.login);
-
-/**
- * POST /api/auth/register
- * Rate limited to 10 attempts/15min, strong password validated via Zod registerSchema
- */
 router.post('/register', authRateLimiter, validateBody(registerSchema), AuthController.register);
-
-/**
- * POST /api/auth/register-agent
- * Single-use tokenized agent registration with PRC & DHSUD credentials
- */
 router.post('/register-agent', authRateLimiter, validateBody(registerAgentSchema), AuthController.registerAgent);
-
-/**
- * POST /api/auth/logout
- * Invalidate user session
- */
 router.post('/logout', AuthController.logout);
-
-/**
- * GET /api/auth/me
- * Protected endpoint returning current user profile
- */
+router.post('/heartbeat', requireAuth, AuthController.heartbeat);
+router.post('/revoke-all', requireAuth, AuthController.revokeAllSessions);
 router.get('/me', requireAuth, AuthController.getMe);
 
 export default router;
