@@ -41,13 +41,20 @@ export interface OnboardingChecklistItem {
 export interface AgentCompletenessInfo {
   completedRequired: number;
   totalRequired: number;
+  completedCount?: number;
+  totalCount?: number;
   percent: number;
   missingFields: string[];
   isComplete: boolean;
   checklist?: OnboardingChecklistItem[];
 }
 
-export type LicenseStatus = 'VALID' | 'FOR_REVIEW' | 'EXPIRED' | 'UNKNOWN' | 'NOT_PROVIDED';
+export type LicenseStatus = 'VALID' | 'FOR_REVIEW' | 'EXPIRED' | 'UNKNOWN' | 'NOT_PROVIDED' | 'EXPIRING_SOON' | 'INCOMPLETE';
+export type LicenseValidityState = LicenseStatus;
+export type AccessTier = 'standard_agent' | 'senior_agent' | 'team_lead' | 'managing_broker' | string;
+export type AgentCompletenessDTO = AgentCompletenessInfo;
+export type AgentChecklistItemDTO = OnboardingChecklistItem;
+export type ResponsibilityItemPreviewDTO = ResponsibilityPreviewItem;
 
 export interface AgentTeamDTO {
   id: string;
@@ -174,7 +181,8 @@ export interface ResponsibilityPreviewItem {
   title: string;
   subtitle?: string;
   status: string;
-  entityType: 'listing' | 'inquiry' | 'appointment';
+  entityType?: 'listing' | 'inquiry' | 'appointment' | 'listings' | 'inquiries' | 'appointments';
+  type?: 'listing' | 'inquiry' | 'appointment' | 'listings' | 'inquiries' | 'appointments';
   createdAt?: string;
 }
 
@@ -191,6 +199,11 @@ export interface ResponsibilityPreviewDTO {
   listings: ResponsibilityPreviewItem[];
   inquiries: ResponsibilityPreviewItem[];
   appointments: ResponsibilityPreviewItem[];
+  items?: {
+    listings: ResponsibilityPreviewItem[];
+    inquiries: ResponsibilityPreviewItem[];
+    appointments: ResponsibilityPreviewItem[];
+  };
   eligible_target_agents: Array<{
     id: string;
     name: string;

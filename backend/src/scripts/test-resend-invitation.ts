@@ -15,12 +15,14 @@ async function testResend() {
 
     if (!inv) {
       console.log(`Creating initial invitation for ${targetEmail}...`);
-      inv = await InvitationService.createInvitation({
-        email: targetEmail,
-        invited_by: 'b0000000-0000-0000-0000-000000000001',
-        broker_name: 'Principal Broker Kerby',
-        notes: 'Integration test invitation',
-      });
+      inv = await InvitationService.createInvitation(
+        {
+          email: targetEmail,
+          brokerAgency: 'Human Shelter Realty',
+          message: 'Integration test invitation',
+        },
+        'b0000000-0000-0000-0000-000000000001'
+      );
       console.log(`✅ Initial invitation created: ID ${inv.id}, Token: ${inv.token}`);
     } else {
       console.log(`Found existing invitation: ID ${inv.id}, Status: ${inv.status}, Expires: ${inv.expires_at}`);
@@ -36,7 +38,7 @@ async function testResend() {
     console.log(` • Recipient     : ${resent.email}`);
     console.log(` • Status        : ${resent.status}`);
     console.log(` • New Expiry    : ${resent.expires_at} (72 hours from now)`);
-    console.log(` • Invite URL    : ${InvitationService.getInviteUrl(resent.token)}`);
+    console.log(` • Invite URL    : ${InvitationService.getInviteUrl(resent.token || '')}`);
     console.log('================================================================\n');
     process.exit(0);
   } catch (err: any) {

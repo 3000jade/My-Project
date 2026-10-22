@@ -102,7 +102,7 @@ export class AgentEligibilityService {
     operation: AgentOperation,
     now: Date = new Date()
   ): Promise<EligibilityResult> {
-    const { AgentService } = await import('./agent.service');
+    const { AgentService } = await import('./agent.service.js');
     const localRegistered = AgentService.getLocalAgentById(agentId);
 
     if (!isSupabaseConfigured && !localRegistered) {
@@ -287,7 +287,7 @@ export class AgentEligibilityService {
         .single();
 
       if (error || !data) {
-        const { AgentService } = await import('./agent.service');
+        const { AgentService } = await import('./agent.service.js');
         const fallback = await AgentService.getAgentById(targetAgentId);
         if (fallback) {
           currentProfile = {

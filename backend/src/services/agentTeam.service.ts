@@ -78,6 +78,11 @@ export class AgentTeamService {
     return localTeamsState.find((t) => t.id === teamId) || null;
   }
 
+  public static getTeamByIdSync(teamId?: string | null): AgentTeamDTO | null {
+    if (!teamId) return null;
+    return localTeamsState.find((t) => t.id === teamId) || null;
+  }
+
   public static async createTeam(payload: {
     brokerage_id?: string;
     name: string;

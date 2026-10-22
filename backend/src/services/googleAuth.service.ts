@@ -1,6 +1,6 @@
 import { OAuth2Client } from 'google-auth-library';
 import { config } from '../config';
-import { supabaseAdmin, isSupabaseConfigured } from '../config/supabase';
+import { supabase, supabaseAdmin, isSupabaseConfigured } from '../config/supabase';
 import logger from '../utils/logger';
 import type { AuthResult } from './auth.service';
 
@@ -149,7 +149,6 @@ export class GoogleAuthService {
       });
 
       if (linkRes.data?.properties?.hashed_token) {
-        const { supabase } = await import('../config/supabase');
         const verifyRes = await supabase.auth.verifyOtp({
           token_hash: linkRes.data.properties.hashed_token,
           type: 'magiclink',

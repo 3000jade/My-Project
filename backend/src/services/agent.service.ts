@@ -166,8 +166,10 @@ export class AgentService {
 
     return {
       percent,
+      completedRequired: completedCount,
       completedCount,
       totalRequired,
+      totalCount: totalRequired,
       isComplete: missingFields.length === 0,
       missingFields,
       checklist: items,
@@ -348,6 +350,7 @@ export class AgentService {
     return {
       id: enriched.id,
       name: enriched.name,
+      role: enriched.role || 'Agent',
       email: enriched.email,
       phone: enriched.phone || null,
       avatar: enriched.avatar || null,
@@ -355,14 +358,11 @@ export class AgentService {
       experience_years: enriched.experience_years ?? null,
       brokerage_name: enriched.brokerage_name || 'Human Shelter Realty',
       team_name: enriched.team_name || null,
-      location_branch: enriched.location_branch || null,
-      verification_status: 'VERIFIED',
       prc_verified: Boolean(enriched.prc_license_no && enriched.license_status !== 'EXPIRED'),
       dhsud_verified: Boolean(enriched.dhsud_accreditation_no && enriched.license_status !== 'EXPIRED'),
-      license_status: enriched.license_status || 'VALID',
+      license_status: 'VALID',
       routing_availability: enriched.routing_availability || 'available',
       assigned_properties_count: enriched.assigned_properties_count ?? 0,
-      recorded_sales_count: enriched.recorded_sales_count ?? 0,
     };
   }
 
@@ -371,8 +371,14 @@ export class AgentService {
    */
   public static async syncAgentAvailabilityDimension(
     agentId: string,
-    routingAvailability: RoutingAvailability
+    availability: RoutingAvailability | { routing_availability: RoutingAvailability },
+    actorId?: string
   ): Promise<void> {
+    const routingAvailability: RoutingAvailability =
+      typeof availability === 'string'
+        ? availability
+        : availability.routing_availability || 'available';
+
     const localIdx = localAgentsState.findIndex((a) => a.id === agentId);
     if (localIdx >= 0) {
       localAgentsState[localIdx] = {

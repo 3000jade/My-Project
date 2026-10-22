@@ -280,7 +280,7 @@ export class AgentController {
         return;
       }
 
-      const actor = user ? { id: user.id, role: user.role } : undefined;
+      const actor = user ? { id: user.id, role: user.role || 'agent' } : undefined;
       const updated = await AgentService.updateAgentProfile(id, req.body, actor);
 
       if (!updated) {
@@ -343,7 +343,7 @@ export class AgentController {
         return;
       }
 
-      await AgentService.updateAgentProfile(id, req.body, { id: user.id, role: user.role });
+      await AgentService.updateAgentProfile(id, req.body, { id: user.id, role: user.role || 'agent' });
       await AgentService.updateAgentStatus(id, 'PENDING', 'Applicant credential resubmission', user.id);
       const refreshed = await AgentService.getAgentById(id);
 

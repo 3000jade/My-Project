@@ -117,10 +117,10 @@ export class GoogleDriveService {
       const mockResult: DriveUploadResult = {
         fileId: mockId,
         fileName: file.originalname,
-        webViewLink: isPrivate ? undefined : `/api/drive/media/${mockId}`,
-        webContentLink: isPrivate ? undefined : `/api/drive/media/${mockId}`,
-        directImageUrl: `/api/drive/media/${mockId}`,
-        thumbnailUrl: `/api/drive/media/${mockId}`,
+        webViewLink: isPrivate ? undefined : `https://drive.google.com/file/d/${mockId}/view`,
+        webContentLink: isPrivate ? undefined : `https://drive.google.com/uc?id=${mockId}&export=download`,
+        directImageUrl: `https://lh3.googleusercontent.com/d/${mockId}`,
+        thumbnailUrl: `https://drive.google.com/thumbnail?id=${mockId}&sz=w1600`,
         mimeType: file.mimetype,
         size: file.size,
       };
@@ -144,8 +144,8 @@ export class GoogleDriveService {
         try {
           const mediaCategory = category === 'CAD' ? 'FloorPlan' : (category === 'Photos' ? 'Photo' : 'Document');
           const primaryUrl = (category === 'Photos' || file.mimetype?.startsWith('image/'))
-            ? mockResult.directImageUrl!
-            : mockResult.webViewLink;
+            ? (mockResult.directImageUrl || `/api/drive/media/${mockResult.fileId}`)
+            : (mockResult.webViewLink || `/api/drive/media/${mockResult.fileId}`);
 
           await supabaseAdmin.from('property_media').insert({
             property_id: propertyId,

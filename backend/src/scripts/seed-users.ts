@@ -5,20 +5,26 @@ export const SYSTEM_USERS = [
   {
     email: 'admin@pt.com',
     password: 'adminPassword123!',
-    fullName: 'Alexander Sterling',
+    fullName: 'Admin',
     role: 'admin',
   },
   {
     email: 'broker@pt.com',
     password: 'brokerPassword123!',
-    fullName: 'Helena Vance',
+    fullName: 'Broker',
     role: 'broker',
   },
   {
     email: 'agent@pt.com',
     password: 'agentPassword123!',
-    fullName: 'Elena Rossi',
+    fullName: 'Agent',
     role: 'agent',
+  },
+  {
+    email: 'client@pt.com',
+    password: 'clientPassword123!',
+    fullName: 'Client',
+    role: 'client',
   },
 ];
 

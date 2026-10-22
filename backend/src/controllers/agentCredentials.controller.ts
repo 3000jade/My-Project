@@ -43,7 +43,7 @@ export class AgentCredentialsController {
    */
   public static async getDocumentContent(req: Request, res: Response): Promise<void> {
     try {
-      const { documentId } = req.params;
+      const documentId = Array.isArray(req.params.documentId) ? req.params.documentId[0] : req.params.documentId;
       const authenticatedUser = (req as any).user;
       const token = (req.query?.token || req.headers?.['x-invitation-token']) as string | undefined;
 
@@ -85,7 +85,7 @@ export class AgentCredentialsController {
    */
   public static async listAgentCredentials(req: Request, res: Response): Promise<void> {
     try {
-      const { agentId } = req.params;
+      const agentId = Array.isArray(req.params.agentId) ? req.params.agentId[0] : req.params.agentId;
       const authenticatedUser = (req as any).user;
 
       const isBrokerOrAdmin = authenticatedUser?.role === 'broker' || authenticatedUser?.role === 'admin';

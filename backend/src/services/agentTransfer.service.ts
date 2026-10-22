@@ -7,9 +7,10 @@ import { NotificationService } from './notification.service';
 import { AppointmentService } from './appointment.service';
 import type {
   ResponsibilityPreviewDTO,
-  ResponsibilityItemPreviewDTO,
+  ResponsibilityPreviewItem,
   ResponsibilityTransferRequestDTO,
   ResponsibilityTransferResultDTO,
+  TransferredItemResult,
 } from '../../../shared/types/agent';
 
 const DEFAULT_BROKERAGE_ID = '00000000-0000-0000-0000-000000000001';
@@ -50,9 +51,9 @@ export class AgentTransferService {
     const agent = await AgentService.getAgentById(sourceAgentId);
     const agentName = agent?.name || 'Agent';
 
-    const listings: ResponsibilityItemPreviewDTO[] = [];
-    const inquiries: ResponsibilityItemPreviewDTO[] = [];
-    const appointments: ResponsibilityItemPreviewDTO[] = [];
+    const listings: ResponsibilityPreviewItem[] = [];
+    const inquiries: ResponsibilityPreviewItem[] = [];
+    const appointments: ResponsibilityPreviewItem[] = [];
 
     const seeded = localResponsibilitiesStore[sourceAgentId];
     if (seeded) {
@@ -194,11 +195,16 @@ export class AgentTransferService {
     return {
       agent_id: sourceAgentId,
       agent_name: agentName,
+      brokerage_id: brokerageId,
       counts: {
         listings: listings.length,
         inquiries: inquiries.length,
         appointments: appointments.length,
+        total: listings.length + inquiries.length + appointments.length,
       },
+      listings,
+      inquiries,
+      appointments,
       items: {
         listings,
         inquiries,
@@ -261,20 +267,20 @@ export class AgentTransferService {
     const scopes = payload.scopes || ['listings', 'inquiries', 'appointments'];
 
     const listingsToMove = scopes.includes('listings')
-      ? preview.items.listings.filter(
-          (item) => !payload.itemIds?.listings || payload.itemIds.listings.includes(item.id)
+      ? preview.listings.filter(
+          (item: ResponsibilityPreviewItem) => !payload.listingIds || payload.listingIds.includes(item.id)
         )
       : [];
 
     const inquiriesToMove = scopes.includes('inquiries')
-      ? preview.items.inquiries.filter(
-          (item) => !payload.itemIds?.inquiries || payload.itemIds.inquiries.includes(item.id)
+      ? preview.inquiries.filter(
+          (item: ResponsibilityPreviewItem) => !payload.inquiryIds || payload.inquiryIds.includes(item.id)
         )
       : [];
 
     const appointmentsToMove = scopes.includes('appointments')
-      ? preview.items.appointments.filter(
-          (item) => !payload.itemIds?.appointments || payload.itemIds.appointments.includes(item.id)
+      ? preview.appointments.filter(
+          (item: ResponsibilityPreviewItem) => !payload.appointmentIds || payload.appointmentIds.includes(item.id)
         )
       : [];
 
@@ -292,7 +298,7 @@ export class AgentTransferService {
     if (isSupabaseConfigured && isSourceUuid && isTargetUuid) {
       try {
         if (listingsToMove.length > 0) {
-          const listingIds = listingsToMove.map((l) => l.id);
+          const listingIds = listingsToMove.map((l: ResponsibilityPreviewItem) => l.id);
           await supabaseAdmin
             .from('properties')
             .update({ list_agent_key: targetAgentId })
@@ -300,7 +306,7 @@ export class AgentTransferService {
         }
 
         if (inquiriesToMove.length > 0) {
-          const inquiryIds = inquiriesToMove.map((i) => i.id);
+          const inquiryIds = inquiriesToMove.map((i: ResponsibilityPreviewItem) => i.id);
           await supabaseAdmin
             .from('inquiries')
             .update({ assigned_agent_id: targetAgentId })
@@ -308,7 +314,7 @@ export class AgentTransferService {
         }
 
         if (appointmentsToMove.length > 0) {
-          const apptIds = appointmentsToMove.map((a) => a.id);
+          const apptIds = appointmentsToMove.map((a: ResponsibilityPreviewItem) => a.id);
           await supabaseAdmin
             .from('appointments')
             .update({ agent_id: targetAgentId })
@@ -316,7 +322,7 @@ export class AgentTransferService {
         }
       } catch (err: any) {
         logger.warn('[AgentTransferService] Partial failure during relational transfer:', err.message);
-        status = 'partially_failed';
+        status = 'partial_failure';
         errorDetails = err.message;
       }
     }
@@ -340,16 +346,16 @@ export class AgentTransferService {
     }
 
     if (localResponsibilitiesStore[sourceAgentId]) {
-      const movedListingIds = new Set(listingsToMove.map((l) => l.id));
-      const movedInquiryIds = new Set(inquiriesToMove.map((i) => i.id));
-      const movedApptIds = new Set(appointmentsToMove.map((a) => a.id));
+      const movedListingIds = new Set(listingsToMove.map((l: ResponsibilityPreviewItem) => l.id));
+      const movedInquiryIds = new Set(inquiriesToMove.map((i: ResponsibilityPreviewItem) => i.id));
+      const movedApptIds = new Set(appointmentsToMove.map((a: ResponsibilityPreviewItem) => a.id));
 
       localResponsibilitiesStore[sourceAgentId].listings =
-        localResponsibilitiesStore[sourceAgentId].listings.filter((l) => !movedListingIds.has(l.id));
+        localResponsibilitiesStore[sourceAgentId].listings.filter((l: { id: string }) => !movedListingIds.has(l.id));
       localResponsibilitiesStore[sourceAgentId].inquiries =
-        localResponsibilitiesStore[sourceAgentId].inquiries.filter((i) => !movedInquiryIds.has(i.id));
+        localResponsibilitiesStore[sourceAgentId].inquiries.filter((i: { id: string }) => !movedInquiryIds.has(i.id));
       localResponsibilitiesStore[sourceAgentId].appointments =
-        localResponsibilitiesStore[sourceAgentId].appointments.filter((a) => !movedApptIds.has(a.id));
+        localResponsibilitiesStore[sourceAgentId].appointments.filter((a: { id: string }) => !movedApptIds.has(a.id));
 
       if (targetAgentId) {
         if (!localResponsibilitiesStore[targetAgentId]) {
@@ -397,22 +403,52 @@ export class AgentTransferService {
     }
 
     const nowIso = new Date().toISOString();
+
+    const itemStatus = targetAgentId ? 'transferred' : 'queued_unassigned';
+    const transferred_items: TransferredItemResult[] = [
+      ...listingsToMove.map((l: ResponsibilityPreviewItem): TransferredItemResult => ({
+        entityType: 'listing',
+        entityId: l.id,
+        title: l.title,
+        fromAgentId: sourceAgentId,
+        toAgentId: targetAgentId,
+        status: itemStatus,
+      })),
+      ...inquiriesToMove.map((i: ResponsibilityPreviewItem): TransferredItemResult => ({
+        entityType: 'inquiry',
+        entityId: i.id,
+        title: i.title,
+        fromAgentId: sourceAgentId,
+        toAgentId: targetAgentId,
+        status: itemStatus,
+      })),
+      ...appointmentsToMove.map((a: ResponsibilityPreviewItem): TransferredItemResult => ({
+        entityType: 'appointment',
+        entityId: a.id,
+        title: a.title,
+        fromAgentId: sourceAgentId,
+        toAgentId: targetAgentId,
+        status: itemStatus,
+      })),
+    ];
+
     const transferRecord: ResponsibilityTransferResultDTO = {
       id: crypto.randomUUID(),
       brokerage_id: brokerageId,
-      from_agent_id: sourceAgentId,
-      to_agent_id: targetAgentId,
+      source_agent_id: sourceAgentId,
+      target_agent_id: targetAgentId,
       initiated_by: actorId,
-      trigger_type: payload.triggerType || 'manual',
+      trigger_type: payload.triggerType || 'manual_transfer',
       status,
       idempotency_key: payload.idempotencyKey || `idem-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       summary_counts: {
         listings: listingsToMove.length,
         inquiries: inquiriesToMove.length,
         appointments: appointmentsToMove.length,
+        failed: status === 'partial_failure' ? 1 : 0,
       },
-      notes: payload.notes || null,
-      error_details: errorDetails,
+      transferred_items,
+      notes: payload.notes || (errorDetails ? `Errors: ${errorDetails}` : null),
       created_at: nowIso,
       completed_at: status === 'completed' ? nowIso : null,
     };
@@ -477,7 +513,6 @@ export class AgentTransferService {
     if (!existing) return null;
 
     existing.status = 'completed';
-    existing.error_details = null;
     existing.completed_at = new Date().toISOString();
     return existing;
   }

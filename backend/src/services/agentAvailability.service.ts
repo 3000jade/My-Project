@@ -159,7 +159,7 @@ export class AgentAvailabilityService {
 
     // Synchronize with AgentService in-memory & Supabase profile metadata envelope
     try {
-      const { AgentService } = await import('./agent.service');
+      const { AgentService } = await import('./agent.service.js');
       await AgentService.syncAgentAvailabilityDimension(agentId, updated, actorId);
     } catch (err: any) {
       logger.warn('[AgentAvailabilityService] Sync with AgentService warning:', err.message);

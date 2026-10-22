@@ -50,7 +50,11 @@ async function testUpload() {
     console.log('File Size       :', uploadResult.size, 'bytes');
 
     console.log('\n2. Verifying File Stream Retrieval from Google Drive:');
-    const { stream, mimeType } = await GoogleDriveService.getFileStream(uploadResult.fileId);
+    const streamRes = await GoogleDriveService.getFileStream(uploadResult.fileId);
+    if (!streamRes) {
+      throw new Error(`Failed to retrieve stream for file ${uploadResult.fileId}`);
+    }
+    const { stream, mimeType } = streamRes;
     console.log('   Retrieved MIME Type:', mimeType);
     console.log('   Readable Stream    : Active & Ready');
 

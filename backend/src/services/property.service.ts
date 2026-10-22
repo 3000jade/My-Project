@@ -623,10 +623,10 @@ export class PropertyService {
       filtered = filtered.filter((p) => p.price <= Number(query.maxPrice));
     }
     if (query.beds) {
-      filtered = filtered.filter((p) => (p.specs.bedroomsTotal ?? p.specs.beds) >= Number(query.beds));
+      filtered = filtered.filter((p) => ((p.specs?.bedroomsTotal ?? p.specs?.beds ?? 0) >= Number(query.beds)));
     }
     if (query.baths) {
-      filtered = filtered.filter((p) => (p.specs.bathroomsTotalInteger ?? p.specs.baths) >= Number(query.baths));
+      filtered = filtered.filter((p) => ((p.specs?.bathroomsTotalInteger ?? p.specs?.baths ?? 0) >= Number(query.baths)));
     }
     if (query.search) {
       const q = query.search.toLowerCase();
@@ -1029,8 +1029,46 @@ export class PropertyService {
       images: data.images?.length
         ? data.images
         : ['https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1200&auto=format&fit=crop'],
-      media: data.media || [],
-      rooms: data.rooms || [],
+      rooms: (data.rooms || []).map((r: any) => {
+        const rawType = r.roomType || r.room_type || 'Bedroom';
+        const rawLevel = r.roomLevel || r.room_level || 'Main';
+        const validLevels = new Set(['Main', 'Second', 'Third', 'Basement', 'Penthouse', 'Upper', 'Lower']);
+        const levelMap: Record<string, string> = {
+          'Ground Floor': 'Main',
+          '1st Floor': 'Main',
+          '2nd Floor': 'Second',
+          '3rd Floor': 'Third',
+          '4th Floor': 'Upper',
+          'Penthouse Level': 'Penthouse',
+          'Mezzanine': 'Second',
+          'Roof Deck': 'Upper',
+          'Attic': 'Upper',
+        };
+        const validTypes = new Set(['Primary Bedroom', 'Bedroom', 'Bathroom', 'Living Room', 'Dining Room', 'Kitchen', 'Home Office', 'Balcony', 'Laundry']);
+        const typeMap: Record<string, string> = {
+          'Den / Home Office': 'Home Office',
+          'Balcony / Terrace': 'Balcony',
+          'Laundry / Utility Room': 'Laundry',
+          'Family Room': 'Living Room',
+          'Entertainment Room': 'Living Room',
+          'Gym / Fitness Room': 'Home Office',
+          'Dirty Kitchen / Auxiliary Kitchen': 'Kitchen',
+          "Maid's Room": 'Bedroom',
+          "Driver's Quarters": 'Bedroom',
+          'Storage Room': 'Home Office',
+        };
+        const normalizedType = validTypes.has(rawType) ? rawType : (typeMap[rawType] || 'Bedroom');
+        const normalizedLevel = validLevels.has(rawLevel) ? rawLevel : (levelMap[rawLevel] || 'Main');
+        return {
+          ...r,
+          roomType: normalizedType,
+          room_type: normalizedType,
+          roomLevel: normalizedLevel,
+          room_level: normalizedLevel,
+          roomLength: r.roomLength ?? r.room_length ?? null,
+          roomWidth: r.roomWidth ?? r.room_width ?? null,
+        };
+      }),
       confidential: data.confidential,
       publicRemarks: data.publicRemarks,
       customResoAttributes: {

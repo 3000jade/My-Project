@@ -20,6 +20,7 @@
     "gmail:test": "tsx src/scripts/test-gmail.ts",
     "invitation:resend": "tsx src/scripts/test-resend-invitation.ts",
     "clean:users": "tsx src/scripts/clean-users.ts",
+    "db:reset-clean": "tsx src/scripts/clean-database.ts",
     "db:push": "tsx src/scripts/migrate.ts"
   },
   "keywords": [],

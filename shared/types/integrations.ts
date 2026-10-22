@@ -6,8 +6,8 @@ export interface GoogleAuthPayload {
 export interface DriveUploadResult {
   fileId: string;
   fileName: string;
-  webViewLink: string;
-  webContentLink: string;
+  webViewLink?: string;
+  webContentLink?: string;
   directImageUrl?: string;
   thumbnailUrl?: string;
   mimeType: string;

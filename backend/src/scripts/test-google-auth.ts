@@ -24,7 +24,7 @@ async function testGoogleAuth() {
     if (error instanceof Error) {
       logger.error(`Error: ${error.message}`);
     } else {
-      logger.error(error);
+      logger.error(String(error));
     }
   }
 }

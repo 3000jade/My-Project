@@ -10,6 +10,7 @@ export const loginSchema = z.object({
       if (val === 'agent') return 'agent@pt.com';
       if (val === 'broker') return 'broker@pt.com';
       if (val === 'admin') return 'admin@pt.com';
+      if (val === 'client') return 'client@pt.com';
       return val;
     })
     .pipe(z.string().email('Invalid email address format.')),

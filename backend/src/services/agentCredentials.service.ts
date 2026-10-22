@@ -91,7 +91,7 @@ export class AgentCredentialsService {
     if (token) {
       const validation = await InvitationService.validateToken(token);
       if (!validation.valid) {
-        throw new Error(`Invitation token is invalid or expired: ${validation.error || 'expired'}`);
+        throw new Error(`Invitation token is invalid or expired: ${validation.reason || 'expired'}`);
       }
       // Look up invitation ID if Supabase configured
       if (isSupabaseConfigured) {

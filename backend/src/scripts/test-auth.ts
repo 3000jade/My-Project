@@ -22,8 +22,10 @@ async function runAuthDiagnostics() {
     { label: 'Agent Account (Full Email)', email: 'agent@pt.com', password: 'agentPassword123!', expectedRole: 'agent' },
     { label: 'Broker Account (Full Email)', email: 'broker@pt.com', password: 'brokerPassword123!', expectedRole: 'broker' },
     { label: 'Admin Account (Full Email)', email: 'admin@pt.com', password: 'adminPassword123!', expectedRole: 'admin' },
+    { label: 'Client Account (Full Email)', email: 'client@pt.com', password: 'clientPassword123!', expectedRole: 'client' },
     { label: 'Agent Shorthand ("agent")', email: 'agent', password: 'agentPassword123!', expectedRole: 'agent' },
     { label: 'Broker Shorthand ("broker")', email: 'broker', password: 'brokerPassword123!', expectedRole: 'broker' },
+    { label: 'Client Shorthand ("client")', email: 'client', password: 'clientPassword123!', expectedRole: 'client' },
   ];
 
   let agentToken = '';
