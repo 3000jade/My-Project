@@ -391,6 +391,9 @@ export function toApiPayload(item = {}) {
       towerName: item.tower_name || item.towerName || undefined,
       cadastralLotId: item.cadastralLotId || undefined,
     },
+    agentId: item.agent_id || item.agentId || item.listAgentKey || undefined,
+    agent_id: item.agent_id || item.agentId || item.listAgentKey || undefined,
+    listAgentKey: item.listAgentKey || item.agent_id || item.agentId || undefined,
   };
 }
 
@@ -523,6 +526,34 @@ export const propertyService = {
    */
   async cancelEditRequest(requestId) {
     const response = await apiClient.post(`/properties/edit-requests/${requestId}/cancel`);
+    return response?.data || response;
+  },
+
+  /**
+   * Accept an assigned property listing (Agent)
+   */
+  async acceptAssignment(propertyId) {
+    const response = await apiClient.patch(`/properties/${propertyId}/accept-assignment`);
+    return response?.data || response;
+  },
+
+  /**
+   * Decline an assigned property listing (Agent)
+   */
+  async declineAssignment(propertyId, reason = '') {
+    const response = await apiClient.patch(`/properties/${propertyId}/decline-assignment`, {
+      reason,
+    });
+    return response?.data || response;
+  },
+
+  /**
+   * Reassign a property listing to a new agent (Broker / Admin)
+   */
+  async reassignAgent(propertyId, newAgentId) {
+    const response = await apiClient.patch(`/properties/${propertyId}/reassign-agent`, {
+      newAgentId,
+    });
     return response?.data || response;
   }
 };

@@ -72,8 +72,8 @@ export default function CreateListingModal({
     architectural_style: 'Modern Minimalist',
     description: '',
     amenities: ['24/7 Security', 'Private Swimming Pool'],
-    agent_id: agents[0]?.id || 'agent-1',
-    is_published: true,
+    agent_id: '',
+    is_published: false,
   });
 
   const [images, setImages] = useState([DEFAULT_COVER_IMAGE]);
@@ -159,8 +159,12 @@ export default function CreateListingModal({
       setError('City / municipality location is required.');
       return;
     }
+    if (!formData.agent_id) {
+      setError('An assigned property consultant must be selected.');
+      return;
+    }
 
-    const selectedAgent = agents.find((a) => a.id === formData.agent_id) || agents[0];
+    const selectedAgent = agents.find((a) => a.id === formData.agent_id);
 
     const payload = {
       title: formData.title.trim(),
@@ -654,6 +658,7 @@ export default function CreateListingModal({
                 onChange={(e) => handleInputChange('agent_id', e.target.value)}
                 className="w-full h-[54px] px-4 bg-white border border-gray-200/80 rounded-xl text-sm font-sans focus:border-[#266F71] outline-none cursor-pointer"
               >
+                <option value="" disabled>-- Select an Agent --</option>
                 {agents.map((agent) => (
                   <option key={agent.id} value={agent.id}>
                     {agent.name} {agent.prc_license_no ? `(${agent.prc_license_no})` : ''}

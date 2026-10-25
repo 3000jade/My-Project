@@ -356,8 +356,8 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
     standard_status: 'Active',
     is_published: true,
     is_featured: false,
-    agent_id: 'agent-1',
-    agent_name: 'Elena Rossi',
+    agent_id: '',
+    agent_name: '',
     amenities: [],
     interior_features: [],
     exterior_features: [],
@@ -1644,6 +1644,17 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
 
     setIsSubmitting(true);
     try {
+      if (!formData.agent_id) {
+        setSubmissionError({
+          title: 'Agent Assignment Required',
+          message: 'An agent must be selected before publishing or submitting this property listing.',
+          errors: ['Select a listing agent from the verified agent roster.']
+        });
+        setIsSubmitting(false);
+        setActiveActionLabel('');
+        return;
+      }
+
       const isDraft = targetStandardStatus === 'Draft';
       const determinedStatus = isDraft ? 'INACTIVE' : (formData.status || 'AVAILABLE');
       
@@ -1946,6 +1957,10 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                     </button>
                   );
                 })()}
+                <p className="text-[11px] text-[#64748B] flex items-center gap-1 mt-1">
+                  <span className="material-symbols-outlined text-[14px] text-teal-600">info</span>
+                  Listing will remain in Pending Confirmation until accepted by the assigned agent.
+                </p>
               </div>
 
               <div className="space-y-1.5 md:col-span-3">
