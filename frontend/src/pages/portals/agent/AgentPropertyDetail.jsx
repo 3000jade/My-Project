@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import PageHeader from '../../../components/dashboard/PageHeader';
 import StatusBadge from '../../../components/dashboard/StatusBadge';
 import DashboardModal from '../../../components/dashboard/DashboardModal';
+import AgentAssignmentActionModal from '../../../components/dashboard/AgentAssignmentActionModal';
 import propertyService from '../../../services/propertyService';
 import { useAuth } from '../../../context/AuthContext';
 import { mockProperties } from '../../../mockData/mockProperties';
@@ -26,6 +27,10 @@ export default function AgentPropertyDetail() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionError, setSubmissionError] = useState('');
   const [successToast, setSuccessToast] = useState('');
+
+  // Assignment Modal State
+  const [isAssignmentModalOpen, setIsAssignmentModalOpen] = useState(false);
+  const [assignmentModalMode, setAssignmentModalMode] = useState('accept');
 
   // Proposal Form State
   const [formTitle, setFormTitle] = useState('');
@@ -145,6 +150,47 @@ export default function AgentPropertyDetail() {
           <button onClick={() => setSuccessToast('')} className="text-emerald-600 hover:text-emerald-900">
             <X className="w-4 h-4" />
           </button>
+        </div>
+      )}
+
+      {/* Pending Assignment Review Alert Banner */}
+      {(property.assignment_status === 'PENDING_CONFIRMATION' || property.assignmentStatus === 'PENDING_CONFIRMATION' || property.standard_status === 'Pending Confirmation') && (
+        <div className="p-4 rounded-lg bg-amber-50 border border-amber-300 text-[#1E293B] shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <span className="p-2 rounded-lg bg-amber-100 text-amber-700 shrink-0">
+              <Clock className="w-5 h-5" />
+            </span>
+            <div>
+              <h4 className="text-sm font-bold text-[#1E293B]">
+                Property Assignment Pending Your Confirmation
+              </h4>
+              <p className="text-xs text-[#64748B] mt-0.5">
+                The broker assigned this listing to you. Please review and confirm your representation. Once accepted, this property will be published live on the public portal.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+            <button
+              onClick={() => {
+                setAssignmentModalMode('accept');
+                setIsAssignmentModalOpen(true);
+              }}
+              className="px-4 py-2 rounded-lg bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-semibold shadow-2xs transition-colors flex items-center gap-1.5 cursor-pointer"
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              Accept Assignment
+            </button>
+            <button
+              onClick={() => {
+                setAssignmentModalMode('decline');
+                setIsAssignmentModalOpen(true);
+              }}
+              className="px-3.5 py-2 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-semibold shadow-2xs transition-colors flex items-center gap-1.5 cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+              Decline
+            </button>
+          </div>
         </div>
       )}
 
@@ -544,6 +590,37 @@ export default function AgentPropertyDetail() {
           <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-line">{property.description || property.public_remarks}</p>
         </div>
       </DashboardModal>
+      {/* Assignment Confirmation / Decline Modal */}
+      <AgentAssignmentActionModal
+        isOpen={isAssignmentModalOpen}
+        onClose={() => setIsAssignmentModalOpen(false)}
+        property={property}
+        mode={assignmentModalMode}
+        onSuccess={(propId, newStatus) => {
+          if (newStatus === 'ACCEPTED') {
+            setProperty(prev => ({
+              ...prev,
+              assignment_status: 'ACCEPTED',
+              assignmentStatus: 'ACCEPTED',
+              standard_status: 'Active',
+              status: 'AVAILABLE',
+              is_published: true
+            }));
+            setSuccessToast('Property assignment accepted. Listing is now live!');
+          } else {
+            setProperty(prev => ({
+              ...prev,
+              assignment_status: 'REJECTED',
+              assignmentStatus: 'REJECTED',
+              standard_status: 'Action Required',
+              status: 'INACTIVE',
+              is_published: false
+            }));
+            setSuccessToast('Property assignment declined. Broker has been notified.');
+          }
+          setTimeout(() => setSuccessToast(''), 4000);
+        }}
+      />
     </div>
   );
 }

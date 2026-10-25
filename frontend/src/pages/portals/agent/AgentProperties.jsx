@@ -8,7 +8,8 @@ import EmptyState from '../../../components/dashboard/EmptyState';
 import propertyService from '../../../services/propertyService';
 import { useAuth } from '../../../context/AuthContext';
 import { mockProperties } from '../../../mockData/mockProperties';
-import { Building2, Clock, CheckCircle2 } from 'lucide-react';
+import { Building2, Clock, CheckCircle2, AlertTriangle, XCircle, Check } from 'lucide-react';
+import AgentAssignmentActionModal from '../../../components/dashboard/AgentAssignmentActionModal';
 
 export default function AgentProperties() {
   const navigate = useNavigate();
@@ -20,6 +21,11 @@ export default function AgentProperties() {
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [typeFilter, setTypeFilter] = useState('ALL');
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'table'
+
+  // Assignment Modal State
+  const [modalProp, setModalProp] = useState(null);
+  const [modalMode, setModalMode] = useState('accept');
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     async function loadAgentProperties() {
@@ -59,7 +65,12 @@ export default function AgentProperties() {
     const loc = (typeof item.location === 'string' ? item.location : item.location?.address || '').toLowerCase();
     const q = search.toLowerCase();
     const matchesSearch = title.includes(q) || loc.includes(q);
-    const matchesStatus = statusFilter === 'ALL' || (item.status || '').toUpperCase() === statusFilter.toUpperCase();
+    const isPendingConfirm = (item.assignment_status || item.assignmentStatus) === 'PENDING_CONFIRMATION' || item.standard_status === 'Pending Confirmation';
+    const matchesStatus = statusFilter === 'ALL'
+      ? true
+      : statusFilter === 'PENDING_CONFIRMATION'
+        ? isPendingConfirm
+        : (item.status || '').toUpperCase() === statusFilter.toUpperCase();
     const itemType = item.property_type || item.propertyType || item.specs?.propertyType || '';
     const matchesType = typeFilter === 'ALL' || itemType.toLowerCase() === typeFilter.toLowerCase();
     return matchesSearch && matchesStatus && matchesType;
@@ -116,21 +127,66 @@ export default function AgentProperties() {
     },
     {
       header: "Status",
-      render: (row) => <StatusBadge status={row.status} />
+      render: (row) => {
+        const isPendingConfirm = (row.assignment_status || row.assignmentStatus) === 'PENDING_CONFIRMATION' || row.standard_status === 'Pending Confirmation';
+        return isPendingConfirm ? (
+          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wider uppercase border bg-amber-500/15 text-amber-700 border-amber-500/30">
+            <span className="w-1.5 h-1.5 rounded-full mr-1.5 bg-amber-600 animate-pulse" />
+            Pending Confirmation
+          </span>
+        ) : (
+          <StatusBadge status={row.status} />
+        );
+      }
     },
     {
       header: "Actions",
       className: "text-right",
-      render: (row) => (
-        <div className="flex items-center justify-end gap-2">
-          <Link
-            to={`/agent/properties/${row.id}`}
-            className="px-3 py-1.5 rounded-lg border border-[#CBD5E1] bg-white hover:bg-[#0F766E] hover:text-white hover:border-[#0F766E] text-xs font-semibold text-[#1E293B] transition-colors shadow-2xs"
-          >
-            View Details
-          </Link>
-        </div>
-      )
+      render: (row) => {
+        const isPendingConfirm = (row.assignment_status || row.assignmentStatus) === 'PENDING_CONFIRMATION' || row.standard_status === 'Pending Confirmation';
+        return (
+          <div className="flex items-center justify-end gap-2">
+            {isPendingConfirm && (
+              <>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setModalProp(row);
+                    setModalMode('accept');
+                    setIsModalOpen(true);
+                  }}
+                  className="px-2.5 py-1.5 rounded-lg bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-semibold shadow-2xs transition-colors flex items-center gap-1 cursor-pointer"
+                  title="Accept assignment and publish"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  <span>Accept</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setModalProp(row);
+                    setModalMode('decline');
+                    setIsModalOpen(true);
+                  }}
+                  className="px-2.5 py-1.5 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-semibold shadow-2xs transition-colors flex items-center gap-1 cursor-pointer"
+                  title="Decline assignment"
+                >
+                  <XCircle className="w-3.5 h-3.5" />
+                  <span>Decline</span>
+                </button>
+              </>
+            )}
+            <Link
+              to={`/agent/properties/${row.id}`}
+              className="px-3 py-1.5 rounded-lg border border-[#CBD5E1] bg-white hover:bg-[#0F766E] hover:text-white hover:border-[#0F766E] text-xs font-semibold text-[#1E293B] transition-colors shadow-2xs"
+            >
+              View Details
+            </Link>
+          </div>
+        );
+      }
     }
   ];
 
@@ -152,6 +208,7 @@ export default function AgentProperties() {
             onChange: setStatusFilter,
             options: [
               { label: "All Statuses", value: "ALL" },
+              { label: "Pending Confirmation", value: "PENDING_CONFIRMATION" },
               { label: "Available", value: "AVAILABLE" },
               { label: "Reserved", value: "RESERVED" },
               { label: "Sold", value: "SOLD" },
@@ -232,7 +289,14 @@ export default function AgentProperties() {
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
                 <div className="absolute top-3 left-3 flex flex-col gap-1.5">
-                  <StatusBadge status={item.status} />
+                  {(item.assignment_status === 'PENDING_CONFIRMATION' || item.assignmentStatus === 'PENDING_CONFIRMATION' || item.standard_status === 'Pending Confirmation') ? (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500 text-white shadow-xs">
+                      <Clock className="w-3 h-3 text-white" />
+                      Pending Confirmation
+                    </span>
+                  ) : (
+                    <StatusBadge status={item.status} />
+                  )}
                   {pendingPropertyIds.has(item.id) && (
                     <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500 text-white shadow-xs">
                       <Clock className="w-3 h-3 text-white" />
@@ -274,18 +338,84 @@ export default function AgentProperties() {
                 </div>
 
                 <div className="pt-2 flex items-center gap-2">
-                  <Link
-                    to={`/agent/properties/${item.id}`}
-                    className="flex-1 py-2.5 bg-[#0F766E] hover:bg-[#115E59] text-white text-center rounded-lg text-xs font-semibold transition-colors shadow-2xs"
-                  >
-                    View & Propose Edits
-                  </Link>
+                  {(item.assignment_status === 'PENDING_CONFIRMATION' || item.assignmentStatus === 'PENDING_CONFIRMATION' || item.standard_status === 'Pending Confirmation') ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setModalProp(item);
+                          setModalMode('accept');
+                          setIsModalOpen(true);
+                        }}
+                        className="flex-1 py-2.5 bg-[#0F766E] hover:bg-[#115E59] text-white text-center rounded-lg text-xs font-semibold transition-colors shadow-2xs flex items-center justify-center gap-1 cursor-pointer"
+                      >
+                        <Check className="w-3.5 h-3.5" />
+                        Accept & Publish
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setModalProp(item);
+                          setModalMode('decline');
+                          setIsModalOpen(true);
+                        }}
+                        className="px-3 py-2.5 border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 text-center rounded-lg text-xs font-semibold transition-colors shadow-2xs flex items-center justify-center gap-1 cursor-pointer"
+                      >
+                        <XCircle className="w-3.5 h-3.5" />
+                        Decline
+                      </button>
+                    </>
+                  ) : (
+                    <Link
+                      to={`/agent/properties/${item.id}`}
+                      className="flex-1 py-2.5 bg-[#0F766E] hover:bg-[#115E59] text-white text-center rounded-lg text-xs font-semibold transition-colors shadow-2xs"
+                    >
+                      View & Propose Edits
+                    </Link>
+                  )}
                 </div>
               </div>
             </div>
           ))}
         </div>
       )}
+
+      {/* Assignment Confirmation / Decline Modal */}
+      <AgentAssignmentActionModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setModalProp(null);
+        }}
+        property={modalProp}
+        mode={modalMode}
+        onSuccess={(propId, newStatus) => {
+          setProperties(prev => prev.map(p => {
+            if (p.id === propId) {
+              if (newStatus === 'ACCEPTED') {
+                return {
+                  ...p,
+                  assignment_status: 'ACCEPTED',
+                  assignmentStatus: 'ACCEPTED',
+                  standard_status: 'Active',
+                  status: 'AVAILABLE',
+                  is_published: true
+                };
+              } else {
+                return {
+                  ...p,
+                  assignment_status: 'REJECTED',
+                  assignmentStatus: 'REJECTED',
+                  standard_status: 'Action Required',
+                  status: 'INACTIVE',
+                  is_published: false
+                };
+              }
+            }
+            return p;
+          }));
+        }}
+      />
     </div>
   );
 }

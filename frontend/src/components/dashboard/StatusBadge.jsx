@@ -32,7 +32,14 @@ export default function StatusBadge({ status, className = '' }) {
 
     // Publication Statuses
     PUBLISHED: "bg-[#266F71]/15 text-[#266F71] border-[#266F71]/30",
-    DRAFT: "bg-gray-100 text-gray-600 border-gray-300"
+    DRAFT: "bg-gray-100 text-gray-600 border-gray-300",
+
+    // Assignment Confirmation Statuses
+    "PENDING CONFIRMATION": "bg-amber-500/15 text-amber-700 border-amber-500/30 font-bold",
+    PENDING_CONFIRMATION: "bg-amber-500/15 text-amber-700 border-amber-500/30 font-bold",
+    "ACTION REQUIRED": "bg-rose-500/15 text-rose-700 border-rose-500/30 font-bold",
+    ACTION_REQUIRED: "bg-rose-500/15 text-rose-700 border-rose-500/30 font-bold",
+    ACCEPTED: "bg-[#266F71]/15 text-[#266F71] border-[#266F71]/30 font-bold"
   };
 
   const style = statusStyles[normalized] || "bg-gray-100 text-gray-700 border-gray-200";
