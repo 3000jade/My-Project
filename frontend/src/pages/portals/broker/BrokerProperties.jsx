@@ -8,6 +8,7 @@ import {
 import DataTable from '../../../components/dashboard/DataTable';
 import PropertyQuickEditDrawer from '../../../components/cms/PropertyQuickEditDrawer';
 import ProposalReviewDrawer from '../../../components/cms/ProposalReviewDrawer';
+import ReassignAgentModal from '../../../components/dashboard/ReassignAgentModal';
 import propertyService, { normalizeProperty } from '../../../services/propertyService';
 import { cn } from '../../../utils/cn';
 
@@ -111,6 +112,8 @@ export default function BrokerProperties() {
 
   const [selectedKeys, setSelectedKeys] = useState(new Set());
   const [quickDrawerProperty, setQuickDrawerProperty] = useState(null);
+  const [reassignProp, setReassignProp] = useState(null);
+  const [isReassignModalOpen, setIsReassignModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
 
   const showToast = (msg) => {
@@ -193,6 +196,8 @@ export default function BrokerProperties() {
   // Tab counts calculated exclusively from actual dataset
   const tabCounts = useMemo(() => {
     let needsApproval = 0;
+    let pendingConfirmation = 0;
+    let actionRequired = 0;
     let active = 0;
     let reserved = 0;
     let sold = 0;
@@ -201,7 +206,14 @@ export default function BrokerProperties() {
     properties.forEach(p => {
       const std = String(p.standard_status || p.standardStatus || '').toUpperCase();
       const s = String(p.status || '').toUpperCase();
+      const asg = String(p.assignment_status || p.assignmentStatus || '').toUpperCase();
 
+      if (asg === 'PENDING_CONFIRMATION' || std === 'PENDING CONFIRMATION') {
+        pendingConfirmation++;
+      }
+      if (asg === 'REJECTED' || std === 'ACTION REQUIRED') {
+        actionRequired++;
+      }
       if (std === 'PENDING APPROVAL') {
         needsApproval++;
       }
@@ -221,6 +233,8 @@ export default function BrokerProperties() {
 
     return {
       all: properties.length,
+      pendingConfirmation,
+      actionRequired,
       needsApproval,
       active,
       reserved,
@@ -276,7 +290,14 @@ export default function BrokerProperties() {
 
       // Horizontal Sub-Tab filter
       let matchesTab = true;
-      if (activeTab === 'NEEDS_APPROVAL') {
+      const isPendingConfirm = (p.assignment_status || p.assignmentStatus) === 'PENDING_CONFIRMATION' || pStdStatus === 'PENDING CONFIRMATION';
+      const isActionReq = (p.assignment_status || p.assignmentStatus) === 'REJECTED' || pStdStatus === 'ACTION REQUIRED';
+
+      if (activeTab === 'PENDING_CONFIRMATION') {
+        matchesTab = isPendingConfirm;
+      } else if (activeTab === 'ACTION_REQUIRED') {
+        matchesTab = isActionReq;
+      } else if (activeTab === 'NEEDS_APPROVAL') {
         matchesTab = pStdStatus === 'PENDING APPROVAL';
       } else if (activeTab === 'ACTIVE') {
         matchesTab = pStdStatus === 'ACTIVE' || pStatus === 'AVAILABLE';
@@ -292,7 +313,11 @@ export default function BrokerProperties() {
       let matchesStatus = true;
       if (statusFilter !== 'ALL') {
         const sf = statusFilter.toUpperCase();
-        if (sf === 'ACTIVE') {
+        if (sf === 'PENDING_CONFIRMATION') {
+          matchesStatus = isPendingConfirm;
+        } else if (sf === 'ACTION_REQUIRED') {
+          matchesStatus = isActionReq;
+        } else if (sf === 'ACTIVE') {
           matchesStatus = pStdStatus === 'ACTIVE' || pStatus === 'AVAILABLE';
         } else if (sf === 'NEEDS_APPROVAL') {
           matchesStatus = pStdStatus === 'PENDING APPROVAL';
@@ -613,6 +638,8 @@ export default function BrokerProperties() {
       className: "min-w-[125px]",
       render: (row) => {
         const std = String(row.standard_status || row.standardStatus || row.status || '').toUpperCase();
+        const isPendingConfirm = (row.assignment_status || row.assignmentStatus) === 'PENDING_CONFIRMATION' || std === 'PENDING CONFIRMATION';
+        const isActionReq = (row.assignment_status || row.assignmentStatus) === 'REJECTED' || std === 'ACTION REQUIRED';
         const isPendingApproval = std === 'PENDING APPROVAL';
         const isActive = std === 'ACTIVE' || std === 'AVAILABLE';
         const isUnderContract = std === 'ACTIVE UNDER CONTRACT' || std === 'UNDER CONTRACT';
@@ -620,11 +647,37 @@ export default function BrokerProperties() {
         const isPending = std === 'PENDING';
         const isClosed = std === 'CLOSED' || std === 'SOLD';
         const isDraft = std === 'DRAFT' || std === 'INACTIVE';
-        const isKnown = isActive || isPendingApproval || isUnderContract || isReserved || isPending || isClosed || isDraft;
+        const isKnown = isActive || isPendingApproval || isUnderContract || isReserved || isPending || isClosed || isDraft || isPendingConfirm || isActionReq;
 
         return (
           <div className="flex items-center gap-2">
-            {isActive && (
+            {isPendingConfirm && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 text-amber-800 border border-amber-200">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                Pending Confirmation
+              </span>
+            )}
+            {isActionReq && (
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-rose-50 text-rose-800 border border-rose-200">
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                  Action Required
+                </span>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setReassignProp(row);
+                    setIsReassignModalOpen(true);
+                  }}
+                  className="text-[10px] font-semibold text-[#0F766E] hover:text-[#115E59] bg-teal-50 hover:bg-teal-100 border border-teal-200 px-2 py-0.5 rounded-md cursor-pointer transition-colors shadow-2xs"
+                  title="Reassign to another agent"
+                >
+                  Reassign
+                </button>
+              </div>
+            )}
+            {!isPendingConfirm && !isActionReq && isActive && (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/60">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                 Active
@@ -897,6 +950,8 @@ export default function BrokerProperties() {
         {[
           { id: 'ALL', label: 'All Listings', count: tabCounts.all },
           { id: 'PROPOSALS', label: 'Agent Proposals', count: proposals.length, badge: proposals.length > 0 },
+          { id: 'PENDING_CONFIRMATION', label: 'Pending Confirmation', count: tabCounts.pendingConfirmation, badge: tabCounts.pendingConfirmation > 0 },
+          { id: 'ACTION_REQUIRED', label: 'Action Required', count: tabCounts.actionRequired, badge: tabCounts.actionRequired > 0, isAlert: true },
           { id: 'NEEDS_APPROVAL', label: 'Needs Approval', count: tabCounts.needsApproval, badge: true },
           { id: 'ACTIVE', label: 'Active', count: tabCounts.active },
           { id: 'RESERVED', label: 'Reserved', count: tabCounts.reserved, ariaLabel: 'Reserved / Under Contract' },
@@ -923,6 +978,8 @@ export default function BrokerProperties() {
                   "px-1.5 py-0.2 rounded-full text-[10px] font-mono",
                   isSelected
                     ? "bg-white/20 text-white font-bold"
+                    : tab.isAlert && tab.count > 0
+                    ? "bg-rose-100 text-rose-800 font-bold"
                     : tab.badge && tab.count > 0
                     ? "bg-amber-100 text-amber-800 font-bold"
                     : "bg-white text-slate-600"
@@ -968,6 +1025,8 @@ export default function BrokerProperties() {
           >
             <option value="ALL">Status: All</option>
             <option value="ACTIVE">Active</option>
+            <option value="PENDING_CONFIRMATION">Pending Confirmation</option>
+            <option value="ACTION_REQUIRED">Action Required</option>
             <option value="NEEDS_APPROVAL">Needs Approval</option>
             <option value="RESERVED">Reserved</option>
             <option value="SOLD">Sold</option>
@@ -1202,6 +1261,35 @@ export default function BrokerProperties() {
         onApprove={handleApproveProposal}
         onReject={handleRejectProposal}
         isProcessing={isProcessingProposal}
+      />
+
+      {/* Reassign Agent Modal */}
+      <ReassignAgentModal
+        isOpen={isReassignModalOpen}
+        onClose={() => {
+          setIsReassignModalOpen(false);
+          setReassignProp(null);
+        }}
+        property={reassignProp}
+        onSuccess={(propId, newAgentId) => {
+          setProperties(prev => prev.map(p => {
+            if ((p.id || p.listingKey) === propId) {
+              return {
+                ...p,
+                agent_id: newAgentId,
+                agentId: newAgentId,
+                assignment_status: 'PENDING_CONFIRMATION',
+                assignmentStatus: 'PENDING_CONFIRMATION',
+                standard_status: 'Pending Confirmation',
+                standardStatus: 'Pending Confirmation',
+                assignment_declined_reason: null,
+                assignmentDeclinedReason: null
+              };
+            }
+            return p;
+          }));
+          showToast('Listing successfully reassigned. Waiting for new agent confirmation.');
+        }}
       />
     </div>
   );
