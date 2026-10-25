@@ -24,6 +24,8 @@ export interface PropertyFilterQuery {
   agentId?: string;
   list_agent_key?: string;
   listAgentKey?: string;
+  assignmentStatus?: string;
+  role?: string;
   search?: string;
   page?: number;
   limit?: number;
@@ -107,6 +109,11 @@ export interface PropertyItem {
   architecturalStyle?: string;
   standardStatus?: StandardStatus;
   status: 'available' | 'pending' | 'sold';
+  assignmentStatus?: 'PENDING_CONFIRMATION' | 'ACCEPTED' | 'REJECTED';
+  assignmentDeclinedReason?: string | null;
+  assignedAt?: string;
+  agentConfirmedAt?: string | null;
+  isPublished?: boolean;
   isFeatured?: boolean;
   createdAt: string;
   updatedAt: string;
@@ -426,6 +433,11 @@ export class PropertyService {
       architecturalStyle: row.architectural_style || null,
       standardStatus: row.standard_status || (row.status === 'available' ? 'Active' : row.status === 'pending' ? 'Pending' : 'Closed'),
       status: row.status || 'available',
+      assignmentStatus: row.assignment_status || 'ACCEPTED',
+      assignmentDeclinedReason: row.assignment_declined_reason || null,
+      assignedAt: row.assigned_at || row.created_at || new Date().toISOString(),
+      agentConfirmedAt: row.agent_confirmed_at || null,
+      isPublished: row.is_published ?? (row.assignment_status ? row.assignment_status === 'ACCEPTED' : true),
       createdAt: row.created_at || new Date().toISOString(),
       updatedAt: row.updated_at || new Date().toISOString(),
       createdBy: row.created_by || null,
@@ -479,6 +491,12 @@ export class PropertyService {
         }
         if (query.standardStatus) {
           dbQuery = dbQuery.eq('standard_status', query.standardStatus);
+        }
+        if (!userRole || userRole === 'client' || query.role === 'client') {
+          dbQuery = dbQuery.or('assignment_status.eq.ACCEPTED,assignment_status.is.null');
+          dbQuery = dbQuery.eq('standard_status', 'Active');
+        } else if (query.assignmentStatus) {
+          dbQuery = dbQuery.eq('assignment_status', query.assignmentStatus);
         }
         if (query.agentId) {
           dbQuery = dbQuery.eq('created_by', query.agentId);
@@ -592,6 +610,17 @@ export class PropertyService {
     // Local in-memory filter fallback
     let filtered = [...localPropertiesState];
 
+    if (!userRole || userRole === 'client' || query.role === 'client') {
+      filtered = filtered.filter(
+        (p) =>
+          (p.assignmentStatus ? p.assignmentStatus === 'ACCEPTED' : true) &&
+          (p.standardStatus ? p.standardStatus === 'Active' : p.status === 'available')
+      );
+    }
+    if (query.assignmentStatus) {
+      filtered = filtered.filter((p) => p.assignmentStatus === query.assignmentStatus);
+    }
+
     // Standard filters
     if (query.city) {
       filtered = filtered.filter((p) =>
@@ -654,6 +683,10 @@ export class PropertyService {
   /**
    * Count properties based on filter query
    */
+  public static async listProperties(query: PropertyFilterQuery = {}, userRole?: string) {
+    return this.findProperties(query, userRole);
+  }
+
   public static async countProperties(query: any) {
     const result = await this.findProperties(query);
     return result.total;
@@ -744,12 +777,17 @@ export class PropertyService {
             architecturalStyle: data.architectural_style,
             standardStatus: data.standard_status || (data.status === 'available' ? 'Active' : data.status === 'pending' ? 'Pending' : 'Closed'),
             status: data.status,
+            assignmentStatus: data.assignment_status || 'ACCEPTED',
+            assignmentDeclinedReason: data.assignment_declined_reason ?? null,
+            assignedAt: data.assigned_at || data.created_at || new Date().toISOString(),
+            agentConfirmedAt: data.agent_confirmed_at || null,
+            isPublished: data.is_published ?? (data.assignment_status ? data.assignment_status === 'ACCEPTED' : true),
             createdAt: data.created_at,
             updatedAt: data.updated_at,
             createdBy: data.created_by,
             listAgentKey: data.list_agent_key,
             agentName: 'Elena Rossi',
-            agentId: data.created_by || 'agent-1',
+            agentId: data.list_agent_key || data.created_by || 'agent-1',
           };
 
           // Fetch property_images (Photos) using supabaseAdmin to ensure visibility across all user roles
@@ -921,9 +959,15 @@ export class PropertyService {
       throw new Error('Forbidden: Agents cannot create property listings (verified or unverified). Creation is restricted to authorized brokers and administrators.');
     }
 
+    const effectiveAgentId = data.agentId || data.agent_id || data.listAgentKey || (data.assignedAgent ? data.assignedAgent.id : undefined);
+    if (!effectiveAgentId || String(effectiveAgentId).trim() === '') {
+      throw new Error('An agent must be assigned before submitting a property listing.');
+    }
+
     const isBrokerOrAdmin = userRole && ['broker', 'admin'].includes(userRole);
-    // Gating rule: Only broker/admin can create listings; standard status defaults to Draft or Active
-    const initialStatus = data.standardStatus || 'Active';
+    const initialAssignmentStatus = data.assignmentStatus || 'PENDING_CONFIRMATION';
+    const initialStatus = initialAssignmentStatus === 'ACCEPTED' ? (data.standardStatus || 'Active') : 'Pending Confirmation';
+    const initialIsPublished = initialAssignmentStatus === 'ACCEPTED' ? Boolean(data.isPublished ?? true) : false;
 
     let coordinates = data.location?.coordinates;
     let resolvedPostal = data.location?.postalCode || data.location?.postal_code || null;
@@ -1090,10 +1134,16 @@ export class PropertyService {
       architecturalStyle: data.architecturalStyle || 'Modern Architectural',
       standardStatus: initialStatus,
       status: initialStatus === 'Active' ? 'available' : 'pending',
+      assignmentStatus: initialAssignmentStatus,
+      assignmentDeclinedReason: null,
+      assignedAt: new Date().toISOString(),
+      agentConfirmedAt: initialAssignmentStatus === 'ACCEPTED' ? new Date().toISOString() : null,
+      isPublished: initialIsPublished,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       createdBy: userId,
-      listAgentKey: data.listAgentKey || (data as any).agentId || userId,
+      listAgentKey: effectiveAgentId,
+      agentId: effectiveAgentId,
     };
 
     const isValidUuid = (val?: string): boolean => {
@@ -1155,6 +1205,11 @@ export class PropertyService {
             custom_reso_attributes: newProperty.customResoAttributes || {},
             standard_status: newProperty.standardStatus,
             status: newProperty.status,
+            assignment_status: newProperty.assignmentStatus,
+            assignment_declined_reason: newProperty.assignmentDeclinedReason,
+            assigned_at: newProperty.assignedAt,
+            agent_confirmed_at: newProperty.agentConfirmedAt,
+            is_published: newProperty.isPublished,
             is_featured: newProperty.isFeatured ?? false,
             transaction_type: newProperty.specs.transactionType || 'For Sale',
             property_condition: newProperty.specs.propertyCondition,
@@ -1931,6 +1986,220 @@ export class PropertyService {
     req.request_status = 'CANCELLED';
     req.updated_at = new Date().toISOString();
     return req;
+  }
+
+  /**
+   * Assigned Agent accepts the property listing assignment.
+   * Transitions status to ACCEPTED, standard_status to Active, and publishes the listing.
+   */
+  public static async acceptAssignment(
+    propertyId: string,
+    agentId: string,
+    role?: string
+  ): Promise<PropertyItem> {
+    const prop = await this.findPropertyById(propertyId, undefined, role || 'broker');
+    if (!prop) {
+      throw new Error(`Property ${propertyId} not found.`);
+    }
+
+    const assignedAgent = prop.agentId || prop.listAgentKey || (prop as any).agent_id;
+    const isAssigned = assignedAgent === agentId;
+    const isSuperuser = role === 'admin';
+
+    if (!isAssigned && !isSuperuser) {
+      throw new Error('Forbidden: Only the assigned agent can accept this property assignment.');
+    }
+
+    const now = new Date().toISOString();
+    const updatedFields = {
+      assignment_status: 'ACCEPTED' as const,
+      standard_status: 'Active' as const,
+      is_published: true,
+      status: 'available' as const,
+      agent_confirmed_at: now,
+      updated_at: now,
+    };
+
+    if (isSupabaseConfigured) {
+      try {
+        await supabaseAdmin
+          .from('properties')
+          .update(updatedFields)
+          .eq('id', propertyId);
+      } catch (err: any) {
+        logger.warn('[PropertyService] acceptAssignment DB update note:', err.message);
+      }
+    }
+
+    const propIdx = localPropertiesState.findIndex((p) => p.id === propertyId);
+    if (propIdx !== -1) {
+      localPropertiesState[propIdx] = {
+        ...localPropertiesState[propIdx],
+        assignmentStatus: 'ACCEPTED',
+        standardStatus: 'Active',
+        isPublished: true,
+        status: 'available',
+        agentConfirmedAt: now,
+        updatedAt: now,
+      };
+      return { ...localPropertiesState[propIdx] };
+    }
+
+    return {
+      ...prop,
+      assignmentStatus: 'ACCEPTED',
+      standardStatus: 'Active',
+      isPublished: true,
+      status: 'available',
+      agentConfirmedAt: now,
+      updatedAt: now,
+    };
+  }
+
+  /**
+   * Assigned Agent declines the property listing assignment.
+   * Transitions status to REJECTED, standard_status to 'Action Required', and records the reason.
+   */
+  public static async declineAssignment(
+    propertyId: string,
+    agentId: string,
+    reason?: string,
+    role?: string
+  ): Promise<PropertyItem> {
+    const prop = await this.findPropertyById(propertyId, undefined, role || 'broker');
+    if (!prop) {
+      throw new Error(`Property ${propertyId} not found.`);
+    }
+
+    const assignedAgent = prop.agentId || prop.listAgentKey || (prop as any).agent_id;
+    const isAssigned = assignedAgent === agentId;
+    const isSuperuser = role === 'admin';
+
+    if (!isAssigned && !isSuperuser) {
+      throw new Error('Forbidden: Only the assigned agent can decline this property assignment.');
+    }
+
+    const now = new Date().toISOString();
+    const declinedReason = reason?.trim() || 'Declined by agent without specific note';
+
+    const updatedFields = {
+      assignment_status: 'REJECTED' as const,
+      standard_status: 'Action Required' as const,
+      is_published: false,
+      status: 'pending' as const,
+      assignment_declined_reason: declinedReason,
+      updated_at: now,
+    };
+
+    if (isSupabaseConfigured) {
+      try {
+        await supabaseAdmin
+          .from('properties')
+          .update(updatedFields)
+          .eq('id', propertyId);
+      } catch (err: any) {
+        logger.warn('[PropertyService] declineAssignment DB update note:', err.message);
+      }
+    }
+
+    const propIdx = localPropertiesState.findIndex((p) => p.id === propertyId);
+    if (propIdx !== -1) {
+      localPropertiesState[propIdx] = {
+        ...localPropertiesState[propIdx],
+        assignmentStatus: 'REJECTED',
+        standardStatus: 'Action Required',
+        isPublished: false,
+        status: 'pending',
+        assignmentDeclinedReason: declinedReason,
+        updatedAt: now,
+      };
+      return { ...localPropertiesState[propIdx] };
+    }
+
+    return {
+      ...prop,
+      assignmentStatus: 'REJECTED',
+      standardStatus: 'Action Required',
+      isPublished: false,
+      status: 'pending',
+      assignmentDeclinedReason: declinedReason,
+      updatedAt: now,
+    };
+  }
+
+  /**
+   * Broker or Admin reassigns a property to a new agent.
+   * Resets status to PENDING_CONFIRMATION and clears previous decline reasons.
+   */
+  public static async reassignAgent(
+    propertyId: string,
+    requestingUserId: string,
+    newAgentId: string
+  ): Promise<PropertyItem> {
+    if (!newAgentId || String(newAgentId).trim() === '') {
+      throw new Error('New agent ID is required for reassignment.');
+    }
+
+    const prop = await this.findPropertyById(propertyId, undefined, 'broker');
+    if (!prop) {
+      throw new Error(`Property ${propertyId} not found.`);
+    }
+
+    const now = new Date().toISOString();
+    const updatedFields = {
+      list_agent_key: newAgentId,
+      assignment_status: 'PENDING_CONFIRMATION' as const,
+      standard_status: 'Pending Confirmation' as const,
+      is_published: false,
+      status: 'pending' as const,
+      assignment_declined_reason: null,
+      assigned_at: now,
+      agent_confirmed_at: null,
+      updated_at: now,
+    };
+
+    if (isSupabaseConfigured) {
+      try {
+        await supabaseAdmin
+          .from('properties')
+          .update(updatedFields)
+          .eq('id', propertyId);
+      } catch (err: any) {
+        logger.warn('[PropertyService] reassignAgent DB update note:', err.message);
+      }
+    }
+
+    const propIdx = localPropertiesState.findIndex((p) => p.id === propertyId);
+    if (propIdx !== -1) {
+      localPropertiesState[propIdx] = {
+        ...localPropertiesState[propIdx],
+        listAgentKey: newAgentId,
+        agentId: newAgentId,
+        assignmentStatus: 'PENDING_CONFIRMATION',
+        standardStatus: 'Pending Confirmation',
+        isPublished: false,
+        status: 'pending',
+        assignmentDeclinedReason: null,
+        assignedAt: now,
+        agentConfirmedAt: null,
+        updatedAt: now,
+      };
+      return { ...localPropertiesState[propIdx] };
+    }
+
+    return {
+      ...prop,
+      listAgentKey: newAgentId,
+      agentId: newAgentId,
+      assignmentStatus: 'PENDING_CONFIRMATION',
+      standardStatus: 'Pending Confirmation',
+      isPublished: false,
+      status: 'pending',
+      assignmentDeclinedReason: null,
+      assignedAt: now,
+      agentConfirmedAt: null,
+      updatedAt: now,
+    };
   }
 }
 

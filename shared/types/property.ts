@@ -5,6 +5,8 @@
 export type StandardStatus = 
   | 'Draft'
   | 'Pending Approval'
+  | 'Pending Confirmation'
+  | 'Action Required'
   | 'Active'
   | 'Active Under Contract'
   | 'Pending'
@@ -132,6 +134,11 @@ export interface Property {
   architecturalStyle?: string;
   standardStatus?: StandardStatus;
   status: 'available' | 'pending' | 'sold';
+  assignmentStatus?: 'PENDING_CONFIRMATION' | 'ACCEPTED' | 'REJECTED';
+  assignmentDeclinedReason?: string | null;
+  assignedAt?: string;
+  agentConfirmedAt?: string | null;
+  isPublished?: boolean;
   listAgentKey?: string;
   createdBy?: string;
   createdAt: string;
