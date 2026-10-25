@@ -123,5 +123,27 @@ router.delete(
   PropertyController.deleteProperty
 );
 
+// Agent Assignment Confirmation Lifecycle routes
+router.patch(
+  '/:id/accept-assignment',
+  requireAuth,
+  requireRole(['agent', 'admin']),
+  PropertyController.acceptAssignment
+);
+
+router.patch(
+  '/:id/decline-assignment',
+  requireAuth,
+  requireRole(['agent', 'admin']),
+  PropertyController.declineAssignment
+);
+
+router.patch(
+  '/:id/reassign-agent',
+  requireAuth,
+  requireRole(['broker', 'admin']),
+  PropertyController.reassignAgent
+);
+
 export default router;
 

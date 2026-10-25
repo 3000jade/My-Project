@@ -573,6 +573,133 @@ export class PropertyController {
       });
     }
   }
+
+  /**
+   * PATCH /api/properties/:id/accept-assignment
+   * Assigned agent accepts listing assignment (or Admin)
+   */
+  public static async acceptAssignment(
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse>
+  ): Promise<void> {
+    try {
+      const propertyId = String(req.params.id);
+      const userId = req.user?.id;
+      const role = req.user?.role;
+
+      if (!userId) {
+        res.status(401).json({
+          success: false,
+          error: 'Unauthorized: User session required.',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const result = await PropertyService.acceptAssignment(propertyId, userId, role);
+
+      res.status(200).json({
+        success: true,
+        data: result,
+        message: 'Property assignment accepted. Listing is now Active and published.',
+        timestamp: new Date().toISOString(),
+      });
+    } catch (err: any) {
+      res.status(err.message?.includes('Forbidden') ? 403 : 400).json({
+        success: false,
+        error: err.message || 'Could not accept property assignment.',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
+  /**
+   * PATCH /api/properties/:id/decline-assignment
+   * Assigned agent declines listing assignment
+   */
+  public static async declineAssignment(
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse>
+  ): Promise<void> {
+    try {
+      const propertyId = String(req.params.id);
+      const userId = req.user?.id;
+      const role = req.user?.role;
+      const reason = req.body?.reason;
+
+      if (!userId) {
+        res.status(401).json({
+          success: false,
+          error: 'Unauthorized: User session required.',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const result = await PropertyService.declineAssignment(propertyId, userId, reason, role);
+
+      res.status(200).json({
+        success: true,
+        data: result,
+        message: 'Property assignment declined. Broker notified for action.',
+        timestamp: new Date().toISOString(),
+      });
+    } catch (err: any) {
+      res.status(err.message?.includes('Forbidden') ? 403 : 400).json({
+        success: false,
+        error: err.message || 'Could not decline property assignment.',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
+  /**
+   * PATCH /api/properties/:id/reassign-agent
+   * Broker or Admin reassigns property to a different agent
+   */
+  public static async reassignAgent(
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse>
+  ): Promise<void> {
+    try {
+      const propertyId = String(req.params.id);
+      const userId = req.user?.id;
+      const newAgentId = req.body?.newAgentId || req.body?.agentId;
+
+      if (!userId) {
+        res.status(401).json({
+          success: false,
+          error: 'Unauthorized: User session required.',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      if (!newAgentId) {
+        res.status(400).json({
+          success: false,
+          error: 'newAgentId is required in request body.',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const result = await PropertyService.reassignAgent(propertyId, userId, newAgentId);
+
+      res.status(200).json({
+        success: true,
+        data: result,
+        message: 'Property listing reassigned. Confirmation pending from new agent.',
+        timestamp: new Date().toISOString(),
+      });
+    } catch (err: any) {
+      res.status(400).json({
+        success: false,
+        error: err.message || 'Could not reassign property agent.',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
 }
 
 export default PropertyController;
