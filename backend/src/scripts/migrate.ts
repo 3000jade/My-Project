@@ -22,6 +22,7 @@ async function runMigrations() {
       'agent_credential_documents_migration.sql',
       'inquiries_module_migration.sql',
       'agent_management_v2_migration.sql',
+      'property_assignment_confirmation_migration.sql',
     ];
 
     for (const file of files) {
