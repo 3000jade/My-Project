@@ -26,34 +26,35 @@ export default function AgentProperties() {
   const [modalMode, setModalMode] = useState('accept');
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  useEffect(() => {
-    async function loadAgentProperties() {
-      setIsLoading(true);
-      try {
-        const [propsRes, editsRes] = await Promise.allSettled([
-          propertyService.getProperties({ agentId: user?.id }),
-          propertyService.getEditRequests({ status: 'PENDING' }),
-        ]);
+  const loadAgentProperties = async () => {
+    setIsLoading(true);
+    try {
+      const queryParams = user?.id ? { agentId: user.id, listAgentKey: user.id } : {};
+      const [propsRes, editsRes] = await Promise.allSettled([
+        propertyService.getProperties(queryParams),
+        propertyService.getEditRequests({ status: 'PENDING' }),
+      ]);
 
-        if (propsRes.status === 'fulfilled' && propsRes.value?.data) {
-          setProperties(Array.isArray(propsRes.value.data) ? propsRes.value.data : []);
-        } else {
-          setProperties([]);
-        }
-
-        if (editsRes.status === 'fulfilled' && editsRes.value?.data) {
-          const rawEdits = Array.isArray(editsRes.value.data) ? editsRes.value.data : editsRes.value.data.requests || [];
-          const ids = new Set(rawEdits.map(e => e.property_id || e.propertyId));
-          setPendingPropertyIds(ids);
-        }
-      } catch (err) {
-        console.warn('Error loading agent properties:', err);
+      if (propsRes.status === 'fulfilled' && propsRes.value?.data) {
+        setProperties(Array.isArray(propsRes.value.data) ? propsRes.value.data : []);
+      } else {
         setProperties([]);
-      } finally {
-        setIsLoading(false);
       }
-    }
 
+      if (editsRes.status === 'fulfilled' && editsRes.value?.data) {
+        const rawEdits = Array.isArray(editsRes.value.data) ? editsRes.value.data : editsRes.value.data.requests || [];
+        const ids = new Set(rawEdits.map(e => e.property_id || e.propertyId));
+        setPendingPropertyIds(ids);
+      }
+    } catch (err) {
+      console.warn('Error loading agent properties:', err);
+      setProperties([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     loadAgentProperties();
   }, [user?.id]);
 

@@ -484,7 +484,7 @@ export class PropertyService {
 
     if (isSupabaseConfigured) {
       try {
-        let dbQuery = supabase.from('properties').select('*', { count: 'exact' });
+        let dbQuery = supabaseAdmin.from('properties').select('*', { count: 'exact' });
 
         // Apply standard filter parameters
         if (query.city) {
@@ -522,12 +522,9 @@ export class PropertyService {
             dbQuery = dbQuery.eq('standard_status', 'Active');
           }
         }
-        if (query.agentId) {
-          dbQuery = dbQuery.eq('created_by', query.agentId);
-        }
-        const assignedKey = query.list_agent_key || query.listAgentKey;
-        if (assignedKey) {
-          dbQuery = dbQuery.eq('list_agent_key', assignedKey);
+        const effectiveAgent = query.agentId || query.list_agent_key || query.listAgentKey;
+        if (effectiveAgent) {
+          dbQuery = dbQuery.or(`list_agent_key.eq.${effectiveAgent},created_by.eq.${effectiveAgent}`);
         }
         if (query.minPrice) {
           dbQuery = dbQuery.gte('price', query.minPrice);
@@ -683,12 +680,11 @@ export class PropertyService {
     if (query.standardStatus) {
       filtered = filtered.filter((p) => p.standardStatus === query.standardStatus);
     }
-    if (query.agentId) {
-      filtered = filtered.filter((p) => p.createdBy === query.agentId || p.agentId === query.agentId);
-    }
-    const localAssignedKey = query.list_agent_key || query.listAgentKey;
-    if (localAssignedKey) {
-      filtered = filtered.filter((p) => p.listAgentKey === localAssignedKey);
+    const effectiveAgent = query.agentId || query.list_agent_key || query.listAgentKey;
+    if (effectiveAgent) {
+      filtered = filtered.filter(
+        (p) => p.createdBy === effectiveAgent || p.agentId === effectiveAgent || p.listAgentKey === effectiveAgent
+      );
     }
     if (query.minPrice) {
       filtered = filtered.filter((p) => p.price >= Number(query.minPrice));
@@ -747,7 +743,7 @@ export class PropertyService {
   ): Promise<PropertyItem | null> {
     if (isSupabaseConfigured) {
       try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseAdmin
           .from('properties')
           .select('*')
           .or(`id.eq.${id},listing_id.eq.${id},listing_key.eq.${id}`)

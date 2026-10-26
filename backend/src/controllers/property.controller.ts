@@ -39,6 +39,8 @@ export class PropertyController {
       } = req.query;
 
       const userRole = (req as AuthenticatedRequest).user?.role;
+      const authenticatedUserId = (req as AuthenticatedRequest).user?.id;
+      const effectiveAgentId = (agentId || list_agent_key || listAgentKey || (userRole === 'agent' ? authenticatedUserId : undefined)) as string | undefined;
 
       const result = await PropertyService.findProperties(
         {
@@ -51,9 +53,9 @@ export class PropertyController {
           baths: baths ? Number(baths) : undefined,
           status: status as string,
           standardStatus: standardStatus as string,
-          agentId: agentId as string,
-          list_agent_key: (list_agent_key || listAgentKey) as string,
-          listAgentKey: (list_agent_key || listAgentKey) as string,
+          agentId: effectiveAgentId,
+          list_agent_key: effectiveAgentId,
+          listAgentKey: effectiveAgentId,
           search: search as string,
           page: page ? Number(page) : undefined,
           limit: limit ? Number(limit) : undefined,
