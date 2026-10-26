@@ -7,7 +7,8 @@ export default function AuthGuard({
   children,
   allowedRoles = [],
   requiredPermissions = [],
-  fallback = null
+  fallback = null,
+  unauthorizedRedirect = null
 }) {
   const { user, loading, isAuthenticated, hasRole, can } = useAuth();
   const location = useLocation();
@@ -43,6 +44,20 @@ export default function AuthGuard({
 
   if (!hasRequiredRole || !hasRequiredPermissions) {
     if (fallback) return fallback;
+
+    if (unauthorizedRedirect) {
+      return (
+        <Navigate
+          to={unauthorizedRedirect}
+          state={{
+            from: location,
+            requiredRoles: allowedRoles,
+            currentRole: user?.role || 'client',
+          }}
+          replace
+        />
+      );
+    }
 
     return (
       <div className="min-h-[400px] flex items-center justify-center p-6 bg-[#FBFBF9]">

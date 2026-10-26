@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Human Shelter Realty - Design System Canvas Mockup</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --color-primary: #0F766E;
+      --color-primary-hover: #115E59;
+      --color-secondary: #14B8A6;
+      --color-accent: #FF6B6B;
+      --color-background: #F8FAFC;
+      --color-surface: #FFFFFF;
+      --color-text-primary: #1E293B;
+      --color-text-secondary: #64748B;
+      --color-border: #E2E8F0;
+      --color-success: #10B981;
+      --color-warning: #F59E0B;
+      --color-error: #DC2626;
+      --radius-sm: 4px;
+      --radius-default: 8px;
+      --radius-lg: 12px;
+      --radius-pill: 9999px;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    body {
+      background-color: #0F172A; /* Deep navy canvas surrounding matte */
+      font-family: var(--font-sans);
+      color: var(--color-text-primary);
+      padding: 40px;
+      display: flex;
+      justify-content: center;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* THE ARTBOARD CANVAS CONTAINER */
+    .artboard {
+      width: 1720px;
+      background-color: var(--color-background);
+      border-radius: 16px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+      border: 1px solid #334155;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* CALIBRATION MARKS & GRID RULER */
+    .ruler-header {
+      background: #0F766E;
+      color: #FFFFFF;
+      padding: 12px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      border-bottom: 2px solid #14B8A6;
+    }
+
+    .ruler-header .spec-tag {
+      background: rgba(255, 255, 255, 0.15);
+      padding: 4px 10px;
+      border-radius: var(--radius-sm);
+      font-weight: 600;
+    }
+
+    .canvas-body {
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+
+    /* SECTION CALLOUT BADGES */
+    .section-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--color-border);
+      margin-bottom: 16px;
+    }
+
+    .section-banner h2 {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--color-text-primary);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .annotation-pin {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #0F766E;
+      color: #FFFFFF;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: var(--radius-pill);
+      letter-spacing: 0.05em;
+    }
+
+    .annotation-pin.coral {
+      background: #FF6B6B;
+      color: #1E293B;
+    }
+
+    .annotation-pin.slate {
+      background: #64748B;
+      color: #FFFFFF;
+    }
+
+    /* TOP ROW: DESIGN SYSTEM TOKENS & WORKFLOW PIPELINE */
+    .system-row {
+      display: grid;
+      grid-template-columns: 460px 1fr;
+      gap: 24px;
+    }
+
+    .token-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-default);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .palette-swatches {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    .swatch {
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-default);
+      padding: 8px;
+      background: #FFFFFF;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .swatch-fill {
+      height: 36px;
+      border-radius: 4px;
+      border: 1px solid rgba(0, 0, 0, 0.06);
+    }
+
+    .swatch-meta {
+      font-size: 10px;
+      font-family: var(--font-mono);
+      line-height: 1.2;
+    }
+
+    .swatch-title {
+      font-weight: 600;
+      color: var(--color-text-primary);
+    }
+
+    .swatch-hex {
+      color: var(--color-text-secondary);
+    }
+
+    .contrast-badge {
+      font-size: 9px;
+      padding: 2px 4px;
+      border-radius: 2px;
+      display: inline-block;
+      margin-top: 2px;
+      font-weight: 600;
+      background: #ECFDF5;
+      color: #065F46;
+      border: 1px solid #A7F3D0;
+    }
+
+    /* WORKFLOW PIPELINE CARDS */
+    .workflow-container {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-default);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .workflow-nodes {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 12px;
+      position: relative;
+    }
+
+    .node-card {
+      background: var(--color-background);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-default);
+      padding: 14px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      position: relative;
+    }
+
+    .node-step {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--color-primary);
+    }
+
+    .node-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--color-text-primary);
+    }
+
+    .node-desc {
+      font-size: 11px;
+      color: var(--color-text-secondary);
+      line-height: 1.3;
+    }
+
+    .node-card.gate-stop {
+      border: 2px solid #FF6B6B;
+      background: #FFF5F5;
+    }
+
+    .node-card.gate-stop .node-step {
+      color: #DC2626;
+    }
+
+    /* MOCKUP A: BALANCED COMPACT DATA PORTAL (§16.2) */
+    .portal-mockup {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-default);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .portal-topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .brand-cluster {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-mark {
+      width: 36px;
+      height: 36px;
+      background: var(--color-primary);
+      color: #FFFFFF;
+      border-radius: var(--radius-default);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 18px;
+    }
+
+    .brand-text h1 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--color-text-primary);
+    }
+
+    .brand-text p {
+      font-size: 11px;
+      color: var(--color-text-secondary);
+      font-family: var(--font-mono);
+    }
+
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .kpi-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-default);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .kpi-label {
+      font-size: 12px;
+      color: var(--color-text-secondary);
+      font-weight: 500;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .kpi-val {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--color-text-primary);
+      font-family: var(--font-mono);
+    }
+
+    .kpi-trend {
+      font-size: 11px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .kpi-trend.up { color: var(--color-success); }
+    .kpi-trend.down { color: var(--color-error); }
+
+    /* TOOLBAR */
+    .portal-toolbar {
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: var(--color-background);
+      padding: 6px 12px;
+      border-radius: var(--radius-default);
+      border: 1px solid var(--color-border);
+    }
+
+    .search-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #FFFFFF;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-default);
+      padding: 6px 12px;
+      width: 320px;
+      height: 36px;
+      font-size: 13px;
+      color: var(--color-text-secondary);
+    }
+
+    .filter-chips {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .filter-chip {
+      background: #FFFFFF;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-pill);
+      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--color-text-primary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn {
+      height: 36px;
+      padding: 0 16px;
+      border-radius: var(--radius-default);
+      font-size: 13px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      cursor: pointer;
+      border: none;
+    }
+
+    .btn-primary {
+      background: var(--color-primary);
+      color: #FFFFFF;
+    }
+
+    .btn-coral {
+      background: var(--color-accent);
+      color: var(--color-text-primary); /* Slate 800 for AA compliance */
+      font-weight: 700;
+    }
+
+    .btn-secondary {
+      background: #FFFFFF;
+      border: 1px solid var(--color-border);
+      color: var(--color-text-primary);
+    }
+
+    /* DATA TABLE */
+    .table-container {
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-default);
+      overflow: hidden;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 13px;
+    }
+
+    th {
+      background: var(--color-background);
+      color: var(--color-text-secondary);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--color-border);
+      color: var(--color-text-primary);
+    }
+
+    tr:hover {
+      background: rgba(248, 250, 252, 0.8);
+    }
+
+    .sticky-cell {
+      position: sticky;
+      left: 0;
+      background: #FFFFFF;
+      font-family: var(--font-mono);
+      font-weight: 600;
+      color: var(--color-primary);
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 8px;
+      border-radius: var(--radius-pill);
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .status-badge.available {
+      background: #ECFDF5;
+      color: #065F46;
+    }
+
+    .status-badge.pending {
+      background: #FFFBEB;
+      color: #92400E;
+    }
+
+    .status-badge.sold {
+      background: #F1F5F9;
+      color: #475569;
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+
+    .status-badge.available .dot { background: #10B981; }
+    .status-badge.pending .dot { background: #F59E0B; }
+    .status-badge.sold .dot { background: #64748B; }
+
+    /* MOCKUP B: 65% / 35% DOSSIER LAYOUT (§15.3 & Design-layout.md) */
+    .dossier-grid {
+      display: grid;
+      grid-template-columns: 65% 35%;
+      gap: 24px;
+    }
+
+    .dossier-main {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .hero-gallery {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      grid-template-rows: 150px 150px;
+      gap: 12px;
+      border-radius: var(--radius-default);
+      overflow: hidden;
+      border: 1px solid var(--color-border);
+    }
+
+    .hero-main {
+      grid-row: span 2;
+      background: linear-gradient(135deg, #1E293B, #0F766E);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 20px;
+      color: #FFFFFF;
+      position: relative;
+    }
+
+    .hero-sub {
+      background: #CBD5E1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      color: #475569;
+      font-size: 12px;
+    }
+
+    .overview-strip {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-default);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .price-headline {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--color-text-primary);
+      font-family: var(--font-mono);
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+    }
+
+    .price-sub {
+      font-size: 13px;
+      color: var(--color-text-secondary);
+      font-weight: 400;
+      font-family: var(--font-sans);
+    }
+
+    .specs-matrix {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      padding: 12px 0;
+      border-top: 1px solid var(--color-border);
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .spec-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .spec-item .label {
+      font-size: 11px;
+      color: var(--color-text-secondary);
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .spec-item .val {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--color-text-primary);
+    }
+
+    .card-block {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-default);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--color-text-primary);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .dil-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .dil-pill {
+      background: var(--color-background);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-default);
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 12px;
+    }
+
+    .dil-pill .key {
+      color: var(--color-text-secondary);
+      font-size: 11px;
+    }
+
+    .dil-pill .val {
+      font-weight: 600;
+      color: var(--color-text-primary);
+    }
+
+    /* RIGHT COLUMN (35%) STICKY SIDEBAR */
+    .dossier-sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .tour-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-default);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    .tab-pills {
+      display: flex;
+      background: var(--color-background);
+      border-radius: var(--radius-default);
+      padding: 4px;
+      border: 1px solid var(--color-border);
+    }
+
+    .tab-pill {
+      flex: 1;
+      text-align: center;
+      padding: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .tab-pill.active {
+      background: #FFFFFF;
+      color: var(--color-primary);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .agent-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-default);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .agent-profile {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .agent-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: #0F766E;
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 18px;
+    }
+
+    .agent-info h4 {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--color-text-primary);
+    }
+
+    .agent-info p {
+      font-size: 11px;
+      color: var(--color-text-secondary);
+    }
+
+    /* FOOTER ANNOTATIONS */
+    .artboard-footer {
+      background: #0F172A;
+      color: #94A3B8;
+      padding: 16px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      border-top: 1px solid #334155;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="artboard">
+    <!-- CALIBRATION TOP RULER -->
+    <div class="ruler-header">
+      <div>HUMAN SHELTER REALTY // DESIGN SYSTEM MOCKUP // CANV-SPEC-01</div>
+      <div>GRID: STRICT 8PX // RADIUS: 8PX (ROUNDED-LG) // PALETTE: TEAL-CORAL-SLATE</div>
+      <div class="spec-tag">WCAG 2.2 AA VERIFIED</div>
+    </div>
+
+    <div class="canvas-body">
+
+      <!-- SECTION: CHROMATIC TOKENS & WORKFLOW PIPELINE -->
+      <div class="system-row">
+        <!-- CHROMATIC PALETTE -->
+        <div class="token-card">
+          <div class="section-banner">
+            <h2>Design Tokens <span class="annotation-pin">§2 COLOR & GEOMETRY</span></h2>
+          </div>
+          <div class="palette-swatches">
+            <div class="swatch">
+              <div class="swatch-fill" style="background: #0F766E;"></div>
+              <div class="swatch-meta">
+                <div class="swatch-title">Primary Teal</div>
+                <div class="swatch-hex">#0F766E</div>
+                <div class="contrast-badge">4.6:1 AA</div>
+              </div>
+            </div>
+            <div class="swatch">
+              <div class="swatch-fill" style="background: #115E59;"></div>
+              <div class="swatch-meta">
+                <div class="swatch-title">Teal Hover</div>
+                <div class="swatch-hex">#115E59</div>
+                <div class="contrast-badge">6.2:1 AA</div>
+              </div>
+            </div>
+            <div class="swatch">
+              <div class="swatch-fill" style="background: #FF6B6B;"></div>
+              <div class="swatch-meta">
+                <div class="swatch-title">Conversion Coral</div>
+                <div class="swatch-hex">#FF6B6B</div>
+                <div class="contrast-badge" style="background: #FEF3C7; color: #92400E; border-color: #FDE68A;">Dark Text Only</div>
+              </div>
+            </div>
+            <div class="swatch">
+              <div class="swatch-fill" style="background: #1E293B;"></div>
+              <div class="swatch-meta">
+                <div class="swatch-title">Slate 800 Ink</div>
+                <div class="swatch-hex">#1E293B</div>
+                <div class="contrast-badge">13.4:1 AAA</div>
+              </div>
+            </div>
+            <div class="swatch">
+              <div class="swatch-fill" style="background: #64748B;"></div>
+              <div class="swatch-meta">
+                <div class="swatch-title">Slate 500 Muted</div>
+                <div class="swatch-hex">#64748B</div>
+                <div class="contrast-badge">4.8:1 AA</div>
+              </div>
+            </div>
+            <div class="swatch">
+              <div class="swatch-fill" style="background: #E2E8F0; border: 1px solid #CBD5E1;"></div>
+              <div class="swatch-meta">
+                <div class="swatch-title">Slate 200 Border</div>
+                <div class="swatch-hex">#E2E8F0</div>
+                <div class="contrast-badge" style="background: #F1F5F9; color: #475569; border-color: #E2E8F0;">Hairline 1px</div>
+              </div>
+            </div>
+            <div class="swatch">
+              <div class="swatch-fill" style="background: #10B981;"></div>
+              <div class="swatch-meta">
+                <div class="swatch-title">Emerald Status</div>
+                <div class="swatch-hex">#10B981</div>
+                <div class="contrast-badge">Success</div>
+              </div>
+            </div>
+            <div class="swatch">
+              <div class="swatch-fill" style="background: #F59E0B;"></div>
+              <div class="swatch-meta">
+                <div class="swatch-title">Amber Status</div>
+                <div class="swatch-hex">#F59E0B</div>
+                <div class="contrast-badge">Warning</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 6-STEP WORKFLOW PIPELINE -->
+        <div class="workflow-container">
+          <div class="section-banner">
+            <h2>Mandatory Engineering Pipeline <span class="annotation-pin">§1 & §11 WORKFLOW</span></h2>
+            <span style="font-family: var(--font-mono); font-size: 11px; color: var(--color-text-secondary);">INSPECT → ANALYZE → PROPOSE → APPROVAL → IMPLEMENT → VERIFY</span>
+          </div>
+          <div class="workflow-nodes">
+            <div class="node-card">
+              <div class="node-step">STEP 01</div>
+              <div class="node-name">Inspect</div>
+              <div class="node-desc">Read-only audit of target UI, dependencies, and styles.</div>
+            </div>
+            <div class="node-card">
+              <div class="node-step">STEP 02</div>
+              <div class="node-name">Analyze</div>
+              <div class="node-desc">Examine contrast, WCAG AA, 8px grid, and functional risks.</div>
+            </div>
+            <div class="node-card">
+              <div class="node-step">STEP 03</div>
+              <div class="node-name">Propose</div>
+              <div class="node-desc">Present structured proposal with rollback strategy.</div>
+            </div>
+            <div class="node-card gate-stop">
+              <div class="node-step">STEP 04</div>
+              <div class="node-name">Approval Gate</div>
+              <div class="node-desc"><strong>HARD STOP.</strong> Zero code edits without explicit user approval.</div>
+            </div>
+            <div class="node-card">
+              <div class="node-step">STEP 05</div>
+              <div class="node-name">Implement</div>
+              <div class="node-desc">Execute only approved files using strict tokens.</div>
+            </div>
+            <div class="node-card">
+              <div class="node-step">STEP 06</div>
+              <div class="node-name">Verify</div>
+              <div class="node-desc">Automated build, test suite, and visual cross-check.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION: CORE MOCKUP A - HIGH DENSITY PORTAL (§16.2) -->
+      <div class="portal-mockup">
+        <div class="section-banner">
+          <h2>Balanced-Compact Operational Console <span class="annotation-pin">§16.2 DESKTOP PORTAL</span> <span class="annotation-pin slate">FULL-WIDTH FLUID GRID</span></h2>
+        </div>
+
+        <!-- PORTAL TOPBAR -->
+        <div class="portal-topbar">
+          <div class="brand-cluster">
+            <div class="brand-mark">HS</div>
+            <div class="brand-text">
+              <h1>Human Shelter Realty // Operations Management</h1>
+              <p>WORKSPACE: METRO MANILA CENTRAL // AGENT: MARIA SANTOS (PRC-09124)</p>
+            </div>
+          </div>
+          <div style="display: flex; gap: 10px;">
+            <button class="btn btn-secondary">Export Cadastre</button>
+            <button class="btn btn-coral">+ Create Listing</button>
+          </div>
+        </div>
+
+        <!-- 4 KPI SUMMARY CARDS -->
+        <div class="kpi-row">
+          <div class="kpi-card">
+            <div class="kpi-label">ACTIVE PORTFOLIO <span>§16.2 KPI</span></div>
+            <div class="kpi-val">128 Properties</div>
+            <div class="kpi-trend up">↑ +14.2% vs last month</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">TOTAL LISTED VALUE <span>§Frontmatter MONO</span></div>
+            <div class="kpi-val">PHP 842.5M</div>
+            <div class="kpi-trend up">↑ +8.6% new inventory</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">SCHEDULED TOURS <span>§3 INTERACTION</span></div>
+            <div class="kpi-val">42 Confirmed</div>
+            <div class="kpi-trend up">↑ 98.2% attendance rate</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">AVG CLOSING TIME <span>§6 AGENT HUB</span></div>
+            <div class="kpi-val">18.4 Days</div>
+            <div class="kpi-trend up">↓ 4.2 days faster</div>
+          </div>
+        </div>
+
+        <!-- COMPACT 48PX TOOLBAR -->
+        <div class="portal-toolbar">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div class="search-box">
+              <span>🔍</span>
+              <span>Filter by cadastral PIN, title number, address...</span>
+            </div>
+            <div class="filter-chips">
+              <div class="filter-chip">Status: All (Active, Pending) ▾</div>
+              <div class="filter-chip">Location: New Manila, QC ▾</div>
+              <div class="filter-chip">Price: PHP 20M - 50M ▾</div>
+            </div>
+          </div>
+          <div style="font-family: var(--font-mono); font-size: 11px; color: var(--color-text-secondary);">
+            SHOWING 1 - 3 OF 128 RECORDS
+          </div>
+        </div>
+
+        <!-- 10-COLUMN TABULAR VIEW WITH STICKY IDENTIFIER -->
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 140px;">CADASTRAL PIN</th>
+                <th>PROPERTY ADDRESS</th>
+                <th>CLASSIFICATION</th>
+                <th>LOT / FLOOR</th>
+                <th>LIST PRICE</th>
+                <th>BROKER IN CHARGE</th>
+                <th>STATUS</th>
+                <th style="text-align: right;">ACTION</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="sticky-cell">PIN-004-98124</td>
+                <td><strong>Rolling Hills Subd.</strong>, New Manila, Quezon City</td>
+                <td>Single-Family Duplex</td>
+                <td>185 sqm / 340 sqm</td>
+                <td><strong style="font-family: var(--font-mono);">PHP 28,500,000</strong></td>
+                <td>Maria Santos (PRC)</td>
+                <td><span class="status-badge available"><span class="dot"></span>Available</span></td>
+                <td style="text-align: right;"><button class="btn btn-secondary" style="height: 28px; padding: 0 10px; font-size: 11px;">View Dossier</button></td>
+              </tr>
+              <tr>
+                <td class="sticky-cell">PIN-004-98125</td>
+                <td><strong>Scout Gandia St.</strong>, Diliman, Quezon City</td>
+                <td>Modern Townhome</td>
+                <td>120 sqm / 260 sqm</td>
+                <td><strong style="font-family: var(--font-mono);">PHP 21,800,000</strong></td>
+                <td>Carlos Tan (PRC)</td>
+                <td><span class="status-badge pending"><span class="dot"></span>Reserved</span></td>
+                <td style="text-align: right;"><button class="btn btn-secondary" style="height: 28px; padding: 0 10px; font-size: 11px;">Review Offer</button></td>
+              </tr>
+              <tr>
+                <td class="sticky-cell">PIN-004-98126</td>
+                <td><strong>Greenhills East</strong>, San Juan City</td>
+                <td>Luxury Villa & Pool</td>
+                <td>450 sqm / 680 sqm</td>
+                <td><strong style="font-family: var(--font-mono);">PHP 89,000,000</strong></td>
+                <td>Elena Cruz (Broker Lead)</td>
+                <td><span class="status-badge sold"><span class="dot"></span>Sold</span></td>
+                <td style="text-align: right;"><button class="btn btn-secondary" style="height: 28px; padding: 0 10px; font-size: 11px;">Archive Log</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SECTION: CORE MOCKUP B - 65% / 35% PROPERTY DETAIL DOSSIER (§15.3 & Design-layout.md) -->
+      <div>
+        <div class="section-banner">
+          <h2>Property Detail Dossier Specification <span class="annotation-pin">§15.3 65/35 SPLIT</span> <span class="annotation-pin coral">ACCESSIBLE CONVERSION</span></h2>
+        </div>
+
+        <div class="dossier-grid">
+          <!-- LEFT COLUMN: 65% PROPERTY CONTENT -->
+          <div class="dossier-main">
+            <!-- HERO PHOTO GALLERY -->
+            <div class="hero-gallery">
+              <div class="hero-main">
+                <span class="annotation-pin" style="align-self: flex-start; margin-bottom: 8px;">📷 24 PHOTOS // 360° TOUR</span>
+                <h3 style="font-size: 20px; font-weight: 700;">Front Elevation: Rolling Hills Contemporary Duplex</h3>
+                <p style="font-size: 12px; opacity: 0.9;">Architectural Concrete, High Ceilings & Private Rooftop Terrace</p>
+              </div>
+              <div class="hero-sub">Photo 2: Open Living & Dining</div>
+              <div class="hero-sub">Photo 3: Master En-Suite</div>
+            </div>
+
+            <!-- OVERVIEW STRIP -->
+            <div class="overview-strip">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                  <div style="display: flex; gap: 8px; margin-bottom: 6px;">
+                    <span class="status-badge available"><span class="dot"></span>Verified Listing</span>
+                    <span class="status-badge pending"><span class="dot"></span>Ready for Occupancy</span>
+                  </div>
+                  <h3 style="font-size: 22px; font-weight: 700; color: var(--color-text-primary);">Rolling Hills Subdivision, New Manila</h3>
+                  <p style="font-size: 13px; color: var(--color-text-secondary);">Quezon City, Metro Manila // TCT-004-98124</p>
+                </div>
+                <div class="price-headline">
+                  PHP 28,500,000
+                  <span class="price-sub">~PHP 83,820 / sqm</span>
+                </div>
+              </div>
+
+              <!-- SPECS MATRIX -->
+              <div class="specs-matrix">
+                <div class="spec-item">
+                  <div class="label">Bedrooms</div>
+                  <div class="val">4 Beds + Maid's</div>
+                </div>
+                <div class="spec-item">
+                  <div class="label">Bathrooms</div>
+                  <div class="val">5 Full Baths</div>
+                </div>
+                <div class="spec-item">
+                  <div class="label">Floor Area</div>
+                  <div class="val">340 sqm Built</div>
+                </div>
+                <div class="spec-item">
+                  <div class="label">Parking Slots</div>
+                  <div class="val">2 Garage Covered</div>
+                </div>
+              </div>
+
+              <p style="font-size: 13px; color: var(--color-text-secondary); line-height: 1.6;">
+                Brand-new modern duplex featuring soaring double-height ceilings, open-concept living and dining spaces, and a private rooftop terrace. Includes an executive kitchen with quartz counters, integrated Blum cabinetry, dedicated utility quarters, and en-suite bathrooms for all primary suites.
+              </p>
+            </div>
+
+            <!-- PROPERTY DUE DILIGENCE & RECORDS -->
+            <div class="card-block">
+              <div class="card-title">
+                <span>Property Records & Due Diligence <span class="annotation-pin">§6 CLIENT TRUST</span></span>
+                <span style="font-size: 12px; color: var(--color-success); font-weight: 600;">✓ Verification Complete</span>
+              </div>
+              <div class="dil-grid">
+                <div class="dil-pill">
+                  <span class="key">Title Status</span>
+                  <span class="val">Clean Transfer Certificate (TCT)</span>
+                </div>
+                <div class="dil-pill">
+                  <span class="key">Encumbrances / Liens</span>
+                  <span class="val">None Recorded (Zero Liens)</span>
+                </div>
+                <div class="dil-pill">
+                  <span class="key">Real Property Tax (Amilyar)</span>
+                  <span class="val">Up to date (Current Year Paid)</span>
+                </div>
+                <div class="dil-pill">
+                  <span class="key">MGB Hazard Georisk</span>
+                  <span class="val">Low / Zero Recorded Flooding</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT COLUMN: 35% STICKY CONVERSION SIDEBAR -->
+          <div class="dossier-sidebar">
+            <!-- TOUR SCHEDULER -->
+            <div class="tour-card">
+              <div class="card-title">
+                <span>Schedule a Private Tour</span>
+                <span class="annotation-pin coral">CTA ANCHOR</span>
+              </div>
+              <div class="tab-pills">
+                <div class="tab-pill active">🚶 In-Person Tour</div>
+                <div class="tab-pill">💻 Video Call</div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <label style="font-size: 11px; font-weight: 600; color: var(--color-text-secondary); text-transform: uppercase;">Select Tour Date</label>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;">
+                  <button class="btn btn-secondary" style="font-size: 11px;">Today</button>
+                  <button class="btn btn-primary" style="font-size: 11px;">Tomorrow</button>
+                  <button class="btn btn-secondary" style="font-size: 11px;">Choose...</button>
+                </div>
+              </div>
+              <button class="btn btn-coral" style="width: 100%; height: 44px; font-size: 14px;">
+                Request Tour Confirmation
+              </button>
+              <div style="font-size: 11px; color: var(--color-text-secondary); text-align: center;">
+                Instant broker confirmation via SMS & Email. Free of charge.
+              </div>
+            </div>
+
+            <!-- BROKER IN CHARGE CONTACT -->
+            <div class="agent-card">
+              <div class="agent-profile">
+                <div class="agent-avatar">MS</div>
+                <div class="agent-info">
+                  <h4>Maria Santos</h4>
+                  <p>Licensed Real Estate Broker (PRC #0019283)</p>
+                  <p style="color: var(--color-primary); font-weight: 600;">Human Shelter Realty Manila</p>
+                </div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <button class="btn btn-primary" style="width: 100%; height: 40px;">
+                  💬 Chat on WhatsApp
+                </button>
+                <button class="btn btn-secondary" style="width: 100%; height: 40px;">
+                  📞 Call: +63 917 892 0124
+                </button>
+              </div>
+            </div>
+
+            <!-- ESTIMATED MONTHLY PAYMENT CALCULATOR -->
+            <div class="card-block">
+              <div class="card-title">
+                <span>Monthly Payment</span>
+                <span style="font-family: var(--font-mono); font-size: 12px; color: var(--color-primary);">Est. Calculator</span>
+              </div>
+              <div style="font-size: 20px; font-weight: 700; color: var(--color-text-primary); font-family: var(--font-mono);">
+                PHP 176,700 <span style="font-size: 12px; color: var(--color-text-secondary); font-family: var(--font-sans);">/ month</span>
+              </div>
+              <p style="font-size: 11px; color: var(--color-text-secondary);">
+                Based on 20% down payment (PHP 5.7M) and 20-year fixed bank financing @ 7.0% APR.
+              </p>
+              <button class="btn btn-secondary" style="width: 100%; height: 36px; font-size: 12px;">
+                Customize Loan Terms 🧮
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ARTBOARD TECHNICAL FOOTER -->
+    <div class="artboard-footer">
+      <div>HUMAN SHELTER REALTY // CANVAS DESIGN SYSTEM ARTIFACT</div>
+      <div>WCAG 2.2 AA VERIFIED // 8PX GRID // TEAL #0F766E // CORAL #FF6B6B (DARK SLATE INK)</div>
+      <div>GENERATED: 2026-10-26 // READY FOR PRODUCTION</div>
+    </div>
+  </div>
+
+</body>
+</html>

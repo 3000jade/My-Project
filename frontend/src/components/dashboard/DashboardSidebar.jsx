@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, Building2, MessageSquare, Calendar, 
-  Users, CheckSquare, FileText, 
+  CheckSquare, FileText, 
   HelpCircle, ExternalLink, X, Bookmark, Compass, User
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
@@ -18,7 +18,6 @@ export default function DashboardSidebar({
     { to: '/broker/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/broker/properties', label: 'Properties', icon: Building2 },
     { to: '/broker/inquiries', label: 'Inquiries', icon: MessageSquare },
-    { to: '/broker/clients', label: 'Clients', icon: Users },
     { to: '/broker/agents', label: 'Agents', icon: User },
     { to: '/broker/notifications', label: 'Tasks', icon: CheckSquare },
     { to: '/broker/reports', label: 'Reports', icon: FileText },

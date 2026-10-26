@@ -95,12 +95,24 @@ export default function DashboardHeader({
     }
   };
 
-  const defaultName = role === 'client' ? 'Valued Client' : role === 'agent' ? 'Associate Agent' : 'Maria Santos';
-  const effectiveUserName = user?.fullName || user?.full_name || user?.name || defaultName;
-  const roleLabel = role === 'client' ? 'Client' : role === 'agent' ? 'Sales Agent' : 'Administrator';
+  const fallbackRoleName = role === 'client'
+    ? 'Valued Client'
+    : role === 'agent'
+      ? 'Associate Agent'
+      : role === 'broker'
+        ? 'Principal Broker'
+        : 'Administrator';
+  const effectiveUserName =
+    user?.fullName ||
+    user?.full_name ||
+    user?.profile?.full_name ||
+    user?.user_metadata?.full_name ||
+    user?.name ||
+    (user?.email ? user.email.split('@')[0] : fallbackRoleName);
+  const roleLabel = role === 'client' ? 'Client' : role === 'agent' ? 'Sales Agent' : role === 'broker' ? 'Principal Broker' : 'Administrator';
   const roleInitials = effectiveUserName
     ? effectiveUserName.split(' ').filter(Boolean).map(n => n[0]).join('').slice(0, 2).toUpperCase()
-    : (role === 'client' ? 'CL' : role === 'agent' ? 'AG' : 'MS');
+    : (role === 'client' ? 'CL' : role === 'agent' ? 'AG' : role === 'broker' ? 'PB' : 'AD');
 
   const profilePath = role === 'client' ? '/client/profile' : role === 'agent' ? '/agent/profile' : '/broker/profile';
   const dashboardPath = role === 'client' ? '/client/dashboard' : role === 'agent' ? '/agent/dashboard' : '/broker/dashboard';

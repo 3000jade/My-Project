@@ -12,6 +12,7 @@ const app: Express = express();
 const port = config.port;
 
 // Trust reverse proxy (Render, Vercel, Cloudflare, etc.) for correct client IP resolution
+// Reload triggered for GMAIL_REFRESH_TOKEN update
 app.set('trust proxy', 1);
 
 // Global Middleware

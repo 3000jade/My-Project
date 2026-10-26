@@ -13,7 +13,14 @@ router.post('/register', authRateLimiter, validateBody(registerSchema), AuthCont
 router.post('/register-agent', authRateLimiter, validateBody(registerAgentSchema), AuthController.registerAgent);
 router.post('/logout', AuthController.logout);
 router.post('/heartbeat', requireAuth, AuthController.heartbeat);
+router.post('/extend-session', requireAuth, AuthController.extendSession);
+router.post('/refresh', AuthController.refreshSession);
+router.post('/forgot-password', authRateLimiter, AuthController.forgotPassword);
+router.post('/reset-password', authRateLimiter, AuthController.resetPassword);
+router.post('/resend-verification', authRateLimiter, AuthController.resendVerification);
 router.post('/revoke-all', requireAuth, AuthController.revokeAllSessions);
+router.get('/sessions', requireAuth, AuthController.listSessions);
+router.delete('/sessions/:sessionId', requireAuth, AuthController.revokeSession);
 router.get('/me', requireAuth, AuthController.getMe);
 
 export default router;

@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Human Shelter Realty — Property Management Dossier Workbench</title>
+<!-- Google Fonts & Material Symbols -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS v3 -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "inverse-on-surface": "#eaf1ff",
+            "inverse-primary": "#80d5cb",
+            "inverse-surface": "#213145",
+            "surface-container": "#e5eeff",
+            "on-primary-fixed": "#00201d",
+            "surface-dim": "#cbdbf5",
+            "surface-variant": "#d3e4fe",
+            "surface-tint": "#006a63",
+            "tertiary": "#005584",
+            "tertiary-container": "#136ea6",
+            "secondary": "#ae2f34",
+            "on-background": "#0b1c30",
+            "surface-container-low": "#eff4ff",
+            "surface-bright": "#f8f9ff",
+            "on-primary": "#ffffff",
+            "on-primary-container": "#a3faef",
+            "on-secondary-fixed-variant": "#8c1520",
+            "primary-container": "#0f766e",
+            "secondary-fixed-dim": "#ffb3b0",
+            "on-secondary-container": "#6d0010",
+            "error": "#ba1a1a",
+            "outline": "#6e7977",
+            "on-secondary": "#ffffff",
+            "outline-variant": "#bdc9c6",
+            "on-error-container": "#93000a",
+            "on-surface": "#0b1c30",
+            "surface-container-lowest": "#ffffff",
+            "secondary-container": "#ff6b6b",
+            "on-surface-variant": "#3e4947",
+            "on-secondary-fixed": "#410006",
+            "primary-fixed": "#9cf2e8",
+            "secondary-fixed": "#ffdad8",
+            "tertiary-fixed": "#cde5ff",
+            "tertiary-fixed-dim": "#94ccff",
+            "on-tertiary": "#ffffff",
+            "background": "#f8f9ff",
+            "surface-container-high": "#dce9ff",
+            "on-tertiary-container": "#daebff",
+            "error-container": "#ffdad6",
+            "primary-fixed-dim": "#80d5cb",
+            "on-tertiary-fixed": "#001d32",
+            "surface-container-highest": "#d3e4fe",
+            "primary": "#005c55",
+            "on-error": "#ffffff",
+            "on-primary-fixed-variant": "#00504a",
+            "on-tertiary-fixed-variant": "#004b74",
+            "surface": "#f8f9ff"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "gutter": "1rem",
+            "space-md": "1rem",
+            "space-xl": "2rem",
+            "gutter-desktop": "1.5rem",
+            "space-sm": "0.5rem",
+            "margin-tablet": "1.5rem",
+            "space-xs": "0.25rem",
+            "margin": "1rem",
+            "space-lg": "1.5rem",
+            "margin-desktop": "2rem"
+          },
+          "fontFamily": {
+            "headline-xl-mobile": ["Plus Jakarta Sans"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "body-lg": ["Plus Jakarta Sans"],
+            "headline-xl": ["Plus Jakarta Sans"],
+            "headline-lg": ["Plus Jakarta Sans"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "label-md": ["Inter"],
+            "body-md": ["Plus Jakarta Sans"],
+            "label-sm": ["Inter"],
+            "body-sm": ["Plus Jakarta Sans"],
+            "data-mono": ["Inter"]
+          },
+          "fontSize": {
+            "headline-xl-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.015em", "fontWeight": "700" }],
+            "headline-sm": ["16px", { "lineHeight": "24px", "letterSpacing": "-0.005em", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "headline-xl": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "600" }],
+            "body-sm": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
+            "data-mono": ["12px", { "lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "500" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    /* Subtle scrollbar for data tables */
+    ::-webkit-scrollbar {
+      height: 6px;
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+<body class="bg-[#F8FAFC] text-on-surface antialiased min-h-screen flex flex-col font-body-md text-body-md selection:bg-primary selection:text-white">
+<!-- ========================================================================= -->
+<!-- 1. TOP NAVIGATION BAR (Shared Component Execution & Custom Requirement)  -->
+<!-- ========================================================================= -->
+<header class="w-full px-6 py-3 flex items-center justify-between gap-4 sticky top-0 z-50 bg-surface-container-lowest dark:bg-surface border-b border-outline-variant shadow-sm">
+<!-- Left: Brand Logo & PRC License Pill -->
+<div class="flex items-center gap-5">
+<a class="flex items-center gap-2.5 group" href="#">
+<img alt="Human Shelter Realty Senior Managing Broker Shield Icon" class="h-9 w-auto object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDg5a5mo--dC4MUh23eaGEUd-IG2nZcCRjmjblimkH3jicRZlMAXKWAl92Sb2o2VHWFAg5Xj2v5oGTRe5cNbxrl3IiTB4g3ibih4d6vcG0-kDZaZ3vsm2baen0_5ZQ2s--fGXGZNQDhlkMvuP1C0IgjIAVBnhmqDdouehBW41heIni5ePAsr5NUiUe-89Ja0We6sVWEONQM2cPCOXEJRTCEtb8hJllzu824nBO2ktWsTDy3TaFqnMB0KW5KPDok_yg8CqJZvTgHP-jX"/>
+</a>
+<div class="h-5 w-[1px] bg-slate-200 hidden sm:block"></div>
+<!-- Active Role Indicator -->
+<div class="hidden lg:flex items-center gap-2 px-2.5 py-1 rounded-full bg-slate-50 border border-slate-200">
+<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+<span class="font-label-md text-label-md text-slate-700 font-medium">Senior Managing Broker — PRC Lic #0031892</span>
+</div>
+</div>
+<!-- Center: Global Search Bar [on_left aligned with hotkey] -->
+<div class="flex-1 max-w-md mx-2 hidden md:block">
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-3 text-slate-400 text-[18px]">search</span>
+<input class="w-full pl-9 pr-14 py-1.5 text-body-sm font-body-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all placeholder:text-slate-400" placeholder="Search cadastral parcels, deeds, owners..." type="text"/>
+<div class="absolute right-2.5 flex items-center gap-0.5">
+<kbd class="px-1.5 py-0.5 text-[10px] font-semibold text-slate-500 bg-white border border-slate-200 rounded shadow-[0_1px_1px_rgba(0,0,0,0.05)]">⌘K</kbd>
+</div>
+</div>
+</div>
+<!-- Right: Navigation Links & Actions Cluster -->
+<div class="flex items-center gap-3">
+<!-- Nav Links -->
+<nav class="hidden xl:flex items-center gap-5 font-label-md text-label-md">
+<a class="text-primary font-semibold border-b-2 border-primary pb-1" href="#">Portfolio</a>
+<a class="text-on-surface-variant hover:text-on-surface pb-1 transition-colors" href="#">Cadastral Map</a>
+<a class="text-on-surface-variant hover:text-on-surface pb-1 transition-colors" href="#">Due Diligence</a>
+<a class="text-on-surface-variant hover:text-on-surface pb-1 transition-colors" href="#">Analytics</a>
+<a class="text-on-surface-variant hover:text-on-surface pb-1 transition-colors" href="#">Deeds &amp; Titles</a>
+</nav>
+<div class="h-5 w-[1px] bg-slate-200 hidden xl:block"></div>
+<!-- Action Buttons -->
+<div class="flex items-center gap-2">
+<button class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 text-slate-700 rounded-xl font-label-md text-label-md hover:bg-slate-50 active:scale-[0.98] transition-all">
+<span class="material-symbols-outlined text-[16px]">file_download</span>
+<span>Export Report</span>
+</button>
+<button class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#0F766E] text-white rounded-xl font-label-md text-label-md hover:bg-[#115E59] active:scale-[0.98] shadow-sm transition-all">
+<span class="material-symbols-outlined text-[16px]">calendar_today</span>
+<span>Schedule Tour</span>
+</button>
+</div>
+<!-- Icon Buttons & Profile -->
+<div class="flex items-center gap-1 pl-2 border-l border-slate-200">
+<!-- Audit Log -->
+<button class="p-2 text-slate-600 hover:text-primary hover:bg-slate-100 rounded-xl transition-colors relative" title="System Audit Trail">
+<span class="material-symbols-outlined text-[20px]">history</span>
+</button>
+<!-- Notifications Bell with unread badge (3) -->
+<button class="p-2 text-slate-600 hover:text-primary hover:bg-slate-100 rounded-xl transition-colors relative" title="Notifications">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+<span class="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-[#FF6B6B] text-[10px] font-bold text-white shadow-sm ring-2 ring-white">3</span>
+</button>
+<!-- Help -->
+<button class="p-2 text-slate-600 hover:text-primary hover:bg-slate-100 rounded-xl transition-colors hidden sm:block" title="Help Center">
+<span class="material-symbols-outlined text-[20px]">help_outline</span>
+</button>
+<!-- Profile Avatar Dropdown -->
+<div class="flex items-center gap-2 pl-2 cursor-pointer group">
+<div class="relative">
+<img class="w-8 h-8 rounded-full object-cover border border-slate-300 ring-2 ring-transparent group-hover:ring-primary/20 transition-all" data-alt="Professional studio portrait of an experienced senior real estate broker with sharp suit, crisp lighting, high contrast and clean minimalist aesthetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAHGvgupHZ5VXpJ-Hfe74g5PAxE7APNM7mFjA-vBtzcne5aH_1bkSILxVBokK2XH3QQndiDMNwUgSNbGLlL8nA2jjmP_Y8WQs9pRNO68Zi9o9NpSCn9l8sV61OqnSEnb31KEG8quYV_o66nHSP1F430hIp3FhdsIJKZT9a2DswSMAlijD1nQmXuLIVGg0O5zqctWR32TxSrdt_JTlryDFggFQogfvu8Z37s8sa7673WgMVDE51w-Ctmkwn0Fzyex7kBYw1zWMCXZuHz"/>
+<span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white"></span>
+</div>
+<span class="material-symbols-outlined text-slate-400 group-hover:text-slate-700 text-[18px]">expand_more</span>
+</div>
+</div>
+</div>
+</header>
+<!-- ========================================================================= -->
+<!-- MAIN WORKBENCH CANVAS                                                     -->
+<!-- ========================================================================= -->
+<main class="flex-1 max-w-[1720px] w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+<!-- ======================================================================= -->
+<!-- 2. SUMMARY KPI METRIC CARDS (4 Cards Grid)                              -->
+<!-- ======================================================================= -->
+<section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+<!-- Card 1: Active Portfolio -->
+<div class="bg-white rounded-xl border border-slate-200 p-4 shadow-[0_1px_3px_0_rgba(15,23,42,0.05)] hover:shadow-md transition-shadow flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="text-slate-500 font-label-md text-label-md uppercase tracking-wider">Active Portfolio</span>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-teal-50 text-[#0F766E] border border-teal-100">
+<span class="material-symbols-outlined text-[13px]">trending_up</span> +8.4% MoM
+          </span>
+</div>
+<div class="mt-3">
+<div class="font-headline-lg text-headline-lg font-bold text-slate-900 tracking-tight">142 Listings</div>
+<div class="mt-1 flex items-center justify-between text-slate-500 font-body-sm text-body-sm">
+<span>89 Available · 34 Reserved</span>
+<span class="text-teal-700 font-medium">92% Occupancy</span>
+</div>
+</div>
+</div>
+<!-- Card 2: Total Portfolio Value -->
+<div class="bg-white rounded-xl border border-slate-200 p-4 shadow-[0_1px_3px_0_rgba(15,23,42,0.05)] hover:shadow-md transition-shadow flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="text-slate-500 font-label-md text-label-md uppercase tracking-wider">Total Portfolio Value</span>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
+<span class="material-symbols-outlined text-[13px]">arrow_upward</span> +14.2% YoY
+          </span>
+</div>
+<div class="mt-3">
+<div class="font-headline-lg text-headline-lg font-bold text-slate-900 tracking-tight">PHP 842.5M</div>
+<div class="mt-1 flex items-center justify-between text-slate-500 font-body-sm text-body-sm">
+<span>Across 4 Masterplanned Sectors</span>
+<span class="text-slate-700 font-medium font-data-mono">Cavite / Laguna</span>
+</div>
+</div>
+</div>
+<!-- Card 3: Scheduled Tours -->
+<div class="bg-white rounded-xl border border-slate-200 p-4 shadow-[0_1px_3px_0_rgba(15,23,42,0.05)] hover:shadow-md transition-shadow flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="text-slate-500 font-label-md text-label-md uppercase tracking-wider">Scheduled Tours</span>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-teal-50 text-[#0F766E] border border-teal-100">
+<span class="material-symbols-outlined text-[13px]">event_available</span> +12% vs last week
+          </span>
+</div>
+<div class="mt-3">
+<div class="font-headline-lg text-headline-lg font-bold text-slate-900 tracking-tight">38 This Week</div>
+<div class="mt-1 flex items-center justify-between text-slate-500 font-body-sm text-body-sm">
+<span class="inline-flex items-center gap-1 text-amber-700 font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> 6 Pending Confirmations
+            </span>
+<span class="text-slate-400">3 Today</span>
+</div>
+</div>
+</div>
+<!-- Card 4: Closing Velocity -->
+<div class="bg-white rounded-xl border border-slate-200 p-4 shadow-[0_1px_3px_0_rgba(15,23,42,0.05)] hover:shadow-md transition-shadow flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="text-slate-500 font-label-md text-label-md uppercase tracking-wider">Closing Velocity</span>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-[#FF6B6B] border border-rose-100">
+<span class="material-symbols-outlined text-[13px]">bolt</span> -3.8 days faster
+          </span>
+</div>
+<div class="mt-3">
+<div class="font-headline-lg text-headline-lg font-bold text-slate-900 tracking-tight">21.4 Days Avg</div>
+<div class="mt-1 flex items-center justify-between text-slate-500 font-body-sm text-body-sm">
+<span class="text-slate-600 font-medium">Streamlined RESA Pipeline</span>
+<span class="text-emerald-600 font-medium font-data-mono">TCT Ready</span>
+</div>
+</div>
+</div>
+</section>
+<!-- ======================================================================= -->
+<!-- 3. 48px COMPACT TOOLBAR                                                 -->
+<!-- ======================================================================= -->
+<div class="h-12 bg-white rounded-xl border border-slate-200 px-3 flex items-center justify-between gap-3 shadow-[0_1px_2px_rgba(15,23,42,0.03)] overflow-x-auto">
+<!-- Search Input Filter -->
+<div class="flex items-center gap-2 flex-1 min-w-[280px] max-w-sm">
+<span class="material-symbols-outlined text-slate-400 text-[18px]">filter_alt</span>
+<input class="w-full text-body-sm font-body-sm bg-transparent border-0 focus:ring-0 p-0 placeholder:text-slate-400 text-slate-800" placeholder="Filter by PIN, Subdivision, Title, or Agent..." type="text"/>
+</div>
+<div class="h-4 w-[1px] bg-slate-200 hidden sm:block"></div>
+<!-- Quick Toggles / Status Pills -->
+<div class="flex items-center gap-1.5 flex-shrink-0">
+<button class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-[#0F766E] text-white">Status: All (142)</button>
+<button class="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 transition-colors">Available (89)</button>
+<button class="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 transition-colors">Reserved (34)</button>
+<button class="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 transition-colors">Sold (19)</button>
+<div class="h-4 w-[1px] bg-slate-200 hidden md:block"></div>
+<button class="hidden lg:inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium text-slate-700 bg-slate-50 border border-slate-200 hover:bg-slate-100">
+<span>District: Alabang / Nuvali / BGC</span>
+<span class="material-symbols-outlined text-[14px]">arrow_drop_down</span>
+</button>
+<button class="hidden xl:inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium text-slate-700 bg-slate-50 border border-slate-200 hover:bg-slate-100">
+<span>Class: Executive Townhomes</span>
+<span class="material-symbols-outlined text-[14px]">arrow_drop_down</span>
+</button>
+</div>
+<!-- Secondary Toolbar Actions -->
+<div class="flex items-center gap-2 flex-shrink-0 ml-auto">
+<button class="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 border border-slate-200">
+<span class="material-symbols-outlined text-[15px]">view_column</span>
+<span>Columns (10/10)</span>
+</button>
+<button class="hidden md:inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 border border-slate-200">
+<span class="material-symbols-outlined text-[15px]">download</span>
+<span>Export CSV / PDF Dossier</span>
+</button>
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#0F766E] hover:bg-[#115E59] text-white shadow-sm transition-all group">
+<span class="material-symbols-outlined text-[16px] text-[#FF6B6B] group-hover:scale-110 transition-transform">add_circle</span>
+<span>+ New Dossier / Listing</span>
+</button>
+</div>
+</div>
+<!-- ======================================================================= -->
+<!-- 4. 10-COLUMN DATA TABLE WITH PINNED CADASTRAL PIN                       -->
+<!-- ======================================================================= -->
+<div class="bg-white rounded-xl border border-slate-200 shadow-[0_1px_3px_0_rgba(15,23,42,0.05)] overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse text-body-sm font-body-sm">
+<thead>
+<tr class="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-label-sm text-label-sm uppercase tracking-wider select-none">
+<th class="py-3 px-4 w-10 text-center">
+<input class="rounded border-slate-300 text-primary focus:ring-primary w-3.5 h-3.5" type="checkbox"/>
+</th>
+<th class="py-3 px-3 min-w-[170px] sticky left-0 bg-slate-50/95 z-10 backdrop-blur-sm">Cadastral PIN</th>
+<th class="py-3 px-4 min-w-[200px]">Property Unit / Model</th>
+<th class="py-3 px-3 min-w-[130px]">Property Type</th>
+<th class="py-3 px-3 min-w-[90px] text-right">Lot Area</th>
+<th class="py-3 px-3 min-w-[90px] text-right">Floor Area</th>
+<th class="py-3 px-4 min-w-[120px] text-right">Price (PHP)</th>
+<th class="py-3 px-3 min-w-[110px] text-center">Status</th>
+<th class="py-3 px-3 min-w-[160px]">Assigned Lead Agent</th>
+<th class="py-3 px-3 min-w-[120px]">Inquiries / Bookings</th>
+<th class="py-3 px-3 min-w-[100px] text-center">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100">
+<!-- Row 1 (ACTIVE / SELECTED DOSSIER ITEM) -->
+<tr class="bg-teal-50/30 hover:bg-teal-50/60 transition-colors border-l-4 border-l-[#0F766E]">
+<td class="py-3 px-4 text-center">
+<input checked="" class="rounded border-slate-300 text-[#0F766E] focus:ring-[#0F766E] w-3.5 h-3.5" type="checkbox"/>
+</td>
+<td class="py-3 px-3 sticky left-0 bg-white/90 backdrop-blur-sm z-10 font-data-mono text-data-mono font-semibold text-[#0F766E]">
+<div class="flex items-center gap-1.5 group cursor-pointer" title="Click to copy Cadastral PIN">
+<span>PIN 024-118-092-A</span>
+<span class="material-symbols-outlined text-[14px] text-slate-400 group-hover:text-[#0F766E]">content_copy</span>
+</div>
+</td>
+<td class="py-3 px-4 font-semibold text-slate-900">
+                The Alabaster Terrace — Unit 14B
+                <div class="text-[11px] text-slate-500 font-normal">Block 8, Lot 14 · South Phase 2</div>
+</td>
+<td class="py-3 px-3 text-slate-700">Modern Townhouse</td>
+<td class="py-3 px-3 text-right font-data-mono text-slate-800">320 sqm</td>
+<td class="py-3 px-3 text-right font-data-mono text-slate-800">280 sqm</td>
+<td class="py-3 px-4 text-right font-semibold font-data-mono text-slate-900">₱28,500,000</td>
+<td class="py-3 px-3 text-center">
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-teal-50 text-teal-800 border border-teal-200">
+<span class="w-1.5 h-1.5 rounded-full bg-teal-600"></span> Available
+                </span>
+</td>
+<td class="py-3 px-3">
+<div class="flex items-center gap-2">
+<img class="w-6 h-6 rounded-full object-cover" data-alt="High quality professional female real estate broker avatar with business attire against neutral clean studio background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAnXQDrAHpkZiLD-x7PSeZpc2H7xUbhRlwjQCmEXsTyJAm52G66cTYTyJKYlxev4t3UhL93q6P2k32_KqZPFYmUc1Mqg1liCQXU4G6B7VpJjCI52yOQqmTxkotcjENQbsZVHcQf7xdcojGLdV_HXV66InwHkcF27nBdoqjoshIiW8HM_Xzs-d5N0koPlKgH6T5uKmB867cH2-ZHxcQPmShqy4zXwa4h4ISp78MJVqlDkEnI8pX8JiP76Y9DBPOjlvkwti6oF4uahD8J"/>
+<span class="font-medium text-slate-800">Mariana Santos, REB</span>
+</div>
+</td>
+<td class="py-3 px-3">
+<span class="text-xs text-slate-700 font-medium">14 Leads</span>
+<span class="text-xs text-slate-400"> / </span>
+<span class="text-xs text-teal-700 font-semibold">4 Tours</span>
+</td>
+<td class="py-3 px-3 text-center">
+<div class="flex items-center justify-center gap-1 text-slate-500">
+<button class="p-1 hover:text-[#0F766E] hover:bg-slate-100 rounded" title="Active Dossier Inspected"><span class="material-symbols-outlined text-[18px] text-[#0F766E]">visibility</span></button>
+<button class="p-1 hover:text-slate-800 hover:bg-slate-100 rounded" title="Print Title"><span class="material-symbols-outlined text-[18px]">print</span></button>
+<button class="p-1 hover:text-slate-800 hover:bg-slate-100 rounded" title="Manage"><span class="material-symbols-outlined text-[18px]">more_vert</span></button>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-slate-50/80 transition-colors">
+<td class="py-3 px-4 text-center">
+<input class="rounded border-slate-300 text-[#0F766E] focus:ring-[#0F766E] w-3.5 h-3.5" type="checkbox"/>
+</td>
+<td class="py-3 px-3 sticky left-0 bg-white/90 backdrop-blur-sm z-10 font-data-mono text-data-mono text-slate-700">
+<div class="flex items-center gap-1.5 group cursor-pointer">
+<span>PIN 024-118-093-B</span>
+<span class="material-symbols-outlined text-[14px] text-slate-300 group-hover:text-slate-600">content_copy</span>
+</div>
+</td>
+<td class="py-3 px-4 text-slate-800">
+                Nuvali Ridge Villa 7A
+                <div class="text-[11px] text-slate-500">Ridge Enclave · Lot 7</div>
+</td>
+<td class="py-3 px-3 text-slate-700">Detached Villa</td>
+<td class="py-3 px-3 text-right font-data-mono text-slate-800">450 sqm</td>
+<td class="py-3 px-3 text-right font-data-mono text-slate-800">380 sqm</td>
+<td class="py-3 px-4 text-right font-semibold font-data-mono text-slate-900">₱46,200,000</td>
+<td class="py-3 px-3 text-center">
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+<span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Reserved
+                </span>
+</td>
+<td class="py-3 px-3">
+<div class="flex items-center gap-2">
+<img class="w-6 h-6 rounded-full object-cover" data-alt="High resolution professional portrait of male real estate agent smiling in tailored blazer with clean architectural backdrop" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAYC_VsGdq55xEXe4DH2ISOTx_eEdfIWx8R5vGtMhlgflJrng9LONpwiU2t2x-QyWI9yvr5CmowlM2gmxaZuUvwQlCTLpL2x0xkehyDBSJhUBxcmnIcs7nlf1myYDusDMtgJM3Cb-zfUxLLKg-erl6huRuiEIWNE7lsEhhMcXQEqfCzeAHoHq7RO7PquCDmfUIAg9urKTR7tU97ITjvMZnQuvjjQStyJzlX2yNkIqyOPrzXVOmwCBwKk81nu19fR2iE2mZxvHthv6no"/>
+<span class="font-medium text-slate-800">Carlos Reyes, REA</span>
+</div>
+</td>
+<td class="py-3 px-3">
+<span class="text-xs text-slate-700 font-medium">9 Leads</span>
+<span class="text-xs text-slate-400"> / </span>
+<span class="text-xs text-slate-600">2 Tours</span>
+</td>
+<td class="py-3 px-3 text-center">
+<div class="flex items-center justify-center gap-1 text-slate-500">
+<button class="p-1 hover:text-slate-800 hover:bg-slate-100 rounded"><span class="material-symbols-outlined text-[18px]">visibility</span></button>
+<button class="p-1 hover:text-slate-800 hover:bg-slate-100 rounded"><span class="material-symbols-outlined text-[18px]">print</span></button>
+<button class="p-1 hover:text-slate-800 hover:bg-slate-100 rounded"><span class="material-symbols-outlined text-[18px]">more_vert</span></button>
+</div>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-slate-50/80 transition-colors">
+<td class="py-3 px-4 text-center">
+<input class="rounded border-slate-300 text-[#0F766E] focus:ring-[#0F766E] w-3.5 h-3.5" type="checkbox"/>
+</td>
+<td class="py-3 px-3 sticky left-0 bg-white/90 backdrop-blur-sm z-10 font-data-mono text-data-mono text-slate-700">
+<div class="flex items-center gap-1.5 group cursor-pointer">
+<span>PIN 018-042-881-C</span>
+<span class="material-symbols-outlined text-[14px] text-slate-300 group-hover:text-slate-600">content_copy</span>
+</div>
+</td>
+<td class="py-3 px-4 text-slate-800">
+                Horizon Park Townhouse 03
+                </td><td class="py-3 px-3 text-slate-700">Executive Duplex</td>
+<td class="py-3 px-3 text-right font-data-mono text-slate-800">240 sqm</td>
+<td class="py-3 px-3 text-right font-data-mono text-slate-800">210 sqm</td>
+<td class="py-3 px-4 text-right font-semibold font-data-mono text-slate-900">₱19,800,000</td>
+<td class="py-3 px-3 text-center">
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+<span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> Sold
+                  </span>
+</td>
+<td class="py-3 px-3">
+<div class="flex items-center gap-2">
+<img class="w-6 h-6 rounded-full object-cover" data-alt="Portrait of senior corporate female property appraiser in light modern studio setting with focused warm demeanor" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAp_M0EwzJ2KuedmtXN05xI_IIwA81qcW3LCNB4VHDyKevReEKzB9sElmM4WXU4Fl-BFnu1XHqRN2JMNcalclynpyS4WaRJRpPSkUDNseXTsDl4x_C33UC3piQL3Wq6EcqpSwFc9wXgtGv-_zD006dVn4Mda18wkA07N_GMMsz-IafI_uDO-GkNtbDuO7O8AELct64ddnWz0OOssh_VivnHVGDKWpB25PAUhYWZFdYjXIX8DRM4_qX1QlxNLUQPqvCKhv0WAUBYVF_t"/>
+<span class="font-medium text-slate-800">Evelyn Tan, REB</span>
+</div>
+</td>
+<td class="py-3 px-3">
+<span class="text-xs text-slate-500 font-medium">Deed Executed</span>
+</td>
+<td class="py-3 px-3 text-center">
+<div class="flex items-center justify-center gap-1 text-slate-500">
+<button class="p-1 hover:text-slate-800 hover:bg-slate-100 rounded"><span class="material-symbols-outlined text-[18px]">visibility</span></button>
+<button class="p-1 hover:text-slate-800 hover:bg-slate-100 rounded"><span class="material-symbols-outlined text-[18px]">print</span></button>
+<button class="p-1 hover:text-slate-800 hover:bg-slate-100 rounded"><span class="material-symbols-outlined text-[18px]">more_vert</span></button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Table Footer Indicator -->
+<div class="px-4 py-2.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500 font-label-md">
+<span>Showing active selection: <strong>PIN 024-118-092-A</strong> (Row 1 of 142)</span>
+<div class="flex items-center gap-3">
+<span>Page 1 of 15</span>
+<div class="flex items-center gap-1">
+<button class="p-1 rounded hover:bg-slate-200 text-slate-400"><span class="material-symbols-outlined text-[16px]">chevron_left</span></button>
+<button class="p-1 rounded hover:bg-slate-200 text-slate-700"><span class="material-symbols-outlined text-[16px]">chevron_right</span></button>
+</div>
+</div>
+</div>
+</div>
+<!-- ======================================================================= -->
+<!-- 5. PROPERTY DETAIL DOSSIER (65/35 SPLIT WORKBENCH)                      -->
+<!-- ======================================================================= -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+<!-- --------------------------------------------------------------------- -->
+<!-- LEFT 65% MAIN CONTENT                                                 -->
+<!-- --------------------------------------------------------------------- -->
+<div class="lg:col-span-8 space-y-6">
+<!-- Dossier Header & Breadcrumbs Card -->
+<div class="bg-white rounded-xl border border-slate-200 p-5 shadow-[0_1px_3px_0_rgba(15,23,42,0.05)]">
+<!-- Breadcrumb row -->
+<div class="flex flex-wrap items-center justify-between gap-2 text-xs font-label-md text-slate-500 mb-3">
+<div class="flex items-center gap-1.5">
+<span class="hover:text-primary cursor-pointer">Portfolio</span>
+<span class="text-slate-300">/</span>
+<span class="hover:text-primary cursor-pointer">Masterplanned Estates</span>
+<span class="text-slate-300">/</span>
+<span class="hover:text-primary cursor-pointer">Alabaster Terraces</span>
+<span class="text-slate-300">/</span>
+<span class="text-slate-900 font-semibold">Unit 14B</span>
+</div>
+<!-- Verified Badge -->
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+<span class="material-symbols-outlined text-[15px] text-emerald-600">verified</span>
+              Clean Title Verified by LRA
+            </span>
+</div>
+<!-- Unit Title & Price Row -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-3 border-b border-slate-100 pb-4">
+<div>
+<div class="flex items-center gap-3">
+<h1 class="font-headline-xl text-headline-xl text-slate-900 font-bold tracking-tight">The Alabaster Terrace — Unit 14B</h1>
+</div>
+<p class="font-data-mono text-data-mono text-slate-500 mt-1 flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-primary">pin_drop</span>
+                Cadastral Title: Lot 14, Blk 8, Plan Pcs-04-019924 · South Cavite Sector
+              </p>
+</div>
+<div class="text-left md:text-right">
+<span class="text-xs font-medium text-slate-400 uppercase tracking-wider block">List Price (Vat-Inc)</span>
+<span class="font-headline-xl text-headline-xl font-bold text-[#0F766E] font-data-mono">₱28,500,000</span>
+</div>
+</div>
+<!-- Photo Gallery (Panoramic Hero + 3 Thumbnails) -->
+<div class="mt-5 space-y-3">
+<div class="relative w-full h-[360px] md:h-[420px] rounded-xl overflow-hidden border border-slate-200 group">
+<!-- Provided Hero Image -->
+<img alt="Panoramic exterior view of modern row townhouse subdivision residences under bright clear morning skies with lush landscaped frontage" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida/AEtjO1Upyc6RibV78lS1bEm-lrCW88C6P05fKcsCYWg8HNG1yrA6T9_HPPOMy9slR57PFJolKg_ApPJezJGakU3rIUPLfFsCRNZ2yAeSaDoJQ5_akJD1AGgL_6yzweEQuP1ncNb4mD9EkXq0_2Hrod8DMjtKmifc_Phpi7r1SHun9q5ClbfuXYI0bLotk89QFaXu969LaFSyqzxpHRvuNESleI3uh3w1_1tAvKUzdngFvZiONXNvvNmygUIn9EnP"/>
+<div class="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent"></div>
+<!-- Floating badges over image -->
+<div class="absolute bottom-4 left-4 text-white">
+<span class="px-2.5 py-1 rounded-lg bg-black/40 backdrop-blur-md text-xs font-semibold uppercase tracking-wide border border-white/20">Phase II Completed 2024</span>
+<p class="text-sm font-medium mt-1 text-slate-100">Alabaster Terraces · West Boulevard Facing</p>
+</div>
+<div class="absolute top-4 right-4 flex items-center gap-2">
+<span class="px-3 py-1 rounded-lg bg-white/90 backdrop-blur-md text-xs font-bold text-slate-800 shadow-sm flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-[#0F766E]">360</span> Interactive 3D Scan
+                </span>
+</div>
+</div>
+<!-- 3 Thumbnails Strip -->
+<div class="grid grid-cols-3 gap-3">
+<div class="relative h-24 rounded-lg overflow-hidden border border-slate-200 group cursor-pointer">
+<img class="w-full h-full object-cover group-hover:opacity-90 transition-opacity" data-alt="Warm sunlight illuminating an elegant master bedroom suite in a modern luxury townhouse with floor to ceiling windows, light wood flooring, and crisp neutral linens" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBiCFtZZs1lsZEF8tJiVBmIvQuEgGYKkjPEzxkv4UgzUjG-v6V5M3xqvae3S4j5sggFrB29sV6nhoDMsBh5dgfk5hasOSXSVoB6UJai805AT5J23sI-RJKOBh-TxPBqD4ZMNtiyQQ4jgrbBIj5hAwolQy9EV-_ne9KVDoc9bKEHUTVJ7C648bDpu5KDK7JX6Bs5xk4YkckSKvW030SYQAnTF6FfbBhuN6qjCheEMW-cs7heBoi-PqQ71XJQhLC6cqPnGAt1iX_F84BO"/>
+<div class="absolute inset-0 bg-black/30 flex items-center justify-center">
+<span class="text-white text-xs font-semibold tracking-wide drop-shadow">Master Suite</span>
+</div>
+</div>
+<div class="relative h-24 rounded-lg overflow-hidden border border-slate-200 group cursor-pointer">
+<img class="w-full h-full object-cover group-hover:opacity-90 transition-opacity" data-alt="Technical architectural CAD floor plan drawing of a multi level modern townhouse displaying dimensions, zoning clearance, structural columns, and room tags" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAEfgoqQl7pCgVlYLHA-YnleAwKIV1WrPx0y_kmoVJ54waehMvCC8Dz-3fwavVY5gRvbUWClprhWCkDtaHN8HzBUWMdd_IBl1IEMzypnhIf1NRlcZjxGR-TA-7Rw8KvVsf4JeB3qfjkjQYk-cFEx6nERV0lumESKc_g_mEHxaZT0yrJtlRJfQ9gN4MHzDsqlTMoqRvm6Fk_j7-Q-2DC0q3_CD9HurJsX2UO611IF2L2hcNs19XOFasYUzYV1ERXyxjJT1oUPBqGZe-A"/>
+<div class="absolute inset-0 bg-black/30 flex items-center justify-center">
+<span class="text-white text-xs font-semibold tracking-wide drop-shadow">Floor Plan (Rev C)</span>
+</div>
+</div>
+<div class="relative h-24 rounded-lg overflow-hidden border border-slate-200 group cursor-pointer">
+<img class="w-full h-full object-cover group-hover:opacity-90 transition-opacity" data-alt="Sunset dusk over outdoor covered lanai patio with lush tropical vertical garden, comfortable outdoor lounge furniture, and soft warm recessed lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDaXnODW23r6gY_BNrPLWfG9kTkPrYfYz_ti5YDdaV1aDHCWpmNHE6488uH3Fl84TCDwxZ30cea3wWb2hhQYbm5zL7tArKZYL9nGALzESPJ1xUf8_nXYDPLRL3cD-KNG7tbuiAu9yGnCiugl6uOT0-rqwfU8p1HB1lsyJuBKgpY-NoweB0WoVoqu1NOD6bH42E7FzFsqhUViUvYU6z5NLiJvtp0tLm5SFEeRRhRxq7bHOEeOfeQd9rZ-kKxBhSfHVNCBqvfkKSsUzEI"/>
+<div class="absolute inset-0 bg-black/30 flex items-center justify-center">
+<span class="text-white text-xs font-semibold tracking-wide drop-shadow">Sunset Lanai</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Architectural Specs Bar -->
+<div class="mt-5 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200 text-center">
+<div class="p-2">
+<span class="block text-slate-400 font-label-sm text-label-sm uppercase">Bedrooms</span>
+<span class="font-bold text-slate-800 text-sm flex items-center justify-center gap-1 mt-0.5">
+<span class="material-symbols-outlined text-[16px] text-primary">bed</span> 4 Beds
+              </span>
+</div>
+<div class="p-2 border-l border-slate-200">
+<span class="block text-slate-400 font-label-sm text-label-sm uppercase">Bathrooms</span>
+<span class="font-bold text-slate-800 text-sm flex items-center justify-center gap-1 mt-0.5">
+<span class="material-symbols-outlined text-[16px] text-primary">bathtub</span> 5 Baths
+              </span>
+</div>
+<div class="p-2 border-l border-slate-200">
+<span class="block text-slate-400 font-label-sm text-label-sm uppercase">Floor Area</span>
+<span class="font-bold text-slate-800 text-sm flex items-center justify-center gap-1 mt-0.5 font-data-mono">
+<span class="material-symbols-outlined text-[16px] text-primary">square_foot</span> 280 sqm
+              </span>
+</div>
+<div class="p-2 border-l border-slate-200">
+<span class="block text-slate-400 font-label-sm text-label-sm uppercase">Lot Area</span>
+<span class="font-bold text-slate-800 text-sm flex items-center justify-center gap-1 mt-0.5 font-data-mono">
+<span class="material-symbols-outlined text-[16px] text-primary">straighten</span> 320 sqm
+              </span>
+</div>
+<div class="p-2 border-l border-slate-200">
+<span class="block text-slate-400 font-label-sm text-label-sm uppercase">Parking</span>
+<span class="font-bold text-slate-800 text-sm flex items-center justify-center gap-1 mt-0.5">
+<span class="material-symbols-outlined text-[16px] text-primary">directions_car</span> 2-Car Port
+              </span>
+</div>
+<div class="p-2 border-l border-slate-200">
+<span class="block text-slate-400 font-label-sm text-label-sm uppercase">Orientation</span>
+<span class="font-bold text-[#0F766E] text-sm flex items-center justify-center gap-1 mt-0.5">
+<span class="material-symbols-outlined text-[16px]">explore</span> Corner Lot
+              </span>
+</div>
+</div>
+</div>
+<!-- Tabbed Due Diligence Pane -->
+<div class="bg-white rounded-xl border border-slate-200 p-5 shadow-[0_1px_3px_0_rgba(15,23,42,0.05)]">
+<!-- Tab navigation -->
+<div class="flex items-center gap-6 border-b border-slate-200 font-label-md text-label-md">
+<button class="text-[#0F766E] font-semibold border-b-2 border-[#0F766E] pb-3 flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[18px]">verified_user</span> Cadastral Due Diligence
+            </button>
+<button class="text-slate-500 hover:text-slate-800 pb-3 transition-colors flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[18px]">history_edu</span> Title Chain History
+            </button>
+<button class="text-slate-500 hover:text-slate-800 pb-3 transition-colors flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[18px]">receipt_long</span> HOA &amp; Tax Assessments
+            </button>
+</div>
+<!-- Active Tab Content: Cadastral Due Diligence -->
+<div class="pt-5 space-y-4">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<!-- Item 1: TCT -->
+<div class="p-3.5 rounded-lg border border-slate-200 bg-slate-50/50">
+<div class="flex items-start justify-between">
+<div>
+<span class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Certificate of Title</span>
+<h2 class="font-bold text-slate-900 mt-0.5 font-data-mono text-sm">TCT No. 042-202300918</h2>
+<p class="text-xs text-slate-600 mt-1">Registry of Deeds: Cavite South Registry Branch</p>
+</div>
+<span class="p-1.5 rounded-full bg-emerald-100 text-emerald-700">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+</span>
+</div>
+<div class="mt-2 text-[11px] text-emerald-800 font-medium bg-emerald-50 px-2 py-1 rounded border border-emerald-100">
+                  Electronic vault verification active · Zero lis pendens or encumbrances
+                </div>
+</div>
+<!-- Item 2: Tax Declaration -->
+<div class="p-3.5 rounded-lg border border-slate-200 bg-slate-50/50">
+<div class="flex items-start justify-between">
+<div>
+<span class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Real Property Tax</span>
+<h2 class="font-bold text-slate-900 mt-0.5 font-data-mono text-sm">TD No. 2024-GR-00281</h2>
+<p class="text-xs text-slate-600 mt-1">Assessor's Office: Tagaytay-Silang District</p>
+</div>
+<span class="p-1.5 rounded-full bg-emerald-100 text-emerald-700">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+</span>
+</div>
+<div class="mt-2 text-[11px] text-emerald-800 font-medium bg-emerald-50 px-2 py-1 rounded border border-emerald-100">
+                  Fully paid through Q4 2025 · Zero tax arrears / Official receipt on file
+                </div>
+</div>
+<!-- Item 3: Geo-coordinates -->
+<div class="p-3.5 rounded-lg border border-slate-200 bg-slate-50/50">
+<div class="flex items-start justify-between">
+<div>
+<span class="text-xs font-semibold text-slate-500 uppercase tracking-wide">LRA Geo-Coordinates</span>
+<h2 class="font-bold text-slate-900 mt-0.5 font-data-mono text-sm">14°18'22.4"N 121°03'45.1"E</h2>
+<p class="text-xs text-slate-600 mt-1">Geodetic Survey: Certified boundary monuments present</p>
+</div>
+<span class="p-1.5 rounded-full bg-teal-100 text-teal-700">
+<span class="material-symbols-outlined text-[16px]">location_on</span>
+</span>
+</div>
+<div class="mt-2 text-[11px] text-slate-600 font-mono bg-white px-2 py-1 rounded border border-slate-200">
+                  Corner Pin 1: BLLM #4, Silang Cadastre · Zero boundary overlaps detected
+                </div>
+</div>
+<!-- Item 4: Zoning & Compliance -->
+<div class="p-3.5 rounded-lg border border-slate-200 bg-slate-50/50">
+<div class="flex items-start justify-between">
+<div>
+<span class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Zoning &amp; Ordinances</span>
+<h2 class="font-bold text-slate-900 mt-0.5 text-sm">R-2 Medium Density Residential</h2>
+<p class="text-xs text-slate-600 mt-1">Municipal Planning &amp; Development Board Compliant</p>
+</div>
+<span class="p-1.5 rounded-full bg-emerald-100 text-emerald-700">
+<span class="material-symbols-outlined text-[16px]">gavel</span>
+</span>
+</div>
+<div class="mt-2 text-[11px] text-slate-700 font-medium bg-white px-2 py-1 rounded border border-slate-200">
+                  Setbacks: 3m front, 2m side/rear conforming · Zero easement encroachments
+                </div>
+</div>
+</div>
+<!-- Environmental Clearance Certificate Banner -->
+<div class="p-3 rounded-lg border border-teal-200 bg-teal-50/40 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#0F766E] text-[22px]">eco</span>
+<div>
+<h2 class="text-xs font-bold text-teal-900">Environmental Clearance Certificate (ECC) Compliant</h2>
+<p class="text-[11px] text-teal-700">DENR-EMB Region IV-A Reference: <span class="font-mono font-semibold">ECC-R4A-2023-0182</span> (Approved for Subdivision Development)</p>
+</div>
+</div>
+<button class="text-xs font-semibold text-[#0F766E] hover:underline flex items-center gap-1">
+                View Certificate <span class="material-symbols-outlined text-[14px]">open_in_new</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- --------------------------------------------------------------------- -->
+<!-- RIGHT 35% STICKY ACTION SIDEBAR                                       -->
+<!-- --------------------------------------------------------------------- -->
+<div class="lg:col-span-4 space-y-6 lg:sticky lg:top-20">
+<!-- Quick Scheduling Box -->
+<div class="bg-white rounded-xl border border-slate-200 p-5 shadow-[0_1px_3px_0_rgba(15,23,42,0.05)] space-y-4">
+<div class="flex items-center justify-between border-b border-slate-100 pb-3">
+<h2 class="font-headline-sm text-headline-sm font-bold text-slate-900 flex items-center gap-2">
+<span class="material-symbols-outlined text-[#0F766E]">calendar_month</span>
+              Book Private Broker/Buyer Tour
+            </h2>
+<span class="text-[11px] px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-full font-semibold border border-emerald-200">Instant VIP</span>
+</div>
+<p class="text-xs text-slate-500">Coordinate exclusive on-site property walkthrough with assigned Senior Managing Broker.</p>
+<div class="space-y-3">
+<div>
+<label class="block text-xs font-semibold text-slate-700 mb-1">Select Inspection Date</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-2.5 text-slate-400 text-[18px]">event</span>
+<input class="w-full pl-9 pr-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0F766E] focus:border-transparent" type="date" value="2025-05-18"/>
+</div>
+</div>
+<div>
+<label class="block text-xs font-semibold text-slate-700 mb-1">Available Time Slot</label>
+<div class="grid grid-cols-2 gap-2">
+<button class="py-1.5 px-2 rounded-lg text-xs font-medium border border-[#0F766E] bg-teal-50 text-[#0F766E] text-center">10:00 AM - 11:30 AM</button>
+<button class="py-1.5 px-2 rounded-lg text-xs font-medium border border-slate-200 text-slate-600 hover:bg-slate-50 text-center">02:00 PM - 03:30 PM</button>
+</div>
+</div>
+<div>
+<label class="block text-xs font-semibold text-slate-700 mb-1">Client / Principal Buyer Name</label>
+<input class="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0F766E] focus:border-transparent" placeholder="e.g. Atty. Roberto Delgado" type="text"/>
+</div>
+<!-- Coral Accent Action Button -->
+<button class="w-full py-2.5 px-4 rounded-lg bg-[#FF6B6B] hover:bg-[#ff5252] text-white font-semibold text-xs shadow-sm transition-all flex items-center justify-center gap-2 active:scale-[0.98]">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+              Confirm On-Site Inspection
+            </button>
+</div>
+</div>
+<!-- Interactive Monthly Amortization & Cashflow Calculator -->
+<div class="bg-white rounded-xl border border-slate-200 p-5 shadow-[0_1px_3px_0_rgba(15,23,42,0.05)] space-y-4">
+<div class="flex items-center justify-between border-b border-slate-100 pb-3">
+<h2 class="font-headline-sm text-headline-sm font-bold text-slate-900 flex items-center gap-2">
+<span class="material-symbols-outlined text-tertiary">calculate</span>
+              Amortization &amp; Financing
+            </h2>
+<span class="text-xs font-data-mono text-slate-400">Fixed 6.75%</span>
+</div>
+<div class="space-y-3.5">
+<!-- Total Contract Price -->
+<div class="flex items-center justify-between">
+<span class="text-xs text-slate-500">Total Contract Price:</span>
+<span class="text-sm font-bold text-slate-900 font-data-mono">₱28,500,000</span>
+</div>
+<!-- Down Payment Slider/Input -->
+<div>
+<div class="flex items-center justify-between text-xs mb-1">
+<span class="text-slate-600 font-medium">Down Payment (20%):</span>
+<span class="font-semibold text-slate-800 font-data-mono">₱5,700,000</span>
+</div>
+<input class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#0F766E]" max="50" min="10" type="range" value="20"/>
+<div class="flex justify-between text-[10px] text-slate-400 mt-1">
+<span>10% (₱2.85M)</span>
+<span>20% Spot</span>
+<span>50% (₱14.25M)</span>
+</div>
+</div>
+<!-- Loan Term Selector -->
+<div>
+<label class="block text-xs font-semibold text-slate-700 mb-1">Loan Term &amp; Repayment Horizon</label>
+<select class="w-full text-xs py-1.5 px-3 border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-[#0F766E] focus:border-transparent font-medium">
+<option selected="">20 Years (240 Mos) @ 6.75% fixed interest</option>
+<option>15 Years (180 Mos) @ 6.25% fixed interest</option>
+<option>10 Years (120 Mos) @ 5.85% fixed interest</option>
+<option>5 Years (60 Mos) Spot Cash Scheme</option>
+</select>
+</div>
+<!-- Highlighted Result Box with Coral Accent Badge -->
+<div class="p-3.5 rounded-xl bg-slate-900 text-white space-y-2 relative overflow-hidden">
+<div class="absolute -right-4 -bottom-4 w-24 h-24 bg-[#FF6B6B]/10 rounded-full blur-xl pointer-events-none"></div>
+<div class="flex items-center justify-between">
+<span class="text-xs text-slate-300">Estimated Monthly Amortization</span>
+<span class="px-2 py-0.5 text-[10px] font-bold uppercase rounded bg-[#FF6B6B] text-white">Bank Rate Locked</span>
+</div>
+<div class="font-headline-xl text-headline-xl font-bold font-data-mono text-[#a3faef]">
+                ₱172,840 <span class="text-xs text-slate-400 font-normal">/ mo</span>
+</div>
+<div class="pt-2 border-t border-slate-800 text-[11px] text-slate-300 flex items-center justify-between">
+<span>Required Combined Household Income:</span>
+<span class="font-semibold text-amber-400 font-data-mono">~₱575,000/mo</span>
+</div>
+</div>
+<!-- Direct Actions -->
+<div class="space-y-2 pt-1">
+<button class="w-full py-2 px-3 rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-800 font-semibold text-xs transition-colors flex items-center justify-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">picture_as_pdf</span>
+                Export Bank Pre-Qualification Sheet (PDF)
+              </button>
+<button class="w-full py-2.5 px-3 rounded-lg bg-[#0F766E] hover:bg-[#115E59] text-white font-semibold text-xs shadow-sm transition-all flex items-center justify-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">contract</span>
+                Initiate Reservation Agreement
+              </button>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- ========================================================================= -->
+<!-- LIGHTWEIGHT FOOTER                                                        -->
+<!-- ========================================================================= -->
+<footer class="mt-auto border-t border-slate-200 bg-white py-4 px-6 text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-3">
+<div class="flex items-center gap-2">
+<span class="font-semibold text-slate-800">Human Shelter Realty Platform</span>
+<span>© 2025 All Rights Reserved · Land Registration Authority Synchronized</span>
+</div>
+<div class="flex items-center gap-4">
+<a class="hover:text-primary" href="#">Cadastral Registry Rules</a>
+<a class="hover:text-primary" href="#">RESA Compliance</a>
+<a class="hover:text-primary" href="#">Broker Security Standards</a>
+<span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-mono text-[10px]">v4.8.2-prod</span>
+</div>
+</footer>
+</body></html>

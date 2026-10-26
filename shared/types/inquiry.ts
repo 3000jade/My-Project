@@ -164,8 +164,20 @@ export interface NotificationJobRecord {
   updatedAt: string;
 }
 
+export type RevokeReason =
+  | 'user_logout'
+  | 'user_manual_revoke'
+  | 'password_reset'
+  | 'inactivity_timeout'
+  | 'absolute_timeout'
+  | 'all_device_revocation'
+  | 'account_disabled'
+  | 'admin_action';
+
 export interface AuthSessionRecord {
-  id: string;
+  id: string; // Stable UUID session identifier (matches Supabase JWT session_id)
+  tokenHash?: string; // SHA-256 hash of active Bearer token (no raw credentials stored at rest)
+  token?: string; // Deprecated legacy in-memory reference during transition
   userId: string;
   role: string;
   createdAt: number;
@@ -173,5 +185,9 @@ export interface AuthSessionRecord {
   idleExpiresAt: number;
   absoluteExpiresAt: number;
   revokedAt?: number;
-  revokeReason?: string;
+  revokeReason?: RevokeReason | string;
+  lastHeartbeatAt?: number;
+  userAgent?: string;
+  ipAddress?: string;
+  updatedAt?: number;
 }

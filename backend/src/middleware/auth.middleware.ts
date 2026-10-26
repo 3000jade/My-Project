@@ -32,18 +32,25 @@ export const requireAuth = async (
     const token = authHeader.split(' ')[1];
     const isHeartbeat = String(req.headers['x-session-heartbeat'] || '').toLowerCase() === 'true';
 
-    // If session is tracked in SessionService, enforce server-side idle/absolute expiry and revocation
-    const existingSession = SessionService.getSession(token);
-    if (existingSession) {
-      const check = SessionService.validateSession(token, Date.now(), isHeartbeat);
-      if (!check.valid) {
-        res.status(401).json({
-          success: false,
-          error: `Unauthorized: ${check.reason || 'Session expired or revoked.'}`,
-          timestamp: new Date().toISOString(),
-        });
-        return;
-      }
+    // Session must be tracked in SessionService; reject untracked tokens (SM-24)
+    const existingSession = await SessionService.getSessionAsync(token);
+    if (!existingSession) {
+      res.status(401).json({
+        success: false,
+        error: 'Unauthorized: Session not found or expired. Please log in again.',
+        timestamp: new Date().toISOString(),
+      });
+      return;
+    }
+
+    const check = await SessionService.validateSessionAsync(token, Date.now(), isHeartbeat);
+    if (!check.valid) {
+      res.status(401).json({
+        success: false,
+        error: `Unauthorized: ${check.reason || 'Session expired or revoked.'}`,
+        timestamp: new Date().toISOString(),
+      });
+      return;
     }
 
     const { data, error } = await supabase.auth.getUser(token);
@@ -73,18 +80,22 @@ export const requireAuth = async (
       return;
     }
 
-    const role = profile.role || 'client';
-    if (!existingSession) {
-      SessionService.createSession({
-        sessionId: token,
-        userId: data.user.id,
-        role,
+    // Invariant: Verify session ownership matches authenticated Supabase user
+    if (existingSession.userId !== data.user.id) {
+      res.status(401).json({
+        success: false,
+        error: 'Unauthorized: Session identity mismatch.',
+        timestamp: new Date().toISOString(),
       });
+      return;
     }
+
+    const role = profile.role || 'client';
 
     const userObj = data.user as any;
     userObj.role = role;
     userObj.profile = profile;
+    userObj.fullName = profile.full_name || data.user.user_metadata?.full_name || profile.email?.split('@')[0] || 'User';
     userObj.verification_status = profile.verification_status;
     req.user = userObj;
     next();

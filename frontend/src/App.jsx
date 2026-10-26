@@ -21,6 +21,9 @@ const ContactPage = lazy(() => import('./pages/public/ContactPage'));
 const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
 const RegisterPage = lazy(() => import('./pages/auth/RegisterPage'));
 const AgentRegisterPage = lazy(() => import('./pages/auth/AgentRegisterPage'));
+const ForgotPasswordPage = lazy(() => import('./pages/auth/ForgotPasswordPage'));
+const ResetPasswordPage = lazy(() => import('./pages/auth/ResetPasswordPage'));
+const VerifyEmailPage = lazy(() => import('./pages/auth/VerifyEmailPage'));
 const UnauthorizedPage = lazy(() => import('./pages/public/UnauthorizedPage'));
 const DemoApiPage = lazy(() => import('./pages/public/DemoApiPage'));
 
@@ -76,6 +79,12 @@ const ClientProfile = lazy(() => import('./pages/portals/client/ClientProfile'))
 const ClientSavedProperties = lazy(() => import('./pages/portals/client/ClientSavedProperties'));
 const ClientInquiries = lazy(() => import('./pages/portals/client/ClientInquiries'));
 
+// Super Admin Portal Pages
+const AdminUsersPage = lazy(() => import('./pages/portals/super-admin/AdminUsersPage'));
+
+// Session Inactivity Watcher
+import SessionWatcher from './components/auth/SessionWatcher';
+
 function ScrollToTop() {
   const { pathname, hash } = useLocation();
   const lenis = useLenis();
@@ -112,7 +121,11 @@ function ScrollToTop() {
 
 function AppRoutes({ isAppLoading }) {
   const location = useLocation();
-  const isDashboardRoute = location.pathname.startsWith('/agent') || location.pathname.startsWith('/broker') || location.pathname.startsWith('/client');
+  const isDashboardRoute =
+    location.pathname.startsWith('/agent') ||
+    location.pathname.startsWith('/broker') ||
+    location.pathname.startsWith('/client') ||
+    location.pathname.startsWith('/admin');
 
   // If on Agent, Broker, or Client portals, render dashboard layouts without Public Header/Footer/ChatWidget
   if (isDashboardRoute) {
@@ -184,6 +197,21 @@ function AppRoutes({ isAppLoading }) {
           <Route path="inquiries" element={<ClientInquiries />} />
           <Route path="profile" element={<ClientProfile />} />
         </Route>
+
+        {/* Super Admin Routes (Protected for Admin) */}
+        <Route
+          path="/admin"
+          element={
+            <Suspense fallback={<div className="min-h-screen bg-[#FBFBF9] flex items-center justify-center text-xs font-mono text-[#0D4446]">Loading Admin Portal...</div>}>
+              <ProtectedRoute allowedRoles={['admin']}>
+                <DashboardLayout role="broker" title="Admin Portal" />
+              </ProtectedRoute>
+            </Suspense>
+          }
+        >
+          <Route index element={<Navigate to="/admin/users" replace />} />
+          <Route path="users" element={<AdminUsersPage />} />
+        </Route>
       </Routes>
     );
   }
@@ -218,7 +246,13 @@ function AppRoutes({ isAppLoading }) {
     );
   }
 
-  const isAuthRoute = location.pathname === '/login' || location.pathname === '/registration-form' || location.pathname.startsWith('/register');
+  const isAuthRoute =
+    location.pathname === '/login' ||
+    location.pathname === '/registration-form' ||
+    location.pathname.startsWith('/register') ||
+    location.pathname === '/forgot-password' ||
+    location.pathname === '/reset-password' ||
+    location.pathname === '/verify-email';
 
   // Client Application Structure (Preserved with lazy loading and 3D duplex route)
   return (
@@ -237,6 +271,9 @@ function AppRoutes({ isAppLoading }) {
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/register/agent" element={<AgentRegisterPage />} />
             <Route path="/registration-form" element={<RegisterPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/verify-email" element={<VerifyEmailPage />} />
             <Route path="/unauthorized" element={<UnauthorizedPage />} />
             <Route path="/demo-api" element={<DemoApiPage />} />
           </Routes>
@@ -278,6 +315,7 @@ export default function App() {
         <Router>
           <ScrollToTop />
           <AuthProvider>
+            <SessionWatcher />
             <AppRoutes isAppLoading={isAppLoading} />
           </AuthProvider>
           {import.meta.env.DEV && <Agentation />}

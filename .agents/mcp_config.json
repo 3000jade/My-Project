@@ -8,6 +8,10 @@
         "RESO_CLIENT_ID": "dev_id",
         "RESO_CLIENT_SECRET": "dev_secret"
       }
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp", "--headless"]
     }
   }
 }

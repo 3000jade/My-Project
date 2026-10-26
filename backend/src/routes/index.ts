@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import healthRoutes from './health.routes';
 import authRoutes from './auth.routes';
+import adminRoutes from './admin.routes';
 import propertyRoutes from './property.routes';
 import valuationRoutes from './valuation.routes';
 import inquiryRoutes from './inquiry.routes';
@@ -24,6 +25,7 @@ const router = Router();
 // Master API Routes Table
 router.use('/health', healthRoutes);
 router.use('/auth', authRoutes);
+router.use('/admin', adminRoutes);
 router.use('/properties', propertyRoutes);
 router.use('/valuations', valuationRoutes);
 router.use('/inquiries', inquiryRoutes);

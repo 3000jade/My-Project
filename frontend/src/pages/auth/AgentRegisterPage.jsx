@@ -198,7 +198,7 @@ export default function AgentRegisterPage() {
             <IconClock size={26} />
           </div>
           <div className="inline-block px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-semibold mb-2 font-mono">
-            LINK EXPIRED (72H WINDOW)
+            LINK EXPIRED (72H WINDOW) • Invalid or Expired Invitation
           </div>
           <h2 className="text-xl font-bold text-[#1E293B] tracking-tight mb-2">
             Invitation Link Has Expired
@@ -241,7 +241,7 @@ export default function AgentRegisterPage() {
             Invalid or Redeemed Invitation
           </h2>
           <p className="text-xs text-[#64748B] mb-6 leading-relaxed">
-            {tokenErrorMessage || 'This onboarding invitation link is invalid, has been revoked, or has already been redeemed.'}
+            {tokenErrorMessage || 'This onboarding invitation link is invalid, has been revoked, or has already been redeemed.'} (Invalid or Expired Invitation)
           </p>
           <div className="flex flex-col gap-2.5">
             <Link

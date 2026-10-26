@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   IconEye, 
@@ -268,13 +268,13 @@ export default function LoginPage() {
                     </button>
                   </div>
                   <div className="flex justify-end pt-1">
-                    <button 
-                      type="button"
-                      onClick={() => setAuthError('Password reset instructions sent if account exists.')}
-                      className="font-sans text-xs text-[#1c2224] hover:text-black hover:underline font-semibold cursor-pointer"
+                    <Link 
+                      to="/forgot-password"
+                      role="button"
+                      className="font-sans text-xs text-[#1c2224] hover:text-[#0F766E] hover:underline font-semibold cursor-pointer"
                     >
                       Forgot Password?
-                    </button>
+                    </Link>
                   </div>
                 </div>
 

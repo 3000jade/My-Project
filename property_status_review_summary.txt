@@ -1,0 +1,195 @@
+================================================================================
+PROPERTY STATUS FIELD REVIEW & LISTING CARD CONTROL SUMMARY
+Human Shelter Realty | Modern SaaS Real Estate Platform
+Generated: October 26, 2026
+================================================================================
+
+1. EXECUTIVE OVERVIEW
+--------------------------------------------------------------------------------
+The property status field governs inventory lifecycle progression, public
+syndication visibility, role-based action gating (broker vs. agent permissions),
+and UI card presentation across Human Shelter Realty.
+
+The platform currently operates a DUAL-STATUS architecture:
+  1) standardStatus / standard_status: RESO Data Dictionary 2.0 standard
+     lifecycle governing visibility, workflow approvals, and compliance.
+  2) status: Legacy operational availability state (3-to-4 states) used for
+     high-level badges and quick triage.
+
+
+2. SUPPORTED STATUSES & SCHEMA MATRIX
+--------------------------------------------------------------------------------
+A. RESO 2.0 Standard Status (standardStatus / standard_status):
+   Location: shared/types/property.ts, backend/src/schemas/property.schema.ts
+   Supported Values:
+     - 'Draft'                  : Unlisted inventory being authored.
+     - 'Pending Approval'       : Proposed new listing or staged modifications.
+     - 'Active'                 : Published, publicly searchable listing.
+     - 'Active Under Contract'  : Accepted offer with pending contingencies.
+     - 'Pending'                : Contract executed, pending final closing.
+     - 'Closed'                 : Transaction completed / sold / leased.
+     - 'Canceled'               : Listing terminated before expiration.
+     - 'Expired'                : Listing agreement reached end date.
+
+B. Operational Availability Status (status):
+   Location: backend/src/schemas/property.schema.ts, frontend/src/services/propertyService.js
+   Supported Values:
+     - Backend / Database enum : 'available' | 'pending' | 'sold' (lowercase)
+     - Frontend Normalizer     : 'AVAILABLE' | 'RESERVED' | 'SOLD' | 'INACTIVE'
+                                 (also 'PUBLISHED', 'DRAFT' in StatusBadge.jsx)
+     - Mock Data Fixtures      : Some legacy mock items contain 'For Sale' / 'For Rent'
+
+
+3. WHERE STATUS IS SET OR UPDATED
+--------------------------------------------------------------------------------
+A. Listing Ingestion / Creation:
+   - File: backend/src/services/property.service.ts (lines 926, 1091-1157)
+   - Rules: Restricted to 'broker' or 'admin'.
+   - Initial assignment:
+       standardStatus defaults to data.standardStatus || 'Active'
+       status defaults to (standardStatus === 'Active' ? 'available' : 'pending')
+   - Database column defaults (supabase_schema.sql):
+       standard_status: 'Draft'
+       status: 'available'
+
+B. Direct Broker / Admin Mutation:
+   - File: backend/src/services/property.service.ts (lines 1332-1414)
+   - Route: PUT /api/properties/:id
+   - Rules: Only broker and admin can transition to 'Active'.
+   - Update mapping:
+       standardStatus = data.standardStatus || existing.standardStatus
+       status = (data.standardStatus === 'Active' ? 'available' : existing.status)
+
+C. Agent Staged Proposal Workflow:
+   - Files: frontend/src/pages/portals/agent/AgentPropertyDetail.jsx (lines 89-105),
+            frontend/src/services/propertyService.js (proposeEdit)
+   - Route: POST /api/properties/:id/propose-edit
+   - Rules: Sales agents cannot mutate live properties. Status changes are
+     serialized into public.property_edit_requests with status 'PENDING'.
+   - Concurrency guard: Partial unique index prevents multiple pending requests.
+
+D. Broker Proposal Approval:
+   - File: backend/src/models/property_edit_approval_migration.sql (lines 156-161)
+   - Stored Procedure: apply_property_edit_request
+   - Rules: Synchronizes standard_status with proposed value and automates:
+       standard_status = 'Active'                  -> status = 'available'
+       standard_status = 'Closed'                  -> status = 'sold'
+       standard_status in ('Pending', 'Contract')  -> status = 'pending'
+
+E. Broker Quick Edit Drawer:
+   - File: frontend/src/components/cms/PropertyQuickEditDrawer.jsx (lines 15-56)
+   - Status Pills:
+       - Active           -> status: 'AVAILABLE', standardStatus: 'Active'
+       - Under Contract   -> status: 'RESERVED',  standardStatus: 'Active Under Contract'
+       - Closed           -> status: 'SOLD',      standardStatus: 'Closed'
+       - Needs Approval   -> status: 'PENDING',   standardStatus: 'Pending Approval'
+       - Draft            -> status: 'DRAFT',     standardStatus: 'Draft'
+
+F. Broker Property Detail Status Dropdown:
+   - File: frontend/src/pages/portals/broker/BrokerPropertyDetail.jsx (lines 303-317, 2087-2095)
+   - Select Options: 'AVAILABLE', 'RESERVED', 'SOLD', 'INACTIVE'
+
+
+4. HOW STATUS CONTROLS LISTING CARDS, PRICING, VISIBILITY & ACTIONS
+--------------------------------------------------------------------------------
+A. Public Listing Card (frontend/src/components/ui/cards/PropertyCard.jsx):
+   - Badge: NO STATUS BADGE IS DISPLAYED. The card only renders transaction
+     type ('For Sale' / 'For Rent'), 'Featured' badge, and property category.
+   - Price: Always displays asking price / rental rate. It does NOT switch to
+     "Sold Price" or "Off Market" even if property is Closed or Draft.
+   - Visibility: The card component contains no self-filtering; visibility is
+     delegated to API parameters and Supabase RLS.
+   - Available Actions: Entire card click and "View Details" unconditionally
+     route to /properties/:id. Viewing list bookmarking is always active.
+
+B. Agent Portal Card & Table (frontend/src/pages/portals/agent/AgentProperties.jsx):
+   - Badge: Renders <StatusBadge status={item.status} />. If a pending edit proposal
+     exists, overlays an amber "Pending Broker Review" pill.
+   - Subhead: Displays "Published" vs "Draft / Unlisted" based on is_published.
+   - Actions: Direct edit is disabled; navigates to AgentPropertyDetail to propose changes.
+
+C. Broker Portal Table (frontend/src/pages/portals/broker/BrokerProperties.jsx):
+   - Badge: Full color-coded badges:
+       - Active           : Emerald pill with dot
+       - Needs Approval   : Amber pill with pulsing dot
+       - Under Contract   : Amber pill
+       - Reserved/Pending : Amber pill
+       - Sold/Closed      : Rose pill
+       - Draft            : Slate/Blue pill
+   - Inline Actions: When status is 'Needs Approval', an inline "Approve" button appears.
+     Row actions provide Edit, Duplicate, and Quick Edit Drawer triggers.
+
+D. Full Public Detail View (frontend/src/pages/public/PropertyListingView.jsx):
+   - Badge: Displays {standardStatus} above hero photo (data-testid="reso-standard-status").
+   - Action Gating: "Schedule Viewing" and "Contact Agent" CTA buttons remain fully
+     enabled even if standardStatus is 'Closed', 'Expired', or 'Draft'.
+
+E. Database Row-Level Security (RLS) Visibility:
+   - File: backend/src/models/property_edit_approval_migration.sql (lines 341-350)
+   - Anonymous / Public users: Restrictive policy allows SELECT ONLY IF
+     standard_status = 'Active'.
+   - Authenticated users: Can view non-Active properties only if they are the
+     creator (created_by), assigned listing agent (list_agent_key), or have role
+     'broker' or 'admin'.
+
+
+5. FLAGGED INCONSISTENCIES & DEFECTS
+--------------------------------------------------------------------------------
+[CRITICAL BUG 1] Quick Edit Discards Status in toApiPayload
+  - Location: frontend/src/services/propertyService.js (lines 294-395)
+  - Detail: toApiPayload() strips both standardStatus and status from the output DTO.
+    When PropertyQuickEditDrawer calls propertyService.updateProperty(id, toApiPayload(data)),
+    status updates are discarded and never persist to the backend database.
+
+[DEFECT 2] Public PropertyCard Lacks Status Badges
+  - Location: frontend/src/components/ui/cards/PropertyCard.jsx
+  - Detail: The public card completely omits status badges. A buyer cannot tell
+    if a property is "Active Under Contract", "Pending", or "Closed".
+
+[DEFECT 3] Checking Status for Transaction Type
+  - Location: frontend/src/components/ui/cards/PropertyCard.jsx (line 39)
+              frontend/src/hooks/usePropertyFilterEngine.js (line 35)
+  - Detail: Both files check property.status.toLowerCase().includes('rent').
+    This conflates operational availability with transaction classification (For Sale vs Rent)
+    due to early mock data legacy format.
+
+[DEFECT 4] Incomplete Asymmetric Sync in updateProperty
+  - Location: backend/src/services/property.service.ts (line 1401)
+  - Detail: Direct updates only sync status when standardStatus === 'Active'.
+    If standardStatus transitions to 'Closed', status remains 'available'.
+    Only the stored procedure apply_property_edit_request maps 'Closed' -> 'sold'.
+
+[DEFECT 5] Incorrect Status Fallback for INACTIVE in BrokerPropertyDetail
+  - Location: frontend/src/pages/portals/broker/BrokerPropertyDetail.jsx (line 309)
+  - Detail: Ternary logic assigns standardStatus: 'Pending' when newStatus === 'INACTIVE',
+    erroneously converting an unlisted/inactive listing into a pending contract.
+
+[DEFECT 6] Double Counting in Broker Tab Counters
+  - Location: frontend/src/pages/portals/broker/BrokerProperties.jsx (lines 208-219)
+  - Detail: Tab counts check 'std === ACTIVE || s === AVAILABLE' and 'std === DRAFT || s === INACTIVE'
+    in separate if-blocks instead of exclusive if/else if. A draft listing with default status='available'
+    increments BOTH the Active and Draft tab counters.
+
+[DEFECT 7] Static Badge Styling & Ungated Public CTAs on Detail View
+  - Location: frontend/src/pages/public/PropertyListingView.jsx (lines 474, 924-938)
+  - Detail: The status badge always renders in teal regardless of whether status is Active,
+    Closed, or Expired. "Schedule Viewing" and "Contact Agent" remain clickable on sold properties.
+
+[DEFECT 8] Hardcoded "Available" Badge in Broker Detail Hero
+  - Location: frontend/src/pages/portals/broker/BrokerPropertyDetail.jsx (lines 472-474)
+  - Detail: The hero carousel badge is hardcoded to '<span ...>Available</span>', ignoring
+    property.status and property.standardStatus entirely.
+
+
+6. RECOMMENDED ACTION PLAN
+--------------------------------------------------------------------------------
+1. Fix toApiPayload: Include standardStatus and status in the serialized payload
+   in frontend/src/services/propertyService.js.
+2. Standardize Backend Sync: Ensure backend/src/services/property.service.ts updates
+   both standardStatus and status symmetrically on direct updates (matching the RPC).
+3. Enhance PropertyCard: Add a status badge chip on PropertyCard for non-Active statuses
+   ('Under Contract', 'Pending', 'Closed') and style them with design tokens.
+4. Correct Broker Tab Logic: Use exclusive if/else if branches for tab counters in BrokerProperties.jsx.
+5. Gate Public CTAs: Disable "Schedule Viewing" on PropertyListingView when status is 'Closed',
+   'Expired', or 'Canceled'.
+================================================================================

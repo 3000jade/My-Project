@@ -53,7 +53,7 @@ export default function RegisterPage() {
   const [agreeTerms, setAgreeTerms] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [authError, setAuthError] = useState('');
-  const [role, setRole] = useState('agent');
+  const role = 'client';
 
   // Password Rules & Validation
   const passwordRules = [
@@ -93,8 +93,13 @@ export default function RegisterPage() {
     try {
       const payload = { fullName, role };
       if (phone) payload.phone = phone;
-      await register(email, password, payload);
-      navigate(`/${role}/dashboard`);
+      const authData = await register(email, password, payload);
+      if (authData?.requiresEmailVerification) {
+        navigate('/verify-email', { state: { email } });
+      } else {
+        const targetRole = authData?.user?.role || 'client';
+        navigate(`/${targetRole}/dashboard`);
+      }
     } catch (err) {
       setAuthError(err.message || 'Unable to complete registration. Please try again.');
     } finally {
@@ -111,8 +116,8 @@ export default function RegisterPage() {
     setAuthError('');
     setIsSubmitting(true);
     try {
-      const authData = await googleLogin(credentialResponse.credential, role);
-      const targetRole = authData?.user?.role || role;
+      const authData = await googleLogin(credentialResponse.credential, 'client');
+      const targetRole = authData?.user?.role || 'client';
       navigate(`/${targetRole}/dashboard`);
     } catch (err) {
       setAuthError(err.message || 'Google authentication failed. Please try again.');
@@ -199,6 +204,20 @@ export default function RegisterPage() {
                   className="text-[#183d3b] hover:text-[#c4683c] font-semibold underline underline-offset-4 ml-1 cursor-pointer transition-colors"
                 >
                   Log in
+                </button>
+              </p>
+            </div>
+
+            {/* Agent / Broker Invitation Info Callout */}
+            <div className="p-3 bg-[#F0FDFA] border border-[#0F766E]/20 rounded-xl text-left">
+              <p className="font-sans text-xs text-[#0F766E] leading-relaxed">
+                <strong>Licensed Real Estate Professional?</strong> Real estate agent onboarding requires a broker invitation token under RESA RA 9646.{' '}
+                <button
+                  type="button"
+                  onClick={() => navigate('/register/agent')}
+                  className="font-semibold underline hover:text-[#115E59] cursor-pointer"
+                >
+                  Enter broker invite code
                 </button>
               </p>
             </div>

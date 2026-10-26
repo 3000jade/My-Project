@@ -92,6 +92,8 @@ __pycache__/
 *$py.class
 
 # 10. RESO & MCP Tooling Integration
+.playwright-mcp/
+**/.playwright-mcp/
 .reso-cache/
 **/.reso-cache/
 *.reso.cache
