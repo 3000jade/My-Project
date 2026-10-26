@@ -433,17 +433,32 @@ export class PropertyService {
       architecturalStyle: row.architectural_style || null,
       standardStatus: row.standard_status || (row.status === 'available' ? 'Active' : row.status === 'pending' ? 'Pending' : 'Closed'),
       status: row.status || 'available',
-      assignmentStatus: row.assignment_status || 'ACCEPTED',
-      assignmentDeclinedReason: row.assignment_declined_reason || null,
-      assignedAt: row.assigned_at || row.created_at || new Date().toISOString(),
-      agentConfirmedAt: row.agent_confirmed_at || null,
-      isPublished: row.is_published ?? (row.assignment_status ? row.assignment_status === 'ACCEPTED' : true),
+      assignmentStatus: row.assignment_status 
+        || row.custom_reso_attributes?.assignment_status 
+        || (row.standard_status === 'Pending Confirmation' ? 'PENDING_CONFIRMATION' 
+            : row.standard_status === 'Action Required' ? 'REJECTED' 
+            : 'ACCEPTED'),
+      assignmentDeclinedReason: row.assignment_declined_reason 
+        || row.custom_reso_attributes?.assignment_declined_reason 
+        || null,
+      assignedAt: row.assigned_at 
+        || row.custom_reso_attributes?.assigned_at 
+        || row.created_at 
+        || new Date().toISOString(),
+      agentConfirmedAt: row.agent_confirmed_at 
+        || row.custom_reso_attributes?.agent_confirmed_at 
+        || null,
+      isPublished: row.is_published !== undefined && row.is_published !== null
+        ? row.is_published
+        : (row.custom_reso_attributes?.is_published !== undefined
+            ? row.custom_reso_attributes.is_published
+            : (row.standard_status === 'Active')),
       createdAt: row.created_at || new Date().toISOString(),
       updatedAt: row.updated_at || new Date().toISOString(),
       createdBy: row.created_by || null,
       listAgentKey: row.list_agent_key || null,
       agentName: 'Elena Rossi',
-      agentId: row.created_by || 'agent-1',
+      agentId: row.list_agent_key || row.created_by || 'agent-1',
     };
   }
 
@@ -493,10 +508,15 @@ export class PropertyService {
           dbQuery = dbQuery.eq('standard_status', query.standardStatus);
         }
         if (!userRole || userRole === 'client' || query.role === 'client') {
-          dbQuery = dbQuery.or('assignment_status.eq.ACCEPTED,assignment_status.is.null');
           dbQuery = dbQuery.eq('standard_status', 'Active');
         } else if (query.assignmentStatus) {
-          dbQuery = dbQuery.eq('assignment_status', query.assignmentStatus);
+          if (query.assignmentStatus === 'PENDING_CONFIRMATION') {
+            dbQuery = dbQuery.eq('standard_status', 'Pending Confirmation');
+          } else if (query.assignmentStatus === 'REJECTED') {
+            dbQuery = dbQuery.eq('standard_status', 'Action Required');
+          } else if (query.assignmentStatus === 'ACCEPTED') {
+            dbQuery = dbQuery.eq('standard_status', 'Active');
+          }
         }
         if (query.agentId) {
           dbQuery = dbQuery.eq('created_by', query.agentId);
@@ -534,6 +554,9 @@ export class PropertyService {
           const total = count ?? data.length;
 
           if (data.length === 0) {
+            if (localPropertiesState.length > 0) {
+              return this.filterLocalProperties(query, userRole, page, limit);
+            }
             return {
               properties: [],
               total: 0,
@@ -608,6 +631,24 @@ export class PropertyService {
     }
 
     // Local in-memory filter fallback
+    return this.filterLocalProperties(query, userRole, page, limit);
+  }
+
+  /**
+   * Helper to filter in-memory properties
+   */
+  private static filterLocalProperties(
+    query: PropertyFilterQuery = {},
+    userRole?: string,
+    page: number = 1,
+    limit: number = 10
+  ): {
+    properties: PropertyItem[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  } {
     let filtered = [...localPropertiesState];
 
     if (!userRole || userRole === 'client' || query.role === 'client') {
@@ -777,11 +818,26 @@ export class PropertyService {
             architecturalStyle: data.architectural_style,
             standardStatus: data.standard_status || (data.status === 'available' ? 'Active' : data.status === 'pending' ? 'Pending' : 'Closed'),
             status: data.status,
-            assignmentStatus: data.assignment_status || 'ACCEPTED',
-            assignmentDeclinedReason: data.assignment_declined_reason ?? null,
-            assignedAt: data.assigned_at || data.created_at || new Date().toISOString(),
-            agentConfirmedAt: data.agent_confirmed_at || null,
-            isPublished: data.is_published ?? (data.assignment_status ? data.assignment_status === 'ACCEPTED' : true),
+            assignmentStatus: data.assignment_status 
+              || data.custom_reso_attributes?.assignment_status 
+              || (data.standard_status === 'Pending Confirmation' ? 'PENDING_CONFIRMATION' 
+                  : data.standard_status === 'Action Required' ? 'REJECTED' 
+                  : 'ACCEPTED'),
+            assignmentDeclinedReason: data.assignment_declined_reason 
+              || data.custom_reso_attributes?.assignment_declined_reason 
+              || null,
+            assignedAt: data.assigned_at 
+              || data.custom_reso_attributes?.assigned_at 
+              || data.created_at 
+              || new Date().toISOString(),
+            agentConfirmedAt: data.agent_confirmed_at 
+              || data.custom_reso_attributes?.agent_confirmed_at 
+              || null,
+            isPublished: data.is_published !== undefined && data.is_published !== null
+              ? data.is_published
+              : (data.custom_reso_attributes?.is_published !== undefined
+                  ? data.custom_reso_attributes.is_published
+                  : (data.standard_status === 'Active')),
             createdAt: data.created_at,
             updatedAt: data.updated_at,
             createdBy: data.created_by,
@@ -1156,9 +1212,7 @@ export class PropertyService {
         const resolvedCreatedBy = isValidUuid(userId) ? userId : null;
         const resolvedListAgentKey = isValidUuid(newProperty.listAgentKey) ? newProperty.listAgentKey : null;
 
-        const { data: inserted, error } = await supabaseAdmin
-          .from('properties')
-          .insert({
+        const insertPayload: any = {
             listing_key: newProperty.listingKey,
             listing_id: newProperty.listingId,
             title: newProperty.title,
@@ -1202,7 +1256,14 @@ export class PropertyService {
             parking_open: newProperty.specs.parkingOpen || 0,
             architectural_style: newProperty.architecturalStyle,
             public_remarks: newProperty.publicRemarks,
-            custom_reso_attributes: newProperty.customResoAttributes || {},
+            custom_reso_attributes: {
+              ...(newProperty.customResoAttributes || {}),
+              assignment_status: newProperty.assignmentStatus,
+              assignment_declined_reason: newProperty.assignmentDeclinedReason,
+              assigned_at: newProperty.assignedAt,
+              agent_confirmed_at: newProperty.agentConfirmedAt,
+              is_published: newProperty.isPublished,
+            },
             standard_status: newProperty.standardStatus,
             status: newProperty.status,
             assignment_status: newProperty.assignmentStatus,
@@ -1217,9 +1278,32 @@ export class PropertyService {
             list_agent_key: resolvedListAgentKey,
             ...(Array.isArray(newProperty.images) && newProperty.images.length > 0 ? { images: newProperty.images } : {}),
             ...(newProperty.mainImage ? { main_image: newProperty.mainImage } : {}),
-          })
+          };
+
+        let { data: inserted, error } = await supabaseAdmin
+          .from('properties')
+          .insert(insertPayload)
           .select()
           .single();
+
+        if (error && (error.code === 'PGRST204' || error.code === '42703' || String(error.message).includes('column') || String(error.message).includes('assignment_status'))) {
+          logger.warn('[PropertyService] Retrying properties insert without dedicated lifecycle columns (stored in custom_reso_attributes):', error.message);
+          const safePayload = { ...insertPayload };
+          delete safePayload.assignment_status;
+          delete safePayload.assignment_declined_reason;
+          delete safePayload.assigned_at;
+          delete safePayload.agent_confirmed_at;
+          delete safePayload.is_published;
+          delete safePayload.images;
+          delete safePayload.main_image;
+          const retry = await supabaseAdmin
+            .from('properties')
+            .insert(safePayload)
+            .select()
+            .single();
+          inserted = retry.data;
+          error = retry.error;
+        }
 
         if (error) {
           logger.error('[PropertyService] Supabase properties insert failed:', {
@@ -2022,10 +2106,26 @@ export class PropertyService {
 
     if (isSupabaseConfigured) {
       try {
-        await supabaseAdmin
+        const { error: updateErr } = await supabaseAdmin
           .from('properties')
           .update(updatedFields)
           .eq('id', propertyId);
+
+        if (updateErr && (updateErr.code === 'PGRST204' || updateErr.code === '42703' || String(updateErr.message).includes('column'))) {
+          const { data: currentProp } = await supabaseAdmin.from('properties').select('custom_reso_attributes').eq('id', propertyId).single();
+          const customAttrs = {
+            ...(currentProp?.custom_reso_attributes || {}),
+            assignment_status: 'ACCEPTED',
+            agent_confirmed_at: now,
+            is_published: true,
+          };
+          await supabaseAdmin.from('properties').update({
+            standard_status: 'Active',
+            status: 'available',
+            updated_at: now,
+            custom_reso_attributes: customAttrs,
+          }).eq('id', propertyId);
+        }
       } catch (err: any) {
         logger.warn('[PropertyService] acceptAssignment DB update note:', err.message);
       }
@@ -2093,10 +2193,26 @@ export class PropertyService {
 
     if (isSupabaseConfigured) {
       try {
-        await supabaseAdmin
+        const { error: updateErr } = await supabaseAdmin
           .from('properties')
           .update(updatedFields)
           .eq('id', propertyId);
+
+        if (updateErr && (updateErr.code === 'PGRST204' || updateErr.code === '42703' || String(updateErr.message).includes('column'))) {
+          const { data: currentProp } = await supabaseAdmin.from('properties').select('custom_reso_attributes').eq('id', propertyId).single();
+          const customAttrs = {
+            ...(currentProp?.custom_reso_attributes || {}),
+            assignment_status: 'REJECTED',
+            assignment_declined_reason: declinedReason,
+            is_published: false,
+          };
+          await supabaseAdmin.from('properties').update({
+            standard_status: 'Action Required',
+            status: 'pending',
+            updated_at: now,
+            custom_reso_attributes: customAttrs,
+          }).eq('id', propertyId);
+        }
       } catch (err: any) {
         logger.warn('[PropertyService] declineAssignment DB update note:', err.message);
       }
@@ -2160,10 +2276,29 @@ export class PropertyService {
 
     if (isSupabaseConfigured) {
       try {
-        await supabaseAdmin
+        const { error: updateErr } = await supabaseAdmin
           .from('properties')
           .update(updatedFields)
           .eq('id', propertyId);
+
+        if (updateErr && (updateErr.code === 'PGRST204' || updateErr.code === '42703' || String(updateErr.message).includes('column'))) {
+          const { data: currentProp } = await supabaseAdmin.from('properties').select('custom_reso_attributes').eq('id', propertyId).single();
+          const customAttrs = {
+            ...(currentProp?.custom_reso_attributes || {}),
+            assignment_status: 'PENDING_CONFIRMATION',
+            assignment_declined_reason: null,
+            assigned_at: now,
+            agent_confirmed_at: null,
+            is_published: false,
+          };
+          await supabaseAdmin.from('properties').update({
+            list_agent_key: newAgentId,
+            standard_status: 'Pending Confirmation',
+            status: 'pending',
+            updated_at: now,
+            custom_reso_attributes: customAttrs,
+          }).eq('id', propertyId);
+        }
       } catch (err: any) {
         logger.warn('[PropertyService] reassignAgent DB update note:', err.message);
       }

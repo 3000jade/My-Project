@@ -1542,6 +1542,9 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
   if (!formData.property_type) {
     draftValidationErrors.push({ field: 'Property Type', step: 1, message: 'Property type classification is required.' });
   }
+  if (!formData.agent_id) {
+    draftValidationErrors.push({ field: 'Assigned Agent', step: 1, message: 'Select an assigned agent from the roster.' });
+  }
 
   const finalValidationErrors = [...draftValidationErrors];
   if (formData.title && formData.title.trim().length < 3) {

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { PropertyController } from '../controllers/property.controller';
-import { requireAuth } from '../middleware/auth.middleware';
+import { requireAuth, optionalAuth } from '../middleware/auth.middleware';
 import { requireRole } from '../middleware/role.middleware';
 import { validateBody, validateQuery } from '../middleware/validate.middleware';
 import {
@@ -21,10 +21,10 @@ const upload = multer({
 const router = Router();
 
 /**
- * Public routes
+ * Public & Authenticated Listing Discovery routes (optionalAuth populates user role for brokers/agents)
  */
-router.get('/count', validateQuery(queryPropertySchema), PropertyController.countProperties);
-router.get('/', validateQuery(queryPropertySchema), PropertyController.listProperties);
+router.get('/count', optionalAuth, validateQuery(queryPropertySchema), PropertyController.countProperties);
+router.get('/', optionalAuth, validateQuery(queryPropertySchema), PropertyController.listProperties);
 
 /**
  * Edit Request & Proposal routes (Must precede /:id)
@@ -75,7 +75,7 @@ router.post(
 /**
  * Single Property routes
  */
-router.get('/:id', PropertyController.getProperty);
+router.get('/:id', optionalAuth, PropertyController.getProperty);
 
 /**
  * Protected Property Management routes (Requires Bearer Auth Token + RBAC)

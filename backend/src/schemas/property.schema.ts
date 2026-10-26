@@ -115,9 +115,15 @@ export const createPropertySchema = z.object({
   publicRemarks: z.string().optional(),
   customResoAttributes: z.record(z.string(), z.unknown()).optional(),
   architecturalStyle: z.string().optional(),
-  standardStatus: z.enum(['Draft', 'Pending Approval', 'Active', 'Active Under Contract', 'Pending', 'Closed', 'Canceled', 'Expired']).optional(),
+  standardStatus: z.enum(['Draft', 'Pending Approval', 'Active', 'Active Under Contract', 'Pending', 'Closed', 'Canceled', 'Expired', 'Pending Confirmation', 'Action Required']).optional(),
   status: z.enum(['available', 'pending', 'sold']).optional().default('available'),
   isFeatured: z.boolean().optional().default(false),
+  agentId: z.string().trim().optional(),
+  agent_id: z.string().trim().optional(),
+  listAgentKey: z.string().trim().optional(),
+  list_agent_key: z.string().trim().optional(),
+  assignmentStatus: z.enum(['PENDING_CONFIRMATION', 'ACCEPTED', 'REJECTED']).optional(),
+  isPublished: z.boolean().optional(),
 });
 
 export const queryPropertySchema = z.object({
