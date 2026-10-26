@@ -7,8 +7,14 @@ import {
   buildInquiryEmailHtml,
   buildTourConfirmationEmailHtml,
   buildAgentInvitationEmailHtml,
+  buildPropertyAssignmentEmailHtml,
+  buildAssignmentAcceptedEmailHtml,
+  buildAssignmentDeclinedEmailHtml,
   InquiryEmailData,
   TourConfirmationEmailData,
+  PropertyAssignmentEmailData,
+  AssignmentAcceptedEmailData,
+  AssignmentDeclinedEmailData,
 } from '../templates/emailTemplates';
 
 export class GmailService {
@@ -226,6 +232,78 @@ export class GmailService {
     const mockId = `mock-invite-msg-${Date.now()}`;
     logger.warn(`[GmailService] Mock mode active: sending agent invitation email to ${data.to}`);
     logger.info(`[GmailService] Onboarding Invitation Link: ${data.inviteUrl}`);
+    return {
+      success: true,
+      messageId: mockId,
+    };
+  }
+
+  /**
+   * Send new property assignment email notification to assigned agent
+   */
+  public static async sendPropertyAssignmentEmail(
+    data: PropertyAssignmentEmailData
+  ): Promise<{ success: boolean; messageId?: string }> {
+    const subject = `Action Required: New Property Listing Assigned - ${data.propertyTitle}`;
+    const html = buildPropertyAssignmentEmailHtml(data);
+    const fromName = 'Human Shelter Realty Brokerage';
+    const fromEmail = config.integrations.gmailUserEmail || 'brokerage@cpkerby.luxury';
+
+    const dispatchResult = await this.dispatchEmail(data.agentEmail, fromEmail, fromName, subject, html);
+    if (dispatchResult.success) {
+      return dispatchResult;
+    }
+
+    const mockId = `mock-assign-msg-${Date.now()}`;
+    logger.warn(`[GmailService] Mock mode active: sending property assignment email to ${data.agentEmail}`);
+    return {
+      success: true,
+      messageId: mockId,
+    };
+  }
+
+  /**
+   * Send assignment accepted email notification to broker
+   */
+  public static async sendAssignmentAcceptedEmail(
+    data: AssignmentAcceptedEmailData
+  ): Promise<{ success: boolean; messageId?: string }> {
+    const subject = `Listing Confirmed and Live: ${data.propertyTitle} accepted by ${data.agentName}`;
+    const html = buildAssignmentAcceptedEmailHtml(data);
+    const fromName = 'Human Shelter Realty System';
+    const fromEmail = config.integrations.gmailUserEmail || 'system@cpkerby.luxury';
+
+    const dispatchResult = await this.dispatchEmail(data.brokerEmail, fromEmail, fromName, subject, html);
+    if (dispatchResult.success) {
+      return dispatchResult;
+    }
+
+    const mockId = `mock-accept-msg-${Date.now()}`;
+    logger.warn(`[GmailService] Mock mode active: sending assignment accepted email to ${data.brokerEmail}`);
+    return {
+      success: true,
+      messageId: mockId,
+    };
+  }
+
+  /**
+   * Send assignment declined email notification to broker
+   */
+  public static async sendAssignmentDeclinedEmail(
+    data: AssignmentDeclinedEmailData
+  ): Promise<{ success: boolean; messageId?: string }> {
+    const subject = `Action Required: ${data.propertyTitle} declined by ${data.agentName}`;
+    const html = buildAssignmentDeclinedEmailHtml(data);
+    const fromName = 'Human Shelter Realty System';
+    const fromEmail = config.integrations.gmailUserEmail || 'system@cpkerby.luxury';
+
+    const dispatchResult = await this.dispatchEmail(data.brokerEmail, fromEmail, fromName, subject, html);
+    if (dispatchResult.success) {
+      return dispatchResult;
+    }
+
+    const mockId = `mock-decline-msg-${Date.now()}`;
+    logger.warn(`[GmailService] Mock mode active: sending assignment declined email to ${data.brokerEmail}`);
     return {
       success: true,
       messageId: mockId,

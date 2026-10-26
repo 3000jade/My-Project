@@ -2,6 +2,10 @@ import { supabase, supabaseAdmin, isSupabaseConfigured } from '../config/supabas
 import logger from '../utils/logger';
 import { NominatimService } from './nominatim.service';
 import { AgentEligibilityService } from './agentEligibility.service';
+import { NotificationService } from './notification.service';
+import { GmailService } from './gmail.service';
+import { AgentService } from './agent.service';
+import { ProfileService } from './profile.service';
 import type { 
   StandardStatus, 
   MediaItem, 
@@ -1447,6 +1451,39 @@ export class PropertyService {
       }
     }
 
+
+    // Notify assigned agent via In-App Notification and Email
+    try {
+      const agentId = newProperty.listAgentKey || newProperty.agentId;
+      const agent = agentId ? await AgentService.getAgentById(agentId) : null;
+      const agentEmail = agent?.email || 'agent@pt.com';
+      const agentName = agent?.name || 'Agent';
+
+      const brokerProfile = userId ? await ProfileService.getProfile(userId, 'broker') : null;
+      const brokerName = brokerProfile?.name || 'Principal Broker';
+
+      await NotificationService.createNotification({
+        title: `New Property Assigned: ${newProperty.title}`,
+        message: `${brokerName} has assigned "${newProperty.title}" to you. Please review and confirm the assignment to make it live.`,
+        type: 'property',
+        role: 'agent',
+        user_id: agentId,
+        related_record: newProperty.id,
+      });
+
+      await GmailService.sendPropertyAssignmentEmail({
+        agentEmail,
+        agentName,
+        propertyTitle: newProperty.title,
+        propertyPrice: newProperty.price,
+        propertyAddress: newProperty.location?.address,
+        propertyId: newProperty.id,
+        brokerName,
+      });
+    } catch (notifErr: any) {
+      logger.warn(`[PropertyService] Assignment notification to agent failed: ${notifErr.message}`);
+    }
+
     localPropertiesState.unshift(newProperty);
     return newProperty;
   }
@@ -2131,6 +2168,38 @@ export class PropertyService {
       }
     }
 
+    
+    // Notify broker that agent accepted and listing is now published
+    try {
+      const agentId = (prop as any).agentId || (prop as any).listAgentKey;
+      const agent = agentId ? await AgentService.getAgentById(agentId) : null;
+      const agentName = agent?.name || (prop as any).agentName || 'Assigned Agent';
+
+      const brokerId = prop.createdBy;
+      const brokerProfile = brokerId ? await ProfileService.getProfile(brokerId, 'broker') : null;
+      const brokerEmail = brokerProfile?.email || 'broker@pt.com';
+      const brokerName = brokerProfile?.name || 'Principal Broker';
+
+      await NotificationService.createNotification({
+        title: `Assignment Accepted: ${prop.title}`,
+        message: `${agentName} accepted the assignment for "${prop.title}". The listing is now Active and published.`,
+        type: 'property',
+        role: 'broker',
+        user_id: brokerId || undefined,
+        related_record: prop.id,
+      });
+
+      await GmailService.sendAssignmentAcceptedEmail({
+        brokerEmail,
+        brokerName,
+        propertyTitle: prop.title,
+        agentName,
+        propertyId: prop.id,
+      });
+    } catch (notifErr: any) {
+      logger.warn(`[PropertyService] Accept assignment notification to broker failed: ${notifErr.message}`);
+    }
+
     const propIdx = localPropertiesState.findIndex((p) => p.id === propertyId);
     if (propIdx !== -1) {
       localPropertiesState[propIdx] = {
@@ -2218,6 +2287,39 @@ export class PropertyService {
       }
     }
 
+    
+    // Notify broker that agent declined assignment
+    try {
+      const agentId = (prop as any).agentId || (prop as any).listAgentKey;
+      const agent = agentId ? await AgentService.getAgentById(agentId) : null;
+      const agentName = agent?.name || (prop as any).agentName || 'Assigned Agent';
+
+      const brokerId = prop.createdBy;
+      const brokerProfile = brokerId ? await ProfileService.getProfile(brokerId, 'broker') : null;
+      const brokerEmail = brokerProfile?.email || 'broker@pt.com';
+      const brokerName = brokerProfile?.name || 'Principal Broker';
+
+      await NotificationService.createNotification({
+        title: `Assignment Declined: ${prop.title}`,
+        message: `${agentName} declined assignment for "${prop.title}". Reason: "${declinedReason}". Reassignment required.`,
+        type: 'property',
+        role: 'broker',
+        user_id: brokerId || undefined,
+        related_record: prop.id,
+      });
+
+      await GmailService.sendAssignmentDeclinedEmail({
+        brokerEmail,
+        brokerName,
+        propertyTitle: prop.title,
+        agentName,
+        reason: declinedReason,
+        propertyId: prop.id,
+      });
+    } catch (notifErr: any) {
+      logger.warn(`[PropertyService] Decline assignment notification to broker failed: ${notifErr.message}`);
+    }
+
     const propIdx = localPropertiesState.findIndex((p) => p.id === propertyId);
     if (propIdx !== -1) {
       localPropertiesState[propIdx] = {
@@ -2302,6 +2404,38 @@ export class PropertyService {
       } catch (err: any) {
         logger.warn('[PropertyService] reassignAgent DB update note:', err.message);
       }
+    }
+
+    
+    // Notify new agent via in-app notification & email
+    try {
+      const agent = await AgentService.getAgentById(newAgentId);
+      const agentEmail = agent?.email || 'agent@pt.com';
+      const agentName = agent?.name || 'Agent';
+
+      const brokerProfile = requestingUserId ? await ProfileService.getProfile(requestingUserId, 'broker') : null;
+      const brokerName = brokerProfile?.name || 'Principal Broker';
+
+      await NotificationService.createNotification({
+        title: `New Property Assigned: ${prop.title}`,
+        message: `${brokerName} has reassigned "${prop.title}" to you. Please review and confirm the assignment to make it live.`,
+        type: 'property',
+        role: 'agent',
+        user_id: newAgentId,
+        related_record: prop.id,
+      });
+
+      await GmailService.sendPropertyAssignmentEmail({
+        agentEmail,
+        agentName,
+        propertyTitle: prop.title,
+        propertyPrice: prop.price,
+        propertyAddress: prop.location?.address,
+        propertyId: prop.id,
+        brokerName,
+      });
+    } catch (notifErr: any) {
+      logger.warn(`[PropertyService] Reassignment notification to agent failed: ${notifErr.message}`);
     }
 
     const propIdx = localPropertiesState.findIndex((p) => p.id === propertyId);

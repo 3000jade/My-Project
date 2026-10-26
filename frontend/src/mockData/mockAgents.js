@@ -1,5 +1,27 @@
 export const mockAgents = [
   {
+    id: "e59ef10a-2963-4de4-a330-fbce2e0f284a",
+    name: "Koco Madri",
+    role: "Sales Agent",
+    email: "agent@pt.com",
+    phone: "+63 954 380 4742",
+    avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80",
+    prc_license_no: "PRC-REB-0083921",
+    prc_validity: "2027-11-20",
+    dhsud_accreditation_no: "DHSUD-NCR-AA-2024-0012",
+    dhsud_validity: "2026-12-31",
+    verification_status: "VERIFIED",
+    license_status: "VALID",
+    experience_years: 4,
+    bio: "Licensed Real Estate Agent specializing in luxury residential developments.",
+    assigned_properties_count: 5,
+    active_inquiries_count: 10,
+    upcoming_appointments_count: 3,
+    recorded_sales_count: 8,
+    total_sales_value: 320000000,
+    last_activity: "Active now"
+  },
+  {
     id: "agent-1",
     name: "Elena Rossi",
     role: "Senior Agent",

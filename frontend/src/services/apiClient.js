@@ -95,6 +95,10 @@ export const apiClient = {
     return axiosInstance.put(endpoint, data, config);
   },
 
+  async patch(endpoint, data, config = {}) {
+    return axiosInstance.patch(endpoint, data, config);
+  },
+
   async delete(endpoint, config = {}) {
     return axiosInstance.delete(endpoint, config);
   },
