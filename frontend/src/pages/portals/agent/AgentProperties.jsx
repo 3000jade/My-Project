@@ -7,7 +7,6 @@ import DataTable from '../../../components/dashboard/DataTable';
 import EmptyState from '../../../components/dashboard/EmptyState';
 import propertyService from '../../../services/propertyService';
 import { useAuth } from '../../../context/AuthContext';
-import { mockProperties } from '../../../mockData/mockProperties';
 import { Building2, Clock, CheckCircle2, AlertTriangle, XCircle, Check } from 'lucide-react';
 import AgentAssignmentActionModal from '../../../components/dashboard/AgentAssignmentActionModal';
 
@@ -36,11 +35,10 @@ export default function AgentProperties() {
           propertyService.getEditRequests({ status: 'PENDING' }),
         ]);
 
-        if (propsRes.status === 'fulfilled' && propsRes.value?.data?.length > 0) {
-          setProperties(propsRes.value.data);
+        if (propsRes.status === 'fulfilled' && propsRes.value?.data) {
+          setProperties(Array.isArray(propsRes.value.data) ? propsRes.value.data : []);
         } else {
-          // Fallback to mock properties filtered for agent
-          setProperties(mockProperties.filter(p => p.agent_id === (user?.id || 'agent-1')));
+          setProperties([]);
         }
 
         if (editsRes.status === 'fulfilled' && editsRes.value?.data) {
@@ -50,7 +48,7 @@ export default function AgentProperties() {
         }
       } catch (err) {
         console.warn('Error loading agent properties:', err);
-        setProperties(mockProperties.filter(p => p.agent_id === (user?.id || 'agent-1')));
+        setProperties([]);
       } finally {
         setIsLoading(false);
       }

@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DashboardModal from './DashboardModal';
 import propertyService from '../../services/propertyService';
-import { mockAgents } from '../../mockData/mockAgents';
-import { AlertCircle, UserCheck, ShieldAlert } from 'lucide-react';
+import { agentService } from '../../services/agentService';
+import { AlertCircle, UserCheck, ShieldAlert, Loader2 } from 'lucide-react';
 
 export default function ReassignAgentModal({
   isOpen,
@@ -11,13 +11,49 @@ export default function ReassignAgentModal({
   onSuccess
 }) {
   const [selectedAgentId, setSelectedAgentId] = useState('');
+  const [agentsList, setAgentsList] = useState([]);
+  const [isLoadingAgents, setIsLoadingAgents] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
-  if (!property) return null;
+  const currentAgentId = property ? (property.agent_id || property.agentId || property.list_agent_key || property.listAgentKey) : null;
+  const declineReason = property ? (property.assignment_declined_reason || property.assignmentDeclinedReason) : null;
 
-  const currentAgentId = property.agent_id || property.agentId;
-  const declineReason = property.assignment_declined_reason || property.assignmentDeclinedReason;
+  useEffect(() => {
+    if (!isOpen) {
+      setSelectedAgentId('');
+      setError(null);
+      return;
+    }
+
+    let isMounted = true;
+    async function loadAgents() {
+      setIsLoadingAgents(true);
+      try {
+        const fetched = await agentService.getAgents();
+        if (isMounted) {
+          const list = Array.isArray(fetched) ? fetched : [];
+          setAgentsList(list);
+        }
+      } catch (err) {
+        if (isMounted) {
+          console.warn('[ReassignAgentModal] Failed to load agents directory:', err);
+          setAgentsList([]);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingAgents(false);
+        }
+      }
+    }
+
+    loadAgents();
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen]);
+
+  if (!property) return null;
 
   const handleReassign = async (e) => {
     e.preventDefault();
@@ -41,6 +77,8 @@ export default function ReassignAgentModal({
       setIsSubmitting(false);
     }
   };
+
+  const eligibleAgents = agentsList.filter(a => a.id !== currentAgentId);
 
   return (
     <DashboardModal
@@ -96,23 +134,35 @@ export default function ReassignAgentModal({
         )}
 
         <div className="space-y-2">
-          <label className="block text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
+          <label htmlFor="reassign-agent-select" className="block text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
             Select Replacement Agent <span className="text-[#DC2626]">*</span>
           </label>
-          <select
-            value={selectedAgentId}
-            onChange={(e) => setSelectedAgentId(e.target.value)}
-            className="w-full h-10 px-3 bg-[#F8FAFC] border border-[#CBD5E1] rounded-lg text-xs text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-[#0F766E] focus:border-[#0F766E]"
-          >
-            <option value="">-- Choose Licensed Agent --</option>
-            {mockAgents
-              .filter(a => a.id !== currentAgentId)
-              .map(a => (
+          {isLoadingAgents ? (
+            <div className="h-10 px-3 bg-[#F8FAFC] border border-[#CBD5E1] rounded-lg text-xs text-[#64748B] flex items-center gap-2">
+              <Loader2 className="w-4 h-4 animate-spin text-[#0F766E]" />
+              <span>Loading verified agents from directory...</span>
+            </div>
+          ) : (
+            <select
+              id="reassign-agent-select"
+              data-testid="reassign-agent-select"
+              value={selectedAgentId}
+              onChange={(e) => setSelectedAgentId(e.target.value)}
+              className="w-full h-10 px-3 bg-[#F8FAFC] border border-[#CBD5E1] rounded-lg text-xs text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-[#0F766E] focus:border-[#0F766E]"
+            >
+              <option value="">-- Choose Licensed Agent --</option>
+              {eligibleAgents.map(a => (
                 <option key={a.id} value={a.id}>
-                  {a.name} ({a.role || 'Agent'}) — {a.email}
+                  {a.name || a.fullName} ({a.role || 'Agent'}) — {a.email}
                 </option>
               ))}
-          </select>
+            </select>
+          )}
+          {!isLoadingAgents && eligibleAgents.length === 0 && (
+            <p className="text-xs text-amber-700">
+              No other active licensed agents found in the brokerage roster.
+            </p>
+          )}
           <p className="text-[11px] text-[#64748B]">
             The new agent will receive this listing in their portal under "Pending Confirmation" and must review it before the listing goes live.
           </p>

@@ -234,48 +234,7 @@ const ROOM_QUILL_MODULES = {
   ],
 };
 
-const DEFAULT_BROKER_AGENTS = [
-  { 
-    id: 'agent-1', 
-    name: 'Elena Rossi', 
-    role: 'Senior Property Consultant',
-    email: 'elena.rossi@humanshelter.ph',
-    assigned_properties_count: 14,
-    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80'
-  },
-  { 
-    id: 'agent-2', 
-    name: 'Alexander Sterling', 
-    role: 'Principal Architectural Director',
-    email: 'alexander.s@humanshelter.ph',
-    assigned_properties_count: 9,
-    avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=400&q=80'
-  },
-  { 
-    id: 'agent-3', 
-    name: 'Victoria Vance', 
-    role: 'Luxury Portfolio Specialist',
-    email: 'victoria.v@humanshelter.ph',
-    assigned_properties_count: 18,
-    avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=400&q=80'
-  },
-  { 
-    id: 'agent-4', 
-    name: 'Marcus Chen', 
-    role: 'Managing Partner & Broker',
-    email: 'marcus.chen@humanshelter.ph',
-    assigned_properties_count: 22,
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'
-  },
-  { 
-    id: 'agent-5', 
-    name: 'Sofia Laurent', 
-    role: 'Commercial Acquisitions Lead',
-    email: 'sofia.laurent@humanshelter.ph',
-    assigned_properties_count: 7,
-    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=400&q=80'
-  },
-];
+const DEFAULT_BROKER_AGENTS = [];
 
 
 export default function BrokerCreateListings({ isDrawer = false, onClose } = {}) {
@@ -691,25 +650,37 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
   ];
 
   // Agent selector state
-  const [agentsList, setAgentsList] = useState(DEFAULT_BROKER_AGENTS);
+  const [agentsList, setAgentsList] = useState([]);
+  const [isLoadingAgents, setIsLoadingAgents] = useState(false);
   const [isAgentModalOpen, setIsAgentModalOpen] = useState(false);
   const [agentViewMode, setAgentViewMode] = useState('grid'); // 'grid' | 'list'
   const [agentSearchQuery, setAgentSearchQuery] = useState('');
 
-
-  // Fetch available agents from backend with fallback
+  // Fetch verified agents directly from backend database
   useEffect(() => {
+    let isMounted = true;
     const fetchAgents = async () => {
+      setIsLoadingAgents(true);
       try {
         const fetched = await agentService.getAgents();
-        if (Array.isArray(fetched) && fetched.length > 0) {
-          setAgentsList(fetched);
+        if (isMounted) {
+          setAgentsList(Array.isArray(fetched) ? fetched : []);
         }
       } catch (err) {
-        console.warn('[BrokerCreateListings] Unable to load remote agents, using defaults:', err);
+        if (isMounted) {
+          console.warn('[BrokerCreateListings] Unable to load remote agents:', err);
+          setAgentsList([]);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingAgents(false);
+        }
       }
     };
     fetchAgents();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const stepTitles = [

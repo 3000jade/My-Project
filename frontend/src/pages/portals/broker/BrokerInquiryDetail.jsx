@@ -4,7 +4,7 @@ import PageHeader from '../../../components/dashboard/PageHeader';
 import StatusBadge from '../../../components/dashboard/StatusBadge';
 import DashboardModal from '../../../components/dashboard/DashboardModal';
 import { inquiryService } from '../../../services/inquiryService';
-import { mockAgents } from '../../../mockData/mockAgents';
+import { agentService } from '../../../services/agentService';
 
 export default function BrokerInquiryDetail() {
   const { id } = useParams();
@@ -14,6 +14,7 @@ export default function BrokerInquiryDetail() {
   const [error, setError] = useState(null);
   const [reassignModalOpen, setReassignModalOpen] = useState(false);
   const [selectedAgentId, setSelectedAgentId] = useState('');
+  const [agents, setAgents] = useState([]);
   const [reassignReason, setReassignReason] = useState('Reassigned by Broker');
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('overview'); // overview | audit
@@ -24,11 +25,13 @@ export default function BrokerInquiryDetail() {
       setLoading(true);
       setError(null);
       try {
-        const [data, audits] = await Promise.all([
+        const [data, audits, agentList] = await Promise.all([
           inquiryService.getInquiryById(id),
           inquiryService.getAuditEvents({ inquiryId: id }).catch(() => []),
+          agentService.getAgents().catch(() => []),
         ]);
         if (mounted) {
+          setAgents(Array.isArray(agentList) ? agentList : []);
           if (data) {
             setInquiry(data);
             setSelectedAgentId(data.agent_id || '');
@@ -52,7 +55,7 @@ export default function BrokerInquiryDetail() {
   }, [id]);
 
   const handleSaveReassignment = async () => {
-    const selectedAgent = mockAgents.find(a => a.id === selectedAgentId) || { id: selectedAgentId, name: 'Assigned Specialist' };
+    const selectedAgent = agents.find(a => a.id === selectedAgentId) || { id: selectedAgentId, name: 'Assigned Specialist' };
     if (!selectedAgentId || !inquiry) return;
 
     setSaving(true);
@@ -371,7 +374,7 @@ export default function BrokerInquiryDetail() {
             Select Active Consultant
           </label>
           <div className="space-y-2 max-h-56 overflow-y-auto custom-scrollbar">
-            {mockAgents.map(ag => (
+            {agents.map(ag => (
               <label
                 key={ag.id}
                 className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all ${

@@ -27,7 +27,7 @@ import {
   IconShare
 } from '@tabler/icons-react';
 
-import { mockProperties } from '../../mockData/mockProperties';
+
 import { propertyService } from '../../services/propertyService';
 import { inquiryService } from '../../services/inquiryService';
 import useViewingList from '../../hooks/useViewingList';
@@ -43,52 +43,38 @@ export default function PropertyListingView() {
   const { user } = useAuth();
 
   // 1. Initial State & Data Hydration
-  const [property, setProperty] = useState(() => {
-    if (!id) return mockProperties[0] || null;
-    return mockProperties.find(p => 
-      String(p.id) === String(id) || 
-      p.ListingKey === id || 
-      p.listingKey === id ||
-      p.ListingId === id || 
-      p.listingId === id ||
-      p.ref_code === id
-    ) || mockProperties[0] || null;
-  });
-  const [isLoading, setIsLoading] = useState(false);
+  const [property, setProperty] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
 
   // Hydrate from API
   useEffect(() => {
     let isMounted = true;
     async function loadProperty() {
-      const localMatch = mockProperties.find(p => 
-        String(p.id) === String(id) || 
-        p.ListingKey === id || 
-        p.listingKey === id ||
-        p.ListingId === id || 
-        p.listingId === id ||
-        p.ref_code === id
-      );
-      if (localMatch) {
-        setProperty(localMatch);
+      if (!id) {
+        setIsLoading(false);
+        setLoadError('No property ID provided');
+        return;
       }
 
-      if (id && (!localMatch || !String(localMatch.id).startsWith('reso-fixture-'))) {
-        try {
-          setIsLoading(true);
-          setLoadError(null);
-          const remoteData = await propertyService.getPropertyById(id);
-          if (isMounted && remoteData) {
+      try {
+        setIsLoading(true);
+        setLoadError(null);
+        const remoteData = await propertyService.getPropertyById(id);
+        if (isMounted) {
+          if (remoteData) {
             setProperty(remoteData);
-          }
-        } catch (err) {
-          console.warn('[PropertyListingView] Remote fetch fallback to local:', err);
-          if (!localMatch && isMounted) {
+          } else {
             setLoadError('Failed to load property details.');
           }
-        } finally {
-          if (isMounted) setIsLoading(false);
         }
+      } catch (err) {
+        console.warn('[PropertyListingView] Remote fetch error:', err);
+        if (isMounted) {
+          setLoadError('Failed to load property details.');
+        }
+      } finally {
+        if (isMounted) setIsLoading(false);
       }
     }
 

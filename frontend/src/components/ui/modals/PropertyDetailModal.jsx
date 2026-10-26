@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import useEmblaCarousel from 'embla-carousel-react';
-import { mockProperties } from '../../../mockData/mockProperties';
+import propertyService from '../../../services/propertyService';
 import useViewingList from '../../../hooks/useViewingList';
 import InspectionScheduleModal from './InspectionScheduleModal';
 import ActionConsole from '../cards/ActionConsole';
@@ -60,9 +60,17 @@ export default function PropertyDetailModal() {
       setProperty(null);
       return;
     }
-    let found = mockProperties.find(p => p.id === id || p.ref_code === id);
-    if (!found) found = mockProperties[0] || null;
-    setProperty(found || null);
+    let isMounted = true;
+    async function fetchProperty() {
+      try {
+        const prop = await propertyService.getPropertyById(id);
+        if (isMounted) setProperty(prop || null);
+      } catch (e) {
+        if (isMounted) setProperty(null);
+      }
+    }
+    fetchProperty();
+    return () => { isMounted = false; };
   }, [id]);
 
   const handleAction = (actionName, payloadData, route, method = 'POST') => {

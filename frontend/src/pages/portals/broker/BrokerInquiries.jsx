@@ -6,7 +6,7 @@ import StatusBadge from '../../../components/dashboard/StatusBadge';
 import DataTable from '../../../components/dashboard/DataTable';
 import EmptyState from '../../../components/dashboard/EmptyState';
 import { inquiryService } from '../../../services/inquiryService';
-import { mockAgents } from '../../../mockData/mockAgents';
+import { agentService } from '../../../services/agentService';
 
 export default function BrokerInquiries() {
   const navigate = useNavigate();
@@ -18,13 +18,18 @@ export default function BrokerInquiries() {
   const [activeTab, setActiveTab] = useState('ALL'); // ALL, ACTIVE, INACTIVE, UNASSIGNED, UNANSWERED, OVERDUE
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [agentFilter, setAgentFilter] = useState('ALL');
+  const [agents, setAgents] = useState([]);
 
   const loadInquiriesAndMetrics = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await inquiryService.getInquiries();
+      const [data, agentList] = await Promise.all([
+        inquiryService.getInquiries(),
+        agentService.getAgents().catch(() => []),
+      ]);
       setInquiries(Array.isArray(data) ? data : []);
+      setAgents(Array.isArray(agentList) ? agentList : []);
       if (typeof inquiryService.getBrokerMetrics === 'function') {
         const met = await inquiryService.getBrokerMetrics().catch(() => null);
         if (met) setMetrics(met);
@@ -77,7 +82,7 @@ export default function BrokerInquiries() {
 
   const agentOptions = [
     { label: "All Agents", value: "ALL" },
-    ...mockAgents.map(a => ({ label: a.name, value: a.id }))
+    ...agents.map(a => ({ label: a.name || a.fullName, value: a.id }))
   ];
 
   const columns = [

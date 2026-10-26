@@ -1,5 +1,4 @@
-import { mockProperties } from '../mockData/mockProperties';
-import { mockInquiries } from '../mockData/mockInquiries';
+import propertyService from './propertyService';
 
 const CLIENT_STORAGE_KEYS = {
   PROFILE: 'cp_client_profile_mock',
@@ -75,7 +74,7 @@ export const clientUserService = {
   },
 
   /**
-   * Mock Change Password
+   * Change Password
    */
   async changePassword(currentPassword, newPassword) {
     if (!currentPassword) {
@@ -91,18 +90,20 @@ export const clientUserService = {
    * Get client saved properties
    */
   async getSavedProperties() {
-    const storedIds = safeGetStorage(CLIENT_STORAGE_KEYS.SAVED_PROPERTIES, null);
-    if (Array.isArray(storedIds)) {
-      return mockProperties.filter((p) => storedIds.includes(String(p.id)));
+    const storedIds = safeGetStorage(CLIENT_STORAGE_KEYS.SAVED_PROPERTIES, []);
+    if (!Array.isArray(storedIds) || storedIds.length === 0) {
+      return [];
     }
 
-    // Default: seed with first 4 luxury properties
-    const defaultList = mockProperties.slice(0, 4);
-    safeSetStorage(
-      CLIENT_STORAGE_KEYS.SAVED_PROPERTIES,
-      defaultList.map((p) => String(p.id))
-    );
-    return defaultList;
+    try {
+      const items = await Promise.all(
+        storedIds.map(id => propertyService.getPropertyById(id).catch(() => null))
+      );
+      return items.filter(Boolean);
+    } catch (err) {
+      console.warn('[clientUserService] Failed to load saved properties from API:', err);
+      return [];
+    }
   },
 
   /**
@@ -115,7 +116,7 @@ export const clientUserService = {
       storedIds = [idStr, ...storedIds];
       safeSetStorage(CLIENT_STORAGE_KEYS.SAVED_PROPERTIES, storedIds);
     }
-    return mockProperties.filter((p) => storedIds.includes(String(p.id)));
+    return this.getSavedProperties();
   },
 
   /**
@@ -126,7 +127,7 @@ export const clientUserService = {
     let storedIds = safeGetStorage(CLIENT_STORAGE_KEYS.SAVED_PROPERTIES, []);
     storedIds = storedIds.filter((id) => id !== idStr);
     safeSetStorage(CLIENT_STORAGE_KEYS.SAVED_PROPERTIES, storedIds);
-    return mockProperties.filter((p) => storedIds.includes(String(p.id)));
+    return this.getSavedProperties();
   },
 
   /**
@@ -136,30 +137,15 @@ export const clientUserService = {
     try {
       const { inquiryService } = await import('./inquiryService');
       const liveList = await inquiryService.getMyInquiries();
-      if (Array.isArray(liveList) && liveList.length > 0) {
+      if (Array.isArray(liveList)) {
         return liveList;
       }
     } catch (err) {
-      console.warn('[clientUserService] Live inquiry fetch failed, using stored inquiries:', err);
+      console.warn('[clientUserService] Live inquiry fetch error:', err);
     }
 
-    const stored = safeGetStorage(CLIENT_STORAGE_KEYS.INQUIRIES, null);
-    if (Array.isArray(stored)) {
-      return stored;
-    }
-
-    // Default inquiries customized for the client
-    const initial = mockInquiries.slice(0, 3).map((inq, idx) => ({
-      ...inq,
-      client_name: 'Sophia Isabella Laurel',
-      client_email: 'client@pt.com',
-      client_phone: '+63 917 555 8899',
-      status: idx === 0 ? 'NEW' : idx === 1 ? 'ASSIGNED' : 'SCHEDULED',
-      created_at: inq.created_at || '2026-10-10 14:30',
-    }));
-
-    safeSetStorage(CLIENT_STORAGE_KEYS.INQUIRIES, initial);
-    return initial;
+    const stored = safeGetStorage(CLIENT_STORAGE_KEYS.INQUIRIES, []);
+    return Array.isArray(stored) ? stored : [];
   },
 
   /**
@@ -168,39 +154,44 @@ export const clientUserService = {
   async addInquiryMessage(inquiryId, messageText) {
     try {
       const { inquiryService } = await import('./inquiryService');
-      const reply = await inquiryService.addMessage(inquiryId, messageText);
-      if (reply) {
-        const inquiries = await this.getClientInquiries();
-        const target = inquiries.find((i) => String(i.id) === String(inquiryId));
-        if (target) {
-          target.messages = [...(target.messages || []), reply];
-          target.last_message = messageText;
-          return target;
-        }
+      if (inquiryService?.addMessage) {
+        return await inquiryService.addMessage(inquiryId, {
+          senderRole: 'client',
+          message: messageText,
+        });
       }
     } catch (err) {
-      console.warn('[clientUserService] Live addMessage failed, storing locally:', err);
+      console.warn('[clientUserService] Could not post message via API:', err);
     }
 
-    const inquiries = await this.getClientInquiries();
-    const target = inquiries.find((i) => String(i.id) === String(inquiryId));
-    if (!target) {
-      throw new Error(`Inquiry ${inquiryId} not found.`);
-    }
+    // Local state fallback
+    const list = await this.getClientInquiries();
+    const updated = list.map((item) => {
+      if (item.id === inquiryId) {
+        const history = Array.isArray(item.messageHistory)
+          ? item.messageHistory
+          : Array.isArray(item.messages)
+          ? item.messages
+          : [];
+        return {
+          ...item,
+          messageHistory: [
+            ...history,
+            {
+              id: `msg-${Date.now()}`,
+              sender: 'You',
+              senderRole: 'client',
+              message: messageText,
+              timestamp: 'Just now',
+            },
+          ],
+        };
+      }
+      return item;
+    });
 
-    const newMessage = {
-      id: `msg-${Date.now()}`,
-      sender: 'client',
-      sender_name: 'Sophia Isabella Laurel',
-      timestamp: 'Just now',
-      content: messageText,
-    };
-
-    target.messages = [...(target.messages || []), newMessage];
-    target.last_message = messageText;
-
-    safeSetStorage(CLIENT_STORAGE_KEYS.INQUIRIES, inquiries);
-    return target;
+    safeSetStorage(CLIENT_STORAGE_KEYS.INQUIRIES, updated);
+    return updated.find((inq) => inq.id === inquiryId) || null;
   },
 };
 

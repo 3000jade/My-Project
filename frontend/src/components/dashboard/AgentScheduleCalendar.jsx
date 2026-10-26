@@ -28,7 +28,7 @@ import {
   generateAppointmentIcs,
 } from '../../services/appointmentService';
 import { agentService } from '../../services/agentService';
-import { mockAgents } from '../../mockData/mockAgents';
+
 import { cn } from '../../utils/cn';
 
 /**
@@ -144,7 +144,7 @@ export default function AgentScheduleCalendar({
   const [viewMode, setViewMode] = useState(initialView);
 
   const [appointments, setAppointments] = useState([]);
-  const [agents, setAgents] = useState(mockAgents);
+  const [agents, setAgents] = useState([]);
   const [blackoutDates, setBlackoutDates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -215,7 +215,7 @@ export default function AgentScheduleCalendar({
 
       const [apptList, agentList, availData] = await Promise.all([
         appointmentService.getAppointments(queryParams),
-        agentService?.getAgents ? agentService.getAgents().catch(() => mockAgents) : Promise.resolve(mockAgents),
+        agentService?.getAgents ? agentService.getAgents().catch(() => []) : Promise.resolve([]),
         agentService?.getAvailability
           ? agentService.getAvailability(effectiveAgent || 'agent-1').catch(() => null)
           : Promise.resolve(null),

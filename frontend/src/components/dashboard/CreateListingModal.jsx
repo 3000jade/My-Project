@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import DashboardModal from './DashboardModal';
-import { mockAgents } from '../../mockData/mockAgents';
+import { agentService } from '../../services/agentService';
 import { driveService, isDriveUrl, resolveDriveImageUrl } from '../../services/driveService';
 
 const PROPERTY_TYPES = [
@@ -52,8 +52,30 @@ export default function CreateListingModal({
   isOpen,
   onClose,
   onSubmit,
-  agents = mockAgents,
+  agents: externalAgents,
 }) {
+  const [internalAgents, setInternalAgents] = useState([]);
+  const [isLoadingAgents, setIsLoadingAgents] = useState(false);
+
+  React.useEffect(() => {
+    if (!isOpen || (externalAgents && externalAgents.length > 0)) return;
+    let isMounted = true;
+    async function fetchAgents() {
+      setIsLoadingAgents(true);
+      try {
+        const list = await agentService.getAgents();
+        if (isMounted) setInternalAgents(Array.isArray(list) ? list : []);
+      } catch (e) {
+        console.warn('[CreateListingModal] Error fetching agents:', e);
+      } finally {
+        if (isMounted) setIsLoadingAgents(false);
+      }
+    }
+    fetchAgents();
+    return () => { isMounted = false; };
+  }, [isOpen, externalAgents]);
+
+  const agents = (externalAgents && externalAgents.length > 0) ? externalAgents : internalAgents;
   const [formData, setFormData] = useState({
     title: '',
     tagline: '',

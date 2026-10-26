@@ -6,7 +6,6 @@ import DashboardModal from '../../../components/dashboard/DashboardModal';
 import AgentAssignmentActionModal from '../../../components/dashboard/AgentAssignmentActionModal';
 import propertyService from '../../../services/propertyService';
 import { useAuth } from '../../../context/AuthContext';
-import { mockProperties } from '../../../mockData/mockProperties';
 import { 
   Building2, Clock, CheckCircle2, AlertCircle, 
   Send, X, Sparkles, Bed, Bath, Maximize2, Car, MapPin, 
@@ -49,20 +48,21 @@ export default function AgentPropertyDetail() {
       setIsLoading(true);
       try {
         const prop = await propertyService.getPropertyById(id);
-        const resolvedProp = prop || mockProperties.find(p => p.id === id) || mockProperties[0];
-        setProperty(resolvedProp);
-        setActiveImage(resolvedProp?.mainImage || (resolvedProp?.images && resolvedProp.images[0]) || null);
+        setProperty(prop || null);
+        if (prop) {
+          setActiveImage(prop?.mainImage || (prop?.images && prop.images[0]) || null);
 
-        // Prepopulate proposal form
-        setFormTitle(resolvedProp?.title || '');
-        setFormTagline(resolvedProp?.tagline || '');
-        setFormPrice(String(resolvedProp?.price_raw || (typeof resolvedProp?.price === 'number' ? resolvedProp.price : 50000000)));
-        setFormCondition(resolvedProp?.property_condition || 'Pristine / Turnkey');
-        setFormStandardStatus(resolvedProp?.standard_status || 'Active');
-        setFormBeds(resolvedProp?.bedrooms || resolvedProp?.specs?.beds || 3);
-        setFormBaths(resolvedProp?.bathrooms || resolvedProp?.specs?.baths || 3);
-        setFormSqm(resolvedProp?.sqm || resolvedProp?.specs?.livingArea || 250);
-        setFormDescription(resolvedProp?.description || resolvedProp?.public_remarks || '');
+          // Prepopulate proposal form
+          setFormTitle(prop?.title || '');
+          setFormTagline(prop?.tagline || '');
+          setFormPrice(String(prop?.price_raw || (typeof prop?.price === 'number' ? prop.price : '')));
+          setFormCondition(prop?.property_condition || 'Pristine / Turnkey');
+          setFormStandardStatus(prop?.standard_status || 'Active');
+          setFormBeds(prop?.bedrooms || prop?.specs?.beds || 0);
+          setFormBaths(prop?.bathrooms || prop?.specs?.baths || 0);
+          setFormSqm(prop?.sqm || prop?.specs?.livingArea || 0);
+          setFormDescription(prop?.description || prop?.public_remarks || '');
+        }
 
         // Fetch active pending proposals for this property
         const editsRes = await propertyService.getEditRequests({ propertyId: id, status: 'PENDING' });
@@ -74,9 +74,7 @@ export default function AgentPropertyDetail() {
         }
       } catch (err) {
         console.warn('Error loading property detail:', err);
-        const fallback = mockProperties.find(p => p.id === id) || mockProperties[0];
-        setProperty(fallback);
-        setActiveImage(fallback?.mainImage || null);
+        setProperty(null);
       } finally {
         setIsLoading(false);
       }
@@ -129,11 +127,32 @@ export default function AgentPropertyDetail() {
     }
   };
 
-  if (isLoading || !property) {
+  if (isLoading) {
     return (
       <div className="space-y-8 max-w-6xl mx-auto py-12 text-center">
         <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#0F766E]" />
         <p className="text-xs text-[#64748B]">Loading luxury listing dossier...</p>
+      </div>
+    );
+  }
+
+  if (!property) {
+    return (
+      <div className="space-y-6 max-w-md mx-auto py-16 text-center">
+        <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto text-slate-400">
+          <Building2 className="w-6 h-6" />
+        </div>
+        <div>
+          <h3 className="text-base font-bold text-[#1E293B]">Property Not Found</h3>
+          <p className="text-xs text-[#64748B] mt-1">This property listing does not exist in the database or may have been removed.</p>
+        </div>
+        <Link
+          to="/agent/properties"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-[#0F766E] text-white rounded-lg text-xs font-semibold hover:bg-[#115E59] transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Assigned Properties
+        </Link>
       </div>
     );
   }
