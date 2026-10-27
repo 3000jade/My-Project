@@ -174,7 +174,7 @@ export default function PropertyFilterToolbar({
             type="text"
             value={search || ''}
             onChange={(e) => onSearchChange?.(e.target.value)}
-            placeholder="Search properties (title, location, MLS key)..."
+            placeholder="Search properties by title, location, or listing code..."
             className="w-full h-9 pl-9 pr-8 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs text-[#1E293B] placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#0F766E] focus:border-[#0F766E]"
           />
           {search && (

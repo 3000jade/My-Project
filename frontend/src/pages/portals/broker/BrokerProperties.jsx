@@ -9,8 +9,11 @@ import DataTable from '../../../components/dashboard/DataTable';
 import PropertyQuickEditDrawer from '../../../components/cms/PropertyQuickEditDrawer';
 import ProposalReviewDrawer from '../../../components/cms/ProposalReviewDrawer';
 import ReassignAgentModal from '../../../components/dashboard/ReassignAgentModal';
+import PropertyFilterToolbar from '../../../components/properties/PropertyFilterToolbar';
 import propertyService, { normalizeProperty } from '../../../services/propertyService';
 import { cn } from '../../../utils/cn';
+import { Badge } from '../../../components/ui/badge';
+import { Button, buttonVariants } from '../../../components/ui/button';
 
 function formatPhilippineRelativeTime(dateStr) {
   if (!dateStr) return 'Not provided';
@@ -108,6 +111,7 @@ export default function BrokerProperties() {
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [typeFilter, setTypeFilter] = useState('ALL');
   const [locationFilter, setLocationFilter] = useState('ALL');
+  const [priceRange, setPriceRange] = useState({ min: '', max: '' });
   const [sortBy, setSortBy] = useState('newest');
 
   const [selectedKeys, setSelectedKeys] = useState(new Set());
@@ -344,7 +348,16 @@ export default function BrokerProperties() {
         matchesLocation = (p.city || p.location || '').toLowerCase().includes(locationFilter.toLowerCase());
       }
 
-      return matchesSearch && matchesTab && matchesStatus && matchesType && matchesLocation;
+      // Price Range Filter
+      let matchesPrice = true;
+      if (priceRange.min !== '') {
+        matchesPrice = matchesPrice && (p.price_raw || p.price || 0) >= Number(priceRange.min);
+      }
+      if (priceRange.max !== '') {
+        matchesPrice = matchesPrice && (p.price_raw || p.price || 0) <= Number(priceRange.max);
+      }
+
+      return matchesSearch && matchesTab && matchesStatus && matchesType && matchesLocation && matchesPrice;
     });
 
     // Sorting
@@ -359,7 +372,7 @@ export default function BrokerProperties() {
     }
 
     return result;
-  }, [properties, search, activeTab, statusFilter, typeFilter, locationFilter, sortBy]);
+  }, [properties, search, activeTab, statusFilter, typeFilter, locationFilter, priceRange, sortBy]);
 
   // Checkbox selection logic
   const handleToggleSelect = (key) => {
@@ -473,6 +486,7 @@ export default function BrokerProperties() {
     setStatusFilter('ALL');
     setTypeFilter('ALL');
     setLocationFilter('ALL');
+    setPriceRange({ min: '', max: '' });
     setSortBy('newest');
     setActiveTab('ALL');
     showToast('Filters reset to default');
@@ -485,7 +499,8 @@ export default function BrokerProperties() {
       className: "min-w-[280px]",
       render: (row) => {
         const title = row.title || 'Untitled property';
-        const listingCode = row.listing_id || row.listingId || (row.listing_key || row.listingKey ? `KEY: ${row.listing_key || row.listingKey}` : (row.id ? `ID: ${row.id}` : 'Not provided'));
+        const rawKey = row.listing_key || row.listingKey;
+        const listingCode = row.listing_id || row.listingId || (rawKey ? `ID: ${rawKey}` : (row.id ? `ID: ${row.id}` : 'Not provided'));
         const thumbnailImg = row.mainImage || (Array.isArray(row.images) && row.images.length > 0 ? row.images[0] : null) || row.thumbnail || row.image || (Array.isArray(row.property_images) && row.property_images[0] ? (row.property_images[0].imageUrl || row.property_images[0].image_url) : null);
         return (
           <div className="flex items-center gap-3">
@@ -883,7 +898,7 @@ export default function BrokerProperties() {
       )}
 
       {/* Truthful Connection Notice / Error State (No Mock Data Fallback) */}
-      {error && (
+      {error && properties.length > 0 && (
         <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-center justify-between text-amber-800 text-xs font-sans">
           <div className="flex items-center gap-2">
             <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
@@ -935,173 +950,50 @@ export default function BrokerProperties() {
           </button>
           
           <Link
-            to="/broker/properties/create"
-            className="h-10 px-4 rounded-lg bg-[#EB0028] hover:bg-[#D00223] active:bg-[#B3021E] text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer flex items-center gap-1.5"
+            to="/broker/properties/select-type"
+            className={cn(
+              buttonVariants({ variant: "default" }),
+              "h-10 px-4 flex items-center gap-1.5 cursor-pointer shadow-xs"
+            )}
             aria-label="New Listing / Add New Property"
           >
-            <Plus className="w-4 h-4 stroke-[2.5] text-white" />
-            <span className="text-white font-medium">Add New Property</span>
+            <Plus className="w-4 h-4 stroke-[2.5]" />
+            <span className="font-medium">Add New Property</span>
           </Link>
         </div>
       </div>
 
-      {/* Status Pill Tabs Matching Mockup */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs select-none custom-scrollbar">
-        {[
-          { id: 'ALL', label: 'All Listings', count: tabCounts.all },
-          { id: 'PROPOSALS', label: 'Agent Proposals', count: proposals.length, badge: proposals.length > 0 },
-          { id: 'PENDING_CONFIRMATION', label: 'Pending Confirmation', count: tabCounts.pendingConfirmation, badge: tabCounts.pendingConfirmation > 0 },
-          { id: 'ACTION_REQUIRED', label: 'Action Required', count: tabCounts.actionRequired, badge: tabCounts.actionRequired > 0, isAlert: true },
-          { id: 'NEEDS_APPROVAL', label: 'Needs Approval', count: tabCounts.needsApproval, badge: true },
-          { id: 'ACTIVE', label: 'Active', count: tabCounts.active },
-          { id: 'RESERVED', label: 'Reserved', count: tabCounts.reserved, ariaLabel: 'Reserved / Under Contract' },
-          { id: 'SOLD', label: 'Sold', count: tabCounts.sold, ariaLabel: 'Sold / Closed' },
-          { id: 'DRAFT', label: 'Draft', count: tabCounts.draft },
-        ].map((tab) => {
-          const isSelected = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActiveTab(tab.id)}
-              aria-label={tab.ariaLabel || `${tab.label} (${tab.count})`}
-              className={cn(
-                "inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs transition-colors cursor-pointer shrink-0 font-medium",
-                isSelected
-                  ? "bg-[#0F766E] text-white shadow-xs font-semibold"
-                  : "bg-slate-100 text-[#64748B] hover:text-[#1E293B] hover:bg-slate-200/80"
-              )}
-            >
-              <span>{tab.label}</span>
-              <span
-                className={cn(
-                  "px-1.5 py-0.2 rounded-full text-[10px] font-mono",
-                  isSelected
-                    ? "bg-white/20 text-white font-bold"
-                    : tab.isAlert && tab.count > 0
-                    ? "bg-rose-100 text-rose-800 font-bold"
-                    : tab.badge && tab.count > 0
-                    ? "bg-amber-100 text-amber-800 font-bold"
-                    : "bg-white text-slate-600"
-                )}
-              >
-                {tab.count}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Multi-Criteria Search & Filter Toolbar Matching Mockup */}
-      <div className="bg-white rounded-lg border border-[#E2E8F0] p-3 shadow-2xs flex flex-wrap items-center gap-2.5">
-        
-        {/* Search Input */}
-        <div className="relative flex-1 min-w-[220px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search properties by title, location, or listing code..."
-            className="w-full h-9 pl-9 pr-8 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs text-[#1E293B] placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#0F766E] focus:border-[#0F766E]"
-          />
-          {search && (
-            <button
-              type="button"
-              onClick={() => setSearch('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          )}
-        </div>
-
-        {/* Status Dropdown */}
-        <div className="w-36 shrink-0">
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-full h-9 px-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-[#0F766E] cursor-pointer"
-          >
-            <option value="ALL">Status: All</option>
-            <option value="ACTIVE">Active</option>
-            <option value="PENDING_CONFIRMATION">Pending Confirmation</option>
-            <option value="ACTION_REQUIRED">Action Required</option>
-            <option value="NEEDS_APPROVAL">Needs Approval</option>
-            <option value="RESERVED">Reserved</option>
-            <option value="SOLD">Sold</option>
-            <option value="DRAFT">Draft</option>
-          </select>
-        </div>
-
-        {/* Property Type Dropdown */}
-        <div className="w-36 shrink-0">
-          <select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            className="w-full h-9 px-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-[#0F766E] cursor-pointer"
-          >
-            <option value="ALL">Type: All</option>
-            {propertyTypeOptions.map(t => (
-              <option key={t} value={t}>{t}</option>
-            ))}
-            {propertyTypeOptions.length === 0 && (
-              <>
-                <option value="Condominium">Condominium</option>
-                <option value="House & Lot">House & Lot</option>
-                <option value="Townhouse">Townhouse</option>
-                <option value="Estate">Estate</option>
-              </>
-            )}
-          </select>
-        </div>
-
-        {/* Location Dropdown */}
-        <div className="w-36 shrink-0">
-          <select
-            value={locationFilter}
-            onChange={(e) => setLocationFilter(e.target.value)}
-            className="w-full h-9 px-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-[#0F766E] cursor-pointer"
-          >
-            <option value="ALL">Location: All</option>
-            {locationOptions.map(l => (
-              <option key={l} value={l}>{l}</option>
-            ))}
-            {locationOptions.length === 0 && (
-              <>
-                <option value="Makati">Makati</option>
-                <option value="Taguig">Taguig / BGC</option>
-                <option value="Muntinlupa">Muntinlupa</option>
-              </>
-            )}
-          </select>
-        </div>
-
-        {/* Sort By Dropdown */}
-        <div className="w-36 shrink-0">
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            className="w-full h-9 px-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-[#0F766E] cursor-pointer"
-          >
-            <option value="newest">Sort: Newest First</option>
-            <option value="price_desc">Price: High to Low</option>
-            <option value="price_asc">Price: Low to High</option>
-            <option value="title_asc">Title: A to Z</option>
-          </select>
-        </div>
-
-        {/* Clear Filters Button */}
-        <button
-          type="button"
-          onClick={handleClearFilters}
-          className="h-9 px-3 bg-white hover:bg-slate-50 border border-[#E2E8F0] rounded-lg text-xs font-semibold text-[#64748B] hover:text-[#1E293B] flex items-center gap-1.5 transition-colors cursor-pointer shrink-0"
-          title="Reset all filters"
-        >
-          <SlidersHorizontal className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">Reset</span>
-        </button>
-      </div>
+      {/* Property Filter & Search Toolbar */}
+      <PropertyFilterToolbar
+        search={search}
+        onSearchChange={setSearch}
+        statusTab={activeTab}
+        onStatusTabChange={setActiveTab}
+        statusCounts={{
+          all: tabCounts.all,
+          active: tabCounts.active,
+          needsApproval: tabCounts.needsApproval,
+          proposals: proposals.length,
+          pendingConfirmation: tabCounts.pendingConfirmation,
+          actionRequired: tabCounts.actionRequired,
+          reserved: tabCounts.reserved,
+          sold: tabCounts.sold,
+          draft: tabCounts.draft
+        }}
+        selectedType={typeFilter}
+        onTypeChange={setTypeFilter}
+        propertyTypeOptions={propertyTypeOptions}
+        selectedLocation={locationFilter}
+        onLocationChange={setLocationFilter}
+        locationOptions={locationOptions}
+        priceRange={priceRange}
+        onPriceRangeChange={setPriceRange}
+        sortBy={sortBy}
+        onSortByChange={setSortBy}
+        onResetFilters={handleClearFilters}
+        totalCount={properties.length}
+        filteredCount={filteredProperties.length}
+      />
 
       {/* Main Data Table or Neutral Empty / Loading States */}
       {activeTab === 'PROPOSALS' ? (
@@ -1164,7 +1056,7 @@ export default function BrokerProperties() {
             </p>
           </div>
           <Link
-            to="/broker/properties/create"
+            to="/broker/properties/select-type"
             className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#FF6B6B] hover:bg-[#EE5A5A] text-[#1E293B] text-xs font-semibold rounded-lg shadow-2xs transition-colors cursor-pointer"
           >
             <Plus className="w-4 h-4" />
