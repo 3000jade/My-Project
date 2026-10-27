@@ -2,8 +2,8 @@
 
 **Implementation Version:** `v2.1.0`  
 **Verification Date:** `2026-10-21`  
-**Specification Source:** `docs/implementation/agentmanagementModule.md`, `docs/implementation/appointmentAndCalendarInterface.md`, `docs/superpowers/specs/2026-10-21-agent-management-module-design.md`, `docs/superpowers/specs/2026-10-21-calendar-and-appointment-scheduling-design.md`
-**Companion Calendar & Scheduling Reference:** [`calendar-appointments-learn.md`](file:///c:/Users/Win11x64/Desktop/My%20code%20space/CP_kerby/docs/modules/agent-management/calendar-appointments-learn.md)
+**Specification Source:** `docs/modules/03-agent-management/2026-10-14-agent-management-module-spec.md`, `docs/modules/03-agent-management/2026-10-21-appointment-calendar-interface-spec.md`, `docs/superpowers/specs/2026-10-21-agent-management-module-design.md`, `docs/superpowers/specs/2026-10-21-calendar-and-appointment-scheduling-design.md`
+**Companion Calendar & Scheduling Reference:** [`calendar-appointments-learn.md`](file:///c:/Users/Win11x64/Desktop/My%20code%20space/CP_kerby/docs/modules/03-agent-management/2026-10-21-calendar-appointments-scheduling-reference.md)
 
 ---
 
@@ -191,7 +191,7 @@ Defined in `backend/src/models/agent_management_v2_migration.sql` and `backend/s
 
 ## 12. Verification Evidence and Results
 
-Verified on `2026-10-21` (full report in `docs/reports/agent-management-module-verification-report.md`):
+Verified on `2026-10-21` (full report in `docs/modules/03-agent-management/2026-10-14-agent-management-module-verification-report.md`):
 - `test files/backend/agentManagementSchema.test.ts`: **3 passed**
 - `test files/backend/agentOnboardingLifecycle.test.ts`: **4 passed**
 - `test files/backend/agentAvailabilityAndTeams.test.ts`: **2 passed**

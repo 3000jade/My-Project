@@ -1,7 +1,7 @@
 # Phase 5 Verification Report — Calendar & Appointment Scheduling Integration into Agent Management
 
 **Date:** `2026-10-21`  
-**Specification Source:** `docs/implementation/appointmentAndCalendarInterface.md`, `docs/superpowers/specs/2026-10-21-calendar-and-appointment-scheduling-design.md`  
+**Specification Source:** `docs/modules/03-agent-management/2026-10-21-appointment-calendar-interface-spec.md`, `docs/superpowers/specs/2026-10-21-calendar-and-appointment-scheduling-design.md`  
 **Implementation Plan:** `docs/superpowers/plans/2026-10-21-calendar-and-appointment-scheduling-plan.md`  
 **Status:** **PASSED (56/56 Automated Tests Passing | Production Build Clean)**
 

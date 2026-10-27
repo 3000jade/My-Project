@@ -8,11 +8,11 @@
 1. **Backend Service (`PropertyService.findProperties`)**: Batch retrieve images from `public.property_images` ordered by `display_order`, map proper numeric values preserving 0, eliminate hardcoded/fabricated MLS IDs, remove legacy property-type lookups, and ensure confidential field protection.
 2. **Frontend Service (`propertyService.js`)**: Refactor `normalizeProperty` to eliminate automatic Unsplash fallbacks, preserve 0 vs null for bedrooms/bathrooms/livingArea, respect unit definitions, avoid MLS code fabrication, and return pristine UI-safe objects.
 3. **Presentation Layer (`BrokerProperties.jsx`)**: Render neutral `<Building2 />` placeholder on image error or missing image with accessible labels; format listing codes (`listing_id` > `listing_key` > `id`); format living area with units (`m²`, `sq ft`); format bedrooms/bathrooms preserving 0 and showing `—` only when unknown; display type / subtype cleanly without purpose conflation; separate `PENDING` vs `RESERVED` vs `PENDING APPROVAL`; format Philippine dates (`Asia/Manila`) with calendar and relative day boundaries; implement exhaustive missing-state labels ("Untitled property", "Location not provided", "Price not provided", "Type not provided", "Unknown"); add accessible labels, responsive alignment, loading, empty, filtered-empty, and error/retry states with working-data preservation.
-4. **Verification**: Focused unit/integration regression tests (Vitest) + Playwright E2E verification capturing refreshed browser state, network payloads, screenshots, and updating `docs/reports/broker-property-listings-data-verification.md`.
+4. **Verification**: Focused unit/integration regression tests (Vitest) + Playwright E2E verification capturing refreshed browser state, network payloads, screenshots, and updating `docs/modules/02-property-listing/2026-10-16-broker-property-listings-data-verification.md`.
 
 **Tech Stack:** React 19, TypeScript, Express v5, PostgreSQL / Supabase, Vitest, Playwright, Tailwind CSS v4, Lucide React.
 
-**Spec:** [USER_REQUEST prompt requirements and `docs/reports/broker-property-listings-data-verification.md`]
+**Spec:** [USER_REQUEST prompt requirements and `docs/modules/02-property-listing/2026-10-16-broker-property-listings-data-verification.md`]
 
 ## Global Constraints
 
@@ -255,7 +255,7 @@ Expected: All property tests pass.
 **Files:**
 - Script: `frontend/verify-broker-properties-e2e.mjs`
 - Evidence: `docs/reports/evidence/broker-property-listings/`
-- Report: `docs/reports/broker-property-listings-data-verification.md`
+- Report: `docs/modules/02-property-listing/2026-10-16-broker-property-listings-data-verification.md`
 
 - [ ] **Step 1: Execute Playwright E2E browser verification**
 
@@ -269,7 +269,7 @@ Verify:
 6. Zero preservation and missing labels.
 7. Capture before/after screenshots and network logs into `docs/reports/evidence/broker-property-listings/`.
 
-- [ ] **Step 2: Update `docs/reports/broker-property-listings-data-verification.md`**
+- [ ] **Step 2: Update `docs/modules/02-property-listing/2026-10-16-broker-property-listings-data-verification.md`**
 
 Update the audit report with:
 - Summary of all implemented corrections.

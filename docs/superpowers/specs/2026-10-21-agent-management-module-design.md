@@ -1,7 +1,7 @@
 # Agent Management Module — Architecture & Design Specification
 
 > **Date:** 2026-10-21  
-> **Module Reference:** `docs/implementation/agentmanagementModule.md`  
+> **Module Reference:** `docs/modules/03-agent-management/2026-10-14-agent-management-module-spec.md`  
 > **Selected Architecture:** Approach A — Relational Brokerage Membership & Synced Profile Projection  
 > **Design System:** Human Shelter Realty | Modern SaaS (`#0F766E` Teal, `#115E59` Hover, `#FF6B6B` Coral, `#F8FAFC` Slate Alabaster, `#FFFFFF` Pure White, `8px` grid & `8px` radius)
 

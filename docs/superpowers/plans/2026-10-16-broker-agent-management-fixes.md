@@ -12,7 +12,7 @@
 
 **Tech Stack:** React 19, TypeScript, Express v5, Vitest, Playwright, Supabase PostgreSQL, Tailwind CSS v4.
 
-**Spec:** `docs/reports/broker-agent-management-data-verification.md`
+**Spec:** `docs/modules/03-agent-management/2026-10-16-broker-agent-management-data-verification.md`
 
 ## Global Constraints
 - Preserve existing database schema, authentication, permissions, registration workflows, and production records. Do not run DDL or mutate live production rows.
@@ -212,7 +212,7 @@
 ### Task 9: Update Data Verification Report
 
 **Files:**
-- Update: `docs/reports/broker-agent-management-data-verification.md`
+- Update: `docs/modules/03-agent-management/2026-10-16-broker-agent-management-data-verification.md`
 
 - [x] **Step 1: Update report with before/after comparison, implemented fixes, regression test results, and remaining limitations**
 - [x] **Step 2: Ensure all tokens, credentials, and PII in evidence and report are properly redacted**

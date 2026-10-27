@@ -1,7 +1,7 @@
 # Agent Management — Calendar & Appointment Scheduling Design Specification
 
 **Date:** 2026-10-21  
-**Source Spec:** `docs/implementation/appointmentAndCalendarInterface.md`  
+**Source Spec:** `docs/modules/03-agent-management/2026-10-21-appointment-calendar-interface-spec.md`  
 **Status:** Approved by User  
 
 ---

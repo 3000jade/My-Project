@@ -2,7 +2,7 @@
 
 **Date:** 2026-10-21  
 **Status:** Validated Design Specification  
-**Source Requirement:** [`docs/implementation/CommunicationNotificationAuditAndSessionHandling.md`](file:///c:/Users/Win11x64/Desktop/My%20code%20space/CP_kerby/docs/implementation/CommunicationNotificationAuditAndSessionHandling.md)  
+**Source Requirement:** [`docs/modules/06-audit/2026-10-21-communication-notification-audit-session-handling.md`](file:///c:/Users/Win11x64/Desktop/My%20code%20space/CP_kerby/docs/modules/06-audit/2026-10-21-communication-notification-audit-session-handling.md)  
 **Architecture Pattern:** Approach A — Relational Extension + In-Process Async Workers + Dual Supabase/Deterministic Fallback  
 
 ---

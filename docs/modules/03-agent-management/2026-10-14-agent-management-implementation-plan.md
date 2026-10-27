@@ -8,7 +8,7 @@
 
 **Tech stack:** React, Express, TypeScript, Supabase/PostgreSQL, Google Drive, Zod, Vitest, and the repository's existing Playwright tooling.
 
-**Evidence:** [Agent management evaluation](./agent-management-evaluation.md), repository `docs/agent-management.md`, and `docs/superpowers/specs/2026-10-14-agent-management-module-design.md`.
+**Evidence:** [Agent management evaluation](./agent-management-evaluation.md), repository `docs/modules/03-agent-management/2026-10-14-agent-management-overview.md`, and `docs/superpowers/specs/2026-10-14-agent-management-module-design.md`.
 
 **Repository:** `C:/Users/Win11x64/Desktop/My code space/CP_kerby`
 
@@ -276,7 +276,7 @@ async updateAgentProfile(id, payload) {
 
 ## Task 10 — Validate, document, and prepare a controlled release
 
-**Modify:** `docs/agent-management.md`, existing design specification where it conflicts with approved behavior; create browser/HTTP acceptance tests.
+**Modify:** `docs/modules/03-agent-management/2026-10-14-agent-management-overview.md`, existing design specification where it conflicts with approved behavior; create browser/HTTP acceptance tests.
 
 - [ ] Exercise the full workflow through HTTP and browser: authorized invite → logged-out private upload → registration → broker inspection → rejection → applicant correction → approval → permitted listing action → suspension → denied restricted action → reviewed reinstatement.
 - [ ] Include unauthorized roles, forged tokens, replay/concurrent submission, expired links/licenses, failed email delivery, database failure, failed saves, private document reads, and empty states. Use an isolated database to validate actual RLS/function grants and race behavior.

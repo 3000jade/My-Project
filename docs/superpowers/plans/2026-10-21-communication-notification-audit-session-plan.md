@@ -573,7 +573,7 @@ git commit -m "feat(frontend): add session coordinator, live agent chat states, 
 
 **Files:**
 - Modify: `docs/system-modules/04-property-listing-inquiry-module.md`
-- Modify: `docs/reports/property-listing-inquiry-management-verification-report.md`
+- Modify: `docs/modules/07-inquiry/2026-10-06-inquiry-management-verification-report.md`
 
 - [ ] **Step 1: Run the complete backend and frontend test suite**
 
@@ -582,11 +582,11 @@ Expected: 100% PASS across all 21 acceptance criteria (`INQ-01` through `UX-01`)
 
 - [ ] **Step 2: Update `/learn` documentation and Verification Report**
 
-Document the implemented architecture, data model, API contracts, session lifecycle, AI summary safeguards, notification queue, audit controls, and full 21-item acceptance evidence matrix in `docs/system-modules/04-property-listing-inquiry-module.md` and `docs/reports/property-listing-inquiry-management-verification-report.md`.
+Document the implemented architecture, data model, API contracts, session lifecycle, AI summary safeguards, notification queue, audit controls, and full 21-item acceptance evidence matrix in `docs/system-modules/04-property-listing-inquiry-module.md` and `docs/modules/07-inquiry/2026-10-06-inquiry-management-verification-report.md`.
 
 - [ ] **Step 3: Commit documentation**
 
 ```bash
-git add docs/system-modules/04-property-listing-inquiry-module.md docs/reports/property-listing-inquiry-management-verification-report.md
+git add docs/system-modules/04-property-listing-inquiry-module.md docs/modules/07-inquiry/2026-10-06-inquiry-management-verification-report.md
 git commit -m "docs(learn): document communication, notification, audit, AI summary, and session handling verification"
 ```

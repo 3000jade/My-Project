@@ -4,9 +4,10 @@
 **System:** Human Shelter Realty / CP_kerby Luxury Architectural Real Estate Platform  
 **Status:** Active & Production-Verified  
 **Workflow Reference:** [`docs/implementation/Authentication_and_Authorization.md`](file:///c:/Users/Win11x64/Desktop/My%20code%20space/CP_kerby/docs/implementation/Authentication_and_Authorization.md)  
-**Verification Report:** [`docs/reports/auth-verification-report.md`](file:///c:/Users/Win11x64/Desktop/My%20code%20space/CP_kerby/docs/reports/auth-verification-report.md)  
-**Last Updated:** October 23, 2026  
-**Implementation Commit:** `894969f2c1186ce16e187707ad0bda75b059cae1`  
+**Verification Report:** [`docs/modules/01-user-management/2026-10-08-auth-verification-report.md`](file:///c:/Users/Win11x64/Desktop/My%20code%20space/CP_kerby/docs/modules/01-user-management/2026-10-08-auth-verification-report.md)  
+**Last Updated:** October 27, 2026  
+**Implementation Commit:** Current Working Tree  
+**Recent Change Record:** [`docs/modules/01-user-management/2026-10-27-session-timeout-relogin-fix-report.md`](./2026-10-27-session-timeout-relogin-fix-report.md)  
 
 ---
 
@@ -370,12 +371,12 @@ All capabilities have been validated across **27 automated test suites** (**89 a
 | **AuthContext Boundary Check** | [`frontend/src/context/AuthContext.jsx`](file:///c:/Users/Win11x64/Desktop/My%20code%20space/CP_kerby/frontend/src/context/AuthContext.jsx) | `test files/frontend/context/AuthContext.test.jsx` | **PASS (2/2)** |
 | **Login Input Form** | [`frontend/src/components/auth/LoginForm.jsx`](file:///c:/Users/Win11x64/Desktop/My%20code%20space/CP_kerby/frontend/src/components/auth/LoginForm.jsx) | `test files/frontend/auth/LoginForm.test.jsx` | **PASS (2/2)** |
 | **Register Input Form** | [`frontend/src/components/auth/RegisterForm.jsx`](file:///c:/Users/Win11x64/Desktop/My%20code%20space/CP_kerby/frontend/src/components/auth/RegisterForm.jsx) | `test files/frontend/auth/RegisterForm.test.jsx` | **PASS (1/1)** |
-| **Login Page Journey** | [`frontend/src/pages/auth/LoginPage.jsx`](file:///c:/Users/Win11x64/Desktop/My%20code%20space/CP_kerby/frontend/src/pages/auth/LoginPage.jsx) | `test files/frontend/pages/auth/LoginPage.test.jsx` | **PASS (4/4)** |
+| **Login Page Journey** | [`frontend/src/pages/auth/LoginPage.jsx`](file:///c:/Users/Win11x64/Desktop/My%20code%20space/CP_kerby/frontend/src/pages/auth/LoginPage.jsx) | `src/pages/auth/LoginPage.test.jsx` | **PASS (6/6)** |
 | **Register Page Journey** | [`frontend/src/pages/auth/RegisterPage.jsx`](file:///c:/Users/Win11x64/Desktop/My%20code%20space/CP_kerby/frontend/src/pages/auth/RegisterPage.jsx) | `test files/frontend/pages/auth/RegisterPage.test.jsx` | **PASS (5/5)** |
 | **Forgot Password Page** | [`frontend/src/pages/auth/ForgotPasswordPage.jsx`](file:///c:/Users/Win11x64/Desktop/My%20code%20space/CP_kerby/frontend/src/pages/auth/ForgotPasswordPage.jsx) | `test files/frontend/pages/auth/ForgotPasswordPage.test.jsx` | **PASS (3/3)** |
 | **Reset Password Page** | [`frontend/src/pages/auth/ResetPasswordPage.jsx`](file:///c:/Users/Win11x64/Desktop/My%20code%20space/CP_kerby/frontend/src/pages/auth/ResetPasswordPage.jsx) | `test files/frontend/pages/auth/ResetPasswordPage.test.jsx` | **PASS (3/3)** |
 | **Verify Email Page** | [`frontend/src/pages/auth/VerifyEmailPage.jsx`](file:///c:/Users/Win11x64/Desktop/My%20code%20space/CP_kerby/frontend/src/pages/auth/VerifyEmailPage.jsx) | `test files/frontend/pages/auth/VerifyEmailPage.test.jsx` | **PASS (2/2)** |
-| **Session Inactivity Watcher** | [`frontend/src/components/auth/SessionWatcher.jsx`](file:///c:/Users/Win11x64/Desktop/My%20code%20space/CP_kerby/frontend/src/components/auth/SessionWatcher.jsx) | `test files/frontend/auth/SessionWatcher.test.jsx` | **PASS (2/2)** |
+| **Session Inactivity Watcher** | [`frontend/src/components/auth/SessionWatcher.jsx`](file:///c:/Users/Win11x64/Desktop/My%20code%20space/CP_kerby/frontend/src/components/auth/SessionWatcher.jsx) | `src/components/auth/SessionWatcher.test.jsx` | **PASS (3/3)** |
 | **Admin User & Role Editor** | [`frontend/src/components/auth/RolePermissionEditor.jsx`](file:///c:/Users/Win11x64/Desktop/My%20code%20space/CP_kerby/frontend/src/components/auth/RolePermissionEditor.jsx) | `test files/frontend/auth/RolePermissionEditor.test.jsx` | **PASS (2/2)** |
 | **Route Access Guard** | [`frontend/src/components/auth/AuthGuard.jsx`](file:///c:/Users/Win11x64/Desktop/My%20code%20space/CP_kerby/frontend/src/components/auth/AuthGuard.jsx) | `test files/frontend/auth/AuthGuard.test.jsx` | **PASS (2/2)** |
 | **Protected Route RBAC** | [`frontend/src/components/auth/ProtectedRoute.jsx`](file:///c:/Users/Win11x64/Desktop/My%20code%20space/CP_kerby/frontend/src/components/auth/ProtectedRoute.jsx) | `test files/frontend/components/auth/ProtectedRoute.test.jsx` | **PASS (5/5)** |

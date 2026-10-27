@@ -166,9 +166,9 @@
 
 **Files:**
 - Create: `test files/backend/agentManagementE2E.verification.test.ts`
-- Create: `docs/reports/agent-management-module-verification-report.md`
-- Create: `docs/modules/agent-management/learn.md`
+- Create: `docs/modules/03-agent-management/2026-10-14-agent-management-module-verification-report.md`
+- Create: `docs/modules/03-agent-management/2026-10-21-agent-management-technical-reference.md`
 
 - [ ] **Step 1: Execute complete E2E verification suite covering all Phase 5 acceptance criteria (Invitations & Onboarding, Profiles & Permissions, Availability & Assignment, Suspension & Departure Transfers, Reporting & Experience)**
-- [ ] **Step 2: Record evidence and results in `docs/reports/agent-management-module-verification-report.md`**
-- [ ] **Step 3: Write the comprehensive Phase 6 `/learn` module summary in `docs/modules/agent-management/learn.md`**
+- [ ] **Step 2: Record evidence and results in `docs/modules/03-agent-management/2026-10-14-agent-management-module-verification-report.md`**
+- [ ] **Step 3: Write the comprehensive Phase 6 `/learn` module summary in `docs/modules/03-agent-management/2026-10-21-agent-management-technical-reference.md`**

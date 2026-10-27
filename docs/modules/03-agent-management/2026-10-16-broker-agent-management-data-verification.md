@@ -3,7 +3,7 @@
 **Target Application**: Human Shelter Realty (CP_kerby Luxury Architectural Real Estate Platform)  
 **Target Route**: `/broker/agents` (Broker Dashboard → Agents → Agent Management) and `/broker/agents/:id` (Agent Details)  
 **Verification Target Layer**: Database (`Supabase PostgreSQL`) $\longrightarrow$ Backend (`Node.js/Express`) $\longrightarrow$ Client (`React 19/Vite`)  
-**Report Path**: `docs/reports/broker-agent-management-data-verification.md`  
+**Report Path**: `docs/modules/03-agent-management/2026-10-16-broker-agent-management-data-verification.md`  
 **Evidence Directory**: `docs/reports/evidence/broker-agent-management/`  
 **Date of Audit & Fix Verification**: 2026-10-16  
 **Execution Environment**: Windows 11 x64, Chromium Headless (Playwright v1.63.0), Node.js v22.19.0  
@@ -220,5 +220,5 @@ All evidentiary artifacts have been captured during a live authenticated browser
 - **Lead Verification Engineer**: Antigravity Automated Verification Agent
 - **Verification Status**: **100% COMPLETE & VERIFIED PASSING**
 - **Regression Test Suite**: 42/42 backend test files passed (180/180 tests); 5/5 frontend unit tests passed; frontend Vite production build succeeded cleanly.
-- **Report Location**: `docs/reports/broker-agent-management-data-verification.md`
+- **Report Location**: `docs/modules/03-agent-management/2026-10-16-broker-agent-management-data-verification.md`
 - **Evidence Location**: `docs/reports/evidence/broker-agent-management/`

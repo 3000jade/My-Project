@@ -5,7 +5,7 @@
 > **Architecture Version:** 3.2.0  
 > **Stack:** React 19 + Tailwind CSS v4 | Express + TypeScript | PostgreSQL (Supabase) + Dual-Mode In-Memory Fallback  
 > **Design Language:** Modern SaaS (#0F766E Teal, #FF6B6B Coral, #F8FAFC Slate Ground, 8px Grid/Radius)  
-> **Source Directive:** `docs/implementation/CommunicationNotificationAuditAndSessionHandling.md`
+> **Source Directive:** `docs/modules/06-audit/2026-10-21-communication-notification-audit-session-handling.md`
 
 ---
 

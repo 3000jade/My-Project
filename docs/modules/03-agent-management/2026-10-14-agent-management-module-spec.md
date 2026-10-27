@@ -323,7 +323,7 @@ Include:
 14. **Relevant files, migrations, contracts, and tests.**
 15. **Implementation version and verification date.**
 
-Save the summary in the project’s established documentation location. If no convention exists, use `docs/modules/agent-management/learn.md`.
+Save the summary in the project’s established documentation location. If no convention exists, use `docs/modules/03-agent-management/2026-10-21-agent-management-technical-reference.md`.
 
 **Deliverable:** Structured `/learn` module summary.
 

@@ -2,7 +2,7 @@
 
 **Implementation Version:** `v2.1.0`  
 **Verification Date:** `2026-10-21`  
-**Specification Source:** `docs/implementation/appointmentAndCalendarInterface.md`, `docs/superpowers/specs/2026-10-21-calendar-and-appointment-scheduling-design.md`
+**Specification Source:** `docs/modules/03-agent-management/2026-10-21-appointment-calendar-interface-spec.md`, `docs/superpowers/specs/2026-10-21-calendar-and-appointment-scheduling-design.md`
 
 ---
 

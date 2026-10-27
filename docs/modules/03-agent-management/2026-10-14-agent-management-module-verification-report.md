@@ -2,7 +2,7 @@
 
 **Verification Date:** 2026-10-21  
 **Module:** Agent Management (`Broker`, `Sales Agent`, `Client`)  
-**Specification Reference:** `docs/implementation/agentmanagementModule.md`, `docs/superpowers/specs/2026-10-21-agent-management-module-design.md`
+**Specification Reference:** `docs/modules/03-agent-management/2026-10-14-agent-management-module-spec.md`, `docs/superpowers/specs/2026-10-21-agent-management-module-design.md`
 
 ---
 

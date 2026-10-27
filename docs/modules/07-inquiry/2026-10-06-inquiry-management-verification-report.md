@@ -2,7 +2,7 @@
 ## Communication, Notification, Audit, AI Summary & Session Handling (Phases 1–6)
 
 > **Document Type:** Verification & Acceptance Report  
-> **Target Specification:** [`docs/implementation/CommunicationNotificationAuditAndSessionHandling.md`](file:///c:/Users/Win11x64/Desktop/My%20code%20space/CP_kerby/docs/implementation/CommunicationNotificationAuditAndSessionHandling.md)  
+> **Target Specification:** [`docs/modules/06-audit/2026-10-21-communication-notification-audit-session-handling.md`](file:///c:/Users/Win11x64/Desktop/My%20code%20space/CP_kerby/docs/modules/06-audit/2026-10-21-communication-notification-audit-session-handling.md)  
 > **Approved Spec:** [`docs/superpowers/specs/2026-10-21-communication-notification-audit-session-design.md`](file:///c:/Users/Win11x64/Desktop/My%20code%20space/CP_kerby/docs/superpowers/specs/2026-10-21-communication-notification-audit-session-design.md)  
 > **Implementation Plan:** [`docs/superpowers/plans/2026-10-21-communication-notification-audit-session-plan.md`](file:///c:/Users/Win11x64/Desktop/My%20code%20space/CP_kerby/docs/superpowers/plans/2026-10-21-communication-notification-audit-session-plan.md)  
 > **Verification Status:** **100% COMPLETE & PASSING (21 / 21 Criteria Met)**  
@@ -115,4 +115,4 @@ npx vitest run \
 
 ## 4. Operational Sign-Off
 
-All 21 acceptance criteria specified in Section 11 of [`docs/implementation/CommunicationNotificationAuditAndSessionHandling.md`](file:///c:/Users/Win11x64/Desktop/My%20code%20space/CP_kerby/docs/implementation/CommunicationNotificationAuditAndSessionHandling.md) have been systematically implemented, validated with dedicated automated test suites across frontend and backend, and verified with zero regressions to existing inquiry vertical slice tests.
+All 21 acceptance criteria specified in Section 11 of [`docs/modules/06-audit/2026-10-21-communication-notification-audit-session-handling.md`](file:///c:/Users/Win11x64/Desktop/My%20code%20space/CP_kerby/docs/modules/06-audit/2026-10-21-communication-notification-audit-session-handling.md) have been systematically implemented, validated with dedicated automated test suites across frontend and backend, and verified with zero regressions to existing inquiry vertical slice tests.

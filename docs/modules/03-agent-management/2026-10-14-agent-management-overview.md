@@ -3,7 +3,7 @@
 **Document Version:** 1.0.0  
 **Status:** Implemented & Verified  
 **Scope:** Human Shelter Realty (`CP_kerby`) Brokerage Platform  
-**Target File:** [`docs/agent-management.md`](file:///c:/Users/Win11x64/Desktop/My%20code%20space/CP_kerby/docs/agent-management.md)
+**Target File:** [`docs/modules/03-agent-management/2026-10-14-agent-management-overview.md`](file:///c:/Users/Win11x64/Desktop/My%20code%20space/CP_kerby/docs/modules/03-agent-management/2026-10-14-agent-management-overview.md)
 
 ---
 
