@@ -61,6 +61,7 @@ import BrokerDashboard from './pages/portals/broker/BrokerDashboard';
 import BrokerProperties from './pages/portals/broker/BrokerProperties';
 import BrokerPropertyDetail from './pages/portals/broker/BrokerPropertyDetail';
 import BrokerCreateListings from './pages/portals/broker/BrokerCreateListings';
+import BrokerPropertyTypeSelect from './pages/portals/broker/BrokerPropertyTypeSelect';
 import BrokerInquiries from './pages/portals/broker/BrokerInquiries';
 import BrokerInquiryDetail from './pages/portals/broker/BrokerInquiryDetail';
 import BrokerAppointments from './pages/portals/broker/BrokerAppointments';
@@ -143,6 +144,8 @@ function AppRoutes({ isAppLoading }) {
           <Route index element={<Navigate to="/agent/dashboard" replace />} />
           <Route path="dashboard" element={<AgentDashboard />} />
           <Route path="properties" element={<AgentProperties />} />
+          <Route path="properties/new" element={<AgentPropertyCreate />} />
+          <Route path="properties/create" element={<AgentPropertyCreate />} />
           <Route path="properties/:id" element={<AgentPropertyDetail />} />
           <Route path="inquiries" element={<AgentInquiries />} />
           <Route path="inquiries/:id" element={<AgentInquiryDetail />} />
@@ -164,6 +167,7 @@ function AppRoutes({ isAppLoading }) {
           <Route index element={<Navigate to="/broker/dashboard" replace />} />
           <Route path="dashboard" element={<BrokerDashboard />} />
           <Route path="properties" element={<BrokerProperties />} />
+          <Route path="properties/select-type" element={<BrokerPropertyTypeSelect />} />
           <Route path="properties/create" element={<BrokerCreateListings />} />
           <Route path="properties/:id/edit" element={<BrokerCreateListings />} />
           <Route path="properties/:id" element={<BrokerPropertyDetail />} />
