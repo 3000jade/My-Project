@@ -11,7 +11,7 @@ import {
   Send, X, Sparkles, Bed, Bath, Maximize2, Car, MapPin, 
   ArrowLeft, Eye, Edit3, Compass
 } from 'lucide-react';
-import { GooglePropertyMap, StreetViewModal } from '../../../components/ui/map';
+import { GooglePropertyMap, StreetViewModal, EnlargedMapModal } from '../../../components/ui/map';
 
 export default function AgentPropertyDetail() {
   const { id } = useParams();
@@ -32,6 +32,7 @@ export default function AgentPropertyDetail() {
   const [isAssignmentModalOpen, setIsAssignmentModalOpen] = useState(false);
   const [assignmentModalMode, setAssignmentModalMode] = useState('accept');
   const [isStreetViewOpen, setIsStreetViewOpen] = useState(false);
+  const [isEnlargedMapOpen, setIsEnlargedMapOpen] = useState(false);
 
   // Proposal Form State
   const [formTitle, setFormTitle] = useState('');
@@ -94,7 +95,7 @@ export default function AgentPropertyDetail() {
       const proposedChanges = {
         title: formTitle,
         tagline: formTagline,
-        price: Number(formPrice),
+        price: Number(String(formPrice).replace(/[^0-9.]/g, '')),
         property_condition: formCondition,
         standard_status: formStandardStatus,
         bedrooms_total: Number(formBeds),
@@ -159,8 +160,8 @@ export default function AgentPropertyDetail() {
     );
   }
 
-  const propLat = parseFloat(property.latitude || property.location?.coordinates?.lat) || 14.5547;
-  const propLng = parseFloat(property.longitude || property.location?.coordinates?.lng) || 121.0244;
+  const propLat = parseFloat(property.latitude || property.lat || property.location?.coordinates?.lat) || 14.5547;
+  const propLng = parseFloat(property.longitude || property.lng || property.location?.coordinates?.lng) || 121.0244;
   const mapPropertyItem = {
     ...property,
     id: property.id || id,
@@ -406,14 +407,25 @@ export default function AgentPropertyDetail() {
                 <MapPin className="w-4 h-4 text-[#0F766E]" />
                 <span>Cadastral Location & Map</span>
               </h3>
-              <button
-                type="button"
-                onClick={() => setIsStreetViewOpen(true)}
-                className="px-2.5 py-1 bg-white hover:bg-teal-50 border border-[#0F766E] text-[#0F766E] rounded-md text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
-              >
-                <Compass className="w-3.5 h-3.5" />
-                <span>360° Street View</span>
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  data-testid="enlarge-map-btn"
+                  onClick={() => setIsEnlargedMapOpen(true)}
+                  className="px-2.5 py-1 bg-[#0F766E] hover:bg-[#115E59] text-white rounded-md text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+                >
+                  <Maximize2 className="w-3.5 h-3.5" />
+                  <span>Enlarge Map</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsStreetViewOpen(true)}
+                  className="px-2.5 py-1 bg-white hover:bg-teal-50 border border-[#0F766E] text-[#0F766E] rounded-md text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <Compass className="w-3.5 h-3.5" />
+                  <span>360° Street View</span>
+                </button>
+              </div>
             </div>
             
             <div className="aspect-[16/9] w-full rounded-lg overflow-hidden border border-[#CBD5E1]" data-lenis-prevent="true">
@@ -422,7 +434,7 @@ export default function AgentPropertyDetail() {
                 singlePropertyMode={true}
                 interactive={true}
                 initialZoom={16}
-                height="100%"
+                className="w-full h-full"
               />
             </div>
             <div className="text-xs text-[#64748B] flex items-center justify-between">
@@ -508,14 +520,15 @@ export default function AgentPropertyDetail() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B] block mb-1">
+                <label htmlFor="form-price" className="text-xs font-semibold uppercase tracking-wider text-[#1E293B] block mb-1">
                   Proposed Price (PHP) <span className="text-[#FF6B6B]">*</span>
                 </label>
                 <div className="relative">
                   <span className="absolute left-3 top-3 text-sm font-bold text-[#0F766E]">₱</span>
                   <input
+                    id="form-price"
                     required
-                    type="number"
+                    type="text"
                     value={formPrice}
                     onChange={e => setFormPrice(e.target.value)}
                     className="w-full h-11 pl-8 pr-3.5 border border-[#CBD5E1] rounded-lg text-sm font-mono font-bold text-[#0F766E] outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E]"
@@ -693,9 +706,20 @@ export default function AgentPropertyDetail() {
         <StreetViewModal
           isOpen={isStreetViewOpen}
           onClose={() => setIsStreetViewOpen(false)}
-          lat={propLat}
-          lng={propLng}
-          propertyName={property.title || 'Property Frontage'}
+          coordinates={{ lat: propLat, lng: propLng }}
+          propertyTitle={property.title || 'Property Frontage'}
+        />
+      )}
+      {/* Fullscreen Enlarged Neighborhood Map Modal */}
+      {property && (
+        <EnlargedMapModal
+          isOpen={isEnlargedMapOpen}
+          onClose={() => setIsEnlargedMapOpen(false)}
+          propertyId={property.id || id}
+          currentCoordinates={{ lat: propLat, lng: propLng }}
+          currentPrice={property.price || property.price_raw || 0}
+          currentTitle={property.title || 'Luxury Residence'}
+          currentAddress={typeof property.location === 'string' ? property.location : property.location?.address || 'Metro Manila, Philippines'}
         />
       )}
     </div>

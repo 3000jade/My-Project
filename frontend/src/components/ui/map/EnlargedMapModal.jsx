@@ -117,6 +117,7 @@ export default function EnlargedMapModal({
       aria-modal="true"
       aria-label="Enlarged property location and neighborhood map"
       data-lenis-prevent="true"
+      data-testid="enlarged-map-modal"
       className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-md flex flex-col select-none animate-in fade-in duration-200"
     >
       {/* Top Navigation & Status Bar */}

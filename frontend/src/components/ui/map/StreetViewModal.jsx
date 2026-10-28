@@ -5,9 +5,15 @@ export default function StreetViewModal({
   isOpen,
   onClose,
   coordinates,
+  lat,
+  lng,
   propertyTitle = 'Luxury Residence',
+  propertyName,
   hasCoverage: coverageOverride,
 }) {
+  const resolvedCoords = coordinates || (lat != null && lng != null ? { lat: Number(lat), lng: Number(lng) } : null);
+  const resolvedTitle = propertyTitle || propertyName || 'Luxury Residence';
+
   const panoramaContainerRef = useRef(null);
   const panoramaInstanceRef = useRef(null);
 
@@ -19,7 +25,7 @@ export default function StreetViewModal({
   );
 
   useEffect(() => {
-    if (!isOpen || !coordinates || !coordinates.lat || !coordinates.lng) {
+    if (!isOpen || !resolvedCoords || !resolvedCoords.lat || !resolvedCoords.lng) {
       return;
     }
 
@@ -49,7 +55,7 @@ export default function StreetViewModal({
         }
 
         const svService = new google.maps.StreetViewService();
-        const latLng = new google.maps.LatLng(coordinates.lat, coordinates.lng);
+        const latLng = new google.maps.LatLng(resolvedCoords.lat, resolvedCoords.lng);
 
         svService.getPanorama({ location: latLng, radius: 100 }, (data, status) => {
           if (!isMounted) return;
@@ -94,13 +100,14 @@ export default function StreetViewModal({
         panoramaInstanceRef.current.setVisible(false);
       }
     };
-  }, [isOpen, coordinates, coverageOverride]);
+  }, [isOpen, resolvedCoords?.lat, resolvedCoords?.lng, coverageOverride]);
 
   if (!isOpen) return null;
 
   return (
     <div
       data-lenis-prevent="true"
+      data-testid="street-view-modal"
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
     >
       <div className="relative w-full max-w-4xl bg-white rounded-xl shadow-2xl border border-[#E2E8F0] overflow-hidden flex flex-col max-h-[90vh]">
@@ -114,7 +121,7 @@ export default function StreetViewModal({
               </h3>
             </div>
             <p className="text-xs text-[#64748B] mt-0.5 line-clamp-1">
-              {propertyTitle}
+              {resolvedTitle}
             </p>
           </div>
 

@@ -406,6 +406,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [mapSearchQuery, setMapSearchQuery] = useState('');
   const mapSearchContainerRef = useRef(null);
+  const latestPinRequestRef = useRef(0);
 
   // Unsaved changes alert
   useEffect(() => {
@@ -468,9 +469,10 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
   // Reverse geocode when map pin is moved or map is clicked
   const handlePinMoved = async (pos) => {
     setIsDirty(true);
+    const requestId = ++latestPinRequestRef.current;
     try {
       const geo = await mapsService.reverse(pos[0], pos[1]);
-      if (geo) {
+      if (geo && requestId === latestPinRequestRef.current) {
         setFormData(prev => ({
           ...prev,
           latitude: pos[0].toFixed(7),
@@ -2031,24 +2033,39 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
               <div className="flex items-center gap-1.5 flex-wrap pt-1">
                 <span className="text-[11px] font-semibold text-[#64748B]">Cadastral Presets:</span>
                 {[
-                  { name: 'BGC, Taguig', lat: 14.5547, lng: 121.0494 },
-                  { name: 'Makati CBD', lat: 14.5547, lng: 121.0244 },
-                  { name: 'Ortigas Center', lat: 14.5869, lng: 121.0614 },
-                  { name: 'Cebu IT Park', lat: 10.3297, lng: 123.9063 },
-                  { name: 'Clark Freeport', lat: 15.1856, lng: 120.5369 }
-                ].map(preset => (
-                  <button
-                    key={preset.name}
-                    type="button"
-                    onClick={() => {
-                      handleMapPositionChange([preset.lat, preset.lng]);
-                      handlePinMoved([preset.lat, preset.lng]);
-                    }}
-                    className="text-[11px] px-2 py-0.5 rounded bg-white hover:bg-teal-50 border border-[#E2E8F0] text-[#0F766E] font-medium transition-colors cursor-pointer"
-                  >
-                    {preset.name}
-                  </button>
-                ))}
+                  { name: 'BGC, Taguig', lat: 14.5547, lng: 121.0494, city: 'Taguig', subdivision: 'Bonifacio Global City' },
+                  { name: 'Makati CBD', lat: 14.5547, lng: 121.0244, city: 'Makati', subdivision: 'Makati Central Business District' },
+                  { name: 'Ortigas Center', lat: 14.5869, lng: 121.0614, city: 'Pasig', subdivision: 'Ortigas Center' },
+                  { name: 'Cebu IT Park', lat: 10.3297, lng: 123.9063, city: 'Cebu City', subdivision: 'Cebu IT Park' },
+                  { name: 'Clark Freeport', lat: 15.1856, lng: 120.5369, city: 'Angeles', subdivision: 'Clark Freeport Zone' }
+                ].map(preset => {
+                  const isActive = Math.abs(Number(formData.latitude) - preset.lat) < 0.0001 && Math.abs(Number(formData.longitude) - preset.lng) < 0.0001;
+                  return (
+                    <button
+                      key={preset.name}
+                      type="button"
+                      onClick={() => {
+                        handleMapPositionChange([preset.lat, preset.lng]);
+                        handlePinMoved([preset.lat, preset.lng]);
+                        setFormData(prev => ({
+                          ...prev,
+                          latitude: preset.lat.toFixed(7),
+                          longitude: preset.lng.toFixed(7),
+                          city: prev.city || preset.city,
+                          location: prev.location || preset.city,
+                          subdivision_name: prev.subdivision_name || preset.subdivision
+                        }));
+                      }}
+                      className={`text-[11px] px-2 py-0.5 rounded border transition-colors cursor-pointer ${
+                        isActive
+                          ? 'bg-[#0F766E] text-white border-[#0F766E] font-semibold shadow-xs'
+                          : 'bg-white hover:bg-teal-50 border-[#E2E8F0] text-[#0F766E] font-medium'
+                      }`}
+                    >
+                      {preset.name}
+                    </button>
+                  );
+                })}
               </div>
 
               {/* Coordinates: Latitude & Longitude Inputs */}
@@ -4551,12 +4568,36 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                   </div>
                   <div>
                     <span className="text-[#64748B] block mb-0.5">Coordinates (Latitude & Longitude)</span>
-                    <span className="font-mono text-[#0F766E] font-medium">
-                      {formData.latitude && formData.longitude 
-                        ? `${Number(formData.latitude).toFixed(6)}, ${Number(formData.longitude).toFixed(6)}` 
-                        : <span className="text-amber-600 font-sans font-normal italic">Not provided</span>}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-[#0F766E] font-medium">
+                        {formData.latitude && formData.longitude 
+                          ? `${Number(formData.latitude).toFixed(6)}, ${Number(formData.longitude).toFixed(6)}` 
+                          : <span className="text-amber-600 font-sans font-normal italic">Not provided</span>}
+                      </span>
+                      {formData.latitude && formData.longitude && (
+                        <a
+                          href={`https://www.google.com/maps?q=${Number(formData.latitude).toFixed(6)},${Number(formData.longitude).toFixed(6)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#0F766E] hover:underline"
+                        >
+                          <span>Open in Google Maps</span>
+                          <span className="text-[10px]">↗</span>
+                        </a>
+                      )}
+                    </div>
                   </div>
+
+                  {formData.latitude && formData.longitude && (
+                    <div className="sm:col-span-2 mt-2 rounded-lg overflow-hidden border border-[#CBD5E1] bg-slate-50 relative aspect-[21/9]">
+                      <iframe
+                        title="Review Google Maps Cadastral Pinpoint"
+                        src={`https://maps.google.com/maps?q=${Number(formData.latitude).toFixed(6)},${Number(formData.longitude).toFixed(6)}&t=m&z=15&output=embed`}
+                        className="w-full h-full border-0 select-none"
+                        loading="lazy"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
 

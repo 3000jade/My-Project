@@ -33,7 +33,10 @@ export default {
                 "outline": "#6B7B7C",
                 "outline-variant": "#D0D9D9",
                 "coral": "#E76F51",
-                "on-coral": "#ffffff",
+
+                "teal": "#0F766E",
+                "on-teal": "#ffffff",
+
             },
             spacing: {
                 "margin-desktop": "80px",
