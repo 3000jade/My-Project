@@ -133,27 +133,30 @@ describe('BrokerCreateListings - Form Fields & Step Navigation', () => {
     expect(screen.getAllByText(/Step 1 of 7/i)[0]).toBeInTheDocument();
   });
 
-  it('allows filling Section 1 (Basic Info) fields and updates title', () => {
+  it('allows filling Section 1 (Listing Overview) fields including tagline, reference code, and assigned agent', () => {
     renderComponent();
 
     // Step 1: Listing Title input
     const titleInput = screen.getByPlaceholderText(/e\.g\. Modernist Cantilever Estate at Ayala Alabang/i);
     expect(titleInput).toBeInTheDocument();
-
-    // Test filling title
     fireEvent.change(titleInput, { target: { value: 'Luxury Penthouse at The Proscenium' } });
     expect(titleInput.value).toBe('Luxury Penthouse at The Proscenium');
+
+    // Tagline input
+    const taglineInput = screen.getByPlaceholderText(/e\.g\. Elevated residential lot overlooking Laguna de Bay/i);
+    expect(taglineInput).toBeInTheDocument();
+    fireEvent.change(taglineInput, { target: { value: 'High-floor Rockwell corner unit' } });
+    expect(taglineInput.value).toBe('High-floor Rockwell corner unit');
+
+    // Reference Code input
+    const refCodeInput = screen.getByPlaceholderText(/e\.g\. CAD-HAV-B12-L04/i);
+    expect(refCodeInput).toBeInTheDocument();
+
+    // Assigned Listing Agent selector
+    expect(screen.getByText(/Assigned Listing Agent/i)).toBeInTheDocument();
   });
 
-  it('renders Step 1 without any agent selector controls (decoupled to agent management)', () => {
-    renderComponent();
-
-    // Verify agent controls are absent from Step 1
-    expect(screen.queryByText(/Assign Agent/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/Select an Agent/i)).not.toBeInTheDocument();
-  });
-
-  it('navigates to Section 2 (Location & Address) and verifies address fields', () => {
+  it('navigates to Section 2 (Location & Address) and verifies tailored subdivision block/lot fields', () => {
     renderComponent();
 
     // Navigate to step 2: Location via stepper
@@ -162,6 +165,12 @@ describe('BrokerCreateListings - Form Fields & Step Navigation', () => {
     // Verify location controls exist
     expect(screen.getByPlaceholderText(/Search Philippine address or landmark/i)).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/e\.g\. 142 Acacia Avenue, Phase 2/i)).toBeInTheDocument();
+
+    // Verify tailored subdivision fields exist for residential lot / house and lot
+    expect(screen.getByPlaceholderText(/e\.g\. Havila Highlands/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Phase 2')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Block 12')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Lot 4')).toBeInTheDocument();
   });
 
   it('navigates to Section 3 (Property Specifications) and checks architectural and dimension fields', () => {

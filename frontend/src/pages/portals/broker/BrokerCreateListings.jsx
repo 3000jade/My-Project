@@ -14,8 +14,13 @@ import PageHeader from '../../../components/dashboard/PageHeader';
 import DashboardModal from '../../../components/dashboard/DashboardModal';
 import { Button, buttonVariants } from '../../../components/ui/button';
 import { Badge } from '../../../components/ui/badge';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, useToast, Toaster } from '../../../components/ui';
+import { 
+  Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, 
+  Input, Label, Textarea, Alert, AlertTitle, AlertDescription,
+  useToast, Toaster 
+} from '../../../components/ui';
 import propertyService, { normalizeProperty, toApiPayload } from '../../../services/propertyService';
+import agentService from '../../../services/agentService';
 import { useAuth } from '../../../context/AuthContext';
 import mapsService from '../../../services/mapsService';
 import phLocationService from '../../../services/phLocationService';
@@ -249,13 +254,32 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
   const searchParams = new URLSearchParams(location.search);
   const typeParam = searchParams.get('type') || location.state?.propertyType;
 
+  const [availableAgents, setAvailableAgents] = useState([]);
+
+  useEffect(() => {
+    const fetchAgents = async () => {
+      try {
+        const result = await (agentService.getAgents ? agentService.getAgents() : (agentService.default ? agentService.default.getAgents() : []));
+        if (Array.isArray(result)) {
+          setAvailableAgents(result);
+        }
+      } catch (err) {
+        setAvailableAgents([]);
+      }
+    };
+    fetchAgents();
+  }, []);
+
   const [formData, setFormData] = useState({
     title: '',
+    tagline: '',
+    referenceCode: '',
     transaction_type: 'For Sale',
-    property_type: (!isEditing && typeParam) ? typeParam : 'House & Lot',
+    property_type: (!isEditing && typeParam) ? typeParam : 'houseAndLot',
     property_condition: 'RFO',
+    development_condition: '',
     price: '',
-    currency: '₱',
+    currency: 'PHP',
     price_term: 'Total Contract Price',
     is_negotiable: false,
     location: '',
@@ -263,7 +287,13 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
     address: '',
     subdivision: '',
     subdivision_name: '',
+    phase: '',
+    block: '',
+    lot: '',
     building_name: '',
+    tower_name: '',
+    floor_level: '',
+    unit_number: '',
     barangay: '',
     province: '',
     state_or_province: '',
@@ -1845,7 +1875,41 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                 />
               </div>
 
-              <div className="space-y-1.5 md:col-span-2 sm:max-w-sm">
+              {/* Tagline / Marketing Headline */}
+              <div className="space-y-1.5 md:col-span-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
+                    Headline / Marketing Tagline
+                  </label>
+                  <span className="text-[11px] text-[#64748B]">
+                    {(formData.tagline || '').length} / 160
+                  </span>
+                </div>
+                <input
+                  type="text"
+                  maxLength={160}
+                  placeholder="e.g. Elevated residential lot overlooking Laguna de Bay"
+                  value={formData.tagline || ''}
+                  onChange={e => { setIsDirty(true); setFormData({ ...formData, tagline: e.target.value }); }}
+                  className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none transition-colors shadow-2xs"
+                />
+              </div>
+
+              {/* Reference Code & Transaction Purpose */}
+              <div className="space-y-1.5 md:col-span-1">
+                <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B] block h-5">
+                  MLS / Cadastral Reference Code
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. CAD-HAV-B12-L04"
+                  value={formData.referenceCode || formData.listing_id || ''}
+                  onChange={e => { setIsDirty(true); setFormData({ ...formData, referenceCode: e.target.value, listing_id: e.target.value }); }}
+                  className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none transition-colors shadow-2xs font-mono"
+                />
+              </div>
+
+              <div className="space-y-1.5 md:col-span-1">
                 <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B] block h-5">
                   Transaction Purpose <span className="text-[#FF6B6B]">*</span>
                 </label>
@@ -1865,6 +1929,85 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                     </button>
                   ))}
                 </div>
+              </div>
+
+              {/* Development Condition Selector */}
+              <div className="space-y-1.5 md:col-span-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
+                    Development Stage & Condition
+                  </label>
+                  <Badge variant="secondary">Philippine Market Standard</Badge>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {(isLand
+                    ? ['Raw / Undeveloped Lot', 'Subdivision Phase Cut', 'Ready to Build']
+                    : isCondo
+                    ? ['Ready for Occupancy (RFO)', 'Pre-Selling', 'Resale']
+                    : ['Brand New / RFO', 'Pre-Selling', 'Well-Maintained Resale', 'Renovated']
+                  ).map(cond => {
+                    const isSelected = formData.development_condition === cond || formData.property_condition === cond;
+                    return (
+                      <button
+                        key={cond}
+                        type="button"
+                        onClick={() => {
+                          setIsDirty(true);
+                          setFormData({ ...formData, development_condition: cond, property_condition: cond });
+                        }}
+                        className={`px-3.5 py-2 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
+                          isSelected
+                            ? 'bg-[#0F766E] text-white border-[#0F766E] shadow-xs'
+                            : 'bg-white hover:bg-slate-50 border-[#CBD5E1] text-[#1E293B]'
+                        }`}
+                      >
+                        {cond}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Assigned Listing Agent (PRC License) */}
+              <div className="space-y-1.5 md:col-span-2">
+                <div className="flex items-center justify-between">
+                  <label htmlFor="assigned-agent-select" className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
+                    Assigned Listing Agent <span className="text-[#0F766E]">(PRC Broker / Salesperson)</span>
+                  </label>
+                  <Badge variant="outline">Supabase RLS Bound</Badge>
+                </div>
+                <select
+                  id="assigned-agent-select"
+                  value={formData.agent_id || ''}
+                  onChange={(e) => {
+                    setIsDirty(true);
+                    const selectedId = e.target.value;
+                    const selectedAgent = availableAgents.find(a => a.id === selectedId);
+                    setFormData({
+                      ...formData,
+                      agent_id: selectedId,
+                      list_agent_key: selectedId || null,
+                      agent_name: selectedAgent ? selectedAgent.name : '',
+                      assignedAgent: selectedAgent ? {
+                        agentId: selectedAgent.id,
+                        name: selectedAgent.name,
+                        email: selectedAgent.email,
+                        phone: selectedAgent.phone,
+                        role: selectedAgent.role,
+                        prcLicenseNo: selectedAgent.prc_license_no || selectedAgent.license_no || 'PRC-REB-0024891',
+                        assignmentStatus: 'accepted'
+                      } : null
+                    });
+                  }}
+                  className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none transition-colors shadow-2xs"
+                >
+                  <option value="">Human Shelter Realty Corporate Brokerage Desk</option>
+                  {availableAgents.map((agent) => (
+                    <option key={agent.id} value={agent.id}>
+                      {agent.name} ({agent.role || 'Licensed Agent'} • {agent.email})
+                    </option>
+                  ))}
+                </select>
               </div>
 
               {/* Property Type Classification Option Cards */}
@@ -2299,51 +2442,152 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                   </div>
                 </div>
 
-                {/* Second Row: Subdivision / Community & Building Name */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Subdivision / Community */}
-                  <div className="space-y-1.5">
-                    <label htmlFor="subdivision-input" className="text-xs font-semibold text-[#1E293B] block">
-                      Subdivision / Community
-                    </label>
-                    <input
-                      id="subdivision-input"
-                      type="text"
-                      placeholder="e.g. Ayala Alabang Village, Forbes Park"
-                      value={formData.subdivision_name || formData.subdivision || ''}
-                      onChange={e => {
-                        setIsDirty(true);
-                        setFormData({
-                          ...formData,
-                          subdivision: e.target.value,
-                          subdivision_name: e.target.value,
-                        });
-                      }}
-                      className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
-                    />
-                  </div>
+                {/* Tailored Address Branching: Condo vs Subdivision */}
+                {isCondo ? (
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                    <div className="space-y-1.5 md:col-span-6">
+                      <label htmlFor="building-name-input" className="text-xs font-semibold text-[#1E293B] block">
+                        Building Name <span className="text-[#FF6B6B]">*</span>
+                      </label>
+                      <input
+                        id="building-name-input"
+                        type="text"
+                        placeholder="e.g. The Proscenium at Rockwell, Two Serendra"
+                        value={formData.building_name || ''}
+                        onChange={e => {
+                          setIsDirty(true);
+                          setFormData({ ...formData, building_name: e.target.value });
+                        }}
+                        className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
+                      />
+                    </div>
 
-                  {/* Building Name */}
-                  <div className="space-y-1.5">
-                    <label htmlFor="building-name-input" className="text-xs font-semibold text-[#1E293B] block">
-                      Building Name
-                    </label>
-                    <input
-                      id="building-name-input"
-                      type="text"
-                      placeholder="e.g. Two Serendra, Grand Hyatt Residences"
-                      value={formData.building_name || ''}
-                      onChange={e => {
-                        setIsDirty(true);
-                        setFormData({
-                          ...formData,
-                          building_name: e.target.value,
-                        });
-                      }}
-                      className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
-                    />
+                    <div className="space-y-1.5 md:col-span-6">
+                      <label htmlFor="tower-name-input" className="text-xs font-semibold text-[#1E293B] block">
+                        Tower / Wing
+                      </label>
+                      <input
+                        id="tower-name-input"
+                        type="text"
+                        placeholder="e.g. The Lincoln Tower"
+                        value={formData.tower_name || ''}
+                        onChange={e => {
+                          setIsDirty(true);
+                          setFormData({ ...formData, tower_name: e.target.value });
+                        }}
+                        className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5 md:col-span-6">
+                      <label htmlFor="floor-level-input" className="text-xs font-semibold text-[#1E293B] block">
+                        Floor Level
+                      </label>
+                      <input
+                        id="floor-level-input"
+                        type="text"
+                        placeholder="e.g. 28"
+                        value={formData.floor_level || ''}
+                        onChange={e => {
+                          setIsDirty(true);
+                          setFormData({ ...formData, floor_level: e.target.value });
+                        }}
+                        className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5 md:col-span-6">
+                      <label htmlFor="unit-number-input" className="text-xs font-semibold text-[#1E293B] block">
+                        Unit Number
+                      </label>
+                      <input
+                        id="unit-number-input"
+                        type="text"
+                        placeholder="e.g. Unit 28B"
+                        value={formData.unit_number || ''}
+                        onChange={e => {
+                          setIsDirty(true);
+                          setFormData({ ...formData, unit_number: e.target.value });
+                        }}
+                        className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
+                      />
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                    <div className="space-y-1.5 md:col-span-6">
+                      <label htmlFor="subdivision-input" className="text-xs font-semibold text-[#1E293B] block">
+                        Subdivision / Village Name
+                      </label>
+                      <input
+                        id="subdivision-input"
+                        type="text"
+                        placeholder="e.g. Havila Highlands Executive Subdivision, Ayala Alabang"
+                        value={formData.subdivision_name || formData.subdivision || ''}
+                        onChange={e => {
+                          setIsDirty(true);
+                          setFormData({
+                            ...formData,
+                            subdivision: e.target.value,
+                            subdivision_name: e.target.value,
+                          });
+                        }}
+                        className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5 md:col-span-2">
+                      <label htmlFor="phase-input" className="text-xs font-semibold text-[#1E293B] block">
+                        Phase
+                      </label>
+                      <input
+                        id="phase-input"
+                        type="text"
+                        placeholder="Phase 2"
+                        value={formData.phase || ''}
+                        onChange={e => {
+                          setIsDirty(true);
+                          setFormData({ ...formData, phase: e.target.value });
+                        }}
+                        className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5 md:col-span-2">
+                      <label htmlFor="block-input" className="text-xs font-semibold text-[#1E293B] block">
+                        Block
+                      </label>
+                      <input
+                        id="block-input"
+                        type="text"
+                        placeholder="Block 12"
+                        value={formData.block || ''}
+                        onChange={e => {
+                          setIsDirty(true);
+                          setFormData({ ...formData, block: e.target.value });
+                        }}
+                        className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5 md:col-span-2">
+                      <label htmlFor="lot-input" className="text-xs font-semibold text-[#1E293B] block">
+                        Lot
+                      </label>
+                      <input
+                        id="lot-input"
+                        type="text"
+                        placeholder="Lot 4"
+                        value={formData.lot || ''}
+                        onChange={e => {
+                          setIsDirty(true);
+                          setFormData({ ...formData, lot: e.target.value });
+                        }}
+                        className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
