@@ -3,7 +3,7 @@ import { X, ExternalLink, Check, DollarSign, Home, Key, Shield, User } from 'luc
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/utils/cn';
 import propertyService, { toApiPayload } from '@/services/propertyService';
-import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 
 const AGENT_OPTIONS = [
   'Elena Rossi',
@@ -53,6 +53,14 @@ const STATUS_PILLS = [
     standardStatus: 'Draft',
     activeClass: 'bg-slate-600 text-white border-slate-600 shadow-xs',
     idleClass: 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+  },
+  {
+    id: 'INACTIVE',
+    label: 'Archive (Inactive)',
+    status: 'inactive',
+    standardStatus: 'Closed',
+    activeClass: 'bg-amber-700 text-white border-amber-700 shadow-xs',
+    idleClass: 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100'
   }
 ];
 
@@ -161,19 +169,19 @@ export default function PropertyQuickEditDrawer({
       <SheetContent data-testid="broker-drawer" side="right" className="w-full max-w-lg p-0 flex flex-col h-full bg-white border-l border-[#E2E8F0] shadow-2xl overflow-y-auto [&>button]:hidden">
         
         {/* Header */}
-        <div className="px-6 py-4 border-b border-[#E2E8F0] flex items-center justify-between bg-[#F8FAFC]">
+        <SheetHeader className="px-6 py-4 border-b border-[#E2E8F0] flex flex-row items-center justify-between bg-[#F8FAFC] space-y-0">
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-mono text-[10px] text-[#0D4446] bg-[#0D4446]/10 px-2 py-0.5 rounded font-semibold uppercase tracking-wider">
+              <span className="font-mono text-[10px] text-[#0F766E] bg-[#0F766E]/10 px-2 py-0.5 rounded font-semibold uppercase tracking-wider">
                 Quick Edit
               </span>
-              <span className="font-mono text-[10px] text-slate-400">
+              <SheetDescription className="font-mono text-[10px] text-slate-400">
                 ID: {property.listingKey || property.id}
-              </span>
+              </SheetDescription>
             </div>
-            <h3 className="text-sm font-semibold text-[#0F172A] mt-1 truncate max-w-[280px]">
+            <SheetTitle className="text-sm font-semibold text-[#1E293B] mt-1 truncate max-w-[280px]">
               {property.title}
-            </h3>
+            </SheetTitle>
           </div>
 
           <div className="flex items-center gap-2">
@@ -191,10 +199,7 @@ export default function PropertyQuickEditDrawer({
               onClick={onClose}
               className="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-[#F4F5F4] flex items-center justify-center cursor-pointer transition-colors"
             >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
+              <X className="w-4 h-4" />`r`n            </button>`r`n          </div>`r`n        </SheetHeader>
 
         {/* Form Body */}
         <div className="p-6 overflow-y-auto space-y-5 flex-1 text-xs font-sans">

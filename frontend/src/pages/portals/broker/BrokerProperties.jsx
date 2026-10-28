@@ -4,7 +4,7 @@ import {
   Building2, CheckCircle2, Plus, RotateCw, Edit3, ExternalLink,
   MapPin, Maximize2, Bed, Bath, Copy, MoreVertical, ChevronRight,
   Search, X, SlidersHorizontal, AlertCircle, Home,
-  List, LayoutGrid, Map as MapIcon
+  List, LayoutGrid, Map as MapIcon, Archive, Trash2, RotateCcw
 } from 'lucide-react';
 import { GooglePropertyMap } from '../../../components/ui/map';
 import DataTable from '../../../components/dashboard/DataTable';
@@ -12,6 +12,8 @@ import PropertyQuickEditDrawer from '../../../components/cms/PropertyQuickEditDr
 import ProposalReviewDrawer from '../../../components/cms/ProposalReviewDrawer';
 import ReassignAgentModal from '../../../components/dashboard/ReassignAgentModal';
 import PropertyFilterToolbar from '../../../components/properties/PropertyFilterToolbar';
+import ArchivePropertyModal from '../../../components/ui/modals/ArchivePropertyModal';
+import DeletePropertyModal from '../../../components/ui/modals/DeletePropertyModal';
 import propertyService, { normalizeProperty } from '../../../services/propertyService';
 import { cn } from '../../../utils/cn';
 import { Badge } from '../../../components/ui/badge';
@@ -139,6 +141,164 @@ export default function BrokerProperties() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
+  // Archive & Delete Modal States
+  const [targetArchiveProperty, setTargetArchiveProperty] = useState(null);
+  const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
+  const [isArchiving, setIsArchiving] = useState(false);
+  const [archiveError, setArchiveError] = useState(null);
+  const [batchArchiveMode, setBatchArchiveMode] = useState(false);
+
+  const [targetDeleteProperty, setTargetDeleteProperty] = useState(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState(null);
+  const [batchDeleteMode, setBatchDeleteMode] = useState(false);
+
+  const handleArchiveClick = (row) => {
+    setTargetArchiveProperty(row);
+    setBatchArchiveMode(false);
+    setArchiveError(null);
+    setIsArchiveModalOpen(true);
+  };
+
+  const handleConfirmArchive = async () => {
+    if (!targetArchiveProperty) return;
+    setIsArchiving(true);
+    setArchiveError(null);
+    try {
+      const targetId = targetArchiveProperty.id || targetArchiveProperty.listingKey;
+      await propertyService.updateProperty(targetId, {
+        status: 'inactive',
+        standard_status: 'Closed',
+        standardStatus: 'Closed',
+      });
+      setProperties(prev => prev.map(p => {
+        if (p.id === targetId || p.listingKey === targetId) {
+          return { ...p, status: 'inactive', standard_status: 'Closed', standardStatus: 'Closed' };
+        }
+        return p;
+      }));
+      showToast(`Listing "${targetArchiveProperty.title}" archived successfully.`);
+      setIsArchiveModalOpen(false);
+      setTargetArchiveProperty(null);
+    } catch (err) {
+      setArchiveError(err.message || 'Failed to archive property listing.');
+    } finally {
+      setIsArchiving(false);
+    }
+  };
+
+  const handleReactivateClick = async (row) => {
+    const targetId = row.id || row.listingKey;
+    try {
+      await propertyService.updateProperty(targetId, {
+        status: 'available',
+        standard_status: 'Active',
+        standardStatus: 'Active',
+      });
+      setProperties(prev => prev.map(p => {
+        if (p.id === targetId || p.listingKey === targetId) {
+          return { ...p, status: 'available', standard_status: 'Active', standardStatus: 'Active' };
+        }
+        return p;
+      }));
+      showToast(`Listing "${row.title}" reactivated and restored to Active status.`);
+    } catch (err) {
+      showToast(err.message || 'Failed to reactivate listing.');
+    }
+  };
+
+  const handleDeleteClick = (row) => {
+    setTargetDeleteProperty(row);
+    setBatchDeleteMode(false);
+    setDeleteError(null);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!targetDeleteProperty) return;
+    setIsDeleting(true);
+    setDeleteError(null);
+    try {
+      const targetId = targetDeleteProperty.id || targetDeleteProperty.listingKey;
+      await propertyService.deleteProperty(targetId);
+      setProperties(prev => prev.filter(p => p.id !== targetId && p.listingKey !== targetId));
+      setSelectedKeys(prev => {
+        const next = new Set(prev);
+        next.delete(targetId);
+        return next;
+      });
+      showToast(`Listing "${targetDeleteProperty.title}" permanently deleted.`);
+      setIsDeleteModalOpen(false);
+      setTargetDeleteProperty(null);
+    } catch (err) {
+      setDeleteError(err.message || 'Failed to delete listing.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleBatchArchivePrompt = () => {
+    setBatchArchiveMode(true);
+    setArchiveError(null);
+    setIsArchiveModalOpen(true);
+  };
+
+  const handleConfirmBatchArchive = async () => {
+    setIsArchiving(true);
+    setArchiveError(null);
+    try {
+      const keys = Array.from(selectedKeys);
+      await Promise.allSettled(
+        keys.map(id => propertyService.updateProperty(id, {
+          status: 'inactive',
+          standard_status: 'Closed',
+          standardStatus: 'Closed',
+        }))
+      );
+      setProperties(prev => prev.map(p => {
+        if (selectedKeys.has(p.id) || selectedKeys.has(p.listingKey)) {
+          return { ...p, status: 'inactive', standard_status: 'Closed', standardStatus: 'Closed' };
+        }
+        return p;
+      }));
+      showToast(`${keys.length} listings archived successfully.`);
+      setSelectedKeys(new Set());
+      setIsArchiveModalOpen(false);
+      setBatchArchiveMode(false);
+    } catch (err) {
+      setArchiveError(err.message || 'Failed to archive selected listings.');
+    } finally {
+      setIsArchiving(false);
+    }
+  };
+
+  const handleBatchDeletePrompt = () => {
+    setBatchDeleteMode(true);
+    setDeleteError(null);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleConfirmBatchDelete = async () => {
+    setIsDeleting(true);
+    setDeleteError(null);
+    try {
+      const keys = Array.from(selectedKeys);
+      await Promise.allSettled(
+        keys.map(id => propertyService.deleteProperty(id))
+      );
+      setProperties(prev => prev.filter(p => !selectedKeys.has(p.id) && !selectedKeys.has(p.listingKey)));
+      showToast(`${keys.length} listings permanently deleted.`);
+      setSelectedKeys(new Set());
+      setIsDeleteModalOpen(false);
+      setBatchDeleteMode(false);
+    } catch (err) {
+      setDeleteError(err.message || 'Failed to delete selected listings.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   // Strictly Live API Fetch (No Fake / Mock Fallback Records)
   const fetchProperties = useCallback(async (isManualRefresh = false) => {
     if (isManualRefresh) {
@@ -220,6 +380,7 @@ export default function BrokerProperties() {
     let reserved = 0;
     let sold = 0;
     let draft = 0;
+    let inactive = 0;
 
     properties.forEach(p => {
       const std = String(p.standard_status || p.standardStatus || '').toUpperCase();
@@ -244,8 +405,11 @@ export default function BrokerProperties() {
       if (std === 'CLOSED' || s === 'SOLD') {
         sold++;
       }
-      if (std === 'DRAFT' || s === 'INACTIVE') {
+      if (std === 'DRAFT') {
         draft++;
+      }
+      if (s === 'INACTIVE' || std === 'HOLD' || std === 'INACTIVE') {
+        inactive++;
       }
     });
 
@@ -258,6 +422,7 @@ export default function BrokerProperties() {
       reserved,
       sold,
       draft,
+      inactive,
     };
   }, [properties]);
 
@@ -324,7 +489,9 @@ export default function BrokerProperties() {
       } else if (activeTab === 'SOLD' || activeTab === 'CLOSED') {
         matchesTab = pStdStatus === 'CLOSED' || pStatus === 'SOLD';
       } else if (activeTab === 'DRAFT') {
-        matchesTab = pStdStatus === 'DRAFT' || pStatus === 'INACTIVE';
+        matchesTab = pStdStatus === 'DRAFT';
+      } else if (activeTab === 'INACTIVE' || activeTab === 'ARCHIVED') {
+        matchesTab = pStatus === 'INACTIVE' || pStdStatus === 'HOLD' || pStdStatus === 'INACTIVE';
       }
 
       // Dropdown Status Filter
@@ -790,35 +957,61 @@ export default function BrokerProperties() {
     },
     {
       header: "Actions",
-      className: "w-24 text-right",
-      render: (row) => (
-        <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-          <Link
-            to={`/broker/properties/${row.id || row.listingKey}/edit`}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-[#0F766E] hover:bg-slate-100 transition-colors cursor-pointer"
-            title="Edit Property"
-            aria-label="Edit Property"
-          >
-            <Edit3 className="w-4 h-4" />
-          </Link>
-          <button
-            onClick={(e) => handleDuplicate(e, row)}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-[#0F766E] hover:bg-slate-100 transition-colors cursor-pointer"
-            title="Duplicate Property"
-            aria-label="Duplicate Property"
-          >
-            <Copy className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => setQuickDrawerProperty(row)}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-[#0F766E] hover:bg-slate-100 transition-colors cursor-pointer"
-            title="More Options"
-            aria-label="More options"
-          >
-            <MoreVertical className="w-4 h-4" />
-          </button>
-        </div>
-      )
+      className: "w-36 text-right",
+      render: (row) => {
+        const isArchived = String(row.status || '').toUpperCase() === 'INACTIVE' || String(row.standard_status || row.standardStatus || '').toUpperCase() === 'CLOSED' || String(row.standard_status || row.standardStatus || '').toUpperCase() === 'HOLD' || String(row.standard_status || row.standardStatus || '').toUpperCase() === 'INACTIVE';
+        return (
+          <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+            {isArchived ? (
+              <button
+                type="button"
+                onClick={() => handleReactivateClick(row)}
+                className="p-1.5 rounded-lg text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 transition-colors cursor-pointer"
+                title="Reactivate Listing"
+                aria-label="Reactivate Listing"
+              >
+                <RotateCcw className="w-4 h-4" />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => handleArchiveClick(row)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-colors cursor-pointer"
+                title="Archive Listing"
+                aria-label="Archive Listing"
+              >
+                <Archive className="w-4 h-4" />
+              </button>
+            )}
+            <Link
+              to={`/broker/properties/${row.id || row.listingKey}/edit`}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-[#0F766E] hover:bg-slate-100 transition-colors cursor-pointer"
+              title="Edit Property"
+              aria-label="Edit Property"
+            >
+              <Edit3 className="w-4 h-4" />
+            </Link>
+            <button
+              type="button"
+              onClick={(e) => handleDuplicate(e, row)}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-[#0F766E] hover:bg-slate-100 transition-colors cursor-pointer"
+              title="Duplicate Property"
+              aria-label="Duplicate Property"
+            >
+              <Copy className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => handleDeleteClick(row)}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+              title="Delete Property"
+              aria-label="Delete Property"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+        );
+      }
     }
   ];
 
@@ -1032,7 +1225,8 @@ export default function BrokerProperties() {
           actionRequired: tabCounts.actionRequired,
           reserved: tabCounts.reserved,
           sold: tabCounts.sold,
-          draft: tabCounts.draft
+          draft: tabCounts.draft,
+          inactive: tabCounts.inactive
         }}
         selectedType={typeFilter}
         onTypeChange={setTypeFilter}
@@ -1364,6 +1558,20 @@ export default function BrokerProperties() {
               Set Sold
             </button>
             <button
+              onClick={handleBatchArchivePrompt}
+              className="px-2.5 py-1 rounded-md bg-amber-600 hover:bg-amber-500 text-white transition-colors cursor-pointer flex items-center gap-1.5"
+            >
+              <Archive className="w-3.5 h-3.5" />
+              <span>Archive Selected</span>
+            </button>
+            <button
+              onClick={handleBatchDeletePrompt}
+              className="px-2.5 py-1 rounded-md bg-red-600 hover:bg-red-500 text-white transition-colors cursor-pointer flex items-center gap-1.5"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Delete Selected</span>
+            </button>
+            <button
               onClick={() => setSelectedKeys(new Set())}
               className="text-slate-400 hover:text-white underline cursor-pointer ml-1"
             >
@@ -1372,6 +1580,36 @@ export default function BrokerProperties() {
           </div>
         </div>
       )}
+
+      {/* Archive Property Confirmation Modal */}
+      <ArchivePropertyModal
+        isOpen={isArchiveModalOpen}
+        onClose={() => {
+          setIsArchiveModalOpen(false);
+          setTargetArchiveProperty(null);
+          setBatchArchiveMode(false);
+        }}
+        onConfirm={batchArchiveMode ? handleConfirmBatchArchive : handleConfirmArchive}
+        property={batchArchiveMode ? null : targetArchiveProperty}
+        selectedCount={batchArchiveMode ? selectedKeys.size : 0}
+        isArchiving={isArchiving}
+        error={archiveError}
+      />
+
+      {/* Delete Property Confirmation Modal */}
+      <DeletePropertyModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setTargetDeleteProperty(null);
+          setBatchDeleteMode(false);
+        }}
+        onConfirm={batchDeleteMode ? handleConfirmBatchDelete : handleConfirmDelete}
+        property={batchDeleteMode ? null : targetDeleteProperty}
+        selectedCount={batchDeleteMode ? selectedKeys.size : 0}
+        isDeleting={isDeleting}
+        error={deleteError}
+      />
 
       {/* Quick Edit Drawer */}
       <PropertyQuickEditDrawer

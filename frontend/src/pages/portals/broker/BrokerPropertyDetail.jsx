@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import propertyService, { normalizeProperty } from '../../../services/propertyService';
 import { driveService, isDriveUrl, resolveDriveImageUrl, getDriveProxyUrl } from '../../../services/driveService';
 import { Button, Badge, Alert, Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, Editable, EditablePreview, EditableInput, useToast, Toaster } from '../../../components/ui';
 import { GooglePropertyMap, StreetViewModal, EnlargedMapModal, CommuteAnalysisCard } from '../../../components/ui/map';
+import ArchivePropertyModal from '../../../components/ui/modals/ArchivePropertyModal';
+import DeletePropertyModal from '../../../components/ui/modals/DeletePropertyModal';
 import {
   ArrowLeft,
   ChevronLeft,
@@ -13,6 +15,8 @@ import {
   Copy,
   Printer,
   Trash2,
+  Archive,
+  RotateCcw,
   Camera,
   Check,
   Building,
@@ -59,6 +63,15 @@ export default function BrokerPropertyDetail() {
   const [uploadError, setUploadError] = useState(null);
   const [toastMsg, setToastMsg] = useState('');
   const [isFeatured, setIsFeatured] = useState(() => Boolean((property?.is_featured || property?.isFeatured) ?? true));
+  const navigate = useNavigate();
+  const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
+  const [isArchiving, setIsArchiving] = useState(false);
+  const [archiveError, setArchiveError] = useState(null);
+
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState(null);
+
   const [isStreetViewOpen, setIsStreetViewOpen] = useState(false);
   const [isEnlargedMapOpen, setIsEnlargedMapOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -397,9 +410,64 @@ export default function BrokerPropertyDetail() {
     showToast('Listing link copied for duplication');
   };
 
-  const handleArchive = async () => {
-    if (window.confirm('Are you sure you want to archive this property listing?')) {
-      await handleStatusChange('INACTIVE');
+  const handleConfirmArchive = async () => {
+    if (!property) return;
+    setIsArchiving(true);
+    setArchiveError(null);
+    try {
+      await propertyService.updateProperty(property.id, {
+        status: 'inactive',
+        standard_status: 'Closed',
+        standardStatus: 'Closed',
+      });
+      setProperty(prev => ({
+        ...prev,
+        status: 'inactive',
+        standard_status: 'Closed',
+        standardStatus: 'Closed',
+      }));
+      showToast(`Listing "${property.title}" archived successfully.`);
+      setIsArchiveModalOpen(false);
+    } catch (err) {
+      setArchiveError(err.message || 'Failed to archive property.');
+    } finally {
+      setIsArchiving(false);
+    }
+  };
+
+  const handleReactivate = async () => {
+    if (!property) return;
+    try {
+      await propertyService.updateProperty(property.id, {
+        status: 'available',
+        standard_status: 'Active',
+        standardStatus: 'Active',
+      });
+      setProperty(prev => ({
+        ...prev,
+        status: 'available',
+        standard_status: 'Active',
+        standardStatus: 'Active',
+      }));
+      showToast(`Listing "${property.title}" reactivated and restored to Active status.`);
+    } catch (err) {
+      showToast(err.message || 'Failed to reactivate listing.');
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!property) return;
+    setIsDeleting(true);
+    setDeleteError(null);
+    try {
+      await propertyService.deleteProperty(property.id);
+      showToast(`Listing "${property.title}" permanently deleted.`);
+      setIsDeleteModalOpen(false);
+      navigate('/broker/properties');
+    } catch (err) {
+      setDeleteError(err.message || 'Failed to delete listing.');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -495,13 +563,45 @@ export default function BrokerPropertyDetail() {
       )}
 
       {/* Top Breadcrumb row matching Mockup */}
-      <div className="flex items-center justify-between text-xs text-[#64748B]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-[#64748B]">
         <div className="flex items-center gap-1.5 font-medium">
           <Link to="/broker/properties" className="hover:text-[#0F766E] transition-colors">
             Properties
           </Link>
           <span className="text-slate-400">&gt;</span>
           <span className="text-[#1E293B] font-semibold">Property Details</span>
+        </div>
+
+        {/* Top Action Buttons (Archive, Reactivate, Delete) */}
+        <div className="flex items-center gap-2">
+          {String(property?.status || '').toUpperCase() === 'INACTIVE' || String(property?.standard_status || '').toUpperCase() === 'CLOSED' || String(property?.standard_status || '').toUpperCase() === 'HOLD' ? (
+            <button
+              type="button"
+              onClick={handleReactivate}
+              className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Reactivate Listing</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setIsArchiveModalOpen(true)}
+              className="px-3 py-1.5 rounded-lg border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+            >
+              <Archive className="w-3.5 h-3.5 text-amber-700" />
+              <span>Archive</span>
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={() => setIsDeleteModalOpen(true)}
+            className="px-3 py-1.5 rounded-lg border border-red-200 bg-white hover:bg-red-50 text-red-600 text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            <span>Delete Listing</span>
+          </button>
         </div>
 
         {/* Hidden screen-reader helpers for legacy tests */}
@@ -2443,6 +2543,26 @@ export default function BrokerPropertyDetail() {
           currentProperty={property}
         />
       )}
+
+      {/* Archive Property Modal */}
+      <ArchivePropertyModal
+        isOpen={isArchiveModalOpen}
+        onClose={() => setIsArchiveModalOpen(false)}
+        onConfirm={handleConfirmArchive}
+        property={property}
+        isArchiving={isArchiving}
+        error={archiveError}
+      />
+
+      {/* Delete Property Modal */}
+      <DeletePropertyModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleConfirmDelete}
+        property={property}
+        isDeleting={isDeleting}
+        error={deleteError}
+      />
       <Toaster />
     </div>
   );

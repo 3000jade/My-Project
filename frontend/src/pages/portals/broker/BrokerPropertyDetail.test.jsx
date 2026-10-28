@@ -8,7 +8,8 @@ import propertyService from '../../../services/propertyService';
 vi.mock('../../../services/propertyService', () => ({
   default: {
     getPropertyById: vi.fn(),
-    updateProperty: vi.fn()
+    updateProperty: vi.fn(),
+    deleteProperty: vi.fn(),
   },
   normalizeProperty: (p) => p
 }));
@@ -193,6 +194,53 @@ describe('BrokerPropertyDetail Page', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/Under Contract \(Live Listing\)/i)).toBeInTheDocument();
+    });
+  });
+
+  it('renders Archive and Delete buttons in header, and allows archiving property', async () => {
+    propertyService.updateProperty.mockResolvedValue({ success: true });
+    renderComponent();
+
+    await waitFor(() => {
+      expect(screen.getByText('Skyline Grand Villa at Forbes Park')).toBeInTheDocument();
+    });
+
+    const archiveBtn = screen.getByRole('button', { name: /^Archive$/i });
+    expect(archiveBtn).toBeInTheDocument();
+    fireEvent.click(archiveBtn);
+
+    // Modal dialog opens
+    expect(await screen.findByText('Archive Property Listing?')).toBeInTheDocument();
+    const confirmArchiveBtn = screen.getByRole('button', { name: /^Archive Listing$/i });
+    fireEvent.click(confirmArchiveBtn);
+
+    await waitFor(() => {
+      expect(propertyService.updateProperty).toHaveBeenCalledWith('prop-101', expect.objectContaining({
+        status: 'inactive',
+        standard_status: 'Closed',
+      }));
+    });
+  });
+
+  it('allows permanently deleting property via Delete Listing button', async () => {
+    propertyService.deleteProperty.mockResolvedValue({ success: true });
+    renderComponent();
+
+    await waitFor(() => {
+      expect(screen.getByText('Skyline Grand Villa at Forbes Park')).toBeInTheDocument();
+    });
+
+    const deleteBtn = screen.getByRole('button', { name: /Delete Listing/i });
+    expect(deleteBtn).toBeInTheDocument();
+    fireEvent.click(deleteBtn);
+
+    // Modal dialog opens
+    expect(await screen.findByText('Permanently Delete Listing?')).toBeInTheDocument();
+    const confirmDeleteBtn = screen.getByRole('button', { name: /Delete Permanently/i });
+    fireEvent.click(confirmDeleteBtn);
+
+    await waitFor(() => {
+      expect(propertyService.deleteProperty).toHaveBeenCalledWith('prop-101');
     });
   });
 });

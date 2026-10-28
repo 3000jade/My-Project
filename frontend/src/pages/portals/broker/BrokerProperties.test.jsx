@@ -190,4 +190,49 @@ describe('BrokerProperties Page (Mockup & Modern SaaS Layout)', () => {
     expect(screen.getByTestId('grid-view')).toBeInTheDocument();
     expect(screen.getByTestId('grid-property-card-prop-1')).toBeInTheDocument();
   });
+
+  it('allows broker to archive a property via row action and updates status', async () => {
+    propertyService.updateProperty.mockResolvedValueOnce({ success: true });
+    renderComponent();
+
+    expect(await screen.findByText('Aurelia Modernist Penthouse at BGC')).toBeInTheDocument();
+
+    const archiveBtns = screen.getAllByRole('button', { name: /Archive Listing/i });
+    expect(archiveBtns.length).toBeGreaterThan(0);
+    fireEvent.click(archiveBtns[0]);
+
+    // Modal opens
+    expect(await screen.findByText('Archive Property Listing?')).toBeInTheDocument();
+    const confirmBtn = screen.getByRole('button', { name: /^Archive Listing$/i });
+    fireEvent.click(confirmBtn);
+
+    await waitFor(() => {
+      expect(propertyService.updateProperty).toHaveBeenCalledWith(
+        'prop-1',
+        expect.objectContaining({ status: 'inactive', standard_status: 'Closed' })
+      );
+    });
+  });
+
+  it('allows broker to permanently delete a property with confirmation dialog', async () => {
+    propertyService.deleteProperty.mockResolvedValueOnce({ success: true });
+    renderComponent();
+
+    expect(await screen.findByText('Aurelia Modernist Penthouse at BGC')).toBeInTheDocument();
+
+    const deleteBtns = screen.getAllByRole('button', { name: /Delete Property/i });
+    expect(deleteBtns.length).toBeGreaterThan(0);
+    fireEvent.click(deleteBtns[0]);
+
+    // Delete modal opens
+    expect(await screen.findByText('Permanently Delete Listing?')).toBeInTheDocument();
+    expect(screen.getByText('Caution: Irreversible Deletion')).toBeInTheDocument();
+
+    const confirmDeleteBtn = screen.getByRole('button', { name: /Delete Permanently/i });
+    fireEvent.click(confirmDeleteBtn);
+
+    await waitFor(() => {
+      expect(propertyService.deleteProperty).toHaveBeenCalledWith('prop-1');
+    });
+  });
 });

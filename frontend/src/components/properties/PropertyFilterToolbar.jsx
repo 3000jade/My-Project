@@ -102,6 +102,7 @@ export default function PropertyFilterToolbar({
       ariaLabel: 'Sold / Closed',
     },
     { id: 'DRAFT', label: 'Draft', count: statusCounts?.draft ?? 0 },
+    { id: 'INACTIVE', label: 'Archived', count: statusCounts?.inactive ?? 0 },
   ];
 
   const formatPrice = (val) => {
