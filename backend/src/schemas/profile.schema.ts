@@ -14,6 +14,13 @@ export const updateProfileSchema = z.object({
   dhsud_validity: z.string().optional(),
   firm_name: z.string().optional(),
   experience_years: z.number().int().nonnegative().optional(),
+  preferred_location: z.string().optional(),
+  preferredLocation: z.string().optional(),
+  investment_budget: z.string().optional(),
+  investmentBudget: z.string().optional(),
+  notification_preferences: z.record(z.string(), z.boolean()).optional(),
+  notificationPreferences: z.record(z.string(), z.boolean()).optional(),
+  verification_status: z.enum(['VERIFIED', 'PENDING', 'REJECTED', 'SUSPENDED']).optional(),
   role: z.enum(['admin', 'broker', 'agent', 'client']).optional(),
 });
 

@@ -8,6 +8,7 @@ import EmptyState from '../../../components/dashboard/EmptyState';
 import propertyService from '../../../services/propertyService';
 import { useAuth } from '../../../context/AuthContext';
 import { Building2, Clock, CheckCircle2, AlertTriangle, XCircle, Check } from 'lucide-react';
+import { Button, buttonVariants, Badge } from '../../../components/ui';
 import AgentAssignmentActionModal from '../../../components/dashboard/AgentAssignmentActionModal';
 
 export default function AgentProperties() {
@@ -194,6 +195,15 @@ export default function AgentProperties() {
       <PageHeader
         title="Assigned Properties"
         subtitle="Review your exclusive property inventory. To make changes, submit an edit proposal for broker review."
+        actions={
+          <Link
+            to="/agent/properties/new"
+            className={buttonVariants({ variant: 'default', size: 'default' })}
+          >
+            <span className="material-symbols-outlined text-[16px]">add</span>
+            <span>Propose New Listing</span>
+          </Link>
+        }
       />
 
       {/* Filter and View Mode Toolbar */}

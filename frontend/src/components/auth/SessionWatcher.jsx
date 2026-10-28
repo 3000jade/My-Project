@@ -24,6 +24,23 @@ export default function SessionWatcher() {
 
   const lastActivityRef = useRef(Date.now());
   const isExtendingRef = useRef(false);
+  const isLoggingOutRef = useRef(false);
+  const prevUserRef = useRef(user);
+
+  // Reset activity tracker and modal state whenever user logs in, logs out, or switches accounts
+  useEffect(() => {
+    if (user && (!prevUserRef.current || prevUserRef.current.id !== user.id)) {
+      lastActivityRef.current = Date.now();
+      isLoggingOutRef.current = false;
+      setIsModalOpen(false);
+      setSecondsRemaining(warningWindowSeconds);
+    } else if (!user && prevUserRef.current) {
+      lastActivityRef.current = Date.now();
+      isLoggingOutRef.current = false;
+      setIsModalOpen(false);
+    }
+    prevUserRef.current = user;
+  }, [user, warningWindowSeconds]);
 
   // Throttled activity tracker (resets idle clock only when warning is NOT showing)
   const handleUserActivity = useCallback(() => {
@@ -49,7 +66,10 @@ export default function SessionWatcher() {
     } catch (err) {
       console.warn('[SessionWatcher] Server session extension failed:', err);
       // If server rejected (e.g. absolute ceiling reached or revoked), log out
-      await logout();
+      if (!isLoggingOutRef.current) {
+        isLoggingOutRef.current = true;
+        await logout();
+      }
     } finally {
       isExtendingRef.current = false;
     }
@@ -57,7 +77,10 @@ export default function SessionWatcher() {
 
   const handleLogoutNow = async () => {
     setIsModalOpen(false);
-    await logout();
+    if (!isLoggingOutRef.current) {
+      isLoggingOutRef.current = true;
+      await logout();
+    }
   };
 
   // Activity event listeners
@@ -80,11 +103,14 @@ export default function SessionWatcher() {
     }
 
     const checkTimeout = () => {
+      if (isLoggingOutRef.current) return;
+
       const elapsedSeconds = Math.floor((Date.now() - lastActivityRef.current) / 1000);
       const remainingSeconds = maxIdleSeconds - elapsedSeconds;
 
       if (remainingSeconds <= 0) {
         // Inactivity ceiling reached - log out immediately
+        isLoggingOutRef.current = true;
         setIsModalOpen(false);
         logout();
       } else if (remainingSeconds <= warningWindowSeconds) {
@@ -113,6 +139,11 @@ export default function SessionWatcher() {
     const unsubscribe = sessionCoordinator.subscribeSessionEvents((event) => {
       if (event.type === 'SESSION_EXTENDED') {
         lastActivityRef.current = Date.now();
+        isLoggingOutRef.current = false;
+        setIsModalOpen(false);
+      } else if (event.type === 'LOGOUT' || event.type === 'ROLE_REVOKED') {
+        lastActivityRef.current = Date.now();
+        isLoggingOutRef.current = false;
         setIsModalOpen(false);
       }
     });

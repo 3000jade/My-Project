@@ -171,4 +171,23 @@ describe('BrokerProperties Page (Mockup & Modern SaaS Layout)', () => {
 
     expect(mockNavigate).toHaveBeenCalledWith('/broker/properties/prop-1');
   });
+
+  it('switches view mode between Table, Grid, and Cadastral Map View', async () => {
+    renderComponent();
+
+    expect(await screen.findByText('Aurelia Modernist Penthouse at BGC')).toBeInTheDocument();
+
+    const mapViewBtn = screen.getByRole('button', { name: /Cadastral Map View/i });
+    expect(mapViewBtn).toBeInTheDocument();
+    fireEvent.click(mapViewBtn);
+
+    expect(screen.getByTestId('cadastral-split-view')).toBeInTheDocument();
+    expect(screen.getByTestId('map-property-card-prop-1')).toBeInTheDocument();
+
+    const gridViewBtn = screen.getByRole('button', { name: /Grid View/i });
+    fireEvent.click(gridViewBtn);
+
+    expect(screen.getByTestId('grid-view')).toBeInTheDocument();
+    expect(screen.getByTestId('grid-property-card-prop-1')).toBeInTheDocument();
+  });
 });

@@ -2,7 +2,7 @@
 module: 06-audit
 title: Audit Module
 last_updated: 2026-10-28
-total_documents: 2
+total_documents: 3
 ---
 
 # Audit Module — Master Index
@@ -19,6 +19,7 @@ All updates and technical reports for this module are ordered chronologically by
 
 | Date | Document File | Description |
 | :--- | :--- | :--- |
+| `2026-10-28` | [2026-10-28-audit-interface-and-recent-activity-slide-down-verification-report.md](./2026-10-28-audit-interface-and-recent-activity-slide-down-verification-report.md) | **Verification Report:** Full-stack implementation and Playwright MCP functional verification of the Audit Trail interface and Recent Activities slide-down. |
 | `2026-10-28` | [2026-10-28-audit-module-spec.md](./2026-10-28-audit-module-spec.md) | **Module Specification:** Full ISO/IEC 29148, 42010, and 25010 aligned specification for Audit Trail & Security Logging (`FR-AU-001` through `FR-AU-008`). |
 | `2026-10-21` | [2026-10-21-communication-notification-audit-session-handling.md](./2026-10-21-communication-notification-audit-session-handling.md) | Communication Notification Audit Session Handling |
 

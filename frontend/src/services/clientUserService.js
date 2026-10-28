@@ -1,4 +1,5 @@
 import propertyService from './propertyService';
+import profileService from './profileService';
 
 const CLIENT_STORAGE_KEYS = {
   PROFILE: 'cp_client_profile_mock',
@@ -49,6 +50,16 @@ export const clientUserService = {
    * Get current client profile
    */
   async getClientProfile() {
+    try {
+      const serverProfile = await profileService.getProfile({ role: 'client' });
+      if (serverProfile) {
+        const merged = { ...DEFAULT_CLIENT_PROFILE, ...serverProfile };
+        safeSetStorage(CLIENT_STORAGE_KEYS.PROFILE, merged);
+        return merged;
+      }
+    } catch {
+      // Fallback to storage
+    }
     return safeGetStorage(CLIENT_STORAGE_KEYS.PROFILE, DEFAULT_CLIENT_PROFILE);
   },
 
@@ -70,6 +81,24 @@ export const clientUserService = {
     };
 
     safeSetStorage(CLIENT_STORAGE_KEYS.PROFILE, merged);
+
+    try {
+      await profileService.updateProfile({
+        name,
+        phone: merged.phone,
+        bio: merged.bio,
+        preferred_location: merged.preferredLocation,
+        investment_budget: merged.investmentBudget,
+        notification_preferences: {
+          email: merged.emailNotifications,
+          sms: merged.smsNotifications,
+          priceDrops: merged.priceDropAlerts,
+        },
+      }, { role: 'client' });
+    } catch {
+      // Offline fallback
+    }
+
     return merged;
   },
 

@@ -12,7 +12,11 @@ export class ProfileController {
     try {
       const user = req.user;
       const roleQuery = (req.query.role as string) || (user?.role as string) || 'agent';
-      const userId = user?.id || (roleQuery === 'broker' ? 'user-broker-1' : 'user-agent-1');
+      const userId = user?.id || (
+        roleQuery === 'broker' ? 'user-broker-1' :
+        roleQuery === 'client' ? 'user-client-1' :
+        'user-agent-1'
+      );
 
       const profile = await ProfileService.getProfile(userId, roleQuery);
 
@@ -38,10 +42,15 @@ export class ProfileController {
   public static async updateProfile(req: AuthenticatedRequest, res: Response<ApiResponse>): Promise<void> {
     try {
       const user = req.user;
-      const roleQuery = (req.query.role as string) || (user?.role as string) || (req.body.role as string) || 'agent';
-      const userId = user?.id || (roleQuery === 'broker' ? 'user-broker-1' : 'user-agent-1');
+      const roleQuery = (req.query.role as string) || (user?.role as string) || 'agent';
+      const userId = user?.id || (
+        roleQuery === 'broker' ? 'user-broker-1' :
+        roleQuery === 'client' ? 'user-client-1' :
+        'user-agent-1'
+      );
+      const isAdmin = user?.role === 'admin';
 
-      const updated = await ProfileService.updateProfile(userId, req.body, roleQuery);
+      const updated = await ProfileService.updateProfile(userId, req.body, roleQuery, isAdmin);
 
       res.status(200).json({
         success: true,

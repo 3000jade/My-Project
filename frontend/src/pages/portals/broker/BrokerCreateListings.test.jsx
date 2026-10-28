@@ -8,11 +8,13 @@ import BrokerCreateListings from './BrokerCreateListings';
 // Mocks
 // ---------------------------------------------------------------------------
 const mockNavigate = vi.fn();
+let mockLocation = { search: '', state: null };
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
   return {
     ...actual,
     useNavigate: () => mockNavigate,
+    useLocation: () => mockLocation,
     useParams: () => ({ id: undefined }), // 'new' mode
     Link: ({ children, to, className }) => <a href={to} className={className}>{children}</a>
   };
@@ -104,6 +106,7 @@ vi.mock('react-quill-new', () => ({
 describe('BrokerCreateListings - Form Fields & Step Navigation', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockLocation = { search: '', state: null };
   });
 
   const renderComponent = () => {
@@ -137,6 +140,14 @@ describe('BrokerCreateListings - Form Fields & Step Navigation', () => {
     // Test filling title
     fireEvent.change(titleInput, { target: { value: 'Luxury Penthouse at The Proscenium' } });
     expect(titleInput.value).toBe('Luxury Penthouse at The Proscenium');
+  });
+
+  it('renders Step 1 without any agent selector controls (decoupled to agent management)', () => {
+    renderComponent();
+
+    // Verify agent controls are absent from Step 1
+    expect(screen.queryByText(/Assign Agent/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Select an Agent/i)).not.toBeInTheDocument();
   });
 
   it('navigates to Section 2 (Location) and verifies address fields', () => {
@@ -188,5 +199,63 @@ describe('BrokerCreateListings - Form Fields & Step Navigation', () => {
     // Should render review summary and publish buttons
     expect(screen.getByText(/Publish Listing/i)).toBeInTheDocument();
     expect(screen.getByText(/Save Draft/i)).toBeInTheDocument();
+  });
+
+  it('renders all 8 common property type option cards in Step 1', () => {
+    renderComponent();
+
+    const expectedTypes = [
+      'House & Lot',
+      'Condominium',
+      'Townhouse',
+      'Lot / Land',
+      'Commercial',
+      'Apartment',
+      'Villa',
+      'Warehouse',
+    ];
+
+    expectedTypes.forEach(type => {
+      expect(screen.getByRole('button', { name: type })).toBeInTheDocument();
+    });
+  });
+
+  it('selects a property type card and activates conditional adaptations in Section 3', () => {
+    renderComponent();
+
+    // Select Condominium card
+    const condoCard = screen.getByRole('button', { name: /Condominium/i });
+    fireEvent.click(condoCard);
+
+    // Navigate to Step 3 (Specifications)
+    fireEvent.click(screen.getAllByText('Specifications')[0]);
+
+    // Lot Area input must be absent for Condominium
+    expect(screen.queryByLabelText(/Lot Area \*/i)).not.toBeInTheDocument();
+    // Floor Area must be present
+    expect(screen.getByPlaceholderText(/e\.g\. 450/i)).toBeInTheDocument();
+  });
+
+  it('adapts Section 3 for Lot / Land by hiding interior room fields', () => {
+    renderComponent();
+
+    // Select Lot / Land
+    const landCard = screen.getByRole('button', { name: /Lot \/ Land/i });
+    fireEvent.click(landCard);
+
+    // Navigate to Step 3 (Specifications)
+    fireEvent.click(screen.getAllByText('Specifications')[0]);
+
+    // Floor area should not be rendered for land
+    expect(screen.queryByPlaceholderText(/e\.g\. 450/i)).not.toBeInTheDocument();
+    // Land informational notice should be visible
+    expect(screen.getByText(/Vacant Land listing selected/i)).toBeInTheDocument();
+  });
+
+  it('initializes property type from URL query parameter ?type=Condominium', () => {
+    mockLocation = { search: '?type=Condominium', state: null };
+    renderComponent();
+
+    expect(screen.getByText(/Active:/i)).toHaveTextContent('Condominium');
   });
 });

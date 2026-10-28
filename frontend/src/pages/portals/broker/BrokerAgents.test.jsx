@@ -100,7 +100,7 @@ describe('BrokerAgents Component', () => {
     await waitFor(() => {
       expect(screen.getByText('Total Agents')).toBeInTheDocument();
       expect(screen.getByText('Verified Agents')).toBeInTheDocument();
-      expect(screen.getByText('Pending Review')).toBeInTheDocument();
+      expect(screen.getAllByText('Pending Review').length).toBeGreaterThanOrEqual(1);
       expect(screen.getByText('Active Invitations')).toBeInTheDocument();
     });
   });
@@ -149,5 +149,43 @@ describe('BrokerAgents Component', () => {
     await waitFor(() => {
       expect(screen.queryByPlaceholderText('agent@example.com')).not.toBeInTheDocument();
     });
+  });
+
+  it('filters roster when clicking status pill tabs', async () => {
+    renderComponent();
+
+    await waitFor(() => {
+      expect(screen.getByText('Elena Rossi')).toBeInTheDocument();
+      expect(screen.getByText('Marcus Aurelius Tan')).toBeInTheDocument();
+    });
+
+    // Click Pending Review pill tab
+    const pendingPill = screen.getByRole('button', { name: /Pending Review/i });
+    fireEvent.click(pendingPill);
+
+    // Marcus Aurelius Tan is PENDING -> should be in document
+    expect(screen.getByText('Marcus Aurelius Tan')).toBeInTheDocument();
+    // Elena Rossi is VERIFIED -> should NOT be in document
+    expect(screen.queryByText('Elena Rossi')).not.toBeInTheDocument();
+
+    // Click All Agents pill tab to reset
+    const allAgentsPill = screen.getByRole('button', { name: /All Agents/i });
+    fireEvent.click(allAgentsPill);
+
+    expect(screen.getByText('Elena Rossi')).toBeInTheDocument();
+  });
+
+  it('toggles Analytics & Insights panel visibility', async () => {
+    renderComponent();
+
+    await waitFor(() => {
+      expect(screen.getByText('Verification Summary')).toBeInTheDocument();
+    });
+
+    const toggleBtn = screen.getByTitle(/Toggle Analytics & Insights panel/i);
+    fireEvent.click(toggleBtn);
+
+    // Button text should change to "Insights"
+    expect(screen.getByText('Insights')).toBeInTheDocument();
   });
 });

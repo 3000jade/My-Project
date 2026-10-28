@@ -9,8 +9,9 @@ import { useAuth } from '../../../context/AuthContext';
 import { 
   Building2, Clock, CheckCircle2, AlertCircle, 
   Send, X, Sparkles, Bed, Bath, Maximize2, Car, MapPin, 
-  ArrowLeft, Eye, Edit3
+  ArrowLeft, Eye, Edit3, Compass
 } from 'lucide-react';
+import { GooglePropertyMap, StreetViewModal } from '../../../components/ui/map';
 
 export default function AgentPropertyDetail() {
   const { id } = useParams();
@@ -30,6 +31,7 @@ export default function AgentPropertyDetail() {
   // Assignment Modal State
   const [isAssignmentModalOpen, setIsAssignmentModalOpen] = useState(false);
   const [assignmentModalMode, setAssignmentModalMode] = useState('accept');
+  const [isStreetViewOpen, setIsStreetViewOpen] = useState(false);
 
   // Proposal Form State
   const [formTitle, setFormTitle] = useState('');
@@ -156,6 +158,20 @@ export default function AgentPropertyDetail() {
       </div>
     );
   }
+
+  const propLat = parseFloat(property.latitude || property.location?.coordinates?.lat) || 14.5547;
+  const propLng = parseFloat(property.longitude || property.location?.coordinates?.lng) || 121.0244;
+  const mapPropertyItem = {
+    ...property,
+    id: property.id || id,
+    title: property.title || 'Property Location',
+    price: property.price || property.price_raw || 0,
+    coordinates: { lat: propLat, lng: propLng },
+    address: typeof property.location === 'string' ? property.location : property.location?.address || 'Metro Manila, Philippines',
+    city: property.city || 'Metro Manila',
+    category: property.property_type || 'Residential',
+    image: property.mainImage || (property.images && property.images[0]) || ''
+  };
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
@@ -382,6 +398,38 @@ export default function AgentPropertyDetail() {
               </div>
             </div>
           )}
+
+          {/* Cadastral Location & Navigation Map */}
+          <div className="bg-white rounded-lg border border-[#E2E8F0] p-6 shadow-xs space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-[#1E293B] flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-[#0F766E]" />
+                <span>Cadastral Location & Map</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsStreetViewOpen(true)}
+                className="px-2.5 py-1 bg-white hover:bg-teal-50 border border-[#0F766E] text-[#0F766E] rounded-md text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <Compass className="w-3.5 h-3.5" />
+                <span>360° Street View</span>
+              </button>
+            </div>
+            
+            <div className="aspect-[16/9] w-full rounded-lg overflow-hidden border border-[#CBD5E1]" data-lenis-prevent="true">
+              <GooglePropertyMap
+                properties={[mapPropertyItem]}
+                singlePropertyMode={true}
+                interactive={true}
+                initialZoom={16}
+                height="100%"
+              />
+            </div>
+            <div className="text-xs text-[#64748B] flex items-center justify-between">
+              <span>{typeof property.location === 'string' ? property.location : property.location?.address || 'Metro Manila, Philippines'}</span>
+              <span className="font-mono text-[#0F766E]">GPS: {propLat.toFixed(5)}, {propLng.toFixed(5)}</span>
+            </div>
+          </div>
         </div>
 
         {/* Right 1 Col: Agent Info & Operational Control */}
@@ -640,6 +688,16 @@ export default function AgentPropertyDetail() {
           setTimeout(() => setSuccessToast(''), 4000);
         }}
       />
+      {/* 360° Street View Modal */}
+      {property && (
+        <StreetViewModal
+          isOpen={isStreetViewOpen}
+          onClose={() => setIsStreetViewOpen(false)}
+          lat={propLat}
+          lng={propLng}
+          propertyName={property.title || 'Property Frontage'}
+        />
+      )}
     </div>
   );
 }

@@ -1,8 +1,8 @@
 ---
 module: 01-user-management
 title: User Management Module
-last_updated: 2026-10-27
-total_documents: 8
+last_updated: 2026-10-28
+total_documents: 9
 ---
 
 # User Management Module — Master Index
@@ -27,6 +27,7 @@ All updates and technical reports for this module are ordered chronologically by
 | `2026-10-18` | [2026-10-18-session-management-specification-and-flow-report.md](./2026-10-18-session-management-specification-and-flow-report.md) | Session Management Specification And Flow Report |
 | `2026-10-18` | [2026-10-18-session-management-technical-specification.docx](./2026-10-18-session-management-technical-specification.docx) | Session Management Technical Specification |
 | `2026-10-27` | [2026-10-27-session-timeout-relogin-fix-report.md](./2026-10-27-session-timeout-relogin-fix-report.md) | Session Timeout Inactivity Timer & Re-Login Redirect Fix Report |
+| `2026-10-28` | [2026-10-28-account-profile-fullstack-implementation.md](./2026-10-28-account-profile-fullstack-implementation.md) | Full-Stack Account Profile Management & Design Modernization Report |
 
 ---
 

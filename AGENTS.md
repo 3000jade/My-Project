@@ -1,109 +1,364 @@
-# Design System Specification (Imported from design.md)
+# Antigravity AI Agent Development Workflow
 
-**Name:** Human Shelter Realty | Modern SaaS UI/UX Design System  
-**Ethos:** Applying a consistent, high-performing Modern SaaS design language across the entire platform while strictly preserving existing functionality, components, pages, and business logic. Balancing clarity, rapid wayfinding, data density, and accessibility with an 8px grid, standard 8px radius, and disciplined Teal-Coral chromatic palette.
+## 1. Purpose and Workflow
 
----
+Use specification-led development for new modules, new features, enhancements, bug fixes, and design updates.
 
-## 1. Mandatory Workflow for Design Updates
+**Inspect → Check Readiness → /grill-me → Specify → /plan → Approve When Required → Implement → Verify → Document → Deliver Locally**
 
-$$\text{INSPECT} \longrightarrow \text{ANALYZE} \longrightarrow \text{PROPOSE} \longrightarrow \text{APPROVAL} \longrightarrow \text{IMPLEMENT} \longrightarrow \text{VERIFY}$$
+Scale the process to the task. Preserve existing user work and functionality outside the approved scope.
 
-1. **Inspect:** Examine target page/component, styles, dependencies, and reusable components. Do NOT modify any files.
-2. **Analyze:** Evaluate inconsistencies, usability, responsiveness, accessibility, and functional risks.
-3. **Propose:** Present a concise Design Update Proposal (Target, Existing Design, Proposed UI/UX Changes, Affected Files, Risks).
-4. **Approval Gate (STOP):** Wait for explicit user approval before modifying any files.
-5. **Implement:** Update only approved components/files, follow design tokens, reuse components, and preserve business logic.
-6. **Verify:** Check visual consistency, responsiveness, accessibility, run build/tests, and report results.
+## 2. Task Classification
 
----
-
-## 2. Design System Tokens & Color Palette
-
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│  BASE CANVAS:      Slate Alabaster Ground (#F8FAFC)                     │
-│  SURFACE ELEVATION: Pure White (#FFFFFF) with 1px Border (#E2E8F0)     │
-│  PRIMARY BRAND:    Teal (#0F766E) | Hover (#115E59) | Active (#14B8A6) │
-│  CONVERSION ACCENT: Coral (#FF6B6B)                                    │
-│  TYPOGRAPHIC INK:  Slate 800 (#1E293B) | Slate 500 Muted (#64748B)     │
-└────────────────────────────────────────────────────────────────────────┘
-```
-
-### Color Variables & Tokens
-- **Theme:** Modern SaaS
-- **Primary:** Teal `#0F766E` (Hover: `#115E59`)
-- **Secondary:** `#14B8A6`
-- **Accent (Conversion & CTAs):** Coral `#FF6B6B`
-- **Background (Canvas):** `#F8FAFC`
-- **Surface (Containers, Cards, Modals):** `#FFFFFF`
-- **Primary Text:** `#1E293B` (Slate 800)
-- **Secondary Text:** `#64748B` (Slate 500)
-- **Border:** `#E2E8F0` (Slate 200)
-- **Semantic Status:**
-  - Success: `#10B981` (Emerald)
-  - Warning: `#F59E0B` (Amber)
-  - Error / Destructive: `#DC2626` (Red 600)
-
-### Geometry, Radii & Spacing
-- **Typography:** `Inter`, `-apple-system`, `sans-serif` (Data/Cadastre: `JetBrains Mono`).
-- **Standard Border Radius:** `8px` (`rounded-lg`) as the standard across inputs, cards, and buttons. Sm: `4px`, Lg: `12px`, Pill: `9999px`.
-- **Spacing:** Strict **8px-based system** (`8px`, `16px`, `24px`, `32px`, `40px`, `48px`).
-- **Accessibility:** Minimum WCAG 2.2 AA ($\ge 4.5:1$) for standard text, AAA ($\ge 7.0:1$) for primary headings.
-- **Elevation & Shadows:** Subtle shadows (`0 1px 3px rgba(0,0,0,0.1)`) paired with hairline borders (`1px border border-[#E2E8F0]`).
-
----
-
-## 3. Scope Control & Role-Based Standards
-
-### Scope Control
-- **Allowed After Approval:** Visual styling, layout refinements, component styling, responsive adjustments, approved UX flows, reusable token updates.
-- **NOT Allowed Without Separate Approval:** Deleting existing pages, changing routes, modifying database schemas, altering authentication/guards, changing business logic/APIs, removing features, or installing unnecessary packages.
-
-### Role-Based Profiles
-- **Administrator:** High-density data tables, administrative logs, user management, and system configuration.
-- **Agent:** Property listings, inquiry triage, appointment scheduling, and task-oriented workflows.
-- **Client:** Property discovery, intuitive search, clear property specs, and straightforward inquiry interactions.
-
----
-
-# Superpowers Engineering Methodology & Directives
-
-> Inherited from `obra/superpowers` (v6.3.0) adapted for Antigravity
-
-## Core Directive: Skills Before Action
-
-If you think there is even a 1% chance a skill might apply to what you are doing, you ABSOLUTELY MUST invoke the skill before taking implementation action or writing code.
-
-- **Process Skills First**: Process skills set the engineering discipline, then domain/UI skills carry it out.
-  - New feature, component, behavior change, or project structure → `brainstorming` first.
-  - Bug, unexpected behavior, or error → `systematic-debugging` first.
-  - Writing code with verifiable behavior → `test-driven-development` (strict Red/Green/Refactor).
-  - Multi-step implementation → `writing-plans` then `executing-plans` (or `subagent-driven-development`).
-  - Pre-completion verification → `verification-before-completion`.
-
-## Antigravity Tool Mapping
-
-| Action Requested | Antigravity CLI Equivalent |
+| Task | Required approach |
 |---|---|
-| **Dispatch Subagent** | `invoke_subagent` using built-in `TypeName`: `self` (full-capability execution) or `research` (read-only review/investigation). |
-| **Task Tracking / Checklists** | Maintain a **task artifact**: `write_to_file` with `IsArtifact: true` and `ArtifactMetadata.ArtifactType: "task"`, updated incrementally with `replace_file_content`. *(Do not use `manage_task`, which manages OS background tasks).* |
-| **Skill Invocation** | View and follow `.agents/skills/<skill-name>/SKILL.md` using `view_file`. |
+| New module | Module specification, full-stack plan, implementation, and verification |
+| New feature | Feature requirements within the existing module, implementation, and regression verification |
+| Enhancement | Define changed behavior and compatibility requirements |
+| Bug fix | Reproduce, diagnose, fix, and verify against regression |
+| Design update | Apply `design.md` and verify visual and interaction behavior |
+| Specification only | Deliver requirements and applicable architecture documentation without implementation |
 
-## Hard Gates
+Every new module or feature requires `/grill-me` and `/plan`.
 
-1. **Brainstorming Gate**: Do NOT jump into code or scaffold implementation until the design path (Spike, Bounded, Architectural) is classified and approved by the human partner.
-2. **TDD Gate**: Tests must be written and seen to FAIL first (Red) before writing implementation code to make them PASS (Green).
-3. **Review & Verification Gate**: Never mark work complete without running automated tests, checking git status, and validating against acceptance criteria.
-4. **Git Safety Gate**: NEVER execute `git push`, force-push (`--force`), or publish branches to remote git repositories under any circumstances unless the human partner explicitly commands you to push. Local commits and branches must remain strictly local until explicit user authorization.
+Small fixes may proceed without the feature interview and planning commands unless ambiguous, substantial, or crossing an approval boundary.
 
----
+## 3. Inspect Before Editing
 
-# Architecture & Directory Blueprint
+Read the applicable sources:
 
-All code additions, refactors, and file placements MUST strictly comply with the directory structure and layer responsibilities defined in [ARCHITECTURE_MAP.md](file:///c:/Users/Win11x64/Desktop/My%20code%20space/CP_kerby/ARCHITECTURE_MAP.md):
-- **Frontend Layout**: Structural chrome (`Header`, `Footer`) lives in `frontend/src/components/layout/`.
-- **Frontend UI**: Atomic components and showcases live in `frontend/src/components/ui/`.
-- **Frontend Services**: API integrations live in `frontend/src/services/`.
-- **Backend Architecture**: Maintain strict separation across `config/`, `controllers/`, `middleware/`, `models/`, `routes/`, `services/`, and `utils/`.
-- Shared Contracts: Cross-stack DTOs and API envelopes live in `shared/types/`.
+- Project and directory-level agent instructions.
+- `ARCHITECTURE_MAP.md`.
+- `docs/REQUIREMENTS_SPECIFICATION.md` (Master Living Requirements).
+- `docs/DATABASE_SCHEMA.md` (Master Living Schema & RLS Registry).
+- Relevant module `INDEX.md`, current specification, and latest change records.
+- Existing implementation, shared components, services, and contracts.
+- Authentication, authorization, validation, and data-access rules.
+- Project configuration, scripts, and tests.
+- Repository status and pre-existing changes.
+
+Identify confirmed facts, assumptions, dependencies, and unresolved decisions.
+
+Never reset, overwrite, or discard unrelated user work.
+
+## 4. Required Guidance, Commands, and Skills
+
+Select guidance based on the actual requirements.
+
+| Requirement | Required resource |
+|---|---|
+| Every new module or feature | `/grill-me` and `/plan` |
+| UI, layout, styling, or interaction changes | `design.md` |
+| TypeScript implementation or refactoring | Configured TypeScript skill |
+| Supabase functionality | Supabase skill |
+| PostgreSQL schema, queries, or performance | Supabase PostgreSQL best-practices skill |
+| Browser verification | Playwright and applicable configured testing guidance |
+
+Discover the actual installed commands and skill locations. Read applicable skill instructions before dependent work.
+
+Do not assume a command exists, invent an invocation, or claim a command ran when it did not.
+
+**Strict prerequisite:** If a required command or skill is unavailable, stop all task work, report what is missing, and wait until it is available. Do not substitute an equivalent process.
+
+A skill is required only when relevant to the task.
+
+## 5. Environment Readiness
+
+Before implementation, confirm that required verification can run. Include the readiness findings in `/plan`.
+
+Check applicable prerequisites:
+
+- Dependencies and project scripts.
+- Local application services.
+- Local database and migration tooling.
+- Test accounts for relevant roles.
+- Controlled test data.
+- Playwright browser installation and configuration.
+- Required environment configuration, without exposing secrets.
+
+**If required verification cannot run, stop all task work.** Report the blocker, the prerequisite needed, and the current task status. Wait until the environment is ready.
+
+Do not bypass required checks or mark the work complete.
+
+Distinguish an unavailable check from an executable check that reports a failure. Executable failures enter diagnosis and repair.
+
+For specification-only tasks, apply readiness and verification requirements to the document deliverable; runtime tests are not required unless part of the requested scope.
+
+## 6. Requirements Interview: `/grill-me`
+
+Use `/grill-me` for every new module or feature. Scale interview depth to uncertainty.
+
+- Clear feature: briefly confirm assumptions and acceptance criteria.
+- Complex feature: examine workflows, edge cases, dependencies, and tradeoffs.
+- Small fix: interview only when ambiguity requires it.
+
+Inspect the project before asking questions that existing code or documentation can answer.
+
+Resolve consequential decisions before finalizing the plan:
+
+- Business rules and status transitions.
+- Roles and permissions.
+- Data ownership and visibility.
+- Scope and exclusions.
+- Acceptance criteria.
+
+Do not silently infer consequential product decisions.
+
+Record minor assumptions and decide routine implementation details independently. Avoid repeating questions already answered.
+
+## 7. Specifications
+
+Use these references where applicable:
+
+- ISO/IEC/IEEE 29148:2018 — requirements engineering.
+- ISO/IEC/IEEE 42010:2022 — architecture descriptions.
+- ISO/IEC 25010:2023 — product-quality requirements.
+
+Describe documentation as standards-aligned unless conformance has been assessed.
+
+### New Module
+
+Specify:
+
+- Purpose, scope, exclusions, stakeholders, and roles.
+- Functional requirements and user journeys.
+- Business rules and permissions.
+- Data requirements and external interfaces.
+- UI behavior and applicable design constraints.
+- Measurable quality requirements.
+- Dependencies and cross-module effects.
+- Acceptance criteria and verification methods.
+- Assumptions and unresolved decisions.
+
+### Feature in an Existing Module
+
+Read the current module specification first.
+
+Specify:
+
+- Existing behavior and proposed behavior.
+- Added, changed, or superseded requirements.
+- Affected roles and user journeys.
+- Data, API, UI, and business-rule changes.
+- Compatibility with existing records and consumers.
+- Cross-module effects.
+- Acceptance criteria and regression scenarios.
+- Migration or rollout needs.
+
+Small additions update the module specification directly. Substantial features also receive a separate feature specification.
+
+Reference unchanged requirements rather than duplicating them. Preserve existing requirement IDs.
+
+### Master Requirements Maintenance (`docs/REQUIREMENTS_SPECIFICATION.md`)
+
+Whenever requirements are added, updated, or deprecated:
+1. **Assign Sequential ID:** Use standard prefixes (`FR-<MODULE>-XXX` for functional, `NFR-<CATEGORY>-XXX` for non-functional).
+2. **Update Status:** Keep the requirement lifecycle current (`Planned` → `In Progress` → `Implemented` / `Active`).
+3. **Record Revision:** Add an entry to Section 1 (Revision History) in `docs/REQUIREMENTS_SPECIFICATION.md` summarizing the addition or change.
+4. **Preserve IDs:** Never delete or reassign existing IDs to maintain audit traceability.
+
+Maintain traceability:
+
+**Requirement → Acceptance criterion → Test or verification evidence**
+
+## 8. Implementation Planning: `/plan`
+
+After resolving consequential requirements, use `/plan` to produce an actionable plan.
+
+Include:
+
+- Intended outcome and task scope.
+- Applicable guidance and skills.
+- Requirements and acceptance criteria.
+- Affected files or implementation areas.
+- Frontend, backend, contracts, and data changes.
+- Permissions and cross-module effects.
+- Ordered implementation steps.
+- Verification commands and Playwright scenarios.
+- Environment readiness and existing failures requiring repair.
+- Risks, assumptions, and rollback approach.
+- Explicit approval boundaries.
+
+Present the plan before implementation.
+
+For specification-only tasks, plan and deliver the documentation work without implementing application code or applying database changes.
+
+## 9. Conditional Autonomy and Approval
+
+Proceed after presenting the plan when requirements are settled and no approval boundary is crossed.
+
+Wait for explicit approval when the implementation plan includes:
+
+- Database changes.
+- Permission changes.
+- Breaking API changes.
+- Work beyond the user's requested scope.
+
+Itemize each approval-requiring change and its effect. Preparing a specification or proposal does not authorize executing the proposed changes.
+
+Once approved, implement and test the agreed local changes without repeatedly requesting permission.
+
+### Database Boundary
+
+Present schema, migration, constraint, access-policy, and other database changes in the plan.
+
+After approval, implement and test locally.
+
+Applying migrations to shared or production environments requires separate explicit approval. Approval of a local implementation plan does not authorize remote migration execution.
+
+### Design Boundary
+
+Apply `design.md` to relevant work.
+
+For this workflow, the conditional approval rules in this section replace blanket requirements to obtain approval before every visual edit. Preserve all applicable design standards and functional protections.
+
+## 10. Full-Stack Implementation
+
+Follow `ARCHITECTURE_MAP.md` and existing project conventions.
+
+Implement complete working capabilities through the necessary layers:
+
+**Data → Backend → Shared Contracts → Frontend → Integrated Verification**
+
+For each capability:
+
+1. Define acceptance checks.
+2. Add a failing behavior test where applicable.
+3. Implement data constraints and access policies.
+4. Implement server-side validation, authorization, and business rules.
+5. Define or update shared TypeScript contracts.
+6. Connect existing frontend services and reusable components.
+7. Handle applicable loading, empty, success, error, and disabled states.
+8. Verify the integrated behavior.
+
+Enforce authorization at the backend or database boundary. UI visibility alone is insufficient.
+
+Avoid unnecessary dependencies and unrelated refactoring.
+
+## 11. Verification
+
+Run applicable project checks:
+
+- Type checking.
+- Linting.
+- Unit tests.
+- API and integration tests.
+- Database and access-policy tests.
+- Build.
+- Playwright E2E tests.
+
+### UI Features
+
+Use Playwright to verify:
+
+- The main user journey.
+- Relevant input validation.
+- Role-specific access.
+- Persistence after reload.
+- Applicable failure and recovery behavior.
+- Relevant desktop and mobile layouts.
+- Related existing journeys.
+
+Prefer accessible role and label locators, observable assertions, and automatic waiting over fixed delays.
+
+Use controlled accounts and test data. Retain useful failure traces or screenshots.
+
+### Backend-Only Changes
+
+Use API, integration, database, and authorization tests as appropriate.
+
+Run related E2E tests when user journeys could be affected.
+
+### Design Changes
+
+Verify applicable `design.md` requirements, including responsive layout, keyboard access, focus visibility, contrast, feedback, and visual consistency.
+
+Capture before-and-after screenshots where available.
+
+### Existing Failures
+
+Record existing failures and include their repair in the plan.
+
+If repair expands the requested scope, obtain approval before proceeding with that expansion.
+
+Do not conceal existing failures or report failed checks as passed. If required checks cannot execute, follow the stop-all-work rule.
+
+Record verification results as passed, failed, skipped, or unavailable. Skipped or unavailable required checks do not satisfy completion.
+
+## 12. Documentation
+
+Maintain documentation under:
+
+`docs/modules/<module>/`
+
+Keep:
+
+- `INDEX.md` as the module entry point.
+- A clearly identified current module specification.
+- Separate specifications for substantial features.
+- Dated implementation and verification records.
+
+Dated change records must include YAML frontmatter:
+
+- `module`
+- `date`
+- `status`
+- `affected_files`
+
+After implementation:
+
+1. Update the module specification to describe delivered behavior.
+2. Record changed contracts, permissions, data, and dependencies.
+3. Link requirements to verification evidence.
+4. Record approved scope changes and remaining limitations.
+5. Register documents in `INDEX.md`.
+
+### Master Living Documents Maintenance
+
+In addition to module-level documentation under `docs/modules/<module>/`:
+
+1. **Schema Updates (`docs/DATABASE_SCHEMA.md`):**
+   - Whenever any database table, column, constraint, foreign key, index, trigger, function, or RLS policy is created, modified, or migrated:
+     - Update the target table in Section 3 of `docs/DATABASE_SCHEMA.md`.
+     - Update the RLS Policy Registry in Section 4 and Migration Index in Section 5.
+     - Add a record to the Schema Revision History in Section 1.
+
+2. **Requirements Updates (`docs/REQUIREMENTS_SPECIFICATION.md`):**
+   - Whenever new features, business rules, or non-functional constraints (security, performance, usability) are created or changed:
+     - Add or edit the corresponding row in the Functional (FR) or Non-Functional (NFR) requirements table.
+     - Add a record to the SRS Revision History in Section 1.
+
+For cross-module features, maintain one primary specification and link it from each affected module.
+
+## 13. Completion: Verified Local Delivery
+
+A development task is complete when:
+
+- Implementation meets the agreed requirements.
+- Required tests and checks pass.
+- Existing failures included in the agreed scope are resolved.
+- `docs/DATABASE_SCHEMA.md` is updated if any schema, table, RLS, or migration changed.
+- `docs/REQUIREMENTS_SPECIFICATION.md` is updated if any functional or non-functional behavior changed.
+- Module specifications, dated change records, and `INDEX.md` are updated.
+- Verification evidence is recorded.
+- Final changes and repository status have been reviewed.
+
+Do not declare completion while required verification is unavailable or acceptance criteria remain unmet.
+
+Deliver a concise report containing:
+
+**Delivered behavior → Changes → Verification evidence → Limitations**
+
+Use clear task statuses:
+
+- **Complete — verified locally:** Implementation, required checks, and documentation are finished.
+- **Blocked — environment unavailable:** Required verification cannot run; all task work stops.
+- **Blocked — required command or skill unavailable:** A strict prerequisite is missing; all task work stops.
+- **Awaiting approval:** A change crosses an approval boundary.
+- **Incomplete — verification failed:** Checks ran and found unresolved failures.
+
+Local delivery does not require deployment or a further acceptance gate.
+
+For specification-only tasks, completion means the requested specification is delivered, consequential decisions are resolved, and its requirements and traceability have been reviewed. Do not claim implementation or runtime verification.
+
+Pushing, publishing branches, applying shared or production migrations, and deploying require explicit user authorization.

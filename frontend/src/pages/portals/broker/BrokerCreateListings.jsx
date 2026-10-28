@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { useNavigate, Link, useParams } from 'react-router-dom';
+import { useNavigate, Link, useParams, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
@@ -7,16 +7,19 @@ import {
   ArrowLeft, ArrowRight, Check, CheckCircle2, Circle, 
   FileText, MapPin, Sliders, DollarSign, Sparkles, 
   Image as ImageIcon, Send, Lock, Building2, User, ChevronDown,
-  LayoutGrid, List, Search, Building
+  LayoutGrid, List, Search, Building, Home, Trees, Store
 } from 'lucide-react';
+import { COMMON_PROPERTY_TYPES } from './BrokerPropertyTypeSelect';
 import PageHeader from '../../../components/dashboard/PageHeader';
 import DashboardModal from '../../../components/dashboard/DashboardModal';
+import { Button, buttonVariants } from '../../../components/ui/button';
+import { Badge } from '../../../components/ui/badge';
 import propertyService, { normalizeProperty, toApiPayload } from '../../../services/propertyService';
-import { agentService } from '../../../services/agentService';
 import { useAuth } from '../../../context/AuthContext';
 import mapsService from '../../../services/mapsService';
 import phLocationService from '../../../services/phLocationService';
 import driveService from '../../../services/driveService';
+import { CadastralLocationPicker } from '../../../components/ui/map';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -234,18 +237,20 @@ const ROOM_QUILL_MODULES = {
   ],
 };
 
-const DEFAULT_BROKER_AGENTS = [];
 
 
 export default function BrokerCreateListings({ isDrawer = false, onClose } = {}) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { id } = useParams();
   const isEditing = id && id !== 'new';
+  const searchParams = new URLSearchParams(location.search);
+  const typeParam = searchParams.get('type') || location.state?.propertyType;
 
   const [formData, setFormData] = useState({
     title: '',
     transaction_type: 'For Sale',
-    property_type: 'House & Lot',
+    property_type: (!isEditing && typeParam) ? typeParam : 'House & Lot',
     property_condition: 'RFO',
     price: '',
     currency: '₱',
@@ -578,7 +583,8 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
     }
   };
 
-  const propertyTypeOptions = ['House & Lot', 'Condominium', 'Townhouse', 'Commercial', 'Penthouse', 'Estate', 'Vacant Land / Lot', 'Villa'];
+  const PROPERTY_TYPE_CONFIGS = COMMON_PROPERTY_TYPES;
+  const propertyTypeOptions = COMMON_PROPERTY_TYPES.map(c => c.id);
   const propertyConditionOptions = ['Brand New', 'RFO', 'Pre-selling', 'Newly Renovated', 'Well-Maintained', 'Bare Shell', 'Fitted', 'Needs Renovation / Fixer-Upper'];
   const architecturalStyleOptions = [
     'Modern Contemporary',
@@ -649,40 +655,6 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
     'Pest Control Services'
   ];
 
-  // Agent selector state
-  const [agentsList, setAgentsList] = useState([]);
-  const [isLoadingAgents, setIsLoadingAgents] = useState(false);
-  const [isAgentModalOpen, setIsAgentModalOpen] = useState(false);
-  const [agentViewMode, setAgentViewMode] = useState('grid'); // 'grid' | 'list'
-  const [agentSearchQuery, setAgentSearchQuery] = useState('');
-
-  // Fetch verified agents directly from backend database
-  useEffect(() => {
-    let isMounted = true;
-    const fetchAgents = async () => {
-      setIsLoadingAgents(true);
-      try {
-        const fetched = await agentService.getAgents();
-        if (isMounted) {
-          setAgentsList(Array.isArray(fetched) ? fetched : []);
-        }
-      } catch (err) {
-        if (isMounted) {
-          console.warn('[BrokerCreateListings] Unable to load remote agents:', err);
-          setAgentsList([]);
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoadingAgents(false);
-        }
-      }
-    };
-    fetchAgents();
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
   const stepTitles = [
     'Basic Info',
     'Location',
@@ -708,6 +680,15 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
     '24/7 Security', 'Gated Community', 'CCTV Surveillance',
     'Lounge / Clubhouse', 'Gym / Fitness Center', 'Pet-Friendly Community', 'Flood-Free Area'
   ];
+
+  useEffect(() => {
+    if (typeParam && !isEditing) {
+      setFormData(prev => ({
+        ...prev,
+        property_type: typeParam,
+      }));
+    }
+  }, [typeParam, isEditing]);
 
   useEffect(() => {
     if (!isEditing) return;
@@ -1513,9 +1494,6 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
   if (!formData.property_type) {
     draftValidationErrors.push({ field: 'Property Type', step: 1, message: 'Property type classification is required.' });
   }
-  if (!formData.agent_id) {
-    draftValidationErrors.push({ field: 'Assigned Agent', step: 1, message: 'Select an assigned agent from the roster.' });
-  }
 
   const finalValidationErrors = [...draftValidationErrors];
   if (formData.title && formData.title.trim().length < 3) {
@@ -1618,16 +1596,6 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
 
     setIsSubmitting(true);
     try {
-      if (!formData.agent_id) {
-        setSubmissionError({
-          title: 'Agent Assignment Required',
-          message: 'An agent must be selected before publishing or submitting this property listing.',
-          errors: ['Select a listing agent from the verified agent roster.']
-        });
-        setIsSubmitting(false);
-        setActiveActionLabel('');
-        return;
-      }
 
       const isDraft = targetStandardStatus === 'Draft';
       const determinedStatus = isDraft ? 'INACTIVE' : (formData.status || 'AVAILABLE');
@@ -1748,8 +1716,8 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
     );
   }
 
-  const isCondo = formData.property_type === 'Condominium';
-  const isLand = formData.property_type === 'Vacant Land / Lot' || formData.property_type === 'Land';
+  const isCondo = ['Condominium', 'Penthouse', 'Apartment'].includes(formData.property_type);
+  const isLand = ['Lot / Land', 'Vacant Land / Lot', 'Land'].includes(formData.property_type);
 
   return (
     <div className={`space-y-6 max-w-[1440px] mx-auto ${isDrawer ? 'pb-6' : 'pb-16'}`}>
@@ -1827,8 +1795,8 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
               </h3>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="space-y-1.5 md:col-span-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-1.5 md:col-span-2">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
                     Listing Title <span className="text-[#FF6B6B]">*</span>
@@ -1848,7 +1816,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                 />
               </div>
 
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 md:col-span-2 sm:max-w-sm">
                 <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B] block h-5">
                   Transaction Purpose <span className="text-[#FF6B6B]">*</span>
                 </label>
@@ -1870,74 +1838,78 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B] block h-5">
-                  Category / Type <span className="text-[#FF6B6B]">*</span>
-                </label>
-                <div className="relative">
-                  <select
-                    value={formData.property_type}
-                    onChange={e => { setIsDirty(true); setFormData({ ...formData, property_type: e.target.value }); }}
-                    className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none cursor-pointer appearance-none shadow-2xs transition-colors"
-                  >
-                    {propertyTypeOptions.map(opt => (
-                      <option key={opt} value={opt}>{opt}</option>
-                    ))}
-                  </select>
-                  <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-3.5 pointer-events-none" />
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between h-5">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
-                    Assign Agent
+              {/* Property Type Classification Option Cards */}
+              <div className="space-y-2.5 md:col-span-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B] block">
+                    Category / Type Classification <span className="text-[#FF6B6B]">*</span>
                   </label>
-                  <span className="text-[11px] font-semibold text-[#0F766E] bg-teal-50 px-2 py-0.5 rounded-full border border-teal-200/50">
-                    {agentsList.length} Available
+                  <span className="text-xs text-[#64748B]">
+                    Active: <strong className="text-[#0F766E] font-bold">{formData.property_type || 'House & Lot'}</strong>
                   </span>
                 </div>
-                {(() => {
-                  const currentAgent = agentsList.find(a => a.id === formData.agent_id);
 
-                  return (
-                    <button
-                      type="button"
-                      onClick={() => setIsAgentModalOpen(true)}
-                      className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-[#0F766E] rounded-lg text-sm text-[#1E293B] flex items-center justify-between transition-colors shadow-2xs group cursor-pointer"
-                    >
-                      <div className="flex items-center gap-2.5 truncate">
-                        {currentAgent ? (
-                          <>
-                            <img
-                              src={currentAgent.avatar || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80'}
-                              alt={currentAgent.name}
-                              className="w-6 h-6 rounded-full object-cover border border-[#E2E8F0] shrink-0"
-                            />
-                            <span className="font-semibold text-[#1E293B] truncate group-hover:text-[#0F766E] transition-colors">
-                              {currentAgent.name}
-                            </span>
-                          </>
-                        ) : (
-                          <>
-                            <User className="w-4 h-4 text-slate-400 shrink-0" />
-                            <span className="text-[#64748B]">Select an Agent</span>
-                          </>
-                        )}
-                      </div>
-                      <span className="text-xs font-semibold text-[#0F766E] bg-teal-50 group-hover:bg-[#0F766E] group-hover:text-white px-2.5 py-1 rounded transition-colors shrink-0">
-                        {currentAgent ? 'Change' : 'Select'}
-                      </span>
-                    </button>
-                  );
-                })()}
-                <p className="text-[11px] text-[#64748B] flex items-center gap-1 mt-1">
-                  <span className="material-symbols-outlined text-[14px] text-teal-600">info</span>
-                  Listing will remain in Pending Confirmation until accepted by the assigned agent.
-                </p>
+                <div 
+                  className="grid grid-cols-2 sm:grid-cols-4 gap-3" 
+                  role="radiogroup" 
+                  aria-label="Property Type Classification"
+                >
+                  {COMMON_PROPERTY_TYPES.map(config => {
+                    const Icon = config.icon;
+                    const isSelected = formData.property_type === config.id;
+
+                    return (
+                      <button
+                        key={config.id}
+                        type="button"
+                        role="button"
+                        aria-label={config.name}
+                        aria-pressed={isSelected}
+                        data-testid={`property-type-${config.id.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
+                        onClick={() => {
+                          setIsDirty(true);
+                          setFormData({ ...formData, property_type: config.id });
+                        }}
+                        className={`relative p-4 rounded-xl border text-center transition-all duration-200 flex flex-col items-center justify-center gap-2 group cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#0F766E]/30 ${
+                          isSelected
+                            ? 'bg-teal-50/60 border-[#0F766E] ring-2 ring-[#0F766E]/20 shadow-xs'
+                            : 'bg-white border-[#E2E8F0] hover:border-[#0F766E]/50 hover:bg-slate-50 shadow-2xs'
+                        }`}
+                      >
+                        <div
+                          className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
+                            isSelected
+                              ? 'bg-[#0F766E] text-white'
+                              : 'bg-slate-100 text-[#0F766E] group-hover:bg-[#0F766E] group-hover:text-white'
+                          }`}
+                        >
+                          <Icon className="w-5 h-5" />
+                        </div>
+                        <span className="font-bold text-xs sm:text-sm text-[#1E293B] group-hover:text-[#0F766E] transition-colors">
+                          {config.name}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Synchronized accessible select fallback */}
+                <select
+                  aria-label="Category / Type"
+                  value={formData.property_type}
+                  onChange={e => {
+                    setIsDirty(true);
+                    setFormData({ ...formData, property_type: e.target.value });
+                  }}
+                  className="sr-only"
+                >
+                  {COMMON_PROPERTY_TYPES.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
               </div>
 
-              <div className="space-y-1.5 md:col-span-3">
+              <div className="space-y-1.5 md:col-span-2">
                 <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B] block h-5">
                   Property Description <span className="text-[#FF6B6B]">*</span>
                 </label>
@@ -2043,23 +2015,40 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                 </div>
               </div>
 
-              {/* Interactive Map */}
-              <div className="rounded-lg overflow-hidden border border-[#CBD5E1] h-72 relative z-10">
-                <MapContainer center={mapPosition} zoom={13} style={{ height: '100%', width: '100%', zIndex: 1 }}>
-                  <TileLayer
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                  />
-                  <LocationMarker 
-                    position={formData.latitude && formData.longitude ? [parseFloat(formData.latitude), parseFloat(formData.longitude)] : null} 
-                    setPosition={handleMapPositionChange}
-                    onPinMoved={handlePinMoved}
-                  />
-                </MapContainer>
-                <div className="absolute bottom-3 left-3 bg-white/95 backdrop-blur-sm px-3 py-1.5 rounded-md border border-teal-200 text-[11px] font-mono text-[#0F766E] shadow-sm z-[20] flex items-center gap-1.5 font-semibold">
-                  <span className="material-symbols-outlined text-[14px]">pin_drop</span>
-                  <span>Pin: {formData.latitude || '14.5995000'}, {formData.longitude || '120.9842000'}</span>
-                </div>
+              {/* Cadastral Interactive Map */}
+              <CadastralLocationPicker
+                latitude={formData.latitude}
+                longitude={formData.longitude}
+                address={formData.address}
+                onPositionChange={(pos) => {
+                  handleMapPositionChange(pos);
+                  handlePinMoved(pos);
+                }}
+                className="w-full"
+              />
+
+              {/* Cadastral Quick Presets */}
+              <div className="flex items-center gap-1.5 flex-wrap pt-1">
+                <span className="text-[11px] font-semibold text-[#64748B]">Cadastral Presets:</span>
+                {[
+                  { name: 'BGC, Taguig', lat: 14.5547, lng: 121.0494 },
+                  { name: 'Makati CBD', lat: 14.5547, lng: 121.0244 },
+                  { name: 'Ortigas Center', lat: 14.5869, lng: 121.0614 },
+                  { name: 'Cebu IT Park', lat: 10.3297, lng: 123.9063 },
+                  { name: 'Clark Freeport', lat: 15.1856, lng: 120.5369 }
+                ].map(preset => (
+                  <button
+                    key={preset.name}
+                    type="button"
+                    onClick={() => {
+                      handleMapPositionChange([preset.lat, preset.lng]);
+                      handlePinMoved([preset.lat, preset.lng]);
+                    }}
+                    className="text-[11px] px-2 py-0.5 rounded bg-white hover:bg-teal-50 border border-[#E2E8F0] text-[#0F766E] font-medium transition-colors cursor-pointer"
+                  >
+                    {preset.name}
+                  </button>
+                ))}
               </div>
 
               {/* Coordinates: Latitude & Longitude Inputs */}
@@ -2407,11 +2396,13 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                 {/* Lot Area & Unit */}
                 {!isCondo && (
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
+                    <label htmlFor="lot-size-area-input" className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
                       Lot Area <span className="text-[#FF6B6B]">*</span>
                     </label>
                     <div className="flex border border-[#CBD5E1] hover:border-slate-400 rounded-lg overflow-hidden bg-white focus-within:border-[#0F766E] focus-within:ring-1 focus-within:ring-[#0F766E] shadow-2xs transition-colors">
                       <input
+                        id="lot-size-area-input"
+                        aria-label="Lot Area"
                         required={!isCondo}
                         type="number"
                         step="any"
@@ -5057,11 +5048,12 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
 
                     if (isAgent) {
                       return (
-                        <button
+                        <Button
                           type="button"
+                          variant="coral"
                           disabled={isSubmitting}
                           onClick={() => executeSubmission('Pending Approval')}
-                          className="w-full sm:w-auto h-11 px-7 bg-[#FF6B6B] hover:bg-[#EE5A5A] text-white rounded-lg text-xs font-bold shadow-xs transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
+                          className="w-full sm:w-auto h-11 px-7 flex items-center justify-center gap-1.5 cursor-pointer shadow-xs font-bold"
                         >
                           {isSubmitting ? (
                             <span className="material-symbols-outlined text-[16px] animate-spin">sync</span>
@@ -5069,16 +5061,17 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                             <Send className="w-3.5 h-3.5" />
                           )}
                           <span>{isSubmitting ? (activeActionLabel || 'Submitting…') : 'Submit for Review'}</span>
-                        </button>
+                        </Button>
                       );
                     }
 
                     return (
-                      <button
+                      <Button
                         type="button"
+                        variant="coral"
                         disabled={isSubmitting}
                         onClick={() => executeSubmission('Active')}
-                        className="w-full sm:w-auto h-11 px-7 bg-[#FF6B6B] hover:bg-[#EE5A5A] text-white rounded-lg text-xs font-bold shadow-xs transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
+                        className="w-full sm:w-auto h-11 px-7 flex items-center justify-center gap-1.5 cursor-pointer shadow-xs font-bold"
                       >
                         {isSubmitting ? (
                           <span className="material-symbols-outlined text-[16px] animate-spin">sync</span>
@@ -5086,7 +5079,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                           <Send className="w-3.5 h-3.5" />
                         )}
                         <span>{isSubmitting ? (activeActionLabel || 'Publishing…') : 'Publish Listing'}</span>
-                      </button>
+                      </Button>
                     );
                   })()}
                 </>
@@ -5456,184 +5449,6 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
 
 
 
-      {/* Assign Agent Selection Modal */}
-      <DashboardModal
-        isOpen={isAgentModalOpen}
-        onClose={() => setIsAgentModalOpen(false)}
-        title="Assign Agent"
-        subtitle="Select a verified property consultant to manage this property listing."
-        maxWidth="max-w-3xl"
-        actions={
-          <button
-            type="button"
-            onClick={() => setIsAgentModalOpen(false)}
-            className="h-10 px-6 bg-[#0F766E] hover:bg-[#115E59] text-white rounded-lg text-xs font-semibold cursor-pointer shadow-xs transition-colors"
-          >
-            Confirm & Done
-          </button>
-        }
-      >
-        <div className="space-y-4">
-          {/* Controls: Search and View Mode Switcher */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pb-2 border-b border-[#E2E8F0]">
-            <div className="relative flex-1">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3 pointer-events-none" />
-              <input
-                type="text"
-                placeholder="Search agent by name or email..."
-                value={agentSearchQuery}
-                onChange={e => setAgentSearchQuery(e.target.value)}
-                className="w-full h-10 pl-9 pr-4 bg-white border border-[#CBD5E1] rounded-lg text-xs text-[#1E293B] placeholder-slate-400 focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none transition-all"
-              />
-            </div>
-            <div className="flex items-center gap-1 self-end sm:self-center bg-[#F8FAFC] border border-[#CBD5E1] p-1 rounded-lg">
-              <button
-                type="button"
-                onClick={() => setAgentViewMode('grid')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold cursor-pointer transition-colors ${
-                  agentViewMode === 'grid'
-                    ? 'bg-white text-[#0F766E] shadow-2xs font-bold'
-                    : 'text-[#64748B] hover:text-[#1E293B]'
-                }`}
-                aria-label="Grid view"
-              >
-                <LayoutGrid className="w-3.5 h-3.5" />
-                Grid
-              </button>
-              <button
-                type="button"
-                onClick={() => setAgentViewMode('list')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold cursor-pointer transition-colors ${
-                  agentViewMode === 'list'
-                    ? 'bg-white text-[#0F766E] shadow-2xs font-bold'
-                    : 'text-[#64748B] hover:text-[#1E293B]'
-                }`}
-                aria-label="List view"
-              >
-                <List className="w-3.5 h-3.5" />
-                List
-              </button>
-            </div>
-          </div>
-
-          {/* Agent Display View */}
-          {(() => {
-            const filteredAgents = agentsList.filter(agent => {
-              const query = agentSearchQuery.toLowerCase();
-              return (
-                agent.name?.toLowerCase().includes(query) ||
-                agent.email?.toLowerCase().includes(query) ||
-                agent.role?.toLowerCase().includes(query)
-              );
-            });
-
-            if (filteredAgents.length === 0) {
-              return (
-                <div className="py-12 text-center text-[#64748B] text-xs space-y-1">
-                  <p className="font-semibold text-sm text-[#1E293B]">No agents matched your search</p>
-                  <p>Try searching with another name or email keyword.</p>
-                </div>
-              );
-            }
-
-            if (agentViewMode === 'grid') {
-              return (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 max-h-[50vh] overflow-y-auto pr-1">
-                  {filteredAgents.map(agent => {
-                    const isSelected = formData.agent_id === agent.id;
-                    return (
-                      <div
-                        key={agent.id}
-                        onClick={() => {
-                          setIsDirty(true);
-                          setFormData({ ...formData, agent_id: agent.id, agent_name: agent.name });
-                        }}
-                        className={`relative flex flex-col p-4 rounded-xl border text-left cursor-pointer transition-all ${
-                          isSelected
-                            ? 'border-[#0F766E] bg-teal-50/40 shadow-xs ring-1 ring-[#0F766E]'
-                            : 'border-[#E2E8F0] bg-white hover:border-slate-400 hover:shadow-2xs'
-                        }`}
-                      >
-                        {isSelected && (
-                          <div className="absolute top-2.5 right-2.5 w-5 h-5 rounded-full bg-[#0F766E] text-white flex items-center justify-center shadow-xs">
-                            <Check className="w-3.5 h-3.5 stroke-[3]" />
-                          </div>
-                        )}
-                        <img
-                          src={agent.avatar || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80'}
-                          alt={agent.name}
-                          className="w-14 h-14 rounded-full object-cover border-2 border-white shadow-xs mx-auto mb-3"
-                        />
-                        <div className="text-center min-w-0">
-                          <h4 className="text-xs font-bold text-[#1E293B] truncate">{agent.name}</h4>
-                          <p className="text-[11px] text-[#64748B] truncate mt-0.5">{agent.email}</p>
-                          <span className="inline-block mt-2 text-[10px] font-semibold text-[#0F766E] bg-teal-50 px-2 py-0.5 rounded-full border border-teal-200/50">
-                            {agent.assigned_properties_count ?? 0} Listed Properties
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              );
-            }
-
-            // List View
-            return (
-              <div className="divide-y divide-[#E2E8F0] border border-[#E2E8F0] rounded-xl overflow-hidden max-h-[50vh] overflow-y-auto">
-                {filteredAgents.map(agent => {
-                  const isSelected = formData.agent_id === agent.id;
-                  return (
-                    <div
-                      key={agent.id}
-                      onClick={() => {
-                        setIsDirty(true);
-                        setFormData({ ...formData, agent_id: agent.id, agent_name: agent.name });
-                      }}
-                      className={`flex items-center justify-between p-3.5 cursor-pointer transition-colors ${
-                        isSelected ? 'bg-teal-50/50' : 'bg-white hover:bg-slate-50'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3.5 min-w-0">
-                        <img
-                          src={agent.avatar || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80'}
-                          alt={agent.name}
-                          className="w-11 h-11 rounded-full object-cover border border-[#E2E8F0] shrink-0"
-                        />
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-bold text-[#1E293B] truncate">{agent.name}</span>
-                            {agent.role && (
-                              <span className="text-[10px] px-1.5 py-0.2 bg-slate-100 text-[#64748B] rounded border border-slate-200">
-                                {agent.role}
-                              </span>
-                            )}
-                          </div>
-                          <div className="text-[11px] text-[#64748B] truncate mt-0.5">{agent.email}</div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-4 shrink-0 pl-3">
-                        <div className="text-right hidden sm:block">
-                          <span className="text-xs font-bold text-[#1E293B]">
-                            {agent.assigned_properties_count ?? 0}
-                          </span>
-                          <span className="text-[10px] text-[#64748B] block">Properties listed</span>
-                        </div>
-                        <div className={`w-5 h-5 rounded-full flex items-center justify-center transition-all ${
-                          isSelected ? 'bg-[#0F766E] text-white shadow-xs' : 'border border-[#CBD5E1]'
-                        }`}>
-                          {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            );
-          })()}
-        </div>
-      </DashboardModal>
 
       {/* Media Preview Modal */}
       {previewMediaItem && (

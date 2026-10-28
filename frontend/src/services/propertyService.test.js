@@ -180,4 +180,33 @@ describe('propertyService RESO 2.0 Adapters', () => {
     const document = payload.media.find(m => m.mediaCategory === 'Document');
     expect(document.shortDescription).toBe('Certified Condominium Certificate of Title');
   });
+
+  it('populates corporate brokerage desk contact fallback when property is unassigned', () => {
+    const unassignedProperty = {
+      id: 'prop-unassigned-123',
+      title: 'Bonifacio Global City Modern Loft',
+      price: 45000000,
+      agent_id: null,
+      agent_name: null,
+      list_agent_key: null,
+    };
+
+    const normalized = normalizeProperty(unassignedProperty);
+
+    expect(normalized.isCorporateDesk).toBe(true);
+    expect(normalized.is_corporate_desk).toBe(true);
+    expect(normalized.agent_name).toBe('Human Shelter Realty Desk');
+    expect(normalized.agentName).toBe('Human Shelter Realty Desk');
+    expect(normalized.agentPhone).toBe('+63 2 8888 0000');
+    expect(normalized.agentEmail).toBe('inquiries@humanshelterrealty.com');
+    expect(normalized.agent).toEqual({
+      id: null,
+      name: 'Human Shelter Realty Desk',
+      title: 'Corporate Brokerage Desk',
+      brokerage: 'Human Shelter Realty',
+      phone: '+63 2 8888 0000',
+      email: 'inquiries@humanshelterrealty.com',
+      isCorporateDesk: true,
+    });
+  });
 });

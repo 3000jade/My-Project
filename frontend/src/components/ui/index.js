@@ -1,5 +1,59 @@
 // Master Production UI Design System Barrel Export Hub
 
+// shadcn/ui Unified Design System Primitives
+export { Button as ShadcnButton, buttonVariants } from './button';
+export { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from './card';
+export { Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooter, TableCaption } from './table';
+export { Badge, badgeVariants } from './badge';
+export { Skeleton } from './skeleton';
+export { Input } from './input';
+export { Textarea } from './textarea';
+export { Label } from './label';
+export { Checkbox } from './checkbox';
+export { Alert, AlertTitle, AlertDescription, alertVariants } from './alert';
+export { Tabs, TabsList, TabsTrigger, TabsContent } from './tabs';
+export { Sheet, SheetTrigger, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetDescription } from './sheet';
+export {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from './alert-dialog';
+export {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuCheckboxItem,
+  DropdownMenuRadioItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuGroup,
+  DropdownMenuPortal,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuRadioGroup,
+} from './dropdown-menu';
+export {
+  Dialog,
+  DialogPortal,
+  DialogOverlay,
+  DialogClose,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+} from './dialog';
+
 // Core Primitives
 export { default as Button } from './core/Button';
 export { default as DynamicBackground } from './core/DynamicBackground';
@@ -27,7 +81,14 @@ export { default as UnifiedSearchBar } from './search/UnifiedSearchBar';
 
 // Map & Geographical
 export { default as PropertyMap } from './map/PropertyMap';
+export { default as GooglePropertyMap } from './map/GooglePropertyMap';
 export { default as MapLayerControl } from './map/MapLayerControl';
+export { default as StreetViewModal } from './map/StreetViewModal';
+export { default as GooglePlacesSearchInput } from './map/GooglePlacesSearchInput';
+export { default as CadastralLocationPicker } from './map/CadastralLocationPicker';
+export { default as CommuteAnalysisCard } from './map/CommuteAnalysisCard';
+export { default as EnlargedMapModal } from './map/EnlargedMapModal';
+export * from './map/googleMapMarkers';
 
 // Sections & Calculators
 export { default as AgentBrokerSection } from './sections/AgentBrokerSection';

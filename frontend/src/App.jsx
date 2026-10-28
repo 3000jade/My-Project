@@ -71,6 +71,7 @@ import BrokerInviteAgent from './pages/portals/broker/BrokerInviteAgent';
 import BrokerAgentEdit from './pages/portals/broker/BrokerAgentEdit';
 import BrokerSales from './pages/portals/broker/BrokerSales';
 import BrokerReports from './pages/portals/broker/BrokerReports';
+import BrokerAudit from './pages/portals/broker/BrokerAudit';
 import BrokerNotifications from './pages/portals/broker/BrokerNotifications';
 import BrokerProfile from './pages/portals/broker/BrokerProfile';
 
@@ -181,6 +182,7 @@ function AppRoutes({ isAppLoading }) {
           <Route path="agents/:id/edit" element={<BrokerAgentEdit />} />
           <Route path="sales" element={<BrokerSales />} />
           <Route path="reports" element={<BrokerReports />} />
+          <Route path="audit" element={<BrokerAudit />} />
           <Route path="notifications" element={<BrokerNotifications />} />
           <Route path="profile" element={<BrokerProfile />} />
         </Route>

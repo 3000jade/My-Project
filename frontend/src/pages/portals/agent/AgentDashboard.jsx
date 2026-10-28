@@ -4,9 +4,13 @@ import MetricCard from '../../../components/dashboard/MetricCard';
 import StatusBadge from '../../../components/dashboard/StatusBadge';
 import PageHeader from '../../../components/dashboard/PageHeader';
 import { dashboardService, computeAgentFallback } from '../../../services/dashboardService';
+import { useAuth } from '../../../context/AuthContext';
 
 export default function AgentDashboard() {
-  const [data, setData] = useState(() => computeAgentFallback('agent-1'));
+  const { user } = useAuth();
+  const effectiveAgentId = user?.id || 'agent-1';
+
+  const [data, setData] = useState(() => computeAgentFallback(effectiveAgentId));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -16,7 +20,7 @@ export default function AgentDashboard() {
     try {
       const summary = await dashboardService.getDashboardSummary({
         role: 'agent',
-        agentId: 'agent-1',
+        agentId: effectiveAgentId,
       });
       setData(summary);
     } catch (err) {
@@ -25,7 +29,7 @@ export default function AgentDashboard() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [effectiveAgentId]);
 
   useEffect(() => {
     loadDashboard();
@@ -46,27 +50,79 @@ export default function AgentDashboard() {
   const upcomingAppointments = metrics.upcomingAppointments || 0;
   const totalRecordedSalesValue = metrics.totalRecordedSalesValue || 0;
 
+  const verificationStatus = (user?.verification_status || 'VERIFIED').toUpperCase();
+  const isRejected = verificationStatus === 'REJECTED';
+  const isPendingReview = verificationStatus === 'PENDING';
+
   return (
     <div className="space-y-8">
       <PageHeader
-        title="Agent Overview"
+        title="Agent Workspace & Overview"
         subtitle="Track assigned property listings, client inquiries, viewing appointments, and sales milestones."
         actions={
           <div className="flex items-center flex-wrap gap-2.5">
             <button
               onClick={loadDashboard}
               disabled={loading}
-              className="h-[46px] px-4 bg-white hover:bg-gray-50 text-[#174849] border border-gray-200 rounded-xl text-xs font-bold font-sans uppercase tracking-wider flex items-center gap-2 transition-all shadow-xs cursor-pointer disabled:opacity-60"
+              className="h-[46px] px-4 bg-white hover:bg-gray-50 text-[#1E293B] border border-gray-200 rounded-xl text-xs font-bold font-sans uppercase tracking-wider flex items-center gap-2 transition-all shadow-xs cursor-pointer disabled:opacity-60"
             >
               <span className={`material-symbols-outlined text-[18px] ${loading ? 'animate-spin' : ''}`}>
                 refresh
               </span>
               <span>Refresh</span>
             </button>
-
           </div>
         }
       />
+
+      {/* Regulatory Watchdog Banner */}
+      {isRejected ? (
+        <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-rose-800 font-sans text-sm">
+          <div className="flex items-start sm:items-center gap-3">
+            <span className="material-symbols-outlined text-rose-600 text-[22px]">gavel</span>
+            <div>
+              <p className="font-bold">Credential Verification Action Required</p>
+              <p className="text-xs text-rose-700">
+                {user?.rejection_remarks ||
+                  'Your PRC or DHSUD accreditation dossier was rejected by the managing broker. Please review remarks and resubmit documents.'}
+              </p>
+            </div>
+          </div>
+          <Link
+            to="/agent/profile"
+            className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold uppercase rounded-xl tracking-wider transition-colors shrink-0"
+          >
+            Review & Resubmit
+          </Link>
+        </div>
+      ) : isPendingReview ? (
+        <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-center justify-between text-amber-800 font-sans text-sm">
+          <div className="flex items-center gap-3">
+            <span className="material-symbols-outlined text-amber-600 text-[22px]">hourglass_top</span>
+            <div>
+              <p className="font-bold">Supervisory Broker Review in Progress</p>
+              <p className="text-xs text-amber-700">
+                Your submitted PRC and DHSUD documents are undergoing regulatory validation by your managing broker.
+              </p>
+            </div>
+          </div>
+          <span className="px-3 py-1 bg-amber-100 text-amber-800 rounded-lg text-xs font-bold uppercase tracking-wider">
+            Pending Approval
+          </span>
+        </div>
+      ) : (
+        <div className="p-3.5 bg-emerald-50/70 border border-emerald-200/80 rounded-2xl flex items-center justify-between text-emerald-900 font-sans text-xs">
+          <div className="flex items-center gap-2.5">
+            <span className="material-symbols-outlined text-emerald-600 text-[18px]">verified_user</span>
+            <span>
+              <strong>PRC & DHSUD Verified Consultant:</strong> Active regulatory accreditation verified under Republic Act No. 9646.
+            </span>
+          </div>
+          <Link to="/agent/profile" className="font-bold text-emerald-800 hover:underline">
+            View Credentials →
+          </Link>
+        </div>
+      )}
 
       {error && (
         <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-center justify-between text-amber-800 font-sans text-sm">
@@ -134,22 +190,22 @@ export default function AgentDashboard() {
       <div className="bg-white rounded-2xl border border-gray-200/80 p-6 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-gray-100">
           <div>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-[#FB8E5D] font-sans">
-              Sales Monitoring
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#FF6B6B] font-sans">
+              Sales & Pipeline Monitoring
             </span>
-            <h3 className="text-xl font-display font-bold text-[#174849] mt-0.5">
-              Recorded Sales Performance
+            <h3 className="text-xl font-display font-bold text-[#1E293B] mt-0.5">
+              Deal Conveyance & Performance
             </h3>
             <p className="text-xs text-gray-500 font-sans mt-0.5">
-              Summary of completed and pending transaction values.
+              Live snapshot of completed and pending transaction milestones.
             </p>
           </div>
-          <div className="flex items-center gap-6 bg-[#F1F0EC]/60 px-5 py-3 rounded-xl">
+          <div className="flex items-center gap-6 bg-[#F8FAFC]/60 px-5 py-3 rounded-xl">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 font-sans">
                 Total Closed Value
               </p>
-              <p className="text-xl font-display font-bold text-[#174849]">
+              <p className="text-xl font-display font-bold text-[#1E293B]">
                 {`₱${(totalRecordedSalesValue / 1000000).toFixed(1)}M`}
               </p>
             </div>
@@ -158,7 +214,7 @@ export default function AgentDashboard() {
               <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 font-sans">
                 Recorded Sales Count
               </p>
-              <p className="text-xl font-display font-bold text-[#266F71]">
+              <p className="text-xl font-display font-bold text-[#0F766E]">
                 {`${agentSales.length} Deals`}
               </p>
             </div>
@@ -180,10 +236,10 @@ export default function AgentDashboard() {
             <tbody className="divide-y divide-gray-50">
               {agentSales.slice(0, 3).map((sale) => (
                 <tr key={sale.id} className="hover:bg-gray-50/50 transition-colors">
-                  <td className="py-3 font-semibold text-[#174849]">{sale.property_title}</td>
+                  <td className="py-3 font-semibold text-[#1E293B]">{sale.property_title}</td>
                   <td className="py-3 text-gray-600">{sale.client_name}</td>
                   <td className="py-3 text-gray-500">{sale.sale_date}</td>
-                  <td className="py-3 font-bold text-[#266F71]">
+                  <td className="py-3 font-bold text-[#0F766E]">
                     {`₱${(sale.property_value || 0).toLocaleString()}`}
                   </td>
                   <td className="py-3">
@@ -197,9 +253,9 @@ export default function AgentDashboard() {
         <div className="mt-4 pt-3 border-t border-gray-100 flex justify-end">
           <Link
             to="/agent/sales"
-            className="text-xs font-bold font-sans uppercase tracking-wider text-[#266F71] hover:text-[#174849] transition-colors"
+            className="text-xs font-bold font-sans uppercase tracking-wider text-[#0F766E] hover:text-[#115E59] transition-colors"
           >
-            View Full Sales Monitoring →
+            View Full Deal Pipeline & Commissions →
           </Link>
         </div>
       </div>
@@ -210,7 +266,7 @@ export default function AgentDashboard() {
         <div className="bg-white rounded-2xl border border-gray-200/80 p-6 shadow-sm flex flex-col">
           <div className="flex items-center justify-between pb-4 border-b border-gray-100">
             <div>
-              <h3 className="text-lg font-display font-bold text-[#174849]">
+              <h3 className="text-lg font-display font-bold text-[#1E293B]">
                 Upcoming Appointments
               </h3>
               <p className="text-xs text-gray-500 font-sans">
@@ -219,7 +275,7 @@ export default function AgentDashboard() {
             </div>
             <Link
               to="/agent/appointments"
-              className="text-xs font-bold text-[#266F71] uppercase tracking-wider font-sans hover:underline"
+              className="text-xs font-bold text-[#0F766E] uppercase tracking-wider font-sans hover:underline"
             >
               All Appointments
             </Link>
@@ -230,14 +286,14 @@ export default function AgentDashboard() {
               <div key={apt.id} className="py-4 flex items-start justify-between gap-3">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-sm text-[#174849] font-sans">
+                    <span className="font-bold text-sm text-[#1E293B] font-sans">
                       {apt.client_name}
                     </span>
                     <span className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600 font-medium">
                       {apt.appointment_type}
                     </span>
                   </div>
-                  <p className="text-xs text-[#266F71] font-medium font-sans">
+                  <p className="text-xs text-[#0F766E] font-medium font-sans">
                     {apt.property_title}
                   </p>
                   <p className="text-xs text-gray-400 flex items-center gap-1 font-sans">
@@ -257,7 +313,7 @@ export default function AgentDashboard() {
         <div className="bg-white rounded-2xl border border-gray-200/80 p-6 shadow-sm flex flex-col">
           <div className="flex items-center justify-between pb-4 border-b border-gray-100">
             <div>
-              <h3 className="text-lg font-display font-bold text-[#174849]">
+              <h3 className="text-lg font-display font-bold text-[#1E293B]">
                 Recent Inquiries
               </h3>
               <p className="text-xs text-gray-500 font-sans">
@@ -266,7 +322,7 @@ export default function AgentDashboard() {
             </div>
             <Link
               to="/agent/inquiries"
-              className="text-xs font-bold text-[#266F71] uppercase tracking-wider font-sans hover:underline"
+              className="text-xs font-bold text-[#0F766E] uppercase tracking-wider font-sans hover:underline"
             >
               All Inquiries
             </Link>
@@ -281,10 +337,10 @@ export default function AgentDashboard() {
               >
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <span className="font-bold text-sm text-[#174849] font-sans">
+                    <span className="font-bold text-sm text-[#1E293B] font-sans">
                       {inq.client_name}
                     </span>
-                    <p className="text-xs text-[#266F71] font-medium font-sans">
+                    <p className="text-xs text-[#0F766E] font-medium font-sans">
                       {inq.property_title}
                     </p>
                   </div>
@@ -304,18 +360,18 @@ export default function AgentDashboard() {
 
       {/* 5. Recent Activity Feed */}
       <div className="bg-white rounded-2xl border border-gray-200/80 p-6 shadow-sm">
-        <h3 className="text-lg font-display font-bold text-[#174849] mb-4">
+        <h3 className="text-lg font-display font-bold text-[#1E293B] mb-4">
           Recent Activity Timeline
         </h3>
         <div className="space-y-4">
           {recentActivity.map((act) => (
             <div key={act.id} className="flex items-start gap-3.5 text-sm font-sans">
-              <div className="w-8 h-8 rounded-full bg-[#266F71]/10 text-[#266F71] flex items-center justify-center shrink-0 mt-0.5">
+              <div className="w-8 h-8 rounded-full bg-[#0F766E]/10 text-[#0F766E] flex items-center justify-center shrink-0 mt-0.5">
                 <span className="material-symbols-outlined text-[18px]">{act.icon}</span>
               </div>
               <div className="flex-1 flex flex-col sm:flex-row sm:items-center justify-between">
                 <div>
-                  <span className="font-bold text-[#174849]">{act.action}</span>
+                  <span className="font-bold text-[#1E293B]">{act.action}</span>
                   <span className="text-gray-500"> — {act.user_name} on </span>
                   <span className="font-semibold text-gray-700">{act.target}</span>
                 </div>

@@ -17,11 +17,35 @@ export interface UserProfileData {
   dhsud_validity: string;
   firm_name: string;
   experience_years: number;
+  preferred_location?: string;
+  investment_budget?: string;
+  notification_preferences?: Record<string, boolean>;
   verification_status: 'VERIFIED' | 'PENDING' | 'REJECTED' | 'SUSPENDED';
   updated_at?: string;
 }
 
 const defaultProfiles: Record<string, UserProfileData> = {
+  client: {
+    id: 'user-client-1',
+    name: 'Sophia Isabella Laurel',
+    email: 'client@pt.com',
+    phone: '+63 917 555 8899',
+    role: 'client',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+    avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+    bio: 'Private investor exploring high-yield prime estates and modern architectural condominiums.',
+    prc_license_no: '',
+    prc_validity: '',
+    dhsud_accreditation_no: '',
+    dhsud_validity: '',
+    firm_name: '',
+    experience_years: 0,
+    preferred_location: 'Bonifacio Global City, Taguig',
+    investment_budget: '₱50,000,000 - ₱120,000,000',
+    notification_preferences: { email: true, sms: true, priceDrops: true },
+    verification_status: 'VERIFIED',
+    updated_at: new Date().toISOString(),
+  },
   broker: {
     id: 'user-broker-1',
     name: 'Alexander Sterling',
@@ -63,8 +87,10 @@ const defaultProfiles: Record<string, UserProfileData> = {
 let inMemoryProfiles: Map<string, UserProfileData> = new Map([
   ['user-broker-1', { ...defaultProfiles.broker }],
   ['user-agent-1', { ...defaultProfiles.agent }],
+  ['user-client-1', { ...defaultProfiles.client }],
   ['broker@pt.com', { ...defaultProfiles.broker }],
   ['agent@pt.com', { ...defaultProfiles.agent }],
+  ['client@pt.com', { ...defaultProfiles.client }],
 ]);
 
 export class ProfileService {
@@ -72,7 +98,11 @@ export class ProfileService {
    * Get user profile by userId or by role
    */
   public static async getProfile(userId?: string, role?: string): Promise<UserProfileData> {
-    const targetRole = (role === 'broker' ? 'broker' : 'agent') as 'broker' | 'agent';
+    const rawRole = (role || 'agent').toLowerCase();
+    const targetRole = (['broker', 'agent', 'client', 'admin'].includes(rawRole)
+      ? rawRole
+      : 'agent') as 'broker' | 'agent' | 'client' | 'admin';
+    const fallbackProfile = defaultProfiles[targetRole] || defaultProfiles.agent;
 
     if (isSupabaseConfigured && userId) {
       try {
@@ -85,19 +115,22 @@ export class ProfileService {
         if (!error && data) {
           return {
             id: data.id,
-            name: data.full_name || defaultProfiles[targetRole].name,
-            email: data.email || defaultProfiles[targetRole].email,
-            phone: data.phone || defaultProfiles[targetRole].phone,
+            name: data.full_name || fallbackProfile.name,
+            email: data.email || fallbackProfile.email,
+            phone: data.phone || fallbackProfile.phone,
             role: (data.role as any) || targetRole,
-            avatar: data.avatar_url || defaultProfiles[targetRole].avatar,
-            avatar_url: data.avatar_url || defaultProfiles[targetRole].avatar,
-            bio: data.bio || defaultProfiles[targetRole].bio,
-            prc_license_no: data.prc_license_no || defaultProfiles[targetRole].prc_license_no,
-            prc_validity: data.prc_validity || defaultProfiles[targetRole].prc_validity,
-            dhsud_accreditation_no: data.dhsud_accreditation_no || defaultProfiles[targetRole].dhsud_accreditation_no,
-            dhsud_validity: data.dhsud_validity || defaultProfiles[targetRole].dhsud_validity,
-            firm_name: data.firm_name || defaultProfiles[targetRole].firm_name,
-            experience_years: data.experience_years ?? defaultProfiles[targetRole].experience_years,
+            avatar: data.avatar_url || fallbackProfile.avatar,
+            avatar_url: data.avatar_url || fallbackProfile.avatar,
+            bio: data.bio || fallbackProfile.bio,
+            prc_license_no: data.prc_license_no || fallbackProfile.prc_license_no,
+            prc_validity: data.prc_validity || fallbackProfile.prc_validity,
+            dhsud_accreditation_no: data.dhsud_accreditation_no || fallbackProfile.dhsud_accreditation_no,
+            dhsud_validity: data.dhsud_validity || fallbackProfile.dhsud_validity,
+            firm_name: data.firm_name || fallbackProfile.firm_name,
+            experience_years: data.experience_years ?? fallbackProfile.experience_years,
+            preferred_location: data.preferred_location || fallbackProfile.preferred_location,
+            investment_budget: data.investment_budget || fallbackProfile.investment_budget,
+            notification_preferences: data.notification_preferences || fallbackProfile.notification_preferences,
             verification_status: data.verification_status || 'VERIFIED',
             updated_at: data.updated_at,
           };
@@ -112,7 +145,7 @@ export class ProfileService {
       return { ...inMemoryProfiles.get(userId)! };
     }
 
-    return { ...defaultProfiles[targetRole] };
+    return { ...fallbackProfile };
   }
 
   /**
@@ -121,20 +154,36 @@ export class ProfileService {
   public static async updateProfile(
     userId: string,
     updates: UpdateProfileInput,
-    role?: string
+    role?: string,
+    isAdmin = false
   ): Promise<UserProfileData> {
-    const targetRole = (role === 'broker' ? 'broker' : 'agent') as 'broker' | 'agent';
+    const rawRole = (role || 'agent').toLowerCase();
+    const targetRole = (['broker', 'agent', 'client', 'admin'].includes(rawRole)
+      ? rawRole
+      : 'agent') as 'broker' | 'agent' | 'client' | 'admin';
     const current = await this.getProfile(userId, role);
 
     const updatedName = updates.fullName || updates.name || current.name;
     const updatedAvatar = updates.avatar_url || updates.avatar || current.avatar;
+    const updatedLocation = updates.preferred_location || updates.preferredLocation || current.preferred_location;
+    const updatedBudget = updates.investment_budget || updates.investmentBudget || current.investment_budget;
+    const updatedNotifications = updates.notification_preferences || updates.notificationPreferences || current.notification_preferences;
+
+    // Anti-tampering guard: only admin can alter role or verification_status
+    const finalRole = isAdmin && updates.role ? updates.role : current.role;
+    const finalVerificationStatus = isAdmin && updates.verification_status ? updates.verification_status : current.verification_status;
 
     const updatedData: UserProfileData = {
       ...current,
       ...updates,
       name: updatedName,
+      role: finalRole,
+      verification_status: finalVerificationStatus,
       avatar: updatedAvatar,
       avatar_url: updatedAvatar,
+      preferred_location: updatedLocation,
+      investment_budget: updatedBudget,
+      notification_preferences: updatedNotifications,
       updated_at: new Date().toISOString(),
     };
 
@@ -146,6 +195,16 @@ export class ProfileService {
             full_name: updatedData.name,
             phone: updatedData.phone,
             avatar_url: updatedData.avatar,
+            bio: updatedData.bio,
+            preferred_location: updatedData.preferred_location,
+            investment_budget: updatedData.investment_budget,
+            firm_name: updatedData.firm_name,
+            prc_license_no: updatedData.prc_license_no,
+            prc_validity: updatedData.prc_validity,
+            dhsud_accreditation_no: updatedData.dhsud_accreditation_no,
+            dhsud_validity: updatedData.dhsud_validity,
+            experience_years: updatedData.experience_years,
+            notification_preferences: updatedData.notification_preferences,
             updated_at: updatedData.updated_at,
           })
           .eq('id', userId)
@@ -166,8 +225,9 @@ export class ProfileService {
     if (updatedData.email) {
       inMemoryProfiles.set(updatedData.email, updatedData);
     }
-    // Also update defaultProfiles cache for role preview
-    defaultProfiles[targetRole] = { ...updatedData };
+    if (defaultProfiles[targetRole]) {
+      defaultProfiles[targetRole] = { ...updatedData };
+    }
 
     return updatedData;
   }

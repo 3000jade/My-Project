@@ -146,4 +146,25 @@ describe('BrokerPropertyDetail Page', () => {
       }));
     });
   });
+
+  it('switches to Location tab and renders cadastral map and Enlarge Map trigger', async () => {
+    renderComponent();
+
+    await waitFor(() => {
+      expect(screen.getByText('Skyline Grand Villa at Forbes Park')).toBeInTheDocument();
+    });
+
+    const locationTab = screen.getByRole('button', { name: /^location$/i });
+    fireEvent.click(locationTab);
+
+    expect(screen.getByText(/Cadastral Location & Navigation Map/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /enlarge map/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /360° street view/i })).toBeInTheDocument();
+
+    // Click "Enlarge Map"
+    const enlargeBtn = screen.getByRole('button', { name: /enlarge map/i });
+    fireEvent.click(enlargeBtn);
+
+    expect(screen.getByRole('dialog', { name: /enlarged property location and neighborhood map/i })).toBeInTheDocument();
+  });
 });

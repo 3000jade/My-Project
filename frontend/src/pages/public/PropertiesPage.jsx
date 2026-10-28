@@ -8,6 +8,8 @@ import {
   AllFiltersDrawer,
   PropertyCard,
   PropertyMap,
+  GooglePropertyMap,
+  StreetViewModal,
   FilterEmptyState,
   Button
 } from '../../components/ui';
@@ -24,6 +26,7 @@ export default function PropertiesPage() {
   const [targetDistrict, setTargetDistrict] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [showActiveFilters, setShowActiveFilters] = useState(false);
+  const [streetViewData, setStreetViewData] = useState(null);
 
   const [properties, setProperties] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -346,13 +349,14 @@ export default function PropertiesPage() {
                 className={`w-full h-full lg:col-span-6 xl:col-span-6 rounded-3xl overflow-hidden shadow-lg border border-gray-200/90 z-20 bg-gray-50 ${mobileTab === 'list' ? 'hidden lg:block' : 'block'
                   }`}
               >
-                <PropertyMap
+                <GooglePropertyMap
                   properties={filteredProperties}
                   selectedPropertyId={selectedPropertyId}
                   hoveredPropertyId={hoveredPropertyId}
                   onSelectProperty={handleSelectProperty}
                   onBoundsChange={(bounds) => setFilter('mapBounds', bounds)}
                   targetDistrict={targetDistrict}
+                  onOpenStreetView={(coords) => setStreetViewData({ coordinates: coords, title: 'Luxury Residence' })}
                 />
               </div>
             )}
@@ -395,6 +399,15 @@ export default function PropertiesPage() {
         totalCount={filteredProperties.length}
         onClearAll={clearFilters}
       />
+      {/* 360° Street View Modal */}
+      {streetViewData && (
+        <StreetViewModal
+          isOpen={Boolean(streetViewData)}
+          coordinates={streetViewData.coordinates}
+          propertyTitle={streetViewData.title}
+          onClose={() => setStreetViewData(null)}
+        />
+      )}
     </div>
   );
 }

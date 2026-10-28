@@ -7,6 +7,7 @@ import {
   Send, MapPin, Check, Plus, SlidersHorizontal, TrendingUp,
   BarChart2, PieChart, Info, AlertCircle, X, Shield, UserX
 } from 'lucide-react';
+import { Search } from 'lucide-react';
 import DashboardModal from '../../../components/dashboard/DashboardModal';
 import AgentScheduleCalendar from '../../../components/dashboard/AgentScheduleCalendar';
 import { agentService } from '../../../services/agentService';
@@ -149,6 +150,52 @@ export default function BrokerAgentDetail() {
       mounted = false;
     };
   }, [id]);
+
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+  const [unassignedProperties, setUnassignedProperties] = useState([]);
+  const [loadingUnassigned, setLoadingUnassigned] = useState(false);
+  const [assignSearchQuery, setAssignSearchQuery] = useState('');
+  const [selectedPropertyId, setSelectedPropertyId] = useState(null);
+  const [isAssigning, setIsAssigning] = useState(false);
+
+  const fetchUnassignedProperties = async () => {
+    setLoadingUnassigned(true);
+    try {
+      const res = await propertyService.getProperties({ unassigned: true });
+      const list = Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : []);
+      const unassigned = list.filter(p => !p.listAgentKey || p.listAgentKey === '' || p.assignmentStatus === 'UNASSIGNED');
+      setUnassignedProperties(unassigned);
+    } catch (err) {
+      console.warn('Failed to load unassigned properties:', err);
+      setUnassignedProperties([]);
+    } finally {
+      setLoadingUnassigned(false);
+    }
+  };
+
+  const handleOpenAssignModal = () => {
+    setSelectedPropertyId(null);
+    setAssignSearchQuery('');
+    setIsAssignModalOpen(true);
+    fetchUnassignedProperties();
+  };
+
+  const handleConfirmAssignment = async () => {
+    if (!selectedPropertyId || !agent) return;
+    setIsAssigning(true);
+    try {
+      await propertyService.reassignAgent(selectedPropertyId, agent.id);
+      showToast(`Property successfully assigned to ${agent.name}. Status: Pending Confirmation.`);
+      setIsAssignModalOpen(false);
+      const res = await propertyService.getProperties({ list_agent_key: id });
+      const list = Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : []);
+      setAssignedProps(list);
+    } catch (err) {
+      showToast(`Failed to assign property: ${err.message || 'Unknown error'}`);
+    } finally {
+      setIsAssigning(false);
+    }
+  };
 
   const renderLicenseBadge = (licenseStr) => {
     const lic = (licenseStr || '').toUpperCase();
@@ -1057,7 +1104,7 @@ export default function BrokerAgentDetail() {
             </div>
             <button
               type="button"
-              onClick={() => navigate('/broker/properties/create')}
+              onClick={handleOpenAssignModal}
               className="h-9 px-4 bg-[#0F766E] hover:bg-[#115E59] text-white rounded-lg text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 transition-colors shadow-2xs cursor-pointer shrink-0"
             >
               <Plus className="w-4 h-4" />
@@ -1697,6 +1744,113 @@ export default function BrokerAgentDetail() {
               />
             </div>
           )}
+        </div>
+      </DashboardModal>
+
+      {/* Assign Property Modal */}
+      <DashboardModal
+        isOpen={isAssignModalOpen}
+        onClose={() => setIsAssignModalOpen(false)}
+        title={`Assign Property to ${agent.name}`}
+        subtitle="Select an unassigned inventory property to allocate to this agent."
+        maxWidth="max-w-2xl"
+        actions={
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setIsAssignModalOpen(false)}
+              className="h-10 px-4 bg-white border border-[#CBD5E1] hover:bg-slate-50 text-[#1E293B] rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={!selectedPropertyId || isAssigning}
+              onClick={handleConfirmAssignment}
+              className="h-10 px-6 bg-[#0F766E] hover:bg-[#115E59] disabled:opacity-50 text-white rounded-lg text-xs font-semibold cursor-pointer shadow-xs transition-colors flex items-center gap-2"
+            >
+              {isAssigning ? 'Assigning...' : 'Confirm Assignment'}
+            </button>
+          </div>
+        }
+      >
+        <div className="space-y-4">
+          <div className="relative">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Search unassigned property by title, city, or address..."
+              value={assignSearchQuery}
+              onChange={e => setAssignSearchQuery(e.target.value)}
+              className="w-full h-10 pl-9 pr-4 bg-white border border-[#CBD5E1] rounded-lg text-xs text-[#1E293B] placeholder-slate-400 focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none transition-all"
+            />
+          </div>
+
+          {loadingUnassigned ? (
+            <div className="py-12 text-center text-xs text-[#64748B]">Loading unassigned properties...</div>
+          ) : (() => {
+            const query = assignSearchQuery.toLowerCase();
+            const filtered = unassignedProperties.filter(p =>
+              (p.title || '').toLowerCase().includes(query) ||
+              (p.city || p.location || '').toLowerCase().includes(query) ||
+              (p.address || '').toLowerCase().includes(query)
+            );
+
+            if (filtered.length === 0) {
+              return (
+                <div className="py-12 text-center text-[#64748B] text-xs space-y-1">
+                  <Building2 className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                  <p className="font-semibold text-sm text-[#1E293B]">No Unassigned Properties Available</p>
+                  <p>All active listings currently have an assigned property consultant, or none matched your search filter.</p>
+                </div>
+              );
+            }
+
+            return (
+              <div className="divide-y divide-[#E2E8F0] border border-[#E2E8F0] rounded-xl overflow-hidden max-h-[50vh] overflow-y-auto">
+                {filtered.map(prop => {
+                  const isSelected = selectedPropertyId === prop.id;
+                  return (
+                    <div
+                      key={prop.id}
+                      onClick={() => setSelectedPropertyId(prop.id)}
+                      className={cn(
+                        "flex items-center justify-between p-3.5 cursor-pointer transition-colors",
+                        isSelected ? "bg-teal-50/50" : "bg-white hover:bg-slate-50"
+                      )}
+                    >
+                      <div className="flex items-center gap-3.5 min-w-0">
+                        <img
+                          src={prop.mainImage || prop.image || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=400'}
+                          alt={prop.title}
+                          className="w-12 h-12 rounded-lg object-cover border border-[#E2E8F0] shrink-0"
+                        />
+                        <div className="min-w-0">
+                          <h4 className="text-xs font-bold text-[#1E293B] truncate">{prop.title}</h4>
+                          <p className="text-[11px] text-[#64748B] truncate mt-0.5 flex items-center gap-1">
+                            <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
+                            <span>{prop.city || prop.location || 'Metro Manila'}</span>
+                          </p>
+                          <span className="text-[11px] font-semibold text-[#0F766E] mt-0.5 block">
+                            {prop.formattedPrice || (prop.price ? `₱${Number(prop.price).toLocaleString()}` : 'Price on Inquiry')}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 shrink-0 pl-3">
+                        <div className={cn(
+                          "w-5 h-5 rounded-full flex items-center justify-center transition-all",
+                          isSelected ? "bg-[#0F766E] text-white shadow-xs" : "border border-[#CBD5E1]"
+                        )}>
+                          {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
         </div>
       </DashboardModal>
     </div>

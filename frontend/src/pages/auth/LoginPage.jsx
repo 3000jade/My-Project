@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   IconEye, 
@@ -8,6 +8,7 @@ import {
   IconRefresh
 } from '@tabler/icons-react';
 import { useAuth } from '../../context/AuthContext';
+import sessionCoordinator from '../../services/sessionCoordinator';
 import { GoogleLogin, useGoogleOAuth } from '@react-oauth/google';
 
 function GoogleOAuthSafe({ onSuccess, onError, fallback }) {
@@ -33,6 +34,7 @@ function GoogleOAuthSafe({ onSuccess, onError, fallback }) {
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login, googleLogin } = useAuth();
 
   // State
@@ -56,14 +58,42 @@ export default function LoginPage() {
     return () => clearInterval(timer);
   }, [lockoutTimer]);
 
-  const completeAuthRedirect = (targetEmail) => {
-    const lower = (targetEmail || identifier).toLowerCase();
-    if (lower.includes('agent')) {
+  const completeAuthRedirect = (role, targetEmail) => {
+    // 1. Check returnUrl from query parameters or router location state
+    const rawSearch = location.search || (typeof window !== 'undefined' ? window.location.search : '');
+    const searchParams = new URLSearchParams(rawSearch);
+    const returnUrlParam = searchParams.get('returnUrl') || location.state?.from?.pathname;
+    const validReturn = returnUrlParam
+      ? sessionCoordinator.validateReturnTo(decodeURIComponent(returnUrlParam))
+      : null;
+
+    const userRole =
+      role ||
+      (targetEmail?.toLowerCase().includes('agent')
+        ? 'agent'
+        : targetEmail?.toLowerCase().includes('broker')
+        ? 'broker'
+        : targetEmail?.toLowerCase().includes('admin')
+        ? 'admin'
+        : 'client');
+
+    if (validReturn && validReturn !== '/' && validReturn !== '/login') {
+      const isRoleAllowed =
+        userRole === 'admin' ||
+        (userRole === 'agent' && validReturn.startsWith('/agent')) ||
+        (userRole === 'broker' && (validReturn.startsWith('/broker') || validReturn.startsWith('/agent'))) ||
+        (userRole === 'client' && validReturn.startsWith('/client'));
+
+      if (isRoleAllowed) {
+        navigate(validReturn);
+        return;
+      }
+    }
+
+    if (userRole === 'agent') {
       navigate('/agent/dashboard');
-    } else if (lower.includes('broker') || lower.includes('admin')) {
+    } else if (userRole === 'broker' || userRole === 'admin') {
       navigate('/broker/dashboard');
-    } else if (lower.includes('client')) {
-      navigate('/client/dashboard');
     } else {
       navigate('/client/dashboard');
     }
@@ -82,9 +112,10 @@ export default function LoginPage() {
     setIsSubmitting(true);
 
     try {
-      await login(identifier, password);
+      const authData = await login(identifier, password, rememberMe);
       setFailedAttempts(0);
-      completeAuthRedirect(identifier);
+      const role = authData?.user?.role;
+      completeAuthRedirect(role, identifier);
     } catch (err) {
       const newFailed = failedAttempts + 1;
       setFailedAttempts(newFailed);
@@ -112,13 +143,7 @@ export default function LoginPage() {
       const authData = await googleLogin(credentialResponse.credential, 'client');
       setFailedAttempts(0);
       const userRole = authData?.user?.role || 'client';
-      if (userRole === 'agent') {
-        navigate('/agent/dashboard');
-      } else if (userRole === 'broker' || userRole === 'admin') {
-        navigate('/broker/dashboard');
-      } else {
-        navigate('/client/dashboard');
-      }
+      completeAuthRedirect(userRole, authData?.user?.email);
     } catch (err) {
       setAuthError('Google authentication failed. Please try again.');
     } finally {

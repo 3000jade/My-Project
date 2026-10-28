@@ -5,3 +5,4 @@ export * from './auth';
 export * from './agent';
 export * from './appointment';
 export * from './inquiry';
+export * from './profile';

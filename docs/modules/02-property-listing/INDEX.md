@@ -2,7 +2,7 @@
 module: 02-property-listing
 title: Property Listing Module
 last_updated: 2026-10-28
-total_documents: 27
+total_documents: 30
 ---
 
 # Property Listing Module — Master Index
@@ -47,6 +47,9 @@ All updates and technical reports for this module are ordered chronologically by
 | `2026-10-28` | [2026-10-28-property-type-option-cards-verification.md](./2026-10-28-property-type-option-cards-verification.md) | Verification Record — Property Type Option Cards & Adaptive Intake |
 | `2026-10-28` | [2026-10-28-property-type-selection-page-verification.md](./2026-10-28-property-type-selection-page-verification.md) | Verification Record — Property Type Selection Page & Minimalist Intake |
 | `2026-10-28` | [2026-10-28-property-filter-toolbar-verification.md](./2026-10-28-property-filter-toolbar-verification.md) | Verification Record — Multi-Criteria Property Filter Toolbar |
+| `2026-10-28` | [2026-10-28-google-maps-full-stack-implementation-verification.md](./2026-10-28-google-maps-full-stack-implementation-verification.md) | Verification Record — Google Maps Platform Full-Stack Implementation |
+| `2026-10-28` | [2026-10-28-enlarged-property-map-verification.md](./2026-10-28-enlarged-property-map-verification.md) | Verification Record — Property Detail Pinpoint Map & Enlarged Full-Scale Map Modal |
+| `2026-10-28` | [2026-10-28-broker-map-refactoring-verification.md](./2026-10-28-broker-map-refactoring-verification.md) | Verification Record — Broker Map Refactoring & Cadastral Split-View Integration |
 
 ---
 

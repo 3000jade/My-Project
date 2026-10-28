@@ -118,4 +118,21 @@ describe('DashboardHeader User Display Name & Fallbacks', () => {
     // Should fallback to neutral title or email username
     expect(screen.getAllByText(/Principal Broker|Broker|broker/i).length).toBeGreaterThan(0);
   });
+
+  it('renders search input with placeholder and shortcut indicator', () => {
+    useAuth.mockReturnValue({
+      user: { id: 'u1', email: 'broker@pt.com', role: 'broker', fullName: 'Broker Admin' },
+      logout: mockLogout,
+    });
+
+    render(
+      <MemoryRouter>
+        <DashboardHeader role="broker" />
+      </MemoryRouter>
+    );
+
+    const searchInput = screen.getByPlaceholderText('Search properties, clients, or inquiries...');
+    expect(searchInput).toBeInTheDocument();
+    expect(screen.getByText('⌘K')).toBeInTheDocument();
+  });
 });

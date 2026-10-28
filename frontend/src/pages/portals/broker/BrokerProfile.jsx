@@ -2,13 +2,20 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import PageHeader from '../../../components/dashboard/PageHeader';
 import StatusBadge from '../../../components/dashboard/StatusBadge';
-import DashboardModal from '../../../components/dashboard/DashboardModal';
+import { EditProfileDialog } from '@/components/profile';
+import { Button } from '@/components/ui/button';
 import { profileService, mockDefaultProfiles } from '../../../services/profileService';
 import { useAuth } from '../../../context/AuthContext';
 
 export default function BrokerProfile() {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  let auth = null;
+  try {
+    auth = useAuth();
+  } catch {
+    // Handled gracefully when rendered in isolated test runners
+  }
+  const logout = auth?.logout;
   const [profile, setProfile] = useState(mockDefaultProfiles.broker);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -46,15 +53,16 @@ export default function BrokerProfile() {
     setEditModalOpen(true);
   };
 
-  const handleSave = async () => {
+  const handleSave = async (formData) => {
     setSaving(true);
+    const dataToSave = formData || form;
     try {
-      const updated = await profileService.updateProfile(form, { role: 'broker' });
+      const updated = await profileService.updateProfile(dataToSave, { role: 'broker' });
       setProfile(updated);
       setEditModalOpen(false);
     } catch (err) {
       console.warn('Profile update error:', err.message);
-      setProfile(prev => ({ ...prev, ...form }));
+      setProfile(prev => ({ ...prev, ...dataToSave }));
       setEditModalOpen(false);
     } finally {
       setSaving(false);
@@ -92,20 +100,22 @@ export default function BrokerProfile() {
             <button
               onClick={loadProfile}
               disabled={loading}
-              className="h-[42px] px-3.5 bg-white hover:bg-slate-50 text-[#174849] border border-[#E2E8F0] rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+              className="h-[42px] px-3.5 bg-white hover:bg-slate-50 text-[#1E293B] border border-[#E2E8F0] rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
             >
               <span className={`material-symbols-outlined text-[17px] ${loading ? 'animate-spin' : ''}`}>
                 refresh
               </span>
               <span>Refresh</span>
             </button>
-            <button
+            <Button
+              type="button"
+              variant="coral"
               onClick={handleOpenEdit}
-              className="h-[42px] px-4 bg-[#0F766E] hover:bg-[#115E59] text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+              className="h-[42px] px-4 bg-[#FF6B6B] hover:bg-[#EE5A5A] text-[#1E293B] font-bold shadow-xs flex items-center gap-1.5 cursor-pointer"
             >
               <span className="material-symbols-outlined text-[17px]">edit</span>
               <span>Edit Profile</span>
-            </button>
+            </Button>
             <button
               type="button"
               onClick={handleLogout}
@@ -136,7 +146,7 @@ export default function BrokerProfile() {
 
       {loading ? (
         <div className="py-24 flex flex-col items-center justify-center text-gray-400 gap-3">
-          <span className="material-symbols-outlined animate-spin text-[40px] text-[#266F71]">
+          <span className="material-symbols-outlined animate-spin text-[40px] text-[#0F766E]">
             progress_activity
           </span>
           <p className="text-sm font-sans font-medium">Loading executive profile credentials...</p>
@@ -148,11 +158,11 @@ export default function BrokerProfile() {
             <img
               src={profile.avatar}
               alt={profile.name}
-              className="w-28 h-28 rounded-full object-cover border-4 border-[#266F71]/20 shadow-md"
+              className="w-28 h-28 rounded-full object-cover border-4 border-[#0F766E]/20 shadow-md"
             />
 
             <div>
-              <h3 className="text-xl font-display font-bold text-[#174849]">{profile.name}</h3>
+              <h3 className="text-xl font-display font-bold text-[#1E293B]">{profile.name}</h3>
               <p className="text-xs text-gray-500 font-sans mt-0.5">{profile.role}</p>
             </div>
 
@@ -215,17 +225,17 @@ export default function BrokerProfile() {
           {/* Right 2 Columns: Credentials & Supervised Scope */}
           <div className="md:col-span-2 space-y-6">
             <div className="bg-white rounded-2xl border border-gray-200/80 p-6 shadow-sm space-y-5">
-              <h3 className="text-base font-display font-bold text-[#174849] pb-3 border-b border-gray-100 flex items-center gap-2">
-                <span className="material-symbols-outlined text-[#266F71]">admin_panel_settings</span>
+              <h3 className="text-base font-display font-bold text-[#1E293B] pb-3 border-b border-gray-100 flex items-center gap-2">
+                <span className="material-symbols-outlined text-[#0F766E]">admin_panel_settings</span>
                 Supervising Real Estate Broker Accreditations
               </h3>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="p-4 bg-[#F1F0EC]/60 rounded-xl border border-gray-200 space-y-2">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#266F71] font-sans">
+                <div className="p-4 bg-[#F8FAFC]/60 rounded-xl border border-gray-200 space-y-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#0F766E] font-sans">
                     Principal PRC Broker License
                   </span>
-                  <p className="text-base font-bold font-display text-[#174849]">
+                  <p className="text-base font-bold font-display text-[#1E293B]">
                     {profile.prc_license_no}
                   </p>
                   <div className="pt-2 text-xs text-gray-500 font-sans flex items-center justify-between border-t border-gray-200/50">
@@ -234,11 +244,11 @@ export default function BrokerProfile() {
                   </div>
                 </div>
 
-                <div className="p-4 bg-[#F1F0EC]/60 rounded-xl border border-gray-200 space-y-2">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#FB8E5D] font-sans">
+                <div className="p-4 bg-[#F8FAFC]/60 rounded-xl border border-gray-200 space-y-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#FF6B6B] font-sans">
                     DHSUD Firm Registration
                   </span>
-                  <p className="text-base font-bold font-display text-[#174849]">
+                  <p className="text-base font-bold font-display text-[#1E293B]">
                     {profile.dhsud_accreditation_no}
                   </p>
                   <div className="pt-2 text-xs text-gray-500 font-sans flex items-center justify-between border-t border-gray-200/50">
@@ -249,7 +259,7 @@ export default function BrokerProfile() {
               </div>
 
               <div className="p-4 bg-gray-50 rounded-xl border border-gray-200/80 text-xs font-sans text-gray-600 space-y-1">
-                <span className="font-bold text-[#174849] uppercase tracking-wider text-[10px] block">
+                <span className="font-bold text-[#1E293B] uppercase tracking-wider text-[10px] block">
                   Administrative Authority
                 </span>
                 <p>
@@ -262,72 +272,27 @@ export default function BrokerProfile() {
       )}
 
       {/* Edit Modal */}
-      <DashboardModal
-        isOpen={editModalOpen}
-        onClose={() => setEditModalOpen(false)}
+      <EditProfileDialog
+        open={editModalOpen}
+        onOpenChange={setEditModalOpen}
         title="Edit Broker Profile"
-        subtitle="Update executive contact and administrative information"
-        actions={
-          <div className="flex gap-2">
-            <button
-              onClick={() => setEditModalOpen(false)}
-              className="px-4 py-2 text-xs font-bold uppercase tracking-wider text-gray-500 font-sans cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="px-5 py-2 bg-[#266F71] hover:bg-[#174849] text-white rounded-xl text-xs font-bold uppercase tracking-wider font-sans cursor-pointer transition-colors disabled:opacity-50"
-            >
-              {saving ? 'Saving...' : 'Save Profile'}
-            </button>
-          </div>
-        }
-      >
-        <div className="space-y-4 font-sans">
-          <div className="space-y-1">
-            <label htmlFor="broker-name" className="text-xs font-bold uppercase tracking-wider text-gray-600">Full Name</label>
-            <input
-              id="broker-name"
-              type="text"
-              value={form.name || ''}
-              onChange={e => setForm({ ...form, name: e.target.value })}
-              className="w-full h-[54px] px-4 border border-gray-200 rounded-xl text-sm outline-none focus:border-[#266F71]"
-            />
-          </div>
-          <div className="space-y-1">
-            <label htmlFor="broker-email" className="text-xs font-bold uppercase tracking-wider text-gray-600">Email Address</label>
-            <input
-              id="broker-email"
-              type="email"
-              value={form.email || ''}
-              onChange={e => setForm({ ...form, email: e.target.value })}
-              className="w-full h-[54px] px-4 border border-gray-200 rounded-xl text-sm outline-none focus:border-[#266F71]"
-            />
-          </div>
-          <div className="space-y-1">
-            <label htmlFor="broker-phone" className="text-xs font-bold uppercase tracking-wider text-gray-600">Phone</label>
-            <input
-              id="broker-phone"
-              type="text"
-              value={form.phone || ''}
-              onChange={e => setForm({ ...form, phone: e.target.value })}
-              className="w-full h-[54px] px-4 border border-gray-200 rounded-xl text-sm outline-none focus:border-[#266F71]"
-            />
-          </div>
-          <div className="space-y-1">
-            <label htmlFor="broker-firm" className="text-xs font-bold uppercase tracking-wider text-gray-600">Operating Entity / Firm</label>
-            <input
-              id="broker-firm"
-              type="text"
-              value={form.firm_name || ''}
-              onChange={e => setForm({ ...form, firm_name: e.target.value })}
-              className="w-full h-[54px] px-4 border border-gray-200 rounded-xl text-sm outline-none focus:border-[#266F71]"
-            />
-          </div>
-        </div>
-      </DashboardModal>
+        description="Update executive contact and administrative information"
+        submitLabel="Save Profile"
+        initialData={{
+          name: profile.name,
+          email: profile.email,
+          phone: profile.phone,
+          firm_name: profile.firm_name,
+        }}
+        fields={[
+          { name: 'name', label: 'Full Name', type: 'text', placeholder: 'Alexander Sterling', required: true },
+          { name: 'email', label: 'Email Address', type: 'email', placeholder: 'broker@pt.com', required: true },
+          { name: 'phone', label: 'Phone', type: 'tel', placeholder: '+63 918 555 0244', required: true },
+          { name: 'firm_name', label: 'Operating Entity / Firm', type: 'text', placeholder: 'Precision Trust Realty Operations Inc.' },
+        ]}
+        onSave={handleSave}
+        saving={saving}
+      />
     </div>
   );
 }

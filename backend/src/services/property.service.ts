@@ -29,6 +29,7 @@ export interface PropertyFilterQuery {
   list_agent_key?: string;
   listAgentKey?: string;
   assignmentStatus?: string;
+  unassigned?: boolean;
   role?: string;
   search?: string;
   page?: number;
@@ -520,7 +521,12 @@ export class PropertyService {
             dbQuery = dbQuery.eq('standard_status', 'Action Required');
           } else if (query.assignmentStatus === 'ACCEPTED') {
             dbQuery = dbQuery.eq('standard_status', 'Active');
+          } else if (query.assignmentStatus === 'UNASSIGNED') {
+            dbQuery = dbQuery.is('list_agent_key', null);
           }
+        }
+        if (query.unassigned) {
+          dbQuery = dbQuery.is('list_agent_key', null);
         }
         const effectiveAgent = query.agentId || query.list_agent_key || query.listAgentKey;
         if (effectiveAgent) {
@@ -681,7 +687,11 @@ export class PropertyService {
       filtered = filtered.filter((p) => p.standardStatus === query.standardStatus);
     }
     const effectiveAgent = query.agentId || query.list_agent_key || query.listAgentKey;
-    if (effectiveAgent) {
+    if (query.unassigned || query.assignmentStatus === 'UNASSIGNED') {
+      filtered = filtered.filter(
+        (p) => !p.listAgentKey || p.listAgentKey === '' || p.assignmentStatus === 'UNASSIGNED'
+      );
+    } else if (effectiveAgent) {
       filtered = filtered.filter(
         (p) => p.createdBy === effectiveAgent || p.agentId === effectiveAgent || p.listAgentKey === effectiveAgent
       );
@@ -1016,14 +1026,18 @@ export class PropertyService {
     }
 
     const effectiveAgentId = data.agentId || data.agent_id || data.listAgentKey || (data.assignedAgent ? data.assignedAgent.id : undefined);
-    if (!effectiveAgentId || String(effectiveAgentId).trim() === '') {
-      throw new Error('An agent must be assigned before submitting a property listing.');
-    }
+    const hasAgent = Boolean(effectiveAgentId && String(effectiveAgentId).trim() !== '');
 
     const isBrokerOrAdmin = userRole && ['broker', 'admin'].includes(userRole);
-    const initialAssignmentStatus = data.assignmentStatus || 'PENDING_CONFIRMATION';
-    const initialStatus = initialAssignmentStatus === 'ACCEPTED' ? (data.standardStatus || 'Active') : 'Pending Confirmation';
-    const initialIsPublished = initialAssignmentStatus === 'ACCEPTED' ? Boolean(data.isPublished ?? true) : false;
+    const initialAssignmentStatus = hasAgent 
+      ? (data.assignmentStatus || 'PENDING_CONFIRMATION') 
+      : (data.assignmentStatus || 'UNASSIGNED');
+    const initialStatus = initialAssignmentStatus === 'ACCEPTED' 
+      ? (data.standardStatus || 'Active') 
+      : (hasAgent ? 'Pending Confirmation' : (data.standardStatus || 'Active'));
+    const initialIsPublished = initialAssignmentStatus === 'ACCEPTED' 
+      ? Boolean(data.isPublished ?? true) 
+      : (!hasAgent ? Boolean(data.isPublished ?? true) : false);
 
     let coordinates = data.location?.coordinates;
     let resolvedPostal = data.location?.postalCode || data.location?.postal_code || null;
@@ -1192,14 +1206,14 @@ export class PropertyService {
       status: initialStatus === 'Active' ? 'available' : 'pending',
       assignmentStatus: initialAssignmentStatus,
       assignmentDeclinedReason: null,
-      assignedAt: new Date().toISOString(),
+      assignedAt: hasAgent ? new Date().toISOString() : null,
       agentConfirmedAt: initialAssignmentStatus === 'ACCEPTED' ? new Date().toISOString() : null,
       isPublished: initialIsPublished,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       createdBy: userId,
-      listAgentKey: effectiveAgentId,
-      agentId: effectiveAgentId,
+      listAgentKey: hasAgent ? effectiveAgentId : null,
+      agentId: hasAgent ? effectiveAgentId : null,
     };
 
     const isValidUuid = (val?: string): boolean => {
@@ -1448,36 +1462,38 @@ export class PropertyService {
     }
 
 
-    // Notify assigned agent via In-App Notification and Email
-    try {
-      const agentId = newProperty.listAgentKey || newProperty.agentId;
-      const agent = agentId ? await AgentService.getAgentById(agentId) : null;
-      const agentEmail = agent?.email || 'agent@pt.com';
-      const agentName = agent?.name || 'Agent';
+    // Notify assigned agent via In-App Notification and Email if agent is assigned
+    if (hasAgent && (newProperty.listAgentKey || newProperty.agentId)) {
+      try {
+        const agentId = newProperty.listAgentKey || newProperty.agentId;
+        const agent = agentId ? await AgentService.getAgentById(agentId) : null;
+        const agentEmail = agent?.email || 'agent@pt.com';
+        const agentName = agent?.name || 'Agent';
 
-      const brokerProfile = userId ? await ProfileService.getProfile(userId, 'broker') : null;
-      const brokerName = brokerProfile?.name || 'Principal Broker';
+        const brokerProfile = userId ? await ProfileService.getProfile(userId, 'broker') : null;
+        const brokerName = brokerProfile?.name || 'Principal Broker';
 
-      await NotificationService.createNotification({
-        title: `New Property Assigned: ${newProperty.title}`,
-        message: `${brokerName} has assigned "${newProperty.title}" to you. Please review and confirm the assignment to make it live.`,
-        type: 'property',
-        role: 'agent',
-        user_id: agentId,
-        related_record: newProperty.id,
-      });
+        await NotificationService.createNotification({
+          title: `New Property Assigned: ${newProperty.title}`,
+          message: `${brokerName} has assigned "${newProperty.title}" to you. Please review and confirm the assignment to make it live.`,
+          type: 'property',
+          role: 'agent',
+          user_id: agentId,
+          related_record: newProperty.id,
+        });
 
-      await GmailService.sendPropertyAssignmentEmail({
-        agentEmail,
-        agentName,
-        propertyTitle: newProperty.title,
-        propertyPrice: newProperty.price,
-        propertyAddress: newProperty.location?.address,
-        propertyId: newProperty.id,
-        brokerName,
-      });
-    } catch (notifErr: any) {
-      logger.warn(`[PropertyService] Assignment notification to agent failed: ${notifErr.message}`);
+        await GmailService.sendPropertyAssignmentEmail({
+          agentEmail,
+          agentName,
+          propertyTitle: newProperty.title,
+          propertyPrice: newProperty.price,
+          propertyAddress: newProperty.location?.address,
+          propertyId: newProperty.id,
+          brokerName,
+        });
+      } catch (notifErr: any) {
+        logger.warn(`[PropertyService] Assignment notification to agent failed: ${notifErr.message}`);
+      }
     }
 
     localPropertiesState.unshift(newProperty);

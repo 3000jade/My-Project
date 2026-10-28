@@ -21,7 +21,27 @@ describe('DashboardSidebar Navigation', () => {
     expect(screen.getByText('Reports')).toBeInTheDocument();
     expect(screen.getByText('Settings')).toBeInTheDocument();
 
+    // Verify semantic group headings
+    expect(screen.getByText('Overview')).toBeInTheDocument();
+    expect(screen.getByText('Management')).toBeInTheDocument();
+    expect(screen.getByText('Analytics & System')).toBeInTheDocument();
+
+    // Verify support card
+    expect(screen.getByText('Need Assistance?')).toBeInTheDocument();
+    expect(screen.getByText('Go to Help Center')).toBeInTheDocument();
+
     // Verify Clients is NOT rendered in broker navigation
     expect(screen.queryByText('Clients')).not.toBeInTheDocument();
+  });
+
+  it('renders Settings link pointing to /broker/profile', () => {
+    render(
+      <MemoryRouter initialEntries={['/broker/dashboard']}>
+        <DashboardSidebar role="broker" />
+      </MemoryRouter>
+    );
+
+    const settingsLink = screen.getByText('Settings').closest('a');
+    expect(settingsLink).toHaveAttribute('href', '/broker/profile');
   });
 });

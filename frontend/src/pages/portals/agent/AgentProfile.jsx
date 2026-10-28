@@ -16,10 +16,11 @@ import {
 } from 'lucide-react';
 import PageHeader from '../../../components/dashboard/PageHeader';
 import StatusBadge from '../../../components/dashboard/StatusBadge';
-import DashboardModal from '../../../components/dashboard/DashboardModal';
 import PublicAgentProfileModal from '../../../components/ui/modals/PublicAgentProfileModal';
 import { profileService, mockDefaultProfiles } from '../../../services/profileService';
 import { agentService, computeAgentCompleteness } from '../../../services/agentService';
+import { EditProfileDialog } from '@/components/profile';
+import { Button } from '@/components/ui/button';
 
 export default function AgentProfile() {
   const [agent, setAgent] = useState(() => ({
@@ -121,28 +122,33 @@ export default function AgentProfile() {
     setEditModalOpen(true);
   };
 
-  const handleSaveProfile = async () => {
+  const handleSaveProfile = async (formData) => {
     setSaving(true);
-    const fullName = `${form.firstName} ${form.lastName}`.trim();
+    const dataToSave = formData || form;
+    const first = dataToSave.firstName || '';
+    const last = dataToSave.lastName || '';
+    const computedName = [first, last].filter(Boolean).join(' ');
+    const fullName = computedName || dataToSave.name || agent.name;
+
     const credentialsChanged =
-      form.prc_license_no !== agent.prc_license_no ||
-      form.prc_validity !== agent.prc_validity ||
-      form.dhsud_accreditation_no !== agent.dhsud_accreditation_no ||
-      form.dhsud_validity !== agent.dhsud_validity;
+      dataToSave.prc_license_no !== agent.prc_license_no ||
+      dataToSave.prc_validity !== agent.prc_validity ||
+      dataToSave.dhsud_accreditation_no !== agent.dhsud_accreditation_no ||
+      dataToSave.dhsud_validity !== agent.dhsud_validity;
 
     try {
       const updated = await profileService.updateProfile(
         {
           name: fullName,
           fullName,
-          email: form.email,
-          phone: form.phone,
-          bio: form.bio,
-          experience_years: Number(form.experience_years || 0),
-          prc_license_no: form.prc_license_no,
-          prc_validity: form.prc_validity,
-          dhsud_accreditation_no: form.dhsud_accreditation_no,
-          dhsud_validity: form.dhsud_validity,
+          email: dataToSave.email,
+          phone: dataToSave.phone,
+          bio: dataToSave.bio,
+          experience_years: Number(dataToSave.experience_years || 0),
+          prc_license_no: dataToSave.prc_license_no,
+          prc_validity: dataToSave.prc_validity,
+          dhsud_accreditation_no: dataToSave.dhsud_accreditation_no,
+          dhsud_validity: dataToSave.dhsud_validity,
         },
         { role: 'agent' }
       );
@@ -453,152 +459,32 @@ export default function AgentProfile() {
       )}
 
       {/* Edit Profile & Credentials Modal */}
-      <DashboardModal
-        isOpen={editModalOpen}
-        onClose={() => setEditModalOpen(false)}
-        title="Edit Profile & Regulatory Credentials"
-        subtitle="Update your public advisor bio or submit renewed PRC/DHSUD credentials for Broker review."
-        actions={
-          <div className="flex gap-2">
-            <button
-              onClick={() => setEditModalOpen(false)}
-              className="px-4 py-2 text-xs font-semibold uppercase tracking-wider text-[#64748B] cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSaveProfile}
-              disabled={saving}
-              className="px-5 py-2 bg-[#0F766E] hover:bg-[#115E59] text-white rounded-lg text-xs font-semibold uppercase tracking-wider cursor-pointer transition-colors disabled:opacity-50"
-            >
-              {saving ? 'Saving...' : 'Save Profile'}
-            </button>
-          </div>
-        }
-      >
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label htmlFor="agent-first-name" className="text-xs font-semibold text-[#1E293B]">
-                First Name
-              </label>
-              <input
-                id="agent-first-name"
-                type="text"
-                value={form.firstName}
-                onChange={(e) => setForm({ ...form, firstName: e.target.value })}
-                className="w-full h-10 px-3.5 border border-[#E2E8F0] rounded-lg text-xs outline-none focus:border-[#0F766E]"
-              />
-            </div>
-            <div className="space-y-1">
-              <label htmlFor="agent-last-name" className="text-xs font-semibold text-[#1E293B]">
-                Last Name
-              </label>
-              <input
-                id="agent-last-name"
-                type="text"
-                value={form.lastName}
-                onChange={(e) => setForm({ ...form, lastName: e.target.value })}
-                className="w-full h-10 px-3.5 border border-[#E2E8F0] rounded-lg text-xs outline-none focus:border-[#0F766E]"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label htmlFor="agent-email" className="text-xs font-semibold text-[#1E293B]">
-                Contact Email
-              </label>
-              <input
-                id="agent-email"
-                type="email"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                className="w-full h-10 px-3.5 border border-[#E2E8F0] rounded-lg text-xs outline-none focus:border-[#0F766E]"
-              />
-            </div>
-            <div className="space-y-1">
-              <label htmlFor="agent-phone" className="text-xs font-semibold text-[#1E293B]">
-                Mobile Phone
-              </label>
-              <input
-                id="agent-phone"
-                type="text"
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                className="w-full h-10 px-3.5 border border-[#E2E8F0] rounded-lg text-xs font-mono outline-none focus:border-[#0F766E]"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4 pt-2 border-t border-[#E2E8F0]">
-            <div className="space-y-1">
-              <label htmlFor="agent-prc-no" className="text-xs font-semibold text-[#1E293B]">
-                PRC License Number
-              </label>
-              <input
-                id="agent-prc-no"
-                type="text"
-                value={form.prc_license_no}
-                onChange={(e) => setForm({ ...form, prc_license_no: e.target.value })}
-                className="w-full h-10 px-3.5 border border-[#E2E8F0] rounded-lg text-xs font-mono outline-none focus:border-[#0F766E]"
-              />
-            </div>
-            <div className="space-y-1">
-              <label htmlFor="agent-prc-val" className="text-xs font-semibold text-[#1E293B]">
-                PRC Expiry Date
-              </label>
-              <input
-                id="agent-prc-val"
-                type="date"
-                value={form.prc_validity}
-                onChange={(e) => setForm({ ...form, prc_validity: e.target.value })}
-                className="w-full h-10 px-3.5 border border-[#E2E8F0] rounded-lg text-xs font-mono outline-none focus:border-[#0F766E]"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label htmlFor="agent-dhsud-no" className="text-xs font-semibold text-[#1E293B]">
-                DHSUD Accreditation No.
-              </label>
-              <input
-                id="agent-dhsud-no"
-                type="text"
-                value={form.dhsud_accreditation_no}
-                onChange={(e) => setForm({ ...form, dhsud_accreditation_no: e.target.value })}
-                className="w-full h-10 px-3.5 border border-[#E2E8F0] rounded-lg text-xs font-mono outline-none focus:border-[#0F766E]"
-              />
-            </div>
-            <div className="space-y-1">
-              <label htmlFor="agent-dhsud-val" className="text-xs font-semibold text-[#1E293B]">
-                DHSUD Expiry Date
-              </label>
-              <input
-                id="agent-dhsud-val"
-                type="date"
-                value={form.dhsud_validity}
-                onChange={(e) => setForm({ ...form, dhsud_validity: e.target.value })}
-                className="w-full h-10 px-3.5 border border-[#E2E8F0] rounded-lg text-xs font-mono outline-none focus:border-[#0F766E]"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-1">
-            <label htmlFor="agent-bio" className="text-xs font-semibold text-[#1E293B]">
-              Professional Bio
-            </label>
-            <textarea
-              id="agent-bio"
-              rows={3}
-              value={form.bio}
-              onChange={(e) => setForm({ ...form, bio: e.target.value })}
-              className="w-full p-3.5 border border-[#E2E8F0] rounded-lg text-xs outline-none focus:border-[#0F766E]"
-            />
-          </div>
-        </div>
-      </DashboardModal>
+      <EditProfileDialog
+        open={editModalOpen}
+        onOpenChange={setEditModalOpen}
+        title="Edit Profile Information & Regulatory Credentials"
+        description="Update your agent credentials, PRC/DHSUD licenses, and contact information."
+        submitLabel="Save Profile"
+        initialData={{
+          ...agent,
+          firstName: agent.firstName || (agent.name || '').split(' ')[0] || '',
+          lastName: agent.lastName || (agent.name || '').split(' ').slice(1).join(' ') || '',
+        }}
+        fields={[
+          { name: 'firstName', label: 'First Name', type: 'text', placeholder: 'Elena', required: true },
+          { name: 'lastName', label: 'Last Name', type: 'text', placeholder: 'Rossi', required: true },
+          { name: 'email', label: 'Contact Email', type: 'email', placeholder: 'agent@pt.com', required: true },
+          { name: 'phone', label: 'Mobile Phone', type: 'tel', placeholder: '+63 917 555 0192', required: true },
+          { name: 'prc_license_no', label: 'PRC License Number', type: 'text', placeholder: 'PRC-REB-0028491' },
+          { name: 'prc_validity', label: 'PRC Expiry Date', type: 'date' },
+          { name: 'dhsud_accreditation_no', label: 'DHSUD Accreditation No.', type: 'text', placeholder: 'DHSUD-NCR-AA-2023-0182' },
+          { name: 'dhsud_validity', label: 'DHSUD Expiry Date', type: 'date' },
+          { name: 'experience_years', label: 'Years of Experience', type: 'number', placeholder: '6' },
+          { name: 'bio', label: 'Professional Bio', type: 'textarea', placeholder: 'Enter bio...', fullWidth: true },
+        ]}
+        onSave={handleSaveProfile}
+        saving={saving}
+      />
 
       {/* Public Profile Card Preview Modal */}
       <PublicAgentProfileModal

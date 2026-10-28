@@ -12,6 +12,7 @@
 
 | Version | Date (UTC) | Author / Role | Affected Modules | Summary of Changes |
 | :---: | :---: | :--- | :--- | :--- |
+| `1.2.0` | `2026-10-28` | Data Architect | Module 01 (User Management) | Extended `public.profiles` with `preferred_location`, `investment_budget`, `firm_name`, and `notification_preferences` JSONB; registered migration and RLS policies. |
 | `1.1.0` | `2026-10-28` | Data Architect | Module 06 (Audit Module) | Detailed exact column definitions for `audit_events`, `property_audit_log`, `agent_audit_events`, and `inquiry_assignment_audit`; registered their immutable RLS policies in Section 4. |
 | `1.0.0` | `2026-10-28` | Data Architect | Modules 01–08 | Comprehensive baseline documentation of all active PostgreSQL tables, columns, relations, and RLS policies. |
 
@@ -75,7 +76,11 @@ erDiagram
 | `supporting_documents` | `JSONB` | Yes | `'[]'::jsonb` | — | Uploaded license certificates |
 | `rejection_remarks` | `TEXT` | Yes | `NULL` | — | Admin remarks if verification rejected |
 | `experience_years` | `INTEGER` | Yes | `0` | — | Years in professional practice |
+| `firm_name` | `TEXT` | Yes | `NULL` | — | Brokerage operating entity / firm name |
 | `bio` | `TEXT` | Yes | `NULL` | — | Public broker/agent professional bio |
+| `preferred_location` | `TEXT` | Yes | `NULL` | — | Client preferred acquisition location / enclaves |
+| `investment_budget` | `TEXT` | Yes | `NULL` | — | Client target property investment budget range |
+| `notification_preferences` | `JSONB` | Yes | `'{"email": true, "sms": true, "priceDrops": true}'::jsonb` | — | Multi-channel communication notification flags |
 | `created_at` | `TIMESTAMPTZ` | No | `timezone('utc', now())` | — | Creation timestamp |
 | `updated_at` | `TIMESTAMPTZ` | No | `timezone('utc', now())` | — | Last update timestamp |
 
@@ -270,6 +275,7 @@ erDiagram
 | :--- | :--- | :---: | :--- | :--- |
 | `profiles` | Public profiles viewable | `SELECT` | `public` | `true` |
 | `profiles` | Users can update own profile | `UPDATE` | `authenticated` | `auth.uid() = id OR is_admin()` |
+| `profiles` | Users update own preferences | `UPDATE` | `authenticated` | `auth.uid() = id` |
 | `properties` | Public active listings | `SELECT` | `public` | `standard_status = 'Active' OR is_creator_or_broker()` |
 | `properties` | Authenticated insertion | `INSERT` | `authenticated` | `auth.uid() IS NOT NULL` |
 | `property_confidential` | Deny all public access | `SELECT` | `authenticated` | `role IN ('agent', 'broker', 'admin')` |
@@ -302,6 +308,7 @@ erDiagram
 | `backend/src/models/inquiries_module_migration.sql` | 07 | `inquiry_messages`, `inquiry_internal_notes`, `inquiry_assignment_audit` |
 | `backend/src/models/communication_audit_session_migration.sql` | 06, 07, 08 | `inquiry_chat_sessions`, `inquiry_follow_up_tasks`, `inquiry_ai_summaries`, `audit_events`, `notification_jobs` |
 | `backend/src/models/agent_audit_events_migration.sql` | 03, 06 | `agent_audit_events` |
+| `backend/src/models/user_profiles_preferences_migration.sql` | 01 | `profiles` (extended with `preferred_location`, `investment_budget`, `firm_name`, `notification_preferences`) |
 
 ---
 

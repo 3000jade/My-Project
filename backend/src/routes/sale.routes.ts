@@ -13,6 +13,12 @@ const router = Router();
 router.get('/', optionalAuth, SaleController.list);
 
 /**
+ * GET /api/sales/pipeline-metrics
+ * Aggregate deal pipeline statistics and projected commission
+ */
+router.get('/pipeline-metrics', optionalAuth, SaleController.getPipelineMetrics);
+
+/**
  * GET /api/sales/:id
  * Get single sales conveyance record
  */

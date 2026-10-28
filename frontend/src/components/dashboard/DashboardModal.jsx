@@ -41,15 +41,15 @@ export default function DashboardModal({
             className={`relative w-full ${maxWidth} bg-white rounded-2xl shadow-2xl overflow-hidden z-10 my-8 flex flex-col max-h-[90vh]`}
           >
             {/* Modal Header */}
-            <div className="flex items-center justify-between px-6 py-5 border-b border-gray-200/80 bg-[#F1F0EC]/50">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-[#E2E8F0] bg-[#F8FAFC]">
               <div>
                 {title && (
-                  <h3 className="text-xl font-display font-bold text-[#174849]">
+                  <h3 className="text-xl font-display font-bold text-[#1E293B]">
                     {title}
                   </h3>
                 )}
                 {subtitle && (
-                  <p className="text-xs font-sans text-gray-500 mt-0.5">
+                  <p className="text-xs font-sans text-[#64748B] mt-0.5">
                     {subtitle}
                   </p>
                 )}

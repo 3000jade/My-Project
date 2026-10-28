@@ -24,28 +24,60 @@ import {
   IconLock,
   IconChevronDown,
   IconChevronUp,
-  IconShare
+  IconShare,
+  IconMaximize,
+  IconCompass
 } from '@tabler/icons-react';
 
 
+import { mockProperties } from '../../mockData/mockProperties';
 import { propertyService } from '../../services/propertyService';
 import { inquiryService } from '../../services/inquiryService';
 import useViewingList from '../../hooks/useViewingList';
-import { useAuth } from '../../context/AuthContext';
+import AuthContext, { useAuth } from '../../context/AuthContext';
 import { getPropertyCoordinates } from '../../utils/propertyCoordinates';
 import { resolveDriveImageUrl } from '../../services/driveService';
 import InspectionScheduleModal from '../../components/ui/modals/InspectionScheduleModal';
 import PublicAgentProfileModal from '../../components/ui/modals/PublicAgentProfileModal';
+import { GooglePropertyMap, StreetViewModal, CommuteAnalysisCard, EnlargedMapModal } from '../../components/ui';
 
 export default function PropertyListingView() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const authContext = React.useContext(AuthContext);
+  const user = authContext?.user || null;
 
   // 1. Initial State & Data Hydration
-  const [property, setProperty] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [property, setProperty] = useState(() => {
+    if (!id) return null;
+    return (
+      mockProperties.find(
+        (p) =>
+          String(p.id) === String(id) ||
+          p.ListingKey === id ||
+          p.listingKey === id ||
+          p.ListingId === id ||
+          p.listingId === id ||
+          p.ref_code === id
+      ) || null
+    );
+  });
+  const [isLoading, setIsLoading] = useState(() => {
+    if (!id) return false;
+    const localMatch = mockProperties.find(
+      (p) =>
+        String(p.id) === String(id) ||
+        p.ListingKey === id ||
+        p.listingKey === id ||
+        p.ListingId === id ||
+        p.listingId === id ||
+        p.ref_code === id
+    );
+    return !localMatch;
+  });
   const [loadError, setLoadError] = useState(null);
+  const [isStreetViewOpen, setIsStreetViewOpen] = useState(false);
+  const [isEnlargedMapOpen, setIsEnlargedMapOpen] = useState(false);
 
   // Hydrate from API
   useEffect(() => {
@@ -57,29 +89,48 @@ export default function PropertyListingView() {
         return;
       }
 
-      try {
-        setIsLoading(true);
-        setLoadError(null);
-        const remoteData = await propertyService.getPropertyById(id);
-        if (isMounted) {
-          if (remoteData) {
-            setProperty(remoteData);
-          } else {
+      const localMatch = mockProperties.find(
+        (p) =>
+          String(p.id) === String(id) ||
+          p.ListingKey === id ||
+          p.listingKey === id ||
+          p.ListingId === id ||
+          p.listingId === id ||
+          p.ref_code === id
+      );
+      if (localMatch && isMounted) {
+        setProperty(localMatch);
+      }
+
+      if (id && (!localMatch || !String(localMatch.id).startsWith('reso-fixture-'))) {
+        try {
+          if (!localMatch) setIsLoading(true);
+          setLoadError(null);
+          const remoteData = await propertyService.getPropertyById(id);
+          if (isMounted) {
+            if (remoteData) {
+              setProperty(remoteData);
+            } else if (!localMatch) {
+              setLoadError('Failed to load property details.');
+            }
+          }
+        } catch (err) {
+          console.warn('[PropertyListingView] Remote fetch error:', err);
+          if (isMounted && !localMatch) {
             setLoadError('Failed to load property details.');
           }
+        } finally {
+          if (isMounted) setIsLoading(false);
         }
-      } catch (err) {
-        console.warn('[PropertyListingView] Remote fetch error:', err);
-        if (isMounted) {
-          setLoadError('Failed to load property details.');
-        }
-      } finally {
-        if (isMounted) setIsLoading(false);
+      } else {
+        setIsLoading(false);
       }
     }
 
     loadProperty();
-    return () => { isMounted = false; };
+    return () => {
+      isMounted = false;
+    };
   }, [id]);
 
   // 2. UI Interactive States
@@ -417,6 +468,7 @@ export default function PropertyListingView() {
             <button
               type="button"
               onClick={handleSaveToggle}
+              aria-label={inViewingList ? 'In Viewing List' : 'Add to Viewing List'}
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors focus:outline-none focus:ring-2 focus:ring-[#0F766E] ${
                 inViewingList
                   ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
@@ -424,7 +476,7 @@ export default function PropertyListingView() {
               }`}
             >
               {inViewingList ? <IconBookmarkFilled size={15} className="text-[#0F766E]" /> : <IconBookmark size={15} />}
-              <span>{inViewingList ? 'Saved' : 'Save'}</span>
+              <span>{inViewingList ? 'In Viewing List' : 'Add to Viewing List'}</span>
             </button>
           </div>
         </div>
@@ -432,6 +484,12 @@ export default function PropertyListingView() {
 
       {/* Main Container */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        {/* Breadcrumb Eyebrow */}
+        <div className="flex items-center gap-2 text-xs text-[#64748B]">
+          <Link to="/properties" className="hover:text-[#0F766E] transition-colors">Properties</Link>
+          <span>/</span>
+          <span className="font-semibold text-[#1E293B]">Property Listing Details</span>
+        </div>
         
         {/* 2. Photo Gallery Cover */}
         <section className="relative w-full aspect-[16/9] sm:aspect-[21/9] max-h-[520px] rounded-lg overflow-hidden bg-slate-900 border border-[#E2E8F0] shadow-xs">
@@ -497,6 +555,9 @@ export default function PropertyListingView() {
                 </span>
                 <span className="text-xs font-mono text-[#64748B]">
                   ID: <span data-testid="reso-listing-id">{property?.listing_id || property?.ListingId || property?.listingId || property?.ListingKey || property?.listingKey || property?.ref_code || propertyId}</span>
+                  {property?.id && (
+                    <span className="ml-1.5 text-[11px] text-slate-400 font-mono">({property.id})</span>
+                  )}
                 </span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1E293B] tracking-tight">
@@ -632,6 +693,30 @@ export default function PropertyListingView() {
                     </span>
                   </div>
                 )}
+                {(property?.floor_level || property?.floorLevel) && (
+                  <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
+                    <span className="text-[#64748B]">Floor Level</span>
+                    <span className="font-semibold text-[#1E293B]">
+                      {property.floor_level || property.floorLevel}
+                    </span>
+                  </div>
+                )}
+                {(property?.furnishing || property?.Furnishing) && (
+                  <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
+                    <span className="text-[#64748B]">Furnishing</span>
+                    <span className="font-semibold text-[#1E293B]">
+                      {property.furnishing || property.Furnishing}
+                    </span>
+                  </div>
+                )}
+                {(property?.year_built || property?.yearBuilt || property?.YearBuilt) && (
+                  <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
+                    <span className="text-[#64748B]">Year Built</span>
+                    <span className="font-semibold text-[#1E293B]">
+                      {property.year_built || property.yearBuilt || property.YearBuilt}
+                    </span>
+                  </div>
+                )}
                 <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
                   <span className="text-[#64748B]">Architectural Style</span>
                   <span className="font-semibold text-[#1E293B]">{architecturalStyle || (isStaff ? 'Not provided' : 'Modern')}</span>
@@ -699,35 +784,92 @@ export default function PropertyListingView() {
               </div>
             </section>
 
-            {/* SECTION: Location with Interactive Map */}
+            {/* SECTION: Location with Interactive Map & Geospatial Intelligence */}
             <section className="bg-white rounded-lg p-6 border border-[#E2E8F0] shadow-xs space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
-                  <h2 className="text-base font-bold text-[#1E293B]">Location</h2>
+                  <h2 className="text-base font-bold text-[#1E293B]">Cadastral Location</h2>
                   <p className="text-xs text-[#64748B] mt-0.5">{fullAddress}</p>
                 </div>
-                <span className="font-mono text-[11px] text-[#0F766E] bg-teal-50 border border-teal-200 px-2 py-0.5 rounded">
-                  {propertyCoords.lat.toFixed(4)}°N, {propertyCoords.lng.toFixed(4)}°E
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-[11px] text-[#0F766E] bg-teal-50 border border-teal-200 px-2 py-0.5 rounded">
+                    {propertyCoords.lat.toFixed(4)}°N, {propertyCoords.lng.toFixed(4)}°E
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setIsEnlargedMapOpen(true)}
+                    className="px-3.5 py-1.5 bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-semibold rounded-md transition-colors flex items-center gap-1.5 shadow-2xs min-h-[36px] cursor-pointer"
+                  >
+                    <IconMaximize size={15} />
+                    <span>Enlarge Map</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsStreetViewOpen(true)}
+                    className="px-3 py-1.5 bg-white border border-[#CBD5E1] hover:bg-slate-50 text-[#1E293B] text-xs font-semibold rounded-md transition-colors flex items-center gap-1.5 min-h-[36px] cursor-pointer"
+                  >
+                    <IconCompass size={15} className="text-[#0F766E]" />
+                    <span>360° Street View</span>
+                  </button>
+                </div>
               </div>
 
-              <div className="relative w-full h-[280px] rounded-lg overflow-hidden border border-[#E2E8F0] bg-slate-100">
-                <iframe
-                  title="Property Location Map"
-                  className="w-full h-full border-0"
-                  loading="lazy"
-                  src={`https://www.openstreetmap.org/export/embed.html?bbox=${propertyCoords.lng - 0.008}%2C${propertyCoords.lat - 0.006}%2C${propertyCoords.lng + 0.008}%2C${propertyCoords.lat + 0.006}&layer=mapnik&marker=${propertyCoords.lat}%2C${propertyCoords.lng}`}
+              {/* Tight Pinpoint Map with Floating Action Dock */}
+              <div className="relative w-full h-[300px] sm:h-[340px] rounded-lg overflow-hidden border border-[#E2E8F0] bg-slate-50" data-lenis-prevent="true">
+                <GooglePropertyMap
+                  properties={property ? [property] : []}
+                  selectedPropertyId={property?.id}
+                  singlePropertyMode={true}
+                  showControls={false}
+                  onOpenStreetView={() => setIsStreetViewOpen(true)}
                 />
-                <a
-                  href={`https://www.openstreetmap.org/?mlat=${propertyCoords.lat}&mlon=${propertyCoords.lng}#map=16/${propertyCoords.lat}/${propertyCoords.lng}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="absolute bottom-3 right-3 px-3 py-1.5 bg-white/95 text-[#0F766E] hover:bg-white text-xs font-semibold rounded-lg shadow-sm border border-[#E2E8F0] flex items-center gap-1.5 transition-colors"
-                >
-                  <span>Open Full Map</span>
-                </a>
+
+                {/* Floating Glass Dock Inside Canvas */}
+                <div className="absolute top-3 right-3 z-10 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsEnlargedMapOpen(true)}
+                    aria-label="Enlarge map to explore full scale of properties"
+                    className="h-9 sm:h-10 px-3 sm:px-3.5 bg-white/95 hover:bg-white text-[#0F766E] hover:text-[#115E59] backdrop-blur-md rounded-lg text-xs font-semibold shadow-md border border-[#CBD5E1] transition-all flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-[#0F766E] cursor-pointer"
+                  >
+                    <IconMaximize size={15} />
+                    <span>Enlarge Map</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsStreetViewOpen(true)}
+                    aria-label="Open 360° Street View"
+                    className="h-9 sm:h-10 px-3 sm:px-3.5 bg-white/95 hover:bg-white text-[#1E293B] hover:text-[#0F766E] backdrop-blur-md rounded-lg text-xs font-semibold shadow-md border border-[#CBD5E1] transition-all flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-[#0F766E] cursor-pointer"
+                  >
+                    <IconCompass size={15} className="text-[#0F766E]" />
+                    <span>360° View</span>
+                  </button>
+                </div>
               </div>
+
+              {/* Commute and Travel Duration Analysis Card */}
+              <CommuteAnalysisCard
+                latitude={propertyCoords.lat}
+                longitude={propertyCoords.lng}
+                propertyName={propertyTitle}
+                className="mt-4"
+              />
             </section>
+
+            {/* 360° Street View Modal */}
+            <StreetViewModal
+              isOpen={isStreetViewOpen}
+              coordinates={propertyCoords}
+              propertyTitle={propertyTitle}
+              onClose={() => setIsStreetViewOpen(false)}
+            />
+
+            {/* Fullscreen Enlarged Property Map Modal */}
+            <EnlargedMapModal
+              isOpen={isEnlargedMapOpen}
+              onClose={() => setIsEnlargedMapOpen(false)}
+              currentProperty={property}
+            />
 
             {/* SECTION: Pricing & Terms */}
             <section className="bg-white rounded-lg p-6 border border-[#E2E8F0] shadow-xs space-y-4">
@@ -767,6 +909,18 @@ export default function PropertyListingView() {
                     {assocFee != null && !isNaN(assocFee) ? `₱${Number(assocFee).toLocaleString('en-PH')}` : 'Included in dues'}
                   </span>
                 </div>
+                {property?.promo_cash_out && (
+                  <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
+                    <span className="text-[#64748B]">Promo Cash Out</span>
+                    <span className="font-semibold text-[#1E293B]">{property.promo_cash_out}</span>
+                  </div>
+                )}
+                {property?.monthly_amortization && (
+                  <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
+                    <span className="text-[#64748B]">Estimated Amortization</span>
+                    <span className="font-semibold text-[#1E293B]">{property.monthly_amortization}</span>
+                  </div>
+                )}
               </div>
             </section>
 
@@ -901,6 +1055,11 @@ export default function PropertyListingView() {
                   <IconCheck size={13} />
                   <span>View Verified Advisor Credentials</span>
                 </button>
+                {(property?.call_to_action || property?.cta) && (
+                  <p className="text-xs text-[#0F766E] font-medium text-center pt-1 italic">
+                    {property.call_to_action || property.cta}
+                  </p>
+                )}
               </div>
 
               {/* Contact Actions */}
@@ -908,10 +1067,11 @@ export default function PropertyListingView() {
                 <button
                   type="button"
                   onClick={() => setIsScheduleModalOpen(true)}
+                  aria-label="Schedule Free Site Viewing"
                   className="w-full py-2.5 px-4 bg-[#FF6B6B] hover:bg-[#fa5252] text-white text-xs font-bold rounded-lg shadow-xs transition-colors flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-[#FF6B6B]"
                 >
                   <IconCalendarEvent size={16} />
-                  <span>Schedule Viewing</span>
+                  <span>Schedule Free Site Viewing</span>
                 </button>
 
                 <button

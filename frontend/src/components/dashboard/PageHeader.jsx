@@ -19,7 +19,7 @@ export default function PageHeader({
               {crumb.to ? (
                 <Link
                   to={crumb.to}
-                  className="hover:text-[#266F71] transition-colors"
+                  className="hover:text-[#0F766E] transition-colors"
                 >
                   {crumb.label}
                 </Link>

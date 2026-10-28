@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { Outlet } from 'react-router-dom';
 import DashboardSidebar from './DashboardSidebar';
 import DashboardHeader from './DashboardHeader';
@@ -24,7 +24,9 @@ export default function DashboardLayout({ role = 'broker', title = 'Property Lis
         />
 
         <main className="flex-1 p-4 sm:p-6 lg:p-8 w-full space-y-6 sm:space-y-8">
-          <Outlet />
+          <Suspense fallback={<div className="p-8 text-center text-sm text-[#64748B]">Loading portal...</div>}>
+            <Outlet />
+          </Suspense>
         </main>
       </div>
     </div>

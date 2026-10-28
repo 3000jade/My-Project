@@ -15,8 +15,12 @@ import DashboardModal from '../../../components/dashboard/DashboardModal';
 import AgentScheduleCalendar from '../../../components/dashboard/AgentScheduleCalendar';
 import { mockAvailability } from '../../../mockData/mockAvailability';
 import { agentService } from '../../../services/agentService';
+import { useAuth } from '../../../context/AuthContext';
 
 export default function AgentAvailability() {
+  const { user } = useAuth();
+  const effectiveAgentId = user?.id || 'agent-1';
+
   const [schedule, setSchedule] = useState(mockAvailability);
   const [routingAvailability, setRoutingAvailability] = useState('available');
   const [maxConcurrentLeads, setMaxConcurrentLeads] = useState(25);
@@ -45,7 +49,7 @@ export default function AgentAvailability() {
     let mounted = true;
     async function loadSchedule() {
       try {
-        const res = await agentService.getAvailability('agent-1');
+        const res = await agentService.getAvailability(effectiveAgentId);
         if (mounted && res) {
           if (res.routing_availability) setRoutingAvailability(res.routing_availability);
           if (res.max_concurrent_leads) setMaxConcurrentLeads(res.max_concurrent_leads);

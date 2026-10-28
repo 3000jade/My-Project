@@ -4,6 +4,7 @@ import axios from 'axios';
 import PageHeader from '../../../components/dashboard/PageHeader';
 import DashboardModal from '../../../components/dashboard/DashboardModal';
 import propertyService from '../../../services/propertyService';
+import { GooglePlacesSearchInput } from '../../../components/ui/map';
 
 export default function AgentPropertyCreate() {
   const navigate = useNavigate();
@@ -434,9 +435,27 @@ export default function AgentPropertyCreate() {
         {/* Step 3: Location & Amenities */}
         <div className="bg-white rounded-2xl border border-gray-200/80 p-6 sm:p-8 shadow-sm space-y-6 transition-all hover:shadow-md">
           <h3 className="text-lg font-display font-bold text-slate-800 pb-3 border-b border-slate-100 flex items-center gap-2">
-            <span className="material-symbols-outlined text-[#266F71]">location_on</span>
+            <span className="material-symbols-outlined text-[#0F766E]">location_on</span>
             3. Location & Amenities
           </h3>
+
+          <div className="space-y-2">
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-600 font-sans">
+              Smart Address Search & Places Autocomplete
+            </label>
+            <GooglePlacesSearchInput
+              placeholder="Search Philippine condominium, subdivision, or landmark..."
+              onPlaceSelect={(place) => {
+                setFormData(prev => ({
+                  ...prev,
+                  address: place.formattedAddress || place.description || prev.address,
+                  location: place.city || place.subdivision || prev.location || 'Metro Manila',
+                  latitude: place.latitude ? String(place.latitude) : prev.latitude,
+                  longitude: place.longitude ? String(place.longitude) : prev.longitude
+                }));
+              }}
+            />
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">

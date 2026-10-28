@@ -4,6 +4,14 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import BrokerAgentDetail from './BrokerAgentDetail';
 import { agentService } from '../../../services/agentService';
+import { propertyService } from '../../../services/propertyService';
+
+vi.mock('../../../services/propertyService', () => ({
+  propertyService: {
+    getProperties: vi.fn(),
+    reassignAgent: vi.fn(),
+  },
+}));
 
 vi.mock('../../../services/agentService', () => ({
   agentService: {
@@ -40,6 +48,8 @@ describe('BrokerAgentDetail Component', () => {
       ...mockAgent,
       verification_status: 'VERIFIED'
     });
+    propertyService.getProperties.mockResolvedValue({ data: [] });
+    propertyService.reassignAgent.mockResolvedValue({ success: true });
   });
 
   const renderComponent = (agentId = 'agent-1') =>
@@ -89,6 +99,59 @@ describe('BrokerAgentDetail Component', () => {
 
     await waitFor(() => {
       expect(agentService.updateAgentStatus).toHaveBeenCalledWith('agent-1', 'VERIFIED');
+    });
+  });
+
+  it('allows managing broker to open the Assign Property modal from Listings tab', async () => {
+    propertyService.getProperties.mockImplementation((params) => {
+      if (params?.unassigned) {
+        return Promise.resolve({
+          data: [
+            {
+              id: 'prop-unassigned-1',
+              title: 'Modernist Cantilever Estate',
+              city: 'Taguig',
+              price: 35000000,
+              formattedPrice: '₱35,000,000',
+              assignmentStatus: 'UNASSIGNED',
+            }
+          ]
+        });
+      }
+      return Promise.resolve({ data: [] });
+    });
+
+    renderComponent();
+
+    const listingsTab = await screen.findByRole('button', { name: /Listings \(\d+\)/i });
+    expect(listingsTab).toBeInTheDocument();
+
+    // Switch to Listings tab
+    fireEvent.click(listingsTab);
+
+    // Click Assign Property button
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /Assign Property/i })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Assign Property/i }));
+
+    // Verify Assign Property modal opened
+    await waitFor(() => {
+      expect(screen.getByText(/Assign Property to Elena Rossi/i)).toBeInTheDocument();
+      expect(screen.getByText('Modernist Cantilever Estate')).toBeInTheDocument();
+    });
+
+    // Select the property
+    fireEvent.click(screen.getByText('Modernist Cantilever Estate'));
+
+    // Confirm assignment
+    const confirmBtn = screen.getByRole('button', { name: /Confirm Assignment/i });
+    expect(confirmBtn).not.toBeDisabled();
+    fireEvent.click(confirmBtn);
+
+    await waitFor(() => {
+      expect(propertyService.reassignAgent).toHaveBeenCalledWith('prop-unassigned-1', 'agent-1');
     });
   });
 });

@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import propertyService, { normalizeProperty } from '../../../services/propertyService';
 import { driveService, isDriveUrl, resolveDriveImageUrl, getDriveProxyUrl } from '../../../services/driveService';
+import { Button, Badge, Alert } from '../../../components/ui';
+import { GooglePropertyMap, StreetViewModal, EnlargedMapModal, CommuteAnalysisCard } from '../../../components/ui/map';
 import {
   ArrowLeft,
   ChevronLeft,
@@ -56,7 +58,10 @@ export default function BrokerPropertyDetail() {
   const [uploadError, setUploadError] = useState(null);
   const [toastMsg, setToastMsg] = useState('');
   const [isFeatured, setIsFeatured] = useState(() => Boolean((property?.is_featured || property?.isFeatured) ?? true));
-  const [editingCard, setEditingCard] = useState(null); // 'about' | 'details' | 'location' | 'amenities' | null
+  const [isStreetViewOpen, setIsStreetViewOpen] = useState(false);
+  const [isEnlargedMapOpen, setIsEnlargedMapOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingCard, setEditingCard] = useState(null); // 'hero' | 'about' | 'details' | 'location' | 'amenities' | null
   const [editFormData, setEditFormData] = useState({
     title: '',
     tagline: '',
@@ -127,8 +132,19 @@ export default function BrokerPropertyDetail() {
     setEditingCard(cardKey);
   };
 
+  const handleStartEditing = () => {
+    handleStartEditCard('hero');
+    setIsEditing(true);
+  };
+
+  const handleCancelEditing = () => {
+    setEditingCard(null);
+    setIsEditing(false);
+  };
+
   const handleCancelEditCard = () => {
     setEditingCard(null);
+    setIsEditing(false);
   };
 
   const handleSaveEditCard = async () => {
@@ -182,7 +198,8 @@ export default function BrokerPropertyDetail() {
       }));
 
       setEditingCard(null);
-      showToast('Card updated successfully');
+      setIsEditing(false);
+      showToast('Property details updated successfully');
     } catch (err) {
       console.error('[BrokerPropertyDetail] Save error:', err);
       showToast(err.message || 'Failed to update card');
@@ -411,6 +428,21 @@ export default function BrokerPropertyDetail() {
   const latitudeVal = property.latitude || property.location?.coordinates?.lat || '';
   const longitudeVal = property.longitude || property.location?.coordinates?.lng || '';
 
+  const mapPropertyItem = property ? {
+    ...property,
+    id: property.id || 'current',
+    title: property.title || 'Property Location',
+    price: property.price || 0,
+    coordinates: {
+      lat: parseFloat(latitudeVal) || 14.5547,
+      lng: parseFloat(longitudeVal) || 121.0244
+    },
+    address: streetAddressVal || cityVal || 'Philippines',
+    city: cityVal,
+    category: property.property_type || 'Residential',
+    image: property.mainImage || (property.images && property.images[0]) || ''
+  } : null;
+
   const tabs = ['Overview', 'Details', 'Location', 'Amenities', 'Gallery', 'Agent', 'Activity'];
 
   return (
@@ -439,6 +471,35 @@ export default function BrokerPropertyDetail() {
           <span>Back to Properties</span>
         </Link>
       </div>
+
+      {/* Editing Mode Banner */}
+      {(isEditing || editingCard) && (
+        <Alert className="p-3.5 rounded-lg bg-teal-50 border border-teal-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-[#0F766E] shadow-2xs animate-in fade-in duration-200">
+          <div className="flex items-center gap-2 font-medium">
+            <Sparkles className="w-4 h-4 text-[#0F766E] shrink-0" />
+            <span><strong>Editing Mode:</strong> You can edit property title, price, metrics, specs, and narrative below.</span>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              disabled={updating}
+              onClick={handleCancelEditing}
+              className="px-3 py-1.5 rounded-md border border-[#CBD5E1] bg-white text-[#64748B] hover:text-[#1E293B] text-xs font-semibold cursor-pointer transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={updating}
+              onClick={handleSaveEditCard}
+              className="px-3.5 py-1.5 rounded-md bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-semibold cursor-pointer shadow-xs transition-colors flex items-center gap-1.5"
+            >
+              {updating && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
+              <span>Save Changes</span>
+            </button>
+          </div>
+        </Alert>
+      )}
 
 
 
@@ -1355,30 +1416,16 @@ export default function BrokerPropertyDetail() {
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
                   {/* Left: Map Preview Box matching Mockup */}
                   <div className="md:col-span-5 space-y-2">
-                    <div className="relative aspect-[4/3] w-full rounded-lg overflow-hidden border border-[#CBD5E1] bg-[#e5e3df]">
-                      <iframe
-                        title="Property Map Location"
-                        className="w-full h-full border-0 pointer-events-none opacity-90"
-                        src={`https://maps.google.com/maps?q=${encodeURIComponent([editFormData.address || property.address, editFormData.city || property.city, editFormData.state || property.state].filter(Boolean).join(', ') || 'Philippines')}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
-                      />
-                      
-                      {/* Teardrop Pin Marker & Card */}
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <div className="px-3 py-1.5 rounded-lg bg-white/95 backdrop-blur-xs border border-[#CBD5E1] shadow-md flex items-center gap-2 text-xs">
-                          <div className="w-5 h-5 rounded-full bg-[#0F766E] flex items-center justify-center text-white">
-                            <MapPin className="w-3 h-3 fill-white" />
-                          </div>
-                          <div>
-                            <p className="font-bold text-[#1E293B] leading-none">{editFormData.city || property.city || property.address || 'Location'}</p>
-                            <p className="text-[10px] text-[#64748B] mt-0.5 leading-none">{editFormData.state || property.state || ''}</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Google Logo */}
-                      <div className="absolute bottom-1 left-2 pointer-events-none">
-                        <span className="text-[9px] font-bold text-slate-500 bg-white/80 px-1 rounded shadow-2xs">Google</span>
-                      </div>
+                    <div className="relative aspect-[4/3] w-full rounded-lg overflow-hidden border border-[#CBD5E1] bg-[#e5e3df]" data-lenis-prevent="true">
+                      {mapPropertyItem && (
+                        <GooglePropertyMap
+                          properties={[mapPropertyItem]}
+                          singlePropertyMode={true}
+                          interactive={false}
+                          initialZoom={15}
+                          height="100%"
+                        />
+                      )}
                     </div>
                   </div>
 
@@ -1872,23 +1919,54 @@ export default function BrokerPropertyDetail() {
                   <MapPin className="w-4 h-4 text-[#0F766E]" />
                   Cadastral Location & Navigation Map
                 </h3>
-                <span className="text-[11px] font-mono text-[#0F766E] bg-teal-50 border border-teal-200 px-2 py-0.5 rounded">
-                  GPS: {latitudeVal}, {longitudeVal}
-                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsEnlargedMapOpen(true)}
+                    className="px-2.5 py-1 bg-[#0F766E] hover:bg-[#115E59] text-white rounded-md text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+                  >
+                    <Maximize2 className="w-3.5 h-3.5" />
+                    <span>Enlarge Map</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsStreetViewOpen(true)}
+                    className="px-2.5 py-1 bg-white hover:bg-teal-50 border border-[#0F766E] text-[#0F766E] rounded-md text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <Compass className="w-3.5 h-3.5" />
+                    <span>360° Street View</span>
+                  </button>
+                  <span className="text-[11px] font-mono text-[#0F766E] bg-teal-50 border border-teal-200 px-2 py-0.5 rounded">
+                    GPS: {latitudeVal || '14.5547'}, {longitudeVal || '121.0244'}
+                  </span>
+                </div>
               </div>
 
-              <div className="aspect-[16/9] w-full rounded-lg overflow-hidden border border-[#CBD5E1]">
-                <iframe
-                  title="Full Property Map"
-                  className="w-full h-full border-0"
-                  src={`https://maps.google.com/maps?q=${encodeURIComponent([streetAddressVal, subdivisionVal, cityVal, stateVal].filter(Boolean).join(', ') || 'Philippines')}&t=&z=16&ie=UTF8&iwloc=&output=embed`}
-                />
+              <div className="aspect-[16/9] w-full rounded-lg overflow-hidden border border-[#CBD5E1]" data-lenis-prevent="true">
+                {mapPropertyItem && (
+                  <GooglePropertyMap
+                    properties={[mapPropertyItem]}
+                    singlePropertyMode={true}
+                    interactive={true}
+                    initialZoom={16}
+                    height="100%"
+                  />
+                )}
               </div>
 
               <div className="p-3.5 bg-[#F8FAFC] rounded-lg border border-[#CBD5E1] text-xs space-y-1">
                 <p className="font-semibold text-[#1E293B]">{streetAddressVal || 'Address not specified'}</p>
                 <p className="text-[#64748B]">{[subdivisionVal, cityVal, stateVal, postalCodeVal].filter(Boolean).join(', ') || 'No additional regional metadata'}</p>
               </div>
+
+              {/* Commute and Travel Duration Analysis Card */}
+              {latitudeVal && longitudeVal && (
+                <CommuteAnalysisCard
+                  latitude={parseFloat(latitudeVal)}
+                  longitude={parseFloat(longitudeVal)}
+                  propertyName={property.title || 'Property'}
+                />
+              )}
             </div>
           )}
 
@@ -2069,6 +2147,54 @@ export default function BrokerPropertyDetail() {
         {/* ========================================================================= */}
         <div className="lg:col-span-4 space-y-6">
 
+          {/* Broker Actions Card */}
+          <div className="bg-white rounded-xl border border-[#E2E8F0] p-5 shadow-2xs space-y-3.5">
+            <h3 className="text-sm font-bold text-[#1E293B] tracking-tight">
+              Broker Actions
+            </h3>
+            {isEditing || editingCard ? (
+              <div className="space-y-2">
+                <Button
+                  type="button"
+                  disabled={updating}
+                  onClick={handleSaveEditCard}
+                  className="w-full h-10 px-3.5 rounded-lg bg-[#0F766E] hover:bg-[#115E59] text-white font-semibold text-xs flex items-center justify-center gap-2 transition-colors shadow-2xs cursor-pointer disabled:opacity-60"
+                >
+                  {updating ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      <span>Saving Changes...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4" />
+                      <span>Save Changes</span>
+                    </>
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={updating}
+                  onClick={handleCancelEditing}
+                  className="w-full h-9 px-3.5 rounded-lg border-[#CBD5E1] bg-white hover:bg-slate-50 text-[#64748B] hover:text-[#1E293B] font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <span>Cancel</span>
+                </Button>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                onClick={handleStartEditing}
+                className="w-full h-10 px-3.5 rounded-lg bg-[#0F766E] hover:bg-[#115E59] text-white font-semibold text-xs flex items-center justify-start gap-2.5 transition-colors shadow-2xs cursor-pointer"
+              >
+                <Edit3 className="w-4 h-4 text-white" />
+                <span>Edit Property</span>
+                <span className="sr-only">Quick Edit</span>
+              </Button>
+            )}
+          </div>
+
           {/* Card 1: Listing Status matching Mockup */}
           <div className="bg-white rounded-xl border border-[#E2E8F0] p-5 shadow-2xs space-y-3.5">
             <h3 className="text-sm font-bold text-[#1E293B] tracking-tight">
@@ -2205,6 +2331,26 @@ export default function BrokerPropertyDetail() {
         </div>
 
       </div>
+
+      {/* 360° Street View Modal */}
+      {property && (
+        <StreetViewModal
+          isOpen={isStreetViewOpen}
+          onClose={() => setIsStreetViewOpen(false)}
+          lat={parseFloat(latitudeVal) || 14.5547}
+          lng={parseFloat(longitudeVal) || 121.0244}
+          propertyName={property.title || 'Property Frontage'}
+        />
+      )}
+
+      {/* Fullscreen Enlarged Property Map Modal */}
+      {property && (
+        <EnlargedMapModal
+          isOpen={isEnlargedMapOpen}
+          onClose={() => setIsEnlargedMapOpen(false)}
+          currentProperty={property}
+        />
+      )}
     </div>
   );
 }

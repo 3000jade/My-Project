@@ -1,14 +1,60 @@
----
-name: Modern SaaS Design System & UI/UX Standards
-philosophy:
-  concept: "Soft Minimalist SaaS | Airy, Accessible & Performance-Driven"
-  ethos: >
-    Applying a consistent, functional Modern SaaS design language across the entire platform
-    while preserving existing functionality, components, pages, and business logic.
-    Balancing clarity, comfortable information density, rapid wayfinding, and accessibility
-    with an airy, structured layout, 8px grid, standard 8px radius, and restrained
-    application of the original Teal-Coral palette.
+# UI Design Specification
 
+> Fill in the bracketed placeholders before implementation. This document is the UI specification for the AI agent building the application. Keep requirements concrete, observable, and consistent with the approved mockups.
+
+## 1. Project Context
+
+- **Project name:** Human Shelter Realty
+- **Product purpose:** [Problem the application solves]
+- **Primary users:** [User groups and their needs]
+- **Primary user journey:** [Main task from start to finish]
+- **Platform:** Responsive web application
+- **In scope:** [Screens and features to build]
+- **Out of scope:** [Features excluded from this implementation]
+
+## 2. Instructions for the AI Agent
+
+1. Read this document and applicable repository instructions before implementation.
+2. Use the existing framework, components, and design tokens when available. Apply the shadcn/ui architecture and brand requirements in Appendix A using the integration notes in Section 8.
+3. Treat filled-in requirements as the intended behavior. Treat bracketed placeholders as unresolved information, not literal UI text.
+4. Do not invent product features, permissions, business rules, or backend behavior. Ask for clarification when a missing detail blocks a correct implementation.
+5. For minor visual details that are unspecified, follow existing project conventions and record any material assumptions.
+6. Implement all relevant interaction, validation, responsive, and accessibility requirements, including loading, empty, success, and error states.
+7. Use mock data only when authorized, and identify it clearly in the implementation handoff.
+8. Verify the acceptance criteria and report completed work, verification results, assumptions, and remaining gaps.
+9. Record module UI specifications at `docs/modules/<module>/ui-specification.md` and register them in the module INDEX.md, following Section 9. Keep this root document as the shared design standard.
+
+### Implementation Skill: `shadcn-ui`
+
+Use the `shadcn-ui` skill for implementing, composing, customizing, and reviewing the project's shadcn/ui components.
+
+- Before UI implementation, locate and read the available `shadcn-ui` skill's `SKILL.md`; follow relevant linked guidance as needed.
+- Apply its component selection, installation, composition, variants, form, and accessibility guidance where covered by the actual skill.
+- Preserve this document's approved palette, coral/slate button pairing, directory structure, and canonical `cn` helper when applying generic skill examples.
+- Follow applicable instruction precedence. Skill examples do not override explicit user requirements or authorize unrelated actions.
+- If the skill is unavailable, report that clearly. Do not claim to have loaded it. Use this specification and current official shadcn/ui documentation as the fallback for authorized implementation work.
+
+**Availability at specification update:** A local search on 2026-10-27 found no `shadcn-ui` skill in the installed skill locations. This section records the requested skill usage; it does not install a skill or assume a particular publisher or source.
+
+## 3. Shared Visual System
+
+| Property | Specification |
+|---|---|
+| Design direction | [Visual style and reference designs] |
+| Colors | Use the authoritative color tokens in Section 3.1. These exact hex values take precedence over Appendix A color examples. |
+| Typography | [Font family, sizes, weights, and line heights] |
+| Spacing | [Spacing scale and page padding] |
+| Layout | [Content width, grid, alignment, and section spacing] |
+| Borders and corners | [Border styles and radius tokens] |
+| Elevation | [Shadow or layering rules] |
+| Icons | [Icon library, sizes, and labeling rules] |
+| Motion | [Transitions, timing, and reduced-motion behavior] |
+
+### 3.1 Authoritative Color Tokens
+
+The user supplied the following palette. These exact hex values are the source of truth for all shared colors and take precedence over conflicting color examples or HSL annotations in Appendix A. Derive any alternative color representations from these values.
+
+```yaml
 colors:
   primary: '#0F766E'                  # Primary Teal
   primary-hover: '#115E59'            # Primary Teal Hover
@@ -23,532 +69,564 @@ colors:
     success: '#10B981'                # Emerald Success
     warning: '#F59E0B'                # Amber Warning
     error: '#DC2626'                  # Red Destructive / Error
-
-grid:
-  system: "Responsive 12-Column Flexible Grid & 8px Spacing Base"
-  spacingBase: "8px"
-  desktop:
-    columns: 12
-    gutter: "24px"
-    margin: "32px"
-    maxWidth: "1440px"
-  tablet:
-    columns: 8
-    gutter: "20px"
-    margin: "24px"
-    breakpoint: "768px - 1023px"
-  mobile:
-    columns: 4
-    gutter: "16px"
-    margin: "16px"
-    breakpoint: "< 768px"
-
-typography:
-  fontFamily: "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-  scaleRatio: "1.250 (Major Third Modular Scale)"
-  hierarchy:
-    display-h1:
-      fontFamily: "Inter"
-      fontSize: "36px"
-      lineHeight: "44px"
-      fontWeight: "700"
-      letterSpacing: "-0.025em"
-      role: "Hero declarations, primary page headers"
-    heading-h2:
-      fontFamily: "Inter"
-      fontSize: "28px"
-      lineHeight: "36px"
-      fontWeight: "700"
-      letterSpacing: "-0.02em"
-      role: "Major section headers, module titles"
-    card-h3:
-      fontFamily: "Inter"
-      fontSize: "20px"
-      lineHeight: "28px"
-      fontWeight: "600"
-      letterSpacing: "-0.015em"
-      role: "Card titles, subsection heads, modal headers"
-    subhead-h4:
-      fontFamily: "Inter"
-      fontSize: "16px"
-      lineHeight: "24px"
-      fontWeight: "600"
-      letterSpacing: "-0.01em"
-      role: "Form group labels, table headers, subheadings"
-    body-regular:
-      fontFamily: "Inter"
-      fontSize: "14px"
-      lineHeight: "20px"
-      fontWeight: "400"
-      letterSpacing: "0em"
-      role: "Primary copy, form inputs, table data cells"
-    body-small:
-      fontFamily: "Inter"
-      fontSize: "12px"
-      lineHeight: "16px"
-      fontWeight: "500"
-      letterSpacing: "0.005em"
-      role: "Secondary metadata, helper text, badges, timestamps"
-    mono-data:
-      fontFamily: "'JetBrains Mono', monospace"
-      fontSize: "12px"
-      lineHeight: "16px"
-      role: "Codes, IDs, cadastral numbers, monetary calculations"
-
-radii:
-  sm: "4px"                           # Badges, nested status indicators, tooltips
-  default: "8px"                      # Standard buttons, form controls, cards, panels
-  md: "8px"                           # Standard cards, forms, filter plinths
-  lg: "12px"                          # Modals, drawers, elevated surface containers
-  pill: "9999px"                      # Status pills, avatar circles, filter chips
-
-shadows:
-  subtle: "0 1px 2px 0 rgba(0, 0, 0, 0.05)"
-  card: "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)"
-  card-hover: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1)"
-  modal: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)"
----
-
-# Human Shelter Realty | Soft Minimalist SaaS UI/UX Design System Specification
-
-## PURPOSE
-
-This specification defines the mandatory design standards and protocol for AI agents and developers whenever a user requests a design update, redesign, UI improvement, or UX enhancement across Human Shelter Realty.
-
-- **Trigger:** When the user instructs to update, improve, redesign, or refine any part of the system interface.
-- **Objective:** Apply a consistent, high-performing **Soft Minimalist SaaS** UI/UX design while preserving existing functionality, components, pages, and business logic. This document governs design changes; it does not authorize creating listed example features.
-
----
-
-## 1. MANDATORY WORKFLOW
-
-Follow this sequence for every design update without exception:
-
-$$\text{INSPECT} \longrightarrow \text{ANALYZE} \longrightarrow \text{PROPOSE} \longrightarrow \text{APPROVAL} \longrightarrow \text{IMPLEMENT} \longrightarrow \text{VERIFY}$$
-
-### Step 1: Inspect
-- Examine the requested page or component.
-- Review existing styles, layouts, and dependencies.
-- Identify reusable UI components.
-- Check related pages for potential conflicts.
-- **Do not modify any files during this step.**
-
-### Step 2: Analyze
-- Identify current design inconsistencies.
-- Evaluate usability, responsiveness, and accessibility.
-- Determine what requires improvement.
-- Identify risks to existing functionality.
-
-### Step 3: Propose
-Present a concise design update plan containing:
-- Target page or component
-- Existing design issues
-- Proposed UI improvements
-- Proposed UX improvements
-- Files requiring changes
-- Potential conflicts or risks
-
-### Step 4: Request Approval
-> [!IMPORTANT]
-> **STOP and wait for explicit user approval.**  
-> Do not modify any project files before approval is given.
-
-### Step 5: Implement
-After approval:
-- Update only approved components and files.
-- Follow the established design system standards.
-- Reuse existing components.
-- Preserve business logic and functionality.
-- Avoid unrelated changes.
-
-### Step 6: Verify
-- Check visual consistency.
-- Verify existing functionality.
-- Test responsive layouts.
-- Check accessibility standards.
-- Report modified files and verification results.
-
----
-
-## 2. DESIGN SYSTEM STANDARDS & COLOR TOKENS
-
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│  BASE CANVAS:      Slate Alabaster Ground (#F8FAFC)                     │
-│  SURFACE ELEVATION: Pure White (#FFFFFF) with 1px Border (#E2E8F0)     │
-│  PRIMARY BRAND:    Teal (#0F766E) | Hover (#115E59) | Active (#14B8A6) │
-│  CONVERSION ACCENT: Coral (#FF6B6B)                                    │
-│  TYPOGRAPHIC INK:  Slate 800 (#1E293B) | Slate 500 Muted (#64748B)     │
-└────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Color Palette Specification
-| Token Name | Hex Code | Purpose / Application | Contrast Ratio |
-| :--- | :--- | :--- | :--- |
-| `--color-primary` | `#0F766E` | Primary actions, branding, active tab borders | $\ge 4.5:1$ on `#FFFFFF` |
-| `--color-primary-hover`| `#115E59` | Hover state for primary buttons and interactive items | Deep teal focus |
-| `--color-secondary` | `#14B8A6` | Accompanying brand accents, secondary badges | Cyan-teal |
-| `--color-accent` | `#FF6B6B` | Accents and conversion buttons with dark slate text | `#1E293B` text; verify AA |
-| `--color-background` | `#F8FAFC` | Page and app canvas background | Neutral soft slate |
-| `--color-surface` | `#FFFFFF` | Elevated cards, tables, modal containers, inputs | Pure white |
-| `--color-text-primary`| `#1E293B` | Main headings, primary copy, table values | $> 13:1$ on `#F8FAFC` (AAA) |
-| `--color-text-secondary`| `#64748B` | Labels, helper copy, placeholder text, breadcrumbs | $> 4.5:1$ (AA) |
-| `--color-border` | `#E2E8F0` | Structural card borders, dividers, table lines | Slate 200 hairline |
-| `--color-success` | `#10B981` | Positive statuses, active listings, success alerts | Emerald |
-| `--color-warning` | `#F59E0B` | Pending approvals, caution alerts, expiring items | Amber |
-| `--color-error` | `#DC2626` | Destructive actions, validation errors, rejected states | Red 600 |
+| UI Role / shadcn Token | Palette Token |
+|---|---|
+| `background` | `background` |
+| `foreground`, `card-foreground`, `popover-foreground` | `text-primary` |
+| `card`, `popover` | `surface` |
+| `primary`, `ring` | `primary` |
+| Primary button hover | `primary-hover` |
+| `secondary` | `secondary` |
+| `accent` / conversion action | `accent` |
+| `muted-foreground` | `text-secondary` |
+| `border`, `input` | `border` |
+| Success indicator | `semantic.success` |
+| Warning indicator | `semantic.warning` |
+| `destructive` / error indicator | `semantic.error` |
 
-### Styling & Geometric Rules
-- **Typography:** `Inter`, `-apple-system`, `sans-serif`.
-- **Standard Border Radius:** `8px` as the default across inputs, cards, and buttons; designated pills, avatars, and larger dialogs may use their documented radius tokens. Tailwind utility names apply only if that framework exists.
-- **Spacing:** Use an **8px-based system** (`8px`, `16px`, `24px`, `32px`, `40px`, `48px`); 4px half-step exceptions require a documented reason. Avoid arbitrary 20px spacing.
-- **Clean and Minimal Layouts:** Distraction-free surfaces without decorative canvas noise.
-- **Consistent Visual Hierarchy:** Clear typographic scale from H1 (36px) down to Micro (12px).
-- **Responsive Design:** 12-column desktop (1024px and above), 8-column tablet (768–1023px), 4-column mobile (below 768px), unless existing project breakpoints differ; do not replace them without approval.
-- **Accessible Color Contrast:** Target WCAG 2.2 AA: at least 4.5:1 for normal text, 3:1 for large text and relevant non-text UI indicators; 7:1 primary text contrast is an aspirational AAA enhancement, not a universal AA requirement. Validate actual foreground/background pairs.
-- **Subtle Shadows and Hairlines:** Low-elevation shadows (`0 1px 3px rgba(0,0,0,0.1)`) paired with `1px border border-[#E2E8F0]`.
-- **Control Heights:** Standardized input and action button heights (40px standard, 48px prominent); larger search controls may use 56px if consistent with the approved design. Ensure adequate target sizes and spacing.
+Use `surface` or `background` for context-appropriate foregrounds on primary controls only after verifying contrast. Use `text-primary` on secondary and coral filled controls. Semantic colors do not automatically define accessible text/background pairs; choose and verify each pairing. Keep success, warning, and error distinguishable through labels or icons as well as color. Unspecified foreground, muted background, hover, and dark-theme tokens remain subject to the implementation checks in Section 8.
 
----
+### Approved Coral Button
 
-## 3. UI COMPONENT REQUIREMENTS
+User-approved on 2026-10-27:
 
-Maintain consistent visual design for all interface primitives:
+- **Background:** Coral `#FF6B6B` (`colors.accent`).
+- **Font and icon color:** Slate `#1E293B` (`colors.text-primary`).
+- **Use:** High-impact conversion actions, including “Review listing”.
+- **Contrast:** Approximately 5.27:1 for the approved text/background pair.
+- **Implementation:** Map `accent-foreground` and the coral button variant's foreground to `text-primary`. Icons inherit the text color. Keep this pairing consistent across the property discovery and agent workspace designs.
+- **Other states:** Verify hover, focus, and disabled states separately; approval applies to the default color pair.
 
-1. **Sidebars and Navigation:**
-   - Consistent width, clear icon-label alignment, active indicator with Teal `#0F766E` background tint or left bar.
-   - Clean group headers, collapsible menus, and responsive drawer on mobile.
+### Shared Components
 
-2. **Headers and Breadcrumbs:**
-   - Flush alignment, subtle bottom border (`#E2E8F0`), user profile dropdown with role chips, and predictable trail navigation.
+| Component | Variants / States | Reuse Rules |
+|---|---|---|
+| [Button, input, dialog, table, etc.] | [Applicable sizes, variants, and states] | [Existing component or shared implementation] |
 
-3. **Buttons and Icon Buttons:**
-   - **Primary:** Background Teal `#0F766E`, hover `#115E59`, text `#FFFFFF`, border-radius `8px`.
-   - **Secondary / Outline:** Border `#E2E8F0`, text `#1E293B`, hover background `#F8FAFC`.
-   - **Accent / Conversion:** Background Coral `#FF6B6B`, text `#1E293B` (dark slate, accessible for normal text). Hover styling must be visually distinct and retain at least 4.5:1 text contrast; do not default to white text on coral.
-   - **Destructive:** Background `#DC2626`, hover `#B91C1C`, text `#FFFFFF`.
+## 4. Navigation and Access
 
-4. **Forms and Inputs:**
-   - Uniform height (`h-[40px]` or `h-[48px]`), background `#FFFFFF`, border `1px solid #E2E8F0`.
-   - Focus ring: `focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E]`.
-   - Clear field labels, required asterisks (`*`), helper text, and accessible error message slots.
+| Screen | Route / Entry Point | Allowed Roles | Main Destinations |
+|---|---|---|---|
+| [Screen name] | [Route or navigation entry] | [Roles] | [Linked screens] |
 
-5. **Cards and Statistics:**
-   - Background `#FFFFFF`, rounded `8px`, border `1px solid #E2E8F0`, subtle shadow (`shadow-sm`).
-   - Standardized padding (16px or 24px; `p-4` or `p-6` in default Tailwind), legible metric counters, and trend pill indicators.
+- **Unauthenticated behavior:** [Login flow or public access]
+- **Unauthorized behavior:** [Access-denied response]
+- **Back navigation:** [Expected behavior]
+- **Unsaved changes:** [When to warn and how to recover]
 
-6. **Data Tables:**
-   - Clean table header in `#F8FAFC`, uppercase tracking for column labels, dividers in `#E2E8F0`.
-   - Row hover state (`hover:bg-slate-50/60`), right-aligned numeric data, and sticky action columns.
+## 5. Screen Specification
 
-7. **Search and Filters:**
-   - Search input with leading search icon, multi-select filter dropdowns, active filter badge chips, and clear-all buttons.
+> Duplicate this section for each screen. Use unique requirement and element IDs so implementation and verification can refer to them.
 
-8. **Dropdowns and Modals:**
-   - Soft backdrop overlay (`bg-black/40 backdrop-blur-sm`), centered card with `rounded-xl`, clear header, body, and footer button bar.
-   - Prevent background scrolling while a modal is open using the project's existing overlay/dialog handling; use library-specific attributes only when that library exists.
+### Screen: [Screen Name]
 
-9. **Status Badges & Pills:**
-   - Compact height, pill or `rounded-md`, uppercase or small title case, paired icon and status dot.
-   - Use semantic status styling: Green for Available/Verified, Amber for Reserved/Pending, neutral slate for Sold and Draft, Red for Rejected/Error/Suspended. Preserve the underlying status values and distinguish statuses through text as well as color.
+- **Screen ID:** [SCR-01]
+- **Purpose:** [What users accomplish]
+- **Route:** [Route or screen identifier]
+- **User roles:** [Allowed roles]
+- **Preconditions:** [Required session, data, or previous action]
+- **Successful outcome:** [Observable result]
 
-10. **Notifications & Loading Indicators:**
-    - Non-intrusive toasts, inline banners, smooth skeleton pulse loaders (`animate-pulse bg-slate-200/80 rounded`), and accessible spinners.
+#### 5.1 Wireframe or Mockup
 
-> [!NOTE]
-> Do not create duplicate components when reusable components already exist. Always leverage shared UI components.
+[Insert an image path, design link, or labeled layout description. Specify which reference takes precedence if several are provided.]
 
----
+#### 5.2 Layout and Content
 
-## 4. UX COMPONENT REQUIREMENTS
+- **Header:** [Title, supporting text, and actions]
+- **Main content:** [Sections in display order]
+- **Secondary content:** [Sidebar, supporting information, or none]
+- **Footer:** [Actions or information, if applicable]
+- **Content rules:** [Exact labels and messages, formatting, truncation, and overflow behavior]
 
-Whenever relevant to the requested design update, evaluate and enforce:
+#### 5.3 UI Elements
 
-### Navigation
-- Clear page hierarchy with unambiguous headings.
-- Visible, immediate active navigation states.
-- Mobile drawer / responsive collapse behavior.
-- Predictable wayfinding and back navigation.
+| Element ID | Name | Type | Content / Data Source | Behavior | Visible / Enabled When |
+|---|---|---|---|---|---|
+| SCR-01-UI-01 | [Name] | [Input / button / table / etc.] | [Text, field, or data source] | [Action and resulting state] | [Condition] |
 
-### Forms
-- Clear field labels positioned above inputs.
-- Required field indicators (`*`) with semantic labels.
-- Clear client-side validation and helper guidelines; propose real-time validation only if appropriate to the existing form and approved by the user.
-- Helpful, context-specific error messages.
-- Protection against accidental navigation with unsaved changes.
+#### 5.4 Input and Validation
 
-### Data Interaction
-- Preserve existing search behavior; propose debouncing only when justified by current implementation and explicitly approved.
-- Multi-facet filtering with visible selected filter badges.
-- Ascending/descending column sorting with directional indicators.
-- Preserve existing pagination; propose virtualization or new page-size behavior only after separate evaluation and approval.
-- Meaningful, actionable empty states with an illustration or icon and a primary action button.
+| Field | Required | Format / Constraints | Default | Validation Trigger | Exact Error Message |
+|---|---|---|---|---|---|
+| [Field name] | [Yes / No] | [Type, allowed values, length, or range] | [Default or none] | [Blur / change / submit] | [Message] |
 
-### Feedback
-- Provide accurate loading or pending feedback; use optimistic updates only if already present or approved with rollback/error handling.
-- Provide successful-operation feedback when relevant; preserve existing notification behavior and avoid redundant toasts.
-- Human-readable error messages with recovery / retry suggestions.
-- Modal confirmation dialogs for destructive operations.
+- **Submission rules:** [When submission is allowed and how duplicate submissions are handled]
+- **Invalid submission:** [Error placement, focus behavior, and preservation of entered values]
+- **Server errors:** [How server validation and general failures appear]
 
-### Accessibility
-- Keyboard support appropriate to each control (`Tab`, `Shift+Tab`, `Enter`, `Space`, `Escape`, and arrow keys where applicable).
-- High-visibility focus indicators; never remove the native outline unless a clearly visible replacement is provided. Use framework-specific utilities only if supported.
-- Readable typography, proper zoom/reflow behavior, and accessible contrast; avoid relying on 12px metadata for essential instructions.
-- Minimum target touch sizes of $44\text{px} \times 44\text{px}$ on mobile viewports.
+#### 5.5 Interaction Flows
 
----
+| Flow ID | Trigger | System Response | Success Outcome | Failure / Recovery |
+|---|---|---|---|---|
+| SCR-01-FLOW-01 | [User action] | [State change or request] | [Confirmation, updated data, or navigation] | [Message, preserved data, and retry option] |
 
-## 5. SCOPE CONTROL
+#### 5.6 Screen States
 
-Only update the page, module, or component requested by the user.
+| State | Trigger | Display | Available Actions |
+|---|---|---|---|
+| Default | [Initial conditions] | [Normal content] | [Actions] |
+| Loading | [Data or action pending] | [Indicator or skeleton] | [Enabled / disabled actions] |
+| Empty | [No records or results] | [Message] | [Create, reset filters, or other next step] |
+| Success | [Action completed] | [Confirmation and updated content] | [Next step] |
+| Error | [Request or operation failed] | [Actionable message] | [Retry or recovery] |
+| Disabled | [Action unavailable] | [Disabled appearance and explanation where needed] | [Remaining actions] |
 
-### Allowed After Approval
-- Visual styling improvements and theme token harmonization.
-- Layout refinements and spacing consistency.
-- Component styling and interactive states.
-- Responsive adjustments across mobile, tablet, and desktop.
-- Approved UX workflow improvements.
-- Reusable design token updates in theme definitions.
+Mark any state that does not apply as `N/A` with a brief reason.
 
-### Not Allowed Without Separate Approval
-- Deleting existing pages or modules.
-- Changing application routes or URL structures.
-- Modifying database schemas or migrations.
-- Altering authentication flows, session guards, or permission logic.
-- Modifying underlying business logic or calculation formulas.
-- Changing API response structures or endpoint contracts.
-- Removing existing features or capabilities.
-- Redesigning unrelated modules or pages outside the prompt scope.
-- Installing unnecessary dependencies or libraries.
+#### 5.7 Responsive Behavior
 
-If a required change affects another module, explain the dependency and request additional approval.
+| Viewport / Breakpoint | Layout Changes | Navigation Changes | Overflow Behavior |
+|---|---|---|---|
+| [Mobile range] | [Stacking, spacing, and sizing] | [Behavior] | [Tables, long text, and menus] |
+| [Tablet range] | [Changes] | [Behavior] | [Behavior] |
+| [Desktop range] | [Changes] | [Behavior] | [Behavior] |
 
----
+#### 5.8 Accessibility
 
-## 6. ROLE-BASED DESIGN STANDARDS
+- Use semantic elements and provide accessible names for controls.
+- Associate each form field with its label and relevant instructions or errors.
+- Support keyboard operation with a logical focus order and visible focus indicators.
+- Define focus placement and restoration for dialogs and navigation changes.
+- Communicate status and validation changes to assistive technology where appropriate.
+- Do not rely on color alone to convey meaning.
+- Ensure text remains usable with zoom and reflow, and honor reduced-motion preferences.
+- **Additional screen requirements:** [Specific accessibility needs]
 
-Maintain the same Modern SaaS visual identity across the system while adapting layouts to existing user roles:
+#### 5.9 Data and Integration
 
-### Administrator
-- Comfortable, scannable data tables and existing administrative tools; offer compact density only where the workflow requires it.
-- Clear primary actions, grouped analytics, and efficient filtering, without crowding the page.
+| Data / Action | Existing Source or Contract | UI Mapping | Pending / Failure Behavior |
+|---|---|---|---|
+| [Data or operation] | [Existing API, store, local source, or unresolved] | [Fields used by UI] | [State and recovery] |
 
-### Agent
-- Operational workflow hubs: active property listings, inquiry triage, appointment scheduling, and commission ledgers.
-- Task-oriented action bars, quick communication links, and client interaction histories.
+- **Persistence:** [What is saved and when]
+- **Refresh behavior:** [When data is fetched again]
+- **Mock data authorization:** [Allowed scope or none]
 
-### Client
-- Seamless property discovery, intuitive multi-criteria search, transparent pricing breakdowns, and saved favorites.
-- Low-friction inquiry submission and private consultation scheduling.
+#### 5.10 Acceptance Criteria
 
-> Do not create missing modules or workflows unless explicitly requested and approved by the user.
+- [ ] **SCR-01-AC-01:** Given [precondition], when [action], then [observable result].
+- [ ] **SCR-01-AC-02:** Given [invalid input], when [submission], then [exact validation behavior].
+- [ ] **SCR-01-AC-03:** Given [loading, empty, or error condition], then [expected state and recovery action].
+- [ ] **SCR-01-AC-04:** At [specified viewport], [expected layout and usability].
+- [ ] **SCR-01-AC-05:** Using only the keyboard, [primary task] can be completed with visible focus.
 
----
+## 6. Open Questions and Assumptions
 
-## 7. VERIFICATION CHECKLIST
+| ID | Question / Assumption | Impact | Resolution |
+|---|---|---|---|
+| Q-01 | [Unresolved detail] | [Affected behavior or screen] | [Decision or pending] |
 
-After an approved update, execute and document the following verification checklist:
+## 7. Implementation Handoff
 
-- [ ] Design adheres strictly to the Modern SaaS theme.
-- [ ] Teal (`#0F766E`) and Coral (`#FF6B6B`) colors are applied accurately.
-- [ ] Standard border radius is 8px (`rounded-lg`).
-- [ ] Existing reusable components are leveraged without redundant duplications.
-- [ ] Responsive layouts operate smoothly on mobile, tablet, and desktop.
-- [ ] Forms, inputs, and validations remain fully operational.
-- [ ] Navigation paths, breadcrumbs, and existing routes are preserved.
-- [ ] Data operations, API calls, and business logic are untouched.
-- [ ] No unrelated files outside the agreed scope were modified.
-- [ ] Discover the project's actual package manager and scripts, then run applicable build, lint, type-check, and test commands; report unavailable or failing checks without implying they passed.
-- [ ] All modified files and changes are transparently reported to the user.
+The AI agent should provide:
 
----
+- Screens and behaviors implemented, with references to acceptance criteria.
+- Relevant files changed and how to preview the result.
+- Verification performed and its outcome.
+- Material assumptions, unresolved requirements, and known limitations.
 
-## 8. REQUIRED AGENT RESPONSE FORMAT
+## 8. shadcn/ui Integration Notes
 
-Before implementing any redesign, respond with the following standardized structure:
+**Source:** `2026-10-27-shadcn-ui-specification.md`, dated 2026-10-27, supplied by the user. Appendix A preserves the supplied specification. Its “Approved” status is source metadata; implementation and examples have not been independently verified. This update incorporates documentation only.
+
+### Architecture and Brand Requirements
+
+- Target stack from the source: React 19, Tailwind CSS v4, Radix UI, `clsx`, `tailwind-merge`, and `class-variance-authority`.
+- Keep owned UI primitive source in `frontend/src/components/ui/`. Supporting package imports, including Radix, remain valid.
+- Compose domain cards, modals, and layout components outside the primitive directory as shown in Appendix A.
+- Use `frontend/src/utils/cn.js` and alias `@/utils/cn` as the canonical class helper. Avoid generating a duplicate helper.
+- Keep shadcn configuration at `frontend/components.json` and shared styling at `frontend/src/index.css`.
+- Use semantic tokens for component variants. Map the literal colors in the appendix's CVA example to shared tokens.
+- Brand palette: pale slate canvas `#F8FAFC`, white surfaces `#FFFFFF`, slate text `#1E293B`, teal primary `#0F766E`, cyan teal secondary `#14B8A6`, coral conversion accent `#FF6B6B`, and border `#E2E8F0`. Standard radius is 8px.
+- Prefer the existing configured icon library. The source defaults to Tabler and permits Lucide; use a consistent library and label icon-only actions.
+- Use `asChild` where supported when composing styled controls with links. Preserve valid HTML and avoid nested interactive elements.
+
+### Conflicts and Checks Before Implementation
+
+1. **Color consistency:** Some HSL values differ from their annotated hex values. For example, `222 47% 11%` does not represent `#1E293B`. Use the authoritative hex palette in Section 3.1 and derive matching CSS values. Record this resolution in the implementation handoff.
+2. **Tailwind v4 mapping:** The appendix supplies bare HSL channels. Inspect the existing CSS conventions and map complete color values to semantic Tailwind utilities as needed; do not assume the token block alone establishes this mapping.
+3. **Contrast:** Verify actual color pairs in every relevant state. Do not assume the sample white-on-secondary button meets the specified normal-text contrast requirement. Adjust foreground or background as necessary. Pair coral with dark slate text.
+4. **Mobile sizing:** The source shows 32px small buttons and 40px default controls, and requires 44px mobile touch targets. Provide an effective target of at least 44 by 44 CSS pixels on mobile, with adequate spacing.
+5. **Version-sensitive examples:** Verify the supplied CLI commands, preset features, configuration fields, and package workarounds against installed versions and current official documentation before use. Investigate peer dependency conflicts before selecting a compatible version or override; do not automatically bypass checks.
+6. **Accessibility:** Radix supplies behavioral foundations. The application must still implement labels, descriptions, focus behavior, and accessible composition, then verify the finished interface.
+7. **Unspecified tokens:** Section 3.1 defines muted text, destructive/error, success, warning, and primary hover colors. Muted backgrounds, additional hover states, chart, sidebar, dark-theme, and some foreground tokens remain unspecified. Reuse existing project tokens and record unresolved requirements rather than assuming the supplied palette covers every state.
+
+### Shared Acceptance Criteria
+
+- [ ] **DS-AC-01:** Owned UI primitives use the specified directory and canonical class helper.
+- [ ] **DS-AC-02:** Configuration aliases resolve to the intended existing files and directories.
+- [ ] **DS-AC-03:** Semantic color utilities resolve correctly and color representations agree.
+- [ ] **DS-AC-04:** Normal text meets the supplied 4.5:1 contrast requirement, focus is visible, and applicable keyboard interactions work.
+- [ ] **DS-AC-05:** Mobile targets meet the supplied 44 by 44 CSS pixel requirement.
+- [ ] **DS-AC-06:** Loading skeletons match content geometry to limit layout shifts.
+- [ ] **DS-AC-07:** Existing applicable build, type-check, and Vitest checks pass. Identify unavailable checks explicitly.
+- [ ] **DS-AC-08:** Screen-specific requirements in Section 5 are completed and verified alongside the shared criteria.
+
+## 9. Recording UI Specifications by System Module
+
+`design.md` defines shared UI standards. Record each module's actual UI requirements in `docs/modules/<module>/ui-specification.md`, alongside its other module documentation. Use the module folders supplied by the user:
+
+```text
+docs/
+  modules/
+    01-user-management/
+      INDEX.md
+      ui-specification.md
+    02-property-listing/
+      INDEX.md
+      ui-specification.md
+    03-agent-management/
+      INDEX.md
+      ui-specification.md
+    04-sales-and-reports/
+      INDEX.md
+      ui-specification.md
+    05-database/
+      INDEX.md
+      ui-specification.md
+    06-audit/
+      INDEX.md
+      ui-specification.md
+    07-inquiry/
+      INDEX.md
+      ui-specification.md
+    08-ai-inquiry-assisted/
+      INDEX.md
+      ui-specification.md
+```
+
+This is the required documentation layout, based on the supplied screenshot. The screenshot establishes folder names, not implemented screens, permissions, or workflows. This section does not assert that these folders or module specifications already exist in the current workspace. Preserve other existing files and folders, including `docs/implementation/`, `docs/reports/`, `docs/superpowers/`, and `docs/system-modules/`.
+
+### 9.1 Agent Recording Workflow
+
+1. Identify the owning module and read its `INDEX.md`, current module specification, relevant feature specifications, and change records before recording UI behavior.
+2. Create or update the module's `ui-specification.md`. Record proposed behavior before implementation and reconcile it with delivered behavior afterward. Distinguish proposed, approved, implemented, and verified states; never infer approval from implementation.
+3. Reference the root `design.md` for shared tokens, component architecture, accessibility rules, and approved button styling. Avoid duplicating the palette in each module. Record any explicitly approved exception with its scope and rationale.
+4. Use the module template below and repeat Section 5's screen template for every screen, modal, drawer, or other distinct UI view that needs a specification. Record meaningful tabs and states within their owning screen unless they need a separate specification.
+5. Preserve existing requirement IDs. For new IDs, include the module number, such as `M02-SCR-01`, `M02-UI-001`, and `M02-AC-001`, to prevent collisions across modules.
+6. Link each screen to its requirements, relevant implementation paths, acceptance criteria, and verification evidence. Label missing evidence as pending or unavailable; do not claim a check passed without evidence.
+7. Register the UI specification in the module's `INDEX.md`. Link substantial feature UI specifications from the current UI specification rather than creating competing sources of truth.
+8. For cross-module journeys, choose one owning specification and link it from affected modules. Record handoff points and dependencies without duplicating the full workflow.
+9. After a UI change, update the affected screen specifications, module revision history, and a dated change/verification record. Follow the existing module naming convention. Dated records require YAML frontmatter containing `module`, `date`, `status`, and `affected_files`, and must be linked from `INDEX.md`.
+10. Do not invent a user-facing UI for a module merely because its folder exists. For a backend-only module, record `UI applicability: None` with the confirmed reason and links to any interfaces owned by other modules.
+
+### 9.2 Module UI Specification Template
+
+Copy the following structure into the owning module's `ui-specification.md` and complete it using confirmed requirements and implementation evidence.
 
 ```markdown
-### Design Update Proposal
+# [Module Name] — UI Specification
 
-**Target:** [Page or component name]
+- Module ID: [M01–M08]
+- Module folder: [Exact folder name]
+- UI applicability: [User-facing / Shared UI / None / Unresolved]
+- Specification status: [Draft / Approved / Superseded]
+- Implementation status: [Not started / In progress / Implemented / Not applicable]
+- Verification status: [Pending / Passed / Failed / Unavailable / Not applicable]
+- Last updated: [YYYY-MM-DD]
+- Owner: [Name or role, if known]
+- Shared design rules: [Root design.md](../../../design.md)
+- Current module specification: [Link to existing specification]
 
-**Existing Design:** [Brief findings and issues identified]
+## Purpose and Scope
+[Module purpose, supported user tasks, included UI, and exclusions.]
 
-**Proposed UI Changes:**
-- [Change 1]
-- [Change 2]
+## Roles and UI Access
+| Role | View / Action | Visible / Enabled When | Enforcement Reference |
+|---|---|---|---|
+| [Confirmed role] | [Screen or action] | [Condition] | [Permission requirement or server contract] |
 
-**Proposed UX Changes:**
-- [Improvement 1]
-- [Improvement 2]
+UI visibility does not replace server-side authorization.
 
-**Affected Files:**
-- [File path 1]
-- [File path 2]
+## Screen Inventory
+| Screen ID | Screen / View | Route or Entry Point | Roles | Specification Anchor | Implementation Status |
+|---|---|---|---|---|---|
+| M02-SCR-01 | [Name] | [Route, parent screen, or trigger] | [Roles] | [Link to screen section] | [Status] |
 
-**Risks:** [Potential conflicts or none identified]
+## User Journeys and Screen Transitions
+| Flow ID | Entry / Preconditions | Steps and Screen IDs | Success Outcome | Failure / Recovery | Cross-Module Handoff |
+|---|---|---|---|---|---|
+| M02-FLOW-01 | [Entry] | [Ordered interactions] | [Result] | [Recovery] | [Owning specification or N/A] |
 
-**Approval Required:** Yes
+## Screen Specifications
+[Repeat the screen template in design.md Section 5 for each inventory entry.
+Include layout/mockup references, UI elements, exact copy, interactions,
+validation, all applicable states, responsiveness, accessibility, data contracts,
+and screen acceptance criteria. Replace sample IDs with module-specific IDs.]
 
-**Status:** Awaiting user approval.
+## Module Business Rules and Dependencies
+| Rule / Requirement ID | UI Effect | Source | Dependent Module / Contract |
+|---|---|---|---|
+| [Existing ID] | [Behavior or constraint] | [Specification link] | [Dependency or N/A] |
+
+## Design Exceptions
+[None, or explicitly approved deviations with rationale and approval reference.]
+
+## Acceptance and Verification Traceability
+| Requirement ID | Screen / UI IDs | Acceptance Criterion ID | Verification Method | Evidence | Result |
+|---|---|---|---|---|---|
+| [ID] | [IDs] | M02-AC-001 | [Observable check] | [Evidence link or pending] | [Passed / Failed / Skipped / Unavailable / Pending] |
+
+## Open Questions and Assumptions
+| ID | Question / Assumption | Impact | Resolution / Source |
+|---|---|---|---|
+| [ID] | [Detail] | [Affected UI] | [Confirmed decision or pending] |
+
+## Revision History
+| Date | Affected Screen / Requirement IDs | Change | Change / Verification Record |
+|---|---|---|---|
+| [YYYY-MM-DD] | [IDs] | [Description] | [Link] |
 ```
 
-> **Do not implement changes until user approval is explicitly provided.**
+### 9.3 Module Entry Point Registration
+
+Add a link in each applicable module's `INDEX.md`:
+
+```markdown
+- [UI Specification](ui-specification.md) — Current module screens, interactions, states, and verification traceability.
+```
+
+### 9.4 Documentation Completion Criteria
+
+- [ ] The UI specification is saved under the correct module folder and linked from its `INDEX.md`.
+- [ ] UI applicability is explicitly recorded; actual screens and roles are supported by confirmed sources.
+- [ ] Every inventory entry has a matching detailed screen specification or an explicit cross-reference.
+- [ ] Journeys, permissions, validation, states, responsive behavior, and accessibility are documented where applicable.
+- [ ] Shared design rules are referenced, and approved exceptions are identified.
+- [ ] Requirement IDs, acceptance criteria, and verification evidence are traceable; pending work is labeled accurately.
+- [ ] Revision history and dated change records reflect the delivered changes without claiming unperformed verification.
+
+## Appendix A. Supplied shadcn/ui Technical Specification
+
+The following source is preserved for traceability. Use Section 8 to interpret conflicting examples. Source instructions describe future implementation requirements; their inclusion does not authorize unrelated actions or require running commands during this documentation update.
+
+# shadcn/ui Technical Specification & Architecture Guide
+
+**System:** Human Shelter Realty  
+**Document Type:** Technical Specification  
+**Date:** 2026-10-27  
+**Status:** Approved  
+**Affected Subsystem:** `frontend/src/components/ui/`, `frontend/src/utils/cn.js`, `frontend/components.json`  
+**Dependencies:** React 19, Tailwind CSS v4, Radix UI Primitives, `clsx`, `tailwind-merge`, `class-variance-authority`, `@tabler/icons-react` / `lucide-react`
 
 ---
 
+## 1. Executive Summary & Philosophy
+
+**shadcn/ui** is not an external component library distributed as a black-box `node_modules` dependency. Instead, it is an **open-source code distribution system** that copies accessible, customizable UI primitives directly into the project's codebase (`frontend/src/components/ui/`).
+
+### Core Architectural Axioms
+1. **Source Code Ownership:** All components live directly inside the repository. The engineering team has 100% control over the DOM structure, CSS classes, ARIA attributes, and runtime behavior.
+2. **Separation of Concerns:** 
+   - **Behavior & Accessibility:** Managed by headless **Radix UI** primitives (keyboard focus trap, screen-reader semantics, outside-click detection, ARIA state tracking).
+   - **Visual Styling:** Managed exclusively by **Tailwind CSS v4** and semantic CSS variables.
+   - **Variant Orchestration:** Managed declaratively using **Class Variance Authority (`cva`)**.
+3. **Zero Lock-In:** Components can be deleted, refactored, extended, or replaced individually without breaking package dependency graphs.
 
 ---
 
-## 9. COMPONENT ACCEPTANCE CRITERIA
+## 2. Directory Structure & Layer Blueprint
 
-For every approved component update:
-- Follow existing semantic design tokens; avoid duplicated hardcoded values.
-- Preserve existing props, events, data bindings, permissions, and behavior.
-- Specify applicable default, hover, active, focus, disabled, loading, empty, and error states.
-- Verify accessible names, keyboard use, error association, focus visibility, and meaningful status text.
-- Test the component at the existing project breakpoints and relevant zoom levels.
-- Record what was verified and what could not be tested.
+All shadcn/ui artifacts within Human Shelter Realty follow this layout:
 
-A component is complete only when approved acceptance criteria are met or explicitly documented as outstanding.
+```text
+frontend/
+├── components.json                  # shadcn CLI master configuration
+├── src/
+│   ├── components/
+│   │   ├── ui/                     # ATOMIC PRIMITIVES (shadcn distribution target)
+│   │   │   ├── button.jsx          # CVA button with Teal & Coral brand variants
+│   │   │   ├── dialog.jsx          # Radix Dialog primitive with backdrop blur
+│   │   │   ├── table.jsx           # High-density data table elements
+│   │   │   ├── badge.jsx           # Semantic status pills & indicators
+│   │   │   ├── input.jsx           # 40px/48px standard form controls
+│   │   │   ├── label.jsx           # Accessible form label bindings
+│   │   │   └── dropdown-menu.jsx   # Context & action menus
+│   │   ├── cards/                  # COMPOSABLE CARDS (Property Discovery, KPI)
+│   │   ├── modals/                 # DOMAIN MODALS (Due Diligence Dossier)
+│   │   └── layout/                 # STRUCTURAL CHROME (Header, Sidebar)
+│   └── utils/
+│       └── cn.js                   # Canonical class merging helper (clsx + tailwind-merge)
+```
 
-## 10. DESIGN TOKEN AND RESPONSIVE COMPATIBILITY
+---
 
-- First inspect the actual styling stack (CSS, Tailwind, component library, theme configuration).
-- Reuse its existing token location and naming convention. Example semantic names include `--color-primary`, `--color-surface`, and `--color-text-primary`.
-- Do not introduce a second design system or styling framework by default.
-- Use the grid and breakpoint specifications above as proposed defaults, not permission to replace existing responsive behavior.
-- Prefer existing application patterns for modal scroll-lock, focus management, and animation.
-- Honor reduced-motion settings for non-essential transitions and loading effects.
+## 3. Configuration Contract (`components.json`)
 
-## 11. CHANGE CLASSIFICATION AND APPROVAL
+The `components.json` file dictates how the shadcn CLI behaves when installing, updating, and scaffolding components:
 
-Classify every proposed change before implementing it:
+```json
+{
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "style": "default",
+  "rsc": false,
+  "tsx": false,
+  "tailwind": {
+    "config": "",
+    "css": "src/index.css",
+    "baseColor": "slate",
+    "cssVariables": true,
+    "prefix": ""
+  },
+  "iconLibrary": "tabler",
+  "rtl": false,
+  "aliases": {
+    "components": "@/components",
+    "utils": "@/utils/cn",
+    "ui": "@/components/ui",
+    "lib": "@/lib",
+    "hooks": "@/hooks"
+  },
+  "menuColor": "default",
+  "menuAccent": "subtle",
+  "registries": {}
+}
+```
 
-| Class | Examples | Approval |
+### Key Field Specifications:
+- **`css`:** Points to `src/index.css` (the Tailwind CSS v4 entry point).
+- **`aliases.utils`:** Set strictly to `@/utils/cn` to utilize the existing `frontend/src/utils/cn.js` and eliminate duplicate `lib/utils.js` files.
+- **`aliases.ui`:** Directs generated primitives into `@/components/ui`.
+- **`iconLibrary`:** Set to `tabler` (leveraging `@tabler/icons-react`) or `lucide` (leveraging `lucide-react`).
+
+---
+
+## 4. Design System Token Alignment (`design.md`)
+
+shadcn uses CSS custom properties defined in HSL format. The semantic tokens must strictly adhere to the Human Shelter Realty Design System:
+
+```css
+/* frontend/src/index.css */
+:root {
+  /* Canvas Ground & Surface Elevation */
+  --background: 210 40% 98%;          /* #F8FAFC Canvas */
+  --foreground: 222 47% 11%;          /* #1E293B Slate 800 */
+  --card: 0 0% 100%;                  /* #FFFFFF Surface */
+  --card-foreground: 222 47% 11%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 47% 11%;
+
+  /* Primary Brand: Teal (#0F766E) */
+  --primary: 175 77% 26%;
+  --primary-foreground: 0 0% 100%;
+
+  /* Secondary Brand: Cyan Teal (#14B8A6) */
+  --secondary: 173 80% 40%;
+  --secondary-foreground: 0 0% 100%;
+
+  /* High-Impact Conversion Accent: Coral (#FF6B6B) */
+  /* CRITICAL: Paired with dark slate #1E293B for WCAG 2.2 AA (>= 4.5:1) */
+  --accent: 0 100% 71%;
+  --accent-foreground: 222 47% 11%;
+
+  /* Borders, Inputs, Focus Rings */
+  --border: 214 32% 91%;             /* #E2E8F0 Hairline Border */
+  --input: 214 32% 91%;
+  --ring: 175 77% 26%;               /* #0F766E Focus Ring */
+
+  /* Standard Geometry Radius */
+  --radius: 0.5rem;                  /* 8px standard default (rounded-lg) */
+}
+```
+
+---
+
+## 5. Preset Lifecycle & Management
+
+shadcn supports sharable design presets that bundle base colors, themes, radius scales, and icon packages.
+
+```
+┌────────────────────────────────────────────────────────┐
+│                   PRESET LIFECYCLE                     │
+│                                                        │
+│   1. Inspect / Decode:                                 │
+│      npx shadcn preset decode <code-or-url>            │
+│                            │                           │
+│                            ▼                           │
+│   2. Fresh Setup:                                      │
+│      npx shadcn init --preset <code-or-url> -y         │
+│                            │                           │
+│                            ▼                           │
+│   3. Dynamic Switch on Existing Project:               │
+│      npx shadcn apply --preset <code-or-url>           │
+│                                                        │
+│   4. Partial Update (Theme & Font only):               │
+│      npx shadcn apply --preset <code> --only theme,font│
+└────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 6. Core Technical Patterns
+
+### 6.1 The Polymorphic Slot Pattern (`asChild`)
+Radix UI primitives utilize `@radix-ui/react-slot`. Passing `asChild` instructs the component not to render its default HTML element (e.g. `<button>`), but instead forward its styling, ref, and accessibility event handlers onto its direct child:
+
+```jsx
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+
+// Valid accessible <a> element with full button styling
+<Button asChild variant="default">
+  <Link to="/properties/HS-MK-2024-001">View Details</Link>
+</Button>
+```
+
+### 6.2 Declarative Variants with Class Variance Authority (`cva`)
+Components define their styling contract using `cva`. Additional brand-specific variants are declared in the variants schema:
+
+```javascript
+// Example CVA definition in src/components/ui/button.jsx
+export const buttonVariants = cva(
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#0F766E] disabled:pointer-events-none disabled:opacity-50",
+  {
+    variants: {
+      variant: {
+        default: "bg-[#0F766E] text-white hover:bg-[#115E59]",
+        coral: "bg-[#FF6B6B] text-[#1E293B] hover:brightness-95 font-bold shadow-xs",
+        secondary: "bg-[#14B8A6] text-white hover:bg-[#0F766E]",
+        outline: "border border-[#E2E8F0] bg-white text-[#1E293B] hover:bg-[#F8FAFC]",
+        destructive: "bg-[#DC2626] text-white hover:bg-[#B91C1C]",
+        ghost: "hover:bg-slate-100 text-[#1E293B]",
+      },
+      size: {
+        default: "h-10 px-4 py-2",
+        sm: "h-8 px-3 rounded-md",
+        lg: "h-12 px-6 rounded-lg text-sm",
+        icon: "h-10 w-10",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  }
+);
+```
+
+---
+
+## 7. Operational Guidelines & Troubleshooting
+
+| Issue / Failure | Technical Root Cause | Resolution Protocol |
 | :--- | :--- | :--- |
-| Visual | Color, spacing, typography, borders, layout | Required under standard design approval |
-| Interaction | Validation timing, search behavior, navigation feedback, modal handling | Explicitly itemize and approve behavior changes |
-| Functional | APIs, workflows, database operations, authentication, permissions, calculations | Separate explicit approval, outside the default design scope |
-
-Do not treat a visual-design request as authorization for new functionality. Preserve manual property availability and transaction-status updates by authorized users; never infer sales/reservations from UI actions or payments.
-
-## 12. SOURCE PROTECTION AND ROLLBACK
-
-Before proposed edits:
-1. Inspect repository status (`git status`, if available) and document pre-existing uncommitted changes.
-2. List the exact files expected to change and shared dependencies that could affect other pages.
-3. Describe a rollback strategy that does not discard user work.
-4. Stop after the proposal and wait for explicit approval.
-
-During implementation, do not reset, overwrite, or reformat unrelated work. If a change crosses the approved scope, stop and request approval again.
-
-## 13. REGRESSION AND ACCESSIBILITY VERIFICATION
-
-After approved edits:
-- Compare before-and-after screenshots for target pages when visual capture is available.
-- Inspect related shared-component usages and ensure unrelated pages are unchanged.
-- Check mobile, tablet, and desktop layouts, keyboard focus, zoom/reflow, contrast, validation, and overlays.
-- Test critical existing flows, including form input, navigation, saves, filters, and role-specific access where applicable.
-- Run only commands found in the actual project configuration; distinguish pre-existing failures from newly introduced failures.
-- Report modified files, verification results, failed/unavailable tests, and the safe rollback method.
-
-## 14. REQUIRED PROPOSAL ADDITIONS
-
-Extend the response format from Section 8 with:
-
-- **Change classification:** Visual / Interaction / Functional for each proposal.
-- **Existing dependencies:** Shared components, affected routes, and styling framework.
-- **Acceptance criteria:** Specific checks that establish completion.
-- **Rollback approach:** How to reverse only approved edits without losing user changes.
-- **Verification plan:** Actual project scripts and visual/interaction checks, or state what is not yet known.
-
-**The approval gate from Section 1 remains mandatory. No edits before approval.**
-
-## 15. SOFT MINIMALIST SAAS VISUAL DIRECTION
-
-**Design intent:** Calm, airy, structured, professional, readable. This is a refinement of the existing Modern SaaS system, not a replacement of its color palette, semantic tokens, component architecture, or approval-first workflow.
-
-### 15.1 Visual hierarchy and color restraint
-- Use `#F8FAFC` for the canvas and `#FFFFFF` for primary surfaces. Establish separation with whitespace and `#E2E8F0` hairline borders; use shadows only when elevation is meaningful.
-- Use primary teal `#0F766E` for the selected navigation state, the main page action, accessible focus accents, and limited key indicators. Use `#115E59` for primary hover; `#14B8A6` for restrained secondary accents.
-- Reserve coral `#FF6B6B` for a *small number* of meaningful callouts or conversion actions, never a competing action on every card. For coral buttons use dark slate `#1E293B` text, not white.
-- Prefer plain surfaces over gradients, glassmorphism, glow, strongly tinted cards, and large purely decorative illustrations. Any decorative asset must serve the user task and be approved when it changes existing pages.
-- Keep semantic success, warning, and error colors distinct from branding, including textual status labels.
-
-### 15.2 Airy dashboard layout
-- **Application shell:** A stable left sidebar plus a low-distraction top header for administrator/agent pages; the client website can retain its public navigation pattern.
-- **Sidebar:** Suggested expanded width 240–256px; white surface with subtle border, grouped labels, quiet icons, and a pale teal selected row. Collapse to an accessible drawer on small screens. Reuse existing dimensions if changing them would disturb the layout.
-- **Top header:** Suggested height 64–72px, white or near-white, with only necessary search, notifications, and user-menu controls.
-- **Content container:** Fluid, with a proposed maximum width of 1440px. Preserve existing 12/8/4-column grid and project breakpoints unless changes are explicitly approved.
-- **Outer padding:** Desktop 32px, tablet 24px, mobile 16px as design defaults. Space major sections by 24–32px, card interiors by 16–24px, and tightly related items by 8–16px.
-- **Cards:** Prefer a single low-contrast border, white surface, 8px radius, and at most a subtle shadow; avoid excessive nesting and redundant card wrappers.
-- **Typography:** Retain the Inter scale already defined. Use a clearly distinguished page heading, small supporting description, concise section headings, readable field labels, and subdued metadata. Do not shrink important data to fit dense layouts.
-- **Actions:** One clear primary action per task area; use neutral secondary actions. Destructive actions remain separate and explicitly labeled.
-
-### 15.3 Form layout and property-listing application
-- For long forms, propose a consistent seven-section structure where it matches the approved module specification: Basic Information, Location, Specifications, Pricing, Features, Media, Review.
-- On desktop, favor a primary form column and *optional* narrower preview/assistance column only where a live preview already exists or is separately approved. On mobile, stack content in reading order.
-- Use full-width fields for titles, descriptions, and addresses; use aligned two-column groups for short related fields on wider screens. Avoid squeezing labels or helper text.
-- Show progress, required markers, field-level errors, contextual help, and safe previous/next actions. Keep Save Draft accessible **only if supported by the current workflow**.
-- Do not add a preview, wizard, uploads, autosave, or any new field solely because this document depicts a layout. Propose such changes individually and secure approval first.
-- Preserve the existing field definitions, validations, uploads, permissions, data persistence, and manual status updates.
-
-### 15.4 Responsive behavior and accessibility
-- Preserve the existing grid and breakpoints; proposed layout patterns are defaults, not instructions to override working code.
-- Stack form fields and cards when needed, keep controls touch-accessible, and manage wide tables using an approved mobile pattern (horizontal scrolling or responsive detail cards).
-- Ensure meaningful focus visibility, keyboard access, accessible feedback, readable contrast, reflow at zoom, and reduced-motion behavior.
-- Favor short, subtle transitions (about 150–200ms) where motion adds clarity; avoid gratuitous animation.
-
-### 15.5 Visual design acceptance criteria
-- Main background and card surfaces use the approved palette without excessive color fills.
-- Key actions are obvious; teal and coral do not compete for attention.
-- Layout has consistent alignment, spacing, 8px standard radii, and readable content.
-- No unintended horizontal overflow, cramped controls, or decorative UI noise at supported widths.
-- Updated views remain consistent with related pages; no unrelated visual or functional regressions.
-- Before-and-after screenshots, available test results, and all exceptions are documented after approved implementation.
-
-### 15.6 Approval boundary
-This section defines a **visual direction**, not automatic implementation authorization. The agent must **inspect → analyze → propose → obtain explicit approval → implement only approved changes → verify**. Any new interactions, fields, workflow steps, sidebar resizing affecting other screens, or shared global token modifications must be itemized with affected files and risks in the proposal.
+| `No components.json found` | `shadcn apply` executed before initialization | Run `npx shadcn@latest init --preset <code-or-url>` to generate the configuration first. |
+| React 19 Peer Conflict (`ERESOLVE`) | Radix packages declaring React 18 in `peerDependencies` | Run `npx shadcn@latest add <component> --legacy-peer-deps` or define package overrides in `package.json`. |
+| Nested Interactive Control Error | Nesting `<button>` or `<a>` inside `<Button>` | Apply the `asChild` prop on the parent `<Button>` primitive. |
+| Fragmented Utility Helpers | Generation of redundant `src/lib/utils.js` | Ensure `components.json` points to `@/utils/cn`. |
+| Unintended Cumulative Layout Shift (CLS) | Skeleton loaders mismatching live component geometry | Render 1:1 geometry skeleton wrappers matching live element padding, height, and typography line heights. |
 
 ---
 
-## 16. BALANCED-COMPACT RESPONSIVE LAYOUT
+## 8. Verification & Compliance Checklist
 
-**Objective:** Implement adaptive layouts across Desktop, Tablet, and Mobile devices while preserving all existing functionality, fields, permissions, and business logic. Maintain balanced density without excessive whitespace or cramped data controls.
-
-### 16.1 Responsive Breakpoint Architecture
-- **Desktop:** $1024\text{px}$ and above (`lg` and `xl`).
-- **Tablet:** $768\text{px} - 1023\text{px}$ (`md` to `lg`).
-- **Mobile:** Below $768\text{px}$ (`< md`).
-
-### 16.2 Desktop Layout Standards ($\ge 1024\text{px}$)
-- **Container & Space Utilization:** Full-width fluid layout (`w-full`) eliminating arbitrary `max-w-[1440px]` restrictions. Main portal viewport stretches edge-to-edge with standard perimeter padding (`p-4 sm:p-6 lg:p-8`), completely removing dead outer side gutters on 1080p, 1440p, and ultrawide screens.
-- **Sidebar:** Expanded width approximately $220\text{px} - 240\text{px}$ (or $256\text{px}$ `w-64`), with collapsible icon rail mode (`w-16`).
-- **Summary Metrics:** Four KPI cards positioned in a single horizontal row (`grid-cols-4`).
-- **Toolbar:** Compact single-row toolbar integrating search, multi-dropdown status/role filters, sorting, and reset controls (40px standard touch height).
-- **Data Table:** Full-width primary column table with 10 structured columns, compact 56–64px row heights (`py-3.5`), compact horizontal cell padding (`px-3`), sticky identifier column pinning (`stickyFirstColumn`), and numbered pagination controls.
-- **Typography & Rhythm:** 14px body, 12–13px table text, 11px uppercase metadata labels. Section spacing: 24–32px, card padding: 16–24px.
-
-### 16.3 Tablet Layout Standards ($768\text{px} - 1023\text{px}$)
-- **Navigation:** Collapsible sidebar rail (`w-16`) or off-canvas navigation drawer with backdrop blur.
-- **Summary Metrics:** Balanced 2-column grid layout (`grid-cols-2`) rendering summary cards in a clean 2x2 matrix.
-- **Toolbar:** Adaptive flex layout with wrapping controls that prevent horizontal viewport stretching.
-- **Data Table:** Controlled horizontal scrolling (`overflow-x-auto custom-scrollbar`) with sticky identifier pinning (`stickyFirstColumn`) and minimum column widths to preserve full data fidelity without losing row context or clipping identity.
-- **Secondary Widgets & Dossiers:** Adaptive 2-column grid reflow (`md:grid-cols-2 lg:grid-cols-1` in dashboards; `md:col-span-5` and `md:col-span-7` in detail dossiers), ensuring side-by-side balance rather than tall single-column stacking.
-
-### 16.4 Mobile Layout Standards ($< 768\text{px}$)
-- **Navigation:** Sidebar completely replaced with an accessible slide-over navigation drawer.
-- **Summary Metrics:** 2-column card layout (`grid-cols-2`) avoiding excessive vertical thumb scrolling.
-- **Toolbar:** Vertically stacked search input on top with filter dropdowns grouped below.
-- **Responsive Entity Representation:** Wide tables transform into responsive mobile cards displaying essential information immediately (avatar, role, contact, status dot badge, key metrics) with prominent touch-friendly actions (`Review`, `Resend`, `View`).
-- **Dialogs & Forms:** Single-column form layouts with full touch accessibility and clean dismiss controls.
-
----
-
-## FINAL RULE
-
-Whenever the user requests a design update, follow this document as the single source of truth for the Soft Minimalist SaaS UI/UX direction, preserving the original color tokens and explicit approval requirements.
-
-**Inspect first. Propose changes. Obtain approval. Implement only approved changes. Verify results.**
-
+Before committing any component derived from shadcn/ui:
+- [ ] Component source is committed to `src/components/ui/` (never imported from `node_modules`).
+- [ ] All interactive elements are fully keyboard navigable (`Tab`, `Enter`, `Space`, `Escape`).
+- [ ] Color contrast passes WCAG 2.2 AA ($\ge 4.5:1$ for normal text, dark text on `#FF6B6B`).
+- [ ] Standard border radius adheres to 8px (`rounded-lg` / `var(--radius)`).
+- [ ] Touch targets on mobile measure at least $44\text{px} \times 44\text{px}$.
+- [ ] Existing build, type-check, and Vitest test suites execute successfully without regressions.

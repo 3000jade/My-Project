@@ -48,14 +48,14 @@ export default function BrokerReports() {
       <div className="bg-white rounded-2xl border border-gray-200/80 p-6 shadow-sm space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
-            <h3 className="text-lg font-display font-bold text-[#174849]">
+            <h3 className="text-lg font-display font-bold text-[#1E293B]">
               Sales Valuation Volume by Period (2026)
             </h3>
             <p className="text-xs text-gray-500 font-sans mt-0.5">
               Monthly property valuation conveyance trajectory.
             </p>
           </div>
-          <span className="text-xs font-bold uppercase tracking-wider text-[#266F71] bg-[#266F71]/10 px-3 py-1 rounded-full font-sans">
+          <span className="text-xs font-bold uppercase tracking-wider text-[#0F766E] bg-[#0F766E]/10 px-3 py-1 rounded-full font-sans">
             6-Month Aggregate
           </span>
         </div>
@@ -66,17 +66,17 @@ export default function BrokerReports() {
             return (
               <div key={idx} className="space-y-1.5 font-sans">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="font-bold text-[#174849]">{item.period}</span>
+                  <span className="font-bold text-[#1E293B]">{item.period}</span>
                   <div className="flex items-center gap-3">
                     <span className="text-gray-400">{item.count} Transactions</span>
-                    <span className="font-bold text-[#266F71]">
+                    <span className="font-bold text-[#0F766E]">
                       ₱{(item.volume / 1000000).toFixed(1)} Million
                     </span>
                   </div>
                 </div>
-                <div className="w-full h-3.5 bg-[#F1F0EC] rounded-full overflow-hidden">
+                <div className="w-full h-3.5 bg-[#F8FAFC] rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-gradient-to-r from-[#266F71] to-[#174849] rounded-full transition-all duration-700"
+                    className="h-full bg-gradient-to-r from-[#0F766E] to-[#115E59] rounded-full transition-all duration-700"
                     style={{ width: `${percentage}%` }}
                   />
                 </div>
@@ -90,7 +90,7 @@ export default function BrokerReports() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Sales by Agent Ranking Table */}
         <div className="bg-white rounded-2xl border border-gray-200/80 p-6 shadow-sm space-y-4 flex flex-col">
-          <h3 className="text-lg font-display font-bold text-[#174849] pb-3 border-b border-gray-100">
+          <h3 className="text-lg font-display font-bold text-[#1E293B] pb-3 border-b border-gray-100">
             Consultant Valuation Ranking
           </h3>
           <div className="overflow-x-auto custom-scrollbar flex-1">
@@ -106,10 +106,10 @@ export default function BrokerReports() {
               <tbody className="divide-y divide-gray-50">
                 {salesByAgent.map((agent, idx) => (
                   <tr key={idx} className="hover:bg-gray-50/50">
-                    <td className="py-3 font-semibold text-[#174849]">{agent.agent_name}</td>
+                    <td className="py-3 font-semibold text-[#1E293B]">{agent.agent_name}</td>
                     <td className="py-3 text-gray-600">{agent.deals}</td>
                     <td className="py-3 text-gray-500">{agent.active_listings}</td>
-                    <td className="py-3 text-right font-bold text-[#266F71]">
+                    <td className="py-3 text-right font-bold text-[#0F766E]">
                       ₱{(agent.volume / 1000000).toFixed(0)}M
                     </td>
                   </tr>
@@ -122,19 +122,19 @@ export default function BrokerReports() {
         {/* Sales by Property Type */}
         <div className="bg-white rounded-2xl border border-gray-200/80 p-6 shadow-sm space-y-5 flex flex-col justify-between">
           <div>
-            <h3 className="text-lg font-display font-bold text-[#174849] pb-3 border-b border-gray-100">
+            <h3 className="text-lg font-display font-bold text-[#1E293B] pb-3 border-b border-gray-100">
               Valuation Distribution by Property Type
             </h3>
             <div className="space-y-4 mt-4 font-sans">
               {salesByPropertyType.map((prop, idx) => (
                 <div key={idx} className="space-y-1">
                   <div className="flex justify-between text-xs">
-                    <span className="font-bold text-[#174849]">{prop.type}</span>
+                    <span className="font-bold text-[#1E293B]">{prop.type}</span>
                     <span className="text-gray-500">{prop.percentage}% • ₱{(prop.volume / 1000000).toFixed(0)}M</span>
                   </div>
-                  <div className="w-full h-2.5 bg-[#F1F0EC] rounded-full overflow-hidden">
+                  <div className="w-full h-2.5 bg-[#F8FAFC] rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-[#FB8E5D] rounded-full"
+                      className="h-full bg-[#FF6B6B] rounded-full"
                       style={{ width: `${prop.percentage}%` }}
                     />
                   </div>
@@ -143,7 +143,7 @@ export default function BrokerReports() {
             </div>
           </div>
 
-          <div className="p-4 bg-[#F1F0EC]/60 rounded-xl text-xs font-sans text-gray-600">
+          <div className="p-4 bg-[#F8FAFC]/60 rounded-xl text-xs font-sans text-gray-600">
             <strong>Key Insight:</strong> House & Lot estates account for 42% of total transaction valuations, followed by prime high-rise penthouses in Makati and Taguig.
           </div>
         </div>

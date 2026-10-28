@@ -31,6 +31,30 @@ export class SaleController {
   }
 
   /**
+   * GET /api/sales/pipeline-metrics
+   */
+  public static async getPipelineMetrics(req: AuthenticatedRequest, res: Response<ApiResponse>): Promise<void> {
+    try {
+      const user = req.user;
+      const agentId = user?.id || (req.query.agentId as string) || 'agent-1';
+      const metrics = await SaleService.getAgentSalesPipelineMetrics(agentId);
+
+      res.status(200).json({
+        success: true,
+        data: metrics,
+        message: 'Agent sales pipeline metrics calculated.',
+        timestamp: new Date().toISOString(),
+      });
+    } catch (err: any) {
+      res.status(500).json({
+        success: false,
+        error: err.message || 'Failed to calculate sales pipeline metrics.',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
+  /**
    * GET /api/sales/:id
    */
   public static async getById(req: Request, res: Response<ApiResponse>): Promise<void> {

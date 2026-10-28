@@ -82,7 +82,7 @@ export default function BrokerSales() {
       header: "Property",
       render: (row) => (
         <div>
-          <p className="font-bold text-[#174849] font-sans">{row.property_title}</p>
+          <p className="font-bold text-[#1E293B] font-sans">{row.property_title}</p>
           <p className="text-xs text-gray-400 font-sans">{row.property_location}</p>
         </div>
       )
@@ -102,7 +102,7 @@ export default function BrokerSales() {
     {
       header: "Recorded Valuation",
       render: (row) => (
-        <span className="font-bold text-[#266F71] font-sans">
+        <span className="font-bold text-[#0F766E] font-sans">
           ₱{(Number(row.property_value) || 0).toLocaleString()}
         </span>
       )
@@ -117,7 +117,7 @@ export default function BrokerSales() {
       render: (row) => (
         <button
           onClick={(e) => { e.stopPropagation(); setSelectedSale(row); }}
-          className="px-3 py-1.5 rounded-lg bg-[#F1F0EC] hover:bg-[#266F71] hover:text-white text-xs font-bold font-sans uppercase tracking-wider transition-colors cursor-pointer"
+          className="px-3 py-1.5 rounded-lg bg-[#F8FAFC] hover:bg-[#0F766E] hover:text-white text-xs font-bold font-sans uppercase tracking-wider transition-colors cursor-pointer"
         >
           Inspect Record
         </button>
@@ -134,7 +134,7 @@ export default function BrokerSales() {
           <button
             onClick={loadData}
             disabled={loading}
-            className="h-[46px] px-4 bg-white hover:bg-gray-50 text-[#174849] border border-gray-200 rounded-xl text-xs font-bold font-sans uppercase tracking-wider flex items-center gap-2 transition-all shadow-xs cursor-pointer"
+            className="h-[46px] px-4 bg-white hover:bg-gray-50 text-[#1E293B] border border-gray-200 rounded-xl text-xs font-bold font-sans uppercase tracking-wider flex items-center gap-2 transition-all shadow-xs cursor-pointer"
           >
             <span className={`material-symbols-outlined text-[18px] ${loading ? 'animate-spin' : ''}`}>
               refresh
@@ -165,7 +165,7 @@ export default function BrokerSales() {
           <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400 font-sans">
             Total Closed Valuation (Filtered)
           </span>
-          <p className="text-3xl font-display font-bold text-[#174849] mt-0.5">
+          <p className="text-3xl font-display font-bold text-[#1E293B] mt-0.5">
             {`₱${totalClosedValuation.toLocaleString()}`}
           </p>
         </div>
@@ -199,7 +199,7 @@ export default function BrokerSales() {
 
       {loading ? (
         <div className="py-24 flex flex-col items-center justify-center text-gray-400 gap-3 bg-white rounded-2xl border border-gray-200/80">
-          <span className="material-symbols-outlined animate-spin text-[40px] text-[#266F71]">
+          <span className="material-symbols-outlined animate-spin text-[40px] text-[#0F766E]">
             progress_activity
           </span>
           <p className="text-sm font-sans font-medium">Loading conveyance registry...</p>
@@ -240,7 +240,7 @@ export default function BrokerSales() {
             )}
             <button
               onClick={() => setSelectedSale(null)}
-              className="px-5 py-2 bg-[#266F71] hover:bg-[#174849] text-white rounded-xl text-xs font-bold uppercase tracking-wider font-sans cursor-pointer transition-colors"
+              className="px-5 py-2 bg-[#0F766E] hover:bg-[#115E59] text-white rounded-xl text-xs font-bold uppercase tracking-wider font-sans cursor-pointer transition-colors"
             >
               Close Dossier
             </button>
@@ -249,10 +249,10 @@ export default function BrokerSales() {
       >
         {selectedSale && (
           <div className="space-y-6 font-sans">
-            <div className="p-4 bg-[#F1F0EC] rounded-xl flex items-center justify-between">
+            <div className="p-4 bg-[#F8FAFC] rounded-xl flex items-center justify-between">
               <div>
                 <p className="text-xs text-gray-500">Transaction Valuation</p>
-                <p className="text-2xl font-display font-bold text-[#266F71]">
+                <p className="text-2xl font-display font-bold text-[#0F766E]">
                   ₱{(Number(selectedSale.property_value) || 0).toLocaleString()}
                 </p>
               </div>
@@ -262,12 +262,12 @@ export default function BrokerSales() {
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <p className="text-xs text-gray-400 uppercase tracking-wider font-bold">Property</p>
-                <p className="font-semibold text-[#174849] mt-1">{selectedSale.property_title}</p>
+                <p className="font-semibold text-[#1E293B] mt-1">{selectedSale.property_title}</p>
                 <p className="text-xs text-gray-500">{selectedSale.property_location}</p>
               </div>
               <div>
                 <p className="text-xs text-gray-400 uppercase tracking-wider font-bold">Purchasing Client</p>
-                <p className="font-semibold text-[#174849] mt-1">{selectedSale.client_name}</p>
+                <p className="font-semibold text-[#1E293B] mt-1">{selectedSale.client_name}</p>
               </div>
               <div>
                 <p className="text-xs text-gray-400 uppercase tracking-wider font-bold">Execution Date</p>

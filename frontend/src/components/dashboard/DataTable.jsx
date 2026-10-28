@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight, Inbox } from 'lucide-react';
 import { cn } from '@/utils/cn';
+import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
 
 export default function DataTable({
   columns = [],
@@ -40,11 +41,11 @@ export default function DataTable({
   return (
     <div className="bg-white rounded-lg border border-[#E2E8F0] shadow-2xs overflow-hidden flex flex-col">
       <div className="overflow-x-auto custom-scrollbar">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-[#F8FAFC] border-b border-[#E2E8F0]">
+        <Table className="w-full text-left border-collapse">
+          <TableHeader>
+            <TableRow className="bg-[#F8FAFC] border-b border-[#E2E8F0]">
               {selectable && (
-                <th className={cn(
+                <TableHead className={cn(
                   "w-10 px-3 py-3.5 text-center shrink-0",
                   stickyFirstColumn && "sticky left-0 z-20 bg-[#F8FAFC]"
                 )}>
@@ -55,10 +56,10 @@ export default function DataTable({
                     onChange={() => onToggleSelectAll && onToggleSelectAll(currentData.map(r => r[keyField]))}
                     className="w-4 h-4 rounded border-[#CBD5E1] text-[#0F766E] focus:ring-[#0F766E] cursor-pointer"
                   />
-                </th>
+                </TableHead>
               )}
               {columns.map((col, idx) => (
-                <th
+                <TableHead
                   key={idx}
                   className={cn(
                     "px-3 py-3.5 text-xs font-semibold text-[#1E293B]",
@@ -70,18 +71,18 @@ export default function DataTable({
                   )}
                 >
                   {col.header}
-                </th>
+                </TableHead>
               ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[#E2E8F0] text-xs">
+            </TableRow>
+          </TableHeader>
+          <TableBody className="divide-y divide-[#E2E8F0] text-xs">
             {currentData.length > 0 ? (
               currentData.map((row, rowIdx) => {
                 const rowKey = row[keyField] || rowIdx;
                 const isSelected = selectedKeys.has(rowKey);
 
                 return (
-                  <tr
+                  <TableRow
                     key={rowKey}
                     onClick={() => onRowClick && onRowClick(row)}
                     className={cn(
@@ -91,7 +92,7 @@ export default function DataTable({
                     )}
                   >
                     {selectable && (
-                      <td 
+                      <TableCell 
                         className={cn(
                           "w-10 px-3 py-3.5 text-center shrink-0",
                           stickyFirstColumn && cn(
@@ -107,10 +108,10 @@ export default function DataTable({
                           onChange={() => onToggleSelect && onToggleSelect(rowKey)}
                           className="w-4 h-4 rounded border-[#CBD5E1] text-[#0F766E] focus:ring-[#0F766E] cursor-pointer"
                         />
-                      </td>
+                      </TableCell>
                     )}
                     {columns.map((col, colIdx) => (
-                      <td
+                      <TableCell
                         key={colIdx}
                         className={cn(
                           "px-3 py-3.5 text-[#1E293B] align-middle",
@@ -123,14 +124,14 @@ export default function DataTable({
                         )}
                       >
                         {col.render ? col.render(row) : row[col.accessor]}
-                      </td>
+                      </TableCell>
                     ))}
-                  </tr>
+                  </TableRow>
                 );
               })
             ) : (
-              <tr>
-                <td
+              <TableRow>
+                <TableCell
                   colSpan={columns.length + (selectable ? 1 : 0)}
                   className="px-6 py-12 text-center text-slate-400"
                 >
@@ -138,11 +139,11 @@ export default function DataTable({
                     <Inbox className="w-8 h-8 text-slate-300 stroke-[1.5]" />
                     <p className="text-xs font-medium">{emptyMessage}</p>
                   </div>
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             )}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
 
       {/* Numbered Pagination Controls Matching Mockup */}

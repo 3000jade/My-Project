@@ -3,6 +3,7 @@ import { X, ExternalLink, Check, DollarSign, Home, Key, Shield, User } from 'luc
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/utils/cn';
 import propertyService, { toApiPayload } from '@/services/propertyService';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 
 const AGENT_OPTIONS = [
   'Elena Rossi',
@@ -154,21 +155,11 @@ export default function PropertyQuickEditDrawer({
   const currentStandardStatus = String(formData.standardStatus || '').trim().toLowerCase();
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden flex justify-end">
-      {/* Backdrop */}
-      <div
-        onClick={onClose}
-        className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity duration-200"
-      />
-
-      {/* Slide-over panel */}
-      <div 
-        data-lenis-prevent="true"
-        className="relative w-full max-w-lg bg-white h-full shadow-2xl flex flex-col z-10 border-l border-[#D8DFDF] animate-in slide-in-from-right duration-200"
-      >
+    <Sheet open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <SheetContent side="right" className="w-full max-w-lg p-0 flex flex-col h-full bg-white border-l border-[#E2E8F0] shadow-2xl overflow-y-auto [&>button]:hidden">
         
         {/* Header */}
-        <div className="px-6 py-4 border-b border-[#E5EBEB] flex items-center justify-between bg-[#FBFBF9]">
+        <div className="px-6 py-4 border-b border-[#E2E8F0] flex items-center justify-between bg-[#F8FAFC]">
           <div>
             <div className="flex items-center gap-2">
               <span className="font-mono text-[10px] text-[#0D4446] bg-[#0D4446]/10 px-2 py-0.5 rounded font-semibold uppercase tracking-wider">
@@ -375,7 +366,7 @@ export default function PropertyQuickEditDrawer({
             type="button"
             onClick={handleSave}
             disabled={isSaving}
-            className="flex items-center gap-2 px-5 py-2 rounded-lg bg-[#0D4446] hover:bg-[#083335] font-mono text-xs text-white font-semibold shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+            className="flex items-center gap-2 px-5 py-2 rounded-lg bg-[#0F766E] hover:bg-[#115E59] font-mono text-xs text-white font-semibold shadow-xs transition-colors cursor-pointer disabled:opacity-50"
           >
             {isSaving ? (
               <span>Saving...</span>
@@ -387,8 +378,7 @@ export default function PropertyQuickEditDrawer({
             )}
           </button>
         </div>
-
-      </div>
-    </div>
+      </SheetContent>
+    </Sheet>
   );
 }

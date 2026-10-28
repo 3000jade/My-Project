@@ -65,8 +65,12 @@ export function normalizeProperty(rawItem = {}) {
     ? Boolean(rawItem.is_published)
     : (normalizedStatus !== 'SOLD' && normalizedStatus !== 'INACTIVE');
 
-  const agentName = rawItem.agent_name || rawItem.agentName || rawItem.agent?.name || '';
-  const agentId = rawItem.agent_id || rawItem.agentId || rawItem.createdBy || '';
+  const explicitAgentName = rawItem.agent_name || rawItem.agentName || rawItem.agent?.name || '';
+  const agentId = rawItem.agent_id || rawItem.agentId || null;
+  const isCorporateDesk = !explicitAgentName && !agentId && !rawItem.list_agent_key && !rawItem.listAgentKey;
+  const agentName = explicitAgentName || (isCorporateDesk ? 'Human Shelter Realty Desk' : '');
+  const agentPhone = rawItem.agent_phone || rawItem.agentPhone || rawItem.agent?.phone || (isCorporateDesk ? '+63 2 8888 0000' : '');
+  const agentEmail = rawItem.agent_email || rawItem.agentEmail || rawItem.agent?.email || (isCorporateDesk ? 'inquiries@humanshelterrealty.com' : '');
 
   const bedroomsTotal = parseNullableNumber(rawItem.bedrooms_total ?? rawItem.bedroomsTotal ?? rawItem.specs?.bedroomsTotal ?? rawItem.beds ?? rawItem.specs?.beds ?? rawItem.bedrooms);
   const bathroomsTotal = parseNullableNumber(rawItem.bathrooms_total_integer ?? rawItem.bathroomsTotalInteger ?? rawItem.specs?.bathroomsTotalInteger ?? rawItem.baths ?? rawItem.specs?.baths ?? rawItem.bathrooms);
@@ -123,7 +127,25 @@ export function normalizeProperty(rawItem = {}) {
     is_published: isPublished,
     agent_id: agentId,
     agent_name: agentName,
-    agent: rawItem.agent || (agentName ? { id: agentId, name: agentName } : null),
+    agentName: agentName,
+    agent_phone: agentPhone,
+    agentPhone: agentPhone,
+    agent_email: agentEmail,
+    agentEmail: agentEmail,
+    is_corporate_desk: isCorporateDesk,
+    isCorporateDesk: isCorporateDesk,
+    agent: rawItem.agent ? {
+      ...rawItem.agent,
+      isCorporateDesk: Boolean(rawItem.agent.isCorporateDesk ?? isCorporateDesk),
+    } : {
+      id: agentId,
+      name: agentName,
+      title: isCorporateDesk ? 'Corporate Brokerage Desk' : 'Senior Property Specialist',
+      brokerage: 'Human Shelter Realty',
+      phone: agentPhone,
+      email: agentEmail,
+      isCorporateDesk,
+    },
     list_agent_key: rawItem.list_agent_key || rawItem.listAgentKey || null,
     listAgentKey: rawItem.list_agent_key || rawItem.listAgentKey || null,
     created_at: rawItem.created_at || rawItem.createdAt || null,

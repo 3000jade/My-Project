@@ -6,6 +6,21 @@
 import apiClient from './apiClient';
 
 export const mockDefaultProfiles = {
+  client: {
+    id: 'user-client-1',
+    name: 'Sophia Isabella Laurel',
+    firstName: 'Sophia',
+    lastName: 'Laurel',
+    email: 'client@pt.com',
+    phone: '+63 917 555 8899',
+    role: 'Registered Luxury Client',
+    rawRole: 'client',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+    bio: 'Private investor exploring high-yield prime estates and modern architectural condominiums in Bonifacio Global City and Ayala Alabang.',
+    preferredLocation: 'Bonifacio Global City, Taguig',
+    investmentBudget: '₱50,000,000 - ₱120,000,000',
+    verification_status: 'VERIFIED',
+  },
   broker: {
     id: 'user-broker-1',
     name: 'Alexander Sterling',
@@ -50,7 +65,7 @@ export const mockDefaultProfiles = {
  * Normalizes backend profile payload into consistent UI representation
  */
 export function normalizeProfile(raw = {}) {
-  const roleKey = (raw.role === 'broker' ? 'broker' : 'agent');
+  const roleKey = (['broker', 'agent', 'client'].includes(raw.role) ? raw.role : 'agent');
   const defaults = mockDefaultProfiles[roleKey] || mockDefaultProfiles.agent;
 
   const name = raw.name || raw.full_name || defaults.name;
@@ -62,6 +77,8 @@ export function normalizeProfile(raw = {}) {
 
   const displayRole = raw.role === 'broker'
     ? 'Principal Broker & Managing Director'
+    : raw.role === 'client'
+    ? 'Registered Luxury Client'
     : (raw.role_title || defaults.role);
 
   return {
@@ -75,12 +92,15 @@ export function normalizeProfile(raw = {}) {
     rawRole: raw.role || roleKey,
     avatar,
     bio: raw.bio || defaults.bio,
-    prc_license_no: raw.prc_license_no || defaults.prc_license_no,
-    prc_validity: raw.prc_validity || defaults.prc_validity,
-    dhsud_accreditation_no: raw.dhsud_accreditation_no || defaults.dhsud_accreditation_no,
-    dhsud_validity: raw.dhsud_validity || defaults.dhsud_validity,
-    firm_name: raw.firm_name || defaults.firm_name,
-    experience_years: raw.experience_years ?? defaults.experience_years,
+    preferredLocation: raw.preferredLocation || raw.preferred_location || defaults.preferredLocation || '',
+    investmentBudget: raw.investmentBudget || raw.investment_budget || defaults.investmentBudget || '',
+    notificationPreferences: raw.notificationPreferences || raw.notification_preferences || { email: true, sms: true, priceDrops: true },
+    prc_license_no: raw.prc_license_no || defaults.prc_license_no || '',
+    prc_validity: raw.prc_validity || defaults.prc_validity || '',
+    dhsud_accreditation_no: raw.dhsud_accreditation_no || defaults.dhsud_accreditation_no || '',
+    dhsud_validity: raw.dhsud_validity || defaults.dhsud_validity || '',
+    firm_name: raw.firm_name || defaults.firm_name || '',
+    experience_years: raw.experience_years ?? defaults.experience_years ?? 0,
     verification_status: raw.verification_status || 'VERIFIED',
     updated_at: raw.updated_at || new Date().toISOString(),
   };
