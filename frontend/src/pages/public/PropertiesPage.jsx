@@ -18,6 +18,7 @@ import { propertyService } from '../../services/propertyService';
 
 export default function PropertiesPage() {
   const [searchParams] = useSearchParams();
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const [sortBy, setSortBy] = useState('Newest');
   const [viewMode, setViewMode] = useState('split'); // 'split' | 'grid'
   const [mobileTab, setMobileTab] = useState('list'); // 'list' | 'map'
@@ -30,6 +31,15 @@ export default function PropertiesPage() {
 
   const [properties, setProperties] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Dynamic header visibility listener
+  useEffect(() => {
+    const handleHeaderVisibility = (e) => {
+      setIsHeaderVisible(e.detail?.isVisible ?? true);
+    };
+    window.addEventListener('header-visibility', handleHeaderVisibility);
+    return () => window.removeEventListener('header-visibility', handleHeaderVisibility);
+  }, []);
 
   useEffect(() => {
     async function fetchProperties() {
@@ -149,12 +159,13 @@ export default function PropertiesPage() {
   };
 
   const handleSelectProperty = (property) => {
-    setSelectedPropertyId(property.id);
+    const propId = property.id || property.ListingKey || property.listingKey || property.ListingId || property.listingId;
+    setSelectedPropertyId(propId);
     if (window.innerWidth < 1024) {
       setMobileTab('list');
     }
     setTimeout(() => {
-      const cardEl = document.getElementById(`property-card-${property.id}`);
+      const cardEl = document.getElementById(`property-card-${propId}`) || document.getElementById(`property-card-${property.id}`);
       if (cardEl) {
         cardEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
@@ -162,14 +173,18 @@ export default function PropertiesPage() {
   };
 
   return (
-    <div className="bg-[#FBFBF9] h-screen overflow-hidden w-full flex flex-col">
+    <div className="bg-[#F8FAFC] h-screen overflow-hidden w-full flex flex-col">
       {/* Top spacing below fixed navigation header */}
-      <div className="h-[80px] shrink-0" />
+      <div 
+        className={`shrink-0 transition-all duration-300 ease-in-out ${
+          isHeaderVisible ? 'h-[80px]' : 'h-0'
+        }`} 
+      />
 
       {/* Main Container */}
       <div className="flex-1 w-full px-4 md:px-6 lg:px-8 flex flex-col overflow-hidden pb-4">
         {/* Unified Search Bar & Quick District Chips (Non-sticky) */}
-        <div className="shrink-0 pt-2 pb-4">
+        <div className="shrink-0 pt-2 pb-3 transition-all z-20">
           <UnifiedSearchBar
             filters={filters}
             setFilter={setFilter}
@@ -186,7 +201,7 @@ export default function PropertiesPage() {
           <div>
             {activeFilterCount > 0 && (
               <div className="flex flex-wrap items-center gap-2 mb-3 min-h-[32px]">
-                <div className="flex items-center gap-1.5 text-[11px] font-bold font-sans uppercase tracking-[0.15em] text-[#174849] shrink-0 mr-1">
+                <div className="flex items-center gap-1.5 text-[11px] font-bold font-sans uppercase tracking-[0.15em] text-[#0F766E] shrink-0 mr-1">
                   <span className="material-symbols-outlined text-[16px]">tune</span>
                   Active Filtering ({activeFilterCount})
                 </div>
@@ -208,7 +223,7 @@ export default function PropertiesPage() {
                         if (!displayValue || displayValue.trim() === '') return null;
 
                         return (
-                          <div key={key} className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#174849]/10 text-[#174849] rounded-full text-[10px] font-bold font-sans uppercase tracking-wider border border-[#174849]/20 transition-all hover:bg-[#174849]/15 shrink-0">
+                          <div key={key} className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#0F766E]/10 text-[#0F766E] rounded-full text-[10px] font-bold font-sans uppercase tracking-wider border border-[#0F766E]/20 transition-all hover:bg-[#0F766E]/15 shrink-0">
                             <span>{displayValue}</span>
                             <button type="button" onClick={() => clearSpecificFilter(key)} className="hover:text-red-500 cursor-pointer flex items-center justify-center transition-colors">
                               <span className="material-symbols-outlined text-[14px]">close</span>
@@ -224,7 +239,7 @@ export default function PropertiesPage() {
                 </div>
               </div>
             )}
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold font-display text-[#174849] tracking-tight">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold font-display text-[#0F766E] tracking-tight">
               Available Properties
             </h1>
           </div>
@@ -237,7 +252,7 @@ export default function PropertiesPage() {
               </span>
               <div className="relative">
                 <select
-                  className="appearance-none bg-white border border-gray-200 rounded-xl text-[12px] font-bold uppercase tracking-wider text-[#174849] font-sans py-2 pr-9 pl-3.5 focus:border-[#174849] focus:ring-1 focus:ring-[#174849] outline-none shadow-sm cursor-pointer transition-all hover:border-[#174849]/50"
+                  className="appearance-none bg-white border border-gray-200 rounded-xl text-[12px] font-bold uppercase tracking-wider text-[#0F766E] font-sans py-2 pr-9 pl-3.5 focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-sm cursor-pointer transition-all hover:border-[#0F766E]/50"
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
                 >
@@ -245,7 +260,7 @@ export default function PropertiesPage() {
                   <option value="Price: High to Low">Price: High to Low</option>
                   <option value="Price: Low to High">Price: Low to High</option>
                 </select>
-                <span className="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-[#174849]/50 text-[18px]">
+                <span className="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-[#0F766E]/50 text-[18px]">
                   expand_more
                 </span>
               </div>
@@ -293,19 +308,27 @@ export default function PropertiesPage() {
                         <motion.div
                           key={property.id}
                           id={`property-card-${property.id}`}
-                          className={`h-full transition-all duration-300 rounded-2xl ${selectedPropertyId === property.id
-                              ? 'ring-2 ring-[#E76F51] shadow-2xl scale-[1.01]'
+                          className={`h-full transition-all duration-300 rounded-2xl ${
+                            selectedPropertyId === property.id
+                              ? 'ring-2 ring-[#0F766E] shadow-xl scale-[1.01]'
                               : hoveredPropertyId === property.id
-                                ? 'ring-2 ring-[#174849]/70 shadow-lg'
+                                ? 'ring-2 ring-[#0F766E]/50 shadow-md'
                                 : ''
-                            }`}
+                          }`}
                           onMouseEnter={() => setHoveredPropertyId(property.id)}
                           onMouseLeave={() => setHoveredPropertyId(null)}
                           initial={{ opacity: 0, scale: 0.95, y: 30 }}
                           animate={{ opacity: 1, scale: 1, y: 0 }}
                           transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1], delay: idx * 0.08 }}
                         >
-                          <PropertyCard property={property} variant="vertical" />
+                          <PropertyCard 
+                            property={property} 
+                            variant="vertical" 
+                            isSelected={selectedPropertyId === property.id}
+                            isHovered={hoveredPropertyId === property.id}
+                            onMouseEnter={() => setHoveredPropertyId(property.id)}
+                            onMouseLeave={() => setHoveredPropertyId(null)}
+                          />
                         </motion.div>
                       ))}
                     </div>
@@ -321,7 +344,7 @@ export default function PropertiesPage() {
                     size="lg"
                     icon="expand_more"
                     onClick={handleLoadMore}
-                    className="bg-[#174849] hover:bg-[#113536] text-white shadow-[0_10px_30px_rgba(23,72,73,0.2)] hover:-translate-y-1 transition-all border-none font-bold tracking-widest text-[12px] px-8 cursor-pointer"
+                    className="bg-[#0F766E] hover:bg-[#115E59] text-white shadow-[0_10px_30px_rgba(15,118,110,0.2)] hover:-translate-y-1 transition-all border-none font-bold tracking-widest text-[12px] px-8 cursor-pointer"
                   >
                     Load More Residences
                   </Button>
@@ -334,7 +357,7 @@ export default function PropertiesPage() {
               {displayedProperties.length === filteredProperties.length && filteredProperties.length > 0 && (
                 <div className="flex justify-center mt-16 mb-16">
                   <div className="inline-flex items-center gap-3 px-6 py-2 bg-gray-50 rounded-full border border-gray-100">
-                    <span className="material-symbols-outlined text-[#174849] text-sm">check_circle</span>
+                    <span className="material-symbols-outlined text-[#0F766E] text-sm">check_circle</span>
                     <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500 font-sans">
                       All {filteredProperties.length} Residences Displayed
                     </span>
@@ -378,7 +401,7 @@ export default function PropertiesPage() {
             <button
               type="button"
               onClick={() => setMobileTab((prev) => (prev === 'list' ? 'map' : 'list'))}
-              className="flex items-center gap-2 px-5 py-3 bg-[#174849] hover:bg-[#113536] text-white rounded-full font-bold text-xs uppercase tracking-wider shadow-xl active:scale-95 transition-all border border-[#E76F51]/40 backdrop-blur-md cursor-pointer"
+              className="flex items-center gap-2 px-5 py-3 bg-[#0F766E] hover:bg-[#115E59] text-white rounded-full font-bold text-xs uppercase tracking-wider shadow-xl active:scale-95 transition-all border border-[#FF6B6B]/40 backdrop-blur-md cursor-pointer"
             >
               <span className="material-symbols-outlined text-[18px]">
                 {mobileTab === 'list' ? 'map' : 'format_list_bulleted'}
