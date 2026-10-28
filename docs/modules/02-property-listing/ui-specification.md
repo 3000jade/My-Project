@@ -139,8 +139,21 @@ flowchart TD
 - [ ] **M02-SCR-01-AC-02:** Clicking row actions ellipsis opens `DropdownMenu` with keyboard-accessible focus (Arrow Up/Down, Enter).
 - [ ] **M02-SCR-01-AC-03:** Clicking "Quick Edit" opens `Sheet` drawer without full page reload.
 - [ ] **M02-SCR-01-AC-04:** On viewports <768px, table collapses into high-density property cards with stacked attributes.
+- [x] **M02-SCR-01-AC-05:** Dynamic publication indicator visualizes live status: Live (Teal pulse), Under Contract (Amber), Unpublished/Draft (Slate).
 
-#### 5.1.5 Component Specification: PropertyFilterToolbar (`PropertyFilterToolbar.jsx`)
+#### 5.1.5 Component Specification: PropertyQuickEditDrawer (`PropertyQuickEditDrawer.jsx`)
+- **Component File:** `frontend/src/components/cms/PropertyQuickEditDrawer.jsx`
+- **Requirement Reference:** `FR-PL-020`
+- **Purpose:** High-efficiency slide-out drawer (`Sheet`) allowing brokers to rapidly inspect and mutate listing details—including canonical RESO `StandardStatus`, list price, property type, and city—without leaving the management console.
+- **Canonical RESO StandardStatus Selector:**
+  - Provides canonical RESO options: `Active`, `Active Under Contract`, `Pending`, `Closed`, `Draft`.
+  - Bidirectionally synchronizes with PostgreSQL 3-state check constraint (`CHECK (status IN ('available', 'pending', 'sold'))`) and `isPublished` boolean flag via `mapStandardStatusToDbPayload`.
+- **Form Controls & Tokens:**
+  - Accessible Radix `Sheet` slide-over with `#0F766E` focus rings and `#E2E8F0` borders.
+  - Number formatting with `font-mono` prefix `₱` for price inputs.
+  - Submitting changes triggers in-place updates via `propertyService.updateProperty` and executes `onSuccess` callback to refresh the parent ledger seamlessly.
+
+#### 5.1.6 Component Specification: PropertyFilterToolbar (`PropertyFilterToolbar.jsx`)
 - **Component File:** `frontend/src/components/properties/PropertyFilterToolbar.jsx`
 - **Requirement Reference:** `FR-PL-017`
 - **Purpose:** Reusable, high-efficiency multi-criteria search and filter toolbar adhering to `design.md` tokens. Replaces fragmented inline dropdowns with a unified 3-tier filtering architecture.
@@ -286,12 +299,20 @@ Step 7: Quality Audit & Publication Review (Completeness score, RESO compliance 
 - **Role Access:** Broker, Admin
 
 #### 5.4.1 Visual Hierarchy & Tokens
-- **Header Banner:** Breadcrumbs (`Breadcrumb`), status pill (`Badge`), listing title, cadastral key in `font-mono`, and quick edit trigger.
+- **Header Banner:** Breadcrumbs (`Breadcrumb`), dynamic publication indicator badge, canonical RESO `StandardStatus` badge, listing title, cadastral key in `font-mono`, and quick edit trigger.
+- **Dynamic Publication Indicator:**
+  - **Live / Published:** Spruce Teal `#0F766E` with pulsing status beacon (`bg-teal-500 animate-pulse`).
+  - **Under Contract:** Amber `#F59E0B` (`bg-amber-500`).
+  - **Unpublished / Draft:** Slate `#64748B` (`bg-slate-400`).
+- **Canonical RESO StandardStatus Selector (In-Place Edit):**
+  - Allows broker to edit property status directly via a clean dropdown selector containing canonical RESO options (`Active`, `Active Under Contract`, `Pending`, `Closed`, `Draft`).
+  - Automatically translates selected RESO status to the PostgreSQL 3-state check constraint (`available`, `pending`, `sold`) and updates `isPublished` boolean flag in lockstep.
 - **Tabbed Dossier:**
   - Tab 1: **Overview & Specs** (Beds, baths, living area, floor plans, valuation).
   - Tab 2: **Confidential Dossier** (Gate codes, lockbox passkeys, seller phone, commission splits).
   - Tab 3: **Assignment & Revisions History** (Consultant handshakes, edit proposals, broker reviews).
-  - Tab 4: **Audit Trail** (Immutable timestamped change events from `public.property_audit_log`).
+  - Tab 4: **Location & Cadastre** (Interactive Leaflet cadastral pinpoint map, surrounding luxury properties, commute analysis card, and enlarged modal).
+  - Tab 5: **Audit Trail** (Immutable timestamped change events from `public.property_audit_log`).
 
 #### 5.4.2 shadcn/ui Component Refactoring Mapping
 
@@ -300,11 +321,14 @@ Step 7: Quality Audit & Publication Review (Completeness score, RESO compliance 
 | Dossier Tabs | `Tabs`, `TabsList`, `TabsTrigger`, `TabsContent` | `frontend/src/components/ui/tabs.jsx` | Underline tabs with `#0F766E` active indicator |
 | Confidential Cards | `Card`, `CardHeader`, `CardTitle`, `CardContent` | `frontend/src/components/ui/card.jsx` | Encrypted data cards with reveal-on-click toggle |
 | Audit History Table | `Table`, `TableRow`, `TableCell` | `frontend/src/components/ui/table.jsx` | Compact monospace timestamp audit table |
-| Status Pills | `Badge` | `frontend/src/components/ui/badge.jsx` | Active, Under Contract, Reserved, Closed |
+| Status Pills | `Badge` / `StatusBadge` | `frontend/src/components/dashboard/StatusBadge.jsx` | RESO status badges (`Active`, `Active Under Contract`, `Pending`, `Closed`, `Draft`) |
+| In-Place Status Selector | `Select`, `SelectTrigger`, `SelectContent`, `SelectItem` | `frontend/src/components/ui/select.jsx` | Canonical RESO StandardStatus options mapping to DB payload |
 
 #### 5.4.3 Acceptance Criteria
 - [ ] **M02-SCR-04-AC-01:** Accessing Tab 2 verifies broker authentication before decrypting confidential remarks.
 - [ ] **M02-SCR-04-AC-02:** Assignment status clearly displays whether the listing is `UNASSIGNED`, `PENDING_CONFIRMATION`, `ACCEPTED`, or `REJECTED`.
+- [x] **M02-SCR-04-AC-03:** In-place status selector exposes canonical RESO options (`Active`, `Active Under Contract`, `Pending`, `Closed`, `Draft`) and seamlessly updates DB state without violating PostgreSQL 3-state constraints.
+- [x] **M02-SCR-04-AC-04:** Header dynamically reflects publication state with pulsating Teal badge for live properties and Amber/Slate badges for pending/draft inventory.
 
 ---
 
@@ -428,6 +452,31 @@ import { Select, SelectTrigger, SelectContent, SelectItem } from "@/components/u
 </Button>
 ```
 
+### Approved StatusBadge Design Tokens (`StatusBadge.jsx`)
+
+The canonical `StatusBadge` component (`frontend/src/components/dashboard/StatusBadge.jsx`) enforces strict Modern SaaS design token compliance across all property, transaction, and assignment lifecycles:
+
+| Semantic State | Canonical RESO / Platform Status | Visual Tokens & Classes | Foreground / Border |
+| :--- | :--- | :--- | :--- |
+| **Active / Available** | `Active`, `available` | `bg-teal-50 text-teal-800 border-teal-200` | Primary Spruce Teal `#0F766E` |
+| **Under Contract / Pending** | `Active Under Contract`, `pending`, `Pending Approval` | `bg-amber-50 text-amber-800 border-amber-200` | Warm Amber `#F59E0B` |
+| **Reserved / Action Required** | `Reserved`, `Action Required`, `Rejected` | `bg-coral-50 text-coral-800 border-coral-200` | Approved Coral `#FF6B6B` |
+| **Draft / Closed / Inactive** | `Draft`, `Closed`, `sold`, `Archived` | `bg-slate-100 text-slate-700 border-slate-200` | Slate Gray `#334155` |
+
+```jsx
+// StatusBadge Canonical Usage
+import StatusBadge from '@/components/dashboard/StatusBadge';
+
+// Renders Spruce Teal badge with subtle border
+<StatusBadge status="Active" />
+
+// Renders Warm Amber badge
+<StatusBadge status="Active Under Contract" />
+
+// Renders Slate badge
+<StatusBadge status="Draft" />
+```
+
 ---
 
 ## 7. Responsive Breakpoints & Viewport Rules
@@ -515,3 +564,4 @@ import { Select, SelectTrigger, SelectContent, SelectItem } from "@/components/u
 | `2026-10-27` | All Module 02 Functions | Initial ISO/IEC/IEEE functional specification delivered | `2026-10-27-property-listings-functions-specification.md` |
 | `2026-10-28` | `M02-SCR-02`, `M02-SCR-03` | Decoupled sales agent assignment from intake; relocated assignment to Agent Management | `2026-10-28-property-input-and-agent-assignment-scope-redefinition.md` |
 | `2026-10-28` | All Module 02 Screens | Established comprehensive UI specification and shadcn/ui refactoring blueprint adhering to `design.md` | `ui-specification.md` (this document) |
+| `2026-10-28` | `M02-SCR-01`, `M02-SCR-04` | Registered FR-PL-020: StandardStatus alignment across `BrokerPropertyDetail.jsx` and `PropertyQuickEditDrawer.jsx`, dynamic publication indicators, and `StatusBadge.jsx` tokens | `2026-10-28-property-status-alignment-verification.md` |
