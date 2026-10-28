@@ -2749,6 +2749,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                         Road Frontage (m) <span className="text-[#FF6B6B]">*</span>
                       </label>
                       <input
+                        id="frontage-meters-input"
                         type="number"
                         min="0"
                         step="any"
@@ -2767,6 +2768,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                         Lot Depth (m) <span className="text-[#FF6B6B]">*</span>
                       </label>
                       <input
+                        id="depth-meters-input"
                         type="number"
                         min="0"
                         step="any"

@@ -169,7 +169,9 @@ function AppRoutes({ isAppLoading }) {
           <Route path="dashboard" element={<BrokerDashboard />} />
           <Route path="properties" element={<BrokerProperties />} />
           <Route path="properties/select-type" element={<BrokerPropertyTypeSelect />} />
+          <Route path="properties/types" element={<BrokerPropertyTypeSelect />} />
           <Route path="properties/create" element={<BrokerCreateListings />} />
+          <Route path="properties/new" element={<BrokerCreateListings />} />
           <Route path="properties/:id/edit" element={<BrokerCreateListings />} />
           <Route path="properties/:id" element={<BrokerPropertyDetail />} />
           <Route path="inquiries" element={<BrokerInquiries />} />
