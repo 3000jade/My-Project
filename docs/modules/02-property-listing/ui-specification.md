@@ -222,16 +222,16 @@ flowchart TD
   - "Previous Step" (`Button` variant `ghost`)
   - "Next Step" / "Publish Listing" (`Button` variant `coral` with Slate text `#1E293B` for review step; variant `default` for intermediate steps).
 
-#### 5.2.2 7-Step Architecture & shadcn/ui Refactoring
+#### 5.2.2 7-Step Architecture & shadcn/ui Refactoring (FR-PL-022)
 
 ```text
-Step 1: Basic Property Information (Listing Title, Transaction Purpose, Property Category, Description)
-Step 2: Location & PSGC Cadastre (Street, Barangay, City, Province, Region, Coordinates Lat/Lng)
-Step 3: Architectural Specifications (Beds, Baths, Living Area sqm, Lot Area sqm, Year Built, Features)
-Step 4: Media & Digital Assets (Cover Photo, Gallery, Floor Plans PDF, Drone Video URL, 3D Virtual Tour)
-Step 5: Valuation & Financials (List Price PHP, Association Fee, Real Property Tax, Commission Structure)
-Step 6: Legal & Due Diligence (CCT/TCT Title Number, Tax Declaration, Encumbrance Notes, Private Remarks)
-Step 7: Quality Audit & Publication Review (Completeness score, RESO compliance verification, Publish CTA)
+Step 1: Listing Overview (Title, Marketing Tagline, Cadastral Reference Code, Transaction Purpose, Development Condition, Assigned Listing Agent)
+Step 2: Location & Address (Cadastral Coordinates, Region/Province/City/Barangay, Branched Address: Condo [Building, Tower, Floor, Unit] vs Land [Subdivision, Phase, Block, Lot])
+Step 3: Property Specifications (Tailored Asset Specs: Land [Frontage, Depth, Lot Position, Terrain, Sun Facing, Title]; Condo [Usable Floor Area, Balcony, Unit Layout, Parking]; House & Lot [Dual Area, Stories, Beds, Baths, Carport, Staff Quarters])
+Step 4: Pricing & Terms (Asking Price / Rent Valuation, Currency Selector, Price Term, Association Dues, Lease Terms)
+Step 5: Features & Amenities (Interior & Spatial Finishes, Exterior & Grounds Architecture, Community, Utilities & Security Infrastructure)
+Step 6: Photos & Maps (Listing Photography, Architectural Floor Plans, Video Walk-Throughs, 3D Virtual Tours, Legal Documents)
+Step 7: Review & Publish (Audit summary, draft vs publication requirements check, Save Draft, Publish Listing Now)
 ```
 
 | Studio Component / Section | Target shadcn/ui Primitive | Implementation Path | Variant / Configuration |

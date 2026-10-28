@@ -1,8 +1,8 @@
 ---
 module: 02-property-listing
 title: Property Listing Module
-last_updated: 2026-10-28
-total_documents: 33
+last_updated: 2026-10-29
+total_documents: 34
 ---
 
 # Property Listing Module — Master Index
@@ -54,6 +54,7 @@ All updates and technical reports for this module are ordered chronologically by
 | `2026-10-28` | [2026-10-28-property-status-alignment-verification.md](./2026-10-28-property-status-alignment-verification.md) | Verification Record — Unified Property Status Alignment & Synchronization Engine (FR-PL-020) |
 | `2026-10-28` | [2026-10-28-google-maps-embed-cadastral-verification.md](./2026-10-28-google-maps-embed-cadastral-verification.md) | Verification Record — Google Maps Embed Interface Integration in Broker Listing Studio |
 | `2026-10-28` | [2026-10-28-public-properties-immersive-status-and-layout-verification.md](./2026-10-28-public-properties-immersive-status-and-layout-verification.md) | Verification Record — Public Property Card Lifecycle Status Presentation & Dynamic Viewport Adaptation (FR-PL-021) |
+| `2026-10-29` | [2026-10-29-property-listing-form-scope-adaptation-verification.md](./2026-10-29-property-listing-form-scope-adaptation-verification.md) | Verification Record — Property Listing Form Scope Adaptation & Schema v1.0 Intake Studio (FR-PL-022) |
 
 ---
 
