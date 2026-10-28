@@ -245,7 +245,7 @@ describe('BrokerCreateListings - Form Fields & Step Navigation', () => {
     // Lot Area input must be absent for Condominium
     expect(screen.queryByLabelText(/Lot Area \*/i)).not.toBeInTheDocument();
     // Floor Area must be present
-    expect(screen.getByPlaceholderText(/e\.g\. 450/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/e\.g\. (118|450)/i)).toBeInTheDocument();
   });
 
   it('adapts Section 3 for Subdivision Lot by hiding interior room fields', () => {
@@ -262,6 +262,34 @@ describe('BrokerCreateListings - Form Fields & Step Navigation', () => {
     expect(screen.queryByPlaceholderText(/e\.g\. 450/i)).not.toBeInTheDocument();
     // Land informational notice should be visible
     expect(screen.getByText(/Vacant Land listing selected/i)).toBeInTheDocument();
+  });
+
+  it('renders Schema v1.0 specifications for Subdivision Lot (residentialLot) with dimensions, terrain, and title', () => {
+    mockLocation = { search: '?type=residentialLot', state: null };
+    renderComponent();
+
+    // Navigate to Step 3 (Specifications)
+    fireEvent.click(screen.getAllByText(/Specifications/i)[0]);
+
+    // Check tailored land fields
+    expect(screen.getByPlaceholderText(/e\.g\. 15/i)).toBeInTheDocument(); // Road Frontage (m)
+    expect(screen.getByPlaceholderText(/e\.g\. 18/i)).toBeInTheDocument(); // Lot Depth (m)
+    expect(screen.getByText(/Topography \/ Terrain/i)).toBeInTheDocument();
+    expect(screen.getByText(/Cadastral Survey Reference/i)).toBeInTheDocument();
+    expect(screen.getByText(/Property Title Status/i)).toBeInTheDocument();
+  });
+
+  it('renders Schema v1.0 specifications for Condominium with usable floor area and balcony view', () => {
+    mockLocation = { search: '?type=condominium', state: null };
+    renderComponent();
+
+    // Navigate to Step 3 (Specifications)
+    fireEvent.click(screen.getAllByText(/Specifications/i)[0]);
+
+    // Check tailored condo fields
+    expect(screen.getByPlaceholderText(/e\.g\. 118/i)).toBeInTheDocument(); // Floor Area
+    expect(screen.getByText(/Balcony Details/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/e\.g\. Makati CBD Skyline/i)).toBeInTheDocument(); // Balcony View Facing
   });
 
   it('initializes property type from URL query parameter ?type=Condominium', () => {

@@ -348,6 +348,22 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
     floor_level: '',
     tower_name: '',
     furnishing: 'Fully Furnished',
+    // Schema v1.0 Tailored Asset Specification Fields
+    frontage_meters: '',
+    depth_meters: '',
+    lot_position: 'corner',
+    terrain: 'level',
+    facing_direction: 'east',
+    cadastral_reference: '',
+    title_type: 'tct',
+    title_status: 'clean',
+    has_balcony: false,
+    balcony_area: '',
+    balcony_facing: '',
+    condo_unit_type: '2bedroom',
+    has_dedicated_parking_slot: false,
+    parking_slot_number: '',
+    has_maids_room: false,
     status: 'AVAILABLE',
     standard_status: 'Active',
     is_published: true,
@@ -2654,7 +2670,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                         type="number"
                         step="any"
                         min="0"
-                        placeholder="e.g. 450"
+                        placeholder={isCondo ? "e.g. 118" : "e.g. 450"}
                         value={formData.living_area}
                         onChange={e => {
                           const val = e.target.value === '' ? '' : Math.max(0, parseFloat(e.target.value) || 0);
@@ -2725,20 +2741,136 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                   </div>
                 )}
 
-                {/* Land Frontage / Access Road */}
+                {/* Land Specific: Dimensions, Position, Terrain, Title */}
                 {isLand && (
-                  <div className="space-y-1.5 md:col-span-2">
-                    <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
-                      Lot Frontage / Road Access
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. 25m frontage along 14m wide concrete road"
-                      value={formData.lot_frontage}
-                      onChange={e => { setIsDirty(true); setFormData({ ...formData, lot_frontage: e.target.value }); }}
-                      className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
-                    />
-                  </div>
+                  <>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
+                        Road Frontage (m) <span className="text-[#FF6B6B]">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="any"
+                        placeholder="e.g. 15"
+                        value={formData.frontage_meters || ''}
+                        onChange={e => {
+                          setIsDirty(true);
+                          setFormData({ ...formData, frontage_meters: e.target.value, lot_frontage: `${e.target.value}m frontage` });
+                        }}
+                        className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
+                        Lot Depth (m) <span className="text-[#FF6B6B]">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="any"
+                        placeholder="e.g. 18"
+                        value={formData.depth_meters || ''}
+                        onChange={e => {
+                          setIsDirty(true);
+                          setFormData({ ...formData, depth_meters: e.target.value });
+                        }}
+                        className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
+                        Lot Position / Cut
+                      </label>
+                      <select
+                        value={formData.lot_position || 'corner'}
+                        onChange={e => {
+                          setIsDirty(true);
+                          setFormData({ ...formData, lot_position: e.target.value });
+                        }}
+                        className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
+                      >
+                        <option value="corner">Corner Lot</option>
+                        <option value="inner">Regular / Inner Lot</option>
+                        <option value="through">Through Lot (Dual Road Access)</option>
+                        <option value="end">End / Cul-de-sac Lot</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
+                        Topography / Terrain
+                      </label>
+                      <select
+                        value={formData.terrain || 'level'}
+                        onChange={e => {
+                          setIsDirty(true);
+                          setFormData({ ...formData, terrain: e.target.value });
+                        }}
+                        className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
+                      >
+                        <option value="level">Flat / Level</option>
+                        <option value="rolling">Gently Rolling</option>
+                        <option value="sloping">Sloping / Hillside</option>
+                        <option value="elevated">Elevated (Overlooking / Ridge)</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
+                        Sun Orientation / Facing
+                      </label>
+                      <select
+                        value={formData.facing_direction || 'east'}
+                        onChange={e => {
+                          setIsDirty(true);
+                          setFormData({ ...formData, facing_direction: e.target.value });
+                        }}
+                        className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
+                      >
+                        <option value="east">East (Morning Sun)</option>
+                        <option value="west">West (Afternoon Sun)</option>
+                        <option value="north">North</option>
+                        <option value="south">South</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
+                        Property Title Status
+                      </label>
+                      <select
+                        value={formData.title_status || 'clean'}
+                        onChange={e => {
+                          setIsDirty(true);
+                          setFormData({ ...formData, title_status: e.target.value });
+                        }}
+                        className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
+                      >
+                        <option value="clean">Clean Title (TCT)</option>
+                        <option value="mortgaged">Under Bank Mortgage</option>
+                        <option value="tax_declaration">Tax Declaration Only</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1.5 md:col-span-2">
+                      <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
+                        Cadastral Survey Reference
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Lot 4, Block 12, Psd-04-098231"
+                        value={formData.cadastral_reference || formData.cadastralLotId || ''}
+                        onChange={e => {
+                          setIsDirty(true);
+                          setFormData({ ...formData, cadastral_reference: e.target.value, cadastralLotId: e.target.value });
+                        }}
+                        className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors font-mono"
+                      />
+                    </div>
+                  </>
                 )}
 
               </div>
@@ -2915,32 +3047,114 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
 
               </div>
 
-              {/* Condo Specific: Floor Level & Tower */}
+              {/* Condo Specific: Floor Level, Tower, Balcony & Layout */}
               {isCondo && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
-                      Floor Level
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. 28th Floor, Unit 2804"
-                      value={formData.floor_level}
-                      onChange={e => { setIsDirty(true); setFormData({ ...formData, floor_level: e.target.value }); }}
-                      className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
-                    />
+                <div className="space-y-4 pt-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
+                        Floor Level
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. 28th Floor, Unit 2804"
+                        value={formData.floor_level}
+                        onChange={e => { setIsDirty(true); setFormData({ ...formData, floor_level: e.target.value }); }}
+                        className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
+                        Tower / Building Name
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Horizon Tower B"
+                        value={formData.tower_name}
+                        onChange={e => { setIsDirty(true); setFormData({ ...formData, tower_name: e.target.value }); }}
+                        className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
+                      />
+                    </div>
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
-                      Tower / Building Name
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Horizon Tower B"
-                      value={formData.tower_name}
-                      onChange={e => { setIsDirty(true); setFormData({ ...formData, tower_name: e.target.value }); }}
-                      className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
-                    />
+
+                  <div className="border-t border-slate-100 pt-3">
+                    <h5 className="text-xs font-bold text-[#0F766E] uppercase tracking-wider flex items-center gap-1.5 pb-2">
+                      <span className="material-symbols-outlined text-[16px]">balcony</span>
+                      <span>Balcony Details & Strata Unit Configuration</span>
+                    </h5>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
+                          Unit Layout
+                        </label>
+                        <select
+                          value={formData.condo_unit_type || '2bedroom'}
+                          onChange={e => {
+                            setIsDirty(true);
+                            setFormData({ ...formData, condo_unit_type: e.target.value });
+                          }}
+                          className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
+                        >
+                          <option value="studio">Studio Unit</option>
+                          <option value="1bedroom">1-Bedroom Executive</option>
+                          <option value="2bedroom">2-Bedroom Suite</option>
+                          <option value="3bedroom">3-Bedroom Prime</option>
+                          <option value="penthouse">Penthouse Suite</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
+                          Balcony Area (sqm)
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="any"
+                          placeholder="e.g. 12"
+                          value={formData.balcony_area || ''}
+                          onChange={e => {
+                            const val = e.target.value;
+                            setIsDirty(true);
+                            setFormData({ ...formData, balcony_area: val, has_balcony: Boolean(parseFloat(val) > 0) });
+                          }}
+                          className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
+                          Balcony View Facing
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Makati CBD Skyline & Pasig River"
+                          value={formData.balcony_facing || ''}
+                          onChange={e => {
+                            setIsDirty(true);
+                            setFormData({ ...formData, balcony_facing: e.target.value });
+                          }}
+                          className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5 sm:col-span-3">
+                        <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
+                          Dedicated Parking Slot Number
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Basement 2, Slot #142"
+                          value={formData.parking_slot_number || ''}
+                          onChange={e => {
+                            setIsDirty(true);
+                            setFormData({ ...formData, parking_slot_number: e.target.value, has_dedicated_parking_slot: Boolean(e.target.value.trim()) });
+                          }}
+                          className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors font-mono"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
