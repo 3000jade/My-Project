@@ -14,6 +14,7 @@ import PageHeader from '../../../components/dashboard/PageHeader';
 import DashboardModal from '../../../components/dashboard/DashboardModal';
 import { Button, buttonVariants } from '../../../components/ui/button';
 import { Badge } from '../../../components/ui/badge';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, useToast, Toaster } from '../../../components/ui';
 import propertyService, { normalizeProperty, toApiPayload } from '../../../services/propertyService';
 import { useAuth } from '../../../context/AuthContext';
 import mapsService from '../../../services/mapsService';
@@ -216,6 +217,7 @@ function SearchableSelect({
           )}
         </div>
       )}
+      <Toaster />
     </div>
   );
 }
@@ -1745,7 +1747,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
       )}
 
       {/* 7-Step Navigation Stepper Header */}
-      <div className="bg-white p-4 sm:p-5 rounded-lg border border-[#E2E8F0] shadow-xs mb-6 overflow-x-auto custom-scrollbar">
+      <div data-testid="broker-card" className="bg-white p-4 sm:p-5 rounded-lg border border-[#E2E8F0] shadow-xs mb-6 overflow-x-auto custom-scrollbar">
         <div className="flex items-center justify-between min-w-[720px] relative">
           {/* Subtle background connecting track */}
           <div className="absolute top-4 left-8 right-8 h-[2px] bg-[#E2E8F0] -z-0" />
@@ -1789,7 +1791,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
         {/* SECTION 1: BASIC PROPERTY INFORMATION */}
         {/* ========================================================================= */}
         {currentStep === 1 && (
-          <div className="bg-white rounded-lg border border-[#E2E8F0] p-6 sm:p-8 shadow-xs space-y-6 animate-in fade-in slide-in-from-bottom-2">
+          <div data-testid="broker-card" className="bg-white rounded-lg border border-[#E2E8F0] p-6 sm:p-8 shadow-xs space-y-6 animate-in fade-in slide-in-from-bottom-2">
             <div className="pb-3 border-b border-[#E2E8F0] flex items-center justify-between">
               <h3 className="text-base font-bold text-[#1E293B] flex items-center gap-2">
                 <FileText className="w-4 h-4 text-[#0F766E]" />
@@ -1934,7 +1936,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
         {/* SECTION 2: PROPERTY LOCATION */}
         {/* ========================================================================= */}
         {currentStep === 2 && (
-          <div className="bg-white rounded-lg border border-[#E2E8F0] p-6 sm:p-8 shadow-xs space-y-6 animate-in fade-in slide-in-from-bottom-2">
+          <div data-testid="broker-card" className="bg-white rounded-lg border border-[#E2E8F0] p-6 sm:p-8 shadow-xs space-y-6 animate-in fade-in slide-in-from-bottom-2">
             
             {/* Dynamic Notice Banner for Cascading Clears */}
             {locationNotice && (
@@ -2337,7 +2339,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
         {/* SECTION 3: SPECIFICATIONS */}
         {/* ========================================================================= */}
         {currentStep === 3 && (
-          <div className="bg-white rounded-lg border border-[#E2E8F0] p-6 sm:p-8 shadow-xs space-y-8 animate-in fade-in slide-in-from-bottom-2">
+          <div data-testid="broker-card" className="bg-white rounded-lg border border-[#E2E8F0] p-6 sm:p-8 shadow-xs space-y-8 animate-in fade-in slide-in-from-bottom-2">
             <div className="pb-3 border-b border-[#E2E8F0] flex items-center justify-between">
               <div>
                 <h3 className="text-base font-bold text-[#1E293B] flex items-center gap-2">
@@ -2983,7 +2985,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
         {/* SECTION 4: PRICING AND TERMS */}
         {/* ========================================================================= */}
         {currentStep === 4 && (
-          <div className="bg-white rounded-lg border border-[#E2E8F0] p-6 sm:p-8 shadow-xs space-y-8 animate-in fade-in slide-in-from-bottom-2">
+          <div data-testid="broker-card" className="bg-white rounded-lg border border-[#E2E8F0] p-6 sm:p-8 shadow-xs space-y-8 animate-in fade-in slide-in-from-bottom-2">
             <div className="pb-3 border-b border-[#E2E8F0] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <h3 className="text-base font-bold text-[#1E293B] flex items-center gap-2">
@@ -3282,7 +3284,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
         {/* SECTION 5: FEATURES AND AMENITIES */}
         {/* ========================================================================= */}
         {currentStep === 5 && (
-          <div className="bg-white rounded-lg border border-[#E2E8F0] p-6 sm:p-8 shadow-xs space-y-6 animate-in fade-in slide-in-from-bottom-2">
+          <div data-testid="broker-card" className="bg-white rounded-lg border border-[#E2E8F0] p-6 sm:p-8 shadow-xs space-y-6 animate-in fade-in slide-in-from-bottom-2">
             <div className="pb-3 border-b border-[#E2E8F0] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <h3 className="text-base font-bold text-[#1E293B] flex items-center gap-2">
                 <span className="material-symbols-outlined text-[#0F766E]">tune</span>
@@ -3436,7 +3438,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
         {/* SECTION 6: MEDIA & DOCUMENTS */}
         {/* ========================================================================= */}
         {currentStep === 6 && (
-          <div className="bg-white rounded-lg border border-[#E2E8F0] p-6 sm:p-8 shadow-xs space-y-8 animate-in fade-in slide-in-from-bottom-2">
+          <div data-testid="broker-card" className="bg-white rounded-lg border border-[#E2E8F0] p-6 sm:p-8 shadow-xs space-y-8 animate-in fade-in slide-in-from-bottom-2">
             <div className="pb-3 border-b border-[#E2E8F0] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <h3 className="text-base font-bold text-[#1E293B] flex items-center gap-2">
@@ -4335,7 +4337,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
         {/* SECTION 7: REVIEW AND SUBMIT */}
         {/* ========================================================================= */}
         {currentStep === 7 && (
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
+          <div data-testid="broker-card" className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
             {/* Header */}
             <div className="bg-white rounded-lg border border-[#E2E8F0] p-6 shadow-xs">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -5134,7 +5136,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
 
     {/* Right Column: Listing Preview (Sticky Sidebar) */}
     <div className="hidden lg:block lg:col-span-4 sticky top-20 space-y-5">
-      <div className="bg-white rounded-lg border border-[#E2E8F0] p-5 shadow-xs space-y-4">
+      <div data-testid="broker-card" className="bg-white rounded-lg border border-[#E2E8F0] p-5 shadow-xs space-y-4">
         <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
           <h4 className="text-xs font-bold uppercase tracking-wider text-[#1E293B]">
             Listing Preview
@@ -5530,7 +5532,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
 
       {/* Remove Confirmation Modal */}
       {itemToDelete && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-2xs flex items-center justify-center p-4">
+        <div role="dialog" aria-modal="true" aria-label="Remove Confirmation" data-testid="broker-dialog" className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-2xs flex items-center justify-center p-4">
           <div className="relative bg-white rounded-xl shadow-xl max-w-md w-full p-6 animate-in fade-in zoom-in-95 space-y-4">
             <div className="w-12 h-12 rounded-full bg-red-50 text-red-600 flex items-center justify-center">
               <span className="material-symbols-outlined text-[24px]">delete</span>

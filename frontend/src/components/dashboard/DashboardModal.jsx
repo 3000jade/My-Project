@@ -1,5 +1,13 @@
-import React, { useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter
+} from '../ui/dialog';
+import { cn } from '../../utils/cn';
 
 export default function DashboardModal({
   isOpen,
@@ -10,78 +18,40 @@ export default function DashboardModal({
   maxWidth = "max-w-2xl",
   actions
 }) {
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && isOpen) onClose();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
-
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
-          {/* Heavy Backdrop Blur as required by AGENTS.md */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 bg-black/80 backdrop-blur-md"
-          />
-
-          {/* Modal Container with Spring Physics */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 100 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 100 }}
-            transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            data-lenis-prevent="true"
-            className={`relative w-full ${maxWidth} bg-white rounded-2xl shadow-2xl overflow-hidden z-10 my-8 flex flex-col max-h-[90vh]`}
-          >
-            {/* Modal Header */}
-            <div className="flex items-center justify-between px-6 py-5 border-b border-[#E2E8F0] bg-[#F8FAFC]">
-              <div>
-                {title && (
-                  <h3 className="text-xl font-display font-bold text-[#1E293B]">
-                    {title}
-                  </h3>
-                )}
-                {subtitle && (
-                  <p className="text-xs font-sans text-[#64748B] mt-0.5">
-                    {subtitle}
-                  </p>
-                )}
-              </div>
-
-              {/* Close Button X (solid white circle with shadow) */}
-              <button
-                onClick={onClose}
-                className="w-9 h-9 rounded-full bg-white shadow-md hover:bg-gray-50 flex items-center justify-center text-gray-700 transition-colors"
-                aria-label="Close modal"
-              >
-                <span className="material-symbols-outlined text-[20px]">close</span>
-              </button>
-            </div>
-
-            {/* Modal Body with native scroll prevented from Lenis hijack */}
-            <div
-              data-lenis-prevent="true"
-              className="p-6 overflow-y-auto custom-scrollbar flex-1"
-            >
-              {children}
-            </div>
-
-            {/* Modal Footer Actions */}
-            {actions && (
-              <div className="px-6 py-4 border-t border-gray-200/80 bg-[#F1F0EC]/30 flex items-center justify-end gap-3">
-                {actions}
-              </div>
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open && onClose) onClose(); }}>
+      <DialogContent
+        data-testid="broker-dialog"
+        className={cn(
+          "w-full bg-white dark:bg-slate-900 border border-[#E2E8F0] dark:border-slate-800 text-[#1E293B] dark:text-slate-100 rounded-2xl shadow-2xl p-0 overflow-hidden flex flex-col max-h-[90vh]",
+          maxWidth
+        )}
+      >
+        <DialogHeader className="flex flex-row items-center justify-between px-6 py-5 border-b border-[#E2E8F0] dark:border-slate-800 bg-[#F8FAFC] dark:bg-slate-800/50 space-y-0">
+          <div>
+            {title && (
+              <DialogTitle className="text-xl font-display font-bold text-[#1E293B] dark:text-slate-100">
+                {title}
+              </DialogTitle>
             )}
-          </motion.div>
+            {subtitle && (
+              <DialogDescription className="text-xs font-sans text-[#64748B] dark:text-slate-400 mt-0.5">
+                {subtitle}
+              </DialogDescription>
+            )}
+          </div>
+        </DialogHeader>
+
+        <div data-lenis-prevent="true" className="p-6 overflow-y-auto custom-scrollbar flex-1">
+          {children}
         </div>
-      )}
-    </AnimatePresence>
+
+        {actions && (
+          <DialogFooter className="px-6 py-4 border-t border-[#E2E8F0] dark:border-slate-800 bg-[#F1F0EC]/30 dark:bg-slate-800/30 flex items-center justify-end gap-3 sm:space-x-0">
+            {actions}
+          </DialogFooter>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }

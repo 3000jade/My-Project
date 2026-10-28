@@ -16,6 +16,7 @@ import propertyService, { normalizeProperty } from '../../../services/propertySe
 import { cn } from '../../../utils/cn';
 import { Badge } from '../../../components/ui/badge';
 import { Button, buttonVariants } from '../../../components/ui/button';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, useToast, Toaster } from '../../../components/ui';
 
 function formatPhilippineRelativeTime(dateStr) {
   if (!dateStr) return 'Not provided';
@@ -99,6 +100,7 @@ function PropertyThumbnail({ image, title }) {
 
 export default function BrokerProperties() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [properties, setProperties] = useState([]);
   const [proposals, setProposals] = useState([]);
   const [selectedProposal, setSelectedProposal] = useState(null);
@@ -127,6 +129,13 @@ export default function BrokerProperties() {
 
   const showToast = (msg) => {
     setToastMessage(msg);
+    if (typeof toast === 'function') {
+      toast({
+        title: 'Listing Update',
+        description: msg,
+        variant: 'default',
+      });
+    }
     setTimeout(() => setToastMessage(null), 3500);
   };
 
@@ -1156,6 +1165,7 @@ export default function BrokerProperties() {
                       isHovered && "bg-teal-50/20"
                     )}
                     data-testid={`map-property-card-${prop.id}`}
+                    data-card="broker-card"
                   >
                     <div className="flex gap-3">
                       <div className="w-20 h-20 rounded-lg overflow-hidden bg-slate-100 shrink-0 border border-slate-200">
@@ -1257,6 +1267,7 @@ export default function BrokerProperties() {
                   onClick={() => navigate(`/broker/properties/${prop.id || prop.listingKey || prop.listingId}`)}
                   className="rounded-xl border border-[#E2E8F0] bg-white overflow-hidden shadow-xs hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between"
                   data-testid={`grid-property-card-${prop.id}`}
+                  data-card="broker-card"
                 >
                   <div>
                     <div className="relative aspect-[16/10] w-full bg-slate-100 overflow-hidden">
@@ -1408,6 +1419,7 @@ export default function BrokerProperties() {
           showToast('Listing successfully reassigned. Waiting for new agent confirmation.');
         }}
       />
+      <Toaster />
     </div>
   );
 }
