@@ -315,7 +315,10 @@ export function toApiPayload(item = {}) {
   const livingArea = parseNonnegativeNumber(item.living_area ?? item.livingArea ?? item.floor_area);
   const livingAreaUnits = item.living_area_units || item.livingAreaUnits || 'Square Meters';
 
-  // Compute required sqft from living area conversion
+  const lotSizeArea = parseNonnegativeNumber(item.lot_size_area ?? item.lotSizeArea ?? item.lot_area);
+  const lotSizeUnits = item.lot_size_units || item.lotSizeUnits || 'Square Meters';
+
+  // Compute required sqft from living area conversion or lot size fallback for residentialLot
   let computedSqft = undefined;
   if (livingArea !== undefined && livingArea > 0) {
     if (livingAreaUnits === 'Square Meters') {
@@ -325,10 +328,13 @@ export function toApiPayload(item = {}) {
     }
   } else if (item.sqft) {
     computedSqft = Number(item.sqft);
+  } else if (lotSizeArea !== undefined && lotSizeArea > 0) {
+    if (lotSizeUnits === 'Square Meters') {
+      computedSqft = Math.round(lotSizeArea * 10.7639);
+    } else {
+      computedSqft = Math.round(lotSizeArea);
+    }
   }
-
-  const lotSizeArea = parseNonnegativeNumber(item.lot_size_area ?? item.lotSizeArea ?? item.lot_area);
-  const lotSizeUnits = item.lot_size_units || item.lotSizeUnits || 'Square Meters';
 
   const storiesTotal = parseNonnegativeInt(item.stories_total ?? item.storiesTotal ?? item.stories);
   const parkingTotal = parseNonnegativeInt(item.parking_total ?? item.parkingTotal ?? item.parking);
@@ -385,6 +391,198 @@ export function toApiPayload(item = {}) {
     : (item.isPublished !== undefined
         ? Boolean(item.isPublished)
         : (resolvedStandardStatus === 'Active'));
+
+  const resolvedListAgentKey = item.listAgentKey || item.list_agent_key || item.agentId || item.agent_id || item.assignedAgent?.agentId || item.assignedAgent?.id || undefined;
+
+  // Canonical Schema v1.0 payload construction
+  const rawPropType = String(item.property_type || item.propertyType || '').toLowerCase();
+  let canonicalPropertyType = 'houseAndLot';
+  if (rawPropType.includes('lot') || rawPropType.includes('land')) {
+    canonicalPropertyType = 'residentialLot';
+  } else if (rawPropType.includes('condo') || rawPropType.includes('apartment') || rawPropType.includes('penthouse')) {
+    canonicalPropertyType = 'condominium';
+  } else if (rawPropType.includes('house') || rawPropType.includes('townhouse') || rawPropType.includes('villa')) {
+    canonicalPropertyType = 'houseAndLot';
+  }
+
+  const assignedAgentObj = item.assignedAgent ? {
+    agentId: item.assignedAgent.agentId || item.assignedAgent.id || resolvedListAgentKey,
+    name: item.assignedAgent.name || item.agent_name || '',
+    email: item.assignedAgent.email || item.agent_email || '',
+    role: item.assignedAgent.role || 'agent',
+    prcLicenseNo: item.assignedAgent.prcLicenseNo || item.assignedAgent.license_no || item.assignedAgent.licenseNumber || 'PRC-REB-0024891',
+    assignmentStatus: item.assignedAgent.assignmentStatus || 'accepted',
+    assignedAt: item.assignedAgent.assignedAt || new Date().toISOString()
+  } : (resolvedListAgentKey ? {
+    agentId: resolvedListAgentKey,
+    name: item.agent_name || item.agentName || 'Assigned Agent',
+    email: item.agent_email || item.agentEmail || '',
+    role: 'agent',
+    prcLicenseNo: 'PRC-REB-0024891',
+    assignmentStatus: 'assigned',
+    assignedAt: new Date().toISOString()
+  } : undefined);
+
+  let canonicalPropertyDetails = {};
+  if (canonicalPropertyType === 'residentialLot') {
+    canonicalPropertyDetails = {
+      subdivision: {
+        id: item.subdivisionId || item.subdivision_id || null,
+        name: (item.subdivision_name || item.subdivisionName || item.subdivision || '').trim(),
+        phase: item.phase || item.subdivision_phase || '',
+        block: item.block || item.subdivision_block || '',
+        lot: item.lot || item.subdivision_lot || ''
+      },
+      landUse: item.landUse || item.land_use || 'residential',
+      lotArea: {
+        value: lotSizeArea || 0,
+        unit: 'sqm'
+      },
+      frontage: (item.frontage_meters ?? item.frontage) !== undefined && (item.frontage_meters ?? item.frontage) !== null && (item.frontage_meters ?? item.frontage) !== '' ? {
+        value: Number(item.frontage_meters ?? item.frontage),
+        unit: 'm'
+      } : undefined,
+      depth: (item.depth_meters ?? item.depth) !== undefined && (item.depth_meters ?? item.depth) !== null && (item.depth_meters ?? item.depth) !== '' ? {
+        value: Number(item.depth_meters ?? item.depth),
+        unit: 'm'
+      } : undefined,
+      lotPosition: item.lot_position || item.lotPosition || undefined,
+      terrain: item.terrain || undefined,
+      facingDirection: item.facing_direction || item.facingDirection || undefined,
+      developmentCondition: item.development_condition || item.developmentCondition || 'vacant',
+      readyToBuild: item.ready_to_build !== undefined ? Boolean(item.ready_to_build) : (item.readyToBuild !== undefined ? Boolean(item.readyToBuild) : true),
+      cadastralReference: item.cadastral_reference || item.cadastralReference || item.referenceCode || item.reference_code || undefined,
+      title: {
+        type: item.title_type || item.titleType || 'tct',
+        reportedStatus: item.title_status || item.titleStatus || 'clean',
+        verificationStatus: item.title_verification_status || item.titleVerificationStatus || 'unverified'
+      }
+    };
+  } else if (canonicalPropertyType === 'condominium') {
+    canonicalPropertyDetails = {
+      building: {
+        id: item.buildingId || item.building_id || null,
+        name: (item.building_name || item.buildingName || '').trim(),
+        tower: item.tower_name || item.towerName || item.tower || '',
+        floorLevel: item.floor_level || item.floorLevel || '',
+        unitNumber: item.unit_number || item.unitNumber || ''
+      },
+      floorArea: {
+        value: livingArea || 0,
+        unit: 'sqm'
+      },
+      balcony: {
+        hasBalcony: Boolean(item.has_balcony || item.hasBalcony || item.balcony_area || item.balconyArea),
+        area: parseNullableNumber(item.balcony_area ?? item.balconyArea),
+        viewFacing: item.balcony_facing || item.balconyFacing || undefined
+      },
+      unitLayout: item.unit_layout || item.unitLayout || undefined,
+      parking: {
+        slots: parkingTotal || 0,
+        slotNumbers: item.parking_slot_numbers || item.parkingSlotNumbers || undefined
+      },
+      furnishing: item.furnishing || undefined,
+      title: {
+        type: 'cct',
+        reportedStatus: item.title_status || item.titleStatus || 'clean',
+        verificationStatus: item.title_verification_status || item.titleVerificationStatus || 'unverified'
+      }
+    };
+  } else {
+    // houseAndLot
+    canonicalPropertyDetails = {
+      subdivision: {
+        id: item.subdivisionId || item.subdivision_id || null,
+        name: (item.subdivision_name || item.subdivisionName || item.subdivision || '').trim(),
+        phase: item.phase || item.subdivision_phase || '',
+        block: item.block || item.subdivision_block || '',
+        lot: item.lot || item.subdivision_lot || ''
+      },
+      lotArea: {
+        value: lotSizeArea || 0,
+        unit: 'sqm'
+      },
+      floorArea: {
+        value: livingArea || 0,
+        unit: 'sqm'
+      },
+      stories: storiesTotal || 1,
+      bedrooms: bedroomsTotal || 1,
+      bathrooms: bathroomsTotalInteger || 1,
+      carport: parkingTotal || 0,
+      maidsRoom: Boolean(item.has_maids_room || item.hasMaidsRoom),
+      title: {
+        type: item.title_type || item.titleType || 'tct',
+        reportedStatus: item.title_status || item.titleStatus || 'clean',
+        verificationStatus: item.title_verification_status || item.titleVerificationStatus || 'unverified'
+      }
+    };
+  }
+
+  const rawPhotos = Array.isArray(item.images)
+    ? item.images
+    : (Array.isArray(item.property_images)
+        ? item.property_images.map(p => p.imageUrl || p.image_url)
+        : (item.image ? [item.image] : []));
+
+  const canonicalPhotos = rawPhotos.filter(Boolean).map((img, idx) => ({
+    id: `photo-${String(idx + 1).padStart(3, '0')}`,
+    url: typeof img === 'string' ? img : (img.url || img.imageUrl || ''),
+    caption: typeof img === 'object' ? (img.caption || '') : '',
+    altText: typeof img === 'object' ? (img.altText || '') : '',
+    sortOrder: idx,
+    isPlaceholder: Boolean(typeof img === 'object' && img.isPlaceholder)
+  }));
+
+  const canonicalPayload = {
+    schemaVersion: '1.0',
+    id: item.id || undefined,
+    referenceCode: item.referenceCode || item.reference_code || item.cadastral_reference || item.cadastralReference || undefined,
+    propertyType: canonicalPropertyType,
+    transactionType: item.transactionType || item.transaction_type || 'sale',
+    title: (item.title || 'Untitled Property').trim(),
+    tagline: item.tagline || '',
+    description: item.description || item.publicRemarks || null,
+    status: {
+      publication: resolvedIsPublished ? 'published' : 'draft',
+      availability: derivedStatus === 'available' ? 'available' : (derivedStatus === 'sold' ? 'sold' : 'underContract')
+    },
+    isFeatured: Boolean(item.isFeatured || item.is_featured),
+    assignedAgent: assignedAgentObj,
+    location: {
+      countryCode: item.countryCode || 'PH',
+      region: item.region || (item.location && typeof item.location === 'object' ? item.location.region : undefined),
+      province: (item.province || item.stateOrProvince || item.state || (item.location && typeof item.location === 'object' ? (item.location.province || item.location.state) : '') || '').trim(),
+      city: (item.city || (item.location && typeof item.location === 'object' ? item.location.city : '') || '').trim(),
+      barangay: item.barangay || (item.location && typeof item.location === 'object' ? item.location.barangay : undefined),
+      postalCode: item.postalCode || item.postal_code || (item.location && typeof item.location === 'object' ? item.location.postalCode : undefined),
+      streetAddress: item.streetAddress || item.address || (item.location && typeof item.location === 'object' ? item.location.address : undefined),
+      coordinates: resolvedCoordinates ? {
+        latitude: resolvedCoordinates.lat,
+        longitude: resolvedCoordinates.lng
+      } : undefined,
+      publicDisplay: {
+        showExactAddress: item.showExactAddress ?? false,
+        mapPrecision: item.mapPrecision || 'approximate'
+      }
+    },
+    propertyDetails: canonicalPropertyDetails,
+    pricing: {
+      amount: numericPrice,
+      currency: item.currency || item.listPriceCurrency || 'PHP'
+    },
+    amenities: Array.isArray(item.amenities) ? item.amenities : (Array.isArray(item.features) ? item.features : []),
+    infrastructure: Array.isArray(item.infrastructure) ? item.infrastructure : [],
+    media: {
+      coverImageId: canonicalPhotos.length > 0 ? canonicalPhotos[0].id : null,
+      photos: canonicalPhotos,
+      documents: Array.isArray(item.documents) ? item.documents : []
+    },
+    internal: {
+      privateRemarks: item.privateRemarks || item.privateNotes || (item.confidential && item.confidential.privateRemarks) || '',
+      showingInstructions: item.showingInstructions || (item.confidential && item.confidential.showingInstructions) || ''
+    }
+  };
 
   return {
     title: (item.title || 'Untitled Luxury Property').trim(),
@@ -483,15 +681,16 @@ export function toApiPayload(item = {}) {
     },
     customResoAttributes: {
       ...(item.customResoAttributes || {}),
+      canonicalPayload: canonicalPayload,
       furnishing: item.furnishing || undefined,
       lotFrontage: item.lot_frontage || item.lotFrontage || undefined,
       floorLevel: item.floor_level || item.floorLevel || undefined,
       towerName: item.tower_name || item.towerName || undefined,
       cadastralLotId: item.cadastralLotId || undefined,
     },
-    agentId: item.agent_id || item.agentId || item.listAgentKey || undefined,
-    agent_id: item.agent_id || item.agentId || item.listAgentKey || undefined,
-    listAgentKey: item.listAgentKey || item.agent_id || item.agentId || undefined,
+    agentId: resolvedListAgentKey,
+    agent_id: resolvedListAgentKey,
+    listAgentKey: resolvedListAgentKey,
   };
 }
 

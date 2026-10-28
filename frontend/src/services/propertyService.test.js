@@ -277,4 +277,72 @@ describe('propertyService RESO 2.0 Adapters', () => {
     expect(reservedByStatusPayload.standardStatus).toBe('Active Under Contract');
     expect(reservedByStatusPayload.status).toBe('pending');
   });
+
+  it('serializes canonical Schema v1.0 payload with assignedAgent and dual-envelope attributes', () => {
+    const lotInput = {
+      title: 'Prime Corner Lot in Havila Highlands Subdivision',
+      tagline: 'Elevated residential lot overlooking Laguna de Bay',
+      price: 6480000,
+      property_type: 'residentialLot',
+      subdivision_name: 'Havila Highlands Executive Subdivision',
+      phase: '2',
+      block: '12',
+      lot: '4',
+      lot_size_area: 270,
+      frontage_meters: 15,
+      depth_meters: 18,
+      lot_position: 'corner',
+      terrain: 'level',
+      facing_direction: 'east',
+      cadastral_reference: 'Lot 4, Block 12, Psd-04-098231',
+      title_type: 'tct',
+      title_status: 'clean',
+      assignedAgent: {
+        agentId: 'agent-uuid-elena',
+        name: 'Elena Rossi',
+        email: 'elena@humanshelter.ph',
+        role: 'agent',
+        prcLicenseNo: 'PRC-REB-0024891',
+        assignmentStatus: 'accepted'
+      },
+      agent_id: 'agent-uuid-elena',
+      list_agent_key: 'agent-uuid-elena',
+      amenities: ['gatedEntrance', 'rfidAccess', 'communityPark'],
+      infrastructure: ['undergroundElectricalCabling', 'concreteRoads'],
+      images: ['https://images.unsplash.com/photo-1500382017468.jpg'],
+      privateRemarks: 'Title in possession of listing broker.',
+    };
+
+    const payload = toApiPayload(lotInput);
+
+    // Verify top-level SQL columns for Supabase & Postgres constraints
+    expect(payload.title).toBe('Prime Corner Lot in Havila Highlands Subdivision');
+    expect(payload.price).toBe(6480000);
+    expect(payload.listAgentKey).toBe('agent-uuid-elena');
+    expect(payload.agentId).toBe('agent-uuid-elena');
+    expect(payload.specs.sqft).toBe(Math.round(270 * 10.7639)); // satisfying sqft NOT NULL constraint
+    expect(payload.specs.beds).toBe(1); // constraint fallback
+    expect(payload.specs.baths).toBe(1); // constraint fallback
+
+    // Verify Schema v1.0 canonical embedded payload
+    const canonical = payload.customResoAttributes.canonicalPayload;
+    expect(canonical).toBeDefined();
+    expect(canonical.schemaVersion).toBe('1.0');
+    expect(canonical.propertyType).toBe('residentialLot');
+    expect(canonical.assignedAgent).toBeDefined();
+    expect(canonical.assignedAgent.name).toBe('Elena Rossi');
+    expect(canonical.assignedAgent.agentId).toBe('agent-uuid-elena');
+    expect(canonical.propertyDetails.subdivision.name).toBe('Havila Highlands Executive Subdivision');
+    expect(canonical.propertyDetails.subdivision.block).toBe('12');
+    expect(canonical.propertyDetails.subdivision.lot).toBe('4');
+    expect(canonical.propertyDetails.lotArea.value).toBe(270);
+    expect(canonical.propertyDetails.frontage.value).toBe(15);
+    expect(canonical.propertyDetails.depth.value).toBe(18);
+    expect(canonical.propertyDetails.lotPosition).toBe('corner');
+    expect(canonical.propertyDetails.terrain).toBe('level');
+    expect(canonical.propertyDetails.cadastralReference).toBe('Lot 4, Block 12, Psd-04-098231');
+    expect(canonical.pricing.amount).toBe(6480000);
+    expect(canonical.amenities).toContain('gatedEntrance');
+    expect(canonical.infrastructure).toContain('undergroundElectricalCabling');
+  });
 });
