@@ -172,12 +172,12 @@ describe('BrokerProperties Page (Mockup & Modern SaaS Layout)', () => {
     expect(mockNavigate).toHaveBeenCalledWith('/broker/properties/prop-1');
   });
 
-  it('switches view mode between Table, Grid, and Cadastral Map View', async () => {
+  it('switches view mode between Table, Grid, and Map View', async () => {
     renderComponent();
 
     expect(await screen.findByText('Aurelia Modernist Penthouse at BGC')).toBeInTheDocument();
 
-    const mapViewBtn = screen.getByRole('button', { name: /Cadastral Map View/i });
+    const mapViewBtn = screen.getByRole('button', { name: /Map View|Map/i });
     expect(mapViewBtn).toBeInTheDocument();
     fireEvent.click(mapViewBtn);
 

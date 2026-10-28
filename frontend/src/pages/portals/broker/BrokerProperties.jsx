@@ -983,14 +983,14 @@ export default function BrokerProperties() {
           <button
             type="button"
             onClick={() => setViewMode('map')}
-            aria-label="Cadastral Map View"
+            aria-label="Map View"
             className={cn(
               "h-8 px-2.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer",
               viewMode === 'map' ? "bg-white text-[#0F766E] shadow-2xs font-bold" : "text-[#64748B] hover:text-[#1E293B]"
             )}
           >
             <MapIcon className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Cadastral Map</span>
+            <span className="hidden sm:inline">Map</span>
           </button>
         </div>
 
