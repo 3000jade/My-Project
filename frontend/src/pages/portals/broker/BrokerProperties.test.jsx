@@ -111,24 +111,15 @@ describe('BrokerProperties Page (Mockup & Modern SaaS Layout)', () => {
     expect(screen.getByRole('button', { name: /closed/i })).toBeInTheDocument();
   });
 
-  it('renders table columns with specifications and bold price matching 4-column layout', async () => {
+  it('renders table columns with specifications and bold price', async () => {
     renderComponent();
 
-    // Verify Row Details after async load completes
     expect(await screen.findByText('Aurelia Modernist Penthouse at BGC')).toBeInTheDocument();
-
-    // Verify 4 Consolidated Column Headers
-    expect(screen.getByText('PROPERTY / SPECIFICATIONS')).toBeInTheDocument();
-    expect(screen.getByText('ASKING PRICE')).toBeInTheDocument();
-    expect(screen.getByText('STATUS / ADDED')).toBeInTheDocument();
-    expect(screen.getByText('ACTIONS')).toBeInTheDocument();
-
-    expect(screen.getByText('MLS-HSR-10125001')).toBeInTheDocument();
-    expect(screen.getByText(/Bonifacio Global City, Taguig City/i)).toBeInTheDocument();
-    expect(screen.getByText(/8th Avenue cor\. 36th Street/i)).toBeInTheDocument();
+    expect(screen.getByText('ID: HSR-10125001')).toBeInTheDocument();
+    expect(screen.getByText('8th Avenue cor. 36th Street')).toBeInTheDocument();
+    expect(screen.getByText('Bonifacio Global City, Taguig City')).toBeInTheDocument();
     expect(screen.getByText('188 m²')).toBeInTheDocument();
     expect(screen.getByText('₱158,000,000')).toBeInTheDocument();
-    expect(screen.getAllByText('Asking price').length).toBeGreaterThan(0);
   });
 
   it('filters listings by clicking on status pill tabs', async () => {

@@ -39,22 +39,22 @@ export default function DataTable({
   };
 
   return (
-    <div className="bg-white dark:bg-[#0B131F] rounded-lg border border-[#E2E8F0] dark:border-slate-800 shadow-2xs overflow-hidden flex flex-col">
+    <div className="bg-white rounded-lg border border-[#E2E8F0] shadow-2xs overflow-hidden flex flex-col">
       <div className="overflow-x-auto custom-scrollbar">
         <Table className="w-full text-left border-collapse">
           <TableHeader>
-            <TableRow className="bg-[#F8FAFC] dark:bg-[#0B131F] border-b border-[#E2E8F0] dark:border-slate-800">
+            <TableRow className="bg-[#F8FAFC] border-b border-[#E2E8F0]">
               {selectable && (
                 <TableHead className={cn(
                   "w-10 px-3 py-3.5 text-center shrink-0",
-                  stickyFirstColumn && "sticky left-0 z-20 bg-[#F8FAFC] dark:bg-[#0B131F]"
+                  stickyFirstColumn && "sticky left-0 z-20 bg-[#F8FAFC]"
                 )}>
                   <input
                     type="checkbox"
                     checked={isAllSelected}
                     ref={el => { if (el) el.indeterminate = isSomeSelected; }}
                     onChange={() => onToggleSelectAll && onToggleSelectAll(currentData.map(r => r[keyField]))}
-                    className="w-4 h-4 rounded border-[#CBD5E1] dark:border-slate-700 bg-white dark:bg-slate-900 text-[#0F766E] focus:ring-[#0F766E] cursor-pointer"
+                    className="w-4 h-4 rounded border-[#CBD5E1] text-[#0F766E] focus:ring-[#0F766E] cursor-pointer"
                   />
                 </TableHead>
               )}
@@ -62,10 +62,10 @@ export default function DataTable({
                 <TableHead
                   key={idx}
                   className={cn(
-                    "px-3 py-3.5 text-xs font-semibold text-[#1E293B] dark:text-slate-400 tracking-wider uppercase",
+                    "px-3 py-3.5 text-xs font-semibold text-[#1E293B]",
                     stickyFirstColumn && idx === 0 && cn(
-                      selectable ? "sticky left-10 z-20 bg-[#F8FAFC] dark:bg-[#0B131F]" : "sticky left-0 z-20 bg-[#F8FAFC] dark:bg-[#0B131F]",
-                      "shadow-[1px_0_0_#E2E8F0] dark:shadow-[1px_0_0_#1E293B]"
+                      selectable ? "sticky left-10 z-20 bg-[#F8FAFC]" : "sticky left-0 z-20 bg-[#F8FAFC]",
+                      "shadow-[1px_0_0_#E2E8F0]"
                     ),
                     col.className
                   )}
@@ -75,7 +75,7 @@ export default function DataTable({
               ))}
             </TableRow>
           </TableHeader>
-          <TableBody className="divide-y divide-[#E2E8F0] dark:divide-slate-800/80 text-xs">
+          <TableBody className="divide-y divide-[#E2E8F0] text-xs">
             {currentData.length > 0 ? (
               currentData.map((row, rowIdx) => {
                 const rowKey = row[keyField] || rowIdx;
@@ -87,7 +87,7 @@ export default function DataTable({
                     onClick={() => onRowClick && onRowClick(row)}
                     className={cn(
                       "group transition-colors",
-                      isSelected ? "bg-[#0F766E]/5 dark:bg-teal-950/20" : "hover:bg-[#F8FAFC]/80 dark:hover:bg-slate-800/40",
+                      isSelected ? "bg-[#0F766E]/5" : "hover:bg-[#F8FAFC]/80",
                       onRowClick && "cursor-pointer"
                     )}
                   >
@@ -97,7 +97,7 @@ export default function DataTable({
                           "w-10 px-3 py-3.5 text-center shrink-0",
                           stickyFirstColumn && cn(
                             "sticky left-0 z-10",
-                            isSelected ? "bg-[#F3F8F8] dark:bg-teal-950/20" : "bg-white dark:bg-[#0B131F] group-hover:bg-[#F8FAFC] dark:group-hover:bg-slate-800/40"
+                            isSelected ? "bg-[#F3F8F8]" : "bg-white group-hover:bg-[#F8FAFC]"
                           )
                         )}
                         onClick={(e) => e.stopPropagation()}
@@ -106,7 +106,7 @@ export default function DataTable({
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => onToggleSelect && onToggleSelect(rowKey)}
-                          className="w-4 h-4 rounded border-[#CBD5E1] dark:border-slate-700 bg-white dark:bg-slate-900 text-[#0F766E] focus:ring-[#0F766E] cursor-pointer"
+                          className="w-4 h-4 rounded border-[#CBD5E1] text-[#0F766E] focus:ring-[#0F766E] cursor-pointer"
                         />
                       </TableCell>
                     )}
@@ -114,11 +114,11 @@ export default function DataTable({
                       <TableCell
                         key={colIdx}
                         className={cn(
-                          "px-3 py-3.5 text-[#1E293B] dark:text-slate-200 align-middle",
+                          "px-3 py-3.5 text-[#1E293B] align-middle",
                           stickyFirstColumn && colIdx === 0 && cn(
                             selectable ? "sticky left-10 z-10" : "sticky left-0 z-10",
-                            "shadow-[1px_0_0_#E2E8F0] dark:shadow-[1px_0_0_#1E293B]",
-                            isSelected ? "bg-[#F3F8F8] dark:bg-teal-950/20" : "bg-white dark:bg-[#0B131F] group-hover:bg-[#F8FAFC] dark:group-hover:bg-slate-800/40"
+                            "shadow-[1px_0_0_#E2E8F0]",
+                            isSelected ? "bg-[#F3F8F8]" : "bg-white group-hover:bg-[#F8FAFC]"
                           ),
                           col.className
                         )}
@@ -136,7 +136,7 @@ export default function DataTable({
                   className="px-6 py-12 text-center text-slate-400"
                 >
                   <div className="flex flex-col items-center justify-center space-y-2">
-                    <Inbox className="w-8 h-8 text-slate-300 dark:text-slate-600 stroke-[1.5]" />
+                    <Inbox className="w-8 h-8 text-slate-300 stroke-[1.5]" />
                     <p className="text-xs font-medium">{emptyMessage}</p>
                   </div>
                 </TableCell>
@@ -147,7 +147,7 @@ export default function DataTable({
       </div>
 
       {/* Numbered Pagination Controls Matching Mockup */}
-      <div className="px-4 py-3.5 border-t border-[#E2E8F0] dark:border-slate-800 bg-white dark:bg-[#0B131F] flex items-center justify-between text-xs text-[#64748B] dark:text-slate-400">
+      <div className="px-4 py-3.5 border-t border-[#E2E8F0] bg-white flex items-center justify-between text-xs text-[#64748B]">
         <div>
           Showing <span className="font-semibold text-[#1E293B]">{data.length > 0 ? startIndex + 1 : 0}</span> to{" "}
           <span className="font-semibold text-[#1E293B]">
