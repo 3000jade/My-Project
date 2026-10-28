@@ -5,6 +5,7 @@ import {
   User, Mail, Phone, Award, Shield, FileText, Upload, Trash2
 } from 'lucide-react';
 import { agentService } from '../../../services/agentService';
+import { Card, CardContent, useToast, Toaster } from '../../../components/ui';
 import { cn } from '../../../utils/cn';
 
 const SECTIONS = [
@@ -24,6 +25,7 @@ export default function BrokerAgentEdit() {
   const [error, setError] = useState('');
   const [toastMessage, setToastMessage] = useState('');
 
+  const { toast } = useToast();
   const [teams, setTeams] = useState([]);
   const [formData, setFormData] = useState({
     name: '',
@@ -51,6 +53,7 @@ export default function BrokerAgentEdit() {
 
   const showToast = (msg) => {
     setToastMessage(msg);
+    toast({ title: 'Agent Profile', description: msg, variant: 'success' });
     setTimeout(() => setToastMessage(''), 3500);
   };
 
@@ -61,7 +64,7 @@ export default function BrokerAgentEdit() {
       try {
         const [data, teamList] = await Promise.all([
           agentService.getAgentById(id),
-          agentService.getTeams().catch(() => []),
+          (typeof agentService.getTeams === 'function' ? agentService.getTeams() : Promise.resolve([])).catch(() => []),
         ]);
         if (mounted) {
           setTeams(Array.isArray(teamList) ? teamList : []);
@@ -156,7 +159,8 @@ export default function BrokerAgentEdit() {
   }
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <div className="space-y-6 max-w-5xl mx-auto" data-testid="broker-agent-edit">
+      <Toaster />
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed top-5 right-5 z-50 bg-[#1E293B] text-white text-xs font-medium px-4 py-2.5 rounded-lg shadow-lg flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
@@ -210,7 +214,7 @@ export default function BrokerAgentEdit() {
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
         
         {/* Left Section Navigation (4-Cols on Desktop) */}
-        <div className="md:col-span-4 bg-white rounded-lg border border-[#E2E8F0] p-3 shadow-2xs space-y-1">
+        <div data-testid="broker-card" className="md:col-span-4 bg-white dark:bg-slate-900 rounded-lg border border-[#E2E8F0] dark:border-slate-800 p-3 shadow-2xs space-y-1">
           {SECTIONS.map((sec) => {
             const Icon = sec.icon;
             const isSelected = activeSection === sec.id;
@@ -235,7 +239,7 @@ export default function BrokerAgentEdit() {
         </div>
 
         {/* Right Section Content Card (8-Cols on Desktop) */}
-        <div className="md:col-span-8 bg-white rounded-lg border border-[#E2E8F0] p-6 shadow-2xs space-y-6">
+        <div data-testid="broker-card" className="md:col-span-8 bg-white dark:bg-slate-900 rounded-lg border border-[#E2E8F0] dark:border-slate-800 p-6 shadow-2xs space-y-6">
           
           {error && (
             <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg flex items-center gap-2 text-xs text-rose-700">

@@ -51,7 +51,7 @@ export default function ProposalReviewDrawer({
   const isChanged = (key) => proposed[key] !== undefined && proposed[key] !== original[key];
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden">
+    <div className="fixed inset-0 z-50 overflow-hidden" data-testid="broker-drawer">
       {/* Backdrop */}
       <div 
         onClick={onClose} 

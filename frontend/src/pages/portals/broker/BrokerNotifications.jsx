@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import PageHeader from '../../../components/dashboard/PageHeader';
+import { Card, CardContent, useToast, Toaster } from '../../../components/ui';
 import { notificationService } from '../../../services/notificationService';
 
 export default function BrokerNotifications() {
+  const { toast } = useToast();
   const [notifications, setNotifications] = useState([]);
   const [filter, setFilter] = useState('ALL'); // 'ALL' | 'UNREAD' | 'READ'
   const [loading, setLoading] = useState(true);
@@ -15,11 +17,13 @@ export default function BrokerNotifications() {
       const data = await notificationService.getNotifications();
       setNotifications(Array.isArray(data) ? data : []);
     } catch (err) {
-      setError(err.message ? `Failed to load system notifications: ${err.message}` : 'Failed to load system notifications.');
+      const msg = err.message ? `Failed to load system notifications: ${err.message}` : 'Failed to load system notifications.';
+      setError(msg);
+      toast({ title: 'Notification Error', description: msg, variant: 'destructive' });
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     loadNotifications();
@@ -36,6 +40,12 @@ export default function BrokerNotifications() {
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: nextStatus } : n));
     try {
       await notificationService.markAsRead(id, nextStatus);
+      toast({
+        title: nextStatus ? 'Marked as Read' : 'Marked as Unread',
+        description: 'Notification status updated.',
+        variant: 'default',
+        duration: 2000
+      });
     } catch (err) {
       console.warn('Error updating read status:', err.message);
     }
@@ -45,6 +55,11 @@ export default function BrokerNotifications() {
     setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
     try {
       await notificationService.markAllAsRead();
+      toast({
+        title: 'All Caught Up',
+        description: 'All system notifications marked as read.',
+        variant: 'success',
+      });
     } catch (err) {
       console.warn('Error marking all read:', err.message);
     }
@@ -53,7 +68,8 @@ export default function BrokerNotifications() {
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="space-y-6 max-w-4xl mx-auto font-sans" data-testid="broker-notifications-portal">
+      <Toaster />
       <PageHeader
         title="Notifications & System Alerts"
         subtitle="Operational event feed for client inquiries, agent accreditation filings, and transaction milestones."
@@ -62,7 +78,8 @@ export default function BrokerNotifications() {
             <button
               onClick={loadNotifications}
               disabled={loading}
-              className="h-[46px] px-4 bg-white hover:bg-gray-50 text-[#1E293B] border border-gray-200 rounded-xl text-xs font-bold font-sans uppercase tracking-wider flex items-center gap-2 transition-all shadow-xs cursor-pointer"
+              aria-label="Refresh notifications"
+              className="h-[46px] px-4 bg-white dark:bg-slate-900 hover:bg-gray-50 dark:hover:bg-slate-800 text-[#1E293B] dark:text-slate-100 border border-[#E2E8F0] dark:border-slate-800 rounded-xl text-xs font-bold font-sans uppercase tracking-wider flex items-center gap-2 transition-all shadow-xs cursor-pointer"
             >
               <span className={`material-symbols-outlined text-[18px] ${loading ? 'animate-spin' : ''}`}>
                 refresh
@@ -72,6 +89,7 @@ export default function BrokerNotifications() {
             <button
               onClick={markAllRead}
               disabled={unreadCount === 0}
+              aria-label="Mark all notifications as read"
               className="h-[46px] px-5 bg-[#0F766E] hover:bg-[#115E59] text-white rounded-xl text-xs font-bold font-sans uppercase tracking-wider transition-colors shadow-sm cursor-pointer disabled:opacity-50"
             >
               Mark All as Read
@@ -81,9 +99,9 @@ export default function BrokerNotifications() {
       />
 
       {error && (
-        <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl flex items-center justify-between text-rose-700 font-sans text-sm">
+        <div role="alert" className="p-4 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-900 rounded-2xl flex items-center justify-between text-rose-700 dark:text-rose-300 font-sans text-sm">
           <div className="flex items-center gap-3">
-            <span className="material-symbols-outlined text-rose-600">error</span>
+            <span className="material-symbols-outlined text-rose-600 dark:text-rose-400">error</span>
             <span>{error}</span>
           </div>
           <button
@@ -96,7 +114,7 @@ export default function BrokerNotifications() {
       )}
 
       {/* Filter Tabs */}
-      <div className="flex items-center gap-2 border-b border-gray-200 pb-3">
+      <div className="flex items-center gap-2 border-b border-[#E2E8F0] dark:border-slate-800 pb-3" role="tablist">
         {[
           { key: 'ALL', label: 'All Alerts' },
           { key: 'UNREAD', label: `Unread (${unreadCount})` },
@@ -104,11 +122,13 @@ export default function BrokerNotifications() {
         ].map(tab => (
           <button
             key={tab.key}
+            role="tab"
+            aria-selected={filter === tab.key}
             onClick={() => setFilter(tab.key)}
             className={`px-4 py-2 rounded-xl text-xs font-bold font-sans uppercase tracking-wider transition-colors cursor-pointer ${
               filter === tab.key
                 ? 'bg-[#0F766E] text-white'
-                : 'text-gray-600 hover:bg-white'
+                : 'text-[#64748B] dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800'
             }`}
           >
             {tab.label}
@@ -116,73 +136,79 @@ export default function BrokerNotifications() {
         ))}
       </div>
 
-      {/* Notifications List */}
+      {/* Single-Column Responsive Notifications List using Card */}
       {loading ? (
-        <div className="py-24 flex flex-col items-center justify-center text-gray-400 gap-3 bg-white rounded-2xl border border-gray-200/80">
+        <Card data-testid="broker-card" className="py-24 flex flex-col items-center justify-center text-[#64748B] dark:text-slate-400 gap-3 bg-white dark:bg-slate-900 rounded-2xl border border-[#E2E8F0] dark:border-slate-800 shadow-xs">
           <span className="material-symbols-outlined animate-spin text-[40px] text-[#0F766E]">
             progress_activity
           </span>
           <p className="text-sm font-sans font-medium">Loading system notifications...</p>
-        </div>
+        </Card>
       ) : filtered.length === 0 ? (
-        <div className="py-16 text-center bg-white rounded-2xl border border-gray-200/80 p-8 font-sans">
-          <span className="material-symbols-outlined text-gray-300 text-[48px] mb-2">
+        <Card data-testid="broker-card" className="py-16 text-center bg-white dark:bg-slate-900 rounded-2xl border border-[#E2E8F0] dark:border-slate-800 p-8 font-sans shadow-xs">
+          <span className="material-symbols-outlined text-gray-300 dark:text-slate-600 text-[48px] mb-2">
             notifications_off
           </span>
-          <h3 className="text-base font-bold text-gray-700">No notifications found</h3>
-          <p className="text-xs text-gray-400 mt-1">There are no notifications matching the {filter.toLowerCase()} filter.</p>
-        </div>
+          <h3 className="text-base font-bold text-[#1E293B] dark:text-slate-100">No notifications found</h3>
+          <p className="text-xs text-[#64748B] dark:text-slate-400 mt-1">There are no notifications matching the {filter.toLowerCase()} filter.</p>
+        </Card>
       ) : (
-        <div className="bg-white rounded-2xl border border-gray-200/80 shadow-sm divide-y divide-gray-100 overflow-hidden">
+        <div className="space-y-3">
           {filtered.map(item => (
-            <div
+            <Card
               key={item.id}
-              className={`p-5 flex items-start justify-between gap-4 transition-colors ${
-                !item.is_read ? 'bg-[#FF6B6B]/5' : 'hover:bg-gray-50/50'
+              data-testid="broker-card"
+              className={`border border-[#E2E8F0] dark:border-slate-800 shadow-xs transition-colors overflow-hidden ${
+                !item.is_read ? 'bg-[#FF6B6B]/5 dark:bg-rose-950/20' : 'bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/60'
               }`}
             >
-              <div className="flex items-start gap-3.5">
-                <div
-                  className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
-                    !item.is_read ? 'bg-[#FF6B6B]/15 text-[#FF6B6B]' : 'bg-[#0F766E]/10 text-[#0F766E]'
-                  }`}
-                >
-                  <span className="material-symbols-outlined text-[20px]">
-                    {item.type === 'inquiry' ? 'mail' :
-                     item.type === 'verification' ? 'verified_user' :
-                     item.type === 'appointment' ? 'calendar_today' :
-                     item.type === 'sale' ? 'monetization_on' : 'apartment'}
-                  </span>
-                </div>
-                <div className="space-y-1 font-sans">
-                  <div className="flex items-center gap-2">
-                    <h4 className="font-bold text-sm text-[#1E293B]">{item.title}</h4>
-                    {!item.is_read && (
-                      <span className="w-2 h-2 rounded-full bg-[#FF6B6B]" />
-                    )}
+              <CardContent className="p-5 flex items-start justify-between gap-4">
+                <div className="flex items-start gap-3.5">
+                  <div
+                    className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
+                      !item.is_read
+                        ? 'bg-[#FF6B6B]/15 text-[#FF6B6B]'
+                        : 'bg-[#0F766E]/10 text-[#0F766E] dark:text-teal-400'
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-[20px]">
+                      {item.type === 'inquiry' ? 'mail' :
+                       item.type === 'verification' ? 'verified_user' :
+                       item.type === 'appointment' ? 'calendar_today' :
+                       item.type === 'sale' ? 'monetization_on' : 'apartment'}
+                    </span>
                   </div>
-                  <p className="text-xs text-gray-600 leading-relaxed max-w-xl">
-                    {item.message}
-                  </p>
-                  <div className="flex items-center gap-3 text-[11px] text-gray-400 pt-1">
-                    <span>{item.timestamp}</span>
-                    {item.related_record && (
-                      <>
-                        <span>•</span>
-                        <span>Related ID: {item.related_record}</span>
-                      </>
-                    )}
+                  <div className="space-y-1 font-sans">
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-bold text-sm text-[#1E293B] dark:text-slate-100">{item.title}</h4>
+                      {!item.is_read && (
+                        <span className="w-2 h-2 rounded-full bg-[#FF6B6B]" aria-label="Unread alert" />
+                      )}
+                    </div>
+                    <p className="text-xs text-[#64748B] dark:text-slate-300 leading-relaxed max-w-xl">
+                      {item.message}
+                    </p>
+                    <div className="flex items-center gap-3 text-[11px] text-[#64748B] dark:text-slate-400 pt-1">
+                      <span>{item.timestamp}</span>
+                      {item.related_record && (
+                        <>
+                          <span>•</span>
+                          <span>Related ID: {item.related_record}</span>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <button
-                onClick={() => toggleRead(item.id, item.is_read)}
-                className="text-xs font-semibold text-[#0F766E] hover:underline shrink-0 font-sans cursor-pointer"
-              >
-                {item.is_read ? 'Mark Unread' : 'Mark Read'}
-              </button>
-            </div>
+                <button
+                  onClick={() => toggleRead(item.id, item.is_read)}
+                  aria-label={item.is_read ? `Mark ${item.title} as unread` : `Mark ${item.title} as read`}
+                  className="text-xs font-semibold text-[#0F766E] dark:text-teal-400 hover:underline shrink-0 font-sans cursor-pointer"
+                >
+                  {item.is_read ? 'Mark Unread' : 'Mark Read'}
+                </button>
+              </CardContent>
+            </Card>
           ))}
         </div>
       )}

@@ -53,6 +53,20 @@ export {
   DialogTitle,
   DialogDescription,
 } from './dialog';
+export {
+  Drawer,
+  DrawerTrigger,
+  DrawerClose,
+  DrawerPortal,
+  DrawerOverlay,
+  DrawerContent,
+  DrawerHeader,
+  DrawerFooter,
+  DrawerTitle,
+  DrawerDescription,
+} from './drawer';
+export { Toast, Toaster, useToast, toast } from './toast';
+export { Editable, EditablePreview, EditableInput } from './editable';
 
 // Core Primitives
 export { default as Button } from './core/Button';

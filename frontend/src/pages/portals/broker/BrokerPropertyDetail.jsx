@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import propertyService, { normalizeProperty } from '../../../services/propertyService';
 import { driveService, isDriveUrl, resolveDriveImageUrl, getDriveProxyUrl } from '../../../services/driveService';
-import { Button, Badge, Alert } from '../../../components/ui';
+import { Button, Badge, Alert, Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, Editable, EditablePreview, EditableInput, useToast, Toaster } from '../../../components/ui';
 import { GooglePropertyMap, StreetViewModal, EnlargedMapModal, CommuteAnalysisCard } from '../../../components/ui/map';
 import {
   ArrowLeft,
@@ -49,6 +49,7 @@ import {
 
 export default function BrokerPropertyDetail() {
   const { id } = useParams();
+  const { toast } = useToast();
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeImgIdx, setActiveImgIdx] = useState(0);
@@ -91,6 +92,13 @@ export default function BrokerPropertyDetail() {
 
   const showToast = (msg) => {
     setToastMsg(msg);
+    if (typeof toast === 'function') {
+      toast({
+        title: 'Listing Update',
+        description: msg,
+        variant: 'default',
+      });
+    }
     setTimeout(() => setToastMsg(''), 3000);
   };
 
@@ -543,7 +551,7 @@ export default function BrokerPropertyDetail() {
         <div className="lg:col-span-8 space-y-6">
 
           {/* 1. Hero Card (Horizontal Split Layout matching Reference Mockup) */}
-          <div className="bg-white rounded-xl border border-[#E2E8F0] p-5 sm:p-6 shadow-2xs">
+          <div className="bg-white rounded-xl border border-[#E2E8F0] p-5 sm:p-6 shadow-2xs" data-testid="broker-card">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
               
               {/* Left Side: Photo Carousel & 5-Slot Filmstrip or Database Empty State */}
@@ -937,7 +945,7 @@ export default function BrokerPropertyDetail() {
           {/* 3. Confidential Broker Governance Details (Rendered if Details tab is clicked) */}
           {activeTab === 'Details' && (
             <div className="space-y-6">
-              <div className="bg-white rounded-xl border border-[#CBD5E1] p-5 sm:p-6 shadow-2xs space-y-4">
+              <div className="bg-white rounded-xl border border-[#CBD5E1] p-5 sm:p-6 shadow-2xs space-y-4" data-testid="broker-card">
                 <div className="flex items-center gap-2 pb-2.5 border-b border-[#E2E8F0]">
                   <Lock className="w-4 h-4 text-[#0F766E]" />
                   <h3 className="text-xs font-bold uppercase tracking-wider text-[#1E293B]">
@@ -1019,7 +1027,7 @@ export default function BrokerPropertyDetail() {
             <div className="space-y-6">
 
               {/* Section 1: About This Property */}
-              <div id="section-overview" className="bg-white rounded-xl border border-[#E2E8F0] p-5 sm:p-6 shadow-2xs space-y-3">
+              <div id="section-overview" className="bg-white rounded-xl border border-[#E2E8F0] p-5 sm:p-6 shadow-2xs space-y-3" data-testid="broker-card">
                 <div className="flex items-center justify-between">
                   <h2 className="text-sm font-bold text-[#1E293B] tracking-tight">
                     About This Property
@@ -1073,7 +1081,7 @@ export default function BrokerPropertyDetail() {
               </div>
 
               {/* Section 2: Key Details (3-Column x 4-Row Grid with Icons matching Mockup) */}
-              <div id="section-details" className="bg-white rounded-xl border border-[#E2E8F0] p-5 sm:p-6 shadow-2xs space-y-4">
+              <div id="section-details" className="bg-white rounded-xl border border-[#E2E8F0] p-5 sm:p-6 shadow-2xs space-y-4" data-testid="broker-card">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-bold text-[#1E293B] tracking-tight">
                     Key Details
@@ -1406,7 +1414,7 @@ export default function BrokerPropertyDetail() {
               </div>
 
               {/* Section 3: Location matching Mockup */}
-              <div id="section-location" className="bg-white rounded-xl border border-[#E2E8F0] p-5 sm:p-6 shadow-2xs space-y-4">
+              <div id="section-location" className="bg-white rounded-xl border border-[#E2E8F0] p-5 sm:p-6 shadow-2xs space-y-4" data-testid="broker-card">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-bold text-[#1E293B] tracking-tight">
                     Location
@@ -1618,7 +1626,7 @@ export default function BrokerPropertyDetail() {
               </div>
 
               {/* Section 4: Amenities (4 Categorized Columns with Dot Bullets matching Mockup) */}
-              <div id="section-amenities" className="bg-white rounded-xl border border-[#E2E8F0] p-5 sm:p-6 shadow-2xs space-y-4">
+              <div id="section-amenities" className="bg-white rounded-xl border border-[#E2E8F0] p-5 sm:p-6 shadow-2xs space-y-4" data-testid="broker-card">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-bold text-[#1E293B] tracking-tight">
                     Amenities
@@ -2179,7 +2187,7 @@ export default function BrokerPropertyDetail() {
         <div className="lg:col-span-4 space-y-6">
 
           {/* Broker Actions Card */}
-          <div className="bg-white rounded-xl border border-[#E2E8F0] p-5 shadow-2xs space-y-3.5">
+          <div className="bg-white rounded-xl border border-[#E2E8F0] p-5 shadow-2xs space-y-3.5" data-testid="broker-card">
             <h3 className="text-sm font-bold text-[#1E293B] tracking-tight">
               Broker Actions
             </h3>
@@ -2227,7 +2235,7 @@ export default function BrokerPropertyDetail() {
           </div>
 
           {/* Card 1: Listing Status matching Mockup */}
-          <div className="bg-white rounded-xl border border-[#E2E8F0] p-5 shadow-2xs space-y-3.5">
+          <div className="bg-white rounded-xl border border-[#E2E8F0] p-5 shadow-2xs space-y-3.5" data-testid="broker-card">
             <h3 className="text-sm font-bold text-[#1E293B] tracking-tight">
               Listing Status
             </h3>
@@ -2352,7 +2360,7 @@ export default function BrokerPropertyDetail() {
           </div>
 
           {/* Card 2: Assigned Agent */}
-          <div className="bg-white rounded-xl border border-[#E2E8F0] p-5 shadow-2xs space-y-4">
+          <div className="bg-white rounded-xl border border-[#E2E8F0] p-5 shadow-2xs space-y-4" data-testid="broker-card">
             <h3 className="text-sm font-bold text-[#1E293B] tracking-tight">
               Assigned Agent
             </h3>
@@ -2424,6 +2432,7 @@ export default function BrokerPropertyDetail() {
           currentProperty={property}
         />
       )}
+      <Toaster />
     </div>
   );
 }

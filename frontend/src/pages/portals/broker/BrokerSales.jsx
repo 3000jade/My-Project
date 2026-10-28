@@ -3,11 +3,26 @@ import PageHeader from '../../../components/dashboard/PageHeader';
 import SearchAndFilterBar from '../../../components/dashboard/SearchAndFilterBar';
 import StatusBadge from '../../../components/dashboard/StatusBadge';
 import DataTable from '../../../components/dashboard/DataTable';
-import DashboardModal from '../../../components/dashboard/DashboardModal';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  useToast,
+  Toaster
+} from '../../../components/ui';
 import { saleService } from '../../../services/saleService';
 import { agentService } from '../../../services/agentService';
 
 export default function BrokerSales() {
+  const { toast } = useToast();
   const [sales, setSales] = useState([]);
   const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -30,11 +45,13 @@ export default function BrokerSales() {
       setSales(Array.isArray(salesData) ? salesData : []);
       setAgents(Array.isArray(agentsData) ? agentsData : []);
     } catch (err) {
-      setError(err.message ? `Failed to load firm sales registry: ${err.message}` : 'Failed to load firm sales registry.');
+      const msg = err.message ? `Failed to load firm sales registry: ${err.message}` : 'Failed to load firm sales registry.';
+      setError(msg);
+      toast({ title: 'Error Loading Sales', description: msg, variant: 'destructive' });
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     loadData();
@@ -59,14 +76,24 @@ export default function BrokerSales() {
   const handleUpdateStatus = async (id, newStatus) => {
     setUpdating(true);
     try {
-      const updated = await saleService.updateSale(id, { status: newStatus });
+      await saleService.updateSale(id, { status: newStatus });
       setSales(prev => prev.map(s => s.id === id ? { ...s, status: newStatus } : s));
       if (selectedSale && selectedSale.id === id) {
         setSelectedSale(prev => ({ ...prev, status: newStatus }));
       }
+      toast({
+        title: 'Status Updated',
+        description: `Conveyance record marked as ${newStatus}.`,
+        variant: 'success'
+      });
     } catch (err) {
       console.warn('Failed to update sales status:', err.message);
       setSales(prev => prev.map(s => s.id === id ? { ...s, status: newStatus } : s));
+      toast({
+        title: 'Status Updated Locally',
+        description: `Conveyance status changed to ${newStatus}.`,
+        variant: 'primary'
+      });
     } finally {
       setUpdating(false);
     }
@@ -82,8 +109,8 @@ export default function BrokerSales() {
       header: "Property",
       render: (row) => (
         <div>
-          <p className="font-bold text-[#1E293B] font-sans">{row.property_title}</p>
-          <p className="text-xs text-gray-400 font-sans">{row.property_location}</p>
+          <p className="font-bold text-[#1E293B] dark:text-slate-100 font-sans">{row.property_title}</p>
+          <p className="text-xs text-[#64748B] dark:text-slate-400 font-sans">{row.property_location}</p>
         </div>
       )
     },
@@ -102,7 +129,7 @@ export default function BrokerSales() {
     {
       header: "Recorded Valuation",
       render: (row) => (
-        <span className="font-bold text-[#0F766E] font-sans">
+        <span className="font-bold text-[#0F766E] dark:text-teal-400 font-sans">
           ₱{(Number(row.property_value) || 0).toLocaleString()}
         </span>
       )
@@ -117,7 +144,8 @@ export default function BrokerSales() {
       render: (row) => (
         <button
           onClick={(e) => { e.stopPropagation(); setSelectedSale(row); }}
-          className="px-3 py-1.5 rounded-lg bg-[#F8FAFC] hover:bg-[#0F766E] hover:text-white text-xs font-bold font-sans uppercase tracking-wider transition-colors cursor-pointer"
+          aria-label={`Inspect sale record for ${row.property_title}`}
+          className="px-3 py-1.5 rounded-lg bg-[#F8FAFC] dark:bg-slate-800 hover:bg-[#0F766E] hover:text-white dark:hover:bg-[#0F766E] text-xs font-bold font-sans uppercase tracking-wider transition-colors cursor-pointer border border-[#E2E8F0] dark:border-slate-700 text-[#1E293B] dark:text-slate-200"
         >
           Inspect Record
         </button>
@@ -126,7 +154,8 @@ export default function BrokerSales() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-[1440px] mx-auto font-sans" data-testid="broker-sales-portal">
+      <Toaster />
       <PageHeader
         title="Firm-Wide Sales Audit & Monitoring"
         subtitle="Complete registry of property conveyance agreements, recorded valuations, and deed closing audits."
@@ -134,7 +163,8 @@ export default function BrokerSales() {
           <button
             onClick={loadData}
             disabled={loading}
-            className="h-[46px] px-4 bg-white hover:bg-gray-50 text-[#1E293B] border border-gray-200 rounded-xl text-xs font-bold font-sans uppercase tracking-wider flex items-center gap-2 transition-all shadow-xs cursor-pointer"
+            aria-label="Refresh sales data"
+            className="h-[46px] px-4 bg-white dark:bg-slate-900 hover:bg-gray-50 dark:hover:bg-slate-800 text-[#1E293B] dark:text-slate-100 border border-[#E2E8F0] dark:border-slate-800 rounded-xl text-xs font-bold font-sans uppercase tracking-wider flex items-center gap-2 transition-all shadow-xs cursor-pointer"
           >
             <span className={`material-symbols-outlined text-[18px] ${loading ? 'animate-spin' : ''}`}>
               refresh
@@ -145,9 +175,9 @@ export default function BrokerSales() {
       />
 
       {error && (
-        <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl flex items-center justify-between text-rose-700 font-sans text-sm">
+        <div role="alert" className="p-4 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-900 rounded-2xl flex items-center justify-between text-rose-700 dark:text-rose-300 font-sans text-sm">
           <div className="flex items-center gap-3">
-            <span className="material-symbols-outlined text-rose-600">error</span>
+            <span className="material-symbols-outlined text-rose-600 dark:text-rose-400">error</span>
             <span>{error}</span>
           </div>
           <button
@@ -159,20 +189,22 @@ export default function BrokerSales() {
         </div>
       )}
 
-      {/* Summary Card */}
-      <div className="bg-white rounded-2xl border border-gray-200/80 p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400 font-sans">
-            Total Closed Valuation (Filtered)
-          </span>
-          <p className="text-3xl font-display font-bold text-[#1E293B] mt-0.5">
-            {`₱${totalClosedValuation.toLocaleString()}`}
-          </p>
-        </div>
-        <div className="text-xs font-sans text-gray-500 max-w-sm">
-          <strong>Compliance Notice:</strong> Sales records serve for supervisory real estate operational monitoring. No banking or payment gateway is processed.
-        </div>
-      </div>
+      {/* Summary Card with Single-Column Responsive Card Layout */}
+      <Card data-testid="broker-card" className="border border-[#E2E8F0] dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
+        <CardContent className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#64748B] dark:text-slate-400 font-sans">
+              Total Closed Valuation (Filtered)
+            </span>
+            <p className="text-3xl font-display font-bold text-[#1E293B] dark:text-slate-100 mt-0.5">
+              {`₱${totalClosedValuation.toLocaleString()}`}
+            </p>
+          </div>
+          <div className="text-xs font-sans text-[#64748B] dark:text-slate-400 max-w-sm">
+            <strong>Compliance Notice:</strong> Sales records serve for supervisory real estate operational monitoring. No banking or payment gateway is processed.
+          </div>
+        </CardContent>
+      </Card>
 
       <SearchAndFilterBar
         searchValue={search}
@@ -198,31 +230,83 @@ export default function BrokerSales() {
       />
 
       {loading ? (
-        <div className="py-24 flex flex-col items-center justify-center text-gray-400 gap-3 bg-white rounded-2xl border border-gray-200/80">
+        <div className="py-24 flex flex-col items-center justify-center text-[#64748B] gap-3 bg-white dark:bg-slate-900 rounded-2xl border border-[#E2E8F0] dark:border-slate-800">
           <span className="material-symbols-outlined animate-spin text-[40px] text-[#0F766E]">
             progress_activity
           </span>
           <p className="text-sm font-sans font-medium">Loading conveyance registry...</p>
         </div>
       ) : (
-        <DataTable
-          columns={columns}
-          data={filtered}
-          onRowClick={(row) => setSelectedSale(row)}
-        />
+        <Card data-testid="broker-card" className="border border-[#E2E8F0] dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-xs">
+          <DataTable
+            columns={columns}
+            data={filtered}
+            onRowClick={(row) => setSelectedSale(row)}
+          />
+        </Card>
       )}
 
-      {/* Sale Detail Modal */}
-      <DashboardModal
-        isOpen={!!selectedSale}
-        onClose={() => setSelectedSale(null)}
-        title="Sales Conveyance Record Audit"
-        subtitle={`Audit ID: ${selectedSale?.id}`}
-        actions={
-          <div className="flex items-center gap-2 flex-wrap">
+      {/* Sale Detail shadcn Dialog */}
+      <Dialog open={!!selectedSale} onOpenChange={(open) => { if (!open) setSelectedSale(null); }}>
+        <DialogContent
+          data-testid="broker-dialog"
+          className="max-w-2xl bg-white dark:bg-slate-900 border border-[#E2E8F0] dark:border-slate-800 text-[#1E293B] dark:text-slate-100"
+        >
+          <DialogHeader>
+            <DialogTitle className="text-xl font-display font-bold text-[#1E293B] dark:text-slate-100">
+              Sales Conveyance Record Audit
+            </DialogTitle>
+            <DialogDescription className="text-xs text-[#64748B] dark:text-slate-400">
+              {selectedSale ? `Audit ID: ${selectedSale.id}` : ''}
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedSale && (
+            <div className="space-y-6 font-sans py-2">
+              <div className="p-4 bg-[#F8FAFC] dark:bg-slate-800/60 rounded-xl flex items-center justify-between border border-[#E2E8F0] dark:border-slate-700">
+                <div>
+                  <p className="text-xs text-[#64748B] dark:text-slate-400">Transaction Valuation</p>
+                  <p className="text-2xl font-display font-bold text-[#0F766E] dark:text-teal-400">
+                    ₱{(Number(selectedSale.property_value) || 0).toLocaleString()}
+                  </p>
+                </div>
+                <StatusBadge status={selectedSale.status} />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-xs text-[#64748B] dark:text-slate-400 uppercase tracking-wider font-bold">Property</p>
+                  <p className="font-semibold text-[#1E293B] dark:text-slate-100 mt-1">{selectedSale.property_title}</p>
+                  <p className="text-xs text-[#64748B] dark:text-slate-400">{selectedSale.property_location}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-[#64748B] dark:text-slate-400 uppercase tracking-wider font-bold">Purchasing Client</p>
+                  <p className="font-semibold text-[#1E293B] dark:text-slate-100 mt-1">{selectedSale.client_name}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-[#64748B] dark:text-slate-400 uppercase tracking-wider font-bold">Execution Date</p>
+                  <p className="font-medium text-[#1E293B] dark:text-slate-200 mt-1">{selectedSale.sale_date}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-[#64748B] dark:text-slate-400 uppercase tracking-wider font-bold">Assigned Consultant</p>
+                  <p className="font-medium text-[#1E293B] dark:text-slate-200 mt-1">{selectedSale.agent_name}</p>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-[#E2E8F0] dark:border-slate-800">
+                <p className="text-xs text-[#64748B] dark:text-slate-400 uppercase tracking-wider font-bold mb-1">Audit Notes</p>
+                <p className="text-sm text-[#1E293B] dark:text-slate-300 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-[#E2E8F0] dark:border-slate-700">
+                  {selectedSale.notes || 'No audit notes attached.'}
+                </p>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="flex items-center gap-2 flex-wrap sm:justify-end pt-4 border-t border-[#E2E8F0] dark:border-slate-800">
             {selectedSale?.status === 'PENDING' && (
               <>
                 <button
+                  type="button"
                   onClick={() => handleUpdateStatus(selectedSale.id, 'COMPLETED')}
                   disabled={updating}
                   className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold uppercase tracking-wider font-sans cursor-pointer transition-colors disabled:opacity-50"
@@ -230,64 +314,25 @@ export default function BrokerSales() {
                   {updating ? 'Processing...' : 'Mark as Completed / Conveyed'}
                 </button>
                 <button
+                  type="button"
                   onClick={() => handleUpdateStatus(selectedSale.id, 'CANCELLED')}
                   disabled={updating}
-                  className="px-4 py-2 text-rose-600 hover:bg-rose-50 rounded-xl text-xs font-bold uppercase tracking-wider font-sans cursor-pointer transition-colors disabled:opacity-50"
+                  className="px-4 py-2 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl text-xs font-bold uppercase tracking-wider font-sans cursor-pointer transition-colors disabled:opacity-50"
                 >
                   Cancel Conveyance
                 </button>
               </>
             )}
             <button
+              type="button"
               onClick={() => setSelectedSale(null)}
               className="px-5 py-2 bg-[#0F766E] hover:bg-[#115E59] text-white rounded-xl text-xs font-bold uppercase tracking-wider font-sans cursor-pointer transition-colors"
             >
               Close Dossier
             </button>
-          </div>
-        }
-      >
-        {selectedSale && (
-          <div className="space-y-6 font-sans">
-            <div className="p-4 bg-[#F8FAFC] rounded-xl flex items-center justify-between">
-              <div>
-                <p className="text-xs text-gray-500">Transaction Valuation</p>
-                <p className="text-2xl font-display font-bold text-[#0F766E]">
-                  ₱{(Number(selectedSale.property_value) || 0).toLocaleString()}
-                </p>
-              </div>
-              <StatusBadge status={selectedSale.status} />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <p className="text-xs text-gray-400 uppercase tracking-wider font-bold">Property</p>
-                <p className="font-semibold text-[#1E293B] mt-1">{selectedSale.property_title}</p>
-                <p className="text-xs text-gray-500">{selectedSale.property_location}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-400 uppercase tracking-wider font-bold">Purchasing Client</p>
-                <p className="font-semibold text-[#1E293B] mt-1">{selectedSale.client_name}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-400 uppercase tracking-wider font-bold">Execution Date</p>
-                <p className="font-medium text-gray-800 mt-1">{selectedSale.sale_date}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-400 uppercase tracking-wider font-bold">Assigned Consultant</p>
-                <p className="font-medium text-gray-800 mt-1">{selectedSale.agent_name}</p>
-              </div>
-            </div>
-
-            <div className="pt-4 border-t border-gray-100">
-              <p className="text-xs text-gray-400 uppercase tracking-wider font-bold mb-1">Audit Notes</p>
-              <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-xl border border-gray-100">
-                {selectedSale.notes || 'No audit notes attached.'}
-              </p>
-            </div>
-          </div>
-        )}
-      </DashboardModal>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

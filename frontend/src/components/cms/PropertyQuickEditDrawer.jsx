@@ -158,7 +158,7 @@ export default function PropertyQuickEditDrawer({
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
-      <SheetContent side="right" className="w-full max-w-lg p-0 flex flex-col h-full bg-white border-l border-[#E2E8F0] shadow-2xl overflow-y-auto [&>button]:hidden">
+      <SheetContent data-testid="broker-drawer" side="right" className="w-full max-w-lg p-0 flex flex-col h-full bg-white border-l border-[#E2E8F0] shadow-2xl overflow-y-auto [&>button]:hidden">
         
         {/* Header */}
         <div className="px-6 py-4 border-b border-[#E2E8F0] flex items-center justify-between bg-[#F8FAFC]">

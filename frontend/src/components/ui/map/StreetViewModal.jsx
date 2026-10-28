@@ -107,10 +107,13 @@ export default function StreetViewModal({
   return (
     <div
       data-lenis-prevent="true"
+      role="dialog"
+      aria-modal="true"
+      aria-label="360° Panoramic Street View"
       data-testid="street-view-modal"
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
     >
-      <div className="relative w-full max-w-4xl bg-white rounded-xl shadow-2xl border border-[#E2E8F0] overflow-hidden flex flex-col max-h-[90vh]">
+      <div data-testid="broker-dialog" className="relative w-full max-w-4xl bg-white rounded-xl shadow-2xl border border-[#E2E8F0] overflow-hidden flex flex-col max-h-[90vh]">
         {/* Modal Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#E2E8F0] bg-white">
           <div>

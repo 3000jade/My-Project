@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { invitationService } from '../../../services/invitationService';
 import { agentService } from '../../../services/agentService';
+import { Card, CardContent, useToast, Toaster } from '../../../components/ui';
 import { cn } from '../../../utils/cn';
 
 const STEPS = [
@@ -19,6 +20,7 @@ const STEPS = [
 
 export default function BrokerInviteAgent() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -131,11 +133,13 @@ export default function BrokerInviteAgent() {
     if (!successResult) return;
     navigator.clipboard.writeText(successResult.inviteUrl);
     setCopiedLink(true);
+    toast({ title: 'Link Copied', description: 'Invitation link copied to clipboard.', variant: 'default' });
     setTimeout(() => setCopiedLink(false), 2500);
   };
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <div className="space-y-6 max-w-5xl mx-auto font-sans" data-testid="broker-invite-agent">
+      <Toaster />
       {/* Breadcrumbs */}
       <div>
         <div className="flex items-center gap-1.5 text-xs text-[#64748B] mb-2 font-medium">
@@ -238,7 +242,7 @@ export default function BrokerInviteAgent() {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
           
           {/* Left Column: Progress Stepper (4-Cols on Desktop) */}
-          <div className="md:col-span-4 bg-white rounded-lg border border-[#E2E8F0] p-5 shadow-2xs space-y-4">
+          <div data-testid="broker-card" className="md:col-span-4 bg-white dark:bg-slate-900 rounded-lg border border-[#E2E8F0] dark:border-slate-800 p-5 shadow-2xs space-y-4">
             <h3 className="text-xs font-bold text-[#1E293B] uppercase tracking-wider pb-3 border-b border-[#E2E8F0]">
               Onboarding Steps
             </h3>
@@ -292,7 +296,7 @@ export default function BrokerInviteAgent() {
           </div>
 
           {/* Right Column: Active Step Form (8-Cols on Desktop) */}
-          <div className="md:col-span-8 bg-white rounded-lg border border-[#E2E8F0] p-6 shadow-2xs space-y-6">
+          <div data-testid="broker-card" className="md:col-span-8 bg-white dark:bg-slate-900 rounded-lg border border-[#E2E8F0] dark:border-slate-800 p-6 shadow-2xs space-y-6">
             
             {error && (
               <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-700 animate-in fade-in duration-150 space-y-2">
