@@ -13,7 +13,15 @@ import {
 import { resolveDriveImageUrl } from '../../../services/driveService';
 import useViewingList from '../../../hooks/useViewingList';
 
-export default function PropertyCard({ property = {}, variant = 'vertical', variants }) {
+export default function PropertyCard({ 
+  property = {}, 
+  variant = 'vertical', 
+  variants,
+  isSelected = false,
+  isHovered = false,
+  onMouseEnter,
+  onMouseLeave
+}) {
   const navigate = useNavigate();
   const { isInViewingList, toggleViewingList } = useViewingList();
   
@@ -26,6 +34,13 @@ export default function PropertyCard({ property = {}, variant = 'vertical', vari
   // Safe Property Identification & Navigation Target
   const propertyId = property.id || property.ListingKey || property.listingKey || property.ListingId || property.listingId || property.ref_code || '';
   const isSaved = propertyId ? isInViewingList(propertyId) : false;
+
+  // Derive canonical RESO status
+  const standardStatus = property.standard_status || property.standardStatus || property.StandardStatus || (property.status === 'AVAILABLE' ? 'Active' : property.status === 'SOLD' ? 'Closed' : property.status === 'RESERVED' ? 'Active Under Contract' : property.status || 'Active');
+  const lowerStatus = String(standardStatus).toLowerCase();
+  const isUnderContract = lowerStatus.includes('contract') || lowerStatus.includes('reserved');
+  const isClosed = lowerStatus.includes('closed') || lowerStatus.includes('sold');
+  const isActive = !isUnderContract && !isClosed;
 
   // Title mapping (Name -> properties.title)
   const propertyTitle = property.title || property.name || 'Untitled Property';
@@ -72,9 +87,9 @@ export default function PropertyCard({ property = {}, variant = 'vertical', vari
   const beds = property.bedrooms_total ?? property.bedroomsTotal ?? property.beds ?? property.specs?.beds ?? property.specs?.bedroomsTotal ?? null;
   const baths = property.bathrooms_total_integer ?? property.bathroomsTotalInteger ?? property.baths ?? property.specs?.baths ?? property.specs?.bathroomsTotalInteger ?? null;
   
-  const floorAreaValue = property.living_area ?? property.livingArea ?? property.specs?.livingArea ?? property.sqm ?? property.floor_area ?? property.sqft ?? null;
+  const floorAreaValue = property.living_area ?? property.livingArea ?? property.specs?.livingArea ?? property.sqm ?? property.floor_area ?? property.sqft ?? property.area ?? null;
   const floorAreaUnits = property.living_area_units || property.livingAreaUnits || property.specs?.livingAreaUnits || (property.sqm ? 'sqm' : (property.sqft ? 'sqft' : 'sqm'));
-  const floorAreaFormatted = floorAreaValue != null ? `${floorAreaValue} ${floorAreaUnits}` : null;
+  const floorAreaFormatted = floorAreaValue != null ? (String(floorAreaValue).includes('sq') ? floorAreaValue : `${floorAreaValue} ${floorAreaUnits}`) : null;
 
   // Cover photo with fallback
   const rawImage = (Array.isArray(property.images) && property.images[0]) ||
@@ -95,11 +110,21 @@ export default function PropertyCard({ property = {}, variant = 'vertical', vari
     toggleViewingList(property);
   };
 
+  const isHighlighted = isSelected || isHovered;
+
   return (
     <motion.article
       variants={cardAnimation}
       onClick={handleNavigate}
-      className="group relative bg-[#FFFFFF] rounded-lg border border-[#E2E8F0] shadow-xs hover:shadow-md hover:border-[#0F766E]/40 hover:-translate-y-1 transition-all duration-300 ease-out cursor-pointer overflow-hidden flex flex-col justify-between h-full w-full select-none"
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      data-testid="property-card"
+      data-property-id={propertyId}
+      className={`group relative rounded-lg border transition-all duration-300 ease-out cursor-pointer overflow-hidden flex flex-col justify-between h-full w-full select-none ${
+        isHighlighted
+          ? 'border-[#0F766E] ring-2 ring-[#0F766E]/30 shadow-lg -translate-y-1.5 bg-teal-50/10'
+          : 'bg-[#FFFFFF] border-[#E2E8F0] shadow-xs hover:shadow-md hover:border-[#0F766E]/40 hover:-translate-y-1'
+      }`}
       tabIndex={0}
       role="button"
       aria-label={`View details for ${propertyTitle}`}
@@ -121,15 +146,35 @@ export default function PropertyCard({ property = {}, variant = 'vertical', vari
             onError={(e) => {
               e.currentTarget.src = 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1200&auto=format&fit=crop';
             }}
-            className="w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-500 ease-out"
+            className={`w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-500 ease-out ${
+              isClosed ? 'grayscale-[35%] opacity-90' : ''
+            }`}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent pointer-events-none" />
 
-          {/* Badges: For Sale/Rent + Featured */}
-          <div className="absolute top-3 left-3 flex items-center gap-1.5 z-10">
+          {/* Badges: For Sale/Rent + Status (Under Contract / Closed) + Featured */}
+          <div className="absolute top-3 left-3 flex flex-wrap items-center gap-1.5 z-10">
             <span className="backdrop-blur-md bg-white/95 text-[#0F766E] text-[11px] font-bold px-2.5 py-1 rounded shadow-xs border border-[#E2E8F0]/80 uppercase tracking-wide">
               {typeBadgeLabel}
             </span>
+            {isUnderContract && (
+              <span 
+                className="backdrop-blur-md bg-amber-50/95 text-amber-800 border border-amber-300 text-[11px] font-bold px-2 py-1 rounded shadow-xs uppercase tracking-wide flex items-center gap-1.5" 
+                data-testid="card-status-badge"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                Under Contract
+              </span>
+            )}
+            {isClosed && (
+              <span 
+                className="backdrop-blur-md bg-slate-100/95 text-slate-700 border border-slate-300 text-[11px] font-bold px-2 py-1 rounded shadow-xs uppercase tracking-wide flex items-center gap-1.5" 
+                data-testid="card-status-badge"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-slate-500" />
+                Closed / Sold
+              </span>
+            )}
             {isFeatured && (
               <span className="backdrop-blur-md bg-[#FF6B6B] text-white text-[11px] font-bold px-2.5 py-1 rounded shadow-xs uppercase tracking-wide">
                 Featured
@@ -151,8 +196,15 @@ export default function PropertyCard({ property = {}, variant = 'vertical', vari
             )}
           </button>
 
+          {/* Under Contract contextual banner */}
+          {isUnderContract && (
+            <div className="absolute bottom-0 inset-x-0 bg-amber-500/90 backdrop-blur-xs text-white text-[10px] font-bold py-1 px-3 text-center uppercase tracking-wider z-10 shadow-xs">
+              Under Contract • Backup Inquiries Welcome
+            </div>
+          )}
+
           {/* Property Type Tag at bottom edge of image */}
-          <div className="absolute bottom-3 left-3 z-10">
+          <div className={`absolute left-3 z-10 ${isUnderContract ? 'bottom-8' : 'bottom-3'}`}>
             <span className="backdrop-blur-sm bg-slate-900/80 text-white text-[10px] font-medium px-2 py-0.5 rounded tracking-wide">
               {propertyType}
             </span>
@@ -219,10 +271,15 @@ export default function PropertyCard({ property = {}, variant = 'vertical', vari
 
       {/* Card Footer: View Details Action */}
       <div className="px-4 sm:px-5 py-3 border-t border-[#E2E8F0] bg-white flex items-center justify-between">
-        <span className="text-xs font-semibold text-[#0F766E] group-hover:text-[#115E59] transition-colors flex items-center gap-1">
+        <button
+          type="button"
+          onClick={handleNavigate}
+          aria-label="View Details"
+          className="text-xs font-semibold text-[#0F766E] group-hover:text-[#115E59] transition-colors flex items-center gap-1 cursor-pointer bg-transparent border-0 p-0 text-left"
+        >
           View Details
           <IconArrowRight size={14} stroke={2.5} className="group-hover:translate-x-1 transition-transform" />
-        </span>
+        </button>
         <span className="text-[11px] font-mono text-[#64748B]">
           {property.listing_id || property.ref_code || ''}
         </span>
