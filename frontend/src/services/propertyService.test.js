@@ -209,4 +209,72 @@ describe('propertyService RESO 2.0 Adapters', () => {
       isCorporateDesk: true,
     });
   });
+
+  it('synchronizes standardStatus and legacy status bidirectionally in toApiPayload', () => {
+    // Closed / sold listings
+    const closedPayload = toApiPayload({
+      title: 'Sold Estate',
+      price: 150000000,
+      standardStatus: 'Closed',
+    });
+    expect(closedPayload.standardStatus).toBe('Closed');
+    expect(closedPayload.status).toBe('sold');
+    expect(closedPayload.isPublished).toBe(false);
+
+    const soldByStatusPayload = toApiPayload({
+      title: 'Sold Legacy Estate',
+      price: 150000000,
+      status: 'SOLD',
+    });
+    expect(soldByStatusPayload.standardStatus).toBe('Closed');
+    expect(soldByStatusPayload.status).toBe('sold');
+    expect(soldByStatusPayload.isPublished).toBe(false);
+
+    // Active listings
+    const activePayload = toApiPayload({
+      title: 'Active Villa',
+      price: 95000000,
+      standardStatus: 'Active',
+    });
+    expect(activePayload.standardStatus).toBe('Active');
+    expect(activePayload.status).toBe('available');
+    expect(activePayload.isPublished).toBe(true);
+
+    const availableByStatusPayload = toApiPayload({
+      title: 'Available Legacy Villa',
+      price: 95000000,
+      status: 'AVAILABLE',
+    });
+    expect(availableByStatusPayload.standardStatus).toBe('Active');
+    expect(availableByStatusPayload.status).toBe('available');
+    expect(availableByStatusPayload.isPublished).toBe(true);
+
+    // Draft listings
+    const draftPayload = toApiPayload({
+      title: 'Draft Residence',
+      price: 45000000,
+      standardStatus: 'Draft',
+    });
+    expect(draftPayload.standardStatus).toBe('Draft');
+    expect(draftPayload.status).toBe('pending');
+    expect(draftPayload.isPublished).toBe(false);
+
+    // Active Under Contract / Under Contract listings
+    const underContractPayload = toApiPayload({
+      title: 'Under Contract Penthouse',
+      price: 120000000,
+      standardStatus: 'Active Under Contract',
+    });
+    expect(underContractPayload.standardStatus).toBe('Active Under Contract');
+    expect(underContractPayload.status).toBe('pending');
+    expect(underContractPayload.isPublished).toBe(false);
+
+    const reservedByStatusPayload = toApiPayload({
+      title: 'Reserved Penthouse',
+      price: 120000000,
+      status: 'RESERVED',
+    });
+    expect(reservedByStatusPayload.standardStatus).toBe('Active Under Contract');
+    expect(reservedByStatusPayload.status).toBe('pending');
+  });
 });

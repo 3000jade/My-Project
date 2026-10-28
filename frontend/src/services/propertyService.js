@@ -16,6 +16,37 @@ function parseNullableNumber(val) {
 }
 
 /**
+ * Resolves the canonical RESO StandardStatus from incoming standardStatus or legacy status.
+ */
+export function resolveCanonicalStandardStatus(standardStatus, status) {
+  if (standardStatus && typeof standardStatus === 'string' && standardStatus.trim()) {
+    const lower = standardStatus.trim().toLowerCase();
+    if (lower === 'active') return 'Active';
+    if (lower === 'active under contract' || lower === 'under contract' || lower === 'reserved') return 'Active Under Contract';
+    if (lower === 'pending') return 'Pending';
+    if (lower === 'closed' || lower === 'sold') return 'Closed';
+    if (lower === 'pending approval' || lower === 'needs approval') return 'Pending Approval';
+    if (lower === 'pending confirmation') return 'Pending Confirmation';
+    if (lower === 'action required') return 'Action Required';
+    if (lower === 'draft') return 'Draft';
+    if (lower === 'canceled' || lower === 'cancelled') return 'Canceled';
+    if (lower === 'expired') return 'Expired';
+    return standardStatus.trim();
+  }
+
+  if (status && typeof status === 'string' && status.trim()) {
+    const lower = status.trim().toLowerCase();
+    if (lower === 'available' || lower === 'active') return 'Active';
+    if (lower === 'sold' || lower === 'closed') return 'Closed';
+    if (lower === 'reserved' || lower === 'under contract' || lower === 'active under contract') return 'Active Under Contract';
+    if (lower === 'pending') return 'Pending';
+    if (lower === 'draft' || lower === 'inactive') return 'Draft';
+  }
+
+  return 'Active';
+}
+
+/**
  * Normalizes raw property items from Supabase / Express backend or mock fixtures
  * into a consistent, UI-safe format.
  */
@@ -59,11 +90,18 @@ export function normalizeProperty(rawItem = {}) {
     (typeof rawItem.price === 'string' && rawItem.price.startsWith('₱') ? rawItem.price : null) ||
     (rawNumericPrice > 0 ? `₱${rawNumericPrice.toLocaleString()}` : null);
 
-  const normalizedStatus = (rawItem.status || 'AVAILABLE').toUpperCase();
+  const canonicalStandardStatus = resolveCanonicalStandardStatus(
+    rawItem.standard_status || rawItem.standardStatus,
+    rawItem.status
+  );
+
+  const normalizedStatus = (rawItem.status || (canonicalStandardStatus === 'Active' ? 'AVAILABLE' : canonicalStandardStatus === 'Closed' ? 'SOLD' : 'PENDING')).toUpperCase();
 
   const isPublished = rawItem.is_published !== undefined
     ? Boolean(rawItem.is_published)
-    : (normalizedStatus !== 'SOLD' && normalizedStatus !== 'INACTIVE');
+    : (rawItem.isPublished !== undefined
+        ? Boolean(rawItem.isPublished)
+        : (normalizedStatus !== 'SOLD' && normalizedStatus !== 'INACTIVE'));
 
   const explicitAgentName = rawItem.agent_name || rawItem.agentName || rawItem.agent?.name || '';
   const agentId = rawItem.agent_id || rawItem.agentId || null;
@@ -125,6 +163,7 @@ export function normalizeProperty(rawItem = {}) {
     propertySubType: rawItem.property_sub_type || rawItem.propertySubType || rawItem.specs?.propertySubType || '',
     status: normalizedStatus,
     is_published: isPublished,
+    isPublished: isPublished,
     agent_id: agentId,
     agent_name: agentName,
     agentName: agentName,
@@ -156,8 +195,8 @@ export function normalizeProperty(rawItem = {}) {
     features: Array.isArray(rawItem.features) ? rawItem.features : [],
     listing_id: listingId,
     listing_key: listingKey,
-    standard_status: rawItem.standard_status || rawItem.standardStatus || (normalizedStatus === 'AVAILABLE' ? 'Active' : normalizedStatus === 'RESERVED' ? 'Reserved' : normalizedStatus === 'UNDER CONTRACT' ? 'Active Under Contract' : normalizedStatus === 'SOLD' ? 'Closed' : normalizedStatus),
-    standardStatus: rawItem.standard_status || rawItem.standardStatus || (normalizedStatus === 'AVAILABLE' ? 'Active' : normalizedStatus === 'RESERVED' ? 'Reserved' : normalizedStatus === 'UNDER CONTRACT' ? 'Active Under Contract' : normalizedStatus === 'SOLD' ? 'Closed' : normalizedStatus),
+    standard_status: canonicalStandardStatus,
+    standardStatus: canonicalStandardStatus,
     association_fee: rawItem.pricing?.associationFee ?? rawItem.pricing?.association_fee ?? rawItem.association_fee ?? rawItem.associationFee ?? 0,
     associationFee: rawItem.pricing?.associationFee ?? rawItem.pricing?.association_fee ?? rawItem.association_fee ?? rawItem.associationFee ?? 0,
     association_fee_frequency: rawItem.pricing?.associationFeeFrequency ?? rawItem.pricing?.association_fee_frequency ?? rawItem.association_fee_frequency ?? rawItem.associationFeeFrequency ?? 'Monthly',
@@ -313,6 +352,40 @@ export function toApiPayload(item = {}) {
               : []))
   })) : undefined;
 
+  // Resolve and synchronize standardStatus, status, and isPublished
+  const rawStandardStatus = item.standardStatus || item.standard_status;
+  const rawStatus = (item.status || '').toUpperCase();
+
+  let resolvedStandardStatus = rawStandardStatus;
+  if (!resolvedStandardStatus) {
+    if (rawStatus === 'AVAILABLE' || rawStatus === 'ACTIVE') {
+      resolvedStandardStatus = 'Active';
+    } else if (rawStatus === 'UNDER CONTRACT' || rawStatus === 'ACTIVE UNDER CONTRACT' || rawStatus === 'RESERVED') {
+      resolvedStandardStatus = 'Active Under Contract';
+    } else if (rawStatus === 'SOLD' || rawStatus === 'CLOSED') {
+      resolvedStandardStatus = 'Closed';
+    } else {
+      resolvedStandardStatus = 'Draft';
+    }
+  } else {
+    resolvedStandardStatus = resolveCanonicalStandardStatus(resolvedStandardStatus, item.status);
+  }
+
+  let derivedStatus = 'pending';
+  if (resolvedStandardStatus === 'Active') {
+    derivedStatus = 'available';
+  } else if (resolvedStandardStatus === 'Closed' || rawStatus === 'SOLD') {
+    derivedStatus = 'sold';
+  } else {
+    derivedStatus = 'pending';
+  }
+
+  const resolvedIsPublished = item.is_published !== undefined
+    ? Boolean(item.is_published)
+    : (item.isPublished !== undefined
+        ? Boolean(item.isPublished)
+        : (resolvedStandardStatus === 'Active'));
+
   return {
     title: (item.title || 'Untitled Luxury Property').trim(),
     tagline: item.tagline || '',
@@ -328,8 +401,11 @@ export function toApiPayload(item = {}) {
     taxAnnualAmount: numericTax,
     isFeatured: item.is_featured !== undefined ? Boolean(item.is_featured) : (item.isFeatured !== undefined ? Boolean(item.isFeatured) : false),
     is_featured: item.is_featured !== undefined ? Boolean(item.is_featured) : (item.isFeatured !== undefined ? Boolean(item.isFeatured) : false),
-    standardStatus: item.standardStatus || item.standard_status || (item.status === 'AVAILABLE' ? 'Active' : item.status === 'UNDER CONTRACT' ? 'Active Under Contract' : item.status === 'SOLD' ? 'Closed' : 'Draft'),
-    status: (item.status || 'available').toLowerCase(),
+    standardStatus: resolvedStandardStatus,
+    standard_status: resolvedStandardStatus,
+    status: derivedStatus,
+    isPublished: resolvedIsPublished,
+    is_published: resolvedIsPublished,
     publicRemarks: item.publicRemarks || item.description || '',
     location: {
       address: (item.address || item.location || '').trim(),

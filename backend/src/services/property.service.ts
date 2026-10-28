@@ -139,6 +139,72 @@ function normalizePsgc(val: any): string | null {
   return /^[0-9]{10}$/.test(trimmed) ? trimmed : null;
 }
 
+export interface DerivedStatusResult {
+  status: 'available' | 'pending' | 'sold';
+  standardStatus: StandardStatus;
+  isPublished: boolean;
+}
+
+/**
+ * Derives legacy 3-state status ('available' | 'pending' | 'sold'), canonical RESO StandardStatus,
+ * and listing publication flag (isPublished).
+ */
+export function deriveLegacyStatus(
+  standardStatus?: string,
+  incomingStatus?: string
+): DerivedStatusResult {
+  if (standardStatus && typeof standardStatus === 'string' && standardStatus.trim()) {
+    const s = standardStatus.trim().toLowerCase();
+    if (s === 'active') {
+      return { status: 'available', standardStatus: 'Active', isPublished: true };
+    }
+    if (s === 'active under contract' || s === 'reserved') {
+      return { status: 'pending', standardStatus: 'Active Under Contract', isPublished: true };
+    }
+    if (s === 'pending') {
+      return { status: 'pending', standardStatus: 'Pending', isPublished: false };
+    }
+    if (s === 'closed' || s === 'sold') {
+      return { status: 'sold', standardStatus: 'Closed', isPublished: false };
+    }
+    if (s === 'pending approval' || s === 'needs approval') {
+      return { status: 'pending', standardStatus: 'Pending Approval', isPublished: false };
+    }
+    if (s === 'pending confirmation') {
+      return { status: 'pending', standardStatus: 'Pending Confirmation', isPublished: false };
+    }
+    if (s === 'action required') {
+      return { status: 'pending', standardStatus: 'Action Required', isPublished: false };
+    }
+    if (s === 'draft') {
+      return { status: 'pending', standardStatus: 'Draft', isPublished: false };
+    }
+    if (s === 'canceled' || s === 'cancelled') {
+      return { status: 'pending', standardStatus: 'Canceled', isPublished: false };
+    }
+    if (s === 'expired') {
+      return { status: 'pending', standardStatus: 'Expired', isPublished: false };
+    }
+  }
+
+  if (incomingStatus && typeof incomingStatus === 'string' && incomingStatus.trim()) {
+    const inc = incomingStatus.trim().toLowerCase();
+    if (inc === 'available') {
+      return { status: 'available', standardStatus: 'Active', isPublished: true };
+    }
+    if (inc === 'sold') {
+      return { status: 'sold', standardStatus: 'Closed', isPublished: false };
+    }
+    if (inc === 'reserved') {
+      return { status: 'pending', standardStatus: 'Active Under Contract', isPublished: true };
+    }
+    // default / 'pending' / 'inactive' / 'draft'
+    return { status: 'pending', standardStatus: 'Draft', isPublished: false };
+  }
+
+  return { status: 'available', standardStatus: 'Active', isPublished: true };
+}
+
 // In-memory fallback seed fixtures enriched with RESO Data Dictionary 2.0
 const SEED_PROPERTIES: PropertyItem[] = [
   {
@@ -1518,7 +1584,8 @@ export class PropertyService {
 
     // Broker Approval Enforcement:
     // If transitioning standard_status to 'Active' from another status, require role 'broker' or 'admin'
-    if (data.standardStatus === 'Active' && existing.standardStatus !== 'Active') {
+    const targetStatus = data.standardStatus || data.standard_status;
+    if (targetStatus === 'Active' && existing.standardStatus !== 'Active') {
       const isBrokerOrAdmin = userRole && ['broker', 'admin'].includes(userRole);
       if (!isBrokerOrAdmin) {
         throw new Error('Forbidden: Only brokers and administrators can approve and activate property listings.');
@@ -1578,6 +1645,11 @@ export class PropertyService {
       };
     }
 
+    const hasStatusInput = (data.standardStatus !== undefined || data.standard_status !== undefined || data.status !== undefined);
+    const derived = hasStatusInput
+      ? deriveLegacyStatus(data.standardStatus || data.standard_status, data.status)
+      : deriveLegacyStatus(existing.standardStatus, existing.status);
+
     const updated: PropertyItem = {
       ...existing,
       ...data,
@@ -1585,8 +1657,13 @@ export class PropertyService {
       architecturalStyle: data.architecturalStyle ?? existing.architecturalStyle,
       rooms: data.rooms ?? existing.rooms,
       location: mergedLocation,
-      standardStatus: data.standardStatus || existing.standardStatus,
-      status: (data.standardStatus === 'Active' ? 'available' : existing.status),
+      standardStatus: derived.standardStatus,
+      status: derived.status,
+      isPublished: data.isPublished !== undefined
+        ? Boolean(data.isPublished)
+        : (data.is_published !== undefined
+            ? Boolean(data.is_published)
+            : derived.isPublished),
       updatedAt: new Date().toISOString(),
     };
 
@@ -1600,6 +1677,7 @@ export class PropertyService {
             price: updated.price,
             standard_status: updated.standardStatus,
             status: updated.status,
+            is_published: updated.isPublished,
             address: updated.location.address,
             unparsed_address: updated.location.unparsedAddress,
             subdivision_name: updated.location.subdivisionName,
