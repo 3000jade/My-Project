@@ -167,4 +167,32 @@ describe('BrokerPropertyDetail Page', () => {
 
     expect(screen.getByRole('dialog', { name: /enlarged property location and neighborhood map/i })).toBeInTheDocument();
   });
+
+  it('updates listing status and publication state via status dropdown', async () => {
+    propertyService.updateProperty.mockResolvedValue({ success: true });
+    renderComponent();
+
+    await waitFor(() => {
+      expect(screen.getByText('Skyline Grand Villa at Forbes Park')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText(/Published \(Live on Public Portal\)/i)).toBeInTheDocument();
+
+    const statusSelect = screen.getByRole('combobox');
+    expect(statusSelect).toBeInTheDocument();
+
+    fireEvent.change(statusSelect, { target: { value: 'RESERVED' } });
+
+    await waitFor(() => {
+      expect(propertyService.updateProperty).toHaveBeenCalledWith('prop-101', expect.objectContaining({
+        status: 'pending',
+        standardStatus: 'Active Under Contract',
+        isPublished: true,
+      }));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText(/Under Contract \(Live Listing\)/i)).toBeInTheDocument();
+    });
+  });
 });

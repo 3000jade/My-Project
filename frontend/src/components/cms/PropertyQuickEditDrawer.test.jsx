@@ -66,7 +66,7 @@ describe('PropertyQuickEditDrawer', () => {
     expect(approvePill).toBeInTheDocument();
 
     fireEvent.click(approvePill);
-    expect(approvePill.className).toMatch(/bg-emerald-600|border-emerald-600/);
+    expect(approvePill.className).toMatch(/bg-teal-700|border-teal-700/);
   });
 
   it('persists updates via propertyService and calls onSave', async () => {

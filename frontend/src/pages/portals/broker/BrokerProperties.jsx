@@ -698,8 +698,8 @@ export default function BrokerProperties() {
               </div>
             )}
             {!isPendingConfirm && !isActionReq && isActive && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/60">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-teal-50 text-teal-700 border border-teal-200">
+                <span className="w-1.5 h-1.5 rounded-full bg-teal-600" />
                 Active
               </span>
             )}
@@ -728,14 +728,14 @@ export default function BrokerProperties() {
               </span>
             )}
             {isClosed && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-rose-50 text-rose-700 border border-rose-200/60">
-                <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                Sold
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-300">
+                <span className="w-1.5 h-1.5 rounded-full bg-slate-500" />
+                Closed / Sold
               </span>
             )}
             {isDraft && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60">
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-50 text-slate-600 border border-slate-200">
+                <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
                 Draft
               </span>
             )}
@@ -1273,7 +1273,7 @@ export default function BrokerProperties() {
                       )}
                       <div className="absolute top-3 left-3">
                         <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-white/90 backdrop-blur-xs text-[#0F766E] shadow-2xs border border-white/60">
-                          {prop.standard_status || prop.status || 'Active'}
+                          {prop.standard_status || prop.standardStatus || prop.status || 'Active'}
                         </span>
                       </div>
                     </div>

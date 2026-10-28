@@ -17,23 +17,23 @@ const STATUS_PILLS = [
   {
     id: 'ACTIVE',
     label: 'Approve & Activate',
-    status: 'AVAILABLE',
+    status: 'available',
     standardStatus: 'Active',
-    activeClass: 'bg-emerald-600 text-white border-emerald-600 shadow-xs',
-    idleClass: 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
+    activeClass: 'bg-teal-700 text-white border-teal-700 shadow-xs',
+    idleClass: 'bg-teal-50 text-teal-800 border-teal-200 hover:bg-teal-100'
   },
   {
     id: 'CONTRACT',
     label: 'Under Contract',
-    status: 'RESERVED',
+    status: 'pending',
     standardStatus: 'Active Under Contract',
-    activeClass: 'bg-sky-600 text-white border-sky-600 shadow-xs',
-    idleClass: 'bg-sky-50 text-sky-800 border-sky-200 hover:bg-sky-100'
+    activeClass: 'bg-amber-600 text-white border-amber-600 shadow-xs',
+    idleClass: 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100'
   },
   {
     id: 'CLOSED',
     label: 'Closed',
-    status: 'SOLD',
+    status: 'sold',
     standardStatus: 'Closed',
     activeClass: 'bg-slate-700 text-white border-slate-700 shadow-xs',
     idleClass: 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
@@ -41,17 +41,17 @@ const STATUS_PILLS = [
   {
     id: 'PENDING',
     label: 'Needs Approval',
-    status: 'PENDING',
+    status: 'pending',
     standardStatus: 'Pending Approval',
-    activeClass: 'bg-amber-600 text-white border-amber-600 shadow-xs',
+    activeClass: 'bg-amber-500 text-white border-amber-500 shadow-xs',
     idleClass: 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100'
   },
   {
     id: 'DRAFT',
     label: 'Draft',
-    status: 'DRAFT',
+    status: 'pending',
     standardStatus: 'Draft',
-    activeClass: 'bg-slate-500 text-white border-slate-500 shadow-xs',
+    activeClass: 'bg-slate-600 text-white border-slate-600 shadow-xs',
     idleClass: 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
   }
 ];
@@ -68,7 +68,7 @@ export default function PropertyQuickEditDrawer({
     price: 0,
     propertyType: 'Estate',
     livingArea: 0,
-    status: 'AVAILABLE',
+    status: 'available',
     standardStatus: 'Active',
     associationFee: 0,
     agentName: '',
@@ -79,13 +79,15 @@ export default function PropertyQuickEditDrawer({
 
   useEffect(() => {
     if (property) {
+      const rawStd = property.standard_status || property.standardStatus || 'Active';
+      const rawStatus = (property.status || (rawStd === 'Active' ? 'available' : rawStd === 'Closed' ? 'sold' : 'pending')).toLowerCase();
       setFormData({
         title: property.title || '',
         price: property.price_raw || property.price || 0,
         propertyType: property.property_type || property.type || property.propertyType || 'Estate',
         livingArea: property.specs?.livingArea || property.livingArea || property.living_area || 0,
-        status: (property.status || 'AVAILABLE').toUpperCase(),
-        standardStatus: property.standard_status || property.standardStatus || 'Active',
+        status: rawStatus,
+        standardStatus: rawStd,
         associationFee: property.association_fee || property.associationFee || 0,
         agentName: property.agent_name || property.agent?.full_name || property.agentName || 'Elena Rossi',
         privateRemarks: property.private_remarks || property.privateRemarks || ''
@@ -210,9 +212,18 @@ export default function PropertyQuickEditDrawer({
             </label>
             <div className="flex flex-wrap gap-2">
               {STATUS_PILLS.map((pill) => {
-                const isSelected = 
-                  currentStandardStatus === pill.standardStatus.toLowerCase() ||
-                  (pill.status && formData.status.toUpperCase() === pill.status.toUpperCase());
+                const isSelected = (() => {
+                  if (currentStandardStatus) {
+                    if (currentStandardStatus === pill.standardStatus.toLowerCase()) return true;
+                    if (pill.id === 'PENDING' && (currentStandardStatus === 'pending' || currentStandardStatus === 'pending approval' || currentStandardStatus === 'pending confirmation' || currentStandardStatus === 'action required')) return true;
+                    if (pill.id === 'ACTIVE' && (currentStandardStatus === 'active' || currentStandardStatus === 'available')) return true;
+                    if (pill.id === 'CONTRACT' && (currentStandardStatus === 'active under contract' || currentStandardStatus === 'under contract' || currentStandardStatus === 'reserved')) return true;
+                    if (pill.id === 'CLOSED' && (currentStandardStatus === 'closed' || currentStandardStatus === 'sold')) return true;
+                    if (pill.id === 'DRAFT' && (currentStandardStatus === 'draft' || currentStandardStatus === 'inactive')) return true;
+                    return false;
+                  }
+                  return String(formData.status).toLowerCase() === String(pill.status).toLowerCase();
+                })();
 
                 return (
                   <button
