@@ -660,13 +660,13 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
   ];
 
   const stepTitles = [
-    'Basic Info',
-    'Location',
-    'Specifications',
+    'Listing Overview',
+    'Location & Address',
+    'Property Specifications',
     'Pricing & Terms',
-    'Amenities',
-    'Media & Documents',
-    'Review & Submit'
+    'Features & Amenities',
+    'Photos & Maps',
+    'Review & Publish'
   ];
 
   const interiorAmenitiesList = [
@@ -1720,8 +1720,9 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
     );
   }
 
-  const isCondo = ['Condominium', 'Penthouse', 'Apartment'].includes(formData.property_type);
-  const isLand = ['Lot / Land', 'Vacant Land / Lot', 'Land'].includes(formData.property_type);
+  const isCondo = ['condominium', 'Condominium', 'Penthouse', 'Apartment', 'apartment'].includes(formData.property_type);
+  const isLand = ['residentialLot', 'Subdivision Lot', 'Lot / Land', 'Vacant Land / Lot', 'Land'].includes(formData.property_type);
+  const isHouseAndLot = ['houseAndLot', 'House and Lot', 'House & Lot', 'Townhouse', 'townhouse', 'Villa', 'villa'].includes(formData.property_type);
 
   return (
     <div className={`space-y-6 max-w-[1440px] mx-auto ${isDrawer ? 'pb-6' : 'pb-16'}`}>
@@ -1747,40 +1748,64 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
       )}
 
       {/* 7-Step Navigation Stepper Header */}
-      <div data-testid="broker-card" className="bg-white p-4 sm:p-5 rounded-lg border border-[#E2E8F0] shadow-xs mb-6 overflow-x-auto custom-scrollbar">
-        <div className="flex items-center justify-between min-w-[720px] relative">
-          {/* Subtle background connecting track */}
-          <div className="absolute top-4 left-8 right-8 h-[2px] bg-[#E2E8F0] -z-0" />
+      <Card data-testid="broker-card" className="bg-white dark:bg-slate-900 border-[#E2E8F0] dark:border-slate-800 shadow-xs mb-6 overflow-hidden">
+        <div className="p-4 sm:p-5 flex flex-col gap-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <Badge variant="default" className="font-bold">
+                Step {currentStep} of 7
+              </Badge>
+              <span className="text-sm font-bold text-[#1E293B] dark:text-slate-100 font-display">
+                {stepTitles[currentStep - 1]}
+              </span>
+            </div>
+            <div className="text-xs text-[#64748B] dark:text-slate-400 font-medium hidden sm:block">
+              {Math.round(((currentStep - 1) / 6) * 100)}% Completed
+            </div>
+          </div>
 
-          {stepTitles.map((title, idx) => {
-            const stepNum = idx + 1;
-            const isActive = currentStep === stepNum;
-            const isCompleted = currentStep > stepNum;
-            return (
-              <div 
-                key={stepNum} 
-                className="flex flex-col items-center flex-1 cursor-pointer transition-all hover:opacity-95 relative z-10"
-                onClick={() => setCurrentStep(stepNum)}
-              >
-                <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center text-xs font-bold mb-2 transition-all shadow-2xs ${
-                  isActive 
-                    ? 'bg-[#0F766E] text-white ring-4 ring-[#0F766E]/15 border border-[#0F766E]' 
-                    : isCompleted 
-                    ? 'bg-[#0F766E] text-white border border-[#0F766E]' 
-                    : 'bg-white text-slate-500 border border-[#E2E8F0] hover:border-slate-400'
-                }`}>
-                  {isCompleted ? <Check className="w-4 h-4 stroke-[2.5]" /> : stepNum}
-                </div>
-                <span className={`text-xs text-center transition-colors ${
-                  isActive ? 'text-[#0F766E] font-bold' : isCompleted ? 'text-[#1E293B] font-medium' : 'text-[#64748B]'
-                }`}>
-                  {title}
-                </span>
-              </div>
-            );
-          })}
+          <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+            <div 
+              className="bg-[#0F766E] h-full transition-all duration-300 rounded-full"
+              style={{ width: `${((currentStep) / 7) * 100}%` }}
+            />
+          </div>
+
+          <div className="overflow-x-auto custom-scrollbar pt-1 pb-1">
+            <div className="flex items-center justify-between min-w-[720px] relative">
+              <div className="absolute top-4 left-8 right-8 h-[2px] bg-[#E2E8F0] dark:bg-slate-800 -z-0" />
+
+              {stepTitles.map((title, idx) => {
+                const stepNum = idx + 1;
+                const isActive = currentStep === stepNum;
+                const isCompleted = currentStep > stepNum;
+                return (
+                  <div 
+                    key={stepNum} 
+                    className="flex flex-col items-center flex-1 cursor-pointer transition-all hover:opacity-95 relative z-10"
+                    onClick={() => setCurrentStep(stepNum)}
+                  >
+                    <div className={`size-9 rounded-full flex items-center justify-center text-xs font-bold mb-2 transition-all shadow-2xs ${
+                      isActive 
+                        ? 'bg-[#0F766E] text-white ring-4 ring-[#0F766E]/15 border border-[#0F766E]' 
+                        : isCompleted 
+                        ? 'bg-[#0F766E] text-white border border-[#0F766E]' 
+                        : 'bg-white dark:bg-slate-900 text-slate-500 border border-[#E2E8F0] dark:border-slate-700 hover:border-slate-400'
+                    }`}>
+                      {isCompleted ? <Check className="size-4 stroke-[2.5]" /> : stepNum}
+                    </div>
+                    <span className={`text-xs text-center transition-colors px-1 ${
+                      isActive ? 'text-[#0F766E] dark:text-teal-400 font-bold' : isCompleted ? 'text-[#1E293B] dark:text-slate-200 font-medium' : 'text-[#64748B] dark:text-slate-400'
+                    }`}>
+                      {title}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
-      </div>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Form Column (8 Cols) */}
@@ -1795,7 +1820,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
             <div className="pb-3 border-b border-[#E2E8F0] flex items-center justify-between">
               <h3 className="text-base font-bold text-[#1E293B] flex items-center gap-2">
                 <FileText className="w-4 h-4 text-[#0F766E]" />
-                <span>Section 1: Basic Property Information</span>
+                <span>Section 1: Listing Overview</span>
               </h3>
             </div>
             
@@ -1849,7 +1874,12 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                     Category / Type Classification <span className="text-[#FF6B6B]">*</span>
                   </label>
                   <span className="text-xs text-[#64748B]">
-                    Active: <strong className="text-[#0F766E] font-bold">{formData.property_type || 'House & Lot'}</strong>
+                    Active: <strong className="text-[#0F766E] font-bold">
+                      {(() => {
+                        const match = COMMON_PROPERTY_TYPES.find(c => c.id === formData.property_type || c.name === formData.property_type);
+                        return match ? match.name : (formData.property_type || 'House and Lot');
+                      })()}
+                    </strong>
                   </span>
                 </div>
 
@@ -1860,7 +1890,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                 >
                   {COMMON_PROPERTY_TYPES.map(config => {
                     const Icon = config.icon;
-                    const isSelected = formData.property_type === config.id;
+                    const isSelected = formData.property_type === config.id || formData.property_type === config.name;
 
                     return (
                       <button
@@ -1881,13 +1911,13 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                         }`}
                       >
                         <div
-                          className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
+                          className={`size-10 rounded-xl flex items-center justify-center transition-colors ${
                             isSelected
                               ? 'bg-[#0F766E] text-white'
                               : 'bg-slate-100 text-[#0F766E] group-hover:bg-[#0F766E] group-hover:text-white'
                           }`}
                         >
-                          <Icon className="w-5 h-5" />
+                          <Icon className="size-5" />
                         </div>
                         <span className="font-bold text-xs sm:text-sm text-[#1E293B] group-hover:text-[#0F766E] transition-colors">
                           {config.name}
@@ -2344,7 +2374,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
               <div>
                 <h3 className="text-base font-bold text-[#1E293B] flex items-center gap-2">
                   <span className="material-symbols-outlined text-[#0F766E]">straighten</span>
-                  <span>Section 3: Specifications</span>
+                  <span>Section 3: Property Specifications</span>
                 </h3>
                 <p className="text-xs text-[#64748B] mt-0.5">Define core dimensional specs, sanitary counts, architectural classification, and room breakdown.</p>
               </div>
@@ -4977,27 +5007,25 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
         <div className="sticky bottom-0 z-40 bg-white/95 backdrop-blur-sm border-t border-[#E2E8F0] p-4 sm:p-5 -mx-4 sm:-mx-6 lg:-mx-8 mt-8 shadow-md">
           <div className="max-w-[1440px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="flex items-center gap-3 w-full sm:w-auto">
-              <button
+              <Button
                 type="button"
+                variant="outline"
                 disabled={currentStep === 1 || isSubmitting}
                 onClick={() => setCurrentStep(prev => Math.max(1, prev - 1))}
-                className={`h-11 px-5 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
-                  currentStep === 1 || isSubmitting
-                    ? 'border-[#CBD5E1]/60 text-slate-300 bg-slate-50 cursor-not-allowed' 
-                    : 'border-[#CBD5E1] bg-white hover:bg-[#F8FAFC] text-[#1E293B] shadow-2xs'
-                }`}
+                className="h-11 px-5"
               >
-                <ArrowLeft className="w-3.5 h-3.5" />
+                <ArrowLeft className="size-3.5" />
                 <span>Back</span>
-              </button>
+              </Button>
               {isDrawer ? (
-                <button
+                <Button
                   type="button"
+                  variant="outline"
                   onClick={onClose}
-                  className="h-11 px-4 rounded-lg border border-[#CBD5E1] bg-white hover:bg-[#F8FAFC] text-slate-600 hover:text-[#1E293B] text-xs font-semibold flex items-center transition-colors cursor-pointer shadow-2xs"
+                  className="h-11 px-4 text-slate-600 hover:text-[#1E293B]"
                 >
                   Cancel & Exit
-                </button>
+                </Button>
               ) : (
                 <Link
                   to="/broker/properties"
@@ -5012,43 +5040,46 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
               {currentStep < 7 ? (
                 <>
                   {returnToReview && (
-                    <button
+                    <Button
                       type="button"
+                      variant="outline"
                       onClick={() => {
                         setReturnToReview(false);
                         setCurrentStep(7);
                       }}
-                      className="w-full sm:w-auto h-11 px-5 bg-teal-50 hover:bg-teal-100 text-[#0F766E] border border-teal-300 rounded-lg text-xs font-semibold shadow-2xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                      className="w-full sm:w-auto h-11 px-5 bg-teal-50 hover:bg-teal-100 text-[#0F766E] border-teal-300"
                     >
                       <span>Return to Review</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
+                      <ArrowRight className="size-3.5" />
+                    </Button>
                   )}
-                  <button
+                  <Button
                     type="button"
+                    variant="default"
                     onClick={() => setCurrentStep(prev => Math.min(7, prev + 1))}
-                    className="w-full sm:w-auto h-11 px-6 bg-[#0F766E] hover:bg-[#115E59] text-white rounded-lg text-xs font-semibold shadow-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                    className="w-full sm:w-auto h-11 px-6"
                   >
                     <span>Next Section</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
+                    <ArrowRight className="size-3.5" />
+                  </Button>
                 </>
               ) : (
                 <>
                   {/* Save Draft Action */}
-                  <button
+                  <Button
                     type="button"
+                    variant="outline"
                     disabled={isSubmitting}
                     onClick={() => executeSubmission('Draft')}
-                    className="w-full sm:w-auto h-11 px-5 bg-white hover:bg-slate-50 text-[#1E293B] rounded-lg text-xs font-semibold border border-[#CBD5E1] transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="w-full sm:w-auto h-11 px-5"
                   >
                     {isSubmitting && activeActionLabel === 'Saving...' ? (
                       <span className="material-symbols-outlined text-[16px] animate-spin">sync</span>
                     ) : (
-                      <FileText className="w-3.5 h-3.5 text-slate-500" />
+                      <FileText className="size-3.5 text-slate-500" />
                     )}
                     <span>{isSubmitting && activeActionLabel === 'Saving...' ? 'Saving…' : 'Save Draft'}</span>
-                  </button>
+                  </Button>
 
                   {/* Primary Workflow Action Button */}
                   {(() => {
@@ -5057,35 +5088,37 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                     if (isEditing) {
                       if (isAgent) {
                         return (
-                          <button
+                          <Button
                             type="button"
+                            variant="coral"
                             disabled={isSubmitting}
                             onClick={() => executeSubmission('Pending Approval')}
-                            className="w-full sm:w-auto h-11 px-7 bg-[#FF6B6B] hover:bg-[#EE5A5A] text-white rounded-lg text-xs font-bold shadow-xs transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
+                            className="w-full sm:w-auto h-11 px-7 font-bold"
                           >
                             {isSubmitting ? (
                               <span className="material-symbols-outlined text-[16px] animate-spin">sync</span>
                             ) : (
-                              <Send className="w-3.5 h-3.5" />
+                              <Send className="size-3.5" />
                             )}
                             <span>{isSubmitting ? (activeActionLabel || 'Submitting…') : 'Submit Changes for Review'}</span>
-                          </button>
+                          </Button>
                         );
                       }
                       return (
-                        <button
+                        <Button
                           type="button"
+                          variant="default"
                           disabled={isSubmitting}
                           onClick={() => executeSubmission(formData.standard_status || 'Active')}
-                          className="w-full sm:w-auto h-11 px-7 bg-[#0F766E] hover:bg-[#115E59] text-white rounded-lg text-xs font-bold shadow-xs transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
+                          className="w-full sm:w-auto h-11 px-7 font-bold"
                         >
                           {isSubmitting ? (
                             <span className="material-symbols-outlined text-[16px] animate-spin">sync</span>
                           ) : (
-                            <Check className="w-3.5 h-3.5 stroke-[3]" />
+                            <Check className="size-3.5 stroke-[3]" />
                           )}
                           <span>{isSubmitting ? (activeActionLabel || 'Saving…') : 'Save Changes'}</span>
-                        </button>
+                        </Button>
                       );
                     }
 
@@ -5096,12 +5129,12 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                           variant="coral"
                           disabled={isSubmitting}
                           onClick={() => executeSubmission('Pending Approval')}
-                          className="w-full sm:w-auto h-11 px-7 flex items-center justify-center gap-1.5 cursor-pointer shadow-xs font-bold"
+                          className="w-full sm:w-auto h-11 px-7 font-bold"
                         >
                           {isSubmitting ? (
                             <span className="material-symbols-outlined text-[16px] animate-spin">sync</span>
                           ) : (
-                            <Send className="w-3.5 h-3.5" />
+                            <Send className="size-3.5" />
                           )}
                           <span>{isSubmitting ? (activeActionLabel || 'Submitting…') : 'Submit for Review'}</span>
                         </Button>
@@ -5114,12 +5147,12 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                         variant="coral"
                         disabled={isSubmitting}
                         onClick={() => executeSubmission('Active')}
-                        className="w-full sm:w-auto h-11 px-7 flex items-center justify-center gap-1.5 cursor-pointer shadow-xs font-bold"
+                        className="w-full sm:w-auto h-11 px-7 font-bold"
                       >
                         {isSubmitting ? (
                           <span className="material-symbols-outlined text-[16px] animate-spin">sync</span>
                         ) : (
-                          <Send className="w-3.5 h-3.5" />
+                          <Send className="size-3.5" />
                         )}
                         <span>{isSubmitting ? (activeActionLabel || 'Publishing…') : 'Publish Listing'}</span>
                       </Button>

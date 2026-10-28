@@ -117,17 +117,20 @@ describe('BrokerCreateListings - Form Fields & Step Navigation', () => {
     );
   };
 
-  it('renders the 7-step navigation header with canonical section names', () => {
+  it('renders the 7-step navigation header with real-world broker milestone names and step badge', () => {
     renderComponent();
 
-    // Verify all 7 steps appear in the navigation bar
-    expect(screen.getAllByText('Basic Info')[0]).toBeInTheDocument();
-    expect(screen.getAllByText('Location')[0]).toBeInTheDocument();
-    expect(screen.getAllByText('Specifications')[0]).toBeInTheDocument();
+    // Verify all 7 real-world broker milestones appear in the navigation bar
+    expect(screen.getAllByText('Listing Overview')[0]).toBeInTheDocument();
+    expect(screen.getAllByText('Location & Address')[0]).toBeInTheDocument();
+    expect(screen.getAllByText('Property Specifications')[0]).toBeInTheDocument();
     expect(screen.getAllByText('Pricing & Terms')[0]).toBeInTheDocument();
-    expect(screen.getAllByText('Amenities')[0]).toBeInTheDocument();
-    expect(screen.getAllByText('Media & Documents')[0]).toBeInTheDocument();
-    expect(screen.getAllByText('Review & Submit')[0]).toBeInTheDocument();
+    expect(screen.getAllByText('Features & Amenities')[0]).toBeInTheDocument();
+    expect(screen.getAllByText('Photos & Maps')[0]).toBeInTheDocument();
+    expect(screen.getAllByText('Review & Publish')[0]).toBeInTheDocument();
+
+    // Stepper header badge
+    expect(screen.getAllByText(/Step 1 of 7/i)[0]).toBeInTheDocument();
   });
 
   it('allows filling Section 1 (Basic Info) fields and updates title', () => {
@@ -150,25 +153,25 @@ describe('BrokerCreateListings - Form Fields & Step Navigation', () => {
     expect(screen.queryByText(/Select an Agent/i)).not.toBeInTheDocument();
   });
 
-  it('navigates to Section 2 (Location) and verifies address fields', () => {
+  it('navigates to Section 2 (Location & Address) and verifies address fields', () => {
     renderComponent();
 
     // Navigate to step 2: Location via stepper
-    fireEvent.click(screen.getAllByText('Location')[0]);
+    fireEvent.click(screen.getAllByText(/Location/i)[0]);
 
     // Verify location controls exist
     expect(screen.getByPlaceholderText(/Search Philippine address or landmark/i)).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/e\.g\. 142 Acacia Avenue, Phase 2/i)).toBeInTheDocument();
   });
 
-  it('navigates to Section 3 (Specifications) and checks architectural and dimension fields', () => {
+  it('navigates to Section 3 (Property Specifications) and checks architectural and dimension fields', () => {
     renderComponent();
 
     // Navigate to Step 3: Specifications
-    fireEvent.click(screen.getAllByText('Specifications')[0]);
+    fireEvent.click(screen.getAllByText(/Specifications/i)[0]);
 
     // Check presence of Section 3 heading and floor area input
-    expect(screen.getByText(/Section 3: Specifications/i)).toBeInTheDocument();
+    expect(screen.getByText(/Section 3:.*Specifications/i)).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/e\.g\. 450/i)).toBeInTheDocument();
   });
 
@@ -176,7 +179,7 @@ describe('BrokerCreateListings - Form Fields & Step Navigation', () => {
     renderComponent();
 
     // Navigate to Step 4: Pricing & Terms
-    fireEvent.click(screen.getAllByText('Pricing & Terms')[0]);
+    fireEvent.click(screen.getAllByText(/Pricing & Terms/i)[0]);
 
     // Find price input (placeholder: 150,000,000)
     const priceInput = screen.getByPlaceholderText('150,000,000');
@@ -190,11 +193,11 @@ describe('BrokerCreateListings - Form Fields & Step Navigation', () => {
     expect(priceInput.value).toBe('55,000,000');
   });
 
-  it('navigates to Section 7 (Review & Submit) and verifies submission actions', () => {
+  it('navigates to Section 7 (Review & Publish) and verifies submission actions', () => {
     renderComponent();
 
-    // Click step 7: Review & Submit
-    fireEvent.click(screen.getAllByText('Review & Submit')[0]);
+    // Click step 7: Review & Publish
+    fireEvent.click(screen.getAllByText(/Review/i)[0]);
 
     // Should render review summary and publish buttons
     expect(screen.getByText(/Publish Listing/i)).toBeInTheDocument();
@@ -205,10 +208,10 @@ describe('BrokerCreateListings - Form Fields & Step Navigation', () => {
     renderComponent();
 
     const expectedTypes = [
-      'House & Lot',
+      'House and Lot',
       'Condominium',
       'Townhouse',
-      'Lot / Land',
+      'Subdivision Lot',
       'Commercial',
       'Apartment',
       'Villa',
@@ -228,7 +231,7 @@ describe('BrokerCreateListings - Form Fields & Step Navigation', () => {
     fireEvent.click(condoCard);
 
     // Navigate to Step 3 (Specifications)
-    fireEvent.click(screen.getAllByText('Specifications')[0]);
+    fireEvent.click(screen.getAllByText(/Specifications/i)[0]);
 
     // Lot Area input must be absent for Condominium
     expect(screen.queryByLabelText(/Lot Area \*/i)).not.toBeInTheDocument();
@@ -236,15 +239,15 @@ describe('BrokerCreateListings - Form Fields & Step Navigation', () => {
     expect(screen.getByPlaceholderText(/e\.g\. 450/i)).toBeInTheDocument();
   });
 
-  it('adapts Section 3 for Lot / Land by hiding interior room fields', () => {
+  it('adapts Section 3 for Subdivision Lot by hiding interior room fields', () => {
     renderComponent();
 
-    // Select Lot / Land
-    const landCard = screen.getByRole('button', { name: /Lot \/ Land/i });
+    // Select Subdivision Lot
+    const landCard = screen.getByRole('button', { name: /Subdivision Lot/i });
     fireEvent.click(landCard);
 
     // Navigate to Step 3 (Specifications)
-    fireEvent.click(screen.getAllByText('Specifications')[0]);
+    fireEvent.click(screen.getAllByText(/Specifications/i)[0]);
 
     // Floor area should not be rendered for land
     expect(screen.queryByPlaceholderText(/e\.g\. 450/i)).not.toBeInTheDocument();
