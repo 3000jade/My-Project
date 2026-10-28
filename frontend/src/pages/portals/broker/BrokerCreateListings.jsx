@@ -254,22 +254,6 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
   const searchParams = new URLSearchParams(location.search);
   const typeParam = searchParams.get('type') || location.state?.propertyType;
 
-  const [availableAgents, setAvailableAgents] = useState([]);
-
-  useEffect(() => {
-    const fetchAgents = async () => {
-      try {
-        const result = await (agentService.getAgents ? agentService.getAgents() : (agentService.default ? agentService.default.getAgents() : []));
-        if (Array.isArray(result)) {
-          setAvailableAgents(result);
-        }
-      } catch (err) {
-        setAvailableAgents([]);
-      }
-    };
-    fetchAgents();
-  }, []);
-
   const [formData, setFormData] = useState({
     title: '',
     tagline: '',
@@ -1774,8 +1758,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
     <div className={`space-y-6 max-w-[1440px] mx-auto ${isDrawer ? 'pb-6' : 'pb-16'}`}>
       {!isDrawer && (
         <PageHeader
-          title={isEditing ? "Edit Property Listing" : "Create New Property Listing"}
-          subtitle="Modern SaaS registry compliant with RESO 2.0 standards and verified cadastral records."
+          title={isEditing ? "Edit Property Listing" : "Add Property"}
           className="mb-6"
           breadcrumbs={[
             { label: 'Properties', to: '/broker/properties' },
@@ -1868,6 +1851,20 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                 <FileText className="w-4 h-4 text-[#0F766E]" />
                 <span>Section 1: Listing Overview</span>
               </h3>
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="text-xs font-semibold text-[#0F766E] border-teal-200 bg-teal-50">
+                  Type: {(() => {
+                    const match = COMMON_PROPERTY_TYPES.find(c => c.id === formData.property_type || c.name === formData.property_type);
+                    return match ? match.name : (formData.property_type || 'House and Lot');
+                  })()}
+                </Badge>
+                <Link
+                  to="/broker/properties/types"
+                  className="text-xs text-[#0F766E] hover:underline font-semibold"
+                >
+                  Change
+                </Link>
+              </div>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1953,7 +1950,6 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                   <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
                     Development Stage & Condition
                   </label>
-                  <Badge variant="secondary">Philippine Market Standard</Badge>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {(isLand
@@ -1982,124 +1978,6 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                     );
                   })}
                 </div>
-              </div>
-
-              {/* Assigned Listing Agent (PRC License) */}
-              <div className="space-y-1.5 md:col-span-2">
-                <div className="flex items-center justify-between">
-                  <label htmlFor="assigned-agent-select" className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
-                    Assigned Listing Agent <span className="text-[#0F766E]">(PRC Broker / Salesperson)</span>
-                  </label>
-                  <Badge variant="outline">Supabase RLS Bound</Badge>
-                </div>
-                <select
-                  id="assigned-agent-select"
-                  value={formData.agent_id || ''}
-                  onChange={(e) => {
-                    setIsDirty(true);
-                    const selectedId = e.target.value;
-                    const selectedAgent = availableAgents.find(a => a.id === selectedId);
-                    setFormData({
-                      ...formData,
-                      agent_id: selectedId,
-                      list_agent_key: selectedId || null,
-                      agent_name: selectedAgent ? selectedAgent.name : '',
-                      assignedAgent: selectedAgent ? {
-                        agentId: selectedAgent.id,
-                        name: selectedAgent.name,
-                        email: selectedAgent.email,
-                        phone: selectedAgent.phone,
-                        role: selectedAgent.role,
-                        prcLicenseNo: selectedAgent.prc_license_no || selectedAgent.license_no || 'PRC-REB-0024891',
-                        assignmentStatus: 'accepted'
-                      } : null
-                    });
-                  }}
-                  className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none transition-colors shadow-2xs"
-                >
-                  <option value="">Human Shelter Realty Corporate Brokerage Desk</option>
-                  {availableAgents.map((agent) => (
-                    <option key={agent.id} value={agent.id}>
-                      {agent.name} ({agent.role || 'Licensed Agent'} • {agent.email})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Property Type Classification Option Cards */}
-              <div className="space-y-2.5 md:col-span-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B] block">
-                    Category / Type Classification <span className="text-[#FF6B6B]">*</span>
-                  </label>
-                  <span className="text-xs text-[#64748B]">
-                    Active: <strong className="text-[#0F766E] font-bold">
-                      {(() => {
-                        const match = COMMON_PROPERTY_TYPES.find(c => c.id === formData.property_type || c.name === formData.property_type);
-                        return match ? match.name : (formData.property_type || 'House and Lot');
-                      })()}
-                    </strong>
-                  </span>
-                </div>
-
-                <div 
-                  className="grid grid-cols-2 sm:grid-cols-4 gap-3" 
-                  role="radiogroup" 
-                  aria-label="Property Type Classification"
-                >
-                  {COMMON_PROPERTY_TYPES.map(config => {
-                    const Icon = config.icon;
-                    const isSelected = formData.property_type === config.id || formData.property_type === config.name;
-
-                    return (
-                      <button
-                        key={config.id}
-                        type="button"
-                        role="button"
-                        aria-label={config.name}
-                        aria-pressed={isSelected}
-                        data-testid={`property-type-${config.id.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
-                        onClick={() => {
-                          setIsDirty(true);
-                          setFormData({ ...formData, property_type: config.id });
-                        }}
-                        className={`relative p-4 rounded-xl border text-center transition-all duration-200 flex flex-col items-center justify-center gap-2 group cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#0F766E]/30 ${
-                          isSelected
-                            ? 'bg-teal-50/60 border-[#0F766E] ring-2 ring-[#0F766E]/20 shadow-xs'
-                            : 'bg-white border-[#E2E8F0] hover:border-[#0F766E]/50 hover:bg-slate-50 shadow-2xs'
-                        }`}
-                      >
-                        <div
-                          className={`size-10 rounded-xl flex items-center justify-center transition-colors ${
-                            isSelected
-                              ? 'bg-[#0F766E] text-white'
-                              : 'bg-slate-100 text-[#0F766E] group-hover:bg-[#0F766E] group-hover:text-white'
-                          }`}
-                        >
-                          <Icon className="size-5" />
-                        </div>
-                        <span className="font-bold text-xs sm:text-sm text-[#1E293B] group-hover:text-[#0F766E] transition-colors">
-                          {config.name}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Synchronized accessible select fallback */}
-                <select
-                  aria-label="Category / Type"
-                  value={formData.property_type}
-                  onChange={e => {
-                    setIsDirty(true);
-                    setFormData({ ...formData, property_type: e.target.value });
-                  }}
-                  className="sr-only"
-                >
-                  {COMMON_PROPERTY_TYPES.map(c => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
-                </select>
               </div>
 
               <div className="space-y-1.5 md:col-span-2">
@@ -3778,7 +3656,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
             <div className="pb-3 border-b border-[#E2E8F0] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <h3 className="text-base font-bold text-[#1E293B] flex items-center gap-2">
                 <span className="material-symbols-outlined text-[#0F766E]">tune</span>
-                Section 5: Features and Amenities Taxonomy
+                Section 5: Features and Amenities
               </h3>
               <div className="flex items-center gap-3">
                 <span className="text-xs font-medium text-[#64748B] hidden sm:inline-flex items-center">

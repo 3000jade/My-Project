@@ -133,8 +133,12 @@ describe('BrokerCreateListings - Form Fields & Step Navigation', () => {
     expect(screen.getAllByText(/Step 1 of 7/i)[0]).toBeInTheDocument();
   });
 
-  it('allows filling Section 1 (Listing Overview) fields including tagline, reference code, and assigned agent', () => {
+  it('allows filling Section 1 (Listing Overview) fields and verifies clean Add Property header, removal of agent dropdown and category grid', () => {
     renderComponent();
+
+    // Verify PageHeader has clean title "Add Property" and no RESO jargon subtitle
+    expect(screen.getByText('Add Property')).toBeInTheDocument();
+    expect(screen.queryByText(/Modern SaaS registry compliant/i)).not.toBeInTheDocument();
 
     // Step 1: Listing Title input
     const titleInput = screen.getByPlaceholderText(/e\.g\. Modernist Cantilever Estate at Ayala Alabang/i);
@@ -152,8 +156,13 @@ describe('BrokerCreateListings - Form Fields & Step Navigation', () => {
     const refCodeInput = screen.getByPlaceholderText(/e\.g\. CAD-HAV-B12-L04/i);
     expect(refCodeInput).toBeInTheDocument();
 
-    // Assigned Listing Agent selector
-    expect(screen.getByText(/Assigned Listing Agent/i)).toBeInTheDocument();
+    // Verify Assigned Listing Agent and Category Option Grid are removed
+    expect(screen.queryByText(/Assigned Listing Agent/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Category \/ Type Classification/i)).not.toBeInTheDocument();
+
+    // Verify Active Property Type badge and Change link exist
+    expect(screen.getByText(/Type:/i)).toBeInTheDocument();
+    expect(screen.getByText(/Change/i)).toBeInTheDocument();
   });
 
   it('navigates to Section 2 (Location & Address) and verifies tailored subdivision block/lot fields', () => {
@@ -213,7 +222,7 @@ describe('BrokerCreateListings - Form Fields & Step Navigation', () => {
     expect(screen.getByText(/Save Draft/i)).toBeInTheDocument();
   });
 
-  it('renders all 8 common property type option cards in Step 1', () => {
+  it('confirms property type cards are absent from Step 1 and handled by pre-creation gateway', () => {
     renderComponent();
 
     const expectedTypes = [
@@ -228,16 +237,14 @@ describe('BrokerCreateListings - Form Fields & Step Navigation', () => {
     ];
 
     expectedTypes.forEach(type => {
-      expect(screen.getByRole('button', { name: type })).toBeInTheDocument();
+      // Buttons with these names should NOT be present in Step 1 form
+      expect(screen.queryByRole('button', { name: type })).not.toBeInTheDocument();
     });
   });
 
-  it('selects a property type card and activates conditional adaptations in Section 3', () => {
+  it('receives Condominium via route param and activates conditional adaptations in Section 3', () => {
+    mockLocation = { search: '?type=condominium', state: null };
     renderComponent();
-
-    // Select Condominium card
-    const condoCard = screen.getByRole('button', { name: /Condominium/i });
-    fireEvent.click(condoCard);
 
     // Navigate to Step 3 (Specifications)
     fireEvent.click(screen.getAllByText(/Specifications/i)[0]);
@@ -248,12 +255,9 @@ describe('BrokerCreateListings - Form Fields & Step Navigation', () => {
     expect(screen.getByPlaceholderText(/e\.g\. (118|450)/i)).toBeInTheDocument();
   });
 
-  it('adapts Section 3 for Subdivision Lot by hiding interior room fields', () => {
+  it('adapts Section 3 for Subdivision Lot by hiding interior room fields when passed via route param', () => {
+    mockLocation = { search: '?type=residentialLot', state: null };
     renderComponent();
-
-    // Select Subdivision Lot
-    const landCard = screen.getByRole('button', { name: /Subdivision Lot/i });
-    fireEvent.click(landCard);
 
     // Navigate to Step 3 (Specifications)
     fireEvent.click(screen.getAllByText(/Specifications/i)[0]);
@@ -296,6 +300,6 @@ describe('BrokerCreateListings - Form Fields & Step Navigation', () => {
     mockLocation = { search: '?type=Condominium', state: null };
     renderComponent();
 
-    expect(screen.getByText(/Active:/i)).toHaveTextContent('Condominium');
+    expect(screen.getByText(/Type:\s*Condominium/i)).toBeInTheDocument();
   });
 });

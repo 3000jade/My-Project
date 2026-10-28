@@ -97,6 +97,21 @@ npm run test --prefix frontend -- BrokerCreateListings BrokerPropertyTypeSelect 
    Duration  7.90s
 ```
 
+### 2.3 Step 1 Simplification & Jargon Cleanup Verification
+
+Step 1 was streamlined to eliminate duplicate selectors and verbose jargon:
+1. **PageHeader Title & Subtitle:** Renamed title to `"Add Property"` and removed jargon subtitle (`"Modern SaaS registry compliant with RESO 2.0 standards and verified cadastral records."`).
+2. **Category / Type Classification Grid Removed:** Omitted the redundant 8-card grid and hidden select from Step 1. The selected property type is shown via a clean badge with a `(Change)` link in the Step 1 card header.
+3. **Assigned Listing Agent Dropdown Removed:** Omitted from Step 1 intake in accordance with `FR-PL-006` (Decoupled Agent Architecture), defaulting newly drafted listings to `Human Shelter Realty Desk`.
+4. **Jargon Badges Cleaned:** Removed `<Badge variant="secondary">Philippine Market Standard</Badge>` and other unnecessary tags.
+5. **Section 5 Header Updated:** Renamed `"Section 5: Features and Amenities Taxonomy"` to `"Section 5: Features and Amenities"`.
+
+All 6 Playwright E2E tests (`schema-v1-property-intake.spec.ts` and `property-agent-assignment-decoupling.spec.ts`) pass:
+```bash
+cd frontend; npx playwright test schema-v1-property-intake.spec.ts property-agent-assignment-decoupling.spec.ts
+# Result: 6 passed (26.5s)
+```
+
 ---
 
 ## 3. Traceability Matrix

@@ -68,6 +68,7 @@ test.describe('Schema v1.0 Property Intake Studio & Real-World Specifications', 
     // 1. STEP 1: Listing Overview
     await expect(page.getByText(/Step 1 of 7/i).first()).toBeVisible({ timeout: 10000 });
     await expect(page.getByText(/Listing Overview/i).first()).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Add Property/i })).toBeVisible();
 
     // Verify Marketing Tagline & Cadastral Reference input fields exist
     const titleInput = page.getByPlaceholder(/e\.g\. Modernist Cantilever Estate/i);
@@ -78,7 +79,9 @@ test.describe('Schema v1.0 Property Intake Studio & Real-World Specifications', 
     await expect(titleInput).toBeVisible();
     await expect(taglineInput).toBeVisible();
     await expect(referenceCodeInput).toBeVisible();
-    await expect(agentSelect).toBeVisible();
+    // Verify decoupled architecture: assigned agent dropdown and redundant category grid are absent
+    await expect(agentSelect).not.toBeVisible();
+    await expect(page.getByText(/Category \/ Type Classification/i)).not.toBeVisible();
 
     // Fill Step 1 values
     await titleInput.fill('Prime Corner Lot in Havila Highlands Subdivision');
@@ -160,7 +163,7 @@ test.describe('Schema v1.0 Property Intake Studio & Real-World Specifications', 
     // Advance to Step 5: Features & Amenities
     await nextBtn.click();
     await expect(page.getByText(/Step 5 of 7/i).first()).toBeVisible({ timeout: 5000 });
-    await expect(page.getByText(/Features and Amenities Taxonomy/i).first()).toBeVisible();
+    await expect(page.getByText(/Features and Amenities/i).first()).toBeVisible();
 
     // Advance to Step 6: Photos & Media
     await nextBtn.click();
