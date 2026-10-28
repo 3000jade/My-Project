@@ -84,6 +84,8 @@ export default function GooglePropertyMap({
   searchAsMove = true,
   onToggleSearchAsMove,
   singlePropertyMode = false,
+  interactive = true,
+  initialZoom = 15,
   onOpenStreetView,
 }) {
   const containerRef = useRef(null);
@@ -284,6 +286,10 @@ export default function GooglePropertyMap({
           onBoundsChange={onBoundsChange}
           targetDistrict={targetDistrict}
           className={className}
+          showControls={showControls}
+          singlePropertyMode={singlePropertyMode}
+          interactive={interactive}
+          initialZoom={initialZoom}
         />
       </div>
     );
@@ -292,13 +298,13 @@ export default function GooglePropertyMap({
   return (
     <div
       data-lenis-prevent="true"
-      className={`relative w-full h-full min-h-[420px] bg-[#F8FAFC] overflow-hidden select-none ${className}`}
+      className={`relative w-full h-full ${singlePropertyMode ? 'min-h-0' : 'min-h-[420px]'} bg-[#F8FAFC] overflow-hidden select-none ${className}`}
     >
       {/* Map Viewport Container */}
       <div ref={containerRef} className="w-full h-full" />
 
       {/* Floating Bauhaus Glass HUD Dock */}
-      {showControls && (
+      {showControls && !singlePropertyMode && (
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 p-1 bg-white/95 backdrop-blur-md rounded-full border border-[#E2E8F0] shadow-sm">
           {/* Search As I Move */}
           <button

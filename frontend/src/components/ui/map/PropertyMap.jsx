@@ -13,7 +13,11 @@ export default function PropertyMap({
   onSelectProperty,
   onBoundsChange,
   targetDistrict = null,
-  className = ''
+  className = '',
+  showControls = true,
+  singlePropertyMode = false,
+  interactive = true,
+  initialZoom = 14,
 }) {
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
@@ -32,12 +36,25 @@ export default function PropertyMap({
   useEffect(() => {
     if (!mapContainerRef.current || mapInstanceRef.current) return;
 
-    // Default to Manila / Makati center
+    // Center calculation: if singlePropertyMode, center directly on single property coords
+    let initialCenter = [14.5547, 121.0350];
+    if (singlePropertyMode && properties.length > 0) {
+      const c = getPropertyCoordinates(properties[0]);
+      if (c && c.lat && c.lng) {
+        initialCenter = [c.lat, c.lng];
+      }
+    }
+
+    // Default to Manila / Makati center or property coords
     const map = L.map(mapContainerRef.current, {
-      center: [14.5547, 121.0350],
-      zoom: 12,
+      center: initialCenter,
+      zoom: singlePropertyMode ? (initialZoom || 15) : 12,
       zoomControl: false,
-      scrollWheelZoom: true,
+      scrollWheelZoom: interactive,
+      dragging: interactive,
+      touchZoom: interactive,
+      doubleClickZoom: interactive,
+      boxZoom: interactive,
     });
 
     // Default Tile Layer
@@ -48,22 +65,38 @@ export default function PropertyMap({
     }).addTo(map);
     tileLayerRef.current = initialTileLayer;
 
-    // Zoom controls bottom-right
-    L.control.zoom({ position: 'bottomright' }).addTo(map);
+    // Zoom controls bottom-right (only show on multi-property or interactive ledger mode)
+    if (showControls && !singlePropertyMode) {
+      L.control.zoom({ position: 'bottomright' }).addTo(map);
+    }
 
     const markersGroup = L.featureGroup().addTo(map);
     markersLayerRef.current = markersGroup;
     mapInstanceRef.current = map;
     setMapReady(true);
 
+    // Resize observer to handle dynamic container layout changes
+    let resizeObserver = null;
+    if (typeof ResizeObserver !== 'undefined' && mapContainerRef.current) {
+      resizeObserver = new ResizeObserver(() => {
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.invalidateSize();
+        }
+      });
+      resizeObserver.observe(mapContainerRef.current);
+    }
+
     return () => {
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
       map.remove();
       mapInstanceRef.current = null;
       tileLayerRef.current = null;
       markersLayerRef.current = null;
       districtsLayerRef.current = null;
     };
-  }, []);
+  }, [showControls, singlePropertyMode, interactive, initialZoom, properties]);
 
   // Handle Dynamic Basemap Switching
   useEffect(() => {
@@ -294,12 +327,19 @@ export default function PropertyMap({
 
     // Auto-fit bounds if we have valid pins and not user-controlled panning
     if (!searchOnMove && bounds.isValid() && properties.length > 0) {
-      mapInstanceRef.current.fitBounds(bounds, {
-        padding: [50, 50],
-        maxZoom: 14
-      });
+      if (properties.length === 1 && singlePropertyMode) {
+        const c = getPropertyCoordinates(properties[0]);
+        if (c && c.lat && c.lng) {
+          mapInstanceRef.current.setView([c.lat, c.lng], initialZoom || 15);
+        }
+      } else {
+        mapInstanceRef.current.fitBounds(bounds, {
+          padding: [50, 50],
+          maxZoom: 14
+        });
+      }
     }
-  }, [properties, selectedPropertyId, hoveredPropertyId, onSelectProperty, navigate, searchOnMove]);
+  }, [properties, selectedPropertyId, hoveredPropertyId, onSelectProperty, navigate, searchOnMove, singlePropertyMode, initialZoom]);
 
   // Recenter helper
   const handleRecenter = useCallback(() => {
@@ -313,61 +353,63 @@ export default function PropertyMap({
   return (
     <div
       data-lenis-prevent="true"
-      className={`relative w-full h-full min-h-[450px] overflow-hidden ${className}`}
+      className={`relative w-full h-full ${singlePropertyMode ? 'min-h-0' : 'min-h-[450px]'} overflow-hidden ${className}`}
     >
       {/* Map Canvas */}
       <div ref={mapContainerRef} className="w-full h-full z-0" />
 
       {/* Top Floating Controls Bar */}
-      <div className="absolute top-4 left-4 right-4 z-[400] flex flex-wrap items-center justify-between gap-2 pointer-events-none">
-        {/* Left Side: "Search as I move" Checkbox + MapLayerControl */}
-        <div className="flex flex-wrap items-center gap-2 pointer-events-auto">
-          <label className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-white/95 backdrop-blur-md rounded-full border border-gray-200/80 shadow-sm pointer-events-auto cursor-pointer hover:bg-white transition-all select-none">
-            <input
-              type="checkbox"
-              checked={searchOnMove}
-              onChange={(e) => {
-                setSearchOnMove(e.target.checked);
-                if (!e.target.checked && onBoundsChange) {
-                  onBoundsChange(null); // Clear bounding box restriction
-                }
-              }}
-              className="w-3.5 h-3.5 rounded text-[#174849] accent-[#174849] cursor-pointer"
+      {showControls && !singlePropertyMode && (
+        <div className="absolute top-4 left-4 right-4 z-[400] flex flex-wrap items-center justify-between gap-2 pointer-events-none">
+          {/* Left Side: "Search as I move" Checkbox + MapLayerControl */}
+          <div className="flex flex-wrap items-center gap-2 pointer-events-auto">
+            <label className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-white/95 backdrop-blur-md rounded-full border border-gray-200/80 shadow-sm pointer-events-auto cursor-pointer hover:bg-white transition-all select-none">
+              <input
+                type="checkbox"
+                checked={searchOnMove}
+                onChange={(e) => {
+                  setSearchOnMove(e.target.checked);
+                  if (!e.target.checked && onBoundsChange) {
+                    onBoundsChange(null); // Clear bounding box restriction
+                  }
+                }}
+                className="w-3.5 h-3.5 rounded text-[#174849] accent-[#174849] cursor-pointer"
+              />
+              <span className="text-[11px] font-bold text-gray-700 whitespace-nowrap">
+                Search as I move map
+              </span>
+            </label>
+
+            {/* Floating Glass Basemap & District Layer Control */}
+            <MapLayerControl
+              activeBasemap={activeBasemap}
+              onBasemapChange={setActiveBasemap}
+              showDistricts={showDistricts}
+              onToggleDistricts={() => setShowDistricts((prev) => !prev)}
             />
-            <span className="text-[11px] font-bold text-gray-700 whitespace-nowrap">
-              Search as I move map
-            </span>
-          </label>
-
-          {/* Floating Glass Basemap & District Layer Control */}
-          <MapLayerControl
-            activeBasemap={activeBasemap}
-            onBasemapChange={setActiveBasemap}
-            showDistricts={showDistricts}
-            onToggleDistricts={() => setShowDistricts((prev) => !prev)}
-          />
-        </div>
-
-        {/* Right Side: Telemetry Count + Recenter Button */}
-        <div className="flex items-center gap-1.5 pointer-events-auto">
-          <div className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/95 backdrop-blur-md rounded-full border border-gray-200/80 shadow-sm">
-            <span className="w-2 h-2 rounded-full bg-[#174849] animate-pulse"></span>
-            <span className="text-[11px] font-bold text-[#174849]">
-              {properties.length} {properties.length === 1 ? 'Location' : 'Locations'}
-            </span>
           </div>
 
-          <button
-            type="button"
-            onClick={handleRecenter}
-            className="px-3 py-1.5 bg-white/95 backdrop-blur-md hover:bg-white text-[#174849] text-[11px] font-bold uppercase tracking-wider rounded-full border border-gray-200/80 shadow-sm hover:shadow transition-all flex items-center gap-1.5 cursor-pointer"
-            title="Fit all properties into view"
-          >
-            <span className="material-symbols-outlined text-[15px]">crop_free</span>
-            <span className="hidden md:inline">Fit All</span>
-          </button>
+          {/* Right Side: Telemetry Count + Recenter Button */}
+          <div className="flex items-center gap-1.5 pointer-events-auto">
+            <div className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/95 backdrop-blur-md rounded-full border border-gray-200/80 shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-[#174849] animate-pulse"></span>
+              <span className="text-[11px] font-bold text-[#174849]">
+                {properties.length} {properties.length === 1 ? 'Location' : 'Locations'}
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleRecenter}
+              className="px-3 py-1.5 bg-white/95 backdrop-blur-md hover:bg-white text-[#174849] text-[11px] font-bold uppercase tracking-wider rounded-full border border-gray-200/80 shadow-sm hover:shadow transition-all flex items-center gap-1.5 cursor-pointer"
+              title="Fit all properties into view"
+            >
+              <span className="material-symbols-outlined text-[15px]">crop_free</span>
+              <span className="hidden md:inline">Fit All</span>
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Global Leaflet Marker & Popup Custom Styles */}
       <style>{`

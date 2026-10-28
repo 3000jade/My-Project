@@ -1455,16 +1455,26 @@ export default function BrokerPropertyDetail() {
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
                   {/* Left: Map Preview Box matching Mockup */}
                   <div className="md:col-span-5 space-y-2">
-                    <div className="relative aspect-[4/3] w-full rounded-lg overflow-hidden border border-[#CBD5E1] bg-[#e5e3df]" data-lenis-prevent="true">
+                    <div className="relative aspect-[4/3] w-full rounded-lg overflow-hidden border border-[#CBD5E1] bg-[#e5e3df] group" data-lenis-prevent="true">
                       {mapPropertyItem && (
                         <GooglePropertyMap
                           properties={[mapPropertyItem]}
                           singlePropertyMode={true}
+                          showControls={false}
                           interactive={false}
                           initialZoom={15}
-                          height="100%"
+                          className="w-full h-full min-h-0"
                         />
                       )}
+                      <button
+                        type="button"
+                        onClick={() => setIsEnlargedMapOpen(true)}
+                        className="absolute bottom-2.5 right-2.5 z-10 px-2.5 py-1.5 bg-white/95 backdrop-blur-md hover:bg-white text-[#1E293B] hover:text-[#0F766E] text-xs font-semibold rounded-md border border-[#E2E8F0] shadow-sm flex items-center gap-1.5 transition-all cursor-pointer"
+                        title="Enlarge map"
+                      >
+                        <Maximize2 className="w-3.5 h-3.5 text-[#0F766E]" />
+                        <span className="text-[11px]">Enlarge</span>
+                      </button>
                     </div>
                   </div>
 
@@ -1986,9 +1996,10 @@ export default function BrokerPropertyDetail() {
                   <GooglePropertyMap
                     properties={[mapPropertyItem]}
                     singlePropertyMode={true}
+                    showControls={false}
                     interactive={true}
                     initialZoom={16}
-                    height="100%"
+                    className="w-full h-full min-h-0"
                   />
                 )}
               </div>
