@@ -413,6 +413,37 @@ Step 7: Quality Audit & Publication Review (Completeness score, RESO compliance 
 
 ---
 
+### 5.8 M02-SCR-08: Public Property Discovery Catalog & Immersive Viewport Layout
+
+- **Screen ID:** `M02-SCR-08`
+- **Component Files:** `frontend/src/pages/public/PropertiesPage.jsx`, `frontend/src/components/ui/cards/PropertyCard.jsx`
+- **Route:** `/properties`
+- **Role Access:** Public, Client, All Roles
+
+#### 5.8.1 Canonical RESO Status Presentation on Property Cards (`PropertyCard.jsx`)
+`PropertyCard.jsx` presents canonical RESO status badges and contextual guidance directly on listing cards across grid and list presentations:
+1. **Active Inventory:**
+   - Default active marketplace listings render standard classification badge (`For Sale` / `For Rent`) with Spruce Teal (`#0F766E`) accent.
+2. **Active Under Contract:**
+   - Status badge: Warm Amber `#F59E0B` (`bg-amber-50/95 text-amber-800 border-amber-300`) with pulsing dot indicator (`bg-amber-500 animate-pulse`).
+   - Contextual overlay: `Under Contract • Backup Inquiries Welcome` (`bg-amber-50/90 text-amber-800 border-amber-200`) positioned across the cover image lower threshold to inform prospective clients while welcoming backup inquiries.
+3. **Closed / Sold:**
+   - Status badge: Slate Neutral `#334155` (`bg-slate-100/95 text-slate-700 border-slate-300`) with neutral dot indicator (`bg-slate-500`).
+   - Visual desaturation: Listing cover photo receives `grayscale-[35%] opacity-90` styling.
+   - Contextual overlay: `Sold • Market Comp Reference` (`bg-slate-900/80 text-white border-slate-700/80`) indicating transaction finality.
+
+#### 5.8.2 Dynamic Navigation Header Adaptation & Viewport Immersion (`PropertiesPage.jsx`)
+To deliver an uninterrupted, zero-gap 100vh split map and listview experience, `PropertiesPage.jsx` listens reactively to navigation header states:
+1. **Dynamic Spacing Transition:**
+   - Subscribes to `window.addEventListener('header-visibility')` dispatched by `Header.jsx`.
+   - Top layout padding smoothly animates between `pt-[80px]` (when public header is in view) and `pt-0` (when header collapses during search engagement or deep scroll).
+2. **Reclaiming Full Viewport Height:**
+   - Split-view container dynamically transitions between `h-[calc(100vh-80px)]` and `h-screen`, fully eliminating vertical dead space and maximizing cadastral map surface area.
+3. **Deep Scroll Handshake:**
+   - Synchronizes with `search-sticky-toggle` events when the search toolbar locks to the top viewport edge.
+
+---
+
 ## 6. Shared Component Architecture & Refactoring Recipes
 
 All refactored components must use the canonical import paths and CVA bindings established in `design.md`:
@@ -565,3 +596,4 @@ import StatusBadge from '@/components/dashboard/StatusBadge';
 | `2026-10-28` | `M02-SCR-02`, `M02-SCR-03` | Decoupled sales agent assignment from intake; relocated assignment to Agent Management | `2026-10-28-property-input-and-agent-assignment-scope-redefinition.md` |
 | `2026-10-28` | All Module 02 Screens | Established comprehensive UI specification and shadcn/ui refactoring blueprint adhering to `design.md` | `ui-specification.md` (this document) |
 | `2026-10-28` | `M02-SCR-01`, `M02-SCR-04` | Registered FR-PL-020: StandardStatus alignment across `BrokerPropertyDetail.jsx` and `PropertyQuickEditDrawer.jsx`, dynamic publication indicators, and `StatusBadge.jsx` tokens | `2026-10-28-property-status-alignment-verification.md` |
+| `2026-10-28` | `M02-SCR-08`, `PropertyCard` | Registered FR-PL-021: Public Property Card lifecycle status badges (`Active Under Contract`, `Closed / Sold`), contextual overlays, and dynamic navigation header adaptation (80px to 0px) | `2026-10-28-public-properties-immersive-status-and-layout-verification.md` |

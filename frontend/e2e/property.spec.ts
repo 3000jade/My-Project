@@ -16,8 +16,8 @@ test.describe('Property Flow', () => {
     const propertyCard = page.locator('h3').first();
     await expect(propertyCard).toBeVisible();
     
-    // Find the property card div using CSS selector
-    const cardElement = page.locator('div[role="button"][aria-label^="View details for"]').first();
+    // Find the property card using CSS selector
+    const cardElement = page.locator('[role="button"][aria-label^="View details for"]').first();
     await expect(cardElement).toBeVisible();
     
     // Wait for animations/virtualizer to settle
@@ -33,4 +33,3 @@ test.describe('Property Flow', () => {
     await expect(page.locator('h1').first()).toBeVisible();
   });
 });
-
