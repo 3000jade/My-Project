@@ -137,16 +137,21 @@ describe('BrokerProperties Page (Mockup & Modern SaaS Layout)', () => {
     expect(screen.queryByText('Aurelia Modernist Penthouse at BGC')).toBeNull();
   });
 
-  it('allows duplicating a listing via the Copy action button', async () => {
+  it('allows duplicating a listing via the More Options dropdown menu', async () => {
     renderComponent();
 
     expect(await screen.findByText('Aurelia Modernist Penthouse at BGC')).toBeInTheDocument();
 
-    const duplicateButtons = screen.getAllByRole('button', { name: /duplicate/i });
-    expect(duplicateButtons.length).toBeGreaterThanOrEqual(1);
+    const moreButtons = screen.getAllByRole('button', { name: /more options/i });
+    expect(moreButtons.length).toBeGreaterThanOrEqual(1);
 
-    // Click duplicate on first row
-    fireEvent.click(duplicateButtons[0]);
+    // Open More Options dropdown on first row
+    fireEvent.pointerDown(moreButtons[0]);
+    fireEvent.click(moreButtons[0]);
+
+    // Find and click Duplicate Property menu item
+    const duplicateBtn = await screen.findByRole('menuitem', { name: /duplicate property/i });
+    fireEvent.click(duplicateBtn);
 
     // Check for duplicated row with (Copy) suffix
     await waitFor(() => {
@@ -197,9 +202,13 @@ describe('BrokerProperties Page (Mockup & Modern SaaS Layout)', () => {
 
     expect(await screen.findByText('Aurelia Modernist Penthouse at BGC')).toBeInTheDocument();
 
-    const archiveBtns = screen.getAllByRole('button', { name: /Archive Listing/i });
-    expect(archiveBtns.length).toBeGreaterThan(0);
-    fireEvent.click(archiveBtns[0]);
+    const moreButtons = screen.getAllByRole('button', { name: /more options/i });
+    expect(moreButtons.length).toBeGreaterThan(0);
+    fireEvent.pointerDown(moreButtons[0]);
+    fireEvent.click(moreButtons[0]);
+
+    const archiveBtn = await screen.findByRole('menuitem', { name: /archive listing/i });
+    fireEvent.click(archiveBtn);
 
     // Modal opens
     expect(await screen.findByText('Archive Property Listing?')).toBeInTheDocument();
@@ -220,9 +229,13 @@ describe('BrokerProperties Page (Mockup & Modern SaaS Layout)', () => {
 
     expect(await screen.findByText('Aurelia Modernist Penthouse at BGC')).toBeInTheDocument();
 
-    const deleteBtns = screen.getAllByRole('button', { name: /Delete Property/i });
-    expect(deleteBtns.length).toBeGreaterThan(0);
-    fireEvent.click(deleteBtns[0]);
+    const moreButtons = screen.getAllByRole('button', { name: /more options/i });
+    expect(moreButtons.length).toBeGreaterThan(0);
+    fireEvent.pointerDown(moreButtons[0]);
+    fireEvent.click(moreButtons[0]);
+
+    const deleteBtn = await screen.findByRole('menuitem', { name: /delete property/i });
+    fireEvent.click(deleteBtn);
 
     // Delete modal opens
     expect(await screen.findByText('Permanently Delete Listing?')).toBeInTheDocument();

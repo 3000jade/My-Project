@@ -14,6 +14,13 @@ import ReassignAgentModal from '../../../components/dashboard/ReassignAgentModal
 import PropertyFilterToolbar from '../../../components/properties/PropertyFilterToolbar';
 import ArchivePropertyModal from '../../../components/ui/modals/ArchivePropertyModal';
 import DeletePropertyModal from '../../../components/ui/modals/DeletePropertyModal';
+import { 
+  DropdownMenu, 
+  DropdownMenuTrigger, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuSeparator 
+} from '../../../components/ui/dropdown-menu';
 import propertyService, { normalizeProperty } from '../../../services/propertyService';
 import { cn } from '../../../utils/cn';
 import { Badge } from '../../../components/ui/badge';
@@ -957,58 +964,71 @@ export default function BrokerProperties() {
     },
     {
       header: "Actions",
-      className: "w-36 text-right",
+      className: "w-14 text-center",
       render: (row) => {
         const isArchived = String(row.status || '').toUpperCase() === 'INACTIVE' || String(row.standard_status || row.standardStatus || '').toUpperCase() === 'CLOSED' || String(row.standard_status || row.standardStatus || '').toUpperCase() === 'HOLD' || String(row.standard_status || row.standardStatus || '').toUpperCase() === 'INACTIVE';
         return (
-          <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-            {isArchived ? (
-              <button
-                type="button"
-                onClick={() => handleReactivateClick(row)}
-                className="p-1.5 rounded-lg text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 transition-colors cursor-pointer"
-                title="Reactivate Listing"
-                aria-label="Reactivate Listing"
-              >
-                <RotateCcw className="w-4 h-4" />
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => handleArchiveClick(row)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-colors cursor-pointer"
-                title="Archive Listing"
-                aria-label="Archive Listing"
-              >
-                <Archive className="w-4 h-4" />
-              </button>
-            )}
-            <Link
-              to={`/broker/properties/${row.id || row.listingKey}/edit`}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-[#0F766E] hover:bg-slate-100 transition-colors cursor-pointer"
-              title="Edit Property"
-              aria-label="Edit Property"
-            >
-              <Edit3 className="w-4 h-4" />
-            </Link>
-            <button
-              type="button"
-              onClick={(e) => handleDuplicate(e, row)}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-[#0F766E] hover:bg-slate-100 transition-colors cursor-pointer"
-              title="Duplicate Property"
-              aria-label="Duplicate Property"
-            >
-              <Copy className="w-4 h-4" />
-            </button>
-            <button
-              type="button"
-              onClick={() => handleDeleteClick(row)}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
-              title="Delete Property"
-              aria-label="Delete Property"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
+          <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-[#1E293B] hover:bg-slate-100 transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#0F766E]"
+                  title="More options"
+                  aria-label={`More options for ${row.title || 'property'}`}
+                >
+                  <MoreVertical className="w-4 h-4" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48 p-1 rounded-xl border border-[#E2E8F0] bg-white shadow-lg text-xs z-30 font-sans">
+                <DropdownMenuItem
+                  onClick={() => navigate(`/broker/properties/${row.id || row.listingKey}/edit`)}
+                  className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-[#1E293B] hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"
+                >
+                  <Edit3 className="w-3.5 h-3.5 text-[#0F766E]" />
+                  <span>Edit Property</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setQuickDrawerProperty(row)}
+                  className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-[#1E293B] hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"
+                >
+                  <SlidersHorizontal className="w-3.5 h-3.5 text-[#64748B]" />
+                  <span>Quick Edit</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={(e) => handleDuplicate(e, row)}
+                  className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-[#1E293B] hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"
+                >
+                  <Copy className="w-3.5 h-3.5 text-[#64748B]" />
+                  <span>Duplicate Property</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="my-1 bg-[#E2E8F0]" />
+                {isArchived ? (
+                  <DropdownMenuItem
+                    onClick={() => handleReactivateClick(row)}
+                    className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-emerald-600 hover:bg-emerald-50 rounded-lg cursor-pointer transition-colors"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Reactivate Listing</span>
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem
+                    onClick={() => handleArchiveClick(row)}
+                    className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-amber-700 hover:bg-amber-50 rounded-lg cursor-pointer transition-colors"
+                  >
+                    <Archive className="w-3.5 h-3.5 text-amber-600" />
+                    <span>Archive Listing</span>
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem
+                  onClick={() => handleDeleteClick(row)}
+                  className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50 rounded-lg cursor-pointer transition-colors"
+                >
+                  <Trash2 className="w-3.5 h-3.5 text-red-600" />
+                  <span>Delete Property</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         );
       }
