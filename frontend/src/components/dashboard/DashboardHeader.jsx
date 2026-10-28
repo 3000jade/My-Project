@@ -285,7 +285,7 @@ export default function DashboardHeader({
                         onClick={() => setShowNotifications(false)}
                         className="text-[11px] font-medium text-[#0F766E] hover:text-[#115E59] inline-flex items-center gap-1"
                       >
-                        <span>View all tasks & alerts</span>
+                        <span>View all notifications & alerts</span>
                         <ExternalLink className="w-3 h-3" />
                       </Link>
                     </div>

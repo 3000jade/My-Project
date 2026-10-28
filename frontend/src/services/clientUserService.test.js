@@ -1,6 +1,15 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { clientUserService } from './clientUserService';
 
+vi.mock('./profileService', () => ({
+  default: {
+    getProfile: vi.fn().mockResolvedValue(null),
+    updateProfile: vi.fn().mockImplementation((updates) => Promise.resolve(updates)),
+  },
+  mockDefaultProfiles: {},
+  normalizeProfile: (p) => p,
+}));
+
 describe('clientUserService (Mock Client Management Service)', () => {
   beforeEach(() => {
     localStorage.clear();

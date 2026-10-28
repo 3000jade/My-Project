@@ -17,7 +17,6 @@ describe('DashboardSidebar Navigation', () => {
     expect(screen.getByText('Properties')).toBeInTheDocument();
     expect(screen.getByText('Inquiries')).toBeInTheDocument();
     expect(screen.getByText('Agents')).toBeInTheDocument();
-    expect(screen.getByText('Tasks')).toBeInTheDocument();
     expect(screen.getByText('Reports')).toBeInTheDocument();
     expect(screen.getByText('Settings')).toBeInTheDocument();
 
@@ -30,8 +29,9 @@ describe('DashboardSidebar Navigation', () => {
     expect(screen.getByText('Need Assistance?')).toBeInTheDocument();
     expect(screen.getByText('Go to Help Center')).toBeInTheDocument();
 
-    // Verify Clients is NOT rendered in broker navigation
+    // Verify Clients and Tasks are NOT rendered in broker navigation
     expect(screen.queryByText('Clients')).not.toBeInTheDocument();
+    expect(screen.queryByText('Tasks')).not.toBeInTheDocument();
   });
 
   it('renders Settings link pointing to /broker/profile', () => {
