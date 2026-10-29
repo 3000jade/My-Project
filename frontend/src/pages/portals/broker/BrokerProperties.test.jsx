@@ -248,4 +248,28 @@ describe('BrokerProperties Page (Mockup & Modern SaaS Layout)', () => {
       expect(propertyService.deleteProperty).toHaveBeenCalledWith('prop-1');
     });
   });
+
+  it('allows customizing visible columns and toggling columns off from the table', async () => {
+    renderComponent();
+
+    expect(await screen.findByText('Aurelia Modernist Penthouse at BGC')).toBeInTheDocument();
+
+    // Verify initial table headers include Specs and Price
+    expect(screen.getByRole('columnheader', { name: /specs/i })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: /price/i })).toBeInTheDocument();
+
+    // Open Columns dropdown
+    const columnsBtn = screen.getByRole('button', { name: /customize columns/i });
+    fireEvent.click(columnsBtn);
+
+    // Uncheck Price column
+    const priceCheckbox = screen.getByLabelText(/^price$/i);
+    expect(priceCheckbox).toBeChecked();
+    fireEvent.click(priceCheckbox);
+
+    // The Price column header should now be removed from table
+    expect(screen.queryByRole('columnheader', { name: /price/i })).not.toBeInTheDocument();
+    // Specs should still be present
+    expect(screen.getByRole('columnheader', { name: /specs/i })).toBeInTheDocument();
+  });
 });

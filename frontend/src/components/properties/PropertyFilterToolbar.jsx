@@ -5,6 +5,7 @@ import {
   SlidersHorizontal,
   ChevronDown,
   DollarSign,
+  Columns3,
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { COMMON_PROPERTY_TYPES } from '../../pages/portals/broker/BrokerPropertyTypeSelect';
@@ -28,9 +29,15 @@ export default function PropertyFilterToolbar({
   onResetFilters,
   totalCount = 0,
   filteredCount = 0,
+  availableColumns = [],
+  visibleColumns = [],
+  onVisibleColumnsChange,
 }) {
   const [isPriceOpen, setIsPriceOpen] = useState(false);
   const pricePopoverRef = useRef(null);
+
+  const [isColumnsOpen, setIsColumnsOpen] = useState(false);
+  const columnsPopoverRef = useRef(null);
 
   // Close price popover on outside click
   useEffect(() => {
@@ -46,6 +53,36 @@ export default function PropertyFilterToolbar({
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isPriceOpen]);
+
+  // Close columns popover on outside click
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (columnsPopoverRef.current && !columnsPopoverRef.current.contains(e.target)) {
+        setIsColumnsOpen(false);
+      }
+    }
+    if (isColumnsOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isColumnsOpen]);
+
+  const handleToggleColumn = (colId) => {
+    if (!onVisibleColumnsChange) return;
+    if (visibleColumns.includes(colId)) {
+      onVisibleColumnsChange(visibleColumns.filter((c) => c !== colId));
+    } else {
+      onVisibleColumnsChange([...visibleColumns, colId]);
+    }
+  };
+
+  const handleResetColumns = () => {
+    if (onVisibleColumnsChange && availableColumns.length > 0) {
+      onVisibleColumnsChange(availableColumns.map((c) => c.id));
+    }
+  };
 
   const resolvedTypeOptions =
     propertyTypeOptions && propertyTypeOptions.length > 0
@@ -352,6 +389,81 @@ export default function PropertyFilterToolbar({
           </select>
           <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
         </div>
+
+        {/* Column Visibility Selector */}
+        {availableColumns && availableColumns.length > 0 && (
+          <div className="relative shrink-0" ref={columnsPopoverRef}>
+            <button
+              type="button"
+              onClick={() => setIsColumnsOpen((prev) => !prev)}
+              className={cn(
+                "h-9 px-3 bg-[#F8FAFC] hover:bg-slate-100/70 border rounded-lg text-xs font-medium text-[#1E293B] flex items-center gap-1.5 transition-colors cursor-pointer",
+                isColumnsOpen ? "border-[#0F766E] ring-1 ring-[#0F766E]" : "border-[#E2E8F0]"
+              )}
+              aria-label="Customize columns"
+              title="Customize visible table columns"
+              aria-expanded={isColumnsOpen}
+            >
+              <Columns3 className="w-3.5 h-3.5 text-slate-500" />
+              <span>Columns</span>
+              <ChevronDown
+                className={cn(
+                  "w-3.5 h-3.5 text-slate-400 transition-transform duration-150",
+                  isColumnsOpen && "rotate-180"
+                )}
+              />
+            </button>
+
+            {isColumnsOpen && (
+              <div className="absolute right-0 top-full mt-1.5 w-56 bg-white border border-[#E2E8F0] rounded-xl shadow-lg p-2.5 z-40 animate-in fade-in-50 zoom-in-95">
+                <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100 px-1">
+                  <span className="text-xs font-semibold text-[#1E293B]">Table Columns</span>
+                  <button
+                    type="button"
+                    onClick={handleResetColumns}
+                    className="text-[11px] font-medium text-[#0F766E] hover:text-[#115E59] cursor-pointer"
+                  >
+                    Show All
+                  </button>
+                </div>
+                <div className="space-y-1 max-h-60 overflow-y-auto custom-scrollbar">
+                  {availableColumns.map((col) => {
+                    const isChecked = visibleColumns.includes(col.id);
+                    const isLocked = Boolean(col.isLocked);
+                    return (
+                      <label
+                        key={col.id}
+                        className={cn(
+                          "flex items-center justify-between px-2 py-1.5 rounded-lg text-xs text-[#1E293B] transition-colors select-none",
+                          isLocked ? "cursor-not-allowed text-slate-400 bg-slate-50/50" : "hover:bg-slate-50 cursor-pointer"
+                        )}
+                      >
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            aria-label={col.label}
+                            checked={isChecked}
+                            disabled={isLocked}
+                            onChange={() => !isLocked && handleToggleColumn(col.id)}
+                            className="w-3.5 h-3.5 rounded border-slate-300 text-[#0F766E] focus:ring-[#0F766E] accent-[#0F766E] cursor-pointer disabled:cursor-not-allowed"
+                          />
+                          <span className={cn(isLocked ? "font-normal" : "font-medium")}>
+                            {col.label}
+                          </span>
+                        </div>
+                        {isLocked && (
+                          <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">
+                            Locked
+                          </span>
+                        )}
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Dynamic Reset Action: only renders when filters are active */}
         {hasActiveFilters && (

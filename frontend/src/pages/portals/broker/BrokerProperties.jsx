@@ -26,6 +26,7 @@ import { cn } from '../../../utils/cn';
 import { Badge } from '../../../components/ui/badge';
 import { Button, buttonVariants } from '../../../components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, useToast, Toaster } from '../../../components/ui';
+import { TableSkeleton, CardGridSkeleton } from '../../../components/dashboard/skeletons';
 
 function formatPhilippineRelativeTime(dateStr) {
   if (!dateStr) return 'Not provided';
@@ -107,6 +108,20 @@ function PropertyThumbnail({ image, title }) {
   );
 }
 
+const AVAILABLE_COLUMNS = [
+  { id: 'property', label: 'Property', isLocked: true },
+  { id: 'location', label: 'Location' },
+  { id: 'property_type', label: 'Property Type' },
+  { id: 'specs', label: 'Specs' },
+  { id: 'price', label: 'Price' },
+  { id: 'status', label: 'Status' },
+  { id: 'date_added', label: 'Date Added' },
+  { id: 'actions', label: 'Actions', isLocked: true },
+];
+
+const DEFAULT_VISIBLE_COLUMNS = AVAILABLE_COLUMNS.map((c) => c.id);
+const STORAGE_KEY_COLUMNS = 'hsr_broker_properties_columns';
+
 export default function BrokerProperties() {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -126,6 +141,32 @@ export default function BrokerProperties() {
   const [locationFilter, setLocationFilter] = useState('ALL');
   const [priceRange, setPriceRange] = useState({ min: '', max: '' });
   const [sortBy, setSortBy] = useState('newest');
+
+  // Column Visibility State
+  const [visibleColumnKeys, setVisibleColumnKeys] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_COLUMNS);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return Array.from(new Set([...parsed, 'property', 'actions']));
+        }
+      }
+    } catch {
+      // fallback
+    }
+    return DEFAULT_VISIBLE_COLUMNS;
+  });
+
+  const handleVisibleColumnsChange = (newCols) => {
+    const ensured = Array.from(new Set([...newCols, 'property', 'actions']));
+    setVisibleColumnKeys(ensured);
+    try {
+      localStorage.setItem(STORAGE_KEY_COLUMNS, JSON.stringify(ensured));
+    } catch {
+      // ignore
+    }
+  };
 
   const [selectedKeys, setSelectedKeys] = useState(new Set());
   const [quickDrawerProperty, setQuickDrawerProperty] = useState(null);
@@ -683,6 +724,7 @@ export default function BrokerProperties() {
   // High-Density 8-Column Data Table Structure Matching User Mockup
   const columns = [
     {
+      id: 'property',
       header: "Property",
       className: "min-w-[280px]",
       render: (row) => {
@@ -712,6 +754,7 @@ export default function BrokerProperties() {
       }
     },
     {
+      id: 'location',
       header: "Location",
       className: "min-w-[190px]",
       render: (row) => {
@@ -741,6 +784,7 @@ export default function BrokerProperties() {
       }
     },
     {
+      id: 'property_type',
       header: "Property Type",
       className: "min-w-[150px]",
       render: (row) => {
@@ -770,6 +814,7 @@ export default function BrokerProperties() {
       }
     },
     {
+      id: 'specs',
       header: "Specs",
       className: "min-w-[130px] text-xs",
       render: (row) => {
@@ -810,6 +855,7 @@ export default function BrokerProperties() {
       }
     },
     {
+      id: 'price',
       header: "Price",
       className: "min-w-[130px] text-xs",
       render: (row) => {
@@ -837,6 +883,7 @@ export default function BrokerProperties() {
       }
     },
     {
+      id: 'status',
       header: "Status",
       className: "min-w-[125px]",
       render: (row) => {
@@ -944,6 +991,7 @@ export default function BrokerProperties() {
       }
     },
     {
+      id: 'date_added',
       header: "Date Added",
       className: "min-w-[130px]",
       render: (row) => {
@@ -963,6 +1011,7 @@ export default function BrokerProperties() {
       }
     },
     {
+      id: 'actions',
       header: "Actions",
       className: "w-14 text-center",
       render: (row) => {
@@ -1034,6 +1083,10 @@ export default function BrokerProperties() {
       }
     }
   ];
+
+  const displayedColumns = useMemo(() => {
+    return columns.filter((col) => !col.id || visibleColumnKeys.includes(col.id));
+  }, [columns, visibleColumnKeys]);
 
   // Proposal Columns for the Agent Proposals Review Queue Tab
   const proposalColumns = [
@@ -1261,6 +1314,9 @@ export default function BrokerProperties() {
         onResetFilters={handleClearFilters}
         totalCount={properties.length}
         filteredCount={filteredProperties.length}
+        availableColumns={AVAILABLE_COLUMNS}
+        visibleColumns={visibleColumnKeys}
+        onVisibleColumnsChange={handleVisibleColumnsChange}
       />
 
       {/* Main Data Table or Neutral Empty / Loading States */}
@@ -1286,12 +1342,11 @@ export default function BrokerProperties() {
           />
         )
       ) : loading ? (
-        <div className="bg-white rounded-lg border border-[#E2E8F0] p-12 text-center space-y-4 shadow-xs">
-          <div className="w-9 h-9 border-3 border-[#0F766E] border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-xs uppercase tracking-widest font-sans font-bold text-[#64748B]">
-            Querying Firm Architectural Database...
-          </p>
-        </div>
+        viewMode === 'grid' ? (
+          <CardGridSkeleton count={6} />
+        ) : (
+          <TableSkeleton rows={6} />
+        )
       ) : error && properties.length === 0 ? (
         <div className="bg-white rounded-lg border border-red-200 bg-red-50/20 p-12 text-center space-y-4 shadow-xs">
           <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto text-red-600">
@@ -1534,7 +1589,7 @@ export default function BrokerProperties() {
           </div>
         ) : (
                   <DataTable
-          columns={columns}
+          columns={displayedColumns}
           data={filteredProperties}
           keyField="id"
           pageSize={8}

@@ -150,4 +150,47 @@ describe('PropertyFilterToolbar Component', () => {
     fireEvent.click(removePriceChipBtn);
     expect(onPriceRangeChange).toHaveBeenCalledWith({ min: '', max: '' });
   });
+
+  it('renders columns popover, displays available columns, and allows toggling column visibility', () => {
+    const onVisibleColumnsChange = vi.fn();
+    const availableColumns = [
+      { id: 'property', label: 'Property', isLocked: true },
+      { id: 'price', label: 'Price' },
+      { id: 'specs', label: 'Specs' },
+    ];
+    const visibleColumns = ['property', 'price', 'specs'];
+
+    render(
+      <PropertyFilterToolbar
+        {...defaultProps}
+        availableColumns={availableColumns}
+        visibleColumns={visibleColumns}
+        onVisibleColumnsChange={onVisibleColumnsChange}
+      />
+    );
+
+    const columnsBtn = screen.getByRole('button', { name: /customize columns/i });
+    expect(columnsBtn).toBeInTheDocument();
+    fireEvent.click(columnsBtn);
+
+    expect(screen.getByText('Table Columns')).toBeInTheDocument();
+    expect(screen.getByLabelText(/^property$/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^price$/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^specs$/i)).toBeInTheDocument();
+
+    // Property is locked -> its checkbox should be disabled
+    const propertyCheckbox = screen.getAllByRole('checkbox')[0];
+    expect(propertyCheckbox).toBeDisabled();
+
+    // Price checkbox is enabled -> toggle it
+    const priceCheckbox = screen.getAllByRole('checkbox')[1];
+    expect(priceCheckbox).not.toBeDisabled();
+    fireEvent.click(priceCheckbox);
+    expect(onVisibleColumnsChange).toHaveBeenCalledWith(['property', 'specs']);
+
+    // Click "Show All" button
+    const showAllBtn = screen.getByText('Show All');
+    fireEvent.click(showAllBtn);
+    expect(onVisibleColumnsChange).toHaveBeenCalledWith(['property', 'price', 'specs']);
+  });
 });
