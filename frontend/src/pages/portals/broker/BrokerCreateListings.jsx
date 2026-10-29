@@ -18,7 +18,7 @@ import { Badge } from '../../../components/ui/badge';
 import { 
   Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, 
   Input, Label, Textarea, Alert, AlertTitle, AlertDescription,
-  useToast, Toaster 
+  useToast, Toaster, ViewPropertyButton
 } from '../../../components/ui';
 import propertyService, { normalizeProperty, toApiPayload } from '../../../services/propertyService';
 import agentService from '../../../services/agentService';
@@ -1797,13 +1797,6 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
             <div className="text-xs text-[#64748B] dark:text-slate-400 font-medium hidden sm:block">
               {Math.round(((currentStep - 1) / 6) * 100)}% Completed
             </div>
-          </div>
-
-          <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
-            <div 
-              className="bg-[#0F766E] h-full transition-all duration-300 rounded-full"
-              style={{ width: `${((currentStep) / 7) * 100}%` }}
-            />
           </div>
 
           <div className="overflow-x-auto custom-scrollbar pt-1 pb-1">
@@ -4783,14 +4776,12 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                 </div>
                 {/* Mobile Preview Action */}
                 <div className="lg:hidden">
-                  <button
-                    type="button"
+                  <ViewPropertyButton
                     onClick={() => setShowPublicPreview(true)}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-teal-50 hover:bg-teal-100 text-[#0F766E] border border-teal-200 rounded-lg text-xs font-semibold cursor-pointer transition-colors shadow-2xs"
-                  >
-                    <span className="material-symbols-outlined text-[16px]">visibility</span>
-                    <span>Preview Listing</span>
-                  </button>
+                    label="Preview Listing"
+                    size="sm"
+                    title="Preview Listing"
+                  />
                 </div>
               </div>
             </div>
@@ -5740,17 +5731,10 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
               </p>
             </div>
 
-            <button
-              type="button"
+            <ViewPropertyButton
               onClick={() => setShowPublicPreview(true)}
-              className="inline-flex items-center gap-2 pl-4 pr-1.5 py-1.5 rounded-full bg-[#0F6266] hover:bg-[#0c4e51] text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer group shrink-0"
               title="Preview Listing"
-            >
-              <span>View property</span>
-              <div className="w-6 h-6 rounded-full bg-[#E07A5F] text-white flex items-center justify-center transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
-                <ArrowUpRight className="w-3.5 h-3.5" />
-              </div>
-            </button>
+            />
           </div>
         </div>
       </Card>

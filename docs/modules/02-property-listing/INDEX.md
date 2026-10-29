@@ -2,7 +2,7 @@
 module: 02-property-listing
 title: Property Listing Module
 last_updated: 2026-10-29
-total_documents: 48
+total_documents: 49
 ---
 
 # Property Listing Module — Master Index
@@ -65,6 +65,10 @@ All updates and technical reports for this module are ordered chronologically by
 | `2026-10-29` | [2026-10-29-seamless-interactive-subdivision-vectors-and-splitting.md](./2026-10-29-seamless-interactive-subdivision-vectors-and-splitting.md) | Verification Record — Seamless Interactive Subdivision Vectors, Parcel Splitting & Batch Actions |
 | `2026-10-29` | [2026-10-29-clean-property-filtering-toolbar.md](./2026-10-29-clean-property-filtering-toolbar.md) | Verification Record — Clean Property Filtering Toolbar Redesign & Modern SaaS Alignment |
 | `2026-10-29` | [2026-10-29-datatable-responsive-column-viewport-adaptation.md](./2026-10-29-datatable-responsive-column-viewport-adaptation.md) | Verification Record — DataTable Responsive Column Viewport Adaptation |
+| `2026-10-29` | [2026-10-29-subdivision-map-editor-ui-layout-and-fr001-fr011-refactor.md](./2026-10-29-subdivision-map-editor-ui-layout-and-fr001-fr011-refactor.md) | Verification Record — Subdivision Map Editor UI Layout & FR-001 Through FR-011 Modern SaaS Refactor |
+| `2026-10-29` | [2026-10-29-clean-cad-workstation-layout-and-multi-tab-dock.md](./2026-10-29-clean-cad-workstation-layout-and-multi-tab-dock.md) | Verification Record — Clean CAD Workstation Layout, Left Toolstrip & Multi-Tab Studio Dock |
+| `2026-10-29` | [2026-10-29-view-property-contrast-capsule-button.md](./2026-10-29-view-property-contrast-capsule-button.md) | Verification Record — View Property Contrast Capsule Button Implementation |
+| `2026-10-29` | [2026-10-29-clean-map-interface-and-step-loading-bar-removal.md](./2026-10-29-clean-map-interface-and-step-loading-bar-removal.md) | Verification Record — Clean Map Interface & Stepper Progress Loading Bar Removal |
 
 ---
 
