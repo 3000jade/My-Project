@@ -45,7 +45,7 @@ export default function PropertiesPage() {
     async function fetchProperties() {
       try {
         setIsLoading(true);
-        const res = await propertyService.getProperties();
+        const res = await propertyService.getProperties({ limit: 100 });
         if (res && res.data) {
           setProperties(res.data);
         }
@@ -106,6 +106,13 @@ export default function PropertiesPage() {
       }
     }
   }, [searchParams, setFilter]);
+
+  // When switching to Grid View, clear geographic map bounding box restriction
+  useEffect(() => {
+    if (viewMode === 'grid') {
+      setFilter('mapBounds', null);
+    }
+  }, [viewMode, setFilter]);
 
   const [displayLimit, setDisplayLimit] = useState(8);
 
@@ -269,7 +276,12 @@ export default function PropertiesPage() {
         </div>
 
         {/* Results Area */}
-        {displayedProperties && displayedProperties.length > 0 ? (
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-24 min-h-[360px] w-full" role="status" aria-label="Loading properties">
+            <div className="w-10 h-10 border-3 border-[#0F766E]/20 border-t-[#0F766E] rounded-full animate-spin mb-4" />
+            <p className="text-sm font-medium text-slate-500">Loading firm property listings...</p>
+          </div>
+        ) : displayedProperties && displayedProperties.length > 0 ? (
           <div className={`flex-1 overflow-hidden w-full ${viewMode === 'split' ? 'grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start' : ''}`}>
             {/* Left Pane: Property Cards Grid (Visible on mobile when mobileTab === 'list' or in grid mode) */}
             <div

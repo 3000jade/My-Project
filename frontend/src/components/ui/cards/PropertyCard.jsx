@@ -48,9 +48,8 @@ export default function PropertyCard({
   // Transaction classification & Badge: For Sale / For Rent
   const transactionType = property.transaction_type || property.transactionType || property.specs?.transactionType || '';
   const isRent = Boolean(
-    property.rent_frequency ||
-    property.priceSuffix ||
     (transactionType && transactionType.toLowerCase().includes('rent')) ||
+    property.priceSuffix ||
     (property.status && property.status.toLowerCase().includes('rent'))
   );
   const typeBadgeLabel = isRent ? 'For Rent' : 'For Sale';

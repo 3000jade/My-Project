@@ -138,6 +138,10 @@ export function normalizeProperty(rawItem = {}) {
     province: rawItem.state_or_province || rawItem.location?.stateOrProvince || rawItem.state || rawItem.location?.state || '',
     subdivision_name: rawItem.subdivision_name || rawItem.location?.subdivisionName || rawItem.subdivisionName || '',
     subdivisionName: rawItem.subdivision_name || rawItem.location?.subdivisionName || rawItem.subdivisionName || '',
+    subdivision_project_id: rawItem.subdivision_project_id || rawItem.subdivisionProjectId || null,
+    subdivisionProjectId: rawItem.subdivision_project_id || rawItem.subdivisionProjectId || null,
+    subdivision_lot_id: rawItem.subdivision_lot_id || rawItem.subdivisionLotId || null,
+    subdivisionLotId: rawItem.subdivision_lot_id || rawItem.subdivisionLotId || null,
     building_name: rawItem.building_name || rawItem.location?.buildingName || rawItem.location?.building_name || rawItem.buildingName || '',
     buildingName: rawItem.building_name || rawItem.location?.buildingName || rawItem.location?.building_name || rawItem.buildingName || '',
     postal_code: rawItem.postal_code || rawItem.location?.postalCode || rawItem.postalCode || '',
@@ -197,13 +201,16 @@ export function normalizeProperty(rawItem = {}) {
     listing_key: listingKey,
     standard_status: canonicalStandardStatus,
     standardStatus: canonicalStandardStatus,
+    transaction_type: rawItem.transaction_type || rawItem.specs?.transactionType || rawItem.transactionType || rawItem.customAttributes?.canonicalPayload?.transactionType || (rawItem.pricing?.rentFrequency ? 'For Rent' : 'For Sale'),
+    transactionType: rawItem.transactionType || rawItem.transaction_type || rawItem.specs?.transactionType || rawItem.customAttributes?.canonicalPayload?.transactionType || (rawItem.pricing?.rentFrequency ? 'For Rent' : 'For Sale'),
+    district: rawItem.district || rawItem.location?.district || rawItem.location?.subdivisionName || rawItem.subdivisionName || rawItem.location?.city || rawItem.city || '',
     association_fee: rawItem.pricing?.associationFee ?? rawItem.pricing?.association_fee ?? rawItem.association_fee ?? rawItem.associationFee ?? 0,
     associationFee: rawItem.pricing?.associationFee ?? rawItem.pricing?.association_fee ?? rawItem.association_fee ?? rawItem.associationFee ?? 0,
     association_fee_frequency: rawItem.pricing?.associationFeeFrequency ?? rawItem.pricing?.association_fee_frequency ?? rawItem.association_fee_frequency ?? rawItem.associationFeeFrequency ?? 'Monthly',
     associationFeeFrequency: rawItem.pricing?.associationFeeFrequency ?? rawItem.pricing?.association_fee_frequency ?? rawItem.association_fee_frequency ?? rawItem.associationFeeFrequency ?? 'Monthly',
     currency: rawItem.pricing?.currency || rawItem.currency || rawItem.listPriceCurrency || rawItem.list_price_currency || 'PHP',
-    rent_frequency: rawItem.pricing?.rentFrequency || rawItem.pricing?.rent_frequency || rawItem.rent_frequency || 'Monthly',
-    lease_term: rawItem.pricing?.leaseTerm || rawItem.pricing?.lease_term || rawItem.lease_term || '12 Months',
+    rent_frequency: rawItem.pricing?.rentFrequency || rawItem.pricing?.rent_frequency || rawItem.rent_frequency || null,
+    lease_term: rawItem.pricing?.leaseTerm || rawItem.pricing?.lease_term || rawItem.lease_term || '',
     association_fee_includes: Array.isArray(rawItem.pricing?.associationFeeIncludes || rawItem.pricing?.association_fee_includes || rawItem.association_fee_includes)
       ? (rawItem.pricing?.associationFeeIncludes || rawItem.pricing?.association_fee_includes || rawItem.association_fee_includes)
       : [],
@@ -691,6 +698,10 @@ export function toApiPayload(item = {}) {
     agentId: resolvedListAgentKey,
     agent_id: resolvedListAgentKey,
     listAgentKey: resolvedListAgentKey,
+    subdivision_project_id: item.subdivision_project_id || item.subdivisionProjectId || null,
+    subdivisionProjectId: item.subdivision_project_id || item.subdivisionProjectId || null,
+    subdivision_lot_id: item.subdivision_lot_id || item.subdivisionLotId || null,
+    subdivisionLotId: item.subdivision_lot_id || item.subdivisionLotId || null,
   };
 }
 

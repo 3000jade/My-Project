@@ -32,7 +32,7 @@ export function usePropertyFilterEngine(initialProperties = []) {
   const checkPropertyMatch = useCallback((property, activeFilters) => {
     // 1. Transaction Type
     if (activeFilters.transactionType && activeFilters.transactionType !== 'All') {
-      const pTrans = (property.transactionType || property.listing_status || property.status || '').toLowerCase();
+      const pTrans = (property.transactionType || property.transaction_type || property.specs?.transactionType || property.listing_status || property.status || '').toLowerCase();
       const fTrans = activeFilters.transactionType.toLowerCase();
       if (!pTrans.includes(fTrans) && !(fTrans === 'for sale' && pTrans === 'buy') && !(fTrans === 'for rent' && pTrans === 'rent')) {
         return false;
@@ -42,7 +42,7 @@ export function usePropertyFilterEngine(initialProperties = []) {
     // 2. Keyword Search (Location, Name, Address)
     if (activeFilters.keyword && activeFilters.keyword.trim() !== '') {
       const q = activeFilters.keyword.toLowerCase().trim();
-      const searchable = `${property.name || ''} ${property.location || ''} ${property.address || ''} ${property.city || ''} ${property.district || ''} ${property.title || ''}`.toLowerCase();
+      const searchable = `${property.name || ''} ${property.location || ''} ${property.address || ''} ${property.city || ''} ${property.district || ''} ${property.subdivisionName || ''} ${property.title || ''}`.toLowerCase();
       if (!searchable.includes(q)) {
         return false;
       }
@@ -51,8 +51,9 @@ export function usePropertyFilterEngine(initialProperties = []) {
     // 3. District / Quick Chip
     if (activeFilters.district && activeFilters.district !== 'All' && activeFilters.district !== 'All Metro Manila') {
       const d = activeFilters.district.toLowerCase();
-      const loc = `${property.location || ''} ${property.city || ''} ${property.district || ''} ${property.address || ''}`.toLowerCase();
-      if (!loc.includes(d)) {
+      const subDistricts = d.split('/').map(s => s.trim().toLowerCase());
+      const loc = `${property.location || ''} ${property.city || ''} ${property.district || ''} ${property.address || ''} ${property.subdivisionName || ''}`.toLowerCase();
+      if (!subDistricts.some(sub => loc.includes(sub))) {
         return false;
       }
     }

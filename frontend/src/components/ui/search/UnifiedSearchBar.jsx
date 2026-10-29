@@ -146,6 +146,7 @@ export default function UnifiedSearchBar({
   const handleDistrictClick = (preset) => {
     if (preset.name === 'All Metro Manila') {
       setFilter('district', '');
+      setFilter('mapBounds', null);
     } else {
       setFilter('district', preset.name);
     }
