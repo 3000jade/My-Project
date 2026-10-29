@@ -128,9 +128,9 @@ export default function PropertyFilterToolbar({
   );
 
   return (
-    <div className="space-y-3">
-      {/* Status Pill Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs select-none custom-scrollbar">
+    <div className="space-y-3 font-sans">
+      {/* Status Navigation Tabs (Clean Modern Underline Style) */}
+      <div className="border-b border-[#E2E8F0] flex items-center gap-1 sm:gap-2 overflow-x-auto select-none no-scrollbar -mx-1 px-1">
         {statusTabs.map((tab) => {
           const isSelected = statusTab === tab.id;
           return (
@@ -140,23 +140,23 @@ export default function PropertyFilterToolbar({
               onClick={() => onStatusTabChange?.(tab.id)}
               aria-label={tab.ariaLabel || `${tab.label} (${tab.count})`}
               className={cn(
-                'inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs transition-colors cursor-pointer shrink-0 font-medium',
+                'group relative inline-flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium transition-all cursor-pointer shrink-0 border-b-2 -mb-px',
                 isSelected
-                  ? 'bg-[#0F766E] text-white shadow-xs font-semibold'
-                  : 'bg-slate-100 text-[#64748B] hover:text-[#1E293B] hover:bg-slate-200/80'
+                  ? 'border-[#0F766E] text-[#0F766E] font-semibold'
+                  : 'border-transparent text-[#64748B] hover:text-[#1E293B] hover:border-slate-300'
               )}
             >
               <span>{tab.label}</span>
               <span
                 className={cn(
-                  'px-1.5 py-0.2 rounded-full text-[10px] font-mono',
+                  'px-1.5 py-0.2 rounded-full text-[10px] font-mono transition-colors',
                   isSelected
-                    ? 'bg-white/20 text-white font-bold'
+                    ? 'bg-teal-50 text-[#0F766E] font-bold border border-teal-200/60'
                     : tab.isAlert && tab.count > 0
                     ? 'bg-rose-100 text-rose-800 font-bold'
                     : tab.badge && tab.count > 0
                     ? 'bg-amber-100 text-amber-800 font-bold'
-                    : 'bg-white text-slate-600'
+                    : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200'
                 )}
               >
                 {tab.count}
@@ -166,17 +166,17 @@ export default function PropertyFilterToolbar({
         })}
       </div>
 
-      {/* Multi-Criteria Toolbar */}
-      <div className="bg-white rounded-lg border border-[#E2E8F0] p-3 shadow-2xs flex flex-wrap items-center gap-2.5">
+      {/* Clean Unified Multi-Criteria Toolbar */}
+      <div className="bg-white rounded-xl border border-[#E2E8F0] p-2.5 shadow-2xs flex flex-wrap items-center gap-2">
         {/* Omni Search Input */}
-        <div className="relative flex-1 min-w-[220px]">
+        <div className="relative flex-1 min-w-[240px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
             type="text"
             value={search || ''}
             onChange={(e) => onSearchChange?.(e.target.value)}
             placeholder="Search properties by title, location, or listing code..."
-            className="w-full h-9 pl-9 pr-8 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs text-[#1E293B] placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#0F766E] focus:border-[#0F766E]"
+            className="w-full h-9 pl-9 pr-8 bg-[#F8FAFC] hover:bg-slate-50 focus:bg-white border border-[#E2E8F0] rounded-lg text-xs text-[#1E293B] placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#0F766E] focus:border-[#0F766E] transition-all"
           />
           {search && (
             <button
@@ -191,11 +191,16 @@ export default function PropertyFilterToolbar({
         </div>
 
         {/* Property Type Facet */}
-        <div className="w-36 shrink-0">
+        <div className="relative shrink-0">
           <select
             value={selectedType || 'ALL'}
             onChange={(e) => onTypeChange?.(e.target.value)}
-            className="w-full h-9 px-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-[#0F766E] cursor-pointer"
+            className={cn(
+              "h-9 pl-3 pr-8 rounded-lg text-xs font-medium cursor-pointer transition-colors appearance-none focus:outline-none focus:ring-1 focus:ring-[#0F766E]",
+              selectedType && selectedType !== 'ALL'
+                ? "bg-teal-50/70 border border-[#0F766E] text-[#0F766E] font-semibold"
+                : "bg-[#F8FAFC] hover:bg-slate-100/70 border border-[#E2E8F0] text-[#1E293B]"
+            )}
             aria-label="Property type"
           >
             <option value="ALL">Type: All</option>
@@ -205,14 +210,20 @@ export default function PropertyFilterToolbar({
               </option>
             ))}
           </select>
+          <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
         </div>
 
         {/* Location Facet */}
-        <div className="w-36 shrink-0">
+        <div className="relative shrink-0">
           <select
             value={selectedLocation || 'ALL'}
             onChange={(e) => onLocationChange?.(e.target.value)}
-            className="w-full h-9 px-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-[#0F766E] cursor-pointer"
+            className={cn(
+              "h-9 pl-3 pr-8 rounded-lg text-xs font-medium cursor-pointer transition-colors appearance-none focus:outline-none focus:ring-1 focus:ring-[#0F766E]",
+              selectedLocation && selectedLocation !== 'ALL'
+                ? "bg-teal-50/70 border border-[#0F766E] text-[#0F766E] font-semibold"
+                : "bg-[#F8FAFC] hover:bg-slate-100/70 border border-[#E2E8F0] text-[#1E293B]"
+            )}
             aria-label="Location"
           >
             <option value="ALL">Location: All</option>
@@ -222,6 +233,7 @@ export default function PropertyFilterToolbar({
               </option>
             ))}
           </select>
+          <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
         </div>
 
         {/* Price Range Filter */}
@@ -231,10 +243,10 @@ export default function PropertyFilterToolbar({
             onClick={() => setIsPriceOpen(!isPriceOpen)}
             aria-label="Price range filter"
             className={cn(
-              'h-9 px-3 bg-[#F8FAFC] border rounded-lg text-xs font-medium flex items-center gap-1.5 cursor-pointer shrink-0 transition-colors',
+              'h-9 px-3 rounded-lg text-xs font-medium flex items-center gap-1.5 cursor-pointer shrink-0 transition-colors',
               hasPriceFilter
-                ? 'border-[#0F766E] text-[#0F766E] bg-teal-50/50'
-                : 'border-[#E2E8F0] text-[#1E293B] hover:bg-slate-50'
+                ? 'border border-[#0F766E] text-[#0F766E] bg-teal-50/70 font-semibold'
+                : 'border border-[#E2E8F0] bg-[#F8FAFC] hover:bg-slate-100/70 text-[#1E293B]'
             )}
           >
             <DollarSign className="w-3.5 h-3.5 text-slate-400" />
@@ -243,7 +255,7 @@ export default function PropertyFilterToolbar({
           </button>
 
           {isPriceOpen && (
-            <div className="absolute top-full left-0 sm:right-0 sm:left-auto mt-1.5 w-72 bg-white rounded-xl border border-[#E2E8F0] shadow-lg p-3.5 z-30 space-y-3">
+            <div className="absolute top-full right-0 mt-1.5 w-72 bg-white rounded-xl border border-[#E2E8F0] shadow-xl p-3.5 z-30 space-y-3 font-sans animate-in fade-in-80">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-[#1E293B]">
                   Price Range (PHP)
@@ -252,7 +264,7 @@ export default function PropertyFilterToolbar({
                   <button
                     type="button"
                     onClick={() => onPriceRangeChange?.({ min: '', max: '' })}
-                    className="text-[11px] text-teal-600 hover:text-teal-700 font-medium cursor-pointer"
+                    className="text-[11px] text-[#0F766E] hover:text-[#115E59] font-medium cursor-pointer"
                   >
                     Reset
                   </button>
@@ -314,7 +326,7 @@ export default function PropertyFilterToolbar({
                           max: preset.max,
                         })
                       }
-                      className="text-[11px] py-1 px-2 rounded bg-slate-50 hover:bg-teal-50 hover:text-[#0F766E] border border-slate-200/80 text-slate-600 font-medium transition-colors text-center cursor-pointer"
+                      className="text-[11px] py-1 px-2 rounded-lg bg-slate-50 hover:bg-teal-50 hover:text-[#0F766E] border border-slate-200/80 text-slate-600 font-medium transition-colors text-center cursor-pointer"
                     >
                       {preset.label}
                     </button>
@@ -326,11 +338,11 @@ export default function PropertyFilterToolbar({
         </div>
 
         {/* Sort By Selector */}
-        <div className="w-36 shrink-0">
+        <div className="relative shrink-0">
           <select
             value={sortBy || 'newest'}
             onChange={(e) => onSortByChange?.(e.target.value)}
-            className="w-full h-9 px-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-[#0F766E] cursor-pointer"
+            className="h-9 pl-3 pr-8 bg-[#F8FAFC] hover:bg-slate-100/70 border border-[#E2E8F0] rounded-lg text-xs font-medium text-[#1E293B] appearance-none focus:outline-none focus:ring-1 focus:ring-[#0F766E] cursor-pointer transition-colors"
             aria-label="Sort by"
           >
             <option value="newest">Sort: Newest First</option>
@@ -338,18 +350,21 @@ export default function PropertyFilterToolbar({
             <option value="price_asc">Price (Low to High)</option>
             <option value="title_asc">Title: A to Z</option>
           </select>
+          <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
         </div>
 
-        {/* Reset / Clear Filters Action */}
-        <button
-          type="button"
-          onClick={onResetFilters}
-          className="h-9 px-3 bg-white hover:bg-slate-50 border border-[#E2E8F0] rounded-lg text-xs font-semibold text-[#64748B] hover:text-[#1E293B] flex items-center gap-1.5 transition-colors cursor-pointer shrink-0"
-          title="Reset all filters"
-        >
-          <SlidersHorizontal className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">Reset</span>
-        </button>
+        {/* Dynamic Reset Action: only renders when filters are active */}
+        {hasActiveFilters && (
+          <button
+            type="button"
+            onClick={onResetFilters}
+            className="h-9 px-3 bg-white hover:bg-rose-50 border border-slate-200 hover:border-rose-200 rounded-lg text-xs font-semibold text-rose-600 hover:text-rose-700 flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 animate-in fade-in-50"
+            title="Reset all filters"
+          >
+            <SlidersHorizontal className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Reset</span>
+          </button>
+        )}
       </div>
 
       {/* Active Filter Chips Strip */}
