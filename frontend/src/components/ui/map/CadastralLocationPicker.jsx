@@ -4,6 +4,7 @@ export default function CadastralLocationPicker({
   latitude,
   longitude,
   onPositionChange,
+  onOpenFullView,
   address = '',
   readOnly = false,
   className = '',
@@ -55,6 +56,33 @@ export default function CadastralLocationPicker({
           allowFullScreen={false}
           referrerPolicy="no-referrer-when-downgrade"
         />
+
+        {/* Full View Button (Opens Dedicated Map Page) */}
+        {typeof onOpenFullView === 'function' && (
+          <button
+            type="button"
+            onClick={onOpenFullView}
+            data-testid="cadastral-fullview-btn"
+            title="Open Full View Map Studio"
+            aria-label="Open Full View Map Studio"
+            className="absolute bottom-3 right-3 z-10 w-10 h-10 rounded-full bg-white text-slate-700 hover:text-[#0F766E] hover:bg-slate-50 border border-slate-200/90 shadow-md flex items-center justify-center transition-all hover:scale-105 active:scale-95 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#0F766E]"
+          >
+            <svg
+              className="w-4.5 h-4.5 text-slate-700 hover:text-[#0F766E] transition-colors"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M15 3h6v6" />
+              <path d="M9 3H3v6" />
+              <path d="M9 21H3v-6" />
+              <path d="M15 21h6v-6" />
+            </svg>
+          </button>
+        )}
       </div>
     </div>
   );

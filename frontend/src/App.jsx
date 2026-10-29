@@ -77,6 +77,7 @@ import BrokerNotifications from './pages/portals/broker/BrokerNotifications';
 import BrokerProfile from './pages/portals/broker/BrokerProfile';
 import BrokerSubdivisions from './pages/portals/broker/BrokerSubdivisions';
 import SubdivisionMapEditor from './pages/portals/broker/SubdivisionMapEditor';
+import BrokerFullViewMap from './pages/portals/broker/BrokerFullViewMap';
 
 // Client Portal Pages
 const ClientDashboard = lazy(() => import('./pages/portals/client/ClientDashboard'));
@@ -198,6 +199,23 @@ function AppRoutes({ isAppLoading }) {
           element={
             <ProtectedRoute allowedRoles={['broker', 'admin']}>
               <SubdivisionMapEditor />
+            </ProtectedRoute>
+          }
+        />
+        {/* Fullscreen Location Pinpoint Map Studio (Protected for Broker & Admin) */}
+        <Route
+          path="/broker/properties/location-map"
+          element={
+            <ProtectedRoute allowedRoles={['broker', 'admin']}>
+              <BrokerFullViewMap />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/broker/properties/map"
+          element={
+            <ProtectedRoute allowedRoles={['broker', 'admin']}>
+              <BrokerFullViewMap />
             </ProtectedRoute>
           }
         />

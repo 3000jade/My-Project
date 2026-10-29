@@ -458,6 +458,67 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [isDirty, isSubmitting]);
 
+  // Restore listing draft or returned coordinates from Full View Map Studio
+  useEffect(() => {
+    try {
+      const savedDraft = sessionStorage.getItem('broker_listing_create_draft');
+      const updatedCoords = sessionStorage.getItem('broker_listing_updated_coords');
+
+      if (savedDraft) {
+        const parsed = JSON.parse(savedDraft);
+        if (parsed.formData) {
+          let mergedFormData = { ...parsed.formData };
+          if (updatedCoords) {
+            const coords = JSON.parse(updatedCoords);
+            if (coords.lat != null) mergedFormData.latitude = String(coords.lat);
+            if (coords.lng != null) mergedFormData.longitude = String(coords.lng);
+            if (coords.address) mergedFormData.address = coords.address;
+            if (coords.city) mergedFormData.city = coords.city;
+            if (coords.barangay) mergedFormData.barangay = coords.barangay;
+            sessionStorage.removeItem('broker_listing_updated_coords');
+          }
+          setFormData(mergedFormData);
+          if (parsed.currentStep) {
+            setCurrentStep(parsed.currentStep);
+          }
+        }
+      } else if (updatedCoords) {
+        const coords = JSON.parse(updatedCoords);
+        setFormData(prev => ({
+          ...prev,
+          latitude: coords.lat != null ? String(coords.lat) : prev.latitude,
+          longitude: coords.lng != null ? String(coords.lng) : prev.longitude,
+          address: coords.address || prev.address,
+          city: coords.city || prev.city,
+          barangay: coords.barangay || prev.barangay,
+        }));
+        sessionStorage.removeItem('broker_listing_updated_coords');
+      }
+    } catch (err) {
+      console.warn('[BrokerCreateListings] Error restoring draft from sessionStorage:', err);
+    }
+  }, []);
+
+  const handleOpenFullViewMap = () => {
+    try {
+      sessionStorage.setItem('broker_listing_create_draft', JSON.stringify({
+        formData,
+        currentStep: 2,
+        propertyType: formData.propertyType || typeParam,
+      }));
+    } catch (e) {
+      console.warn('[BrokerCreateListings] Failed saving draft to sessionStorage:', e);
+    }
+    const params = new URLSearchParams();
+    if (formData.latitude) params.set('lat', formData.latitude);
+    if (formData.longitude) params.set('lng', formData.longitude);
+    if (formData.address) params.set('address', formData.address);
+    if (formData.title) params.set('title', formData.title);
+    if (isEditing) params.set('propertyId', id);
+    params.set('returnUrl', location.pathname);
+    navigate(`/broker/properties/location-map?${params.toString()}`);
+  };
+
   // Close address predictions on outside click
   useEffect(() => {
     function handleClickOutside(e) {
@@ -2081,47 +2142,9 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                   handleMapPositionChange(pos);
                   handlePinMoved(pos);
                 }}
+                onOpenFullView={handleOpenFullViewMap}
                 className="w-full"
               />
-
-              {/* Cadastral Quick Presets */}
-              <div className="flex items-center gap-1.5 flex-wrap pt-1">
-                <span className="text-[11px] font-semibold text-[#64748B]">Cadastral Presets:</span>
-                {[
-                  { name: 'BGC, Taguig', lat: 14.5547, lng: 121.0494, city: 'Taguig', subdivision: 'Bonifacio Global City' },
-                  { name: 'Makati CBD', lat: 14.5547, lng: 121.0244, city: 'Makati', subdivision: 'Makati Central Business District' },
-                  { name: 'Ortigas Center', lat: 14.5869, lng: 121.0614, city: 'Pasig', subdivision: 'Ortigas Center' },
-                  { name: 'Cebu IT Park', lat: 10.3297, lng: 123.9063, city: 'Cebu City', subdivision: 'Cebu IT Park' },
-                  { name: 'Clark Freeport', lat: 15.1856, lng: 120.5369, city: 'Angeles', subdivision: 'Clark Freeport Zone' }
-                ].map(preset => {
-                  const isActive = Math.abs(Number(formData.latitude) - preset.lat) < 0.0001 && Math.abs(Number(formData.longitude) - preset.lng) < 0.0001;
-                  return (
-                    <button
-                      key={preset.name}
-                      type="button"
-                      onClick={() => {
-                        handleMapPositionChange([preset.lat, preset.lng]);
-                        handlePinMoved([preset.lat, preset.lng]);
-                        setFormData(prev => ({
-                          ...prev,
-                          latitude: preset.lat.toFixed(7),
-                          longitude: preset.lng.toFixed(7),
-                          city: prev.city || preset.city,
-                          location: prev.location || preset.city,
-                          subdivision_name: prev.subdivision_name || preset.subdivision
-                        }));
-                      }}
-                      className={`text-[11px] px-2 py-0.5 rounded border transition-colors cursor-pointer ${
-                        isActive
-                          ? 'bg-[#0F766E] text-white border-[#0F766E] font-semibold shadow-xs'
-                          : 'bg-white hover:bg-teal-50 border-[#E2E8F0] text-[#0F766E] font-medium'
-                      }`}
-                    >
-                      {preset.name}
-                    </button>
-                  );
-                })}
-              </div>
 
               {/* Coordinates: Latitude & Longitude Inputs */}
               <div className="p-3.5 bg-slate-50 border border-[#E2E8F0] rounded-lg">

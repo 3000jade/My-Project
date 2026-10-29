@@ -2,7 +2,7 @@
 module: 02-property-listing
 title: Property Listing Module
 last_updated: 2026-10-29
-total_documents: 49
+total_documents: 50
 ---
 
 # Property Listing Module — Master Index
@@ -69,6 +69,8 @@ All updates and technical reports for this module are ordered chronologically by
 | `2026-10-29` | [2026-10-29-clean-cad-workstation-layout-and-multi-tab-dock.md](./2026-10-29-clean-cad-workstation-layout-and-multi-tab-dock.md) | Verification Record — Clean CAD Workstation Layout, Left Toolstrip & Multi-Tab Studio Dock |
 | `2026-10-29` | [2026-10-29-view-property-contrast-capsule-button.md](./2026-10-29-view-property-contrast-capsule-button.md) | Verification Record — View Property Contrast Capsule Button Implementation |
 | `2026-10-29` | [2026-10-29-clean-map-interface-and-step-loading-bar-removal.md](./2026-10-29-clean-map-interface-and-step-loading-bar-removal.md) | Verification Record — Clean Map Interface & Stepper Progress Loading Bar Removal |
+| `2026-10-29` | [2026-10-29-fullview-map-page-and-cadastral-presets-removal.md](./2026-10-29-fullview-map-page-and-cadastral-presets-removal.md) | Verification Record — Full-View Map Studio Page & Cadastral Presets Removal |
+| `2026-10-29` | [2026-10-29-executive-header-redesign-and-common-labels.md](./2026-10-29-executive-header-redesign-and-common-labels.md) | Verification Record — Subdivision Map Editor Executive Header Redesign & Common Industry Labels |
 
 ---
 
