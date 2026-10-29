@@ -152,9 +152,9 @@ describe('BrokerCreateListings - Form Fields & Step Navigation', () => {
     fireEvent.change(taglineInput, { target: { value: 'High-floor Rockwell corner unit' } });
     expect(taglineInput.value).toBe('High-floor Rockwell corner unit');
 
-    // Reference Code input
-    const refCodeInput = screen.getByPlaceholderText(/e\.g\. CAD-HAV-B12-L04/i);
-    expect(refCodeInput).toBeInTheDocument();
+    // Verify Reference Code input is removed from Step 1 Listing Overview
+    expect(screen.queryByPlaceholderText(/e\.g\. CAD-HAV-B12-L04/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/MLS \/ Cadastral Reference Code/i)).not.toBeInTheDocument();
 
     // Verify Assigned Listing Agent and Category Option Grid are removed
     expect(screen.queryByText(/Assigned Listing Agent/i)).not.toBeInTheDocument();

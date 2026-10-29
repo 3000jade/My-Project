@@ -70,7 +70,7 @@ test.describe('Schema v1.0 Property Intake Studio & Real-World Specifications', 
     await expect(page.getByText(/Listing Overview/i).first()).toBeVisible();
     await expect(page.getByRole('heading', { name: /Add Property/i })).toBeVisible();
 
-    // Verify Marketing Tagline & Cadastral Reference input fields exist
+    // Verify Marketing Tagline input field exists and redundant reference code / agent select are removed
     const titleInput = page.getByPlaceholder(/e\.g\. Modernist Cantilever Estate/i);
     const taglineInput = page.getByPlaceholder(/e\.g\. Elevated residential lot overlooking/i);
     const referenceCodeInput = page.getByPlaceholder(/e\.g\. CAD-HAV-B12-L04/i);
@@ -78,7 +78,7 @@ test.describe('Schema v1.0 Property Intake Studio & Real-World Specifications', 
 
     await expect(titleInput).toBeVisible();
     await expect(taglineInput).toBeVisible();
-    await expect(referenceCodeInput).toBeVisible();
+    await expect(referenceCodeInput).not.toBeVisible();
     // Verify decoupled architecture: assigned agent dropdown and redundant category grid are absent
     await expect(agentSelect).not.toBeVisible();
     await expect(page.getByText(/Category \/ Type Classification/i)).not.toBeVisible();
@@ -86,7 +86,6 @@ test.describe('Schema v1.0 Property Intake Studio & Real-World Specifications', 
     // Fill Step 1 values
     await titleInput.fill('Prime Corner Lot in Havila Highlands Subdivision');
     await taglineInput.fill('Elevated residential lot overlooking Laguna de Bay');
-    await referenceCodeInput.fill('CAD-HAV-B12-L04');
 
     // Advance to Step 2
     const nextBtn = page.getByRole('button', { name: /Next Section/i });

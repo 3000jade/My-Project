@@ -1914,25 +1914,12 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                 />
               </div>
 
-              {/* Reference Code & Transaction Purpose */}
-              <div className="space-y-1.5 md:col-span-1">
-                <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B] block h-5">
-                  MLS / Cadastral Reference Code
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. CAD-HAV-B12-L04"
-                  value={formData.referenceCode || formData.listing_id || ''}
-                  onChange={e => { setIsDirty(true); setFormData({ ...formData, referenceCode: e.target.value, listing_id: e.target.value }); }}
-                  className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none transition-colors shadow-2xs font-mono"
-                />
-              </div>
-
-              <div className="space-y-1.5 md:col-span-1">
+              {/* Transaction Purpose */}
+              <div className="space-y-1.5 md:col-span-2">
                 <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B] block h-5">
                   Transaction Purpose <span className="text-[#FF6B6B]">*</span>
                 </label>
-                <div className="flex bg-[#F8FAFC] p-1 rounded-lg border border-[#CBD5E1] h-11 items-center shadow-2xs">
+                <div className="flex bg-[#F8FAFC] p-1 rounded-lg border border-[#CBD5E1] h-11 items-center shadow-2xs max-w-md">
                   {['For Sale', 'For Rent'].map(type => (
                     <button
                       key={type}
