@@ -159,4 +159,34 @@ describe('UnifiedSearchBar - Nominatim (OpenStreetMap) Integration', () => {
 
     expect(setFilterMock).toHaveBeenCalledWith('keyword', '');
   });
+
+  it('toggles filter visibility between clean mode and expanded mode', () => {
+    render(
+      <UnifiedSearchBar
+        filters={defaultFilters}
+        setFilter={vi.fn()}
+        initialShowFilters={false}
+      />
+    );
+
+    // Initial state: Clean mode (Hide Filters active), collapsible tray is not rendered
+    expect(screen.getByText(/Show Filters/i)).toBeDefined();
+    expect(screen.queryByTestId('collapsible-quick-filters-tray')).toBeNull();
+
+    // Click Show Filters toggle
+    const toggleBtn = screen.getByTestId('toggle-filters-visibility-btn');
+    fireEvent.click(toggleBtn);
+
+    // Expanded state: Tray is rendered with quick filters and districts
+    expect(screen.getByText(/Hide Filters/i)).toBeDefined();
+    expect(screen.getByTestId('collapsible-quick-filters-tray')).toBeDefined();
+    expect(screen.getByText('Quick Filters')).toBeDefined();
+    expect(screen.getByText('Districts:')).toBeDefined();
+
+    // Click Hide Filters toggle
+    fireEvent.click(toggleBtn);
+
+    // Collapsed back to clean state
+    expect(screen.getByText(/Show Filters/i)).toBeDefined();
+  });
 });

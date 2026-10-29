@@ -200,6 +200,7 @@ export default function PropertiesPage() {
             viewMode={viewMode}
             setViewMode={setViewMode}
             onFlyToDistrict={(preset) => setTargetDistrict(preset)}
+            initialShowFilters={false}
           />
         </div>
 
