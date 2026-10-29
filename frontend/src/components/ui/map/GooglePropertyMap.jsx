@@ -108,6 +108,37 @@ export default function GooglePropertyMap({
   const [activeLayer, setActiveLayer] = useState('vector'); // 'vector' | 'hybrid' | 'terrain'
   const [isSearchActive, setIsSearchActive] = useState(searchAsMove);
   const [activePopupProperty, setActivePopupProperty] = useState(null);
+  const [embedZoom, setEmbedZoom] = useState(initialZoom || 15);
+  const [embedLayer, setEmbedLayer] = useState('m'); // 'm' | 'k' | 'h' | 'p'
+
+  // Derive active property and coordinates for Google Maps Embed
+  const activeProperty = useMemo(() => {
+    if (activePopupProperty) return activePopupProperty;
+    if (selectedPropertyId) {
+      const found = properties.find((p) => p.id === selectedPropertyId);
+      if (found) return found;
+    }
+    if (hoveredPropertyId) {
+      const found = properties.find((p) => p.id === hoveredPropertyId);
+      if (found) return found;
+    }
+    return properties[0] || null;
+  }, [activePopupProperty, selectedPropertyId, hoveredPropertyId, properties]);
+
+  const activeCoords = useMemo(() => {
+    if (activeProperty) {
+      const c = getPropertyCoordinates(activeProperty);
+      if (c && c.lat && c.lng) return c;
+    }
+    return { lat: 14.5489, lng: 121.0503 };
+  }, [activeProperty]);
+
+  // Construct official Google Maps Embed URL
+  const googleMapsEmbedUrl = useMemo(() => {
+    const lat = activeCoords.lat.toFixed(6);
+    const lng = activeCoords.lng.toFixed(6);
+    return `https://maps.google.com/maps?q=${lat},${lng}&t=${embedLayer}&z=${embedZoom}&output=embed`;
+  }, [activeCoords, embedLayer, embedZoom]);
 
   // Initialize Google Maps instance if configured
   useEffect(() => {
@@ -274,23 +305,145 @@ export default function GooglePropertyMap({
     mapInstanceRef.current.fitBounds(bounds, 48);
   }, [properties]);
 
-  // If Google Maps is unconfigured or failed, render Leaflet PropertyMap
+  // If Google Maps JS API key is unconfigured, render Official Google Maps Embed Interface
   if (useFallback) {
     return (
-      <div data-lenis-prevent="true" className={`relative w-full h-full ${className}`}>
-        <PropertyMap
-          properties={properties}
-          selectedPropertyId={selectedPropertyId}
-          hoveredPropertyId={hoveredPropertyId}
-          onSelectProperty={onSelectProperty}
-          onBoundsChange={onBoundsChange}
-          targetDistrict={targetDistrict}
-          className={className}
-          showControls={showControls}
-          singlePropertyMode={singlePropertyMode}
-          interactive={interactive}
-          initialZoom={initialZoom}
+      <div
+        data-lenis-prevent="true"
+        data-testid="google-property-map-embed"
+        className={`relative w-full h-full ${singlePropertyMode ? 'min-h-0' : 'min-h-[420px]'} bg-[#F8FAFC] overflow-hidden select-none ${className}`}
+      >
+        {/* Official Google Maps Embed Iframe */}
+        <iframe
+          key={`${activeCoords.lat.toFixed(6)}-${activeCoords.lng.toFixed(6)}-${embedLayer}-${embedZoom}`}
+          title="Google Maps Property Pinpoint"
+          src={googleMapsEmbedUrl}
+          className="w-full h-full border-0 select-none"
+          loading="lazy"
+          allowFullScreen={false}
+          referrerPolicy="no-referrer-when-downgrade"
         />
+
+        {/* Floating Google Cartographic Control Dock */}
+        {showControls && (
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 p-1 bg-white/95 backdrop-blur-md rounded-full border border-[#E2E8F0] shadow-md">
+            {/* Layer Switchers */}
+            {[
+              { id: 'm', label: 'Roadmap' },
+              { id: 'k', label: 'Satellite' },
+              { id: 'h', label: 'Hybrid' },
+              { id: 'p', label: 'Terrain' },
+            ].map((layer) => (
+              <button
+                key={layer.id}
+                type="button"
+                onClick={() => setEmbedLayer(layer.id)}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold min-h-[36px] transition-colors cursor-pointer ${
+                  embedLayer === layer.id
+                    ? 'bg-[#0F766E] text-white shadow-xs'
+                    : 'text-[#64748B] hover:text-[#1E293B] hover:bg-slate-100'
+                }`}
+              >
+                {layer.label}
+              </button>
+            ))}
+
+            <span className="w-px h-5 bg-[#E2E8F0]" />
+
+            {/* Zoom Controls */}
+            <button
+              type="button"
+              onClick={() => setEmbedZoom((prev) => Math.min(20, prev + 1))}
+              title="Zoom In"
+              aria-label="Zoom In"
+              className="w-8 h-8 rounded-full flex items-center justify-center text-slate-700 hover:text-[#0F766E] hover:bg-slate-100 transition-colors cursor-pointer font-bold text-base"
+            >
+              +
+            </button>
+            <button
+              type="button"
+              onClick={() => setEmbedZoom((prev) => Math.max(10, prev - 1))}
+              title="Zoom Out"
+              aria-label="Zoom Out"
+              className="w-8 h-8 rounded-full flex items-center justify-center text-slate-700 hover:text-[#0F766E] hover:bg-slate-100 transition-colors cursor-pointer font-bold text-base"
+            >
+              −
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setEmbedZoom(13);
+                setActivePopupProperty(null);
+              }}
+              title="Fit All Properties"
+              className="px-2.5 py-1 text-[11px] font-semibold text-slate-600 hover:text-[#0F766E] hover:bg-slate-100 rounded-full transition-colors cursor-pointer"
+            >
+              Fit All
+            </button>
+            {searchAsMove && (
+              <button
+                type="button"
+                onClick={() => {
+                  const next = !isSearchActive;
+                  setIsSearchActive(next);
+                  if (onToggleSearchAsMove) onToggleSearchAsMove(next);
+                }}
+                className={`px-2.5 py-1 text-[11px] font-semibold rounded-full transition-colors cursor-pointer ${
+                  isSearchActive ? 'text-[#0F766E] bg-teal-50' : 'text-slate-500 hover:bg-slate-100'
+                }`}
+              >
+                Search as I move
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Floating Residence Card Popover */}
+        {activeProperty && (
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 w-full max-w-sm px-4 pointer-events-auto">
+            <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-xl overflow-hidden p-3.5 space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <span className="text-[11px] font-mono text-[#0F766E] bg-teal-50 border border-teal-200 px-2 py-0.5 rounded font-semibold">
+                    {formatPriceBadge(activeProperty.price_raw || activeProperty.price || 0, activeProperty.currency)}
+                  </span>
+                  <h4 className="text-sm font-bold text-[#1E293B] mt-1 line-clamp-1">
+                    {activeProperty.title || activeProperty.name || 'Luxury Residence'}
+                  </h4>
+                  <p className="text-xs text-[#64748B] truncate mt-0.5">
+                    {[activeProperty.subdivision, activeProperty.city].filter(Boolean).join(', ') ||
+                      activeProperty.location ||
+                      'Metro Manila'}
+                  </p>
+                </div>
+              </div>
+
+              {/* CTAs */}
+              <div className="flex items-center gap-2 pt-1">
+                {onOpenStreetView && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const coords = getPropertyCoordinates(activeProperty);
+                      onOpenStreetView(coords);
+                    }}
+                    className="flex-1 h-9 px-3 bg-white border border-[#E2E8F0] text-[#1E293B] text-xs font-semibold rounded-lg hover:bg-slate-50 transition-colors flex items-center justify-center cursor-pointer shadow-2xs"
+                  >
+                    360° Street View
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => navigate(`/properties/${activeProperty.id}`)}
+                  className="flex-1 h-9 px-4 bg-[#FF6B6B] hover:bg-[#FF5252] text-[#1E293B] text-xs font-bold rounded-lg transition-colors shadow-xs flex items-center justify-center gap-1 cursor-pointer"
+                >
+                  <span>View Residence</span>
+                  <span>→</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }

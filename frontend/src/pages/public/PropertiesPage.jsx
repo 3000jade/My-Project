@@ -157,8 +157,8 @@ export default function PropertiesPage() {
   const rowVirtualizer = useVirtualizer({
     count: Math.ceil(displayedProperties.length / columns),
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 540,
-    overscan: 2,
+    estimateSize: () => 520,
+    overscan: 4,
   });
 
   const handleLoadMore = () => {
@@ -189,7 +189,7 @@ export default function PropertiesPage() {
       />
 
       {/* Main Container */}
-      <div className="flex-1 w-full px-4 md:px-6 lg:px-8 flex flex-col overflow-hidden pb-4">
+      <div className="flex-1 w-full px-4 md:px-6 lg:px-8 flex flex-col overflow-hidden pb-4 min-h-0">
         {/* Unified Search Bar & Quick District Chips (Non-sticky) */}
         <div className="shrink-0 pt-2 pb-3 transition-all z-20">
           <UnifiedSearchBar
@@ -282,11 +282,13 @@ export default function PropertiesPage() {
             <p className="text-sm font-medium text-slate-500">Loading firm property listings...</p>
           </div>
         ) : displayedProperties && displayedProperties.length > 0 ? (
-          <div className={`flex-1 overflow-hidden w-full ${viewMode === 'split' ? 'grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start' : ''}`}>
+          <div className={`flex-1 overflow-hidden w-full min-h-0 ${viewMode === 'split' ? 'grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start h-full' : 'h-full'}`}>
             {/* Left Pane: Property Cards Grid (Visible on mobile when mobileTab === 'list' or in grid mode) */}
             <div
               ref={parentRef}
-              className={`h-full overflow-y-auto pr-2 custom-scrollbar w-full ${viewMode === 'split'
+              data-lenis-prevent="true"
+              data-testid="properties-scroll-container"
+              className={`h-full min-h-0 overflow-y-auto overscroll-contain pr-2 custom-scrollbar w-full ${viewMode === 'split'
                   ? `lg:col-span-6 xl:col-span-6 ${mobileTab === 'map' ? 'hidden lg:block' : 'block'}`
                   : 'w-full'
                 }`}

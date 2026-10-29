@@ -1,8 +1,8 @@
 ---
 module: 02-property-listing
 title: Property Listing Module
-last_updated: 2026-10-29
-total_documents: 51
+last_updated: 2026-10-30
+total_documents: 52
 ---
 
 # Property Listing Module — Master Index
@@ -74,6 +74,8 @@ All updates and technical reports for this module are ordered chronologically by
 | `2026-10-29` | [2026-10-29-executive-header-redesign-and-common-labels.md](./2026-10-29-executive-header-redesign-and-common-labels.md) | Verification Record — Subdivision Map Editor Executive Header Redesign & Common Industry Labels |
 | `2026-10-29` | [2026-10-29-broker-properties-dynamic-responsive-layout.md](./2026-10-29-broker-properties-dynamic-responsive-layout.md) | Verification Record — Broker Properties Dynamic Viewport Adaptation & Overflow Resolution |
 | `2026-10-29` | [2026-10-29-subdivision-ecosystem-shadcn-refactor-and-inventory-page.md](./2026-10-29-subdivision-ecosystem-shadcn-refactor-and-inventory-page.md) | Verification Record — Subdivision Ecosystem Refactoring with Functional shadcn Components & Dedicated Property Inventory Page |
+| `2026-10-29` | [2026-10-29-subdivision-ai-picture-vector-layout.md](./2026-10-29-subdivision-ai-picture-vector-layout.md) | Verification Record — Subdivision AI Picture Analysis & Vector Polygon Layout Generation (FR-SM-056) |
+| `2026-10-30` | [2026-10-30-properties-google-map-interface-and-scroll-fix.md](./2026-10-30-properties-google-map-interface-and-scroll-fix.md) | Verification Record — Public Properties Google Maps Interface & Card Scroll Fix |
 
 ---
 

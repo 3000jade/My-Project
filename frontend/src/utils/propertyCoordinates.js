@@ -67,6 +67,13 @@ export function getPropertyCoordinates(property) {
   if (!property) return { lat: 14.5547, lng: 121.0244 };
 
   // Explicit coordinates on property record
+  if (property.latitude != null && property.longitude != null) {
+    const lat = Number(property.latitude);
+    const lng = Number(property.longitude);
+    if (!isNaN(lat) && !isNaN(lng)) {
+      return { lat, lng };
+    }
+  }
   if (property.lat && property.lng) {
     const lat = Number(property.lat);
     const lng = Number(property.lng);
