@@ -2,7 +2,7 @@
 module: 02-property-listing
 title: Property Listing Module
 last_updated: 2026-10-29
-total_documents: 50
+total_documents: 51
 ---
 
 # Property Listing Module — Master Index
@@ -70,7 +70,10 @@ All updates and technical reports for this module are ordered chronologically by
 | `2026-10-29` | [2026-10-29-view-property-contrast-capsule-button.md](./2026-10-29-view-property-contrast-capsule-button.md) | Verification Record — View Property Contrast Capsule Button Implementation |
 | `2026-10-29` | [2026-10-29-clean-map-interface-and-step-loading-bar-removal.md](./2026-10-29-clean-map-interface-and-step-loading-bar-removal.md) | Verification Record — Clean Map Interface & Stepper Progress Loading Bar Removal |
 | `2026-10-29` | [2026-10-29-fullview-map-page-and-cadastral-presets-removal.md](./2026-10-29-fullview-map-page-and-cadastral-presets-removal.md) | Verification Record — Full-View Map Studio Page & Cadastral Presets Removal |
+| `2026-10-29` | [2026-10-29-google-map-render-for-fullview-location-map.md](./2026-10-29-google-map-render-for-fullview-location-map.md) | Verification Record — Google Maps Rendering for Full-View Location Map Page |
 | `2026-10-29` | [2026-10-29-executive-header-redesign-and-common-labels.md](./2026-10-29-executive-header-redesign-and-common-labels.md) | Verification Record — Subdivision Map Editor Executive Header Redesign & Common Industry Labels |
+| `2026-10-29` | [2026-10-29-broker-properties-dynamic-responsive-layout.md](./2026-10-29-broker-properties-dynamic-responsive-layout.md) | Verification Record — Broker Properties Dynamic Viewport Adaptation & Overflow Resolution |
+| `2026-10-29` | [2026-10-29-subdivision-ecosystem-shadcn-refactor-and-inventory-page.md](./2026-10-29-subdivision-ecosystem-shadcn-refactor-and-inventory-page.md) | Verification Record — Subdivision Ecosystem Refactoring with Functional shadcn Components & Dedicated Property Inventory Page |
 
 ---
 

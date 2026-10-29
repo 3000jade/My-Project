@@ -1,7 +1,5 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   IconArrowLeft,
   IconMapPin,
@@ -13,28 +11,21 @@ import {
   IconCopy,
   IconCurrentLocation,
   IconX,
-  IconLayersLinked,
-  IconRuler2
+  IconLayersLinked
 } from '@tabler/icons-react';
 import { mapsService } from '../../../services/mapsService';
-import { PHILIPPINE_BASEMAPS } from '../../../mockData/mockMapDistricts';
 
-// Extended basemap definitions with terrain
-const MAP_LAYERS = {
-  ...PHILIPPINE_BASEMAPS,
-  'opentopo-terrain': {
-    id: 'opentopo-terrain',
-    label: 'Terrain',
-    url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
-    attribution: '&copy; OpenTopoMap contributors',
-    maxZoom: 17
-  }
-};
+// Official Google Maps Layer Options
+const GOOGLE_MAP_LAYERS = [
+  { id: 'm', label: 'Roadmap', description: 'Standard Google vector map' },
+  { id: 'k', label: 'Satellite', description: 'High-res satellite imagery' },
+  { id: 'h', label: 'Hybrid', description: 'Satellite with streets & labels' },
+  { id: 'p', label: 'Terrain', description: 'Topographical elevation map' },
+];
 
 export default function BrokerFullViewMap() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const location = useLocation();
 
   // Read initial coordinates and metadata from URL or sessionStorage
   const paramLat = parseFloat(searchParams.get('lat'));
@@ -53,15 +44,10 @@ export default function BrokerFullViewMap() {
   const [resolvedBarangay, setResolvedBarangay] = useState('');
   const [isReverseGeocoding, setIsReverseGeocoding] = useState(false);
 
-  // Map state
-  const mapContainerRef = useRef(null);
-  const mapInstanceRef = useRef(null);
-  const markerRef = useRef(null);
-  const circleRef = useRef(null);
-  const tileLayerRef = useRef(null);
-
-  const [activeLayer, setActiveLayer] = useState('osm-standard');
-  const [radiusKm, setRadiusKm] = useState(0); // 0 = off, 1, 3, 5
+  // Google Maps state
+  // 'm' = Roadmap, 'k' = Satellite, 'h' = Hybrid, 'p' = Terrain
+  const [mapType, setMapType] = useState('m');
+  const [zoomLevel, setZoomLevel] = useState(16);
   const [copied, setCopied] = useState(false);
 
   // Search & Geocoding Autocomplete state
@@ -124,149 +110,35 @@ export default function BrokerFullViewMap() {
     }
   }, []);
 
-  // Update pin position and pan map
-  const updatePosition = useCallback((lat, lng, shouldPan = true) => {
+  // Update pin position
+  const updatePosition = useCallback((lat, lng) => {
     const validLat = Number(lat);
     const validLng = Number(lng);
     if (isNaN(validLat) || isNaN(validLng)) return;
 
     setCurrentLat(validLat);
     setCurrentLng(validLng);
-
-    if (markerRef.current) {
-      markerRef.current.setLatLng([validLat, validLng]);
-    }
-    if (circleRef.current) {
-      circleRef.current.setLatLng([validLat, validLng]);
-    }
-    if (shouldPan && mapInstanceRef.current) {
-      mapInstanceRef.current.panTo([validLat, validLng]);
-    }
-
     performReverseGeocode(validLat, validLng);
   }, [performReverseGeocode]);
 
-  // Initialize Leaflet Map
-  useEffect(() => {
-    if (!mapContainerRef.current || mapInstanceRef.current) return;
-
-    // Custom Luxury Coral/Teal Pin Marker
-    const customPinIcon = L.divIcon({
-      className: 'custom-pinpoint-marker',
-      html: `
-        <div class="relative flex items-center justify-center -translate-x-1/2 -translate-y-full cursor-grab active:cursor-grabbing">
-          <div class="w-10 h-10 rounded-full bg-[#0F766E]/20 animate-ping absolute -top-1"></div>
-          <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-[#0F766E] to-[#115E59] border-2 border-white shadow-xl flex items-center justify-center text-white relative z-10 transition-transform hover:scale-110">
-            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
-              <circle cx="12" cy="10" r="3"/>
-            </svg>
-          </div>
-          <div class="w-2.5 h-2.5 bg-[#FF6B6B] rounded-full border-2 border-white absolute -bottom-1 shadow-md"></div>
-        </div>
-      `,
-      iconSize: [36, 44],
-      iconAnchor: [18, 44]
-    });
-
-    const map = L.map(mapContainerRef.current, {
-      center: [currentLat, currentLng],
-      zoom: 16,
-      zoomControl: false,
-      scrollWheelZoom: true,
-      dragging: true,
-      doubleClickZoom: true,
-    });
-
-    // Default Tile Layer
-    const layerDef = MAP_LAYERS[activeLayer] || MAP_LAYERS['osm-standard'];
-    const tileLayer = L.tileLayer(layerDef.url, {
-      attribution: layerDef.attribution,
-      maxZoom: layerDef.maxZoom,
-    }).addTo(map);
-    tileLayerRef.current = tileLayer;
-
-    // Draggable Marker
-    const marker = L.marker([currentLat, currentLng], {
-      icon: customPinIcon,
-      draggable: true,
-      autoPan: true
-    }).addTo(map);
-
-    marker.on('dragend', (e) => {
-      const { lat, lng } = e.target.getLatLng();
-      updatePosition(lat, lng, false);
-    });
-
-    markerRef.current = marker;
-
-    // Click anywhere on map to reposition pin
-    map.on('click', (e) => {
-      const { lat, lng } = e.latlng;
-      updatePosition(lat, lng, true);
-    });
-
-    mapInstanceRef.current = map;
-
-    return () => {
-      map.remove();
-      mapInstanceRef.current = null;
-    };
-  }, []); // Run once on mount
-
-  // Sync Basemap Layer
-  useEffect(() => {
-    if (!mapInstanceRef.current || !tileLayerRef.current) return;
-    const layerDef = MAP_LAYERS[activeLayer] || MAP_LAYERS['osm-standard'];
-
-    mapInstanceRef.current.removeLayer(tileLayerRef.current);
-    const newLayer = L.tileLayer(layerDef.url, {
-      attribution: layerDef.attribution,
-      maxZoom: layerDef.maxZoom,
-    }).addTo(mapInstanceRef.current);
-    tileLayerRef.current = newLayer;
-  }, [activeLayer]);
-
-  // Sync Radius Circle
-  useEffect(() => {
-    if (!mapInstanceRef.current) return;
-
-    if (radiusKm <= 0) {
-      if (circleRef.current) {
-        mapInstanceRef.current.removeLayer(circleRef.current);
-        circleRef.current = null;
-      }
-      return;
-    }
-
-    const radiusMeters = radiusKm * 1000;
-    if (circleRef.current) {
-      circleRef.current.setLatLng([currentLat, currentLng]);
-      circleRef.current.setRadius(radiusMeters);
-    } else {
-      const circle = L.circle([currentLat, currentLng], {
-        radius: radiusMeters,
-        color: '#0F766E',
-        fillColor: '#0F766E',
-        fillOpacity: 0.12,
-        weight: 1.5,
-        dashArray: '4, 4'
-      }).addTo(mapInstanceRef.current);
-      circleRef.current = circle;
-    }
-  }, [radiusKm, currentLat, currentLng]);
+  // Construct official Google Maps Embed URL
+  const googleMapsEmbedUrl = useMemo(() => {
+    const lat = currentLat.toFixed(6);
+    const lng = currentLng.toFixed(6);
+    return `https://maps.google.com/maps?q=${lat},${lng}&t=${mapType}&z=${zoomLevel}&output=embed`;
+  }, [currentLat, currentLng, mapType, zoomLevel]);
 
   // Handler: Select autocomplete suggestion
   const handleSelectSuggestion = async (item) => {
     setShowSuggestions(false);
     setSearchQuery(item.description || item.mainText || '');
     if (item.latitude && item.longitude) {
-      updatePosition(item.latitude, item.longitude, true);
+      updatePosition(item.latitude, item.longitude);
     } else {
       try {
         const geo = await mapsService.geocode(item.description || item.mainText, 'ph');
         if (geo && geo.latitude && geo.longitude) {
-          updatePosition(geo.latitude, geo.longitude, true);
+          updatePosition(geo.latitude, geo.longitude);
         }
       } catch (err) {
         console.warn('[BrokerFullViewMap] Geocode suggestion error:', err);
@@ -283,10 +155,8 @@ export default function BrokerFullViewMap() {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { latitude, longitude } = pos.coords;
-        updatePosition(latitude, longitude, true);
-        if (mapInstanceRef.current) {
-          mapInstanceRef.current.setView([latitude, longitude], 17);
-        }
+        updatePosition(latitude, longitude);
+        setZoomLevel(17);
       },
       (err) => {
         alert('Could not retrieve device location: ' + err.message);
@@ -370,7 +240,7 @@ export default function BrokerFullViewMap() {
               </h1>
               <span className="hidden lg:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-teal-50 text-[#0F766E] border border-teal-200">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#0F766E]"></span>
-                Full View Pinpoint Studio
+                Google Maps Pinpoint Studio
               </span>
             </div>
             <p className="text-xs text-[#64748B] truncate mt-0.5 flex items-center gap-1">
@@ -407,7 +277,7 @@ export default function BrokerFullViewMap() {
       </header>
 
       {/* Main Map Viewport */}
-      <div className="relative flex-1 w-full h-full min-h-0">
+      <div className="relative flex-1 w-full h-full min-h-0 bg-slate-100">
         {/* Top Floating Search Bar */}
         <div
           ref={searchContainerRef}
@@ -465,12 +335,21 @@ export default function BrokerFullViewMap() {
           )}
         </div>
 
-        {/* Leaflet Map Canvas */}
+        {/* Official Google Maps Render Engine */}
         <div
-          ref={mapContainerRef}
-          data-testid="fullview-leaflet-canvas"
+          data-testid="fullview-google-map-canvas"
           className="w-full h-full"
-        />
+        >
+          <iframe
+            key={`${currentLat.toFixed(6)}-${currentLng.toFixed(6)}-${mapType}-${zoomLevel}`}
+            title="Google Maps Full View Pinpoint"
+            src={googleMapsEmbedUrl}
+            className="w-full h-full border-0 select-none"
+            loading="lazy"
+            allowFullScreen={false}
+            referrerPolicy="no-referrer-when-downgrade"
+          />
+        </div>
 
         {/* Floating Right Plinth: Layers & Zoom Tools */}
         <div className="absolute top-4 right-4 z-20 flex flex-col gap-2">
@@ -478,15 +357,15 @@ export default function BrokerFullViewMap() {
           <div className="bg-white/95 backdrop-blur-md rounded-xl border border-slate-200 shadow-md p-1.5 flex flex-col gap-1">
             <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 px-2 py-0.5 flex items-center gap-1">
               <IconLayersLinked size={12} />
-              <span>Layers</span>
+              <span>Google Layers</span>
             </span>
-            {Object.values(MAP_LAYERS).map((layer) => (
+            {GOOGLE_MAP_LAYERS.map((layer) => (
               <button
                 key={layer.id}
                 type="button"
-                onClick={() => setActiveLayer(layer.id)}
+                onClick={() => setMapType(layer.id)}
                 className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold text-left transition-all cursor-pointer ${
-                  activeLayer === layer.id
+                  mapType === layer.id
                     ? 'bg-[#0F766E] text-white shadow-xs'
                     : 'text-slate-600 hover:bg-slate-100'
                 }`}
@@ -500,7 +379,7 @@ export default function BrokerFullViewMap() {
           <div className="bg-white/95 backdrop-blur-md rounded-xl border border-slate-200 shadow-md p-1 flex flex-col divide-y divide-slate-100">
             <button
               type="button"
-              onClick={() => mapInstanceRef.current?.zoomIn()}
+              onClick={() => setZoomLevel((prev) => Math.min(20, prev + 1))}
               title="Zoom In"
               aria-label="Zoom In"
               className="w-10 h-10 flex items-center justify-center text-slate-700 hover:text-[#0F766E] hover:bg-slate-50 transition-colors cursor-pointer"
@@ -509,7 +388,7 @@ export default function BrokerFullViewMap() {
             </button>
             <button
               type="button"
-              onClick={() => mapInstanceRef.current?.zoomOut()}
+              onClick={() => setZoomLevel((prev) => Math.max(10, prev - 1))}
               title="Zoom Out"
               aria-label="Zoom Out"
               className="w-10 h-10 flex items-center justify-center text-slate-700 hover:text-[#0F766E] hover:bg-slate-50 transition-colors cursor-pointer"
@@ -518,7 +397,7 @@ export default function BrokerFullViewMap() {
             </button>
             <button
               type="button"
-              onClick={() => updatePosition(currentLat, currentLng, true)}
+              onClick={() => setZoomLevel(16)}
               title="Center on Pin"
               aria-label="Center on Pin"
               className="w-10 h-10 flex items-center justify-center text-slate-700 hover:text-[#0F766E] hover:bg-slate-50 transition-colors cursor-pointer"
@@ -534,33 +413,6 @@ export default function BrokerFullViewMap() {
             >
               <IconCurrentLocation size={18} />
             </button>
-          </div>
-
-          {/* Radius Overlay Tool */}
-          <div className="bg-white/95 backdrop-blur-md rounded-xl border border-slate-200 shadow-md p-1.5 flex flex-col gap-1">
-            <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 px-2 py-0.5 flex items-center gap-1">
-              <IconRuler2 size={12} />
-              <span>Radius</span>
-            </span>
-            {[
-              { val: 0, label: 'Off' },
-              { val: 1, label: '1 km' },
-              { val: 3, label: '3 km' },
-              { val: 5, label: '5 km' }
-            ].map(r => (
-              <button
-                key={r.val}
-                type="button"
-                onClick={() => setRadiusKm(r.val)}
-                className={`px-2 py-1 rounded text-[11px] font-semibold text-center transition-all cursor-pointer ${
-                  radiusKm === r.val
-                    ? 'bg-[#0F766E] text-white shadow-xs'
-                    : 'text-slate-600 hover:bg-slate-100'
-                }`}
-              >
-                {r.label}
-              </button>
-            ))}
           </div>
         </div>
 
@@ -587,7 +439,7 @@ export default function BrokerFullViewMap() {
                 type="number"
                 step="any"
                 value={currentLat}
-                onChange={(e) => updatePosition(parseFloat(e.target.value) || 0, currentLng, false)}
+                onChange={(e) => updatePosition(parseFloat(e.target.value) || 0, currentLng)}
                 className="w-full h-8 px-2 bg-slate-50 border border-slate-200 rounded text-xs font-mono font-medium text-slate-800 outline-none focus:border-[#0F766E]"
               />
             </div>
@@ -597,13 +449,13 @@ export default function BrokerFullViewMap() {
                 type="number"
                 step="any"
                 value={currentLng}
-                onChange={(e) => updatePosition(currentLat, parseFloat(e.target.value) || 0, false)}
+                onChange={(e) => updatePosition(currentLat, parseFloat(e.target.value) || 0)}
                 className="w-full h-8 px-2 bg-slate-50 border border-slate-200 rounded text-xs font-mono font-medium text-slate-800 outline-none focus:border-[#0F766E]"
               />
             </div>
           </div>
           <p className="text-[10px] text-slate-400 mt-2 italic">
-            Tip: Click anywhere or drag the teal pin on the map to set exact property placement.
+            Official Google Maps pinpoint render. Adjust coordinates or search an address to reposition.
           </p>
         </div>
       </div>

@@ -1,53 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import BrokerFullViewMap from './BrokerFullViewMap';
-
-// Mock Leaflet
-vi.mock('leaflet', () => {
-  const mapMock = {
-    setView: vi.fn(),
-    panTo: vi.fn(),
-    zoomIn: vi.fn(),
-    zoomOut: vi.fn(),
-    on: vi.fn(),
-    remove: vi.fn(),
-    addLayer: vi.fn(),
-    removeLayer: vi.fn(),
-  };
-
-  const markerMock = {
-    addTo: vi.fn().mockReturnThis(),
-    on: vi.fn(),
-    setLatLng: vi.fn(),
-  };
-
-  const circleMock = {
-    addTo: vi.fn().mockReturnThis(),
-    setLatLng: vi.fn(),
-    setRadius: vi.fn(),
-  };
-
-  const tileLayerMock = {
-    addTo: vi.fn().mockReturnThis(),
-  };
-
-  return {
-    default: {
-      map: vi.fn(() => mapMock),
-      marker: vi.fn(() => markerMock),
-      circle: vi.fn(() => circleMock),
-      tileLayer: vi.fn(() => tileLayerMock),
-      divIcon: vi.fn(() => ({})),
-    },
-    map: vi.fn(() => mapMock),
-    marker: vi.fn(() => markerMock),
-    circle: vi.fn(() => circleMock),
-    tileLayer: vi.fn(() => tileLayerMock),
-    divIcon: vi.fn(() => ({})),
-  };
-});
 
 // Mock mapsService
 vi.mock('../../../services/mapsService', () => ({
@@ -74,13 +29,13 @@ vi.mock('../../../services/mapsService', () => ({
   },
 }));
 
-describe('BrokerFullViewMap component', () => {
+describe('BrokerFullViewMap component (Google Maps Render)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     sessionStorage.clear();
   });
 
-  it('renders full-view map studio with complete UI controls and coordinates readout', () => {
+  it('renders Google Maps full-view studio with complete UI controls and coordinates readout', () => {
     render(
       <MemoryRouter initialEntries={['/broker/properties/location-map?lat=14.5547&lng=121.0244&title=Rockwell+Villa']}>
         <BrokerFullViewMap />
@@ -90,27 +45,53 @@ describe('BrokerFullViewMap component', () => {
     // Verify header components
     expect(screen.getByTestId('broker-fullview-map-page')).toBeDefined();
     expect(screen.getByText('Rockwell Villa')).toBeDefined();
-    expect(screen.getByText(/Full View Pinpoint Studio/i)).toBeDefined();
+    expect(screen.getByText(/Google Maps Pinpoint Studio/i)).toBeDefined();
     expect(screen.getByTestId('apply-coordinates-btn')).toBeDefined();
 
     // Verify search bar input
     expect(screen.getByPlaceholderText(/Search location, district, landmark/i)).toBeDefined();
 
-    // Verify map canvas
-    expect(screen.getByTestId('fullview-leaflet-canvas')).toBeDefined();
+    // Verify official Google Maps canvas and embed iframe
+    expect(screen.getByTestId('fullview-google-map-canvas')).toBeDefined();
+    const iframe = screen.getByTitle(/Google Maps Full View Pinpoint/i);
+    expect(iframe).toBeDefined();
+    expect(iframe.getAttribute('src')).toContain('14.554700');
+    expect(iframe.getAttribute('src')).toContain('121.024400');
+    expect(iframe.getAttribute('src')).toContain('t=m');
 
-    // Verify UI control elements (layers, zoom, center, radius)
-    expect(screen.getByText('Layers')).toBeDefined();
-    expect(screen.getByText('Street')).toBeDefined();
+    // Verify UI control elements (Google layers, zoom, center)
+    expect(screen.getByText('Google Layers')).toBeDefined();
+    expect(screen.getByText('Roadmap')).toBeDefined();
     expect(screen.getByText('Satellite')).toBeDefined();
+    expect(screen.getByText('Hybrid')).toBeDefined();
+    expect(screen.getByText('Terrain')).toBeDefined();
     expect(screen.getByRole('button', { name: /Center on Pin/i })).toBeDefined();
     expect(screen.getByRole('button', { name: /Locate Device Location/i })).toBeDefined();
-    expect(screen.getByText('Radius')).toBeDefined();
 
     // Verify coordinate inspector inputs
     expect(screen.getByText(/Pinpoint Coordinates/i)).toBeDefined();
     expect(screen.getByDisplayValue('14.5547')).toBeDefined();
     expect(screen.getByDisplayValue('121.0244')).toBeDefined();
+  });
+
+  it('switches Google map layers dynamically when user clicks layer buttons', () => {
+    render(
+      <MemoryRouter initialEntries={['/broker/properties/location-map?lat=14.5547&lng=121.0244&title=Rockwell+Villa']}>
+        <BrokerFullViewMap />
+      </MemoryRouter>
+    );
+
+    const satelliteBtn = screen.getByText('Satellite');
+    fireEvent.click(satelliteBtn);
+
+    const iframeSatellite = screen.getByTitle(/Google Maps Full View Pinpoint/i);
+    expect(iframeSatellite.getAttribute('src')).toContain('t=k');
+
+    const terrainBtn = screen.getByText('Terrain');
+    fireEvent.click(terrainBtn);
+
+    const iframeTerrain = screen.getByTitle(/Google Maps Full View Pinpoint/i);
+    expect(iframeTerrain.getAttribute('src')).toContain('t=p');
   });
 
   it('applies coordinates to sessionStorage and navigates on Apply click', async () => {
