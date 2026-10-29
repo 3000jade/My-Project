@@ -5637,12 +5637,21 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
             </div>
           )}
 
-          {/* Top-Left Pill: • For sale / For rent */}
-          <div className="absolute top-3 left-3 z-10">
+          {/* Top-Left Pill: • For sale / For rent + Condition State */}
+          <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 flex-wrap">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/95 backdrop-blur-xs text-[11px] font-medium text-[#1E293B] shadow-xs">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
               {formData.transaction_type === 'For Rent' ? 'For rent' : 'For sale'}
             </span>
+            {(formData.property_condition || formData.development_condition) && (
+              <span 
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/95 backdrop-blur-xs text-[11px] font-semibold text-[#0F766E] shadow-xs border border-teal-100/60"
+                data-testid="card-condition-badge"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-[#0F766E]" />
+                {formData.property_condition || formData.development_condition}
+              </span>
+            )}
           </div>
 
           {/* Top-Right Round Button: Heart (Favorite) */}
@@ -5671,10 +5680,17 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
 
         {/* Content Section below photo */}
         <div className="space-y-3 px-1">
-          {/* Coral dash + Uppercase Property Type */}
-          <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-            <span className="w-4 h-0.5 bg-[#E07A5F] rounded-full" />
-            <span>{formData.property_type || 'PROPERTY TYPE'}</span>
+          {/* Coral dash + Uppercase Property Type + Condition State */}
+          <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-slate-400">
+            <div className="flex items-center gap-2">
+              <span className="w-4 h-0.5 bg-[#E07A5F] rounded-full" />
+              <span>{formData.property_type || 'PROPERTY TYPE'}</span>
+            </div>
+            {(formData.property_condition || formData.development_condition) && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-teal-50 text-[#0F766E] font-semibold text-[10px] tracking-normal border border-teal-200/60 capitalize">
+                {formData.property_condition || formData.development_condition}
+              </span>
+            )}
           </div>
 
           {/* Property Title with Coral Period */}
@@ -5701,6 +5717,26 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                   : '— m²'}
               </span>
             </div>
+          </div>
+
+          {/* Assigned Agent Placeholder */}
+          <div className="pt-2 pb-0.5 border-t border-slate-100 flex items-center justify-between" data-testid="card-agent-placeholder">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-7 h-7 rounded-full bg-teal-50 border border-teal-200/70 flex items-center justify-center text-[#0F766E] shrink-0 shadow-2xs">
+                <User className="w-3.5 h-3.5 text-[#0F766E]" />
+              </div>
+              <div className="min-w-0">
+                <span className="block text-xs font-semibold text-[#1E293B] truncate leading-tight">
+                  {formData.agent_name || 'Human Shelter Desk'}
+                </span>
+                <span className="block text-[10px] text-slate-400 truncate leading-tight">
+                  Listing Agent • Assigned Desk
+                </span>
+              </div>
+            </div>
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200/60 shrink-0">
+              Corporate Desk
+            </span>
           </div>
 
           {/* Subtle Horizontal Divider */}

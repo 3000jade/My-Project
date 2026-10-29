@@ -302,4 +302,36 @@ describe('BrokerCreateListings - Form Fields & Step Navigation', () => {
 
     expect(screen.getByText(/Type:\s*Condominium/i)).toBeInTheDocument();
   });
+
+  it('renders Subdivision Master Plan banner in Step 2 and opens lot picker modal', () => {
+    mockLocation = { search: '?type=houseAndLot', state: null };
+    renderComponent();
+
+    // Navigate to Step 2 (Location)
+    fireEvent.click(screen.getAllByText(/Location/i)[0]);
+
+    // Check Subdivision Master Plan banner
+    expect(screen.getByText(/Subdivision Master Plan/i)).toBeInTheDocument();
+    const selectBtn = screen.getByRole('button', { name: /Select from Subdivision Plan/i });
+    expect(selectBtn).toBeInTheDocument();
+
+    // Trigger modal open
+    fireEvent.click(selectBtn);
+    expect(screen.getByText(/Select from Subdivision Master Plan/i)).toBeInTheDocument();
+  });
+
+  it('renders condition state badge and agent placeholder in the listing preview card', () => {
+    renderComponent();
+
+    // The listing preview card should render the default condition state (e.g. RFO)
+    const conditionBadges = screen.getAllByTestId('card-condition-badge');
+    expect(conditionBadges.length).toBeGreaterThan(0);
+    expect(conditionBadges[0]).toHaveTextContent(/RFO/i);
+
+    // The listing preview card should render the agent placeholder
+    const agentPlaceholder = screen.getByTestId('card-agent-placeholder');
+    expect(agentPlaceholder).toBeInTheDocument();
+    expect(agentPlaceholder).toHaveTextContent(/Human Shelter Desk/i);
+    expect(agentPlaceholder).toHaveTextContent(/Listing Agent/i);
+  });
 });

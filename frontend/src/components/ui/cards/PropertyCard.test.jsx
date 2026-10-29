@@ -139,4 +139,26 @@ describe('PropertyCard Component', () => {
     fireEvent.mouseLeave(card);
     expect(handleMouseLeave).toHaveBeenCalledTimes(1);
   });
+
+  it('renders condition state badge and agent placeholder', () => {
+    const propertyWithConditionAndAgent = {
+      ...baseProperty,
+      property_condition: 'Brand New',
+      agent_name: 'John Dela Cruz'
+    };
+
+    render(
+      <MemoryRouter>
+        <PropertyCard property={propertyWithConditionAndAgent} />
+      </MemoryRouter>
+    );
+
+    const conditionBadge = screen.getByTestId('card-condition-badge');
+    expect(conditionBadge).toBeInTheDocument();
+    expect(conditionBadge).toHaveTextContent('Brand New');
+
+    const agentPlaceholder = screen.getByTestId('card-agent-placeholder');
+    expect(agentPlaceholder).toBeInTheDocument();
+    expect(agentPlaceholder).toHaveTextContent('John Dela Cruz');
+  });
 });

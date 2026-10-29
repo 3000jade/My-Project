@@ -8,7 +8,8 @@ import {
   IconDimensions,
   IconArrowRight,
   IconBookmark,
-  IconBookmarkFilled
+  IconBookmarkFilled,
+  IconUser
 } from '@tabler/icons-react';
 import { resolveDriveImageUrl } from '../../../services/driveService';
 import useViewingList from '../../../hooks/useViewingList';
@@ -91,6 +92,10 @@ export default function PropertyCard({
   const floorAreaUnits = property.living_area_units || property.livingAreaUnits || property.specs?.livingAreaUnits || (property.sqm ? 'sqm' : (property.sqft ? 'sqft' : 'sqm'));
   const floorAreaFormatted = floorAreaValue != null ? (String(floorAreaValue).includes('sq') ? floorAreaValue : `${floorAreaValue} ${floorAreaUnits}`) : null;
 
+  // Condition state & Assigned agent
+  const condition = property.property_condition || property.propertyCondition || property.condition || property.specs?.propertyCondition || property.specs?.condition || '';
+  const agentName = property.agent_name || property.agentName || property.agent?.name || property.assigned_agent?.full_name || property.assignedAgent?.full_name || 'Human Shelter Desk';
+
   // Cover photo with fallback
   const rawImage = (Array.isArray(property.images) && property.images[0]) ||
     (Array.isArray(property.property_images) && property.property_images[0]?.image_url) ||
@@ -152,11 +157,20 @@ export default function PropertyCard({
           />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent pointer-events-none" />
 
-          {/* Badges: For Sale/Rent + Status (Under Contract / Closed) + Featured */}
+          {/* Badges: For Sale/Rent + Status (Under Contract / Closed) + Condition + Featured */}
           <div className="absolute top-3 left-3 flex flex-wrap items-center gap-1.5 z-10">
             <span className="backdrop-blur-md bg-white/95 text-[#0F766E] text-[11px] font-bold px-2.5 py-1 rounded shadow-xs border border-[#E2E8F0]/80 uppercase tracking-wide">
               {typeBadgeLabel}
             </span>
+            {condition && (
+              <span 
+                className="backdrop-blur-md bg-white/95 text-[#0F766E] text-[11px] font-bold px-2.5 py-1 rounded shadow-xs border border-teal-100 uppercase tracking-wide flex items-center gap-1"
+                data-testid="card-condition-badge"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-[#0F766E]" />
+                {condition}
+              </span>
+            )}
             {isUnderContract && (
               <span 
                 className="backdrop-blur-md bg-amber-50/95 text-amber-800 border border-amber-300 text-[11px] font-bold px-2 py-1 rounded shadow-xs uppercase tracking-wide flex items-center gap-1.5" 
@@ -265,6 +279,21 @@ export default function PropertyCard({
                 {floorAreaFormatted || '—'}
               </span>
             </div>
+          </div>
+
+          {/* Agent Placeholder */}
+          <div className="pt-1 flex items-center justify-between text-xs text-[#64748B]" data-testid="card-agent-placeholder">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-6 h-6 rounded-full bg-teal-50 border border-teal-100 flex items-center justify-center text-[#0F766E] shrink-0">
+                <IconUser size={13} stroke={2} className="text-[#0F766E]" />
+              </div>
+              <span className="text-xs text-[#1E293B] font-medium truncate">
+                {agentName}
+              </span>
+            </div>
+            <span className="text-[10px] text-slate-400 font-medium shrink-0">
+              Verified Agent
+            </span>
           </div>
         </div>
       </div>
