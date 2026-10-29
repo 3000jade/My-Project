@@ -3,6 +3,16 @@ import { ChevronLeft, ChevronRight, Inbox } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
 
+function getResponsiveColumnClass(col) {
+  if (!col) return '';
+  if (col.hideBelow === 'sm') return 'hidden sm:table-cell';
+  if (col.hideBelow === 'md') return 'hidden md:table-cell';
+  if (col.hideBelow === 'lg') return 'hidden lg:table-cell';
+  if (col.hideBelow === 'xl') return 'hidden xl:table-cell';
+  if (col.hiddenOnMobile) return 'hidden md:table-cell';
+  return '';
+}
+
 export default function DataTable({
   columns = [],
   data = [],
@@ -67,6 +77,7 @@ export default function DataTable({
                       selectable ? "sticky left-10 z-20 bg-[#F8FAFC]" : "sticky left-0 z-20 bg-[#F8FAFC]",
                       "shadow-[1px_0_0_#E2E8F0]"
                     ),
+                    getResponsiveColumnClass(col),
                     col.className
                   )}
                 >
@@ -120,7 +131,8 @@ export default function DataTable({
                             "shadow-[1px_0_0_#E2E8F0]",
                             isSelected ? "bg-[#F3F8F8]" : "bg-white group-hover:bg-[#F8FAFC]"
                           ),
-                          col.className
+                          getResponsiveColumnClass(col),
+                    col.className
                         )}
                       >
                         {col.render ? col.render(row) : row[col.accessor]}

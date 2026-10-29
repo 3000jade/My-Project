@@ -32,6 +32,8 @@ export default function PropertyFilterToolbar({
   availableColumns = [],
   visibleColumns = [],
   onVisibleColumnsChange,
+  onResetColumns,
+  currentTier = null,
 }) {
   const [isPriceOpen, setIsPriceOpen] = useState(false);
   const pricePopoverRef = useRef(null);
@@ -79,7 +81,9 @@ export default function PropertyFilterToolbar({
   };
 
   const handleResetColumns = () => {
-    if (onVisibleColumnsChange && availableColumns.length > 0) {
+    if (onResetColumns) {
+      onResetColumns();
+    } else if (onVisibleColumnsChange && availableColumns.length > 0) {
       onVisibleColumnsChange(availableColumns.map((c) => c.id));
     }
   };
@@ -406,6 +410,11 @@ export default function PropertyFilterToolbar({
             >
               <Columns3 className="w-3.5 h-3.5 text-slate-500" />
               <span>Columns</span>
+              {availableColumns.length > 0 && (
+                <span className="text-[10px] font-semibold text-slate-500 bg-slate-200/60 px-1.5 py-0.5 rounded-full">
+                  {visibleColumns.length}/{availableColumns.length}
+                </span>
+              )}
               <ChevronDown
                 className={cn(
                   "w-3.5 h-3.5 text-slate-400 transition-transform duration-150",
@@ -418,13 +427,25 @@ export default function PropertyFilterToolbar({
               <div className="absolute right-0 top-full mt-1.5 w-56 bg-white border border-[#E2E8F0] rounded-xl shadow-lg p-2.5 z-40 animate-in fade-in-50 zoom-in-95">
                 <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100 px-1">
                   <span className="text-xs font-semibold text-[#1E293B]">Table Columns</span>
-                  <button
-                    type="button"
-                    onClick={handleResetColumns}
-                    className="text-[11px] font-medium text-[#0F766E] hover:text-[#115E59] cursor-pointer"
-                  >
-                    Show All
-                  </button>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={handleResetColumns}
+                      className="text-[11px] font-medium text-[#0F766E] hover:text-[#115E59] cursor-pointer"
+                      title="Reset to device default columns"
+                    >
+                      Reset Default
+                    </button>
+                    <span className="text-slate-300">•</span>
+                    <button
+                      type="button"
+                      onClick={() => onVisibleColumnsChange && onVisibleColumnsChange(availableColumns.map((c) => c.id))}
+                      className="text-[11px] font-medium text-slate-500 hover:text-slate-800 cursor-pointer"
+                      title="Show all columns"
+                    >
+                      Show All
+                    </button>
+                  </div>
                 </div>
                 <div className="space-y-1 max-h-60 overflow-y-auto custom-scrollbar">
                   {availableColumns.map((col) => {

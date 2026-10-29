@@ -64,6 +64,7 @@ All updates and technical reports for this module are ordered chronologically by
 | `2026-10-29` | [2026-10-29-subdivision-google-maps-pinning-and-ai-auto-layout.md](./2026-10-29-subdivision-google-maps-pinning-and-ai-auto-layout.md) | Verification Record — Google Maps Pre-Creation Pinning, AI Photo Auto-Layout, Satellite Ground Layer & Flexible Vector Editing |
 | `2026-10-29` | [2026-10-29-seamless-interactive-subdivision-vectors-and-splitting.md](./2026-10-29-seamless-interactive-subdivision-vectors-and-splitting.md) | Verification Record — Seamless Interactive Subdivision Vectors, Parcel Splitting & Batch Actions |
 | `2026-10-29` | [2026-10-29-clean-property-filtering-toolbar.md](./2026-10-29-clean-property-filtering-toolbar.md) | Verification Record — Clean Property Filtering Toolbar Redesign & Modern SaaS Alignment |
+| `2026-10-29` | [2026-10-29-datatable-responsive-column-viewport-adaptation.md](./2026-10-29-datatable-responsive-column-viewport-adaptation.md) | Verification Record — DataTable Responsive Column Viewport Adaptation |
 
 ---
 

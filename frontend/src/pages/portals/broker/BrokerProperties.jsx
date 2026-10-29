@@ -26,7 +26,9 @@ import { cn } from '../../../utils/cn';
 import { Badge } from '../../../components/ui/badge';
 import { Button, buttonVariants } from '../../../components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, useToast, Toaster } from '../../../components/ui';
+import { Spinner } from '../../../components/ui';
 import { TableSkeleton, CardGridSkeleton } from '../../../components/dashboard/skeletons';
+import useResponsiveColumns from '../../../hooks/useResponsiveColumns';
 
 function formatPhilippineRelativeTime(dateStr) {
   if (!dateStr) return 'Not provided';
@@ -109,14 +111,14 @@ function PropertyThumbnail({ image, title }) {
 }
 
 const AVAILABLE_COLUMNS = [
-  { id: 'property', label: 'Property', isLocked: true },
-  { id: 'location', label: 'Location' },
-  { id: 'property_type', label: 'Property Type' },
-  { id: 'specs', label: 'Specs' },
-  { id: 'price', label: 'Price' },
-  { id: 'status', label: 'Status' },
-  { id: 'date_added', label: 'Date Added' },
-  { id: 'actions', label: 'Actions', isLocked: true },
+  { id: 'property', label: 'Property', isLocked: true, tiers: ['mobile', 'tablet', 'desktop'] },
+  { id: 'location', label: 'Location', tiers: ['tablet', 'desktop'] },
+  { id: 'property_type', label: 'Property Type', tiers: ['tablet', 'desktop'] },
+  { id: 'specs', label: 'Specs', tiers: ['desktop'] },
+  { id: 'price', label: 'Price', tiers: ['mobile', 'tablet', 'desktop'] },
+  { id: 'status', label: 'Status', tiers: ['mobile', 'tablet', 'desktop'] },
+  { id: 'date_added', label: 'Date Added', tiers: ['desktop'] },
+  { id: 'actions', label: 'Actions', isLocked: true, tiers: ['mobile', 'tablet', 'desktop'] },
 ];
 
 const DEFAULT_VISIBLE_COLUMNS = AVAILABLE_COLUMNS.map((c) => c.id);
@@ -142,31 +144,16 @@ export default function BrokerProperties() {
   const [priceRange, setPriceRange] = useState({ min: '', max: '' });
   const [sortBy, setSortBy] = useState('newest');
 
-  // Column Visibility State
-  const [visibleColumnKeys, setVisibleColumnKeys] = useState(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY_COLUMNS);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return Array.from(new Set([...parsed, 'property', 'actions']));
-        }
-      }
-    } catch {
-      // fallback
-    }
-    return DEFAULT_VISIBLE_COLUMNS;
+  // Device Viewport-Adaptive Column Visibility State
+  const {
+    visibleColumns: visibleColumnKeys,
+    setVisibleColumns: handleVisibleColumnsChange,
+    resetToDeviceDefault: handleResetVisibleColumns,
+    currentTier: currentDeviceTier
+  } = useResponsiveColumns({
+    availableColumns: AVAILABLE_COLUMNS,
+    storageKey: STORAGE_KEY_COLUMNS,
   });
-
-  const handleVisibleColumnsChange = (newCols) => {
-    const ensured = Array.from(new Set([...newCols, 'property', 'actions']));
-    setVisibleColumnKeys(ensured);
-    try {
-      localStorage.setItem(STORAGE_KEY_COLUMNS, JSON.stringify(ensured));
-    } catch {
-      // ignore
-    }
-  };
 
   const [selectedKeys, setSelectedKeys] = useState(new Set());
   const [quickDrawerProperty, setQuickDrawerProperty] = useState(null);
@@ -1317,6 +1304,8 @@ export default function BrokerProperties() {
         availableColumns={AVAILABLE_COLUMNS}
         visibleColumns={visibleColumnKeys}
         onVisibleColumnsChange={handleVisibleColumnsChange}
+        onResetColumns={handleResetVisibleColumns}
+        currentTier={currentDeviceTier}
       />
 
       {/* Main Data Table or Neutral Empty / Loading States */}

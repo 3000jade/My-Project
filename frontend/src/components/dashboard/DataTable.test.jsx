@@ -100,4 +100,27 @@ describe('DataTable Component', () => {
     fireEvent.click(checkboxes[0]);
     expect(handleToggleSelectAll).toHaveBeenCalled();
   });
+
+  it('applies responsive column classes when hideBelow is defined on a column', () => {
+    const responsiveColumns = [
+      { header: 'Property', accessor: 'title' },
+      { header: 'Location', accessor: 'location', hideBelow: 'md' },
+      { header: 'Price', accessor: 'price', hideBelow: 'lg' }
+    ];
+
+    const { container } = render(
+      <DataTable
+        columns={responsiveColumns}
+        data={sampleData.slice(0, 2)}
+      />
+    );
+
+    const headers = container.querySelectorAll('th');
+    expect(headers[1].className).toContain('hidden md:table-cell');
+    expect(headers[2].className).toContain('hidden lg:table-cell');
+
+    const firstRowCells = container.querySelectorAll('tbody tr:first-child td');
+    expect(firstRowCells[1].className).toContain('hidden md:table-cell');
+    expect(firstRowCells[2].className).toContain('hidden lg:table-cell');
+  });
 });
