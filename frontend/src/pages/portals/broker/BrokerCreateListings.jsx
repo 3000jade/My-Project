@@ -7,7 +7,8 @@ import {
   ArrowLeft, ArrowRight, Check, CheckCircle2, Circle, 
   FileText, MapPin, Sliders, DollarSign, Sparkles, 
   Image as ImageIcon, Send, Lock, Building2, User, ChevronDown,
-  LayoutGrid, List, Search, Building, Home, Trees, Store
+  LayoutGrid, List, Search, Building, Home, Trees, Store,
+  Heart, Bed, Bath, Maximize2, ArrowUpRight
 } from 'lucide-react';
 import { COMMON_PROPERTY_TYPES } from './BrokerPropertyTypeSelect';
 import PageHeader from '../../../components/dashboard/PageHeader';
@@ -26,6 +27,7 @@ import mapsService from '../../../services/mapsService';
 import phLocationService from '../../../services/phLocationService';
 import driveService from '../../../services/driveService';
 import { CadastralLocationPicker } from '../../../components/ui/map';
+import SubdivisionLotPickerModal from '../../../components/subdivision/SubdivisionLotPickerModal';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -271,6 +273,9 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
     address: '',
     subdivision: '',
     subdivision_name: '',
+    subdivision_project_id: null,
+    subdivision_lot_id: null,
+    subdivision_lot_details: null,
     phase: '',
     block: '',
     lot: '',
@@ -418,6 +423,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
   const [createdPropertyId, setCreatedPropertyId] = useState(id && id !== 'new' ? id : null);
   const [submissionError, setSubmissionError] = useState(null);
   const [activeActionLabel, setActiveActionLabel] = useState('');
+  const [showSubdivisionLotModal, setShowSubdivisionLotModal] = useState(false);
 
   // 7 Canonical Form Sections per PROPERTY_LISTING_FORM.md
   const [currentStep, setCurrentStep] = useState(1);
@@ -2408,77 +2414,147 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                     </div>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                    <div className="space-y-1.5 md:col-span-6">
-                      <label htmlFor="subdivision-input" className="text-xs font-semibold text-[#1E293B] block">
-                        Subdivision / Village Name
-                      </label>
-                      <input
-                        id="subdivision-input"
-                        type="text"
-                        placeholder="e.g. Havila Highlands Executive Subdivision, Ayala Alabang"
-                        value={formData.subdivision_name || formData.subdivision || ''}
-                        onChange={e => {
-                          setIsDirty(true);
-                          setFormData({
-                            ...formData,
-                            subdivision: e.target.value,
-                            subdivision_name: e.target.value,
-                          });
-                        }}
-                        className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
-                      />
+                  <div className="space-y-4">
+                    {/* Subdivision Master Plan Anchor Selector */}
+                    <div className="p-4 rounded-xl border border-teal-200 bg-teal-50/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                      <div className="flex items-start gap-3">
+                        <div className="w-9 h-9 rounded-lg bg-[#0F766E] text-white flex items-center justify-center shrink-0 shadow-xs">
+                          <span className="material-symbols-outlined text-[20px]">layers</span>
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-[#0F766E] uppercase tracking-wider">Subdivision Master Plan</span>
+                            {formData.subdivision_lot_id && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                <span className="material-symbols-outlined text-[12px]">check_circle</span>
+                                Anchored
+                              </span>
+                            )}
+                          </div>
+                          {formData.subdivision_lot_id ? (
+                            <p className="text-xs text-[#1E293B] mt-0.5">
+                              Anchored to <span className="font-bold text-[#0F766E]">{formData.subdivision_name || formData.subdivision}</span> — Block {formData.block}, Lot {formData.lot}
+                              {formData.lot_area ? ` (${formData.lot_area} m²)` : ''}
+                            </p>
+                          ) : (
+                            <p className="text-xs text-[#64748B] mt-0.5">
+                              Link this listing directly to a verified lot boundary on an interactive subdivision cadastral map.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
+                        <button
+                          type="button"
+                          onClick={() => setShowSubdivisionLotModal(true)}
+                          className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-semibold rounded-lg shadow-xs cursor-pointer transition-colors"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">map</span>
+                          <span>{formData.subdivision_lot_id ? 'Change Lot' : 'Select from Subdivision Plan'}</span>
+                        </button>
+                        {formData.subdivision_lot_id ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsDirty(true);
+                              setFormData({
+                                ...formData,
+                                subdivision_project_id: null,
+                                subdivision_lot_id: null,
+                                subdivision_lot_details: null,
+                              });
+                            }}
+                            className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg border border-slate-200 cursor-pointer transition-colors"
+                            title="Unlink Subdivision Lot"
+                          >
+                            <span className="material-symbols-outlined text-[16px]">link_off</span>
+                          </button>
+                        ) : (
+                          <Link
+                            to="/broker/subdivisions"
+                            target="_blank"
+                            className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#0F766E] hover:text-[#115E59] hover:underline px-2 py-1"
+                          >
+                            <span>Map Studio</span>
+                            <span className="text-[12px]">↗</span>
+                          </Link>
+                        )}
+                      </div>
                     </div>
 
-                    <div className="space-y-1.5 md:col-span-2">
-                      <label htmlFor="phase-input" className="text-xs font-semibold text-[#1E293B] block">
-                        Phase
-                      </label>
-                      <input
-                        id="phase-input"
-                        type="text"
-                        placeholder="Phase 2"
-                        value={formData.phase || ''}
-                        onChange={e => {
-                          setIsDirty(true);
-                          setFormData({ ...formData, phase: e.target.value });
-                        }}
-                        className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
-                      />
-                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                      <div className="space-y-1.5 md:col-span-6">
+                        <label htmlFor="subdivision-input" className="text-xs font-semibold text-[#1E293B] block">
+                          Subdivision / Village Name
+                        </label>
+                        <input
+                          id="subdivision-input"
+                          type="text"
+                          placeholder="e.g. Havila Highlands Executive Subdivision, Ayala Alabang"
+                          value={formData.subdivision_name || formData.subdivision || ''}
+                          onChange={e => {
+                            setIsDirty(true);
+                            setFormData({
+                              ...formData,
+                              subdivision: e.target.value,
+                              subdivision_name: e.target.value,
+                            });
+                          }}
+                          className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
+                        />
+                      </div>
 
-                    <div className="space-y-1.5 md:col-span-2">
-                      <label htmlFor="block-input" className="text-xs font-semibold text-[#1E293B] block">
-                        Block
-                      </label>
-                      <input
-                        id="block-input"
-                        type="text"
-                        placeholder="Block 12"
-                        value={formData.block || ''}
-                        onChange={e => {
-                          setIsDirty(true);
-                          setFormData({ ...formData, block: e.target.value });
-                        }}
-                        className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
-                      />
-                    </div>
+                      <div className="space-y-1.5 md:col-span-2">
+                        <label htmlFor="phase-input" className="text-xs font-semibold text-[#1E293B] block">
+                          Phase
+                        </label>
+                        <input
+                          id="phase-input"
+                          type="text"
+                          placeholder="Phase 2"
+                          value={formData.phase || ''}
+                          onChange={e => {
+                            setIsDirty(true);
+                            setFormData({ ...formData, phase: e.target.value });
+                          }}
+                          className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
+                        />
+                      </div>
 
-                    <div className="space-y-1.5 md:col-span-2">
-                      <label htmlFor="lot-input" className="text-xs font-semibold text-[#1E293B] block">
-                        Lot
-                      </label>
-                      <input
-                        id="lot-input"
-                        type="text"
-                        placeholder="Lot 4"
-                        value={formData.lot || ''}
-                        onChange={e => {
-                          setIsDirty(true);
-                          setFormData({ ...formData, lot: e.target.value });
-                        }}
-                        className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
-                      />
+                      <div className="space-y-1.5 md:col-span-2">
+                        <label htmlFor="block-input" className="text-xs font-semibold text-[#1E293B] block">
+                          Block
+                        </label>
+                        <input
+                          id="block-input"
+                          type="text"
+                          placeholder="Block 12"
+                          value={formData.block || ''}
+                          onChange={e => {
+                            setIsDirty(true);
+                            setFormData({ ...formData, block: e.target.value });
+                          }}
+                          className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5 md:col-span-2">
+                        <label htmlFor="lot-input" className="text-xs font-semibold text-[#1E293B] block">
+                          Lot
+                        </label>
+                        <input
+                          id="lot-input"
+                          type="text"
+                          placeholder="Lot 4"
+                          value={formData.lot || ''}
+                          onChange={e => {
+                            setIsDirty(true);
+                            setFormData({ ...formData, lot: e.target.value });
+                          }}
+                          className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
+                        />
+                      </div>
                     </div>
                   </div>
                 )}
@@ -4930,7 +5006,26 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                   </div>
                   <div>
                     <span className="text-[#64748B] block mb-0.5">Subdivision / Community</span>
-                    <span className="font-medium text-[#1E293B]">{formData.subdivision_name || formData.subdivision || 'Not provided'}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-[#1E293B]">{formData.subdivision_name || formData.subdivision || 'Not provided'}</span>
+                      {formData.subdivision_lot_id && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-teal-50 text-[#0F766E] border border-teal-200">
+                          <span className="material-symbols-outlined text-[11px]">layers</span>
+                          Block {formData.block}, Lot {formData.lot}
+                        </span>
+                      )}
+                    </div>
+                    {formData.subdivision_project_id && (
+                      <a
+                        href={`/subdivisions/${formData.subdivision_project_id}/map`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#0F766E] hover:underline mt-1"
+                      >
+                        <span>Interactive Plan View</span>
+                        <span className="text-[10px]">↗</span>
+                      </a>
+                    )}
                   </div>
                   <div>
                     <span className="text-[#64748B] block mb-0.5">Building Name</span>
@@ -5506,94 +5601,136 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
     </div>
 
     {/* Right Column: Listing Preview (Sticky Sidebar) */}
-    <div className="hidden lg:block lg:col-span-4 sticky top-20 space-y-5">
-      <div data-testid="broker-card" className="bg-white rounded-lg border border-[#E2E8F0] p-5 shadow-xs space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
-          <h4 className="text-xs font-bold uppercase tracking-wider text-[#1E293B]">
-            Listing Preview
-          </h4>
-          <span className="text-[11px] font-mono font-medium text-[#0F766E] bg-teal-50 border border-teal-200 px-2 py-0.5 rounded">
-            Step {currentStep} of 7
-          </span>
-        </div>
+    <div className="hidden lg:block lg:col-span-4 sticky top-20 space-y-4">
+      {/* Step Indicator Header Bar */}
+      <div className="flex items-center justify-between px-1">
+        <h4 className="text-xs font-bold uppercase tracking-wider text-[#1E293B] flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-[#0F766E]" />
+          Listing Preview
+        </h4>
+        <Badge variant="outline" className="text-[11px] font-mono text-[#0F766E] border-[#0F766E]/30 bg-teal-50/50">
+          Step {currentStep} of 7
+        </Badge>
+      </div>
 
-        {/* Media Preview / Cover Image */}
-        <div className="relative aspect-video rounded-lg overflow-hidden border border-[#CBD5E1] bg-[#F8FAFC] flex items-center justify-center">
+      {/* Modern Card replicating Image 2 using shadcn Card */}
+      <Card data-testid="broker-card" className="bg-white rounded-[28px] border border-[#E2E8F0] p-4 shadow-sm space-y-4 overflow-hidden font-sans">
+        {/* Cover Photo Container with Rounded Curvature & Image Badges */}
+        <div className="relative aspect-[16/11] rounded-[20px] overflow-hidden bg-slate-100 border border-slate-200/80 group">
           {mediaPhotos.length > 0 ? (
             <img
               src={mediaPhotos[0].imageUrl}
               alt="Listing Cover"
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
           ) : (
-            <div className="flex flex-col items-center text-slate-400 gap-1">
-              <ImageIcon className="w-7 h-7 text-slate-300 stroke-[1.5]" />
-              <span className="text-[11px]">No cover photo uploaded</span>
+            <div className="relative w-full h-full">
+              <img
+                src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=800&auto=format&fit=crop"
+                alt="Default preview"
+                className="w-full h-full object-cover opacity-85"
+              />
+              <div className="absolute inset-0 bg-slate-900/20 backdrop-blur-[1px] flex flex-col items-center justify-center text-white text-center p-4">
+                <ImageIcon className="w-6 h-6 mb-1 opacity-90 drop-shadow" />
+                <span className="text-[11px] font-medium drop-shadow">No cover photo uploaded</span>
+              </div>
             </div>
           )}
-          <span className="absolute top-2 left-2 bg-slate-900/80 backdrop-blur-xs text-white text-[11px] font-semibold px-2 py-0.5 rounded">
-            {formData.transaction_type}
-          </span>
-          {formData.is_featured && (
-            <span className="absolute top-2 right-2 bg-[#FF6B6B] text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-xs flex items-center gap-1">
-              <Sparkles className="w-3 h-3" />
-              Featured
-            </span>
-          )}
-        </div>
 
-        {/* Title & Price */}
-        <div className="space-y-0.5">
-          <p className="text-sm font-bold text-[#1E293B] line-clamp-2">
-            {formData.title || <span className="text-slate-400 font-normal italic">Untitled Property</span>}
-          </p>
-          <p className="text-xl font-bold font-mono text-[#0F766E]">
-            {formData.price 
-              ? `${formData.currency || 'PHP'} ${Number(formData.price).toLocaleString()}` 
-              : <span className="text-slate-400 font-sans text-xs">Price not entered</span>}
-          </p>
-        </div>
+          {/* Top-Left Pill: • For sale / For rent */}
+          <div className="absolute top-3 left-3 z-10">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/95 backdrop-blur-xs text-[11px] font-medium text-[#1E293B] shadow-xs">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              {formData.transaction_type === 'For Rent' ? 'For rent' : 'For sale'}
+            </span>
+          </div>
 
-        {/* Essential Specs Grid */}
-        <div className="grid grid-cols-2 gap-2 text-xs text-[#64748B]">
-          <div className="p-2 bg-white rounded-lg border border-[#CBD5E1] shadow-2xs">
-            <span className="block text-[10px] uppercase text-slate-400 font-semibold tracking-wider">Type</span>
-            <span className="font-semibold text-[#1E293B] truncate block mt-0.5">{formData.property_type || '—'}</span>
+          {/* Top-Right Round Button: Heart (Favorite) */}
+          <div className="absolute top-3 right-3 z-10">
+            <button
+              type="button"
+              className="w-8 h-8 rounded-full bg-white/95 backdrop-blur-xs hover:bg-white text-rose-500 flex items-center justify-center shadow-xs transition-transform hover:scale-110 cursor-pointer"
+              aria-label="Save to favorites"
+            >
+              <Heart className="w-4 h-4 text-rose-500 fill-rose-500/20" />
+            </button>
           </div>
-          <div className="p-2 bg-white rounded-lg border border-[#CBD5E1] shadow-2xs">
-            <span className="block text-[10px] uppercase text-slate-400 font-semibold tracking-wider">Area</span>
-            <span className="font-semibold text-[#1E293B] truncate block mt-0.5">
-              {formData.living_area || formData.floor_area 
-                ? `${formData.living_area || formData.floor_area} ${formData.living_area_units || formData.floor_area_unit || 'sqm'}` 
-                : '—'}
-            </span>
-          </div>
-          <div className="p-2 bg-white rounded-lg border border-[#CBD5E1] shadow-2xs">
-            <span className="block text-[10px] uppercase text-slate-400 font-semibold tracking-wider">Bed / Bath</span>
-            <span className="font-semibold text-[#1E293B] truncate block mt-0.5">
-              {formData.bedrooms_total || formData.bedrooms || 0} Beds • {formData.bathrooms_total_integer || formData.bathrooms || 0} Baths
-            </span>
-          </div>
-          <div className="p-2 bg-white rounded-lg border border-[#CBD5E1] shadow-2xs">
-            <span className="block text-[10px] uppercase text-slate-400 font-semibold tracking-wider">Location</span>
-            <span className="font-semibold text-[#1E293B] truncate block mt-0.5">
-              {formData.location || formData.city || '—'}
-            </span>
+
+          {/* Bottom-Left Pill: Location pin & location name */}
+          <div className="absolute bottom-3 left-3 z-10 max-w-[85%]">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/95 backdrop-blur-xs text-xs font-medium text-[#1E293B] shadow-xs truncate">
+              <div className="w-4 h-4 rounded-full bg-rose-50 flex items-center justify-center text-rose-500 shrink-0">
+                <MapPin className="w-2.5 h-2.5 text-rose-500" />
+              </div>
+              <span className="truncate">
+                {formData.city || formData.location || 'Location name'}
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Single Preview Listing Action */}
-        <div className="pt-2">
-          <button
-            type="button"
-            onClick={() => setShowPublicPreview(true)}
-            className="w-full h-10 bg-teal-50 hover:bg-teal-100 text-[#0F766E] border border-teal-200 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer transition-colors shadow-2xs"
-          >
-            <span className="material-symbols-outlined text-[16px]">visibility</span>
-            <span>Preview Listing</span>
-          </button>
+        {/* Content Section below photo */}
+        <div className="space-y-3 px-1">
+          {/* Coral dash + Uppercase Property Type */}
+          <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+            <span className="w-4 h-0.5 bg-[#E07A5F] rounded-full" />
+            <span>{formData.property_type || 'PROPERTY TYPE'}</span>
+          </div>
+
+          {/* Property Title with Coral Period */}
+          <h3 className="text-xl sm:text-2xl font-bold text-[#0F4C5C] tracking-tight line-clamp-2 leading-tight">
+            {formData.title || 'Property name'}
+            <span className="text-[#E07A5F]">.</span>
+          </h3>
+
+          {/* Key Specs Row: beds, baths, area */}
+          <div className="flex items-center gap-4 sm:gap-5 text-xs text-slate-500 font-medium pt-0.5">
+            <div className="flex items-center gap-1.5">
+              <Bed className="w-4 h-4 text-slate-400" />
+              <span>{formData.bedrooms_total || formData.bedrooms ? `${formData.bedrooms_total || formData.bedrooms} beds` : '— beds'}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Bath className="w-4 h-4 text-slate-400" />
+              <span>{formData.bathrooms_total_integer || formData.bathrooms ? `${formData.bathrooms_total_integer || formData.bathrooms} baths` : '— baths'}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Maximize2 className="w-4 h-4 text-slate-400" />
+              <span>
+                {formData.living_area || formData.floor_area 
+                  ? `${formData.living_area || formData.floor_area} m²` 
+                  : '— m²'}
+              </span>
+            </div>
+          </div>
+
+          {/* Subtle Horizontal Divider */}
+          <div className="border-t border-slate-100 pt-3" />
+
+          {/* Footer: Asking Price & View Property Pill Button */}
+          <div className="flex items-end justify-between gap-2 pt-0.5">
+            <div>
+              <span className="block text-[11px] text-slate-400 font-medium">Asking price</span>
+              <p className="text-xl sm:text-2xl font-bold text-[#0F4C5C] tracking-tight">
+                {formData.price 
+                  ? `₱ ${Number(formData.price).toLocaleString()}` 
+                  : '₱ Price'}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowPublicPreview(true)}
+              className="inline-flex items-center gap-2 pl-4 pr-1.5 py-1.5 rounded-full bg-[#0F6266] hover:bg-[#0c4e51] text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer group shrink-0"
+              title="Preview Listing"
+            >
+              <span>View property</span>
+              <div className="w-6 h-6 rounded-full bg-[#E07A5F] text-white flex items-center justify-center transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
+                <ArrowUpRight className="w-3.5 h-3.5" />
+              </div>
+            </button>
+          </div>
         </div>
-      </div>
+      </Card>
     </div>
   </div>
 
@@ -5936,6 +6073,30 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
           </div>
         </div>
       )}
+
+      {/* Subdivision Lot Picker Modal */}
+      <SubdivisionLotPickerModal
+        isOpen={showSubdivisionLotModal}
+        onClose={() => setShowSubdivisionLotModal(false)}
+        selectedLotId={formData.subdivision_lot_id}
+        initialProjectId={formData.subdivision_project_id}
+        onSelectLot={({ project, lot }) => {
+          setIsDirty(true);
+          setFormData((prev) => ({
+            ...prev,
+            subdivision_name: project?.name || prev.subdivision_name,
+            subdivision: project?.name || prev.subdivision,
+            block: lot?.block_number || prev.block,
+            lot: lot?.lot_number || prev.lot,
+            lot_area: lot?.verified_area_sqm ? String(lot.verified_area_sqm) : prev.lot_area,
+            lot_size_area: lot?.verified_area_sqm ? String(lot.verified_area_sqm) : prev.lot_size_area,
+            price: (!prev.price && lot?.price) ? String(lot.price) : prev.price,
+            subdivision_project_id: project?.id || null,
+            subdivision_lot_id: lot?.id || null,
+            subdivision_lot_details: lot,
+          }));
+        }}
+      />
 
     </div>
   );
