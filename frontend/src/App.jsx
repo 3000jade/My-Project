@@ -26,6 +26,7 @@ const ResetPasswordPage = lazy(() => import('./pages/auth/ResetPasswordPage'));
 const VerifyEmailPage = lazy(() => import('./pages/auth/VerifyEmailPage'));
 const UnauthorizedPage = lazy(() => import('./pages/public/UnauthorizedPage'));
 const DemoApiPage = lazy(() => import('./pages/public/DemoApiPage'));
+const PublicSubdivisionMap = lazy(() => import('./pages/public/PublicSubdivisionMap'));
 
 // Sandbox Staging Pages
 const SandboxLayout = lazy(() => import('./sandbox/layout/SandboxLayout'));
@@ -74,6 +75,8 @@ import BrokerReports from './pages/portals/broker/BrokerReports';
 import BrokerAudit from './pages/portals/broker/BrokerAudit';
 import BrokerNotifications from './pages/portals/broker/BrokerNotifications';
 import BrokerProfile from './pages/portals/broker/BrokerProfile';
+import BrokerSubdivisions from './pages/portals/broker/BrokerSubdivisions';
+import SubdivisionMapEditor from './pages/portals/broker/SubdivisionMapEditor';
 
 // Client Portal Pages
 const ClientDashboard = lazy(() => import('./pages/portals/client/ClientDashboard'));
@@ -187,7 +190,17 @@ function AppRoutes({ isAppLoading }) {
           <Route path="audit" element={<BrokerAudit />} />
           <Route path="notifications" element={<BrokerNotifications />} />
           <Route path="profile" element={<BrokerProfile />} />
+          <Route path="subdivisions" element={<BrokerSubdivisions />} />
         </Route>
+        {/* Fullscreen Subdivision Map Editor (Protected for Broker & Admin) */}
+        <Route
+          path="/broker/subdivisions/:id/editor"
+          element={
+            <ProtectedRoute allowedRoles={['broker', 'admin']}>
+              <SubdivisionMapEditor />
+            </ProtectedRoute>
+          }
+        />
         {/* Client Routes (Protected for Client, Broker & Admin) */}
         <Route
           path="/client"
@@ -260,7 +273,13 @@ function AppRoutes({ isAppLoading }) {
     location.pathname.startsWith('/register') ||
     location.pathname === '/forgot-password' ||
     location.pathname === '/reset-password' ||
-    location.pathname === '/verify-email';
+    location.pathname === '/verify-email' ||
+    (location.pathname.startsWith('/subdivisions/') && location.pathname.endsWith('/map'));
+
+  const hideFooter =
+    isAuthRoute ||
+    location.pathname === '/properties' ||
+    location.pathname === '/properties/';
 
   // Client Application Structure (Preserved with lazy loading and 3D duplex route)
   return (
@@ -273,6 +292,7 @@ function AppRoutes({ isAppLoading }) {
             <Route path="/properties" element={<PropertiesPage />} />
             <Route path="/properties/:id" element={<PropertyListingView />} />
             <Route path="/listing/:id" element={<PropertyListingView />} />
+            <Route path="/subdivisions/:id/map" element={<PublicSubdivisionMap />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/login" element={<LoginPage />} />
@@ -288,7 +308,7 @@ function AppRoutes({ isAppLoading }) {
         </Suspense>
       </main>
       {!isAuthRoute && <ChatWidget />}
-      {!isAuthRoute && <Footer />}
+      {!hideFooter && <Footer />}
       <PageLoader isLoading={isAppLoading} />
     </div>
   );
