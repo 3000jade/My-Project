@@ -2,7 +2,7 @@
 module: 02-property-listing
 title: Property Listing Module
 last_updated: 2026-10-29
-total_documents: 34
+total_documents: 48
 ---
 
 # Property Listing Module — Master Index
@@ -55,6 +55,15 @@ All updates and technical reports for this module are ordered chronologically by
 | `2026-10-28` | [2026-10-28-google-maps-embed-cadastral-verification.md](./2026-10-28-google-maps-embed-cadastral-verification.md) | Verification Record — Google Maps Embed Interface Integration in Broker Listing Studio |
 | `2026-10-28` | [2026-10-28-public-properties-immersive-status-and-layout-verification.md](./2026-10-28-public-properties-immersive-status-and-layout-verification.md) | Verification Record — Public Property Card Lifecycle Status Presentation & Dynamic Viewport Adaptation (FR-PL-021) |
 | `2026-10-29` | [2026-10-29-property-listing-form-scope-adaptation-verification.md](./2026-10-29-property-listing-form-scope-adaptation-verification.md) | Verification Record — Property Listing Form Scope Adaptation & Schema v1.0 Intake Studio (FR-PL-022) |
+| `2026-10-29` | [2026-10-29-subdivision-map-database-schema-phase1.md](./2026-10-29-subdivision-map-database-schema-phase1.md) | Verification Record — AI-Assisted Subdivision Map & Lot Lifecycle Schema Design (Phase 1) |
+| `2026-10-29` | [2026-10-29-subdivision-map-backend-services-phase2.md](./2026-10-29-subdivision-map-backend-services-phase2.md) | Verification Record — AI-Assisted Subdivision Map & Lot Lifecycle Backend Services (Phase 2) |
+| `2026-10-29` | [2026-10-29-subdivision-vector-canvas-phase3.md](./2026-10-29-subdivision-vector-canvas-phase3.md) | Verification Record — Frontend Custom React SVG Vector Canvas (Phase 3) |
+| `2026-10-29` | [2026-10-29-subdivision-ai-dock-and-editor-phase4.md](./2026-10-29-subdivision-ai-dock-and-editor-phase4.md) | Verification Record — AI Assist Dock, Lot Inspector & Portal Pages (Phase 4) |
+| `2026-10-29` | [2026-10-29-subdivision-map-editor-phase5-phase6-integration.md](./2026-10-29-subdivision-map-editor-phase5-phase6-integration.md) | Verification Record — Broker Listing Studio Integration & Public Visitor Map (Phases 5 & 6) |
+| `2026-10-29` | [2026-10-29-subdivision-map-studio-playwright-e2e-verification.md](./2026-10-29-subdivision-map-studio-playwright-e2e-verification.md) | Verification Record — Subdivision Map Studio & Editor Playwright MCP Interactive Verification (Phase 7) |
+| `2026-10-29` | [2026-10-29-subdivision-google-maps-pinning-and-ai-auto-layout.md](./2026-10-29-subdivision-google-maps-pinning-and-ai-auto-layout.md) | Verification Record — Google Maps Pre-Creation Pinning, AI Photo Auto-Layout, Satellite Ground Layer & Flexible Vector Editing |
+| `2026-10-29` | [2026-10-29-seamless-interactive-subdivision-vectors-and-splitting.md](./2026-10-29-seamless-interactive-subdivision-vectors-and-splitting.md) | Verification Record — Seamless Interactive Subdivision Vectors, Parcel Splitting & Batch Actions |
+| `2026-10-29` | [2026-10-29-clean-property-filtering-toolbar.md](./2026-10-29-clean-property-filtering-toolbar.md) | Verification Record — Clean Property Filtering Toolbar Redesign & Modern SaaS Alignment |
 
 ---
 

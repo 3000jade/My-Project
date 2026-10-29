@@ -1,5 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  IconSearch, 
+  IconMapPin, 
+  IconHome, 
+  IconCurrencyPeso, 
+  IconBed, 
+  IconAdjustmentsHorizontal, 
+  IconLayoutGrid, 
+  IconLayoutSidebar, 
+  IconX, 
+  IconChevronDown 
+} from '@tabler/icons-react';
 import { mapsService } from '../../../services/mapsService';
 
 const DISTRICT_PRESETS = [
@@ -32,7 +44,9 @@ export default function UnifiedSearchBar({
   isSticky = false
 }) {
   const [showPricePopover, setShowPricePopover] = useState(false);
+  const [showBedPopover, setShowBedPopover] = useState(false);
   const pricePopoverRef = useRef(null);
+  const bedPopoverRef = useRef(null);
 
   // Nominatim Autocomplete state
   const [suggestions, setSuggestions] = useState([]);
@@ -41,21 +55,24 @@ export default function UnifiedSearchBar({
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const searchContainerRef = useRef(null);
 
-  // Close price popover and suggestions on outside click
+  // Close popovers and suggestions on outside click
   useEffect(() => {
     function handleClickOutside(e) {
       if (pricePopoverRef.current && !pricePopoverRef.current.contains(e.target)) {
         setShowPricePopover(false);
       }
+      if (bedPopoverRef.current && !bedPopoverRef.current.contains(e.target)) {
+        setShowBedPopover(false);
+      }
       if (searchContainerRef.current && !searchContainerRef.current.contains(e.target)) {
         setShowSuggestions(false);
       }
     }
-    if (showPricePopover || showSuggestions) {
+    if (showPricePopover || showBedPopover || showSuggestions) {
       document.addEventListener('mousedown', handleClickOutside);
     }
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showPricePopover, showSuggestions]);
+  }, [showPricePopover, showBedPopover, showSuggestions]);
 
   // Debounced fetch for Nominatim OSM predictive autocomplete
   useEffect(() => {
@@ -122,7 +139,6 @@ export default function UnifiedSearchBar({
         e.preventDefault();
         handleSelectSuggestion(suggestions[0]);
       } else if (filters.keyword && filters.keyword.trim().length > 1) {
-        // Fallback: Geocode on explicit Enter key submission if no item picked
         setShowSuggestions(false);
         try {
           const geocodeRes = await mapsService.geocode(filters.keyword.trim(), 'ph');
@@ -164,15 +180,15 @@ export default function UnifiedSearchBar({
 
   return (
     <div
-      className={`w-full transition-all duration-300 ${isSticky
-          ? 'bg-white/95 backdrop-blur-2xl shadow-sm border-b border-gray-200/80 py-3 px-4 md:px-8 lg:px-12'
-          : 'bg-white rounded-3xl shadow-sm border border-gray-200/80 p-4 md:p-6'
-        }`}
+      className={`w-full transition-all duration-300 font-sans ${isSticky
+        ? 'bg-white/95 backdrop-blur-2xl shadow-sm border-b border-[#E2E8F0] py-3 px-4 md:px-6'
+        : 'bg-white rounded-2xl shadow-xs border border-[#E2E8F0] p-3 md:p-4'
+      }`}
     >
-      {/* Upper Row: Transaction Mode + Search Input + Controls */}
-      <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-3">
+      {/* Upper Row: Transaction Mode + Location Search + Core Dropdowns + View Switcher */}
+      <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2.5">
         {/* Transaction Mode Segmented Pill */}
-        <div className="flex items-center bg-gray-100/90 p-1 rounded-2xl border border-gray-200/60 self-start lg:self-auto flex-shrink-0">
+        <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200/60 self-start lg:self-auto shrink-0 h-11">
           {['All', 'For Sale', 'For Rent', 'Pre-Selling'].map((type) => {
             const isSelected = (filters.transactionType || 'All') === type;
             return (
@@ -180,9 +196,9 @@ export default function UnifiedSearchBar({
                 key={type}
                 type="button"
                 onClick={() => setFilter('transactionType', type)}
-                className={`px-4 h-[44px] rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${isSelected
-                    ? 'bg-[#174849] text-white shadow-sm'
-                    : 'text-gray-600 hover:text-[#174849]'
+                className={`px-3.5 h-9 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${isSelected
+                    ? 'bg-[#0F766E] text-white shadow-2xs'
+                    : 'text-slate-600 hover:text-[#0F766E]'
                   }`}
               >
                 {type}
@@ -192,23 +208,25 @@ export default function UnifiedSearchBar({
         </div>
 
         {/* Location Search Input with Nominatim OSM Autocomplete */}
-        <div className="relative flex-1 min-w-[220px]" ref={searchContainerRef}>
-          <span className={`material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[20px] pointer-events-none transition-colors ${
-            isLoadingSuggestions ? 'text-[#E76F51] animate-spin' : 'text-gray-400'
-          }`}>
-            {isLoadingSuggestions ? 'progress_activity' : 'search'}
-          </span>
+        <div className="relative flex-1 min-w-[200px]" ref={searchContainerRef}>
+          <div className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 flex items-center justify-center">
+            {isLoadingSuggestions ? (
+              <div className="w-4 h-4 border-2 border-slate-200 border-t-[#0F766E] rounded-full animate-spin" />
+            ) : (
+              <IconSearch size={16} stroke={2} className="text-slate-400" />
+            )}
+          </div>
           <input
             type="text"
             data-testid="unified-search-input"
-            placeholder="Search City, District, or Residence (Nominatim OSM)..."
+            placeholder="Search location, district, or building (Nominatim OSM)..."
             value={filters.keyword || ''}
             onChange={(e) => setFilter('keyword', e.target.value)}
             onFocus={() => {
               if (suggestions.length > 0) setShowSuggestions(true);
             }}
             onKeyDown={handleSearchKeyDown}
-            className="w-full h-[50px] pl-10 pr-9 bg-gray-50/80 hover:bg-gray-50 focus:bg-white border border-gray-200/80 focus:border-[#174849] focus:ring-1 focus:ring-[#174849] rounded-2xl text-xs font-semibold text-gray-800 placeholder-gray-400 outline-none transition-all"
+            className="w-full h-11 pl-9 pr-8 bg-slate-50 hover:bg-slate-100/60 focus:bg-white border border-slate-200 focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] rounded-xl text-xs font-medium text-slate-800 placeholder:text-slate-400 outline-none transition-all"
           />
           {filters.keyword && (
             <button
@@ -218,10 +236,10 @@ export default function UnifiedSearchBar({
                 setShowSuggestions(false);
                 setSuggestions([]);
               }}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer p-0.5"
               title="Clear search"
             >
-              <span className="material-symbols-outlined text-[16px]">close</span>
+              <IconX size={14} stroke={2} />
             </button>
           )}
 
@@ -235,19 +253,19 @@ export default function UnifiedSearchBar({
                 transition={{ duration: 0.16 }}
                 data-lenis-prevent="true"
                 data-testid="nominatim-autocomplete-dropdown"
-                className="absolute top-[56px] left-0 right-0 bg-white rounded-2xl shadow-2xl border border-gray-200/90 py-2 z-[90] overflow-hidden"
+                className="absolute top-[48px] left-0 right-0 bg-white rounded-2xl shadow-xl border border-slate-200 py-2 z-[90] overflow-hidden"
               >
                 {/* Header with OpenStreetMap telemetry */}
-                <div className="flex items-center justify-between px-3.5 py-1.5 border-b border-gray-100 bg-gray-50/60 text-[10px] font-mono uppercase tracking-wider text-gray-500">
-                  <span className="flex items-center gap-1 font-bold text-[#174849]">
-                    <span className="material-symbols-outlined text-[14px] text-[#E76F51]">explore</span>
-                    OpenStreetMap Locations
+                <div className="flex items-center justify-between px-3.5 py-1.5 border-b border-slate-100 bg-slate-50/80 text-[10px] font-mono uppercase tracking-wider text-slate-500">
+                  <span className="flex items-center gap-1 font-bold text-[#0F766E]">
+                    <IconMapPin size={13} stroke={2} className="text-[#FF6B6B]" />
+                    Locations
                   </span>
-                  <span className="text-[9px] text-gray-400 font-semibold">{suggestions.length} Found</span>
+                  <span className="text-[9px] text-slate-400 font-semibold">{suggestions.length} Found</span>
                 </div>
 
                 {/* Suggestions List */}
-                <div className="max-h-[260px] overflow-y-auto custom-scrollbar divide-y divide-gray-50">
+                <div className="max-h-[260px] overflow-y-auto custom-scrollbar divide-y divide-slate-100">
                   {suggestions.map((item, idx) => {
                     const isSelected = highlightedIndex === idx;
                     return (
@@ -258,25 +276,25 @@ export default function UnifiedSearchBar({
                         onClick={() => handleSelectSuggestion(item)}
                         onMouseEnter={() => setHighlightedIndex(idx)}
                         className={`w-full text-left px-3.5 py-2.5 flex items-start gap-3 transition-colors cursor-pointer ${
-                          isSelected ? 'bg-teal-50/70 text-[#174849]' : 'hover:bg-gray-50 text-gray-800'
+                          isSelected ? 'bg-teal-50/70 text-[#0F766E]' : 'hover:bg-slate-50 text-slate-800'
                         }`}
                       >
-                        <div className={`mt-0.5 p-1 rounded-lg ${isSelected ? 'bg-[#174849] text-white' : 'bg-gray-100 text-gray-500'}`}>
-                          <span className="material-symbols-outlined text-[16px] block">location_on</span>
+                        <div className={`mt-0.5 p-1 rounded-lg ${isSelected ? 'bg-[#0F766E] text-white' : 'bg-slate-100 text-slate-500'}`}>
+                          <IconMapPin size={14} stroke={2} className="block" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between gap-2">
-                            <span className="text-xs font-bold truncate text-[#141717]">
+                            <span className="text-xs font-bold truncate text-slate-900">
                               {item.mainText || item.description}
                             </span>
                             {item.latitude && item.longitude && (
-                              <span className="font-mono text-[9px] text-[#174849]/70 shrink-0 font-medium">
+                              <span className="font-mono text-[9px] text-[#0F766E]/70 shrink-0 font-medium">
                                 {Number(item.latitude).toFixed(2)}°, {Number(item.longitude).toFixed(2)}°
                               </span>
                             )}
                           </div>
                           {item.secondaryText && (
-                            <p className="text-[11px] text-gray-500 truncate mt-0.5 font-normal">
+                            <p className="text-[11px] text-slate-500 truncate mt-0.5 font-normal">
                               {item.secondaryText}
                             </p>
                           )}
@@ -287,9 +305,9 @@ export default function UnifiedSearchBar({
                 </div>
 
                 {/* Footer Attribution */}
-                <div className="px-3.5 py-1.5 border-t border-gray-100 bg-gray-50/60 text-[9px] text-gray-400 flex items-center justify-between">
-                  <span>© OpenStreetMap Contributors</span>
-                  <span className="font-mono text-[#174849] font-bold">Nominatim Geocoder</span>
+                <div className="px-3.5 py-1.5 border-t border-slate-100 bg-slate-50/60 text-[9px] text-slate-400 flex items-center justify-between">
+                  <span>© OpenStreetMap</span>
+                  <span className="font-mono text-[#0F766E] font-semibold">Nominatim Geocoder</span>
                 </div>
               </motion.div>
             )}
@@ -297,54 +315,62 @@ export default function UnifiedSearchBar({
         </div>
 
         {/* Property Type Dropdown */}
-        <div className="relative flex-shrink-0 hidden md:block">
-          <select
-            value={filters.propertyType || 'All'}
-            onChange={(e) => setFilter('propertyType', e.target.value)}
-            className={`h-[50px] px-4 pr-10 rounded-2xl text-xs font-bold border flex items-center justify-between gap-2 transition-all cursor-pointer appearance-none ${
-              filters.propertyType && filters.propertyType !== 'All'
-                ? 'bg-[#174849]/5 border-[#174849] text-[#174849]'
-                : 'bg-white hover:bg-gray-50 border-gray-200/80 text-gray-700'
-            }`}
-          >
-            <option value="All">All Property Types</option>
-            <option value="House">House</option>
-            <option value="Condominium">Condominium</option>
-            <option value="Townhouse">Townhouse</option>
-            <option value="Lot">Lot</option>
-          </select>
-          <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-[16px] text-gray-400 pointer-events-none">expand_more</span>
+        <div className="relative shrink-0">
+          <div className="relative">
+            <select
+              value={filters.propertyType || 'All'}
+              onChange={(e) => setFilter('propertyType', e.target.value)}
+              className={`h-11 pl-9 pr-8 rounded-xl text-xs font-semibold border transition-all cursor-pointer appearance-none outline-none ${
+                filters.propertyType && filters.propertyType !== 'All'
+                  ? 'bg-teal-50/70 border-[#0F766E] text-[#0F766E]'
+                  : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700'
+              }`}
+            >
+              <option value="All">All Property Types</option>
+              <option value="House">House</option>
+              <option value="Condominium">Condominium</option>
+              <option value="Townhouse">Townhouse</option>
+              <option value="Lot">Lot</option>
+            </select>
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+              <IconHome size={15} stroke={2} className={filters.propertyType && filters.propertyType !== 'All' ? 'text-[#0F766E]' : 'text-slate-400'} />
+            </div>
+            <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+              <IconChevronDown size={14} stroke={2} />
+            </div>
+          </div>
         </div>
 
         {/* Price Range Popover Button */}
-        <div className="relative flex-shrink-0" ref={pricePopoverRef}>
+        <div className="relative shrink-0" ref={pricePopoverRef}>
           <button
             type="button"
             onClick={() => setShowPricePopover(!showPricePopover)}
-            className={`h-[50px] px-4 rounded-2xl text-xs font-bold border flex items-center justify-between gap-2 transition-all cursor-pointer ${filters.minPrice || filters.maxPrice
-                ? 'bg-[#174849]/5 border-[#174849] text-[#174849]'
-                : 'bg-white hover:bg-gray-50 border-gray-200/80 text-gray-700'
-              }`}
+            className={`h-11 px-3.5 rounded-xl text-xs font-semibold border flex items-center justify-between gap-2 transition-all cursor-pointer ${
+              filters.minPrice || filters.maxPrice
+                ? 'bg-teal-50/70 border-[#0F766E] text-[#0F766E]'
+                : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700'
+            }`}
           >
             <div className="flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[18px] text-[#174849]">payments</span>
+              <IconCurrencyPeso size={15} stroke={2} className={filters.minPrice || filters.maxPrice ? 'text-[#0F766E]' : 'text-slate-400'} />
               <span>{getPriceLabel()}</span>
             </div>
-            <span className="material-symbols-outlined text-[16px] text-gray-400">expand_more</span>
+            <IconChevronDown size={14} stroke={2} className="text-slate-400" />
           </button>
 
           {/* Interactive Price Popover Card */}
           <AnimatePresence>
             {showPricePopover && (
               <motion.div
-                initial={{ opacity: 0, y: 10, scale: 0.96 }}
+                initial={{ opacity: 0, y: 8, scale: 0.97 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 10, scale: 0.96 }}
-                transition={{ duration: 0.18 }}
-                className="absolute top-[60px] left-0 md:right-0 md:left-auto w-80 bg-white rounded-2xl shadow-xl border border-gray-200/90 p-5 z-[80]"
+                exit={{ opacity: 0, y: 8, scale: 0.97 }}
+                transition={{ duration: 0.16 }}
+                className="absolute top-[48px] left-0 md:right-0 md:left-auto w-80 bg-white rounded-2xl shadow-xl border border-slate-200 p-4 z-[80]"
               >
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-[#174849]">Price Budget (PHP)</h4>
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-[#0F766E]">Price Budget (PHP)</h4>
                   {(filters.minPrice || filters.maxPrice) && (
                     <button
                       type="button"
@@ -352,38 +378,38 @@ export default function UnifiedSearchBar({
                         setFilter('minPrice', null);
                         setFilter('maxPrice', null);
                       }}
-                      className="text-[11px] font-bold text-gray-400 hover:text-[#E76F51] cursor-pointer"
+                      className="text-[11px] font-semibold text-slate-400 hover:text-[#FF6B6B] cursor-pointer"
                     >
                       Reset
                     </button>
                   )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 mb-4">
+                <div className="grid grid-cols-2 gap-2.5 mb-3">
                   <div>
-                    <label className="text-[10px] font-bold uppercase text-gray-400 block mb-1">Min Price</label>
+                    <label className="text-[10px] font-bold uppercase text-slate-400 block mb-1">Min Price</label>
                     <input
                       type="number"
                       placeholder="₱ 0"
                       value={filters.minPrice || ''}
                       onChange={(e) => setFilter('minPrice', e.target.value ? Number(e.target.value) : null)}
-                      className="w-full h-10 px-3 border border-gray-200 rounded-xl text-xs font-bold text-gray-800 outline-none focus:border-[#174849]"
+                      className="w-full h-9 px-3 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 outline-none focus:border-[#0F766E]"
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] font-bold uppercase text-gray-400 block mb-1">Max Price</label>
+                    <label className="text-[10px] font-bold uppercase text-slate-400 block mb-1">Max Price</label>
                     <input
                       type="number"
                       placeholder="Any"
                       value={filters.maxPrice || ''}
                       onChange={(e) => setFilter('maxPrice', e.target.value ? Number(e.target.value) : null)}
-                      className="w-full h-10 px-3 border border-gray-200 rounded-xl text-xs font-bold text-gray-800 outline-none focus:border-[#174849]"
+                      className="w-full h-9 px-3 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 outline-none focus:border-[#0F766E]"
                     />
                   </div>
                 </div>
 
-                <div className="space-y-1.5 pt-2 border-t border-gray-100">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block mb-1">Quick Select</span>
+                <div className="space-y-1 pt-2 border-t border-slate-100">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Quick Select</span>
                   <div className="grid grid-cols-2 gap-1.5">
                     {PRICE_PRESETS.map((p) => (
                       <button
@@ -393,7 +419,7 @@ export default function UnifiedSearchBar({
                           setFilter('minPrice', p.min);
                           setFilter('maxPrice', p.max);
                         }}
-                        className="py-1.5 px-2 bg-gray-50 hover:bg-[#174849]/5 hover:text-[#174849] rounded-lg text-[11px] font-bold text-gray-600 transition-colors text-center border border-gray-100 cursor-pointer"
+                        className="py-1.5 px-2 bg-slate-50 hover:bg-teal-50 hover:text-[#0F766E] rounded-lg text-[11px] font-semibold text-slate-600 transition-colors text-center border border-slate-200/60 cursor-pointer"
                       >
                         {p.label}
                       </button>
@@ -405,81 +431,136 @@ export default function UnifiedSearchBar({
           </AnimatePresence>
         </div>
 
-        {/* Bedroom Count Segment */}
-        <div className="hidden xl:flex items-center bg-gray-100/90 p-1 rounded-2xl border border-gray-200/60 flex-shrink-0">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 px-2 font-sans">Beds</span>
-          {BED_OPTIONS.map((opt) => {
-            const isSelected = (filters.beds || 'Any') === opt;
-            return (
-              <button
-                key={opt}
-                type="button"
-                onClick={() => setFilter('beds', opt === 'Any' ? '' : opt)}
-                className={`px-3 h-[44px] rounded-xl text-xs font-bold transition-all cursor-pointer ${isSelected
-                    ? 'bg-[#174849] text-white shadow-sm'
-                    : 'text-gray-600 hover:text-[#174849]'
-                  }`}
+        {/* Bedroom Popover (Clean compact popover replacing sprawling 6 buttons) */}
+        <div className="relative shrink-0" ref={bedPopoverRef}>
+          <button
+            type="button"
+            onClick={() => setShowBedPopover(!showBedPopover)}
+            className={`h-11 px-3.5 rounded-xl text-xs font-semibold border flex items-center justify-between gap-2 transition-all cursor-pointer ${
+              filters.beds && filters.beds !== 'Any'
+                ? 'bg-teal-50/70 border-[#0F766E] text-[#0F766E]'
+                : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700'
+            }`}
+          >
+            <div className="flex items-center gap-1.5">
+              <IconBed size={15} stroke={2} className={filters.beds && filters.beds !== 'Any' ? 'text-[#0F766E]' : 'text-slate-400'} />
+              <span>{filters.beds && filters.beds !== 'Any' ? `${filters.beds} Beds` : 'Bedrooms'}</span>
+            </div>
+            <IconChevronDown size={14} stroke={2} className="text-slate-400" />
+          </button>
+
+          <AnimatePresence>
+            {showBedPopover && (
+              <motion.div
+                initial={{ opacity: 0, y: 8, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 8, scale: 0.97 }}
+                transition={{ duration: 0.15 }}
+                className="absolute top-[48px] left-0 w-64 bg-white rounded-2xl shadow-xl border border-slate-200 p-4 z-[80]"
               >
-                {opt}
-              </button>
-            );
-          })}
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-[#0F766E]">Bedrooms</h4>
+                  {filters.beds && filters.beds !== 'Any' && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFilter('beds', '');
+                        setShowBedPopover(false);
+                      }}
+                      className="text-[11px] font-semibold text-slate-400 hover:text-[#FF6B6B] cursor-pointer"
+                    >
+                      Reset
+                    </button>
+                  )}
+                </div>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {BED_OPTIONS.map((opt) => {
+                    const isSelected = (filters.beds || 'Any') === opt;
+                    return (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => {
+                          setFilter('beds', opt === 'Any' ? '' : opt);
+                          setShowBedPopover(false);
+                        }}
+                        className={`py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer text-center ${
+                          isSelected
+                            ? 'bg-[#0F766E] text-white shadow-2xs'
+                            : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200/60'
+                        }`}
+                      >
+                        {opt === 'Any' ? 'Any' : opt === 'Studio' ? 'Studio' : `${opt} Bed${opt === '1' ? '' : 's'}`}
+                      </button>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
-        {/* 'All Filters' Drawer Button */}
+        {/* 'All Filters' Drawer Trigger */}
         <button
           type="button"
           onClick={onOpenFiltersDrawer}
-          className={`h-[50px] px-4 rounded-2xl text-xs font-bold border flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap flex-shrink-0 ${activeFilterCount > 0
-              ? 'bg-[#174849] text-white border-[#174849] shadow-md'
-              : 'bg-white hover:bg-gray-50 border-gray-200/80 text-gray-700'
-            }`}
+          className={`h-11 px-3.5 rounded-xl text-xs font-semibold border flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+            activeFilterCount > 0
+              ? 'bg-teal-50 border-[#0F766E] text-[#0F766E] shadow-2xs'
+              : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700'
+          }`}
         >
-          <span className="material-symbols-outlined text-[18px]">tune</span>
+          <IconAdjustmentsHorizontal size={15} stroke={2} className={activeFilterCount > 0 ? 'text-[#0F766E]' : 'text-slate-500'} />
           <span>Filters</span>
           {activeFilterCount > 0 && (
-            <span className="w-5 h-5 rounded-full bg-[#E76F51] text-white text-[10px] font-extrabold flex items-center justify-center">
+            <span className="w-5 h-5 rounded-full bg-[#FF6B6B] text-white text-[10px] font-extrabold flex items-center justify-center ml-0.5">
               {activeFilterCount}
             </span>
           )}
         </button>
 
-        {/* View Mode Toggle: Split Map vs Grid */}
+        {/* View Mode Toggle: Split Map vs Grid View */}
         {setViewMode && (
-          <div className="hidden md:flex items-center bg-gray-100/90 p-1 rounded-2xl border border-gray-200/60 flex-shrink-0">
+          <div className="hidden md:flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200/60 shrink-0 h-11">
             <button
               type="button"
               onClick={() => setViewMode('split')}
-              className={`flex items-center gap-1.5 px-3.5 h-[44px] rounded-xl text-xs font-bold transition-all cursor-pointer ${viewMode === 'split'
-                  ? 'bg-white text-[#174849] shadow-sm'
-                  : 'text-gray-500 hover:text-[#174849]'
-                }`}
+              className={`flex items-center gap-1.5 px-3 h-9 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                viewMode === 'split'
+                  ? 'bg-white text-[#0F766E] shadow-2xs'
+                  : 'text-slate-500 hover:text-[#0F766E]'
+              }`}
               title="Split Map View"
             >
-              <span className="material-symbols-outlined text-[17px]">vertical_split</span>
+              <IconLayoutSidebar size={15} stroke={2} />
               <span>Split Map</span>
             </button>
             <button
               type="button"
-              onClick={() => setViewMode('grid')}
-              className={`flex items-center gap-1.5 px-3.5 h-[44px] rounded-xl text-xs font-bold transition-all cursor-pointer ${viewMode === 'grid'
-                  ? 'bg-white text-[#174849] shadow-sm'
-                  : 'text-gray-500 hover:text-[#174849]'
-                }`}
+              onClick={() => {
+                setViewMode('grid');
+                setFilter('mapBounds', null);
+              }}
+              className={`flex items-center gap-1.5 px-3 h-9 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                viewMode === 'grid'
+                  ? 'bg-white text-[#0F766E] shadow-2xs'
+                  : 'text-slate-500 hover:text-[#0F766E]'
+              }`}
               title="Grid Only View"
             >
-              <span className="material-symbols-outlined text-[17px]">grid_view</span>
+              <IconLayoutGrid size={15} stroke={2} />
               <span>Grid View</span>
             </button>
           </div>
         )}
       </div>
 
-      {/* Lower Row: Metro Manila Quick District Chips Bar */}
-      <div className="mt-3 pt-3 border-t border-gray-100/80 flex items-center gap-2 overflow-x-auto no-scrollbar">
-        <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-400 whitespace-nowrap pl-1">
-          Districts:
-        </span>
+      {/* Lower Row: Clean Horizontal District Scroller */}
+      <div className="flex items-center gap-2 pt-2.5 mt-2.5 border-t border-slate-100 overflow-x-auto no-scrollbar">
+        <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-400 uppercase tracking-wider shrink-0 pl-0.5">
+          <IconMapPin size={13} stroke={2} className="text-[#0F766E]" />
+          <span>Districts:</span>
+        </div>
         <div className="flex items-center gap-1.5">
           {DISTRICT_PRESETS.map((preset) => {
             const isSelected =
@@ -491,10 +572,11 @@ export default function UnifiedSearchBar({
                 key={preset.name}
                 type="button"
                 onClick={() => handleDistrictClick(preset)}
-                className={`px-3 py-1.5 rounded-full text-[11px] font-bold whitespace-nowrap transition-all border cursor-pointer ${isSelected
-                    ? 'bg-[#174849] text-white border-[#174849] shadow-sm'
-                    : 'bg-gray-50/80 text-gray-600 border-gray-200/80 hover:border-gray-300 hover:bg-gray-100'
-                  }`}
+                className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-all border cursor-pointer ${
+                  isSelected
+                    ? 'bg-[#0F766E] text-white border-[#0F766E] shadow-2xs'
+                    : 'bg-slate-50 text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-100'
+                }`}
               >
                 {preset.name}
               </button>
