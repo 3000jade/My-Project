@@ -186,9 +186,9 @@ export default function UnifiedSearchBar({
       }`}
     >
       {/* Upper Row: Transaction Mode + Location Search + Core Dropdowns + View Switcher */}
-      <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2.5">
+      <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2 sm:gap-2.5 flex-wrap xl:flex-nowrap">
         {/* Transaction Mode Segmented Pill */}
-        <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200/60 self-start lg:self-auto shrink-0 h-11">
+        <div className="flex items-center bg-slate-100 p-0.5 sm:p-1 rounded-xl border border-slate-200/60 self-start lg:self-auto shrink-0 h-11">
           {['All', 'For Sale', 'For Rent', 'Pre-Selling'].map((type) => {
             const isSelected = (filters.transactionType || 'All') === type;
             return (
@@ -196,7 +196,7 @@ export default function UnifiedSearchBar({
                 key={type}
                 type="button"
                 onClick={() => setFilter('transactionType', type)}
-                className={`px-3.5 h-9 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${isSelected
+                className={`px-2.5 sm:px-3.5 h-9 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${isSelected
                     ? 'bg-[#0F766E] text-white shadow-2xs'
                     : 'text-slate-600 hover:text-[#0F766E]'
                   }`}
@@ -208,7 +208,7 @@ export default function UnifiedSearchBar({
         </div>
 
         {/* Location Search Input with Nominatim OSM Autocomplete */}
-        <div className="relative flex-1 min-w-[200px]" ref={searchContainerRef}>
+        <div className="relative flex-1 min-w-[160px]" ref={searchContainerRef}>
           <div className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 flex items-center justify-center">
             {isLoadingSuggestions ? (
               <div className="w-4 h-4 border-2 border-slate-200 border-t-[#0F766E] rounded-full animate-spin" />
@@ -521,11 +521,11 @@ export default function UnifiedSearchBar({
 
         {/* View Mode Toggle: Split Map vs Grid View */}
         {setViewMode && (
-          <div className="hidden md:flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200/60 shrink-0 h-11">
+          <div className="hidden lg:flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200/60 shrink-0 h-11 ml-auto">
             <button
               type="button"
               onClick={() => setViewMode('split')}
-              className={`flex items-center gap-1.5 px-3 h-9 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-2.5 xl:px-3 h-9 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                 viewMode === 'split'
                   ? 'bg-white text-[#0F766E] shadow-2xs'
                   : 'text-slate-500 hover:text-[#0F766E]'
@@ -533,7 +533,7 @@ export default function UnifiedSearchBar({
               title="Split Map View"
             >
               <IconLayoutSidebar size={15} stroke={2} />
-              <span>Split Map</span>
+              <span className="hidden 2xl:inline">Split Map</span>
             </button>
             <button
               type="button"
@@ -541,7 +541,7 @@ export default function UnifiedSearchBar({
                 setViewMode('grid');
                 setFilter('mapBounds', null);
               }}
-              className={`flex items-center gap-1.5 px-3 h-9 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-2.5 xl:px-3 h-9 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                 viewMode === 'grid'
                   ? 'bg-white text-[#0F766E] shadow-2xs'
                   : 'text-slate-500 hover:text-[#0F766E]'
@@ -549,7 +549,7 @@ export default function UnifiedSearchBar({
               title="Grid Only View"
             >
               <IconLayoutGrid size={15} stroke={2} />
-              <span>Grid View</span>
+              <span className="hidden 2xl:inline">Grid View</span>
             </button>
           </div>
         )}

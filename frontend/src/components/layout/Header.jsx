@@ -25,7 +25,7 @@ export default function Header() {
   const { user, isAuthenticated, logout } = useAuth();
 
   const isPropertiesPage = location.pathname === '/properties';
-  const isSolidTheme = scrolled || location.pathname === '/properties' || location.pathname === '/login' || location.pathname === '/about' || location.pathname === '/contact';
+  const isSolidTheme = scrolled || location.pathname.startsWith('/properties') || location.pathname.startsWith('/listing') || location.pathname === '/login' || location.pathname === '/about' || location.pathname === '/contact';
 
   const isHeaderHidden = isPropertiesPage && deepScrolled && !forceShowHeader;
 

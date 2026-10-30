@@ -561,7 +561,7 @@ export default function GooglePropertyMap({
       <div
         data-lenis-prevent="true"
         data-testid="google-property-map-embed"
-        className={`relative w-full h-full ${singlePropertyMode ? 'min-h-0' : 'min-h-[420px]'} bg-[#F8FAFC] overflow-hidden select-none ${className}`}
+        className={`relative isolate z-0 w-full h-full ${singlePropertyMode ? 'min-h-0' : 'min-h-[420px]'} bg-[#F8FAFC] overflow-hidden select-none ${className}`}
       >
         <iframe
           key={`${activeCoords.lat.toFixed(6)}-${activeCoords.lng.toFixed(6)}-${embedLayer}-${embedZoom}`}
@@ -574,7 +574,7 @@ export default function GooglePropertyMap({
         />
 
         {showControls && (
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-1.5 p-1 bg-white/95 backdrop-blur-md rounded-full border border-[#E2E8F0] shadow-md">
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 p-1 bg-white/95 backdrop-blur-md rounded-full border border-[#E2E8F0] shadow-md">
             {[
               { id: 'm', label: 'Roadmap' },
               { id: 'k', label: 'Satellite' },
@@ -653,14 +653,14 @@ export default function GooglePropertyMap({
     <div
       data-lenis-prevent="true"
       data-testid="google-property-map-interactive"
-      className={`relative w-full h-full ${singlePropertyMode ? 'min-h-0' : 'min-h-[420px]'} bg-[#F8FAFC] overflow-hidden select-none ${className}`}
+      className={`relative isolate z-0 w-full h-full ${singlePropertyMode ? 'min-h-0' : 'min-h-[420px]'} bg-[#F8FAFC] overflow-hidden select-none ${className}`}
     >
       {/* Interactive Map Viewport Container */}
       <div ref={containerRef} className="w-full h-full" tabIndex={0} aria-label="Interactive Google Property Map" />
 
       {/* Floating Bauhaus Glass Minimal HUD Dock */}
       {showControls && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-1 p-1 bg-white/95 backdrop-blur-md rounded-full border border-[#E2E8F0] shadow-md">
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 p-1 bg-white/95 backdrop-blur-md rounded-full border border-[#E2E8F0] shadow-md">
           {/* Layer Switcher */}
           <button
             type="button"
@@ -741,7 +741,7 @@ export default function GooglePropertyMap({
       {/* Floating Bottom-Right Manual Zoom Controls */}
       <div
         data-testid="manual-zoom-controls"
-        className="absolute bottom-20 right-4 sm:right-6 z-[1000] flex flex-col items-center bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200/90 shadow-xl p-1 pointer-events-auto"
+        className="absolute bottom-20 right-4 sm:right-6 z-20 flex flex-col items-center bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200/90 shadow-xl p-1 pointer-events-auto"
       >
         <button
           type="button"

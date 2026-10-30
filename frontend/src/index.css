@@ -524,3 +524,25 @@
   --dashboard-font-scale: 1;
   font-size: 16px;
 }
+
+
+/* ========================================================
+   MAP STACKING CONTEXT & OVERLAY PREVENTION
+   Ensures all maps (Leaflet, Google Maps, embedded iframes)
+   never escape their container or overlap fixed/sticky headers
+   ======================================================== */
+.leaflet-container,
+[data-testid^="google-property-map"],
+.property-map-container {
+  isolation: isolate !important;
+  z-index: 0 !important;
+}
+
+.leaflet-container .leaflet-pane {
+  z-index: 10 !important;
+}
+
+.leaflet-container .leaflet-top,
+.leaflet-container .leaflet-bottom {
+  z-index: 20 !important;
+}

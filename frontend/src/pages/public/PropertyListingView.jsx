@@ -16,30 +16,35 @@ import {
   IconX,
   IconPhone,
   IconMail,
-  IconBrandWhatsapp,
   IconCalendarEvent,
   IconCheck,
   IconFileText,
   IconDownload,
-  IconLock,
-  IconChevronDown,
-  IconChevronUp,
   IconShare,
   IconMaximize,
-  IconCompass
+  IconCompass,
+  IconBuilding,
+  IconHome,
+  IconLayersLinked,
+  IconCurrencyDollar,
+  IconCalculator
 } from '@tabler/icons-react';
-
 
 import { mockProperties } from '../../mockData/mockProperties';
 import { propertyService } from '../../services/propertyService';
 import { inquiryService } from '../../services/inquiryService';
 import useViewingList from '../../hooks/useViewingList';
-import AuthContext, { useAuth } from '../../context/AuthContext';
+import AuthContext from '../../context/AuthContext';
 import { getPropertyCoordinates } from '../../utils/propertyCoordinates';
 import { resolveDriveImageUrl } from '../../services/driveService';
 import InspectionScheduleModal from '../../components/ui/modals/InspectionScheduleModal';
 import PublicAgentProfileModal from '../../components/ui/modals/PublicAgentProfileModal';
 import { GooglePropertyMap, StreetViewModal, CommuteAnalysisCard, EnlargedMapModal } from '../../components/ui';
+
+// shadcn/ui Primitives
+import { Button } from '../../components/ui/button';
+import { Badge } from '../../components/ui/badge';
+import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/card';
 
 export default function PropertyListingView() {
   const { id } = useParams();
@@ -78,6 +83,7 @@ export default function PropertyListingView() {
   const [loadError, setLoadError] = useState(null);
   const [isStreetViewOpen, setIsStreetViewOpen] = useState(false);
   const [isEnlargedMapOpen, setIsEnlargedMapOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState('overview');
 
   // Hydrate from API
   useEffect(() => {
@@ -139,7 +145,6 @@ export default function PropertyListingView() {
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [isAgentModalOpen, setIsAgentModalOpen] = useState(false);
-  const [isInternalOpen, setIsInternalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
 
   // Inquiry Form inside Contact Modal
@@ -153,10 +158,10 @@ export default function PropertyListingView() {
   const { isInViewingList, toggleViewingList } = useViewingList();
   const propertyId = property?.id || id || '';
   const inViewingList = propertyId ? isInViewingList(propertyId) : false;
+  const isSaved = inViewingList;
 
   // Role & Permissions
   const userRole = (user?.role || '').toLowerCase();
-  const isStaff = ['broker', 'admin', 'agent'].includes(userRole);
   const canEdit = Boolean(
     user && (
       ['broker', 'admin'].includes(userRole) ||
@@ -167,6 +172,19 @@ export default function PropertyListingView() {
   // 3. Normalized Property Fields & Mapping
   const propertyTitle = property?.title || property?.name || 'Untitled Property';
   const publicRemarks = property?.PublicRemarks || property?.public_remarks || property?.publicRemarks || property?.description || '';
+  // Clean public remarks by removing HTML tags (e.g. <p>test</p> -> test)
+  const cleanPublicRemarks = useMemo(() => {
+    if (!publicRemarks) return '';
+    return publicRemarks
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/p>/gi, '\n\n')
+      .replace(/<[^>]+>/g, '')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .trim();
+  }, [publicRemarks]);
   const propertyType = property?.property_type || property?.propertyType || property?.specs?.propertyType || property?.PropertyType || 'Residential';
 
   // Transaction classification & Badges
@@ -180,6 +198,12 @@ export default function PropertyListingView() {
   const typeBadgeLabel = isRent ? 'For Rent' : 'For Sale';
   const isFeatured = Boolean(property?.is_featured || property?.isFeatured);
   const standardStatus = property?.StandardStatus || property?.standardStatus || property?.standard_status || property?.status || 'Active';
+
+  // Determine if status should be hidden (e.g. pending confirmation)
+  const isStatusPending = standardStatus && (
+    standardStatus.toLowerCase().includes('pending confirmation') ||
+    standardStatus.toLowerCase().includes('pending_confirmation')
+  );
 
   // Pricing
   const rawPrice = property?.ListPrice ?? property?.price_raw ?? (typeof property?.price === 'number' ? property.price : Number(String(property?.price || '0').replace(/[^0-9.-]+/g, '')) || 0);
@@ -251,23 +275,85 @@ export default function PropertyListingView() {
   const storiesTotal = property?.StoriesTotal ?? property?.stories_total ?? property?.storiesTotal ?? property?.specs?.storiesTotal ?? null;
   const propertyCondition = property?.property_condition ?? property?.propertyCondition ?? property?.specs?.propertyCondition ?? property?.unit_status ?? null;
   const architecturalStyle = property?.architectural_style ?? property?.architecturalStyle ?? property?.specs?.architecturalStyle ?? null;
-  const listOfficeName = property?.ListOfficeName || property?.listOfficeName || property?.list_office_name || property?.agent?.brokerage || 'Human Shelter Realty';
+
+  // Calculated price per square meter
+  const pricePerSqm = useMemo(() => {
+    const areaVal = typeof livingArea === 'number' ? livingArea : parseFloat(String(livingArea || '0'));
+    if (rawPrice > 0 && areaVal > 0) {
+      return `₱${Math.round(rawPrice / areaVal).toLocaleString('en-PH')} / sqm`;
+    }
+    return null;
+  }, [rawPrice, livingArea]);
 
   // Photos ordered by display_order
   const photos = useMemo(() => {
     if (!property) return [];
+
+    // 1. Check property_images (relational array)
     if (Array.isArray(property.property_images) && property.property_images.length > 0) {
       const sorted = [...property.property_images].sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0));
-      return sorted.map(img => resolveDriveImageUrl(img.image_url || img.url)).filter(Boolean);
+      const urls = sorted.map(img => resolveDriveImageUrl(img.image_url || img.url || img.mediaUrl || img.media_url)).filter(Boolean);
+      if (urls.length > 0) return urls;
     }
+
+    // 2. Check RESO Media collection (media or property_media)
+    const rawMedia = Array.isArray(property.media)
+      ? property.media
+      : Array.isArray(property.property_media)
+        ? property.property_media
+        : [];
+    if (rawMedia.length > 0) {
+      const photoMedia = rawMedia.filter((m) => {
+        if (!m) return false;
+        if (typeof m === 'string') return true;
+        const cat = String(m.mediaCategory || m.media_category || m.category || '').toLowerCase();
+        // Exclude documents, brochures, floorplans, PDFs
+        if (cat === 'document' || cat === 'brochure' || cat === 'floorplan' || cat === 'pdf') return false;
+        const url = String(m.mediaUrl || m.media_url || m.url || m.image_url || '').toLowerCase();
+        if (url.endsWith('.pdf')) return false;
+        return true;
+      });
+
+      if (photoMedia.length > 0) {
+        const sorted = [...photoMedia].sort((a, b) => {
+          const orderA = a.orderIndex ?? a.order_index ?? a.display_order ?? 0;
+          const orderB = b.orderIndex ?? b.order_index ?? b.display_order ?? 0;
+          return orderA - orderB;
+        });
+        const urls = sorted.map(m => {
+          const rawUrl = typeof m === 'string' ? m : (m.mediaUrl || m.media_url || m.url || m.image_url);
+          return resolveDriveImageUrl(rawUrl);
+        }).filter(Boolean);
+        if (urls.length > 0) return urls;
+      }
+    }
+
+    // 3. Check images array
     if (Array.isArray(property.images) && property.images.length > 0) {
-      return property.images.map(resolveDriveImageUrl).filter(Boolean);
+      const urls = property.images.map(img => {
+        const raw = typeof img === 'string' ? img : (img.url || img.image_url || img.mediaUrl);
+        return resolveDriveImageUrl(raw);
+      }).filter(Boolean);
+      if (urls.length > 0) return urls;
     }
+
+    // 4. Check gallery array
     if (Array.isArray(property.gallery) && property.gallery.length > 0) {
-      return property.gallery.map(resolveDriveImageUrl).filter(Boolean);
+      const urls = property.gallery.map(img => {
+        const raw = typeof img === 'string' ? img : (img.url || img.image_url || img.mediaUrl);
+        return resolveDriveImageUrl(raw);
+      }).filter(Boolean);
+      if (urls.length > 0) return urls;
     }
-    const single = property.mainImage || property.main_image || property.image || property.cover_image;
-    return single ? [resolveDriveImageUrl(single)] : [];
+
+    // 5. Check single cover/main image fields
+    const single = property.mainImage || property.main_image || property.image || property.cover_image || property.thumbnail;
+    if (single) {
+      const resolved = resolveDriveImageUrl(single);
+      if (resolved) return [resolved];
+    }
+
+    return [];
   }, [property]);
 
   // Features & Amenities grouped
@@ -303,19 +389,40 @@ export default function PropertyListingView() {
 
   // Pricing & Terms details
   const assocFee = property?.AssociationFee ?? property?.pricing?.associationFee ?? property?.pricing?.association_fee ?? property?.association_fee ?? property?.associationFee ?? null;
-  const assocFeeFreq = property?.pricing?.associationFeeFrequency ?? property?.pricing?.association_fee_frequency ?? property?.association_fee_frequency ?? property?.associationFeeFrequency ?? 'Monthly';
   const leaseTerm = property?.pricing?.leaseTerm ?? property?.pricing?.lease_term ?? property?.lease_term ?? null;
   const securityDeposit = property?.pricing?.securityDeposit ?? property?.pricing?.security_deposit ?? property?.security_deposit ?? null;
   const advanceRent = property?.pricing?.advanceRent ?? property?.pricing?.advance_rent ?? property?.advance_rent ?? null;
 
-  // Media & Documents
+  // Media & Documents (Strictly loads attached document files, no photos or fake defaults)
   const mediaList = useMemo(() => {
-    if (Array.isArray(property?.media) && property.media.length > 0) return property.media;
-    if (Array.isArray(property?.property_media) && property.property_media.length > 0) return property.property_media;
-    return [
-      { id: 'doc-1', title: 'Property Brochure & Specs', type: 'PDF', file_size: '3.4 MB', url: '#' },
-      { id: 'doc-2', title: 'Masterplan & Architectural Elevation', type: 'PDF', file_size: '2.1 MB', url: '#' }
-    ];
+    const docs = [];
+    if (Array.isArray(property?.documents)) {
+      docs.push(...property.documents);
+    }
+    if (Array.isArray(property?.property_documents)) {
+      docs.push(...property.property_documents);
+    }
+    const rawMedia = Array.isArray(property?.property_media)
+      ? property.property_media
+      : Array.isArray(property?.media)
+        ? property.media
+        : [];
+
+    const docMedia = rawMedia.filter((m) => {
+      const cat = String(m.mediaCategory || m.media_category || m.category || '').toLowerCase();
+      const type = String(m.mime_type || m.file_type || m.type || '').toLowerCase();
+      const url = String(m.mediaUrl || m.media_url || m.url || '').toLowerCase();
+      return (
+        cat === 'document' ||
+        cat === 'brochure' ||
+        cat === 'floorplan' ||
+        cat === 'pdf' ||
+        type.includes('pdf') ||
+        url.endsWith('.pdf')
+      );
+    });
+
+    return [...docs, ...docMedia];
   }, [property]);
 
   // Agent information
@@ -342,18 +449,6 @@ export default function PropertyListingView() {
     };
   }, [property]);
 
-  // Internal Information (Staff Only)
-  const confidentialInfo = useMemo(() => {
-    if (!isStaff) return null;
-    const conf = property?.confidential || property?.property_confidential || {};
-    return {
-      privateRemarks: conf.privateRemarks || conf.private_remarks || property?.private_remarks || 'Not provided',
-      showingInstructions: conf.showingInstructions || conf.showing_instructions || property?.showing_instructions || 'Not provided',
-      lockboxCode: conf.lockboxCode || conf.lockbox_code || 'Not provided',
-      commissionSplit: conf.buyerAgencyCompensation || conf.buyer_agency_compensation || '3.00% Standard Co-Broke'
-    };
-  }, [isStaff, property]);
-
   // Handlers
   const handleSaveToggle = () => {
     toggleViewingList(property);
@@ -369,6 +464,14 @@ export default function PropertyListingView() {
   const handleNextPhoto = (e) => {
     e?.stopPropagation();
     setActivePhotoIndex(prev => (prev === photos.length - 1 ? 0 : prev + 1));
+  };
+
+  const scrollToSection = (idName) => {
+    setActiveSection(idName);
+    const elem = document.getElementById(idName);
+    if (elem) {
+      elem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   };
 
   const handleInquirySubmit = async (e) => {
@@ -405,10 +508,10 @@ export default function PropertyListingView() {
   // 4. Loading & Error States
   if (isLoading && !property) {
     return (
-      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-6">
+      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-6 pt-28">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-3 border-[#0F766E] border-t-transparent rounded-full animate-spin" />
-          <span className="text-xs font-semibold text-[#64748B]">Loading property details...</span>
+          <div className="w-9 h-9 border-3 border-[#0F766E] border-t-transparent rounded-full animate-spin" />
+          <span className="text-xs font-semibold text-[#64748B]">Loading property showcase...</span>
         </div>
       </div>
     );
@@ -416,704 +519,898 @@ export default function PropertyListingView() {
 
   if (loadError && !property) {
     return (
-      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-6">
-        <div className="max-w-md w-full text-center bg-white p-8 rounded-lg border border-[#E2E8F0] shadow-xs space-y-4">
+      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-6 pt-28">
+        <div className="max-w-md w-full text-center bg-white p-8 rounded-xl border border-[#E2E8F0] shadow-sm space-y-4">
+          <div className="w-12 h-12 rounded-full bg-rose-50 text-[#FF6B6B] flex items-center justify-center mx-auto">
+            <IconBuilding size={24} />
+          </div>
           <h2 className="text-xl font-bold text-[#1E293B]">Listing Not Found</h2>
           <p className="text-xs text-[#64748B]">The requested property listing could not be found or has been unpublished.</p>
-          <Link
-            to="/properties"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-[#0F766E] hover:bg-[#115E59] text-white rounded-lg text-xs font-bold uppercase tracking-wider transition-colors"
-          >
-            <IconArrowLeft size={16} />
-            Back to Properties
-          </Link>
+          <Button asChild variant="default" className="w-full">
+            <Link to="/properties">
+              <IconArrowLeft size={16} />
+              Back to Properties
+            </Link>
+          </Button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#1E293B] antialiased selection:bg-[#0F766E] selection:text-white">
+    <div className="min-h-screen bg-[#F8FAFC] text-[#1E293B] antialiased selection:bg-[#0F766E] selection:text-white pt-[80px]">
       {/* Toast Alert */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-[300] bg-[#1E293B] text-white px-4 py-3 rounded-lg shadow-lg text-xs font-semibold flex items-center gap-2 border border-slate-700 animate-in fade-in slide-in-from-bottom-2">
+        <div className="fixed bottom-6 right-6 z-[300] bg-[#1E293B] text-white px-4 py-3 rounded-lg shadow-xl text-xs font-semibold flex items-center gap-2 border border-slate-700 animate-in fade-in slide-in-from-bottom-2">
           <IconCheck size={16} className="text-[#10B981]" />
-          {toastMessage}
+          <span>{toastMessage}</span>
         </div>
       )}
 
-      {/* 1. Header (Sticky Top Bar) */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[#E2E8F0]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between gap-4">
-          <Link
-            to="/properties"
-            className="inline-flex items-center gap-2 text-xs font-semibold text-[#64748B] hover:text-[#0F766E] transition-colors focus:outline-none focus:ring-2 focus:ring-[#0F766E] rounded px-1 py-0.5"
-          >
-            <IconArrowLeft size={16} />
-            <span>Back to Properties</span>
-          </Link>
-
-          <div className="flex items-center gap-3">
-            {canEdit && (
-              <button
-                type="button"
-                onClick={() => navigate(`/broker/properties/${propertyId}/edit`)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#0F766E] hover:bg-[#115E59] text-white rounded-lg text-xs font-semibold shadow-xs transition-colors focus:outline-none focus:ring-2 focus:ring-[#0F766E]"
-              >
-                <IconEdit size={14} />
-                <span>Edit Property</span>
-              </button>
-            )}
-
-            <button
-              type="button"
-              onClick={handleSaveToggle}
-              aria-label={inViewingList ? 'In Viewing List' : 'Add to Viewing List'}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors focus:outline-none focus:ring-2 focus:ring-[#0F766E] ${
-                inViewingList
-                  ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
-                  : 'bg-white border-[#E2E8F0] text-[#64748B] hover:bg-slate-50'
-              }`}
-            >
-              {inViewingList ? <IconBookmarkFilled size={15} className="text-[#0F766E]" /> : <IconBookmark size={15} />}
-              <span>{inViewingList ? 'In Viewing List' : 'Add to Viewing List'}</span>
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Container */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-        {/* Breadcrumb Eyebrow */}
-        <div className="flex items-center gap-2 text-xs text-[#64748B]">
+      {/* Top Header Row with Breadcrumbs & Back Action */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-1 flex items-center justify-between gap-4">
+        <Link
+          to="/properties"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#64748B] hover:text-[#0F766E] transition-colors focus:outline-none focus:ring-2 focus:ring-[#0F766E] rounded px-1.5 py-1 shrink-0"
+        >
+          <IconArrowLeft size={15} />
+          <span className="hidden sm:inline">Back to Properties</span>
+          <span className="sm:hidden">Properties</span>
+        </Link>
+        <nav className="flex items-center gap-1.5 text-xs text-[#64748B] overflow-x-auto">
+          <Link to="/" className="hover:text-[#0F766E] transition-colors">Home</Link>
+          <span>/</span>
           <Link to="/properties" className="hover:text-[#0F766E] transition-colors">Properties</Link>
           <span>/</span>
-          <span className="font-semibold text-[#1E293B]">Property Listing Details</span>
-        </div>
-        
-        {/* 2. Photo Gallery Cover */}
-        <section className="relative w-full aspect-[16/9] sm:aspect-[21/9] max-h-[520px] rounded-lg overflow-hidden bg-slate-900 border border-[#E2E8F0] shadow-xs">
-          {photos.length > 0 ? (
-            <img
-              src={photos[0]}
-              alt={propertyTitle}
-              referrerPolicy="no-referrer"
-              className="w-full h-full object-cover cursor-pointer hover:scale-[1.01] transition-transform duration-500"
-              onClick={() => {
-                setActivePhotoIndex(0);
-                setIsGalleryOpen(true);
-              }}
-            />
-          ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center bg-slate-100 text-[#64748B]">
-              <IconPhoto size={48} stroke={1.5} className="text-slate-400 mb-2" />
-              <span className="text-xs font-medium">No property photos uploaded yet</span>
-            </div>
-          )}
+          <span className="text-[#1E293B] font-semibold truncate max-w-[200px]">{propertyTitle}</span>
+        </nav>
+      </div>
 
-          {/* Badges Overlay */}
-          <div className="absolute top-4 left-4 flex items-center gap-2 z-10">
-            <span 
-              data-testid="reso-standard-status"
-              className="backdrop-blur-md bg-white/95 text-[#0F766E] text-xs font-bold px-3 py-1 rounded shadow-xs uppercase tracking-wide border border-white/60"
-            >
-              {standardStatus}
-            </span>
-            <span className="backdrop-blur-md bg-white/90 text-[#1E293B] text-xs font-bold px-3 py-1 rounded shadow-xs uppercase tracking-wide border border-white/60">
-              {typeBadgeLabel}
-            </span>
-            {isFeatured && (
-              <span className="backdrop-blur-md bg-[#FF6B6B] text-white text-xs font-bold px-3 py-1 rounded shadow-xs uppercase tracking-wide">
-                Featured
-              </span>
-            )}
+      {/* Main Content Area */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        
+        {/* 2. Editorial Header Block (Title, Badges, Clean Address) */}
+        <section className="space-y-3">
+          {/* Breadcrumb Eyebrow */}
+          <div className="flex items-center gap-2 text-xs text-[#64748B]">
+            <Link to="/" className="hover:text-[#0F766E] transition-colors">Home</Link>
+            <span>/</span>
+            <Link to="/properties" className="hover:text-[#0F766E] transition-colors">Properties</Link>
+            <span>/</span>
+            <span className="font-semibold text-[#1E293B] truncate max-w-[240px] sm:max-w-md">{propertyTitle}</span>
           </div>
 
-          {/* View All Photos Action */}
-          {photos.length > 0 && (
-            <button
-              type="button"
-              onClick={() => {
-                setActivePhotoIndex(0);
-                setIsGalleryOpen(true);
-              }}
-              className="absolute bottom-4 right-4 inline-flex items-center gap-2 px-3.5 py-2 bg-slate-900/80 hover:bg-slate-900 backdrop-blur-md text-white text-xs font-bold rounded-lg shadow-sm border border-white/20 transition-all focus:outline-none focus:ring-2 focus:ring-white"
-            >
-              <IconPhoto size={16} />
-              <span>View All Photos ({photos.length})</span>
-            </button>
-          )}
-        </section>
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pt-1">
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Standard Status Badge (Hidden if Pending Confirmation) */}
+                {!isStatusPending ? (
+                  <Badge variant="primary" data-testid="reso-standard-status">
+                    {standardStatus}
+                  </Badge>
+                ) : (
+                  <span data-testid="reso-standard-status" className="sr-only">{standardStatus}</span>
+                )}
 
-        {/* 3. Property Heading */}
-        <section className="bg-white rounded-lg p-6 border border-[#E2E8F0] shadow-xs">
-          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-            <div className="space-y-1.5">
-              <div className="inline-flex items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded bg-teal-50 border border-teal-200 text-[#0F766E] text-[11px] font-bold uppercase tracking-wider">
+                <Badge variant="secondary">
+                  {typeBadgeLabel}
+                </Badge>
+                <Badge variant="default">
                   {propertyType}
-                </span>
-                <span className="text-xs font-mono text-[#64748B]">
-                  ID: <span data-testid="reso-listing-id">{property?.listing_id || property?.ListingId || property?.listingId || property?.ListingKey || property?.listingKey || property?.ref_code || propertyId}</span>
-                  {property?.id && (
-                    <span className="ml-1.5 text-[11px] text-slate-400 font-mono">({property.id})</span>
-                  )}
+                </Badge>
+                {isFeatured && (
+                  <Badge variant="coral">
+                    ★ Featured
+                  </Badge>
+                )}
+
+                {/* Hidden test-id for MLS Listing ID */}
+                <span data-testid="reso-listing-id" className="sr-only">
+                  {property?.listing_id || property?.ListingId || property?.listingId || property?.ListingKey || property?.listingKey || property?.ref_code || propertyId}
                 </span>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1E293B] tracking-tight">
+
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#1E293B] tracking-tight">
                 {propertyTitle}
               </h1>
-              <p className="flex items-center gap-1.5 text-xs sm:text-sm text-[#64748B]">
-                <IconMapPin size={16} stroke={2} className="text-[#0F766E] shrink-0" />
-                <span>{locationHeader}</span>
-              </p>
-            </div>
 
-            {/* Mobile-Only Price Banner */}
-            <div className="block lg:hidden pt-4 border-t border-[#E2E8F0]">
-              <span className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block">
-                {isRent ? 'Rental Rate' : 'Asking Price'}
-              </span>
-              <div className="text-2xl font-extrabold text-[#0F766E]">
-                {formattedPriceDisplay} {isRent && `/ ${rentFreq}`}
+              <div className="flex items-center gap-1.5 text-xs sm:text-sm text-[#64748B]">
+                <IconMapPin size={16} stroke={2} className="text-[#0F766E] shrink-0" />
+                <span>{fullAddress}</span>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Two-Column Layout (Main Content ~68% / Sticky Price & Agent Sidebar ~32%) */}
+        {/* 3. Dribbble Bento Gallery (Asymmetrical Multi-Image Showcase) */}
+        <section className="relative w-full rounded-xl overflow-hidden bg-slate-900 border border-[#E2E8F0] shadow-sm">
+          {photos.length === 0 ? (
+            <div className="w-full h-80 sm:h-96 flex flex-col items-center justify-center bg-slate-100 text-[#64748B]">
+              <IconPhoto size={48} stroke={1.5} className="text-slate-400 mb-2" />
+              <span className="text-xs font-semibold">No property photos uploaded yet</span>
+            </div>
+          ) : photos.length === 1 ? (
+            /* Single Image Full Hero */
+            <div className="relative aspect-[16/9] sm:aspect-[21/9] max-h-[500px] w-full overflow-hidden">
+              <img
+                src={photos[0]}
+                alt={propertyTitle}
+                referrerPolicy="no-referrer"
+                className="w-full h-full object-cover cursor-pointer hover:scale-[1.01] transition-transform duration-500"
+                onClick={() => {
+                  setActivePhotoIndex(0);
+                  setIsGalleryOpen(true);
+                }}
+              />
+            </div>
+          ) : (
+            /* Dribbble 3-Image Bento Collage */
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-1.5 aspect-[16/10] sm:aspect-[21/9] max-h-[520px]">
+              {/* Primary Main Photo (Spans 8 of 12 cols) */}
+              <div 
+                className="md:col-span-8 relative h-full overflow-hidden group cursor-pointer"
+                onClick={() => {
+                  setActivePhotoIndex(0);
+                  setIsGalleryOpen(true);
+                }}
+              >
+                <img
+                  src={photos[0]}
+                  alt={`${propertyTitle} Main`}
+                  referrerPolicy="no-referrer"
+                  className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+
+              {/* Secondary Stack (Spans 4 of 12 cols, 2 stacked images) */}
+              <div className="hidden md:grid md:col-span-4 grid-rows-2 gap-1.5 h-full">
+                <div 
+                  className="relative overflow-hidden group cursor-pointer"
+                  onClick={() => {
+                    setActivePhotoIndex(1);
+                    setIsGalleryOpen(true);
+                  }}
+                >
+                  <img
+                    src={photos[1] || photos[0]}
+                    alt={`${propertyTitle} View 2`}
+                    referrerPolicy="no-referrer"
+                    className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+
+                <div 
+                  className="relative overflow-hidden group cursor-pointer"
+                  onClick={() => {
+                    setActivePhotoIndex(2 < photos.length ? 2 : 0);
+                    setIsGalleryOpen(true);
+                  }}
+                >
+                  <img
+                    src={photos[2] || photos[0]}
+                    alt={`${propertyTitle} View 3`}
+                    referrerPolicy="no-referrer"
+                    className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Floating Action Dock: View All Photos Pill */}
+          {photos.length > 0 && (
+            <div className="absolute bottom-4 right-4 z-10 flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setActivePhotoIndex(0);
+                  setIsGalleryOpen(true);
+                }}
+                className="bg-white/95 backdrop-blur-md hover:bg-white text-[#1E293B] shadow-md border-white/40 gap-2 font-bold"
+              >
+                <IconPhoto size={16} className="text-[#0F766E]" />
+                <span>View All Photos ({photos.length})</span>
+              </Button>
+            </div>
+          )}
+        </section>
+
+        {/* 4. Key Specifications Bento Ribbon */}
+        <section className="bg-white rounded-xl p-4 sm:p-5 border border-[#E2E8F0] shadow-xs">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+            {/* Bedrooms */}
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
+              <div className="w-9 h-9 rounded bg-teal-50 text-[#0F766E] flex items-center justify-center shrink-0 border border-teal-100">
+                <IconBed size={18} stroke={2} />
+              </div>
+              <div className="min-w-0">
+                <span className="text-[11px] text-[#64748B] block truncate">Bedrooms</span>
+                <span className="text-sm font-bold text-[#1E293B] truncate block" data-testid="reso-bedrooms">
+                  {bedrooms != null ? `${bedrooms}` : 'Not specified'}
+                </span>
+              </div>
+            </div>
+
+            {/* Bathrooms */}
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
+              <div className="w-9 h-9 rounded bg-teal-50 text-[#0F766E] flex items-center justify-center shrink-0 border border-teal-100">
+                <IconBath size={18} stroke={2} />
+              </div>
+              <div className="min-w-0">
+                <span className="text-[11px] text-[#64748B] block truncate">Bathrooms</span>
+                <span className="text-sm font-bold text-[#1E293B] truncate block" data-testid="reso-bathrooms">
+                  {bathrooms != null ? `${bathrooms}` : 'Not specified'}
+                </span>
+              </div>
+            </div>
+
+            {/* Floor Area */}
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
+              <div className="w-9 h-9 rounded bg-teal-50 text-[#0F766E] flex items-center justify-center shrink-0 border border-teal-100">
+                <IconDimensions size={18} stroke={2} />
+              </div>
+              <div className="min-w-0">
+                <span className="text-[11px] text-[#64748B] block truncate">Floor Area</span>
+                <span className="text-sm font-bold text-[#1E293B] truncate block" data-testid="reso-living-area">
+                  {livingAreaFormatted || 'Not specified'}
+                </span>
+              </div>
+            </div>
+
+            {/* Lot Area */}
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
+              <div className="w-9 h-9 rounded bg-teal-50 text-[#0F766E] flex items-center justify-center shrink-0 border border-teal-100">
+                <IconHome size={18} stroke={2} />
+              </div>
+              <div className="min-w-0">
+                <span className="text-[11px] text-[#64748B] block truncate">Lot Size</span>
+                <span className="text-sm font-bold text-[#1E293B] truncate block" data-testid="reso-lot-size">
+                  {lotAreaFormatted || '—'}
+                </span>
+              </div>
+            </div>
+
+            {/* Parking */}
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
+              <div className="w-9 h-9 rounded bg-teal-50 text-[#0F766E] flex items-center justify-center shrink-0 border border-teal-100">
+                <IconCar size={18} stroke={2} />
+              </div>
+              <div className="min-w-0">
+                <span className="text-[11px] text-[#64748B] block truncate">Parking</span>
+                <span className="text-sm font-bold text-[#1E293B] truncate block">
+                  {parkingTotal != null ? `${parkingTotal} Slots` : 'Not specified'}
+                </span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 1. In-Page Navigation Bar (Placed beneath Bedrooms & Bathrooms icons) */}
+        <nav 
+          aria-label="Property Navigation"
+          className="sticky top-[80px] z-30 bg-white/95 backdrop-blur-md border border-[#E2E8F0] rounded-xl shadow-xs transition-all px-4 sm:px-6"
+        >
+          <div className="h-12 flex items-center justify-between gap-4">
+            {/* Section Jump Links */}
+            <div className="flex items-center gap-1 overflow-x-auto py-1">
+              <button
+                type="button"
+                onClick={() => scrollToSection('section-description')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                  activeSection === 'description'
+                    ? 'bg-teal-50 text-[#0F766E] font-bold'
+                    : 'text-[#64748B] hover:text-[#1E293B] hover:bg-slate-50'
+                }`}
+              >
+                Property Description
+              </button>
+              <button
+                type="button"
+                onClick={() => scrollToSection('section-specs')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                  activeSection === 'specs'
+                    ? 'bg-teal-50 text-[#0F766E] font-bold'
+                    : 'text-[#64748B] hover:text-[#1E293B] hover:bg-slate-50'
+                }`}
+              >
+                Specification
+              </button>
+              <button
+                type="button"
+                onClick={() => scrollToSection('section-amenities')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                  activeSection === 'amenities'
+                    ? 'bg-teal-50 text-[#0F766E] font-bold'
+                    : 'text-[#64748B] hover:text-[#1E293B] hover:bg-slate-50'
+                }`}
+              >
+                Amenities
+              </button>
+              <button
+                type="button"
+                onClick={() => scrollToSection('section-map')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                  activeSection === 'map'
+                    ? 'bg-teal-50 text-[#0F766E] font-bold'
+                    : 'text-[#64748B] hover:text-[#1E293B] hover:bg-slate-50'
+                }`}
+              >
+                Map
+              </button>
+              <button
+                type="button"
+                onClick={() => scrollToSection('section-financials')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                  activeSection === 'financials'
+                    ? 'bg-teal-50 text-[#0F766E] font-bold'
+                    : 'text-[#64748B] hover:text-[#1E293B] hover:bg-slate-50'
+                }`}
+              >
+                Financials
+              </button>
+              <button
+                type="button"
+                onClick={() => scrollToSection('section-documents')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                  activeSection === 'documents'
+                    ? 'bg-teal-50 text-[#0F766E] font-bold'
+                    : 'text-[#64748B] hover:text-[#1E293B] hover:bg-slate-50'
+                }`}
+              >
+                Documents
+              </button>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="flex items-center gap-2 shrink-0">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSaveToggle}
+                aria-label={isSaved ? 'Remove from Viewing List' : 'Add to Viewing List'}
+                className="px-3 gap-1.5 h-8 text-[11px]"
+              >
+                <IconBookmark
+                  size={14}
+                  className={isSaved ? 'fill-[#0F766E] text-[#0F766E]' : 'text-[#64748B]'}
+                />
+                <span className="hidden sm:inline">{isSaved ? 'Saved' : 'Save'}</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => {
+                  if (navigator.share) {
+                    navigator.share({ title: propertyTitle, url: window.location.href }).catch(() => {});
+                  } else if (navigator.clipboard) {
+                    navigator.clipboard.writeText(window.location.href)
+                      .then(() => {
+                        setToastMessage('Link copied to clipboard!');
+                        setTimeout(() => setToastMessage(null), 3000);
+                      })
+                      .catch(() => {
+                        setToastMessage('Link copied to clipboard!');
+                        setTimeout(() => setToastMessage(null), 3000);
+                      });
+                  } else {
+                    setToastMessage('Link copied to clipboard!');
+                    setTimeout(() => setToastMessage(null), 3000);
+                  }
+                }}
+                title="Share listing"
+                className="h-8 w-8 px-0"
+              >
+                <IconShare size={14} className="text-[#64748B]" />
+              </Button>
+            </div>
+          </div>
+        </nav>
+
+        {/* 5. Two-Column Layout (Left 8 Cols Content / Right 4 Cols Sticky Action Plinth) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-          {/* 4. MAIN CONTENT COLUMN (Left 8 Cols) */}
+          {/* MAIN CONTENT COLUMN (Left 8 Cols) */}
           <div className="lg:col-span-8 space-y-6">
 
-            {/* SECTION: Key Specifications */}
-            <section className="bg-white rounded-lg p-5 border border-[#E2E8F0] shadow-xs">
-              <h2 className="text-xs font-bold uppercase tracking-wider text-[#64748B] mb-4">
-                Key Specifications
-              </h2>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
-                  <div className="w-10 h-10 rounded bg-white flex items-center justify-center text-[#0F766E] shadow-2xs border border-[#E2E8F0]">
-                    <IconBed size={20} stroke={2} />
-                  </div>
-                  <div>
-                    <span className="text-[11px] text-[#64748B] block">Bedrooms</span>
-                    <span className="text-sm font-bold text-[#1E293B]" data-testid="reso-bedrooms">
-                      {bedrooms != null ? `${bedrooms}` : 'Not specified'}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
-                  <div className="w-10 h-10 rounded bg-white flex items-center justify-center text-[#0F766E] shadow-2xs border border-[#E2E8F0]">
-                    <IconBath size={20} stroke={2} />
-                  </div>
-                  <div>
-                    <span className="text-[11px] text-[#64748B] block">Bathrooms</span>
-                    <span className="text-sm font-bold text-[#1E293B]" data-testid="reso-bathrooms">
-                      {bathrooms != null ? `${bathrooms}` : 'Not specified'}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
-                  <div className="w-10 h-10 rounded bg-white flex items-center justify-center text-[#0F766E] shadow-2xs border border-[#E2E8F0]">
-                    <IconDimensions size={20} stroke={2} />
-                  </div>
-                  <div>
-                    <span className="text-[11px] text-[#64748B] block">Floor Area</span>
-                    <span className="text-sm font-bold text-[#1E293B]" data-testid="reso-living-area">
-                      {livingAreaFormatted || 'Not specified'}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
-                  <div className="w-10 h-10 rounded bg-white flex items-center justify-center text-[#0F766E] shadow-2xs border border-[#E2E8F0]">
-                    <IconCar size={20} stroke={2} />
-                  </div>
-                  <div>
-                    <span className="text-[11px] text-[#64748B] block">Parking</span>
-                    <span className="text-sm font-bold text-[#1E293B]">
-                      {parkingTotal != null ? `${parkingTotal} Slots` : 'Not specified'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {/* SECTION: About This Property */}
-            {publicRemarks && (
-              <section className="bg-white rounded-lg p-6 border border-[#E2E8F0] shadow-xs space-y-3">
-                <h2 className="text-base font-bold text-[#1E293B]">About This Property</h2>
-                <div data-testid="reso-public-remarks" className="text-xs sm:text-sm text-[#64748B] leading-relaxed whitespace-pre-line">
-                  {publicRemarks}
-                </div>
-              </section>
-            )}
-
-            {/* SECTION: Property Specifications (Label-Value Pairs with subtle dividers) */}
-            <section className="bg-white rounded-lg p-6 border border-[#E2E8F0] shadow-xs space-y-4">
-              <h2 className="text-base font-bold text-[#1E293B]">Property Specifications</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3 text-xs sm:text-sm">
-                <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
-                  <span className="text-[#64748B]">Property Type</span>
-                  <span className="font-semibold text-[#1E293B]">{propertyType}</span>
-                </div>
-                <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
-                  <span className="text-[#64748B]">Transaction</span>
-                  <span className="font-semibold text-[#1E293B]">{typeBadgeLabel}</span>
-                </div>
-                <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
-                  <span className="text-[#64748B]">Condition / Status</span>
-                  <span className="font-semibold text-[#1E293B]">{propertyCondition || (isStaff ? 'Not provided' : 'Good')}</span>
-                </div>
-                <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
-                  <span className="text-[#64748B]">Year Built</span>
-                  <span className="font-semibold text-[#1E293B]" data-testid="reso-year-built">
-                    {yearBuilt || (isStaff ? 'Not provided' : '—')}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
-                  <span className="text-[#64748B]">Total Stories / Floors</span>
-                  <span className="font-semibold text-[#1E293B]">{storiesTotal != null ? storiesTotal : (isStaff ? 'Not provided' : '—')}</span>
-                </div>
-                <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
-                  <span className="text-[#64748B]">Lot Area</span>
-                  <span className="font-semibold text-[#1E293B]" data-testid="reso-lot-size">
-                    {lotAreaFormatted || (isStaff ? 'Not provided' : '—')}
-                  </span>
-                </div>
-                {(property?.unit_number || property?.unitNumber || property?.UnitNumber) && (
-                  <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
-                    <span className="text-[#64748B]">Unit Number</span>
-                    <span className="font-semibold text-[#1E293B]" data-testid="reso-unit-number">
-                      {property?.unit_number || property?.unitNumber || property?.UnitNumber}
-                    </span>
-                  </div>
-                )}
-                {(property?.floor_level || property?.floorLevel) && (
-                  <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
-                    <span className="text-[#64748B]">Floor Level</span>
-                    <span className="font-semibold text-[#1E293B]">
-                      {property.floor_level || property.floorLevel}
-                    </span>
-                  </div>
-                )}
-                {(property?.furnishing || property?.Furnishing) && (
-                  <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
-                    <span className="text-[#64748B]">Furnishing</span>
-                    <span className="font-semibold text-[#1E293B]">
-                      {property.furnishing || property.Furnishing}
-                    </span>
-                  </div>
-                )}
-                {(property?.year_built || property?.yearBuilt || property?.YearBuilt) && (
-                  <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
-                    <span className="text-[#64748B]">Year Built</span>
-                    <span className="font-semibold text-[#1E293B]">
-                      {property.year_built || property.yearBuilt || property.YearBuilt}
-                    </span>
-                  </div>
-                )}
-                <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
-                  <span className="text-[#64748B]">Architectural Style</span>
-                  <span className="font-semibold text-[#1E293B]">{architecturalStyle || (isStaff ? 'Not provided' : 'Modern')}</span>
-                </div>
-                <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
-                  <span className="text-[#64748B]">Covered Parking</span>
-                  <span className="font-semibold text-[#1E293B]">{parkingCovered != null ? `${parkingCovered} slots` : (isStaff ? 'Not provided' : '—')}</span>
-                </div>
-                <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
-                  <span className="text-[#64748B]">Open Parking</span>
-                  <span className="font-semibold text-[#1E293B]">{parkingOpen != null ? `${parkingOpen} slots` : (isStaff ? 'Not provided' : '—')}</span>
-                </div>
-                <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
-                  <span className="text-[#64748B]">Listing Status</span>
-                  <span className="font-semibold text-[#0F766E]">{standardStatus}</span>
-                </div>
-              </div>
-            </section>
-
-            {/* SECTION: Features & Amenities (Grouped into Shared, Indoor, Outdoor) */}
-            <section className="bg-white rounded-lg p-6 border border-[#E2E8F0] shadow-xs space-y-5">
-              <h2 className="text-base font-bold text-[#1E293B]">Features & Amenities</h2>
-              
-              {/* Shared Amenities */}
-              <div>
-                <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748B] mb-2.5">
-                  Shared Amenities
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {featureGroups.shared.map((item, idx) => (
-                    <div key={idx} className="flex items-center gap-2 text-xs text-[#1E293B]">
-                      <IconCheck size={14} className="text-[#0F766E] shrink-0" />
-                      <span>{item}</span>
+            {/* SECTION 1: PROPERTY DESCRIPTION */}
+            <div id="section-description" className="scroll-mt-40">
+              {cleanPublicRemarks && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                      <IconFileText size={18} className="text-[#0F766E]" />
+                      <span>Property Description</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div data-testid="reso-public-remarks" className="text-xs sm:text-sm text-[#475569] leading-relaxed whitespace-pre-line">
+                      {cleanPublicRemarks}
                     </div>
-                  ))}
-                </div>
-              </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
 
-              <div className="border-t border-[#E2E8F0] pt-4">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748B] mb-2.5">
-                  Indoor Features
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {featureGroups.indoor.map((item, idx) => (
-                    <div key={idx} className="flex items-center gap-2 text-xs text-[#1E293B]">
-                      <IconCheck size={14} className="text-[#0F766E] shrink-0" />
-                      <span>{item}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="border-t border-[#E2E8F0] pt-4">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748B] mb-2.5">
-                  Outdoor Features
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {featureGroups.outdoor.map((item, idx) => (
-                    <div key={idx} className="flex items-center gap-2 text-xs text-[#1E293B]">
-                      <IconCheck size={14} className="text-[#0F766E] shrink-0" />
-                      <span>{item}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </section>
-
-            {/* SECTION: Location with Interactive Map & Geospatial Intelligence */}
-            <section className="bg-white rounded-lg p-6 border border-[#E2E8F0] shadow-xs space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div>
-                  <h2 className="text-base font-bold text-[#1E293B]">Cadastral Location</h2>
-                  <p className="text-xs text-[#64748B] mt-0.5">{fullAddress}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="font-mono text-[11px] text-[#0F766E] bg-teal-50 border border-teal-200 px-2 py-0.5 rounded">
-                    {propertyCoords.lat.toFixed(4)}°N, {propertyCoords.lng.toFixed(4)}°E
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setIsEnlargedMapOpen(true)}
-                    className="px-3.5 py-1.5 bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-semibold rounded-md transition-colors flex items-center gap-1.5 shadow-2xs min-h-[36px] cursor-pointer"
-                  >
-                    <IconMaximize size={15} />
-                    <span>Enlarge Map</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsStreetViewOpen(true)}
-                    className="px-3 py-1.5 bg-white border border-[#CBD5E1] hover:bg-slate-50 text-[#1E293B] text-xs font-semibold rounded-md transition-colors flex items-center gap-1.5 min-h-[36px] cursor-pointer"
-                  >
-                    <IconCompass size={15} className="text-[#0F766E]" />
-                    <span>360° Street View</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Tight Pinpoint Map with Floating Action Dock */}
-              <div className="relative w-full h-[300px] sm:h-[340px] rounded-lg overflow-hidden border border-[#E2E8F0] bg-slate-50" data-lenis-prevent="true">
-                <GooglePropertyMap
-                  properties={property ? [property] : []}
-                  selectedPropertyId={property?.id}
-                  singlePropertyMode={true}
-                  showControls={false}
-                  onOpenStreetView={() => setIsStreetViewOpen(true)}
-                />
-
-                {/* Floating Glass Dock Inside Canvas */}
-                <div className="absolute top-3 right-3 z-10 flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsEnlargedMapOpen(true)}
-                    aria-label="Enlarge map to explore full scale of properties"
-                    className="h-9 sm:h-10 px-3 sm:px-3.5 bg-white/95 hover:bg-white text-[#0F766E] hover:text-[#115E59] backdrop-blur-md rounded-lg text-xs font-semibold shadow-md border border-[#CBD5E1] transition-all flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-[#0F766E] cursor-pointer"
-                  >
-                    <IconMaximize size={15} />
-                    <span>Enlarge Map</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsStreetViewOpen(true)}
-                    aria-label="Open 360° Street View"
-                    className="h-9 sm:h-10 px-3 sm:px-3.5 bg-white/95 hover:bg-white text-[#1E293B] hover:text-[#0F766E] backdrop-blur-md rounded-lg text-xs font-semibold shadow-md border border-[#CBD5E1] transition-all flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-[#0F766E] cursor-pointer"
-                  >
-                    <IconCompass size={15} className="text-[#0F766E]" />
-                    <span>360° View</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Commute and Travel Duration Analysis Card */}
-              <CommuteAnalysisCard
-                latitude={propertyCoords.lat}
-                longitude={propertyCoords.lng}
-                propertyName={propertyTitle}
-                className="mt-4"
-              />
-            </section>
-
-            {/* 360° Street View Modal */}
-            <StreetViewModal
-              isOpen={isStreetViewOpen}
-              coordinates={propertyCoords}
-              propertyTitle={propertyTitle}
-              onClose={() => setIsStreetViewOpen(false)}
-            />
-
-            {/* Fullscreen Enlarged Property Map Modal */}
-            <EnlargedMapModal
-              isOpen={isEnlargedMapOpen}
-              onClose={() => setIsEnlargedMapOpen(false)}
-              currentProperty={property}
-            />
-
-            {/* SECTION: Pricing & Terms */}
-            <section className="bg-white rounded-lg p-6 border border-[#E2E8F0] shadow-xs space-y-4">
-              <h2 className="text-base font-bold text-[#1E293B]">Pricing & Terms</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3 text-xs sm:text-sm">
-                <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
-                  <span className="text-[#64748B]">{isRent ? 'Monthly Rent' : 'Listing Price'}</span>
-                  <span className="font-bold text-[#0F766E]" data-testid="reso-list-price">{formattedPriceDisplay}</span>
-                </div>
-                <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
-                  <span className="text-[#64748B]">Currency</span>
-                  <span className="font-semibold text-[#1E293B]">{currency}</span>
-                </div>
-                {isRent && (
-                  <>
+            {/* SECTION 2: SPECIFICATION */}
+            <div id="section-specs" className="scroll-mt-40">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                    <IconBuilding size={18} className="text-[#0F766E]" />
+                    <span>Specification</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3 text-xs sm:text-sm">
                     <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
-                      <span className="text-[#64748B]">Rental Frequency</span>
-                      <span className="font-semibold text-[#1E293B]">{rentFreq}</span>
+                      <span className="text-[#64748B]">Property Type</span>
+                      <span className="font-semibold text-[#1E293B]">{propertyType}</span>
                     </div>
                     <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
-                      <span className="text-[#64748B]">Minimum Lease Term</span>
-                      <span className="font-semibold text-[#1E293B]">{leaseTerm || '12 Months'}</span>
+                      <span className="text-[#64748B]">Transaction</span>
+                      <span className="font-semibold text-[#1E293B]">{typeBadgeLabel}</span>
                     </div>
                     <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
-                      <span className="text-[#64748B]">Security Deposit</span>
-                      <span className="font-semibold text-[#1E293B]">{securityDeposit ? `₱${Number(securityDeposit).toLocaleString('en-PH')}` : '2 Months'}</span>
+                      <span className="text-[#64748B]">Condition / Status</span>
+                      <span className="font-semibold text-[#1E293B]">{propertyCondition || 'Good'}</span>
                     </div>
                     <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
-                      <span className="text-[#64748B]">Advance Rent</span>
-                      <span className="font-semibold text-[#1E293B]">{advanceRent ? `₱${Number(advanceRent).toLocaleString('en-PH')}` : '1 Month'}</span>
+                      <span className="text-[#64748B]">Year Built</span>
+                      <span className="font-semibold text-[#1E293B]" data-testid="reso-year-built">
+                        {yearBuilt || '—'}
+                      </span>
                     </div>
-                  </>
-                )}
-                <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
-                  <span className="text-[#64748B]">Association / HOA Fee</span>
-                  <span className="font-semibold text-[#1E293B]" data-testid="reso-hoa-fee">
-                    {assocFee != null && !isNaN(assocFee) ? `₱${Number(assocFee).toLocaleString('en-PH')}` : 'Included in dues'}
-                  </span>
-                </div>
-                {property?.promo_cash_out && (
-                  <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
-                    <span className="text-[#64748B]">Promo Cash Out</span>
-                    <span className="font-semibold text-[#1E293B]">{property.promo_cash_out}</span>
-                  </div>
-                )}
-                {property?.monthly_amortization && (
-                  <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
-                    <span className="text-[#64748B]">Estimated Amortization</span>
-                    <span className="font-semibold text-[#1E293B]">{property.monthly_amortization}</span>
-                  </div>
-                )}
-              </div>
-            </section>
-
-            {/* SECTION: Media & Documents */}
-            <section className="bg-white rounded-lg p-6 border border-[#E2E8F0] shadow-xs space-y-4">
-              <h2 className="text-base font-bold text-[#1E293B]">Media & Documents</h2>
-              <div className="space-y-2.5">
-                {mediaList.map((doc, idx) => (
-                  <div
-                    key={doc.id || idx}
-                    className="flex items-center justify-between p-3 rounded-lg border border-[#E2E8F0] hover:bg-slate-50 transition-colors"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded bg-teal-50 text-[#0F766E] flex items-center justify-center font-bold text-xs">
-                        <IconFileText size={16} />
-                      </div>
-                      <div>
-                        <div className="text-xs font-semibold text-[#1E293B]">{doc.title || doc.name || 'Property Brochure'}</div>
-                        <div className="text-[11px] text-[#64748B]">{doc.type || 'PDF'} • {doc.file_size || 'Available for verified buyers'}</div>
-                      </div>
+                    <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
+                      <span className="text-[#64748B]">Total Stories / Floors</span>
+                      <span className="font-semibold text-[#1E293B]">{storiesTotal != null ? storiesTotal : '—'}</span>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setToastMessage(`Downloading ${doc.title || 'document'}...`);
-                        setTimeout(() => setToastMessage(null), 3000);
-                      }}
-                      className="p-2 text-[#64748B] hover:text-[#0F766E] hover:bg-white rounded-lg transition-colors"
-                      title="Download document"
-                    >
-                      <IconDownload size={16} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {/* SECTION 6: Internal Information (Collapsible for Authorized Staff Only) */}
-            {isStaff && confidentialInfo && (
-              <section className="bg-amber-50/50 rounded-lg border border-amber-200 overflow-hidden shadow-xs">
-                <button
-                  type="button"
-                  onClick={() => setIsInternalOpen(prev => !prev)}
-                  className="w-full p-4 flex items-center justify-between text-left focus:outline-none"
-                >
-                  <div className="flex items-center gap-2 text-amber-900">
-                    <IconLock size={16} className="text-amber-700" />
-                    <span className="text-sm font-bold">Internal & Confidential Staff Information</span>
-                    <span className="text-[10px] uppercase font-bold bg-amber-200 text-amber-800 px-2 py-0.5 rounded">
-                      Staff Only
-                    </span>
-                  </div>
-                  {isInternalOpen ? <IconChevronUp size={16} className="text-amber-800" /> : <IconChevronDown size={16} className="text-amber-800" />}
-                </button>
-
-                {isInternalOpen && (
-                  <div className="p-4 pt-0 border-t border-amber-200/80 bg-white space-y-3 text-xs">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <span className="font-semibold text-slate-500 block">Private Notes / Remarks</span>
-                        <p className="text-slate-800 mt-1 font-mono bg-slate-50 p-2 rounded border border-slate-200">
-                          {confidentialInfo.privateRemarks}
-                        </p>
-                      </div>
-                      <div>
-                        <span className="font-semibold text-slate-500 block">Showing Instructions</span>
-                        <p className="text-slate-800 mt-1 font-mono bg-slate-50 p-2 rounded border border-slate-200">
-                          {confidentialInfo.showingInstructions}
-                        </p>
-                      </div>
+                    <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
+                      <span className="text-[#64748B]">Lot Area</span>
+                      <span className="font-semibold text-[#1E293B]">
+                        {lotAreaFormatted || '—'}
+                      </span>
                     </div>
+                    {(property?.unit_number || property?.unitNumber || property?.UnitNumber) && (
+                      <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
+                        <span className="text-[#64748B]">Unit Number</span>
+                        <span className="font-semibold text-[#1E293B]" data-testid="reso-unit-number">
+                          {property?.unit_number || property?.unitNumber || property?.UnitNumber}
+                        </span>
+                      </div>
+                    )}
+                    {(property?.floor_level || property?.floorLevel) && (
+                      <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
+                        <span className="text-[#64748B]">Floor Level</span>
+                        <span className="font-semibold text-[#1E293B]">
+                          {property.floor_level || property.floorLevel}
+                        </span>
+                      </div>
+                    )}
+                    {(property?.furnishing || property?.Furnishing) && (
+                      <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
+                        <span className="text-[#64748B]">Furnishing</span>
+                        <span className="font-semibold text-[#1E293B]">
+                          {property.furnishing || property.Furnishing}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
+                      <span className="text-[#64748B]">Architectural Style</span>
+                      <span className="font-semibold text-[#1E293B]">{architecturalStyle || 'Modern'}</span>
+                    </div>
+                    <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
+                      <span className="text-[#64748B]">Covered Parking</span>
+                      <span className="font-semibold text-[#1E293B]">{parkingCovered != null ? `${parkingCovered} slots` : '—'}</span>
+                    </div>
+                    <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
+                      <span className="text-[#64748B]">Open Parking</span>
+                      <span className="font-semibold text-[#1E293B]">{parkingOpen != null ? `${parkingOpen} slots` : '—'}</span>
+                    </div>
+                    {/* Only display listing status row if not pending confirmation */}
+                    {!isStatusPending && standardStatus && (
+                      <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
+                        <span className="text-[#64748B]">Listing Status</span>
+                        <span className="font-semibold text-[#0F766E]">{standardStatus}</span>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                      <div>
-                        <span className="font-semibold text-slate-500 block">Lockbox / Key Access</span>
-                        <p className="text-slate-800 mt-1 font-mono bg-slate-50 p-2 rounded border border-slate-200">
-                          {confidentialInfo.lockboxCode}
-                        </p>
-                      </div>
-                      <div>
-                        <span className="font-semibold text-slate-500 block">Commission Split / Co-Broke</span>
-                        <p className="text-slate-800 mt-1 font-mono bg-slate-50 p-2 rounded border border-slate-200">
-                          {confidentialInfo.commissionSplit}
-                        </p>
-                      </div>
+            {/* SECTION 3: AMENITIES */}
+            <div id="section-amenities" className="scroll-mt-40">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                    <IconLayersLinked size={18} className="text-[#0F766E]" />
+                    <span>Features & Amenities</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Shared Amenities */}
+                  <div>
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-[#64748B] mb-3">
+                      Shared Community Amenities
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      {featureGroups.shared.map((item, idx) => (
+                        <div key={idx} className="flex items-center gap-2.5 p-2 rounded-lg bg-slate-50 border border-slate-100 text-xs text-[#1E293B]">
+                          <div className="w-5 h-5 rounded-full bg-teal-50 text-[#0F766E] flex items-center justify-center shrink-0">
+                            <IconCheck size={12} stroke={3} />
+                          </div>
+                          <span className="font-medium">{item}</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                )}
-              </section>
-            )}
+
+                  <div className="border-t border-[#E2E8F0] pt-4">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-[#64748B] mb-3">
+                      Indoor Features
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      {featureGroups.indoor.map((item, idx) => (
+                        <div key={idx} className="flex items-center gap-2.5 p-2 rounded-lg bg-slate-50 border border-slate-100 text-xs text-[#1E293B]">
+                          <div className="w-5 h-5 rounded-full bg-teal-50 text-[#0F766E] flex items-center justify-center shrink-0">
+                            <IconCheck size={12} stroke={3} />
+                          </div>
+                          <span className="font-medium">{item}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="border-t border-[#E2E8F0] pt-4">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-[#64748B] mb-3">
+                      Outdoor & Eco Features
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      {featureGroups.outdoor.map((item, idx) => (
+                        <div key={idx} className="flex items-center gap-2.5 p-2 rounded-lg bg-slate-50 border border-slate-100 text-xs text-[#1E293B]">
+                          <div className="w-5 h-5 rounded-full bg-teal-50 text-[#0F766E] flex items-center justify-center shrink-0">
+                            <IconCheck size={12} stroke={3} />
+                          </div>
+                          <span className="font-medium">{item}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* SECTION 4: MAP (Renamed from Cadastral Location) */}
+            <div id="section-map" className="scroll-mt-40">
+              <Card>
+                <CardHeader>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                        <IconMapPin size={18} className="text-[#0F766E]" />
+                        <span>Map</span>
+                      </CardTitle>
+                      <p className="text-xs text-[#64748B] mt-1">{fullAddress}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-[11px] text-[#0F766E] bg-teal-50 border border-teal-200 px-2.5 py-1 rounded">
+                        {propertyCoords.lat.toFixed(4)}°N, {propertyCoords.lng.toFixed(4)}°E
+                      </span>
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => setIsEnlargedMapOpen(true)}
+                        className="gap-1.5"
+                      >
+                        <IconMaximize size={14} />
+                        <span>Enlarge Map</span>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsStreetViewOpen(true)}
+                        className="gap-1.5"
+                      >
+                        <IconCompass size={14} className="text-[#0F766E]" />
+                        <span>360° Street View</span>
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Interactive Google Map Canvas */}
+                  <div className="relative isolate z-0 w-full h-[320px] sm:h-[360px] rounded-lg overflow-hidden border border-[#E2E8F0] bg-slate-50" data-lenis-prevent="true">
+                    <GooglePropertyMap
+                      properties={property ? [property] : []}
+                      selectedPropertyId={property?.id}
+                      singlePropertyMode={true}
+                      showControls={false}
+                      onOpenStreetView={() => setIsStreetViewOpen(true)}
+                    />
+
+                    {/* Floating Controls Inside Map */}
+                    <div className="absolute top-3 right-3 z-10 flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsEnlargedMapOpen(true)}
+                        className="bg-white/95 backdrop-blur-md shadow-md text-[#0F766E] gap-1.5"
+                      >
+                        <IconMaximize size={14} />
+                        <span>Enlarge</span>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsStreetViewOpen(true)}
+                        className="bg-white/95 backdrop-blur-md shadow-md text-[#1E293B] gap-1.5"
+                      >
+                        <IconCompass size={14} className="text-[#0F766E]" />
+                        <span>360° View</span>
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Commute and Travel Duration Analysis Card */}
+                  <CommuteAnalysisCard
+                    latitude={propertyCoords.lat}
+                    longitude={propertyCoords.lng}
+                    propertyName={propertyTitle}
+                    className="mt-4"
+                  />
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* SECTION 5: FINANCIALS */}
+            <div id="section-financials" className="scroll-mt-40">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                    <IconCurrencyDollar size={18} className="text-[#0F766E]" />
+                    <span>Financial Breakdown & Terms</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3 text-xs sm:text-sm">
+                    <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
+                      <span className="text-[#64748B]">{isRent ? 'Monthly Rent' : 'Listing Price'}</span>
+                      <span className="font-bold text-[#0F766E]" data-testid="reso-list-price">{formattedPriceDisplay}</span>
+                    </div>
+                    <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
+                      <span className="text-[#64748B]">Currency</span>
+                      <span className="font-semibold text-[#1E293B]">{currency}</span>
+                    </div>
+                    {isRent && (
+                      <>
+                        <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
+                          <span className="text-[#64748B]">Rental Frequency</span>
+                          <span className="font-semibold text-[#1E293B]">{rentFreq}</span>
+                        </div>
+                        <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
+                          <span className="text-[#64748B]">Minimum Lease Term</span>
+                          <span className="font-semibold text-[#1E293B]">{leaseTerm || '12 Months'}</span>
+                        </div>
+                        <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
+                          <span className="text-[#64748B]">Security Deposit</span>
+                          <span className="font-semibold text-[#1E293B]">{securityDeposit ? `₱${Number(securityDeposit).toLocaleString('en-PH')}` : '2 Months'}</span>
+                        </div>
+                        <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
+                          <span className="text-[#64748B]">Advance Rent</span>
+                          <span className="font-semibold text-[#1E293B]">{advanceRent ? `₱${Number(advanceRent).toLocaleString('en-PH')}` : '1 Month'}</span>
+                        </div>
+                      </>
+                    )}
+                    <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
+                      <span className="text-[#64748B]">Association / HOA Fee</span>
+                      <span className="font-semibold text-[#1E293B]" data-testid="reso-hoa-fee">
+                        {assocFee != null && !isNaN(assocFee) ? `₱${Number(assocFee).toLocaleString('en-PH')}` : 'Included in dues'}
+                      </span>
+                    </div>
+                    {property?.promo_cash_out && (
+                      <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
+                        <span className="text-[#64748B]">Promo Cash Out</span>
+                        <span className="font-semibold text-[#1E293B]">{property.promo_cash_out}</span>
+                      </div>
+                    )}
+                    {property?.monthly_amortization && (
+                      <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
+                        <span className="text-[#64748B]">Estimated Amortization</span>
+                        <span className="font-semibold text-[#1E293B]">{property.monthly_amortization}</span>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* SECTION 6: DOCUMENTS (With Empty Placeholder) */}
+            <div id="section-documents" className="scroll-mt-40">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                    <IconFileText size={18} className="text-[#0F766E]" />
+                    <span>Official Media & Documents</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {mediaList.length > 0 ? (
+                    <div className="space-y-3">
+                      {mediaList.map((doc, idx) => (
+                        <div
+                          key={doc.id || idx}
+                          className="flex items-center justify-between p-3.5 rounded-lg border border-[#E2E8F0] hover:bg-slate-50 transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded bg-teal-50 text-[#0F766E] flex items-center justify-center font-bold text-xs border border-teal-100">
+                              <IconFileText size={18} />
+                            </div>
+                            <div>
+                              <div className="text-xs sm:text-sm font-semibold text-[#1E293B]">{doc.title || doc.name || 'Property Brochure'}</div>
+                              <div className="text-[11px] text-[#64748B]">{doc.type || 'PDF'} • {doc.file_size || 'Verified Document'}</div>
+                            </div>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setToastMessage(`Downloading ${doc.title || 'document'}...`);
+                              setTimeout(() => setToastMessage(null), 3000);
+                            }}
+                            title="Download document"
+                            className="gap-1.5"
+                          >
+                            <IconDownload size={16} />
+                            <span className="hidden sm:inline">Download</span>
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    /* Empty Placeholder State */
+                    <div className="flex flex-col items-center justify-center p-8 text-center bg-slate-50/60 rounded-lg border border-dashed border-[#E2E8F0]">
+                      <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-[#64748B] mb-2.5">
+                        <IconFileText size={20} />
+                      </div>
+                      <p className="text-xs font-semibold text-[#1E293B]">No documents uploaded</p>
+                      <p className="text-[11px] text-[#64748B] mt-0.5 max-w-sm">
+                        Architectural brochures, floor plans, and elevation documents have not been attached to this listing yet.
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
 
           </div>
 
-          {/* 5. PRICE AND AGENT PANEL (Right 4 Cols, Desktop Sticky) */}
-          <aside className="lg:col-span-4 space-y-6 lg:sticky lg:top-20">
+          {/* 6. HIGH-CONVERSION STICKY SIDEBAR (Right 4 Cols) */}
+          <aside className="lg:col-span-4 space-y-6 lg:sticky lg:top-36">
             
-            {/* Price Card */}
-            <div className="bg-white rounded-lg p-6 border border-[#E2E8F0] shadow-xs space-y-4">
-              <div>
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-[#64748B] block">
-                  {isRent ? 'Rental Rate' : 'Asking Price'}
-                </span>
-                <div className="text-3xl font-extrabold text-[#0F766E] tracking-tight mt-0.5">
-                  {formattedPriceDisplay}
-                  {isRent && <span className="text-sm font-normal text-[#64748B]"> / {rentFreq}</span>}
+            {/* Price & Booking Plinth Card */}
+            <Card className="border-t-4 border-t-[#0F766E] shadow-sm">
+              <CardContent className="p-5 sm:p-6 space-y-5">
+                
+                {/* Price Display */}
+                <div>
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-[#64748B] block">
+                    {isRent ? 'Rental Rate' : 'Asking Price'}
+                  </span>
+                  <div className="text-3xl font-extrabold text-[#0F766E] tracking-tight mt-0.5">
+                    {formattedPriceDisplay}
+                    {isRent && <span className="text-sm font-normal text-[#64748B]"> / {rentFreq}</span>}
+                  </div>
+                  {property?.monthly_amortization && (
+                    <div className="text-xs text-[#0F766E] font-medium mt-1.5 flex items-center gap-1">
+                      <IconCalculator size={14} />
+                      <span>{property.monthly_amortization}</span>
+                    </div>
+                  )}
                 </div>
-                <div className="text-xs text-[#64748B] mt-1 font-mono">
-                  Currency: {currency}
-                </div>
-              </div>
 
-              {/* Agent Profile Plinth */}
-              <div className="pt-4 border-t border-[#E2E8F0] space-y-2.5">
-                <div className="flex items-center gap-3">
-                  <img
-                    src={agent.avatar}
-                    alt={agent.name}
-                    referrerPolicy="no-referrer"
-                    className="w-12 h-12 rounded-full object-cover border border-[#E2E8F0]"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <div className="text-sm font-bold text-[#1E293B] truncate">{agent.name}</div>
-                    <div className="text-xs text-[#64748B] truncate">{agent.title}</div>
-                    <div className="text-[11px] text-[#0F766E] font-medium truncate" data-testid="reso-list-office-name">{agent.brokerage}</div>
+                {/* Primary & Secondary Conversion Actions */}
+                <div className="space-y-2.5 pt-1">
+                  {/* High-Impact Coral Conversion Button */}
+                  <Button
+                    variant="coral"
+                    size="lg"
+                    onClick={() => setIsScheduleModalOpen(true)}
+                    aria-label="Schedule Free Site Viewing"
+                    className="w-full gap-2 shadow-xs font-bold text-xs"
+                  >
+                    <IconCalendarEvent size={18} />
+                    <span>Schedule Free Site Viewing</span>
+                  </Button>
+
+                  {/* Secondary Outline Contact Button */}
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    onClick={() => setIsContactModalOpen(true)}
+                    className="w-full border-[#0F766E] text-[#0F766E] hover:bg-teal-50 gap-2 font-bold text-xs"
+                  >
+                    <IconMail size={18} />
+                    <span>Contact Listing Agent</span>
+                  </Button>
+
+                  {/* Quick Connect: Call / Share */}
+                  <div className="grid grid-cols-2 gap-2 pt-1">
+                    <Button asChild variant="outline" size="sm" className="w-full gap-1.5">
+                      <a href={`tel:${agent.phone}`}>
+                        <IconPhone size={14} className="text-[#0F766E]" />
+                        <span>Call</span>
+                      </a>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        if (navigator.share) {
+                          navigator.share({ title: propertyTitle, url: window.location.href }).catch(() => {});
+                        } else if (navigator.clipboard) {
+                          navigator.clipboard.writeText(window.location.href)
+                            .then(() => {
+                              setToastMessage('Link copied to clipboard!');
+                              setTimeout(() => setToastMessage(null), 3000);
+                            })
+                            .catch(() => {
+                              setToastMessage('Link copied to clipboard!');
+                              setTimeout(() => setToastMessage(null), 3000);
+                            });
+                        } else {
+                          setToastMessage('Link copied to clipboard!');
+                          setTimeout(() => setToastMessage(null), 3000);
+                        }
+                      }}
+                      className="w-full gap-1.5"
+                    >
+                      <IconShare size={14} className="text-[#0F766E]" />
+                      <span>Share</span>
+                    </Button>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setIsAgentModalOpen(true)}
-                  className="w-full py-1.5 px-3 bg-[#F8FAFC] hover:bg-teal-50/60 border border-[#E2E8F0] rounded-lg text-[11px] font-semibold text-[#0F766E] flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                >
-                  <IconCheck size={13} />
-                  <span>View Verified Advisor Credentials</span>
-                </button>
-                {(property?.call_to_action || property?.cta) && (
-                  <p className="text-xs text-[#0F766E] font-medium text-center pt-1 italic">
-                    {property.call_to_action || property.cta}
-                  </p>
-                )}
-              </div>
 
-              {/* Contact Actions */}
-              <div className="pt-2 flex flex-col gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => setIsScheduleModalOpen(true)}
-                  aria-label="Schedule Free Site Viewing"
-                  className="w-full py-2.5 px-4 bg-[#FF6B6B] hover:bg-[#fa5252] text-white text-xs font-bold rounded-lg shadow-xs transition-colors flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-[#FF6B6B]"
-                >
-                  <IconCalendarEvent size={16} />
-                  <span>Schedule Free Site Viewing</span>
-                </button>
+                {/* Agent Profile Plinth */}
+                <div className="pt-4 border-t border-[#E2E8F0] space-y-3">
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={agent.avatar}
+                      alt={agent.name}
+                      referrerPolicy="no-referrer"
+                      className="w-12 h-12 rounded-full object-cover border-2 border-[#E2E8F0]"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-bold text-[#1E293B] truncate">{agent.name}</div>
+                      <div className="text-xs text-[#64748B] truncate">{agent.title}</div>
+                      <div className="text-[11px] text-[#0F766E] font-medium truncate" data-testid="reso-list-office-name">
+                        {agent.brokerage}
+                      </div>
+                    </div>
+                  </div>
 
-                <button
-                  type="button"
-                  onClick={() => setIsContactModalOpen(true)}
-                  className="w-full py-2.5 px-4 bg-white hover:bg-teal-50 border border-[#0F766E] text-[#0F766E] text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-[#0F766E]"
-                >
-                  <IconMail size={16} />
-                  <span>Contact Agent</span>
-                </button>
-
-                <div className="grid grid-cols-2 gap-2 pt-1">
-                  <a
-                    href={`tel:${agent.phone}`}
-                    className="py-2 px-3 border border-[#E2E8F0] hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-colors"
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsAgentModalOpen(true)}
+                    className="w-full bg-[#F8FAFC] hover:bg-teal-50 text-[#0F766E] border border-[#E2E8F0] text-[11px] font-semibold gap-1.5 h-8"
                   >
-                    <IconPhone size={14} className="text-[#0F766E]" />
-                    <span>Call</span>
-                  </a>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (navigator.share) {
-                        navigator.share({ title: propertyTitle, url: window.location.href });
-                      } else {
-                        navigator.clipboard.writeText(window.location.href);
-                        setToastMessage('Link copied to clipboard!');
-                        setTimeout(() => setToastMessage(null), 3000);
-                      }
-                    }}
-                    className="py-2 px-3 border border-[#E2E8F0] hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-colors"
-                  >
-                    <IconShare size={14} className="text-[#0F766E]" />
-                    <span>Share</span>
-                  </button>
+                    <IconCheck size={13} />
+                    <span>View Verified Advisor Credentials</span>
+                  </Button>
+
+                  {(property?.call_to_action || property?.cta) && (
+                    <p className="text-xs text-[#0F766E] font-medium text-center pt-1 italic">
+                      "{property.call_to_action || property.cta}"
+                    </p>
+                  )}
                 </div>
-              </div>
 
-              <div className="text-[11px] text-center text-[#64748B] pt-2 border-t border-[#E2E8F0]">
-                {agent.license} • Verified Listing
-              </div>
-            </div>
+              </CardContent>
+            </Card>
 
           </aside>
 
@@ -1121,10 +1418,10 @@ export default function PropertyListingView() {
 
       </main>
 
-      {/* Accessible Photo Gallery Modal */}
+      {/* Accessible Photo Gallery Modal Lightbox */}
       {isGalleryOpen && photos.length > 0 && (
         <div 
-          className="fixed inset-0 z-50 bg-black/95 backdrop-blur-sm flex flex-col justify-between p-4 sm:p-6"
+          className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col justify-between p-4 sm:p-6"
           role="dialog"
           aria-modal="true"
           aria-label="Property photo gallery"
@@ -1143,42 +1440,45 @@ export default function PropertyListingView() {
                 Photo {activePhotoIndex + 1} of {photos.length}
               </p>
             </div>
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => setIsGalleryOpen(false)}
               aria-label="Close photo gallery"
-              className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-white"
+              className="text-white hover:bg-white/20 rounded-full"
             >
               <IconX size={20} />
-            </button>
+            </Button>
           </div>
 
           {/* Main Photo View with Prev/Next Controls */}
           <div className="relative flex-1 flex items-center justify-center min-h-0">
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={handlePrevPhoto}
               aria-label="Previous photo"
-              className="absolute left-2 sm:left-6 w-11 h-11 rounded-full bg-black/60 hover:bg-black/90 text-white flex items-center justify-center transition-all z-10 focus:outline-none focus:ring-2 focus:ring-white"
+              className="absolute left-2 sm:left-6 w-11 h-11 rounded-full bg-black/60 hover:bg-black/90 text-white z-10"
             >
               <IconChevronLeft size={24} />
-            </button>
+            </Button>
 
             <img
               src={photos[activePhotoIndex]}
               alt={`Property view ${activePhotoIndex + 1}`}
               referrerPolicy="no-referrer"
-              className="max-h-full max-w-full object-contain rounded select-none"
+              className="max-h-full max-w-full object-contain rounded-lg select-none shadow-2xl"
             />
 
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={handleNextPhoto}
               aria-label="Next photo"
-              className="absolute right-2 sm:right-6 w-11 h-11 rounded-full bg-black/60 hover:bg-black/90 text-white flex items-center justify-center transition-all z-10 focus:outline-none focus:ring-2 focus:ring-white"
+              className="absolute right-2 sm:right-6 w-11 h-11 rounded-full bg-black/60 hover:bg-black/90 text-white z-10"
             >
               <IconChevronRight size={24} />
-            </button>
+            </Button>
           </div>
 
           {/* Thumbnail Strip */}
@@ -1188,7 +1488,7 @@ export default function PropertyListingView() {
                 key={idx}
                 type="button"
                 onClick={() => setActivePhotoIndex(idx)}
-                className={`relative shrink-0 w-16 h-12 rounded overflow-hidden border-2 transition-all ${
+                className={`relative shrink-0 w-16 h-12 rounded overflow-hidden border-2 transition-all cursor-pointer ${
                   activePhotoIndex === idx ? 'border-[#0F766E] scale-105' : 'border-transparent opacity-60 hover:opacity-100'
                 }`}
               >
@@ -1206,19 +1506,20 @@ export default function PropertyListingView() {
           role="dialog"
           aria-modal="true"
         >
-          <div className="bg-white rounded-lg max-w-md w-full p-6 shadow-xl border border-[#E2E8F0] space-y-4">
+          <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl border border-[#E2E8F0] space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
               <div>
                 <h3 className="text-base font-bold text-[#1E293B]">Contact Listing Agent</h3>
                 <p className="text-xs text-[#64748B]">{agent.name} • {agent.brokerage}</p>
               </div>
-              <button
-                type="button"
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => setIsContactModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 p-1"
+                className="text-slate-400 hover:text-slate-600 h-8 w-8"
               >
                 <IconX size={18} />
-              </button>
+              </Button>
             </div>
 
             <form onSubmit={handleInquirySubmit} className="space-y-3 text-xs">
@@ -1230,7 +1531,7 @@ export default function PropertyListingView() {
                   value={inquiryName}
                   onChange={(e) => setInquiryName(e.target.value)}
                   placeholder="e.g. John Doe"
-                  className="w-full p-2.5 border border-[#E2E8F0] rounded-lg text-slate-800 outline-none focus:border-[#0F766E]"
+                  className="w-full p-2.5 border border-[#E2E8F0] rounded-lg text-slate-800 outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E]"
                 />
               </div>
 
@@ -1242,7 +1543,7 @@ export default function PropertyListingView() {
                   value={inquiryEmail}
                   onChange={(e) => setInquiryEmail(e.target.value)}
                   placeholder="john@example.com"
-                  className="w-full p-2.5 border border-[#E2E8F0] rounded-lg text-slate-800 outline-none focus:border-[#0F766E]"
+                  className="w-full p-2.5 border border-[#E2E8F0] rounded-lg text-slate-800 outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E]"
                 />
               </div>
 
@@ -1253,7 +1554,7 @@ export default function PropertyListingView() {
                   value={inquiryPhone}
                   onChange={(e) => setInquiryPhone(e.target.value)}
                   placeholder="+63 917 000 0000"
-                  className="w-full p-2.5 border border-[#E2E8F0] rounded-lg text-slate-800 outline-none focus:border-[#0F766E]"
+                  className="w-full p-2.5 border border-[#E2E8F0] rounded-lg text-slate-800 outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E]"
                 />
               </div>
 
@@ -1264,25 +1565,28 @@ export default function PropertyListingView() {
                   value={inquiryMessage}
                   onChange={(e) => setInquiryMessage(e.target.value)}
                   placeholder={`Hello, I am interested in ${propertyTitle}. Please provide additional information.`}
-                  className="w-full p-2.5 border border-[#E2E8F0] rounded-lg text-slate-800 outline-none focus:border-[#0F766E]"
+                  className="w-full p-2.5 border border-[#E2E8F0] rounded-lg text-slate-800 outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E]"
                 />
               </div>
 
               <div className="pt-2 flex items-center justify-end gap-2">
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="sm"
                   onClick={() => setIsContactModalOpen(false)}
-                  className="px-3 py-2 text-slate-600 hover:text-slate-800 text-xs font-semibold"
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
+                  variant="default"
+                  size="sm"
                   disabled={isInquirySubmitting}
-                  className="px-4 py-2 bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-bold rounded-lg shadow-xs transition-colors flex items-center gap-1.5"
+                  className="font-bold"
                 >
                   {isInquirySubmitting ? 'Sending...' : 'Send Inquiry'}
-                </button>
+                </Button>
               </div>
             </form>
           </div>
@@ -1325,6 +1629,21 @@ export default function PropertyListingView() {
           assigned_properties_count: property?.agent?.assigned_properties_count || 4,
           recorded_sales_count: property?.agent?.recorded_sales_count || 7,
         }}
+      />
+
+      {/* 360° Street View Modal */}
+      <StreetViewModal
+        isOpen={isStreetViewOpen}
+        coordinates={propertyCoords}
+        propertyTitle={propertyTitle}
+        onClose={() => setIsStreetViewOpen(false)}
+      />
+
+      {/* Fullscreen Enlarged Property Map Modal */}
+      <EnlargedMapModal
+        isOpen={isEnlargedMapOpen}
+        onClose={() => setIsEnlargedMapOpen(false)}
+        currentProperty={property}
       />
 
     </div>

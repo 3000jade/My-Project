@@ -331,32 +331,24 @@ export default function PropertiesPage() {
                             width: '100%',
                             transform: `translateY(${virtualRow.start}px)`,
                           }}
-                          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 pb-8"
+                          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 pt-1.5 pb-6 px-0.5"
                         >
                           {rowItems.map((property, idx) => (
                             <motion.div
                               key={property.id}
                               id={`property-card-${property.id}`}
-                              className={`h-full transition-all duration-300 rounded-2xl ${
-                                selectedPropertyId === property.id
-                                  ? 'ring-3 ring-[#0F766E] shadow-2xl scale-[1.02] bg-teal-50/20'
-                                  : hoveredPropertyId === property.id
-                                    ? 'ring-2 ring-[#0F766E] shadow-lg scale-[1.01] bg-teal-50/10'
-                                    : ''
-                              }`}
+                              className="h-full"
                               onMouseEnter={() => setHoveredPropertyId(property.id)}
                               onMouseLeave={() => setHoveredPropertyId(null)}
-                              initial={{ opacity: 0, scale: 0.95, y: 30 }}
-                              animate={{ opacity: 1, scale: 1, y: 0 }}
-                              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1], delay: idx * 0.08 }}
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1], delay: idx * 0.05 }}
                             >
                               <PropertyCard
                                 property={property}
                                 variant="vertical"
                                 isSelected={selectedPropertyId === property.id}
                                 isHovered={hoveredPropertyId === property.id}
-                                onMouseEnter={() => setHoveredPropertyId(property.id)}
-                                onMouseLeave={() => setHoveredPropertyId(null)}
                               />
                             </motion.div>
                           ))}
@@ -451,34 +443,26 @@ export default function PropertiesPage() {
                         width: '100%',
                         transform: `translateY(${virtualRow.start}px)`,
                       }}
-                      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8 pb-12"
+                      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8 pt-1.5 pb-10 px-0.5"
                     >
                       {rowItems.map((property, idx) => (
                         <motion.div
                           key={property.id}
                           id={`property-card-${property.id}`}
-                          className={`h-full transition-all duration-300 rounded-2xl ${
-                            selectedPropertyId === property.id
-                              ? 'ring-3 ring-[#0F766E] shadow-2xl scale-[1.02] bg-teal-50/20'
-                              : hoveredPropertyId === property.id
-                                ? 'ring-2 ring-[#0F766E] shadow-lg scale-[1.01] bg-teal-50/10'
-                                : ''
-                          }`}
-                          onMouseEnter={() => setHoveredPropertyId(property.id)}
-                          onMouseLeave={() => setHoveredPropertyId(null)}
-                          initial={{ opacity: 0, scale: 0.95, y: 30 }}
-                          animate={{ opacity: 1, scale: 1, y: 0 }}
-                          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1], delay: idx * 0.08 }}
-                        >
-                          <PropertyCard
-                            property={property}
-                            variant="vertical"
-                            isSelected={selectedPropertyId === property.id}
-                            isHovered={hoveredPropertyId === property.id}
-                            onMouseEnter={() => setHoveredPropertyId(property.id)}
-                            onMouseLeave={() => setHoveredPropertyId(null)}
-                          />
-                        </motion.div>
+                              className="h-full"
+                              onMouseEnter={() => setHoveredPropertyId(property.id)}
+                              onMouseLeave={() => setHoveredPropertyId(null)}
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1], delay: idx * 0.05 }}
+                            >
+                              <PropertyCard
+                                property={property}
+                                variant="vertical"
+                                isSelected={selectedPropertyId === property.id}
+                                isHovered={hoveredPropertyId === property.id}
+                              />
+                            </motion.div>
                       ))}
                     </div>
                   );

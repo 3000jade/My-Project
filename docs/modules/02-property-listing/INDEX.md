@@ -2,7 +2,7 @@
 module: 02-property-listing
 title: Property Listing Module
 last_updated: 2026-10-30
-total_documents: 60
+total_documents: 62
 ---
 
 # Property Listing Module — Master Index
@@ -84,6 +84,8 @@ All updates and technical reports for this module are ordered chronologically by
 | `2026-10-30` | [2026-10-30-minimal-google-map-public-properties.md](./2026-10-30-minimal-google-map-public-properties.md) | Verification Record — Minimal Google Map Interface & Multi-Property Visible Pins |
 | `2026-10-30` | [2026-10-30-remove-broker-property-detail-and-quick-edit.md](./2026-10-30-remove-broker-property-detail-and-quick-edit.md) | Verification Record — Removal of Broker Property Detail View & Quick Edit Slide Bar |
 | `2026-10-30` | [2026-10-30-remove-available-properties-header-and-sort.md](./2026-10-30-remove-available-properties-header-and-sort.md) | Verification Record — Removal of "Available Properties" Header & Sort Row with In-Drawer Sorting Relocation |
+| `2026-10-30` | [2026-10-30-properties-overlapping-and-hover-fix.md](./2026-10-30-properties-overlapping-and-hover-fix.md) | Verification Record — PropertiesPage UI Overlapping & Hover/Highlight Optimization |
+| `2026-10-30` | [2026-10-30-property-listing-view-dribbble-shadcn-refactor.md](./2026-10-30-property-listing-view-dribbble-shadcn-refactor.md) | Verification Record — Property Listing View Dribbble-Inspired shadcn/ui Refactoring |
 
 ---
 

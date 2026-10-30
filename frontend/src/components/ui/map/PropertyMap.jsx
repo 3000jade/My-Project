@@ -353,14 +353,14 @@ export default function PropertyMap({
   return (
     <div
       data-lenis-prevent="true"
-      className={`relative w-full h-full ${singlePropertyMode ? 'min-h-0' : 'min-h-[450px]'} overflow-hidden ${className}`}
+      className={`relative isolate z-0 w-full h-full ${singlePropertyMode ? 'min-h-0' : 'min-h-[450px]'} overflow-hidden ${className}`}
     >
       {/* Map Canvas */}
       <div ref={mapContainerRef} className="w-full h-full z-0" />
 
       {/* Top Floating Controls Bar */}
       {showControls && !singlePropertyMode && (
-        <div className="absolute top-4 left-4 right-4 z-[400] flex flex-wrap items-center justify-between gap-2 pointer-events-none">
+        <div className="absolute top-4 left-4 right-4 z-20 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
           {/* Left Side: "Search as I move" Checkbox + MapLayerControl */}
           <div className="flex flex-wrap items-center gap-2 pointer-events-auto">
             <label className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-white/95 backdrop-blur-md rounded-full border border-gray-200/80 shadow-sm pointer-events-auto cursor-pointer hover:bg-white transition-all select-none">

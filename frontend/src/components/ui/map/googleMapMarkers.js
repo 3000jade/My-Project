@@ -57,17 +57,19 @@ export function createTeardropPinElement(property, options = {}) {
   container.setAttribute('data-property-id', String(property.id || ''));
   container.setAttribute('data-testid', `map-marker-${property.id}`);
 
-  const fillColor = isSelected ? '#FF6B6B' : '#0F766E';
-  const strokeColor = isSelected ? '#E05353' : '#0B5953';
+  const fillColor = isSelected ? '#FF6B6B' : isHovered ? '#0D9488' : '#0F766E';
+  const strokeColor = isSelected ? '#E05353' : isHovered ? '#0F766E' : '#0B5953';
   const scaleClass = isSelected
     ? 'scale-125 z-[9999] drop-shadow-xl'
-    : 'hover:scale-115 hover:z-50 z-20 drop-shadow-md';
+    : isHovered
+      ? 'scale-120 z-[9990] drop-shadow-xl'
+      : 'hover:scale-115 hover:z-50 z-20 drop-shadow-md';
 
   container.className = `relative flex items-center justify-center cursor-pointer transition-all duration-200 select-none group ${scaleClass}`;
 
   container.innerHTML = `
     <!-- Floating Title Tooltip (Visible on Hover) -->
-    <div class="absolute -top-8 left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-md bg-slate-900/95 text-white text-[11px] font-sans font-semibold shadow-lg pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-150 whitespace-nowrap z-50 border border-slate-700/60 flex items-center gap-1.5">
+    <div class="absolute -top-8 left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-md bg-slate-900/95 text-white text-[11px] font-sans font-semibold shadow-lg pointer-events-none ${isHovered ? 'opacity-100 scale-105' : 'opacity-0 group-hover:opacity-100'} transition-opacity duration-150 whitespace-nowrap z-50 border border-slate-700/60 flex items-center gap-1.5">
       <span>${title}</span>
     </div>
 
@@ -83,7 +85,9 @@ export function createTeardropPinElement(property, options = {}) {
       ${
         isSelected
           ? '<circle cx="14" cy="14" r="2.5" fill="#FF6B6B" class="animate-pulse" />'
-          : ''
+          : isHovered
+            ? '<circle cx="14" cy="14" r="2.5" fill="#0D9488" class="animate-pulse" />'
+            : ''
       }
     </svg>
   `;

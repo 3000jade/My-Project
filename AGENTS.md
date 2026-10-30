@@ -52,7 +52,7 @@ Select guidance based on the actual requirements.
 | TypeScript implementation or refactoring | Configured TypeScript skill |
 | Supabase functionality | Supabase skill |
 | PostgreSQL schema, queries, or performance | Supabase PostgreSQL best-practices skill |
-| Browser verification | Playwright and applicable configured testing guidance |
+| Verification & Quality Assurance | Structured Manual Testing Table & static checks |
 
 Discover the actual installed commands and skill locations. Read applicable skill instructions before dependent work.
 
@@ -64,19 +64,16 @@ A skill is required only when relevant to the task.
 
 ## 5. Environment Readiness
 
-Before implementation, confirm that required verification can run. Include the readiness findings in `/plan`.
+Before implementation, confirm that basic services and static checks can run. Include the readiness findings in `/plan`.
 
 Check applicable prerequisites:
 
 - Dependencies and project scripts.
 - Local application services.
 - Local database and migration tooling.
-- Test accounts for relevant roles.
-- Controlled test data.
-- Playwright browser installation and configuration.
 - Required environment configuration, without exposing secrets.
 
-**If required verification cannot run, stop all task work.** Report the blocker, the prerequisite needed, and the current task status. Wait until the environment is ready.
+**If required build/runtime services cannot run, stop all task work.** Report the blocker, the prerequisite needed, and the current task status. Wait until the environment is ready.
 
 Do not bypass required checks or mark the work complete.
 
@@ -174,7 +171,7 @@ Include:
 - Frontend, backend, contracts, and data changes.
 - Permissions and cross-module effects.
 - Ordered implementation steps.
-- Verification commands and Playwright scenarios.
+- Verification strategy: static checks and planned Testing Table scenarios.
 - Environment readiness and existing failures requiring repair.
 - Risks, assumptions, and rollback approach.
 - Explicit approval boundaries.
@@ -223,67 +220,53 @@ Implement complete working capabilities through the necessary layers:
 For each capability:
 
 1. Define acceptance checks.
-2. Add a failing behavior test where applicable.
+2. Outline verification scenarios for the Testing Table.
 3. Implement data constraints and access policies.
 4. Implement server-side validation, authorization, and business rules.
 5. Define or update shared TypeScript contracts.
 6. Connect existing frontend services and reusable components.
 7. Handle applicable loading, empty, success, error, and disabled states.
-8. Verify the integrated behavior.
+8. Verify the integrated behavior via static checks and compile/build passes.
 
 Enforce authorization at the backend or database boundary. UI visibility alone is insufficient.
 
 Avoid unnecessary dependencies and unrelated refactoring.
 
-## 11. Verification
+## 11. Verification: Static Checks & Structured Testing Table
 
-Run applicable project checks:
+To optimize agent token usage, avoid terminal pollution, and provide clear user-facing QA guidelines, **automated test execution (Vitest test suites, Playwright E2E browser automation) is replaced by Static Verification Checks and a Structured Manual Testing Table.**
 
-- Type checking.
-- Linting.
-- Unit tests.
-- API and integration tests.
-- Database and access-policy tests.
-- Build.
-- Playwright E2E tests.
+### 11.1 Static Verification Checks
 
-### UI Features
+Before delivering any implementation, the agent must run fast, token-efficient static checks:
 
-Use Playwright to verify:
+- **Type Checking:** Run `npx tsc --noEmit` (backend or relevant package) to confirm strict type safety.
+- **Build / Syntax Verification:** Run `npm run build` or Vite transform checks to guarantee no syntax, import, or bundle errors exist.
+- **Linter / Lint Checks:** Run lightweight lint checks where configured.
 
-- The main user journey.
-- Relevant input validation.
-- Role-specific access.
-- Persistence after reload.
-- Applicable failure and recovery behavior.
-- Relevant desktop and mobile layouts.
-- Related existing journeys.
+### 11.2 Structured Manual Testing Table (Mandatory for Every Task)
 
-Prefer accessible role and label locators, observable assertions, and automatic waiting over fixed delays.
+Every completed feature, enhancement, or bug fix must include a **Structured Manual Testing Table** in the delivery report. This table provides step-by-step instructions for the developer or QA to verify functionality in the browser or API.
 
-Use controlled accounts and test data. Retain useful failure traces or screenshots.
+The table must follow this schema:
 
-### Backend-Only Changes
+| Test ID | Role / Persona | Preconditions | Action / User Steps | Expected Result | Status |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **TC-001** | *(e.g. Broker)* | *(e.g. Logged in, on `/broker/dashboard`)* | *(e.g. Click "Add Listing" button)* | *(e.g. Navigates to `/broker/properties/select-type`)* | 🔘 Ready to Verify |
+| **TC-002** | *(e.g. Public)* | *(e.g. Viewing property listing)* | *(e.g. Click "Inquire" with invalid email)* | *(e.g. Validation error displays below email field)* | 🔘 Ready to Verify |
 
-Use API, integration, database, and authorization tests as appropriate.
+**Required Scenarios Covered in the Testing Table:**
+1. **Happy Path:** The primary user journey from start to finish.
+2. **Validation & Boundaries:** Empty values, invalid inputs, edge-case strings, or rate limits.
+3. **Role-Based Access:** Confirm authorized roles can access and unauthorized roles are blocked/redirected.
+4. **State Transitions & Error Recovery:** Loading spinners, empty states, error banners, and refresh/retry behavior.
+5. **Responsive / Visual Checks:** Layout consistency on desktop and mobile viewports per `design.md`.
 
-Run related E2E tests when user journeys could be affected.
+### 11.3 Existing Failures & Diagnostics
 
-### Design Changes
-
-Verify applicable `design.md` requirements, including responsive layout, keyboard access, focus visibility, contrast, feedback, and visual consistency.
-
-Capture before-and-after screenshots where available.
-
-### Existing Failures
-
-Record existing failures and include their repair in the plan.
-
-If repair expands the requested scope, obtain approval before proceeding with that expansion.
-
-Do not conceal existing failures or report failed checks as passed. If required checks cannot execute, follow the stop-all-work rule.
-
-Record verification results as passed, failed, skipped, or unavailable. Skipped or unavailable required checks do not satisfy completion.
+If an existing failure or blocker is encountered:
+- Record the issue clearly in the report.
+- Resolve it if within scope, or propose a dedicated fix if it crosses approval boundaries.
 
 ## 12. Documentation
 
@@ -335,27 +318,27 @@ For cross-module features, maintain one primary specification and link it from e
 A development task is complete when:
 
 - Implementation meets the agreed requirements.
-- Required tests and checks pass.
+- Static checks (type checking, build check, syntax) pass without errors.
+- A Structured Manual Testing Table is provided in the delivery report.
 - Existing failures included in the agreed scope are resolved.
 - `docs/DATABASE_SCHEMA.md` is updated if any schema, table, RLS, or migration changed.
 - `docs/REQUIREMENTS_SPECIFICATION.md` is updated if any functional or non-functional behavior changed.
 - Module specifications, dated change records, and `INDEX.md` are updated.
-- Verification evidence is recorded.
 - Final changes and repository status have been reviewed.
 
-Do not declare completion while required verification is unavailable or acceptance criteria remain unmet.
+Do not declare completion while static checks fail or acceptance criteria remain unmet.
 
 Deliver a concise report containing:
 
-**Delivered behavior → Changes → Verification evidence → Limitations**
+**Delivered behavior → Changes → Testing Verification Table → Limitations**
 
 Use clear task statuses:
 
-- **Complete — verified locally:** Implementation, required checks, and documentation are finished.
-- **Blocked — environment unavailable:** Required verification cannot run; all task work stops.
+- **Complete — verified locally:** Implementation, static checks, documentation, and the manual testing table are finished.
+- **Blocked — environment unavailable:** Required build or runtime service cannot run; all task work stops.
 - **Blocked — required command or skill unavailable:** A strict prerequisite is missing; all task work stops.
 - **Awaiting approval:** A change crosses an approval boundary.
-- **Incomplete — verification failed:** Checks ran and found unresolved failures.
+- **Incomplete — verification failed:** Static checks reported unresolved errors.
 
 Local delivery does not require deployment or a further acceptance gate.
 

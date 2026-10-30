@@ -89,7 +89,14 @@ export default function PropertyCard({
   
   const floorAreaValue = property.living_area ?? property.livingArea ?? property.specs?.livingArea ?? property.sqm ?? property.floor_area ?? property.sqft ?? property.area ?? null;
   const floorAreaUnits = property.living_area_units || property.livingAreaUnits || property.specs?.livingAreaUnits || (property.sqm ? 'sqm' : (property.sqft ? 'sqft' : 'sqm'));
-  const floorAreaFormatted = floorAreaValue != null ? (String(floorAreaValue).includes('sq') ? floorAreaValue : `${floorAreaValue} ${floorAreaUnits}`) : null;
+  let floorAreaFormatted = null;
+  if (floorAreaValue != null) {
+    const rawValStr = String(floorAreaValue);
+    const num = Number(rawValStr.replace(/[^0-9.-]+/g, ''));
+    const displayNum = !isNaN(num) && num > 0 ? num.toLocaleString() : floorAreaValue;
+    const cleanUnits = String(floorAreaUnits).toLowerCase().includes('sq') || String(floorAreaUnits).toLowerCase().includes('meter') ? 'sqm' : floorAreaUnits;
+    floorAreaFormatted = `${displayNum} ${cleanUnits}`;
+  }
 
   // Condition state & Assigned agent
   const condition = property.property_condition || property.propertyCondition || property.condition || property.specs?.propertyCondition || property.specs?.condition || '';
@@ -124,14 +131,14 @@ export default function PropertyCard({
       onMouseLeave={onMouseLeave}
       data-testid="property-card"
       data-property-id={propertyId}
-      className={`group relative rounded-[28px] border p-4 transition-all duration-300 ease-out cursor-pointer overflow-hidden flex flex-col justify-between h-full w-full select-none font-sans ${
+      className={`group relative rounded-[28px] border p-4 transition-all duration-200 ease-out cursor-pointer overflow-hidden flex flex-col justify-between h-full w-full select-none font-sans ${
         isClosed
           ? isHighlighted
-            ? 'opacity-100 bg-white/95 border-rose-300 ring-2 ring-rose-400/25 shadow-md -translate-y-1'
-            : 'opacity-80 hover:opacity-100 bg-white/80 backdrop-blur-xs border-slate-200 shadow-2xs hover:shadow-sm hover:border-slate-300 hover:-translate-y-0.5'
+            ? 'opacity-100 bg-white border-rose-400 ring-2 ring-rose-400/30 shadow-lg -translate-y-1'
+            : 'opacity-80 hover:opacity-100 bg-white/90 backdrop-blur-xs border-slate-200 shadow-2xs hover:shadow-md hover:border-slate-300 hover:-translate-y-0.5'
           : isHighlighted
-            ? 'border-[#0F766E] ring-2 ring-[#0F766E]/30 shadow-lg -translate-y-1.5 bg-teal-50/10'
-            : 'bg-[#FFFFFF] border-[#E2E8F0] shadow-xs hover:shadow-md hover:border-[#0F766E]/40 hover:-translate-y-1'
+            ? 'bg-white border-[#0F766E] ring-2 ring-[#0F766E]/30 shadow-xl -translate-y-1'
+            : 'bg-white border-[#E2E8F0] shadow-xs hover:shadow-lg hover:border-[#0F766E]/50 hover:-translate-y-0.5'
       }`}
       tabIndex={0}
       role="button"
@@ -248,12 +255,12 @@ export default function PropertyCard({
         <div className="space-y-3 px-1">
           {/* Coral dash + Uppercase Property Type */}
           <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-slate-400">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 min-w-0">
               <span className="w-4 h-0.5 bg-[#E07A5F] rounded-full" />
               <span className="truncate">{propertyType}</span>
             </div>
             {condition && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-teal-50 text-[#0F766E] font-semibold text-[10px] tracking-normal border border-teal-200/60 capitalize">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-teal-50 text-[#0F766E] font-semibold text-[10px] tracking-normal border border-teal-200/60 capitalize shrink-0 max-w-[50%] truncate">
                 {condition}
               </span>
             )}
@@ -266,7 +273,7 @@ export default function PropertyCard({
           </h3>
 
           {/* Key Specs Row: beds, baths, area */}
-          <div className="flex items-center gap-4 sm:gap-5 text-xs text-slate-500 font-medium pt-0.5">
+          <div className="flex items-center gap-3 sm:gap-4.5 text-xs text-slate-500 font-medium pt-0.5">
             <div className="flex items-center gap-1.5">
               <IconBed size={16} stroke={1.8} className="text-slate-400 shrink-0" />
               <span>
@@ -285,7 +292,7 @@ export default function PropertyCard({
               <IconDimensions size={16} stroke={1.8} className="text-slate-400 shrink-0" />
               <span>
                 {floorAreaFormatted ? (
-                  <span className="font-medium text-slate-700 truncate max-w-[100px] inline-block align-bottom">
+                  <span className="font-medium text-slate-700 truncate max-w-[130px] inline-block align-bottom">
                     {floorAreaFormatted}
                   </span>
                 ) : (
