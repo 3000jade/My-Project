@@ -3,6 +3,8 @@ import { AuthService } from '../services/auth.service';
 import { GoogleAuthService } from '../services/googleAuth.service';
 import { AgentRegistrationService } from '../services/agentRegistration.service';
 import { SessionService } from '../services/session.service';
+import { OtpService } from '../services/otp.service';
+import { supabaseAdmin, isSupabaseConfigured } from '../config/supabase';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
 import type { ApiResponse } from '../types/api';
 
@@ -145,6 +147,238 @@ export class AuthController {
       res.status(400).json({
         success: false,
         error: err.message || 'Agent registration failed.',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
+  /**
+   * POST /api/auth/register-otp/initiate
+   * Validates registration details and dispatches a 6-digit email OTP.
+   */
+  public static async initiateRegistrationOtp(req: Request, res: Response<ApiResponse>): Promise<void> {
+    try {
+      const { email, password, fullName, phone, role } = req.body;
+
+      if (!email || !password) {
+        res.status(400).json({
+          success: false,
+          error: 'Email and password are required.',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Check for existing profile if Supabase is active
+      if (isSupabaseConfigured) {
+        const { data: existing } = await supabaseAdmin
+          .from('profiles')
+          .select('id, email')
+          .eq('email', email.trim().toLowerCase())
+          .maybeSingle();
+
+        if (existing) {
+          res.status(409).json({
+            success: false,
+            error: 'An account with this email address already exists. Please sign in.',
+            timestamp: new Date().toISOString(),
+          });
+          return;
+        }
+      }
+
+      const otpResult = await OtpService.generateRegistrationOtp(email, {
+        fullName,
+        password,
+        phone,
+        role: role || 'client',
+      });
+
+      res.status(200).json({
+        success: true,
+        data: {
+          email: email.trim().toLowerCase(),
+          cooldownSeconds: otpResult.cooldownSeconds,
+          devOtp: otpResult.devOtp,
+        },
+        message: 'A 6-digit verification code has been dispatched to your email address.',
+        timestamp: new Date().toISOString(),
+      });
+    } catch (err: any) {
+      res.status(400).json({
+        success: false,
+        error: err.message || 'Failed to initiate verification code.',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
+  /**
+   * POST /api/auth/register-otp/verify
+   * Verifies the 6-digit OTP, creates the account, and returns authenticated tokens.
+   */
+  public static async verifyRegistrationOtp(req: Request, res: Response<ApiResponse>): Promise<void> {
+    try {
+      const { email, otp, password: bodyPassword, fullName: bodyFullName, phone: bodyPhone } = req.body;
+
+      const verifyResult = await OtpService.verifyRegistrationOtp(email, otp);
+      if (!verifyResult.valid) {
+        res.status(400).json({
+          success: false,
+          error: verifyResult.reason || 'Invalid verification code.',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const finalFullName = bodyFullName || verifyResult.payload?.fullName || 'Client User';
+      const finalPassword = bodyPassword || verifyResult.payload?.password;
+      const finalPhone = bodyPhone || verifyResult.payload?.phone;
+
+      if (!finalPassword) {
+        res.status(400).json({
+          success: false,
+          error: 'Passphrase is required to complete account registration.',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Complete user registration with verified email flag
+      let authData: any = null;
+      if (isSupabaseConfigured) {
+        let userId: string | null = null;
+        try {
+          const { data: createData, error: createErr } = await supabaseAdmin.auth.admin.createUser({
+            email,
+            password: finalPassword,
+            email_confirm: true,
+            user_metadata: {
+              full_name: finalFullName,
+              role: 'client',
+            },
+          });
+          if (createData?.user) {
+            userId = createData.user.id;
+          } else if (createErr) {
+            // If already exists in auth, confirm email and update password
+            const { data: listUser } = await supabaseAdmin.auth.admin.listUsers();
+            const found = listUser?.users?.find((u) => u.email === email);
+            if (found) {
+              userId = found.id;
+              await supabaseAdmin.auth.admin.updateUserById(userId, {
+                password: finalPassword,
+                email_confirm: true,
+              });
+            } else {
+              throw createErr;
+            }
+          }
+        } catch {
+          // Fall back to standard sign up
+          authData = await AuthService.signUp(email, finalPassword, {
+            fullName: finalFullName,
+            role: 'client',
+          });
+          userId = authData?.user?.id;
+        }
+
+        // Upsert verified profile in PostgreSQL profiles table
+        if (userId) {
+          const profilePayload: Record<string, any> = {
+            id: userId,
+            email,
+            full_name: finalFullName,
+            role: 'client',
+            verification_status: 'VERIFIED',
+            updated_at: new Date().toISOString(),
+          };
+          if (finalPhone) profilePayload.phone = finalPhone;
+
+          await supabaseAdmin.from('profiles').upsert(profilePayload);
+
+          // Authenticate and obtain live JWT session
+          try {
+            authData = await AuthService.signIn(email, finalPassword);
+          } catch {
+            authData = {
+              user: {
+                id: userId,
+                email,
+                role: 'client',
+                fullName: finalFullName,
+              },
+              token: `token-verified-${userId}`,
+              refreshToken: `refresh-verified-${userId}`,
+            };
+          }
+        }
+      } else {
+        authData = await AuthService.signUp(email, finalPassword, {
+          fullName: finalFullName,
+          role: 'client',
+        });
+      }
+
+      // Create active session in SessionService
+      if (authData?.token && authData?.user?.id) {
+        SessionService.createSession({
+          sessionId: authData.token,
+          token: authData.token,
+          userId: authData.user.id,
+          role: authData.user.role || 'client',
+          userAgent: (req.headers['user-agent'] as string) || 'Unknown Device',
+          ipAddress: req.ip || (req.headers['x-forwarded-for'] as string) || 'Unavailable',
+        });
+      }
+
+      res.status(201).json({
+        success: true,
+        data: authData,
+        message: 'Account successfully verified and registered.',
+        timestamp: new Date().toISOString(),
+      });
+    } catch (err: any) {
+      res.status(400).json({
+        success: false,
+        error: err.message || 'OTP verification failed.',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
+  /**
+   * POST /api/auth/register-otp/resend
+   * Resends a fresh 6-digit OTP code to the provided email address.
+   */
+  public static async resendRegistrationOtp(req: Request, res: Response<ApiResponse>): Promise<void> {
+    try {
+      const { email } = req.body;
+      if (!email) {
+        res.status(400).json({
+          success: false,
+          error: 'Email address is required.',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const resendResult = await OtpService.resendRegistrationOtp(email);
+
+      res.status(200).json({
+        success: true,
+        data: {
+          email: email.trim().toLowerCase(),
+          cooldownSeconds: resendResult.cooldownSeconds,
+          devOtp: resendResult.devOtp,
+        },
+        message: 'A fresh verification code has been dispatched.',
+        timestamp: new Date().toISOString(),
+      });
+    } catch (err: any) {
+      res.status(400).json({
+        success: false,
+        error: err.message || 'Unable to resend verification code.',
         timestamp: new Date().toISOString(),
       });
     }

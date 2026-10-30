@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import PageHeader from '../../../components/dashboard/PageHeader';
+import ViewPropertyButton from '../../../components/ui/buttons/ViewPropertyButton';
 import StatusBadge from '../../../components/dashboard/StatusBadge';
 import DashboardModal from '../../../components/dashboard/DashboardModal';
 import { inquiryService } from '../../../services/inquiryService';
@@ -699,13 +700,14 @@ export default function AgentInquiryDetail() {
               <p className="text-sm font-bold font-display text-[#0F766E]">
                 {inquiry.property_price}
               </p>
-              <Link
-                to={`/agent/properties/${inquiry.property_id}`}
-                className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-[#0F766E] hover:text-[#115E59] pt-2 font-sans"
-              >
-                <span>View Listing Page</span>
-                <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
-              </Link>
+                            <div className="pt-2">
+                <ViewPropertyButton
+                  to={`/agent/properties/${inquiry.property_id}`}
+                  size="sm"
+                  label="View property"
+                  title="View Listing Page"
+                />
+              </div>
             </div>
           </div>
 

@@ -12,6 +12,8 @@
 
 | Version | Date (UTC) | Author / Role | Affected Modules | Summary of Changes |
 | :---: | :---: | :--- | :--- | :--- |
+| `1.4.0` | `2026-10-29` | Data Architect | Module 01 (User Management) | Extended `public.profiles` with `ui_preferences` JSONB (default `'{"font_size": "standard"}'`); registered `user_profiles_ui_preferences_migration.sql`. |
+| `1.3.0` | `2026-10-29` | Data Architect | Module 02 (Subdivision Maps) | Created tables `subdivision_projects`, `subdivision_plans`, `subdivision_lots`, `subdivision_map_versions`; linked `properties` via `subdivision_project_id` and `subdivision_lot_id`; registered indexes, constraints, and RLS policies. |
 | `1.2.0` | `2026-10-28` | Data Architect | Module 01 (User Management) | Extended `public.profiles` with `preferred_location`, `investment_budget`, `firm_name`, and `notification_preferences` JSONB; registered migration and RLS policies. |
 | `1.1.0` | `2026-10-28` | Data Architect | Module 06 (Audit Module) | Detailed exact column definitions for `audit_events`, `property_audit_log`, `agent_audit_events`, and `inquiry_assignment_audit`; registered their immutable RLS policies in Section 4. |
 | `1.0.0` | `2026-10-28` | Data Architect | Modules 01–08 | Comprehensive baseline documentation of all active PostgreSQL tables, columns, relations, and RLS policies. |
@@ -40,6 +42,13 @@ erDiagram
     PROPERTIES ||--o{ PROPERTY_EDIT_REQUESTS : "pending_edits"
     PROPERTIES ||--o{ INQUIRIES : "targets"
     PROPERTIES ||--o{ APPOINTMENTS : "schedules_showing"
+    PROPERTIES }o--|| SUBDIVISION_PROJECTS : "belongs_to"
+    PROPERTIES }o--|| SUBDIVISION_LOTS : "anchors_lot"
+
+    SUBDIVISION_PROJECTS ||--o{ SUBDIVISION_PLANS : "contains"
+    SUBDIVISION_PROJECTS ||--o{ SUBDIVISION_LOTS : "defines"
+    SUBDIVISION_PROJECTS ||--o{ SUBDIVISION_MAP_VERSIONS : "publishes_version"
+    SUBDIVISION_PLANS ||--o{ SUBDIVISION_LOTS : "maps_on"
 
     INQUIRIES ||--o{ INQUIRY_MESSAGES : "threads"
     INQUIRIES ||--o{ INQUIRY_INTERNAL_NOTES : "notes"
@@ -81,6 +90,7 @@ erDiagram
 | `preferred_location` | `TEXT` | Yes | `NULL` | — | Client preferred acquisition location / enclaves |
 | `investment_budget` | `TEXT` | Yes | `NULL` | — | Client target property investment budget range |
 | `notification_preferences` | `JSONB` | Yes | `'{"email": true, "sms": true, "priceDrops": true}'::jsonb` | — | Multi-channel communication notification flags |
+| `ui_preferences` | `JSONB` | Yes | `'{"font_size": "standard"}'::jsonb` | — | Dashboard UI customization preferences (font size, display density) |
 | `created_at` | `TIMESTAMPTZ` | No | `timezone('utc', now())` | — | Creation timestamp |
 | `updated_at` | `TIMESTAMPTZ` | No | `timezone('utc', now())` | — | Last update timestamp |
 
@@ -129,6 +139,8 @@ erDiagram
 | `created_by` | `UUID` | Yes | `NULL` | `REFERENCES auth.users(id) ON DELETE SET NULL` | Creator user ID |
 | `custom_reso_attributes`| `JSONB` | Yes | `'{}'::jsonb` | — | Additional RESO fields |
 | `is_featured` | `BOOLEAN` | Yes | `false` | — | Curated feature flag |
+| `subdivision_project_id`| `UUID` | Yes | `NULL` | `REFERENCES public.subdivision_projects(id) ON DELETE SET NULL` | Linked subdivision project |
+| `subdivision_lot_id` | `UUID` | Yes | `NULL` | `REFERENCES public.subdivision_lots(id) ON DELETE SET NULL` | Linked lot boundary record |
 | `created_at` | `TIMESTAMPTZ` | No | `timezone('utc', now())` | — | Creation timestamp |
 | `updated_at` | `TIMESTAMPTZ` | No | `timezone('utc', now())` | — | Modification timestamp |
 
@@ -170,6 +182,82 @@ erDiagram
 | `room_length` | `NUMERIC(6,2)`| Yes | `NULL` | — | Length in meters/feet |
 | `room_width` | `NUMERIC(6,2)`| Yes | `NULL` | — | Width in meters/feet |
 | `room_features` | `TEXT[]` | Yes | `'{}'` | — | Array of features (e.g. En-suite, Walk-in closet) |
+
+#### Table: `public.subdivision_projects`
+*Subdivision development entities with geo-location and development lifecycle states (FR-001).*
+
+| Column Name | Data Type | Nullable | Default | Constraints / Foreign Keys | Description |
+| :--- | :--- | :---: | :--- | :--- | :--- |
+| `id` | `UUID` | No | `gen_random_uuid()` | `PRIMARY KEY` | Subdivision project UUID |
+| `name` | `VARCHAR(255)` | No | — | — | Project / estate commercial name |
+| `developer_name` | `VARCHAR(255)` | Yes | `NULL` | — | Real estate developer / corporation |
+| `location_address`| `TEXT` | No | — | — | Street address or enclave route |
+| `city` | `VARCHAR(100)` | No | — | — | City or municipality |
+| `province_state` | `VARCHAR(100)` | Yes | `NULL` | — | Province or state |
+| `latitude` | `DOUBLE PRECISION`| Yes| `NULL` | — | Master GPS latitude coordinate |
+| `longitude` | `DOUBLE PRECISION`| Yes| `NULL` | — | Master GPS longitude coordinate |
+| `status` | `VARCHAR(30)` | No | `'Active'` | `CHECK (status IN ('Planning', 'Active', 'SoldOut', 'Archived'))` | Development lifecycle state |
+| `created_by` | `UUID` | Yes | `NULL` | `REFERENCES auth.users(id) ON DELETE SET NULL` | Creator user ID |
+| `created_at` | `TIMESTAMPTZ` | No | `timezone('utc', now())` | — | Record creation timestamp |
+| `updated_at` | `TIMESTAMPTZ` | No | `timezone('utc', now())` | — | Record update timestamp |
+
+#### Table: `public.subdivision_plans`
+*Master subdivision graphics, cadastral blueprints, and dimensional metadata (FR-002–FR-005).*
+
+| Column Name | Data Type | Nullable | Default | Constraints / Foreign Keys | Description |
+| :--- | :--- | :---: | :--- | :--- | :--- |
+| `id` | `UUID` | No | `gen_random_uuid()` | `PRIMARY KEY` | Master plan document UUID |
+| `project_id` | `UUID` | No | — | `REFERENCES public.subdivision_projects(id) ON DELETE CASCADE` | Associated subdivision |
+| `plan_title` | `VARCHAR(255)` | No | — | — | Document title (e.g. "Phase 1 Master Site Map") |
+| `image_url` | `TEXT` | No | — | — | Storage CDN URL for plan image |
+| `file_name` | `VARCHAR(255)` | Yes | `NULL` | — | Original uploaded file name |
+| `file_size_bytes` | `BIGINT` | Yes | `NULL` | — | File size in bytes (max 15MB) |
+| `image_width` | `INTEGER` | No | — | — | Native image pixel width |
+| `image_height` | `INTEGER` | No | — | — | Native image pixel height |
+| `aspect_ratio` | `NUMERIC(10,4)`| Yes | `NULL` | — | Calculated aspect ratio (width/height) |
+| `is_active` | `BOOLEAN` | No | `true` | — | Whether plan is current active canvas |
+| `created_by` | `UUID` | Yes | `NULL` | `REFERENCES auth.users(id) ON DELETE SET NULL` | Creator user ID |
+| `created_at` | `TIMESTAMPTZ` | No | `timezone('utc', now())` | — | Creation timestamp |
+| `updated_at` | `TIMESTAMPTZ` | No | `timezone('utc', now())` | — | Last update timestamp |
+
+#### Table: `public.subdivision_lots`
+*Interactive vector polygon boundaries, cadastral identifiers, and availability records (FR-006–FR-030).*
+
+| Column Name | Data Type | Nullable | Default | Constraints / Foreign Keys | Description |
+| :--- | :--- | :---: | :--- | :--- | :--- |
+| `id` | `UUID` | No | `gen_random_uuid()` | `PRIMARY KEY` | Lot boundary record UUID |
+| `project_id` | `UUID` | No | — | `REFERENCES public.subdivision_projects(id) ON DELETE CASCADE` | Associated subdivision |
+| `plan_id` | `UUID` | No | — | `REFERENCES public.subdivision_plans(id) ON DELETE CASCADE` | Traced master plan |
+| `block_number` | `VARCHAR(50)` | No | — | — | Cadastral block number |
+| `lot_number` | `VARCHAR(50)` | No | — | — | Cadastral lot number |
+| `boundary_type` | `VARCHAR(50)` | No | `'SaleableLot'` | `CHECK (boundary_type IN ('SaleableLot', 'Road', 'Park', 'Facility', 'Waterway', 'Other'))` | Feature classification |
+| `availability_status`| `VARCHAR(30)`| No | `'Available'` | `CHECK (availability_status IN ('Available', 'Reserved', 'Sold', 'Unavailable'))` | Commercial availability |
+| `verified_area_sqm`| `NUMERIC(10,2)`| No | — | — | Verified land area in square meters |
+| `price` | `NUMERIC(15,2)`| Yes | `NULL` | — | Asking lot price in PHP (₱) |
+| `description` | `TEXT` | Yes | `NULL` | — | Lot orientation/topography notes |
+| `coordinates` | `JSONB` | No | — | — | Ordered array of vertex points `[{x, y}, ...]` |
+| `is_verified` | `BOOLEAN` | No | `false` | — | Human verification gate for AI suggestions |
+| `created_by` | `UUID` | Yes | `NULL` | `REFERENCES auth.users(id) ON DELETE SET NULL` | Creator user ID |
+| `updated_by` | `UUID` | Yes | `NULL` | `REFERENCES auth.users(id) ON DELETE SET NULL` | Last editor user ID |
+| `created_at` | `TIMESTAMPTZ` | No | `timezone('utc', now())` | — | Creation timestamp |
+| `updated_at` | `TIMESTAMPTZ` | No | `timezone('utc', now())` | — | Last update timestamp |
+| — | — | — | — | `UNIQUE (project_id, block_number, lot_number)` | Unique block + lot constraint |
+
+#### Table: `public.subdivision_map_versions`
+*Immutable published map snapshots supporting instantaneous audit and 1-click version rollbacks (FR-035–FR-037).*
+
+| Column Name | Data Type | Nullable | Default | Constraints / Foreign Keys | Description |
+| :--- | :--- | :---: | :--- | :--- | :--- |
+| `id` | `UUID` | No | `gen_random_uuid()` | `PRIMARY KEY` | Map version UUID |
+| `project_id` | `UUID` | No | — | `REFERENCES public.subdivision_projects(id) ON DELETE CASCADE` | Associated subdivision |
+| `plan_id` | `UUID` | No | — | `REFERENCES public.subdivision_plans(id) ON DELETE CASCADE` | Associated master plan |
+| `version_number` | `INTEGER` | No | — | — | Monotonically incrementing version |
+| `snapshot_data` | `JSONB` | No | — | — | Immutable frozen JSON array of lots & vectors |
+| `published_by` | `UUID` | No | — | `REFERENCES auth.users(id) ON DELETE RESTRICT` | Publishing administrator/broker |
+| `published_at` | `TIMESTAMPTZ` | No | `timezone('utc', now())` | — | Publication timestamp |
+| `restored_from_version`| `INTEGER` | Yes | `NULL` | — | Originating version if rolled back |
+| `notes` | `TEXT` | Yes | `NULL` | — | Release / change remarks |
+| — | — | — | — | `UNIQUE (project_id, version_number)` | Version sequence uniqueness |
 
 ---
 
@@ -291,6 +379,14 @@ erDiagram
 | `agent_audit_events` | Brokers and Admins view audit events | `SELECT` | `authenticated` | `role IN ('broker', 'admin')` |
 | `agent_audit_events` | Immutability protection | `UPDATE, DELETE` | `authenticated, anon, public` | `REVOKED (Append-only / Service role only)` |
 | `inquiry_assignment_audit` | Staff can view assignment audit | `SELECT` | `authenticated` | `role IN ('agent', 'broker', 'admin')` |
+| `subdivision_projects` | Public and users view active projects | `SELECT` | `public, authenticated` | `true` |
+| `subdivision_projects` | Brokers and Admins manage projects | `ALL` | `authenticated` | `role IN ('broker', 'admin')` |
+| `subdivision_plans` | Public and users view plans | `SELECT` | `public, authenticated` | `true` |
+| `subdivision_plans` | Brokers and Admins manage plans | `ALL` | `authenticated` | `role IN ('broker', 'admin')` |
+| `subdivision_lots` | Public and users view lots | `SELECT` | `public, authenticated` | `true` |
+| `subdivision_lots` | Brokers and Admins manage lots | `ALL` | `authenticated` | `role IN ('broker', 'admin')` |
+| `subdivision_map_versions` | Public and users view versions | `SELECT` | `public, authenticated` | `true` |
+| `subdivision_map_versions` | Brokers and Admins publish versions | `ALL` | `authenticated` | `role IN ('broker', 'admin')` |
 
 ---
 
@@ -309,6 +405,8 @@ erDiagram
 | `backend/src/models/communication_audit_session_migration.sql` | 06, 07, 08 | `inquiry_chat_sessions`, `inquiry_follow_up_tasks`, `inquiry_ai_summaries`, `audit_events`, `notification_jobs` |
 | `backend/src/models/agent_audit_events_migration.sql` | 03, 06 | `agent_audit_events` |
 | `backend/src/models/user_profiles_preferences_migration.sql` | 01 | `profiles` (extended with `preferred_location`, `investment_budget`, `firm_name`, `notification_preferences`) |
+| `backend/src/models/user_profiles_ui_preferences_migration.sql` | 01 | `profiles` (extended with `ui_preferences` for font size & display density) |
+| `backend/src/models/subdivision_map_tables_migration.sql` | 02 | `subdivision_projects`, `subdivision_plans`, `subdivision_lots`, `subdivision_map_versions`, `properties` FKs |
 
 ---
 

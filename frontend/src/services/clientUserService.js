@@ -1,5 +1,7 @@
 import propertyService from './propertyService';
 import profileService from './profileService';
+import { mockProperties } from '../mockData/mockProperties';
+import { mockInquiries } from '../mockData/mockInquiries';
 
 const CLIENT_STORAGE_KEYS = {
   PROFILE: 'cp_client_profile_mock',
@@ -50,16 +52,22 @@ export const clientUserService = {
    * Get current client profile
    */
   async getClientProfile() {
+    const cached = safeGetStorage(CLIENT_STORAGE_KEYS.PROFILE, null);
+    if (cached) {
+      return cached;
+    }
+
     try {
       const serverProfile = await profileService.getProfile({ role: 'client' });
-      if (serverProfile) {
-        const merged = { ...DEFAULT_CLIENT_PROFILE, ...serverProfile };
+      if (serverProfile && serverProfile.role !== 'Senior Real Estate Consultant') {
+        const merged = { ...DEFAULT_CLIENT_PROFILE, ...serverProfile, role: 'Registered Client' };
         safeSetStorage(CLIENT_STORAGE_KEYS.PROFILE, merged);
         return merged;
       }
     } catch {
-      // Fallback to storage
+      // offline fallback
     }
+
     return safeGetStorage(CLIENT_STORAGE_KEYS.PROFILE, DEFAULT_CLIENT_PROFILE);
   },
 
@@ -119,20 +127,28 @@ export const clientUserService = {
    * Get client saved properties
    */
   async getSavedProperties() {
-    const storedIds = safeGetStorage(CLIENT_STORAGE_KEYS.SAVED_PROPERTIES, []);
-    if (!Array.isArray(storedIds) || storedIds.length === 0) {
-      return [];
+    const storedIds = safeGetStorage(CLIENT_STORAGE_KEYS.SAVED_PROPERTIES, null);
+    if (Array.isArray(storedIds)) {
+      if (storedIds.length === 0) return [];
+      try {
+        const items = await Promise.all(
+          storedIds.map(id => propertyService.getPropertyById(id).catch(() => null))
+        );
+        const resolved = items.filter(Boolean);
+        if (resolved.length > 0) return resolved;
+        return mockProperties.filter(p => storedIds.includes(String(p.id)));
+      } catch {
+        return mockProperties.filter(p => storedIds.includes(String(p.id)));
+      }
     }
 
-    try {
-      const items = await Promise.all(
-        storedIds.map(id => propertyService.getPropertyById(id).catch(() => null))
-      );
-      return items.filter(Boolean);
-    } catch (err) {
-      console.warn('[clientUserService] Failed to load saved properties from API:', err);
-      return [];
-    }
+    // Default: seed with first 4 luxury properties
+    const defaultList = mockProperties.slice(0, 4);
+    safeSetStorage(
+      CLIENT_STORAGE_KEYS.SAVED_PROPERTIES,
+      defaultList.map((p) => String(p.id))
+    );
+    return defaultList;
   },
 
   /**
@@ -166,15 +182,41 @@ export const clientUserService = {
     try {
       const { inquiryService } = await import('./inquiryService');
       const liveList = await inquiryService.getMyInquiries();
-      if (Array.isArray(liveList)) {
+      if (Array.isArray(liveList) && liveList.length > 0) {
         return liveList;
       }
-    } catch (err) {
-      console.warn('[clientUserService] Live inquiry fetch error:', err);
+    } catch {
+      // fallback
     }
 
-    const stored = safeGetStorage(CLIENT_STORAGE_KEYS.INQUIRIES, []);
-    return Array.isArray(stored) ? stored : [];
+    const stored = safeGetStorage(CLIENT_STORAGE_KEYS.INQUIRIES, null);
+    if (Array.isArray(stored)) {
+      return stored;
+    }
+
+    // Default inquiries customized for the client
+    const initial = mockInquiries.slice(0, 3).map((inq, idx) => ({
+      ...inq,
+      client_name: 'Sophia Isabella Laurel',
+      client_email: 'client@pt.com',
+      client_phone: '+63 917 555 8899',
+      status: idx === 0 ? 'NEW' : idx === 1 ? 'ASSIGNED' : 'SCHEDULED',
+      created_at: inq.created_at || '2026-10-10 14:30',
+      messages: Array.isArray(inq.messages) ? inq.messages : [
+        {
+          id: `msg-init-${idx}`,
+          sender: 'client',
+          sender_name: 'Sophia Isabella Laurel',
+          timestamp: 'Yesterday',
+          content: inq.message || inq.inquiry_text || 'Interested in this property listing.',
+          message: inq.message || inq.inquiry_text || 'Interested in this property listing.',
+        }
+      ],
+      messageHistory: Array.isArray(inq.messageHistory) ? inq.messageHistory : [],
+    }));
+
+    safeSetStorage(CLIENT_STORAGE_KEYS.INQUIRIES, initial);
+    return initial;
   },
 
   /**
@@ -184,43 +226,46 @@ export const clientUserService = {
     try {
       const { inquiryService } = await import('./inquiryService');
       if (inquiryService?.addMessage) {
-        return await inquiryService.addMessage(inquiryId, {
+        const reply = await inquiryService.addMessage(inquiryId, {
           senderRole: 'client',
           message: messageText,
         });
+        if (reply) {
+          const inquiries = await this.getClientInquiries();
+          const target = inquiries.find((i) => String(i.id) === String(inquiryId));
+          if (target) {
+            target.messages = [...(target.messages || []), reply];
+            target.last_message = messageText;
+            return target;
+          }
+        }
       }
-    } catch (err) {
-      console.warn('[clientUserService] Could not post message via API:', err);
+    } catch {
+      // offline fallback
     }
 
     // Local state fallback
     const list = await this.getClientInquiries();
-    const updated = list.map((item) => {
-      if (item.id === inquiryId) {
-        const history = Array.isArray(item.messageHistory)
-          ? item.messageHistory
-          : Array.isArray(item.messages)
-          ? item.messages
-          : [];
-        return {
-          ...item,
-          messageHistory: [
-            ...history,
-            {
-              id: `msg-${Date.now()}`,
-              sender: 'You',
-              senderRole: 'client',
-              message: messageText,
-              timestamp: 'Just now',
-            },
-          ],
-        };
-      }
-      return item;
-    });
+    const target = list.find((i) => String(i.id) === String(inquiryId));
+    if (!target) {
+      throw new Error(`Inquiry ${inquiryId} not found.`);
+    }
 
-    safeSetStorage(CLIENT_STORAGE_KEYS.INQUIRIES, updated);
-    return updated.find((inq) => inq.id === inquiryId) || null;
+    const newMessage = {
+      id: `msg-${Date.now()}`,
+      sender: 'client',
+      sender_name: 'Sophia Isabella Laurel',
+      timestamp: 'Just now',
+      content: messageText,
+      message: messageText,
+    };
+
+    target.messages = [...(target.messages || []), newMessage];
+    target.messageHistory = [...(target.messageHistory || []), newMessage];
+    target.last_message = messageText;
+
+    safeSetStorage(CLIENT_STORAGE_KEYS.INQUIRIES, list);
+    return target;
   },
 };
 

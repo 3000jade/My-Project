@@ -20,6 +20,8 @@ import {
   Download,
   Ban,
   ArrowRightLeft,
+  SlidersHorizontal,
+  BadgeCheck,
 } from 'lucide-react';
 import DashboardModal from './DashboardModal';
 import {
@@ -130,18 +132,122 @@ function getMonthGridDays(dateStr) {
   return days;
 }
 
+/**
+ * Interactive Side Mini Calendar
+ * Compact month view enabling rapid date navigation and visual density dot indicators.
+ */
+function MiniSideCalendar({
+  currentMonth,
+  onMonthChange,
+  selectedDate,
+  onDateSelect,
+  todayIso,
+  appointmentsByDate = {},
+}) {
+  const monthDays = useMemo(() => getMonthGridDays(currentMonth), [currentMonth]);
+  const [y, m] = currentMonth.split('-').map(Number);
+  const monthLabel = new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString('en-US', {
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
+
+  return (
+    <div data-testid="mini-side-calendar" className="bg-white rounded-xl border border-[#E2E8F0] p-3.5 shadow-2xs space-y-2.5">
+      {/* Mini Calendar Header with Month/Year & Prev/Next */}
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-bold text-[#1E293B]">{monthLabel}</span>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => onMonthChange(-1)}
+            aria-label="Previous mini calendar month"
+            className="w-6 h-6 flex items-center justify-center rounded-md hover:bg-slate-100 text-[#64748B] hover:text-[#1E293B] transition-colors cursor-pointer"
+          >
+            <ChevronLeft className="w-3.5 h-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => onMonthChange(1)}
+            aria-label="Next mini calendar month"
+            className="w-6 h-6 flex items-center justify-center rounded-md hover:bg-slate-100 text-[#64748B] hover:text-[#1E293B] transition-colors cursor-pointer"
+          >
+            <ChevronRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Weekday headers */}
+      <div className="grid grid-cols-7 text-center text-[10px] font-bold text-[#94A3B8] uppercase">
+        {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d) => (
+          <div key={d} className="py-0.5">{d}</div>
+        ))}
+      </div>
+
+      {/* Days grid */}
+      <div className="grid grid-cols-7 gap-y-1 text-center text-xs">
+        {monthDays.map((cell) => {
+          const isToday = cell.date === todayIso;
+          const isSelected = cell.date === selectedDate;
+          const hasAppts = appointmentsByDate[cell.date]?.length > 0;
+          const dayNum = Number(cell.date.slice(8));
+
+          return (
+            <button
+              key={cell.date}
+              type="button"
+              onClick={() => onDateSelect(cell.date)}
+              className={cn(
+                "relative h-6 w-6 mx-auto flex flex-col items-center justify-center rounded-md transition-all cursor-pointer font-medium text-[11px]",
+                !cell.currentMonth && "text-slate-300",
+                cell.currentMonth && !isSelected && !isToday && "text-[#1E293B] hover:bg-slate-100",
+                isToday && !isSelected && "bg-[#0F766E] text-white font-bold",
+                isSelected && "bg-teal-50 text-[#0F766E] ring-1.5 ring-[#0F766E] font-bold shadow-2xs"
+              )}
+            >
+              <span>{dayNum}</span>
+              {hasAppts && (
+                <span
+                  className={cn(
+                    "absolute bottom-0.5 w-1 h-1 rounded-full",
+                    isSelected ? "bg-[#0F766E]" : isToday ? "bg-white" : "bg-[#0F766E]"
+                  )}
+                />
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function AgentScheduleCalendar({
   role = 'broker', // 'broker' | 'agent' | 'client'
   fixedAgentId = null,
   fixedAgentName = null,
-  initialView = 'agenda', // 'day' | 'week' | 'month' | 'agenda'
+  initialView = 'month', // 'day' | 'week' | 'month' | 'agenda' (giant calendar month view by default)
   initialDate = null,
-  title = null,
+  title = 'Calendar',
   subtitle = null,
 }) {
   const todayIso = useMemo(() => new Date().toISOString().slice(0, 10), []);
   const [selectedDate, setSelectedDate] = useState(initialDate || todayIso);
   const [viewMode, setViewMode] = useState(initialView);
+  const [miniMonth, setMiniMonth] = useState(() => (initialDate || todayIso).slice(0, 7) + '-01');
+
+  // When selectedDate changes, keep miniMonth in sync
+  useEffect(() => {
+    if (selectedDate) {
+      setMiniMonth(selectedDate.slice(0, 7) + '-01');
+    }
+  }, [selectedDate]);
+
+  const handleMiniMonthNavigate = (delta) => {
+    const [y, m] = miniMonth.split('-').map(Number);
+    const d = new Date(Date.UTC(y, m - 1 + delta, 1, 12, 0, 0));
+    setMiniMonth(d.toISOString().slice(0, 10));
+  };
 
   const [appointments, setAppointments] = useState([]);
   const [agents, setAgents] = useState([]);
@@ -497,6 +603,44 @@ export default function AgentScheduleCalendar({
 
   const monthGridDays = useMemo(() => getMonthGridDays(selectedDate), [selectedDate]);
 
+  const appointmentsByDate = useMemo(() => {
+    const map = {};
+    for (const apt of appointments) {
+      if (apt.appointment_date) {
+        if (!map[apt.appointment_date]) map[apt.appointment_date] = [];
+        map[apt.appointment_date].push(apt);
+      }
+    }
+    return map;
+  }, [appointments]);
+
+  const selectedDateAppointments = useMemo(() => {
+    return filteredAppointments.filter((a) => a.appointment_date === selectedDate);
+  }, [filteredAppointments, selectedDate]);
+
+  const mainRangeLabel = useMemo(() => {
+    if (viewMode === 'month') {
+      const [y, m] = selectedDate.split('-').map(Number);
+      return new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString('en-US', {
+        month: 'long',
+        year: 'numeric',
+        timeZone: 'UTC',
+      });
+    }
+    if (viewMode === 'week') {
+      const start = getStartOfWeek(selectedDate);
+      const end = addDays(start, 6);
+      const sDate = new Date(`${start}T12:00:00Z`);
+      const eDate = new Date(`${end}T12:00:00Z`);
+      return `${sDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${eDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+    }
+    if (viewMode === 'day') {
+      const dt = new Date(`${selectedDate}T12:00:00Z`);
+      return dt.toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' });
+    }
+    return 'Agenda Schedule';
+  }, [viewMode, selectedDate]);
+
   return (
     <div data-testid="agent-schedule-calendar" className="space-y-5">
       {toastMessage && (
@@ -528,52 +672,61 @@ export default function AgentScheduleCalendar({
         </div>
       )}
 
-      {/* KPI Summary Plinths */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 sm:gap-4">
-        <div className="bg-white rounded-lg border border-[#E2E8F0] p-4 shadow-2xs">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-[#64748B]">
-            Total Scheduled
-          </p>
-          <p className="text-2xl font-bold text-[#1E293B] mt-1">{totalCount}</p>
+      {/* KPI Summary Plinths (Consistent Modern SaaS, Icon on Left) */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+        {/* Total Scheduled */}
+        <div className="bg-white rounded-xl border border-[#E2E8F0] p-3.5 shadow-2xs flex items-center gap-3 hover:border-slate-300 transition-all">
+          <div className="w-10 h-10 rounded-lg bg-teal-50/70 border border-teal-100/80 flex items-center justify-center text-[#0F766E] shrink-0">
+            <CalendarIcon className="w-4 h-4" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold text-[#64748B] truncate">Total Scheduled</p>
+            <p className="text-xl font-bold text-[#1E293B] mt-0.5">{totalCount}</p>
+          </div>
         </div>
-        <div className="bg-white rounded-lg border border-[#E2E8F0] p-4 shadow-2xs">
-          <p
-            className="text-[11px] font-bold uppercase tracking-wider"
-            style={{ color: '#B45309' }}
-          >
-            Pending Requests
-          </p>
-          <p className="text-2xl font-bold mt-1" style={{ color: '#B45309' }}>
-            {pendingCount}
-          </p>
+
+        {/* Pending Requests */}
+        <div className="bg-white rounded-xl border border-[#E2E8F0] p-3.5 shadow-2xs flex items-center gap-3 hover:border-slate-300 transition-all">
+          <div className="w-10 h-10 rounded-lg bg-teal-50/70 border border-teal-100/80 flex items-center justify-center text-[#0F766E] shrink-0">
+            <Clock className="w-4 h-4" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold text-[#64748B] truncate">Pending Requests</p>
+            <p className="text-xl font-bold text-[#1E293B] mt-0.5">{pendingCount}</p>
+          </div>
         </div>
-        <div className="bg-white rounded-lg border border-[#E2E8F0] p-4 shadow-2xs">
-          <p
-            className="text-[11px] font-bold uppercase tracking-wider"
-            style={{ color: '#1D4ED8' }}
-          >
-            Confirmed Visits
-          </p>
-          <p className="text-2xl font-bold mt-1" style={{ color: '#1D4ED8' }}>
-            {confirmedCount}
-          </p>
+
+        {/* Confirmed Visits */}
+        <div className="bg-white rounded-xl border border-[#E2E8F0] p-3.5 shadow-2xs flex items-center gap-3 hover:border-slate-300 transition-all">
+          <div className="w-10 h-10 rounded-lg bg-teal-50/70 border border-teal-100/80 flex items-center justify-center text-[#0F766E] shrink-0">
+            <CheckCircle2 className="w-4 h-4" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold text-[#64748B] truncate">Confirmed Visits</p>
+            <p className="text-xl font-bold text-[#1E293B] mt-0.5">{confirmedCount}</p>
+          </div>
         </div>
-        <div className="bg-white rounded-lg border border-[#E2E8F0] p-4 shadow-2xs">
-          <p
-            className="text-[11px] font-bold uppercase tracking-wider"
-            style={{ color: '#15803D' }}
-          >
-            Completed
-          </p>
-          <p className="text-2xl font-bold mt-1" style={{ color: '#15803D' }}>
-            {completedCount}
-          </p>
+
+        {/* Completed */}
+        <div className="bg-white rounded-xl border border-[#E2E8F0] p-3.5 shadow-2xs flex items-center gap-3 hover:border-slate-300 transition-all">
+          <div className="w-10 h-10 rounded-lg bg-teal-50/70 border border-teal-100/80 flex items-center justify-center text-[#0F766E] shrink-0">
+            <BadgeCheck className="w-4 h-4" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold text-[#64748B] truncate">Completed</p>
+            <p className="text-xl font-bold text-[#1E293B] mt-0.5">{completedCount}</p>
+          </div>
         </div>
-        <div className="bg-white rounded-lg border border-[#E2E8F0] p-4 shadow-2xs col-span-2 md:col-span-1">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-[#B91C1C]">
-            Schedule Conflicts
-          </p>
-          <p className="text-2xl font-bold text-[#B91C1C] mt-1">{conflictCount}</p>
+
+        {/* Schedule Conflicts */}
+        <div className="bg-white rounded-xl border border-[#E2E8F0] p-3.5 shadow-2xs col-span-2 md:col-span-1 flex items-center gap-3 hover:border-slate-300 transition-all">
+          <div className="w-10 h-10 rounded-lg bg-teal-50/70 border border-teal-100/80 flex items-center justify-center text-[#0F766E] shrink-0">
+            <AlertTriangle className="w-4 h-4" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold text-[#64748B] truncate">Schedule Conflicts</p>
+            <p className="text-xl font-bold text-[#1E293B] mt-0.5">{conflictCount}</p>
+          </div>
         </div>
       </div>
 
@@ -594,213 +747,284 @@ export default function AgentScheduleCalendar({
         </div>
       )}
 
-      {/* Calendar Controls Bar: View Switcher, Date Navigation, Timezone Badge & Actions */}
-      <div className="bg-white rounded-lg border border-[#E2E8F0] p-4 shadow-2xs space-y-4">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3 border-b border-[#E2E8F0]">
-          {/* Left: View Switcher (Day, Week, Month, Agenda) */}
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <div className="inline-flex rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] p-1">
-              {[
-                { id: 'day', label: 'Day' },
-                { id: 'week', label: 'Week' },
-                { id: 'month', label: 'Month' },
-                { id: 'agenda', label: 'Agenda' },
-              ].map((v) => (
-                <button
-                  key={v.id}
-                  type="button"
-                  onClick={() => setViewMode(v.id)}
-                  className={cn(
-                    'px-3 py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer',
-                    viewMode === v.id
-                      ? 'bg-[#0F766E] text-white shadow-2xs'
-                      : 'text-[#64748B] hover:text-[#1E293B]'
-                  )}
-                >
-                  {v.label}
-                </button>
-              ))}
-            </div>
+      {/* Dual Workspace Layout: Small Side Calendar + Filters on Left; Giant Calendar on Right */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+        {/* Left Column: Mini Month Picker, Quick Actions, Left Filters & Day Snapshot */}
+        <div className="lg:col-span-4 xl:col-span-3 space-y-4">
+          {/* 1. Mini Interactive Calendar */}
+          <MiniSideCalendar
+            currentMonth={miniMonth}
+            onMonthChange={handleMiniMonthNavigate}
+            selectedDate={selectedDate}
+            onDateSelect={(date) => {
+              setSelectedDate(date);
+              setMiniMonth(date.slice(0, 7) + '-01');
+            }}
+            todayIso={todayIso}
+            appointmentsByDate={appointmentsByDate}
+          />
 
-            {/* Today & Date Navigation */}
-            <div className="flex items-center gap-1 ml-1">
-              <button
-                type="button"
-                onClick={() => setSelectedDate(todayIso)}
-                className="h-8 px-3 rounded-lg border border-[#E2E8F0] bg-white hover:bg-slate-50 text-xs font-semibold text-[#1E293B] cursor-pointer"
-              >
-                Today
-              </button>
-              <button
-                type="button"
-                onClick={() => handleNavigateDate(-1)}
-                aria-label="Previous date range"
-                className="h-8 w-8 flex items-center justify-center rounded-lg border border-[#E2E8F0] bg-white hover:bg-slate-50 text-[#64748B] cursor-pointer"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <input
-                type="date"
-                aria-label="Selected calendar date"
-                value={selectedDate}
-                onChange={(e) => e.target.value && setSelectedDate(e.target.value)}
-                className="h-8 px-2.5 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] text-xs font-mono font-semibold text-[#1E293B]"
-              />
-              <button
-                type="button"
-                onClick={() => handleNavigateDate(1)}
-                aria-label="Next date range"
-                className="h-8 w-8 flex items-center justify-center rounded-lg border border-[#E2E8F0] bg-white hover:bg-slate-50 text-[#64748B] cursor-pointer"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-
-            <span className="px-2.5 py-1 rounded-full bg-teal-50 border border-teal-200 text-[#0F766E] text-[11px] font-mono font-semibold">
-              Asia/Manila (UTC+8) • 15m Buffer
-            </span>
-          </div>
-
-          {/* Right: Create Appointment & Block Time CTAs */}
+          {/* 2. New Appointment Button */}
           {role !== 'client' && (
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                type="button"
-                onClick={() => setBlockModalOpen(true)}
-                className="h-9 px-3.5 bg-white hover:bg-slate-50 text-[#475569] border border-[#E2E8F0] rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
-              >
-                <Ban className="w-3.5 h-3.5 text-[#475569]" />
-                <span>Block Time</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setCreateModalOpen(true)}
-                className="h-9 px-4 bg-[#FF6B6B] hover:bg-[#EE5A5A] text-[#1E293B] rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors shadow-2xs cursor-pointer"
-              >
-                <Plus className="w-4 h-4" />
-                <span>New Appointment</span>
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => setCreateModalOpen(true)}
+              className="w-full h-10 px-4 bg-[#FF6B6B] hover:bg-[#EE5A5A] text-[#1E293B] font-bold rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-2xs hover:shadow-sm cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>New Appointment</span>
+            </button>
           )}
-        </div>
 
-        {/* Search & Multi-Filter Row */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
-          <div className="relative flex-1">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search client or property..."
-              className="w-full h-9 pl-9 pr-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs text-[#1E293B] outline-none focus:bg-white focus:border-[#0F766E]"
-            />
+          {/* 3. Calendar Filters Card */}
+          <div className="bg-white rounded-xl border border-[#E2E8F0] p-4 shadow-2xs space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-[#E2E8F0]">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#1E293B] flex items-center gap-1.5">
+                <SlidersHorizontal className="w-3.5 h-3.5 text-[#0F766E]" />
+                Calendar Filters
+              </span>
+              {(statusFilter !== 'ALL' || agentFilter !== 'ALL' || typeFilter !== 'ALL' || search) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStatusFilter('ALL');
+                    setAgentFilter('ALL');
+                    setTypeFilter('ALL');
+                    setSearch('');
+                  }}
+                  className="text-[11px] font-semibold text-[#0F766E] hover:underline cursor-pointer"
+                >
+                  Reset
+                </button>
+              )}
+            </div>
+
+            <div className="space-y-2.5">
+              <div>
+                <label className="text-[11px] font-bold text-[#64748B] block mb-1">
+                  Status
+                </label>
+                <select
+                  aria-label="Filter by status"
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="w-full h-9 px-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs font-medium text-[#1E293B] focus:bg-white focus:border-[#0F766E] cursor-pointer"
+                >
+                  <option value="ALL">All Statuses</option>
+                  <option value="REQUESTED">Pending / Requested</option>
+                  <option value="CONFIRMED">Confirmed</option>
+                  <option value="COMPLETED">Completed</option>
+                  <option value="CANCELLED">Cancelled</option>
+                  <option value="NO_SHOW">No-Show</option>
+                </select>
+              </div>
+
+              {!fixedAgentId && role === 'broker' && (
+                <div>
+                  <label className="text-[11px] font-bold text-[#64748B] block mb-1">
+                    Assigned Agent
+                  </label>
+                  <select
+                    aria-label="Filter by agent"
+                    value={agentFilter}
+                    onChange={(e) => setAgentFilter(e.target.value)}
+                    className="w-full h-9 px-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs font-medium text-[#1E293B] focus:bg-white focus:border-[#0F766E] cursor-pointer"
+                  >
+                    <option value="ALL">All Agents</option>
+                    <option value="UNASSIGNED">Unassigned Queue</option>
+                    {agents.map((ag) => (
+                      <option key={ag.id} value={ag.id}>
+                        {ag.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div>
+                <label className="text-[11px] font-bold text-[#64748B] block mb-1">
+                  Type
+                </label>
+                <select
+                  aria-label="Filter by appointment type"
+                  value={typeFilter}
+                  onChange={(e) => setTypeFilter(e.target.value)}
+                  className="w-full h-9 px-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs font-medium text-[#1E293B] focus:bg-white focus:border-[#0F766E] cursor-pointer"
+                >
+                  <option value="ALL">All Appointment Types</option>
+                  <option value="Site Visit">Site Visit</option>
+                  <option value="Property Inspection">Property Inspection</option>
+                  <option value="Online Consultation">Online Consultation</option>
+                  <option value="Document Signing">Document Signing</option>
+                  <option value="Closing Meeting">Closing Meeting</option>
+                </select>
+              </div>
+            </div>
           </div>
 
-          <select
-            aria-label="Filter by status"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="h-9 px-3 bg-white border border-[#E2E8F0] rounded-lg text-xs font-medium text-[#1E293B] cursor-pointer"
-          >
-            <option value="ALL">All Statuses</option>
-            <option value="REQUESTED">Pending / Requested</option>
-            <option value="CONFIRMED">Confirmed</option>
-            <option value="COMPLETED">Completed</option>
-            <option value="CANCELLED">Cancelled</option>
-            <option value="NO_SHOW">No-Show</option>
-          </select>
-
-          {!fixedAgentId && role === 'broker' && (
-            <select
-              aria-label="Filter by agent"
-              value={agentFilter}
-              onChange={(e) => setAgentFilter(e.target.value)}
-              className="h-9 px-3 bg-white border border-[#E2E8F0] rounded-lg text-xs font-medium text-[#1E293B] cursor-pointer"
-            >
-              <option value="ALL">All Agents</option>
-              <option value="UNASSIGNED">Unassigned Queue</option>
-              {agents.map((ag) => (
-                <option key={ag.id} value={ag.id}>
-                  {ag.name}
-                </option>
-              ))}
-            </select>
-          )}
-
-          <select
-            aria-label="Filter by appointment type"
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            className="h-9 px-3 bg-white border border-[#E2E8F0] rounded-lg text-xs font-medium text-[#1E293B] cursor-pointer"
-          >
-            <option value="ALL">All Appointment Types</option>
-            <option value="Site Visit">Site Visit</option>
-            <option value="Property Inspection">Property Inspection</option>
-            <option value="Online Consultation">Online Consultation</option>
-            <option value="Document Signing">Document Signing</option>
-            <option value="Closing Meeting">Closing Meeting</option>
-          </select>
+          {/* 4. Selected Day Agenda Snapshot */}
+          <div className="bg-white rounded-xl border border-[#E2E8F0] p-4 shadow-2xs space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-[#E2E8F0]">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#1E293B]">
+                Day Snapshot
+              </span>
+              <span className="text-[11px] font-mono font-semibold text-[#0F766E]">
+                {selectedDate}
+              </span>
+            </div>
+            {selectedDateAppointments.length === 0 ? (
+              <p className="text-xs text-[#94A3B8] italic py-2 text-center">
+                No appointments for this date
+              </p>
+            ) : (
+              <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+                {selectedDateAppointments.map((apt) => {
+                  const style =
+                    CALENDAR_STATUS_STYLES[String(apt.status).toUpperCase()] ||
+                    CALENDAR_STATUS_STYLES.REQUESTED;
+                  return (
+                    <div
+                      key={apt.id}
+                      onClick={() => {
+                        setSelectedAppointment(apt);
+                        setDetailDrawerOpen(true);
+                      }}
+                      style={{
+                        backgroundColor: style.bg,
+                        borderColor: style.border,
+                        color: style.hex,
+                      }}
+                      className="p-2 rounded-lg border text-xs cursor-pointer hover:opacity-90 transition-opacity"
+                    >
+                      <div className="flex items-center justify-between font-mono font-bold text-[11px]">
+                        <span>{apt.appointment_time}</span>
+                        <span className="text-[10px] font-sans px-1.5 py-0.5 rounded uppercase font-semibold">
+                          {apt.status}
+                        </span>
+                      </div>
+                      <p className="font-semibold text-[#1E293B] truncate mt-0.5">
+                        {apt.client_name}
+                      </p>
+                      <p className="text-[10px] text-[#64748B] truncate">
+                        {apt.property_title}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Mandatory Visible Status Legend with exact spec Hex Colors */}
-        <div
-          data-testid="calendar-status-legend"
-          className="pt-2 border-t border-[#E2E8F0] flex items-center flex-wrap gap-4 text-xs"
-        >
-          <span className="text-[11px] font-bold uppercase tracking-wider text-[#64748B]">
-            Status Legend:
-          </span>
-          <span
-            data-testid="legend-pending"
-            style={{ color: '#B45309' }}
-            className="inline-flex items-center gap-1.5 font-semibold"
-          >
-            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#B45309' }} />
-            Pending (#B45309)
-          </span>
-          <span
-            data-testid="legend-confirmed"
-            style={{ color: '#1D4ED8' }}
-            className="inline-flex items-center gap-1.5 font-semibold"
-          >
-            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#1D4ED8' }} />
-            Confirmed (#1D4ED8)
-          </span>
-          <span
-            data-testid="legend-completed"
-            style={{ color: '#15803D' }}
-            className="inline-flex items-center gap-1.5 font-semibold"
-          >
-            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#15803D' }} />
-            Completed (#15803D)
-          </span>
-          <span
-            data-testid="legend-cancelled"
-            style={{ color: '#64748B' }}
-            className="inline-flex items-center gap-1.5 font-semibold line-through"
-          >
-            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#64748B' }} />
-            Cancelled (#64748B)
-          </span>
-          <span
-            data-testid="legend-no-show"
-            style={{ color: '#B91C1C' }}
-            className="inline-flex items-center gap-1.5 font-semibold"
-          >
-            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#B91C1C' }} />
-            No-show (#B91C1C)
-          </span>
-          <span
-            data-testid="legend-blocked"
-            style={{ color: '#475569' }}
-            className="inline-flex items-center gap-1.5 font-semibold"
-          >
-            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#475569' }} />
-            Blocked time (#475569)
-          </span>
-        </div>
-      </div>
+        {/* Right Column: Giant Calendar, Controls Bar & Status Legend */}
+        <div className="lg:col-span-8 xl:col-span-9 space-y-4">
+          {/* Calendar Controls Bar */}
+          <div className="bg-white rounded-xl border border-[#E2E8F0] p-4 shadow-2xs space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              {/* Left Controls: View Switcher & Date Navigation */}
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* View Switcher */}
+                <div className="inline-flex rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] p-1">
+                  {[
+                    { id: 'month', label: 'Month' },
+                    { id: 'week', label: 'Week' },
+                    { id: 'day', label: 'Day' },
+                    { id: 'agenda', label: 'Agenda' },
+                  ].map((v) => (
+                    <button
+                      key={v.id}
+                      type="button"
+                      onClick={() => setViewMode(v.id)}
+                      className={cn(
+                        'px-3 py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer',
+                        viewMode === v.id
+                          ? 'bg-[#0F766E] text-white shadow-2xs'
+                          : 'text-[#64748B] hover:text-[#1E293B]'
+                      )}
+                    >
+                      {v.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Today & Date Range Navigation */}
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedDate(todayIso);
+                      setMiniMonth(todayIso.slice(0, 7) + '-01');
+                    }}
+                    className="h-8 px-3 rounded-lg border border-[#E2E8F0] bg-white hover:bg-slate-50 text-xs font-semibold text-[#1E293B] cursor-pointer"
+                  >
+                    Today
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleNavigateDate(-1)}
+                    aria-label="Previous date range"
+                    className="h-8 w-8 flex items-center justify-center rounded-lg border border-[#E2E8F0] bg-white hover:bg-slate-50 text-[#64748B] cursor-pointer"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleNavigateDate(1)}
+                    aria-label="Next date range"
+                    className="h-8 w-8 flex items-center justify-center rounded-lg border border-[#E2E8F0] bg-white hover:bg-slate-50 text-[#64748B] cursor-pointer"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                  <input
+                    type="date"
+                    aria-label="Selected calendar date"
+                    value={selectedDate}
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        setSelectedDate(e.target.value);
+                        setMiniMonth(e.target.value.slice(0, 7) + '-01');
+                      }
+                    }}
+                    className="h-8 px-2 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] text-xs font-mono font-semibold text-[#1E293B]"
+                  />
+                </div>
+
+                {/* Active Range Heading */}
+                <h2 className="text-sm font-bold text-[#1E293B] ml-1 tracking-tight">
+                  {mainRangeLabel}
+                </h2>
+              </div>
+
+              {/* Right Controls: Block Time CTA & Buffer Badge */}
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="hidden sm:inline-flex px-2.5 py-1 rounded-full bg-teal-50 border border-teal-200 text-[#0F766E] text-[11px] font-mono font-semibold">
+                  Asia/Manila • 15m Buffer
+                </span>
+                {role !== 'client' && (
+                  <button
+                    type="button"
+                    onClick={() => setBlockModalOpen(true)}
+                    className="h-8 px-3 bg-white hover:bg-slate-50 text-[#475569] border border-[#E2E8F0] rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <Ban className="w-3.5 h-3.5 text-[#475569]" />
+                    <span>Block Time</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Quick Search Bar */}
+            <div className="relative">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search appointments by client, property, or agent..."
+                className="w-full h-9 pl-9 pr-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs text-[#1E293B] outline-none focus:bg-white focus:border-[#0F766E]"
+              />
+            </div>
+          </div>
 
       {/* Loading Indicator */}
       {loading ? (
@@ -1036,7 +1260,7 @@ export default function AgentScheduleCalendar({
                       key={cell.date}
                       onClick={() => setSelectedDate(cell.date)}
                       className={cn(
-                        'min-h-[100px] p-2 flex flex-col gap-1 cursor-pointer transition-colors',
+                        'min-h-[72px] sm:min-h-[100px] lg:min-h-[135px] p-1 sm:p-2 flex flex-col gap-1 cursor-pointer transition-colors',
                         !cell.currentMonth && 'bg-slate-50/60 text-slate-400',
                         isSelected && 'bg-teal-50/40 ring-1 ring-inset ring-[#0F766E]'
                       )}
@@ -1245,6 +1469,66 @@ export default function AgentScheduleCalendar({
           )}
         </>
       )}
+
+          {/* Mandatory Visible Status Legend with exact spec Hex Colors */}
+          <div
+            data-testid="calendar-status-legend"
+            className="p-3.5 bg-white rounded-xl border border-[#E2E8F0] shadow-2xs flex items-center flex-wrap gap-4 text-xs"
+          >
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#64748B]">
+              Status Legend:
+            </span>
+            <span
+              data-testid="legend-pending"
+              style={{ color: '#B45309' }}
+              className="inline-flex items-center gap-1.5 font-semibold"
+            >
+              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#B45309' }} />
+              Pending (#B45309)
+            </span>
+            <span
+              data-testid="legend-confirmed"
+              style={{ color: '#1D4ED8' }}
+              className="inline-flex items-center gap-1.5 font-semibold"
+            >
+              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#1D4ED8' }} />
+              Confirmed (#1D4ED8)
+            </span>
+            <span
+              data-testid="legend-completed"
+              style={{ color: '#15803D' }}
+              className="inline-flex items-center gap-1.5 font-semibold"
+            >
+              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#15803D' }} />
+              Completed (#15803D)
+            </span>
+            <span
+              data-testid="legend-cancelled"
+              style={{ color: '#64748B' }}
+              className="inline-flex items-center gap-1.5 font-semibold line-through"
+            >
+              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#64748B' }} />
+              Cancelled (#64748B)
+            </span>
+            <span
+              data-testid="legend-no-show"
+              style={{ color: '#B91C1C' }}
+              className="inline-flex items-center gap-1.5 font-semibold"
+            >
+              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#B91C1C' }} />
+              No-show (#B91C1C)
+            </span>
+            <span
+              data-testid="legend-blocked"
+              style={{ color: '#475569' }}
+              className="inline-flex items-center gap-1.5 font-semibold"
+            >
+              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#475569' }} />
+              Blocked time (#475569)
+            </span>
+          </div>
+        </div>
+      </div>
 
       {/* ===================================================================== */}
       {/* APPOINTMENT DETAIL DRAWER / MODAL                                     */}

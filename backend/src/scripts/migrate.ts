@@ -23,6 +23,8 @@ async function runMigrations() {
       'inquiries_module_migration.sql',
       'agent_management_v2_migration.sql',
       'property_assignment_confirmation_migration.sql',
+      'user_profiles_preferences_migration.sql',
+      'subdivision_map_tables_migration.sql',
     ];
 
     for (const file of files) {

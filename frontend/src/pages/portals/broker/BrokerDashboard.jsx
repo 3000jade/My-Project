@@ -26,7 +26,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import MetricCard from '../../../components/dashboard/MetricCard';
 import StatusBadge from '../../../components/dashboard/StatusBadge';
 import PageHeader from '../../../components/dashboard/PageHeader';
+import { Spinner } from '../../../components/ui';
 import EmptyState from '../../../components/dashboard/EmptyState';
+import { MetricCardsSkeleton, TableSkeleton } from '../../../components/dashboard/skeletons';
 import { dashboardService, computeBrokerFallback } from '../../../services/dashboardService';
 
 export default function BrokerDashboard() {
@@ -76,19 +78,19 @@ export default function BrokerDashboard() {
   const recentSales = salesSummary.recentSales || [];
 
   return (
-    <div className="space-y-8 font-sans">
+    <div className="space-y-8 font-sans min-w-0 max-w-full">
       {/* 1. Header with Modern SaaS Action Bar */}
       <PageHeader
         title="Dashboard"
         subtitle="Consolidated real estate firm monitoring, agent performance metrics, and sales audit trail."
         actions={
-          <div className="flex items-center flex-wrap gap-2.5">
+          <div className="flex items-center flex-wrap gap-2 sm:gap-2.5 w-full sm:w-auto">
             <Button
               onClick={loadDashboard}
               disabled={loading}
               variant="outline"
               size="default"
-              className="gap-2"
+              className="gap-2 h-9 sm:h-10 px-3 sm:px-4 flex-1 sm:flex-none justify-center"
               aria-label="Refresh dashboard data"
             >
               <span className={`material-symbols-outlined text-[18px] ${loading ? 'animate-spin' : ''}`}>
@@ -97,22 +99,22 @@ export default function BrokerDashboard() {
               <span>Refresh</span>
             </Button>
 
-            <Button asChild variant="outline" size="default">
-              <Link to="/broker/reports" className="flex items-center gap-1.5">
+            <Button asChild variant="outline" size="default" className="h-9 sm:h-10 px-3 sm:px-4 flex-1 sm:flex-none justify-center">
+              <Link to="/broker/reports" className="flex items-center gap-1.5 whitespace-nowrap">
                 <BarChart3 className="w-4 h-4 text-[#64748B]" />
                 <span>Reports &amp; Audit</span>
               </Link>
             </Button>
 
-            <Button asChild variant="coral" size="default">
-              <Link to="/broker/properties/select-type" className="flex items-center gap-1.5">
+            <Button asChild variant="coral" size="default" className="h-9 sm:h-10 px-3 sm:px-4 flex-1 sm:flex-none justify-center">
+              <Link to="/broker/properties/select-type" className="flex items-center gap-1.5 whitespace-nowrap">
                 <Plus className="w-4 h-4 text-[#1E293B]" />
                 <span>Add Listing</span>
               </Link>
             </Button>
 
-            <Button asChild variant="default" size="default">
-              <Link to="/broker/agents" className="flex items-center gap-1.5">
+            <Button asChild variant="default" size="default" className="h-9 sm:h-10 px-3 sm:px-4 flex-1 sm:flex-none justify-center">
+              <Link to="/broker/agents" className="flex items-center gap-1.5 whitespace-nowrap">
                 <Users className="w-4 h-4 text-white" />
                 <span>Manage Agents</span>
               </Link>
@@ -139,8 +141,22 @@ export default function BrokerDashboard() {
         </div>
       )}
 
-      {/* 2. Firm-Wide Key Metrics - Categorized Executive Layout */}
-      <div className="space-y-4">
+      {loading ? (
+        <div className="space-y-8" role="status" aria-busy="true" aria-label="Loading executive broker dashboard...">
+          <MetricCardsSkeleton count={4} />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2">
+              <TableSkeleton rows={5} />
+            </div>
+            <div className="space-y-6">
+              <TableSkeleton rows={4} hasToolbar={false} />
+            </div>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* 2. Firm-Wide Key Metrics - Categorized Executive Layout */}
+          <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-[#0F766E]" />
@@ -461,6 +477,8 @@ export default function BrokerDashboard() {
           )}
         </CardContent>
       </Card>
+      </>
+      )}
     </div>
   );
 }

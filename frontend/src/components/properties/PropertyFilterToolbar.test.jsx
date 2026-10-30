@@ -38,14 +38,13 @@ describe('PropertyFilterToolbar Component', () => {
     vi.clearAllMocks();
   });
 
-  it('renders omni-search input and status pill tabs with counts', () => {
+  it('renders omni-search input and status dropdown with count', () => {
     render(<PropertyFilterToolbar {...defaultProps} />);
 
     expect(screen.getByPlaceholderText(/search properties/i)).toBeInTheDocument();
-    expect(screen.getByText('All Listings')).toBeInTheDocument();
+    expect(screen.getByTestId('status-filter-dropdown-btn')).toBeInTheDocument();
+    expect(screen.getByText(/All Listings/i)).toBeInTheDocument();
     expect(screen.getByText('25')).toBeInTheDocument();
-    expect(screen.getByText('Active')).toBeInTheDocument();
-    expect(screen.getByText('15')).toBeInTheDocument();
   });
 
   it('calls onSearchChange when typing in search input and clears on X button click', () => {
@@ -65,11 +64,17 @@ describe('PropertyFilterToolbar Component', () => {
     expect(onSearchChange).toHaveBeenCalledWith('');
   });
 
-  it('calls onStatusTabChange when clicking a status tab', () => {
+  it('calls onStatusTabChange when selecting a status option from dropdown', () => {
     const onStatusTabChange = vi.fn();
     render(<PropertyFilterToolbar {...defaultProps} onStatusTabChange={onStatusTabChange} />);
 
-    fireEvent.click(screen.getByText('Active'));
+    const dropdownBtn = screen.getByTestId('status-filter-dropdown-btn');
+    fireEvent.click(dropdownBtn);
+
+    const activeOption = screen.getByTestId('status-option-ACTIVE');
+    expect(activeOption).toBeInTheDocument();
+    fireEvent.click(activeOption);
+
     expect(onStatusTabChange).toHaveBeenCalledWith('ACTIVE');
   });
 

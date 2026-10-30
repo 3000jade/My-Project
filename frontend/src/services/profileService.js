@@ -13,12 +13,13 @@ export const mockDefaultProfiles = {
     lastName: 'Laurel',
     email: 'client@pt.com',
     phone: '+63 917 555 8899',
-    role: 'Registered Luxury Client',
+    role: 'Registered Client',
     rawRole: 'client',
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
     bio: 'Private investor exploring high-yield prime estates and modern architectural condominiums in Bonifacio Global City and Ayala Alabang.',
     preferredLocation: 'Bonifacio Global City, Taguig',
     investmentBudget: '₱50,000,000 - ₱120,000,000',
+    ui_preferences: { font_size: 'standard' },
     verification_status: 'VERIFIED',
   },
   broker: {
@@ -38,6 +39,7 @@ export const mockDefaultProfiles = {
     dhsud_validity: '2027-04-30',
     firm_name: 'Precision Trust Realty Operations Inc.',
     experience_years: 12,
+    ui_preferences: { font_size: 'standard' },
     verification_status: 'VERIFIED',
   },
   agent: {
@@ -57,6 +59,7 @@ export const mockDefaultProfiles = {
     dhsud_validity: '2026-12-31',
     firm_name: 'Precision Trust Realty Operations Inc.',
     experience_years: 6,
+    ui_preferences: { font_size: 'standard' },
     verification_status: 'VERIFIED',
   },
 };
@@ -65,8 +68,8 @@ export const mockDefaultProfiles = {
  * Normalizes backend profile payload into consistent UI representation
  */
 export function normalizeProfile(raw = {}) {
-  const roleKey = (['broker', 'agent', 'client'].includes(raw.role) ? raw.role : 'agent');
-  const defaults = mockDefaultProfiles[roleKey] || mockDefaultProfiles.agent;
+  const effectiveRole = raw.rawRole || (['broker', 'agent', 'client'].includes(raw.role) ? raw.role : null) || 'agent';
+  const defaults = mockDefaultProfiles[effectiveRole] || mockDefaultProfiles.agent;
 
   const name = raw.name || raw.full_name || defaults.name;
   const nameParts = name.trim().split(' ');
@@ -75,10 +78,10 @@ export function normalizeProfile(raw = {}) {
 
   const avatar = raw.avatar || raw.avatar_url || defaults.avatar;
 
-  const displayRole = raw.role === 'broker'
+  const displayRole = (effectiveRole === 'broker' || raw.role === 'broker')
     ? 'Principal Broker & Managing Director'
-    : raw.role === 'client'
-    ? 'Registered Luxury Client'
+    : (effectiveRole === 'client' || raw.role === 'client')
+    ? 'Registered Client'
     : (raw.role_title || defaults.role);
 
   return {
@@ -95,6 +98,7 @@ export function normalizeProfile(raw = {}) {
     preferredLocation: raw.preferredLocation || raw.preferred_location || defaults.preferredLocation || '',
     investmentBudget: raw.investmentBudget || raw.investment_budget || defaults.investmentBudget || '',
     notificationPreferences: raw.notificationPreferences || raw.notification_preferences || { email: true, sms: true, priceDrops: true },
+    ui_preferences: raw.ui_preferences || raw.uiPreferences || defaults.ui_preferences || { font_size: 'standard' },
     prc_license_no: raw.prc_license_no || defaults.prc_license_no || '',
     prc_validity: raw.prc_validity || defaults.prc_validity || '',
     dhsud_accreditation_no: raw.dhsud_accreditation_no || defaults.dhsud_accreditation_no || '',

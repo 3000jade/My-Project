@@ -11,6 +11,8 @@ import { Search } from 'lucide-react';
 import DashboardModal from '../../../components/dashboard/DashboardModal';
 import AgentScheduleCalendar from '../../../components/dashboard/AgentScheduleCalendar';
 import { agentService } from '../../../services/agentService';
+import { Spinner } from '../../../components/ui';
+import { AgentDetailSkeleton } from '../../../components/dashboard/skeletons';
 import { propertyService } from '../../../services/propertyService';
 import { cn } from '../../../utils/cn';
 
@@ -398,11 +400,8 @@ export default function BrokerAgentDetail() {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg border border-[#E2E8F0] p-16 text-center space-y-3 max-w-6xl mx-auto shadow-2xs">
-        <div className="inline-block animate-spin rounded-full h-8 w-8 border-2 border-[#0F766E] border-t-transparent"></div>
-        <p className="text-xs font-semibold uppercase tracking-wider text-[#64748B]">
-          Loading agent credentials dossier...
-        </p>
+      <div className="max-w-6xl mx-auto py-12">
+        <AgentDetailSkeleton />
       </div>
     );
   }
@@ -511,7 +510,7 @@ export default function BrokerAgentDetail() {
             </div>
 
             {/* Profile Action Buttons */}
-            <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto shrink-0 mt-3 sm:mt-0">
               <button
                 type="button"
                 onClick={() => navigate(`/broker/agents/${agent.id}/edit`)}
@@ -575,7 +574,7 @@ export default function BrokerAgentDetail() {
           </div>
 
           {/* Navigation Tabs Matching Mockup Screen 3 */}
-          <div className="flex items-center gap-6 mt-6 pt-4 border-t border-[#E2E8F0] overflow-x-auto text-xs font-semibold">
+          <div className="flex items-center gap-4 sm:gap-6 mt-6 pt-4 border-t border-[#E2E8F0] overflow-x-auto scrollbar-none whitespace-nowrap text-xs font-semibold">
             {[
               { id: 'overview', label: 'Overview' },
               { id: 'credentials', label: 'Credentials' },

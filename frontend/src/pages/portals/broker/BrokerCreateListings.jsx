@@ -27,7 +27,6 @@ import mapsService from '../../../services/mapsService';
 import phLocationService from '../../../services/phLocationService';
 import driveService from '../../../services/driveService';
 import { CadastralLocationPicker } from '../../../components/ui/map';
-import SubdivisionLotPickerModal from '../../../components/subdivision/SubdivisionLotPickerModal';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -423,7 +422,6 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
   const [createdPropertyId, setCreatedPropertyId] = useState(id && id !== 'new' ? id : null);
   const [submissionError, setSubmissionError] = useState(null);
   const [activeActionLabel, setActiveActionLabel] = useState('');
-  const [showSubdivisionLotModal, setShowSubdivisionLotModal] = useState(false);
 
   // 7 Canonical Form Sections per PROPERTY_LISTING_FORM.md
   const [currentStep, setCurrentStep] = useState(1);
@@ -1991,6 +1989,143 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                 </div>
               </div>
 
+              {/* Merged Property Status & Lifecycle Overview */}
+              <div className="space-y-3 md:col-span-2 p-4 bg-slate-50/80 rounded-xl border border-slate-200/80" data-testid="listing-overview-status-group">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-200/60">
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[18px] text-[#0F766E]">verified</span>
+                    <span className="text-xs font-bold uppercase tracking-wider text-[#1E293B]">
+                      Property Status & Lifecycle
+                    </span>
+                  </div>
+                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${
+                    formData.status === 'AVAILABLE' || formData.standard_status === 'Active'
+                      ? 'bg-teal-50 text-[#0F766E] border-teal-200'
+                      : formData.status === 'RESERVED' || formData.standard_status === 'Active Under Contract'
+                      ? 'bg-amber-50 text-amber-700 border-amber-200'
+                      : formData.status === 'SOLD' || formData.standard_status === 'Closed'
+                      ? 'bg-slate-100 text-slate-700 border-slate-300'
+                      : 'bg-slate-100 text-slate-600 border-slate-200'
+                  }`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${
+                      formData.status === 'AVAILABLE' || formData.standard_status === 'Active'
+                        ? 'bg-[#0F766E]'
+                        : formData.status === 'RESERVED' || formData.standard_status === 'Active Under Contract'
+                        ? 'bg-amber-500'
+                        : 'bg-slate-400'
+                    }`} />
+                    <span>{formData.status || 'AVAILABLE'} • {formData.standard_status || 'Active'}</span>
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
+                  {/* 1. Transaction / Inventory Status */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-600 block">
+                      Inventory Status <span className="text-[#FF6B6B]">*</span>
+                    </label>
+                    <select
+                      data-testid="property-inventory-status-select"
+                      value={formData.status || 'AVAILABLE'}
+                      onChange={e => {
+                        const nextStatus = e.target.value;
+                        setIsDirty(true);
+                        let nextStandard = formData.standard_status;
+                        let nextPublished = formData.is_published;
+                        if (nextStatus === 'AVAILABLE') {
+                          nextStandard = 'Active';
+                          nextPublished = true;
+                        } else if (nextStatus === 'RESERVED') {
+                          nextStandard = 'Active Under Contract';
+                          nextPublished = true;
+                        } else if (nextStatus === 'SOLD') {
+                          nextStandard = 'Closed';
+                          nextPublished = true; // Sold properties remain published to showcase closed transactions
+                        } else if (nextStatus === 'INACTIVE') {
+                          nextStandard = 'Draft';
+                          nextPublished = false;
+                        }
+                        setFormData({
+                          ...formData,
+                          status: nextStatus,
+                          standard_status: nextStandard,
+                          is_published: nextPublished
+                        });
+                      }}
+                      className="w-full h-10 px-3 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-xs font-semibold text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none cursor-pointer shadow-2xs transition-colors"
+                    >
+                      <option value="AVAILABLE">AVAILABLE (Active Inventory)</option>
+                      <option value="RESERVED">RESERVED (Under Contract)</option>
+                      <option value="SOLD">SOLD / CLOSED</option>
+                      <option value="INACTIVE">INACTIVE (Deactivated)</option>
+                    </select>
+                  </div>
+
+                  {/* 2. RESO Standard Status / Listing Publication */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-600 block">
+                      Listing Publication Status
+                    </label>
+                    <select
+                      data-testid="property-standard-status-select"
+                      value={formData.standard_status || 'Active'}
+                      onChange={e => {
+                        const nextStandard = e.target.value;
+                        setIsDirty(true);
+                        let nextStatus = formData.status;
+                        let nextPublished = formData.is_published;
+                        if (nextStandard === 'Active') {
+                          nextStatus = 'AVAILABLE';
+                          nextPublished = true;
+                        } else if (nextStandard === 'Active Under Contract') {
+                          nextStatus = 'RESERVED';
+                          nextPublished = true;
+                        } else if (nextStandard === 'Closed') {
+                          nextStatus = 'SOLD';
+                          nextPublished = true; // Closed properties remain published
+                        } else if (nextStandard === 'Draft') {
+                          nextStatus = 'INACTIVE';
+                          nextPublished = false;
+                        }
+                        setFormData({
+                          ...formData,
+                          standard_status: nextStandard,
+                          status: nextStatus,
+                          is_published: nextPublished
+                        });
+                      }}
+                      className="w-full h-10 px-3 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-xs font-semibold text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none cursor-pointer shadow-2xs transition-colors"
+                    >
+                      <option value="Active">Active (Live on Market)</option>
+                      <option value="Active Under Contract">Active Under Contract</option>
+                      <option value="Draft">Draft (Internal Only)</option>
+                      <option value="Pending Approval">Pending Approval</option>
+                      <option value="Closed">Closed (Completed)</option>
+                    </select>
+                  </div>
+
+                  {/* 3. Title Ownership Status */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-600 block">
+                      Property Title Status
+                    </label>
+                    <select
+                      data-testid="property-title-status-select"
+                      value={formData.title_status || 'clean'}
+                      onChange={e => {
+                        setIsDirty(true);
+                        setFormData({ ...formData, title_status: e.target.value });
+                      }}
+                      className="w-full h-10 px-3 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-xs font-semibold text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none cursor-pointer shadow-2xs transition-colors"
+                    >
+                      <option value="clean">Clean Title (TCT/CCT)</option>
+                      <option value="mortgaged">Under Bank Mortgage</option>
+                      <option value="tax_declaration">Tax Declaration Only</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
               {/* Development Condition Selector */}
               <div className="space-y-1.5 md:col-span-2">
                 <div className="flex items-center justify-between">
@@ -2418,74 +2553,6 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {/* Subdivision Master Plan Anchor Selector */}
-                    <div className="p-4 rounded-xl border border-teal-200 bg-teal-50/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                      <div className="flex items-start gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-[#0F766E] text-white flex items-center justify-center shrink-0 shadow-xs">
-                          <span className="material-symbols-outlined text-[20px]">layers</span>
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-bold text-[#0F766E] uppercase tracking-wider">Subdivision Master Plan</span>
-                            {formData.subdivision_lot_id && (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                                <span className="material-symbols-outlined text-[12px]">check_circle</span>
-                                Anchored
-                              </span>
-                            )}
-                          </div>
-                          {formData.subdivision_lot_id ? (
-                            <p className="text-xs text-[#1E293B] mt-0.5">
-                              Anchored to <span className="font-bold text-[#0F766E]">{formData.subdivision_name || formData.subdivision}</span> — Block {formData.block}, Lot {formData.lot}
-                              {formData.lot_area ? ` (${formData.lot_area} m²)` : ''}
-                            </p>
-                          ) : (
-                            <p className="text-xs text-[#64748B] mt-0.5">
-                              Link this listing directly to a verified lot boundary on an interactive subdivision cadastral map.
-                            </p>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
-                        <button
-                          type="button"
-                          onClick={() => setShowSubdivisionLotModal(true)}
-                          className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-semibold rounded-lg shadow-xs cursor-pointer transition-colors"
-                        >
-                          <span className="material-symbols-outlined text-[16px]">map</span>
-                          <span>{formData.subdivision_lot_id ? 'Change Lot' : 'Select from Subdivision Plan'}</span>
-                        </button>
-                        {formData.subdivision_lot_id ? (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setIsDirty(true);
-                              setFormData({
-                                ...formData,
-                                subdivision_project_id: null,
-                                subdivision_lot_id: null,
-                                subdivision_lot_details: null,
-                              });
-                            }}
-                            className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg border border-slate-200 cursor-pointer transition-colors"
-                            title="Unlink Subdivision Lot"
-                          >
-                            <span className="material-symbols-outlined text-[16px]">link_off</span>
-                          </button>
-                        ) : (
-                          <Link
-                            to="/broker/subdivisions"
-                            target="_blank"
-                            className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#0F766E] hover:text-[#115E59] hover:underline px-2 py-1"
-                          >
-                            <span>Map Studio</span>
-                            <span className="text-[12px]">↗</span>
-                          </Link>
-                        )}
-                      </div>
-                    </div>
-
                     <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
                       <div className="space-y-1.5 md:col-span-6">
                         <label htmlFor="subdivision-input" className="text-xs font-semibold text-[#1E293B] block">
@@ -3501,12 +3568,24 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
 
                 {/* Transactional Status */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
-                    Transaction Status
-                  </label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
+                      Transaction Status
+                    </label>
+                    <span className="text-[10px] text-[#0F766E] font-medium">Synced with Overview</span>
+                  </div>
                   <select
                     value={formData.status}
-                    onChange={e => { setIsDirty(true); setFormData({ ...formData, status: e.target.value }); }}
+                    onChange={e => {
+                      const nextStatus = e.target.value;
+                      setIsDirty(true);
+                      let nextStandard = formData.standard_status;
+                      if (nextStatus === 'AVAILABLE') nextStandard = 'Active';
+                      else if (nextStatus === 'RESERVED') nextStandard = 'Active Under Contract';
+                      else if (nextStatus === 'SOLD') nextStandard = 'Closed';
+                      else if (nextStatus === 'INACTIVE') nextStandard = 'Draft';
+                      setFormData({ ...formData, status: nextStatus, standard_status: nextStandard });
+                    }}
                     className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm font-semibold text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none cursor-pointer shadow-2xs transition-colors"
                   >
                     <option value="AVAILABLE">AVAILABLE (Active Inventory)</option>
@@ -6103,30 +6182,6 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
           </div>
         </div>
       )}
-
-      {/* Subdivision Lot Picker Modal */}
-      <SubdivisionLotPickerModal
-        isOpen={showSubdivisionLotModal}
-        onClose={() => setShowSubdivisionLotModal(false)}
-        selectedLotId={formData.subdivision_lot_id}
-        initialProjectId={formData.subdivision_project_id}
-        onSelectLot={({ project, lot }) => {
-          setIsDirty(true);
-          setFormData((prev) => ({
-            ...prev,
-            subdivision_name: project?.name || prev.subdivision_name,
-            subdivision: project?.name || prev.subdivision,
-            block: lot?.block_number || prev.block,
-            lot: lot?.lot_number || prev.lot,
-            lot_area: lot?.verified_area_sqm ? String(lot.verified_area_sqm) : prev.lot_area,
-            lot_size_area: lot?.verified_area_sqm ? String(lot.verified_area_sqm) : prev.lot_size_area,
-            price: (!prev.price && lot?.price) ? String(lot.price) : prev.price,
-            subdivision_project_id: project?.id || null,
-            subdivision_lot_id: lot?.id || null,
-            subdivision_lot_details: lot,
-          }));
-        }}
-      />
 
     </div>
   );

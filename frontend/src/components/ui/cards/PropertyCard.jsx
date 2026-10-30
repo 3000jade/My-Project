@@ -13,6 +13,7 @@ import {
 } from '@tabler/icons-react';
 import { resolveDriveImageUrl } from '../../../services/driveService';
 import useViewingList from '../../../hooks/useViewingList';
+import ViewPropertyButton from '../buttons/ViewPropertyButton';
 
 export default function PropertyCard({ 
   property = {}, 
@@ -124,9 +125,13 @@ export default function PropertyCard({
       data-testid="property-card"
       data-property-id={propertyId}
       className={`group relative rounded-[28px] border p-4 transition-all duration-300 ease-out cursor-pointer overflow-hidden flex flex-col justify-between h-full w-full select-none font-sans ${
-        isHighlighted
-          ? 'border-[#0F766E] ring-2 ring-[#0F766E]/30 shadow-lg -translate-y-1.5 bg-teal-50/10'
-          : 'bg-[#FFFFFF] border-[#E2E8F0] shadow-xs hover:shadow-md hover:border-[#0F766E]/40 hover:-translate-y-1'
+        isClosed
+          ? isHighlighted
+            ? 'opacity-100 bg-white/95 border-rose-300 ring-2 ring-rose-400/25 shadow-md -translate-y-1'
+            : 'opacity-80 hover:opacity-100 bg-white/80 backdrop-blur-xs border-slate-200 shadow-2xs hover:shadow-sm hover:border-slate-300 hover:-translate-y-0.5'
+          : isHighlighted
+            ? 'border-[#0F766E] ring-2 ring-[#0F766E]/30 shadow-lg -translate-y-1.5 bg-teal-50/10'
+            : 'bg-[#FFFFFF] border-[#E2E8F0] shadow-xs hover:shadow-md hover:border-[#0F766E]/40 hover:-translate-y-1'
       }`}
       tabIndex={0}
       role="button"
@@ -150,7 +155,7 @@ export default function PropertyCard({
               e.currentTarget.src = 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1200&auto=format&fit=crop';
             }}
             className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out ${
-              isClosed ? 'grayscale-[35%] opacity-90' : ''
+              isClosed ? 'grayscale-[20%] opacity-90' : ''
             }`}
           />
 
@@ -183,11 +188,11 @@ export default function PropertyCard({
 
             {isClosed && (
               <span 
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full backdrop-blur-md bg-slate-100/95 text-slate-700 border border-slate-300 text-[11px] font-bold shadow-xs uppercase tracking-wide" 
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full backdrop-blur-md bg-rose-600 text-white border border-rose-700 text-[11px] font-extrabold shadow-sm uppercase tracking-wider" 
                 data-testid="card-status-badge"
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-slate-500" />
-                Closed / Sold
+                <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                SOLD / CLOSED
               </span>
             )}
 
@@ -228,6 +233,13 @@ export default function PropertyCard({
           {isUnderContract && (
             <div className="absolute bottom-0 inset-x-0 bg-amber-500/90 backdrop-blur-xs text-white text-[10px] font-bold py-1 px-3 text-center uppercase tracking-wider z-10 shadow-xs">
               Under Contract • Backup Inquiries Welcome
+            </div>
+          )}
+
+          {/* Sold / Closed Contextual Overlay Banner */}
+          {isClosed && (
+            <div className="absolute bottom-0 inset-x-0 bg-slate-900/85 backdrop-blur-xs text-white text-[10px] font-bold py-1 px-3 text-center uppercase tracking-widest z-10 shadow-xs">
+              Transaction Closed • Sold Benchmark
             </div>
           )}
         </div>
@@ -309,24 +321,23 @@ export default function PropertyCard({
           {/* Footer: Asking Price & View Property Pill Button */}
           <div className="flex items-end justify-between gap-2 pt-0.5">
             <div>
-              <span className="block text-[11px] text-slate-400 font-medium">Asking price</span>
-              <p className="text-xl sm:text-2xl font-bold text-[#0F4C5C] tracking-tight">
+              <span className="block text-[11px] text-slate-400 font-medium">
+                {isClosed ? 'Sold benchmark' : isUnderContract ? 'Contract pending' : 'Asking price'}
+              </span>
+              <p className={`text-xl sm:text-2xl font-bold tracking-tight ${
+                isClosed ? 'text-slate-700 font-mono' : 'text-[#0F4C5C]'
+              }`}>
                 {priceWithFrequency}
               </p>
             </div>
 
-            <button
-              type="button"
+            <ViewPropertyButton
               onClick={handleNavigate}
-              aria-label="View Details"
-              className="inline-flex items-center gap-2 pl-4 pr-1.5 py-1.5 rounded-full bg-[#0F6266] hover:bg-[#0c4e51] text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer group/btn shrink-0"
-              title="View property"
-            >
-              <span>View property</span>
-              <div className="w-6 h-6 rounded-full bg-[#E07A5F] text-white flex items-center justify-center transition-transform group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5">
-                <IconArrowRight size={13} stroke={2.5} className="-rotate-45" />
-              </div>
-            </button>
+              aria-label={isClosed ? 'View Past Sale' : 'View Details'}
+              label={isClosed ? 'View Past Sale' : isUnderContract ? 'View Details' : 'View property'}
+              className={isClosed ? 'bg-slate-700 hover:bg-slate-800' : ''}
+              title={isClosed ? 'View past sale record' : 'View property'}
+            />
           </div>
         </div>
       </div>

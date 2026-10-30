@@ -88,6 +88,40 @@ export const authService = {
     return response.data;
   },
 
+  /**
+   * Initiate registration with 6-digit Email OTP dispatch
+   */
+  async initiateRegistrationOtp(payload) {
+    const response = await apiClient.post('/auth/register-otp/initiate', payload);
+    return response.data;
+  },
+
+  /**
+   * Verify registration 6-digit Email OTP and establish session
+   */
+  async verifyRegistrationOtp(payload) {
+    const response = await apiClient.post('/auth/register-otp/verify', payload);
+    if (response?.data?.token) {
+      apiClient.setToken(response.data.token);
+    }
+    if (response?.data?.refreshToken && typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('cp_refresh_token', response.data.refreshToken);
+      } catch (err) {
+        console.warn('[authService] Failed storing refresh token:', err);
+      }
+    }
+    return response.data;
+  },
+
+  /**
+   * Resend 6-digit registration verification OTP
+   */
+  async resendRegistrationOtp(email) {
+    const response = await apiClient.post('/auth/register-otp/resend', { email });
+    return response.data;
+  },
+
   // Backward compatible alias
   register(email, password, metadata = {}) {
     return this.registerUser({

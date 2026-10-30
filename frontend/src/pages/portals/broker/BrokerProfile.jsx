@@ -1,3 +1,5 @@
+import { Spinner } from '../../../components/ui';
+import { ProfileSkeleton } from '../../../components/dashboard/skeletons';
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import PageHeader from '../../../components/dashboard/PageHeader';
@@ -7,6 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, useToast, Toaster, Editable } from '../../../components/ui';
 import { profileService, mockDefaultProfiles } from '../../../services/profileService';
 import { useAuth } from '../../../context/AuthContext';
+import { useDashboardDensity } from '../../../context/DashboardThemeContext';
+import { cn } from '@/utils/cn';
 
 export default function BrokerProfile() {
   const navigate = useNavigate();
@@ -18,6 +22,7 @@ export default function BrokerProfile() {
     // Handled gracefully when rendered in isolated test runners
   }
   const logout = auth?.logout;
+  const { density = 'standard', setDensity = () => {}, isSyncing = false, options = [] } = useDashboardDensity();
   const [profile, setProfile] = useState(mockDefaultProfiles.broker);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -37,7 +42,7 @@ export default function BrokerProfile() {
     } catch (err) {
       const msg = err.message || 'Failed to load broker profile.';
       setError(msg);
-      toast({ title: 'Profile Error', description: msg, variant: 'destructive' });
+      toast({ title: 'Profile Error', description: 'Could not synchronize profile data.', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -108,7 +113,7 @@ export default function BrokerProfile() {
   };
 
   return (
-    <div className="space-y-8 max-w-5xl mx-auto font-sans" data-testid="broker-profile-portal">
+    <div className="space-y-8 max-w-5xl mx-auto font-sans min-w-0 max-w-full" data-testid="broker-profile-portal">
       <Toaster />
       <PageHeader
         title="Broker Executive Profile"
@@ -172,12 +177,7 @@ export default function BrokerProfile() {
       )}
 
       {loading ? (
-        <Card data-testid="broker-card" className="py-24 flex flex-col items-center justify-center text-[#64748B] dark:text-slate-400 gap-3 bg-white dark:bg-slate-900 border border-[#E2E8F0] dark:border-slate-800 shadow-xs">
-          <span className="material-symbols-outlined animate-spin text-[40px] text-[#0F766E]">
-            progress_activity
-          </span>
-          <p className="text-sm font-sans font-medium">Loading executive profile credentials...</p>
-        </Card>
+        <ProfileSkeleton />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Left Column: Avatar & Firm Identity */}
@@ -251,6 +251,102 @@ export default function BrokerProfile() {
 
           {/* Right 2 Columns: Credentials & Supervised Scope */}
           <div className="md:col-span-2 space-y-6">
+            {/* Appearance & Typography Density Card */}
+            <Card data-testid="typography-density-card" className="bg-white dark:bg-slate-900 rounded-2xl border border-[#E2E8F0] dark:border-slate-800 p-6 shadow-xs space-y-5">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-3 border-b border-[#E2E8F0] dark:border-slate-800">
+                <div>
+                  <h3 className="text-base font-display font-bold text-[#1E293B] dark:text-slate-100 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[#0F766E] dark:text-teal-400">format_size</span>
+                    Appearance &amp; Typography Density
+                  </h3>
+                  <p className="text-xs text-[#64748B] dark:text-slate-400 mt-0.5">
+                    Adjust the base text scale and layout density across the entire broker command portal.
+                  </p>
+                </div>
+                {isSyncing ? (
+                  <span className="inline-flex items-center gap-1.5 text-xs text-[#0F766E] font-medium animate-pulse">
+                    <span className="material-symbols-outlined text-[15px] animate-spin">sync</span>
+                    Syncing to profile...
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
+                    <span className="material-symbols-outlined text-[13px]">cloud_done</span>
+                    Profile Synced
+                  </span>
+                )}
+              </div>
+
+              {/* 3 Discrete Density Options */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {(options || []).map((opt) => {
+                  const isSelected = density === opt.id;
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => setDensity(opt.id)}
+                      aria-pressed={isSelected}
+                      data-testid={`density-option-${opt.id}`}
+                      className={cn(
+                        "p-3.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2 group",
+                        isSelected
+                          ? "border-[#0F766E] bg-teal-50/40 dark:bg-teal-950/30 ring-1 ring-[#0F766E] shadow-xs"
+                          : "border-[#E2E8F0] dark:border-slate-800 bg-white dark:bg-slate-900/60 hover:border-slate-300 dark:hover:border-slate-700"
+                      )}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className={cn(
+                          "text-xs font-bold",
+                          isSelected ? "text-[#0F766E] dark:text-teal-400" : "text-[#1E293B] dark:text-slate-200"
+                        )}>
+                          {opt.label}
+                        </span>
+                        <span className={cn(
+                          "text-[10px] px-2 py-0.5 rounded font-mono font-bold tracking-tight",
+                          isSelected
+                            ? "bg-[#0F766E] text-white"
+                            : "bg-slate-100 dark:bg-slate-800 text-[#64748B] dark:text-slate-400"
+                        )}>
+                          {opt.badge}
+                        </span>
+                      </div>
+                      <p className="text-[11px] leading-relaxed text-[#64748B] dark:text-slate-400">
+                        {opt.description}
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Live Preview Container */}
+              <div className="p-4 rounded-xl border border-dashed border-[#E2E8F0] dark:border-slate-800 bg-[#F8FAFC]/90 dark:bg-slate-800/40 space-y-2">
+                <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-[#64748B] dark:text-slate-400">
+                  <span>Live Density Preview</span>
+                  <span className="font-mono text-[#0F766E] dark:text-teal-400 lowercase">
+                    data-dashboard-density="{density}"
+                  </span>
+                </div>
+                
+                <div className="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-base font-bold text-[#1E293B] dark:text-slate-100">
+                      The Dahlia Penthouse • BGC High Street
+                    </h4>
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      Active Listing
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#64748B] dark:text-slate-400">
+                    4 Bedrooms • 480 sqm • ₱125,000,000 • Verified Luxury Asset
+                  </p>
+                  <div className="flex items-center gap-4 text-xs font-medium text-slate-700 dark:text-slate-300 pt-1">
+                    <span>Showings: <strong className="text-[#0F766E] font-bold">14</strong></span>
+                    <span>Inquiries: <strong className="text-[#0F766E] font-bold">38</strong></span>
+                    <span>Assigned: <strong>Elena Rossi</strong></span>
+                  </div>
+                </div>
+              </div>
+            </Card>
             <Card data-testid="broker-card" className="bg-white dark:bg-slate-900 rounded-2xl border border-[#E2E8F0] dark:border-slate-800 p-6 shadow-xs space-y-5">
               <h3 className="text-base font-display font-bold text-[#1E293B] dark:text-slate-100 pb-3 border-b border-[#E2E8F0] dark:border-slate-800 flex items-center gap-2">
                 <span className="material-symbols-outlined text-[#0F766E] dark:text-teal-400">admin_panel_settings</span>

@@ -100,15 +100,20 @@ describe('BrokerProperties Page (Mockup & Modern SaaS Layout)', () => {
     expect(newListingBtn).toHaveAttribute('href', '/broker/properties/select-type');
   });
 
-  it('renders pill status tabs with counts matching mockup', async () => {
+  it('renders status dropdown with counts matching mockup', async () => {
     renderComponent();
 
-    // Check tabs by role and accessible name
-    expect(await screen.findByRole('button', { name: /all listings/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /needs approval/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /active/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /under contract/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /closed/i })).toBeInTheDocument();
+    const statusBtn = await screen.findByTestId('status-filter-dropdown-btn');
+    expect(statusBtn).toBeInTheDocument();
+    expect(statusBtn).toHaveTextContent(/Status:\s*All Listings/i);
+
+    // Open status dropdown
+    fireEvent.click(statusBtn);
+
+    expect(screen.getByTestId('status-option-NEEDS_APPROVAL')).toBeInTheDocument();
+    expect(screen.getByTestId('status-option-ACTIVE')).toBeInTheDocument();
+    expect(screen.getByTestId('status-option-RESERVED')).toBeInTheDocument();
+    expect(screen.getByTestId('status-option-SOLD')).toBeInTheDocument();
   });
 
   it('renders table columns with specifications and bold price', async () => {
@@ -122,15 +127,19 @@ describe('BrokerProperties Page (Mockup & Modern SaaS Layout)', () => {
     expect(screen.getByText('₱158,000,000')).toBeInTheDocument();
   });
 
-  it('filters listings by clicking on status pill tabs', async () => {
+  it('filters listings by clicking on status option from dropdown', async () => {
     renderComponent();
 
     expect(await screen.findByText('Aurelia Modernist Penthouse at BGC')).toBeInTheDocument();
     expect(screen.getByText('Dasmarinas Village Sanctuary')).toBeInTheDocument();
 
-    // Click 'Needs Approval' tab
-    const needsApprovalTab = screen.getByRole('button', { name: /needs approval/i });
-    fireEvent.click(needsApprovalTab);
+    // Open status dropdown
+    const statusBtn = await screen.findByTestId('status-filter-dropdown-btn');
+    fireEvent.click(statusBtn);
+
+    // Click 'Needs Approval' option
+    const needsApprovalOption = screen.getByTestId('status-option-NEEDS_APPROVAL');
+    fireEvent.click(needsApprovalOption);
 
     // Only 'Dasmarinas Village Sanctuary' (Pending Approval) should remain
     expect(screen.getByText('Dasmarinas Village Sanctuary')).toBeInTheDocument();
@@ -168,13 +177,21 @@ describe('BrokerProperties Page (Mockup & Modern SaaS Layout)', () => {
     expect(screen.queryByTitle('View Details')).toBeNull();
   });
 
-  it('navigates to the broker property detail page when clicking a listed property row', async () => {
+  it('navigates directly to the listing editor when clicking a listed property row', async () => {
     renderComponent();
 
     const propertyRow = await screen.findByText('Aurelia Modernist Penthouse at BGC');
     fireEvent.click(propertyRow);
 
-    expect(mockNavigate).toHaveBeenCalledWith('/broker/properties/prop-1');
+    expect(mockNavigate).toHaveBeenCalledWith('/broker/properties/prop-1/edit');
+  });
+
+  it('does not render Quick Edit or Dossier links across the portal', async () => {
+    renderComponent();
+
+    expect(await screen.findByText('Aurelia Modernist Penthouse at BGC')).toBeInTheDocument();
+    expect(screen.queryByText(/Quick Edit/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Dossier/i)).not.toBeInTheDocument();
   });
 
   it('switches view mode between Table, Grid, and Map View', async () => {

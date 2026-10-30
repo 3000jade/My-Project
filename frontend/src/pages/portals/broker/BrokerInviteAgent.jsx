@@ -241,8 +241,22 @@ export default function BrokerInviteAgent() {
         /* Multi-Step Wizard Grid (Screen 2) */
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
           
+          {/* Mobile Stepper Header (< md) */}
+          <div className="md:hidden bg-white dark:bg-slate-900 rounded-lg border border-[#E2E8F0] dark:border-slate-800 p-4 shadow-2xs space-y-2">
+            <div className="flex items-center justify-between text-xs font-bold text-[#1E293B]">
+              <span className="text-[#0F766E]">Step {currentStep} of {STEPS.length}</span>
+              <span className="text-[#64748B] font-normal">{STEPS[currentStep - 1]?.title}</span>
+            </div>
+            <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-[#0F766E] rounded-full transition-all duration-300"
+                style={{ width: `${(currentStep / STEPS.length) * 100}%` }}
+              />
+            </div>
+          </div>
+
           {/* Left Column: Progress Stepper (4-Cols on Desktop) */}
-          <div data-testid="broker-card" className="md:col-span-4 bg-white dark:bg-slate-900 rounded-lg border border-[#E2E8F0] dark:border-slate-800 p-5 shadow-2xs space-y-4">
+          <div data-testid="broker-card" className="hidden md:block md:col-span-4 bg-white dark:bg-slate-900 rounded-lg border border-[#E2E8F0] dark:border-slate-800 p-5 shadow-2xs space-y-4">
             <h3 className="text-xs font-bold text-[#1E293B] uppercase tracking-wider pb-3 border-b border-[#E2E8F0]">
               Onboarding Steps
             </h3>

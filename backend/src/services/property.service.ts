@@ -126,6 +126,15 @@ export interface PropertyItem {
   listAgentKey?: string;
   agentName?: string;
   agentId?: string;
+  subdivisionProjectId?: string | null;
+  subdivisionLotId?: string | null;
+  subdivision_project_id?: string | null;
+  subdivision_lot_id?: string | null;
+}
+
+function isValidUuid(val?: any): boolean {
+  if (!val || typeof val !== 'string') return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
 }
 
 /**
@@ -530,6 +539,10 @@ export class PropertyService {
       listAgentKey: row.list_agent_key || null,
       agentName: 'Elena Rossi',
       agentId: row.list_agent_key || row.created_by || 'agent-1',
+      subdivisionProjectId: row.subdivision_project_id || null,
+      subdivisionLotId: row.subdivision_lot_id || null,
+      subdivision_project_id: row.subdivision_project_id || null,
+      subdivision_lot_id: row.subdivision_lot_id || null,
     };
   }
 
@@ -755,7 +768,7 @@ export class PropertyService {
     const effectiveAgent = query.agentId || query.list_agent_key || query.listAgentKey;
     if (query.unassigned || query.assignmentStatus === 'UNASSIGNED') {
       filtered = filtered.filter(
-        (p) => !p.listAgentKey || p.listAgentKey === '' || p.assignmentStatus === 'UNASSIGNED'
+        (p) => !p.listAgentKey || p.listAgentKey === '' || (p.assignmentStatus as any) === 'UNASSIGNED'
       );
     } else if (effectiveAgent) {
       filtered = filtered.filter(
@@ -1272,7 +1285,7 @@ export class PropertyService {
       status: initialStatus === 'Active' ? 'available' : 'pending',
       assignmentStatus: initialAssignmentStatus,
       assignmentDeclinedReason: null,
-      assignedAt: hasAgent ? new Date().toISOString() : null,
+      assignedAt: hasAgent ? new Date().toISOString() : undefined,
       agentConfirmedAt: initialAssignmentStatus === 'ACCEPTED' ? new Date().toISOString() : null,
       isPublished: initialIsPublished,
       createdAt: new Date().toISOString(),
@@ -1280,11 +1293,8 @@ export class PropertyService {
       createdBy: userId,
       listAgentKey: hasAgent ? effectiveAgentId : null,
       agentId: hasAgent ? effectiveAgentId : null,
-    };
-
-    const isValidUuid = (val?: string): boolean => {
-      if (!val || typeof val !== 'string') return false;
-      return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
+      subdivisionProjectId: data.subdivision_project_id || data.subdivisionProjectId || data.location?.subdivisionProjectId || null,
+      subdivisionLotId: data.subdivision_lot_id || data.subdivisionLotId || data.location?.subdivisionLotId || null,
     };
 
     if (isSupabaseConfigured) {
@@ -1356,6 +1366,8 @@ export class PropertyService {
             property_condition: newProperty.specs.propertyCondition,
             created_by: resolvedCreatedBy,
             list_agent_key: resolvedListAgentKey,
+            ...(newProperty.subdivisionProjectId && isValidUuid(newProperty.subdivisionProjectId) ? { subdivision_project_id: newProperty.subdivisionProjectId } : {}),
+            ...(newProperty.subdivisionLotId && isValidUuid(newProperty.subdivisionLotId) ? { subdivision_lot_id: newProperty.subdivisionLotId } : {}),
             ...(Array.isArray(newProperty.images) && newProperty.images.length > 0 ? { images: newProperty.images } : {}),
             ...(newProperty.mainImage ? { main_image: newProperty.mainImage } : {}),
           };
@@ -1715,6 +1727,8 @@ export class PropertyService {
             lot_size_area: updated.specs.lotSizeArea,
             lot_size_units: updated.specs.lotSizeUnits,
             is_featured: data.is_featured !== undefined ? Boolean(data.is_featured) : (data.isFeatured !== undefined ? Boolean(data.isFeatured) : updated.isFeatured),
+            ...(data.subdivision_project_id !== undefined ? { subdivision_project_id: isValidUuid(data.subdivision_project_id) ? data.subdivision_project_id : null } : (data.subdivisionProjectId !== undefined ? { subdivision_project_id: isValidUuid(data.subdivisionProjectId) ? data.subdivisionProjectId : null } : {})),
+            ...(data.subdivision_lot_id !== undefined ? { subdivision_lot_id: isValidUuid(data.subdivision_lot_id) ? data.subdivision_lot_id : null } : (data.subdivisionLotId !== undefined ? { subdivision_lot_id: isValidUuid(data.subdivisionLotId) ? data.subdivisionLotId : null } : {})),
             ...(Array.isArray(data.images) ? { images: data.images } : {}),
             ...(data.main_image || data.mainImage ? { main_image: data.main_image || data.mainImage } : {}),
             updated_at: updated.updatedAt,

@@ -26,6 +26,12 @@ const LIFESTYLE_OPTIONS = [
 const BATH_OPTIONS = ['Any', '1', '2', '3', '4+'];
 const FLOOR_OPTIONS = ['Any', 'Low', 'Mid', 'High', 'Penthouse'];
 
+const SORT_OPTIONS = [
+  { value: 'Newest', label: 'Newest Additions' },
+  { value: 'Price: High to Low', label: 'Price: High to Low' },
+  { value: 'Price: Low to High', label: 'Price: Low to High' },
+];
+
 export default function AllFiltersDrawer({
   isOpen,
   onClose,
@@ -33,7 +39,9 @@ export default function AllFiltersDrawer({
   setFilter,
   facets = {},
   totalCount = 0,
-  onClearAll
+  onClearAll,
+  sortBy = 'Newest',
+  setSortBy,
 }) {
   const toggleArrayFilter = (key, value) => {
     const current = filters[key] || [];
@@ -91,6 +99,37 @@ export default function AllFiltersDrawer({
               data-lenis-prevent="true"
               className="flex-1 overflow-y-auto px-6 py-6 space-y-8 text-gray-800"
             >
+              {/* Sort Order */}
+              {setSortBy && (
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-bold uppercase tracking-wider text-[#174849] font-sans">
+                      Sort Order
+                    </h3>
+                    <span className="text-[11px] font-semibold text-gray-400">Default: Newest</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    {SORT_OPTIONS.map((opt) => {
+                      const isSelected = sortBy === opt.value;
+                      return (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => setSortBy(opt.value)}
+                          className={`px-3 py-2.5 rounded-xl text-xs font-bold transition-all border flex items-center justify-center text-center cursor-pointer ${
+                            isSelected
+                              ? 'bg-[#174849] text-white border-[#174849] shadow-sm'
+                              : 'bg-gray-50/80 text-gray-700 border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               {/* 1. Financing & Payment Terms */}
               <div>
                 <div className="flex items-center justify-between mb-3">

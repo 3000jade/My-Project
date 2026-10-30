@@ -4,9 +4,9 @@ import {
   X,
   SlidersHorizontal,
   ChevronDown,
-  DollarSign,
   Columns3,
 } from 'lucide-react';
+import { IconCurrencyPeso } from '@tabler/icons-react';
 import { cn } from '../../utils/cn';
 import { COMMON_PROPERTY_TYPES } from '../../pages/portals/broker/BrokerPropertyTypeSelect';
 
@@ -41,35 +41,29 @@ export default function PropertyFilterToolbar({
   const [isColumnsOpen, setIsColumnsOpen] = useState(false);
   const columnsPopoverRef = useRef(null);
 
-  // Close price popover on outside click
+  const [isStatusOpen, setIsStatusOpen] = useState(false);
+  const statusPopoverRef = useRef(null);
+
+  // Close popovers on outside click
   useEffect(() => {
     function handleClickOutside(e) {
       if (pricePopoverRef.current && !pricePopoverRef.current.contains(e.target)) {
         setIsPriceOpen(false);
       }
-    }
-    if (isPriceOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isPriceOpen]);
-
-  // Close columns popover on outside click
-  useEffect(() => {
-    function handleClickOutside(e) {
       if (columnsPopoverRef.current && !columnsPopoverRef.current.contains(e.target)) {
         setIsColumnsOpen(false);
       }
+      if (statusPopoverRef.current && !statusPopoverRef.current.contains(e.target)) {
+        setIsStatusOpen(false);
+      }
     }
-    if (isColumnsOpen) {
+    if (isPriceOpen || isColumnsOpen || isStatusOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isColumnsOpen]);
+  }, [isPriceOpen, isColumnsOpen, isStatusOpen]);
 
   const handleToggleColumn = (colId) => {
     if (!onVisibleColumnsChange) return;
@@ -161,56 +155,22 @@ export default function PropertyFilterToolbar({
     priceLabel = `≤ ${formatPrice(priceRange.max)}`;
   }
 
+  const currentTab = statusTabs.find((t) => t.id === statusTab) || statusTabs[0];
+
   const hasActiveFilters = Boolean(
     (search && search.trim() !== '') ||
+      (statusTab && statusTab !== 'ALL') ||
       (selectedType && selectedType !== 'ALL') ||
       (selectedLocation && selectedLocation !== 'ALL') ||
       hasPriceFilter
   );
 
   return (
-    <div className="space-y-3 font-sans">
-      {/* Status Navigation Tabs (Clean Modern Underline Style) */}
-      <div className="border-b border-[#E2E8F0] flex items-center gap-1 sm:gap-2 overflow-x-auto select-none no-scrollbar -mx-1 px-1">
-        {statusTabs.map((tab) => {
-          const isSelected = statusTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => onStatusTabChange?.(tab.id)}
-              aria-label={tab.ariaLabel || `${tab.label} (${tab.count})`}
-              className={cn(
-                'group relative inline-flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium transition-all cursor-pointer shrink-0 border-b-2 -mb-px',
-                isSelected
-                  ? 'border-[#0F766E] text-[#0F766E] font-semibold'
-                  : 'border-transparent text-[#64748B] hover:text-[#1E293B] hover:border-slate-300'
-              )}
-            >
-              <span>{tab.label}</span>
-              <span
-                className={cn(
-                  'px-1.5 py-0.2 rounded-full text-[10px] font-mono transition-colors',
-                  isSelected
-                    ? 'bg-teal-50 text-[#0F766E] font-bold border border-teal-200/60'
-                    : tab.isAlert && tab.count > 0
-                    ? 'bg-rose-100 text-rose-800 font-bold'
-                    : tab.badge && tab.count > 0
-                    ? 'bg-amber-100 text-amber-800 font-bold'
-                    : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200'
-                )}
-              >
-                {tab.count}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-
+    <div className="space-y-3 font-sans min-w-0 max-w-full">
       {/* Clean Unified Multi-Criteria Toolbar */}
-      <div className="bg-white rounded-xl border border-[#E2E8F0] p-2.5 shadow-2xs flex flex-wrap items-center gap-2">
+      <div className="bg-white rounded-xl border border-[#E2E8F0] p-2.5 shadow-2xs flex flex-wrap items-center gap-2 min-w-0 max-w-full">
         {/* Omni Search Input */}
-        <div className="relative flex-1 min-w-[240px]">
+        <div className="relative flex-1 min-w-[200px] w-full sm:w-auto">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
             type="text"
@@ -228,6 +188,105 @@ export default function PropertyFilterToolbar({
             >
               <X className="w-3.5 h-3.5" />
             </button>
+          )}
+        </div>
+
+        {/* Status Facet Dropdown Popover */}
+        <div className="relative shrink-0" ref={statusPopoverRef}>
+          <button
+            type="button"
+            data-testid="status-filter-dropdown-btn"
+            onClick={() => setIsStatusOpen((prev) => !prev)}
+            aria-label={`Status: ${currentTab.label}`}
+            aria-expanded={isStatusOpen}
+            className={cn(
+              "h-9 px-3 rounded-lg text-xs font-medium flex items-center gap-1.5 cursor-pointer shrink-0 transition-colors",
+              statusTab && statusTab !== 'ALL'
+                ? "bg-teal-50/70 border border-[#0F766E] text-[#0F766E] font-semibold"
+                : "bg-[#F8FAFC] hover:bg-slate-100/70 border border-[#E2E8F0] text-[#1E293B]"
+            )}
+          >
+            <span>Status: {currentTab.label}</span>
+            <span
+              className={cn(
+                "px-1.5 py-0.2 rounded-full text-[10px] font-mono transition-colors ml-0.5",
+                statusTab && statusTab !== 'ALL'
+                  ? "bg-teal-100 text-[#0F766E] font-bold"
+                  : currentTab.isAlert && currentTab.count > 0
+                  ? "bg-rose-100 text-rose-800 font-bold"
+                  : currentTab.badge && currentTab.count > 0
+                  ? "bg-amber-100 text-amber-800 font-bold"
+                  : "bg-slate-200/70 text-slate-600"
+              )}
+            >
+              {currentTab.count}
+            </span>
+            <ChevronDown
+              className={cn(
+                "w-3.5 h-3.5 text-slate-400 ml-0.5 transition-transform duration-150",
+                isStatusOpen && "rotate-180"
+              )}
+            />
+          </button>
+
+          {isStatusOpen && (
+            <div
+              data-testid="status-dropdown-menu"
+              className="absolute left-0 top-full mt-1.5 w-60 bg-white border border-[#E2E8F0] rounded-xl shadow-xl p-2 z-40 space-y-1 animate-in fade-in-50 zoom-in-95"
+            >
+              <div className="flex items-center justify-between px-2.5 py-1.5 border-b border-slate-100 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                <span>Listing Status</span>
+                <span className="font-mono text-[10px] text-slate-400 font-normal">
+                  {statusTabs.length} Options
+                </span>
+              </div>
+              <div className="max-h-72 overflow-y-auto custom-scrollbar py-1 space-y-0.5">
+                {statusTabs.map((tab) => {
+                  const isSelected = statusTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      data-testid={`status-option-${tab.id}`}
+                      aria-label={tab.ariaLabel || `${tab.label} (${tab.count})`}
+                      onClick={() => {
+                        onStatusTabChange?.(tab.id);
+                        setIsStatusOpen(false);
+                      }}
+                      className={cn(
+                        "w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer text-left",
+                        isSelected
+                          ? "bg-teal-50/80 text-[#0F766E] font-semibold"
+                          : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                      )}
+                    >
+                      <div className="flex items-center gap-2 truncate pr-2">
+                        {isSelected ? (
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#0F766E] shrink-0" />
+                        ) : (
+                          <span className="w-1.5 h-1.5 rounded-full bg-transparent shrink-0" />
+                        )}
+                        <span className="truncate">{tab.label}</span>
+                      </div>
+                      <span
+                        className={cn(
+                          "px-1.5 py-0.5 rounded-full text-[10px] font-mono shrink-0",
+                          isSelected
+                            ? "bg-teal-100 text-[#0F766E] font-bold"
+                            : tab.isAlert && tab.count > 0
+                            ? "bg-rose-100 text-rose-800 font-bold"
+                            : tab.badge && tab.count > 0
+                            ? "bg-amber-100 text-amber-800 font-bold"
+                            : "bg-slate-100 text-slate-500"
+                        )}
+                      >
+                        {tab.count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           )}
         </div>
 
@@ -290,7 +349,7 @@ export default function PropertyFilterToolbar({
                 : 'border border-[#E2E8F0] bg-[#F8FAFC] hover:bg-slate-100/70 text-[#1E293B]'
             )}
           >
-            <DollarSign className="w-3.5 h-3.5 text-slate-400" />
+            <IconCurrencyPeso size={14} stroke={2} className={hasPriceFilter ? 'text-[#0F766E]' : 'text-slate-400'} />
             <span>{hasPriceFilter ? priceLabel : 'Price'}</span>
             <ChevronDown className="w-3 h-3 text-slate-400 ml-0.5" />
           </button>
@@ -508,6 +567,19 @@ export default function PropertyFilterToolbar({
           </span>
           <div className="h-3 w-px bg-slate-200 mx-1 hidden sm:block" />
           <div className="flex flex-wrap items-center gap-1.5">
+            {statusTab && statusTab !== 'ALL' && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-teal-50 border border-teal-200 text-xs text-[#0F766E] font-medium">
+                <span>Status: {currentTab?.label || statusTab}</span>
+                <button
+                  type="button"
+                  aria-label="Remove status filter"
+                  onClick={() => onStatusTabChange?.('ALL')}
+                  className="text-teal-400 hover:text-teal-700 cursor-pointer"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            )}
             {search && (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200 text-xs text-slate-700 font-medium">
                 <span>Search: "{search}"</span>

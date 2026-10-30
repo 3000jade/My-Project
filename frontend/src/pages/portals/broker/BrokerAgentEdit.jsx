@@ -213,29 +213,31 @@ export default function BrokerAgentEdit() {
       {/* Main 2-Column Edit Grid (Screen 4) */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
         
-        {/* Left Section Navigation (4-Cols on Desktop) */}
-        <div data-testid="broker-card" className="md:col-span-4 bg-white dark:bg-slate-900 rounded-lg border border-[#E2E8F0] dark:border-slate-800 p-3 shadow-2xs space-y-1">
-          {SECTIONS.map((sec) => {
-            const Icon = sec.icon;
-            const isSelected = activeSection === sec.id;
+        {/* Left Section Navigation (Responsive: Horizontal scroll on mobile, Vertical list on desktop) */}
+        <div data-testid="broker-card" className="md:col-span-4 bg-white dark:bg-slate-900 rounded-lg border border-[#E2E8F0] dark:border-slate-800 p-2 sm:p-3 shadow-2xs">
+          <div className="flex md:flex-col items-center md:items-stretch gap-1.5 overflow-x-auto md:overflow-x-visible scrollbar-none whitespace-nowrap md:whitespace-normal">
+            {SECTIONS.map((sec) => {
+              const Icon = sec.icon;
+              const isSelected = activeSection === sec.id;
 
-            return (
-              <button
-                key={sec.id}
-                type="button"
-                onClick={() => setActiveSection(sec.id)}
-                className={cn(
-                  "w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-semibold text-left transition-colors cursor-pointer",
-                  isSelected
-                    ? "bg-teal-50 text-[#0F766E]"
-                    : "text-[#64748B] hover:bg-slate-50 hover:text-[#1E293B]"
-                )}
-              >
-                <Icon className={cn("w-4 h-4", isSelected ? "text-[#0F766E]" : "text-[#94A3B8]")} />
-                <span>{sec.title}</span>
-              </button>
-            );
-          })}
+              return (
+                <button
+                  key={sec.id}
+                  type="button"
+                  onClick={() => setActiveSection(sec.id)}
+                  className={cn(
+                    "flex items-center gap-2 sm:gap-3 px-3 py-2 md:py-2.5 rounded-md text-xs font-semibold text-left transition-colors cursor-pointer shrink-0 md:shrink md:w-full",
+                    isSelected
+                      ? "bg-[#0F766E] text-white shadow-2xs font-bold"
+                      : "text-[#64748B] hover:text-[#1E293B] hover:bg-slate-50"
+                  )}
+                >
+                  <Icon className={cn("w-4 h-4 shrink-0", isSelected ? "text-white" : "text-[#64748B]")} />
+                  <span>{sec.title}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Right Section Content Card (8-Cols on Desktop) */}

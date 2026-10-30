@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -6,10 +6,15 @@ import {
   IconEyeOff,
   IconAlertCircle,
   IconCheck,
-  IconRefresh
+  IconRefresh,
+  IconMailCheck,
+  IconArrowLeft,
+  IconEdit,
 } from '@tabler/icons-react';
 import { GoogleLogin, useGoogleOAuth } from '@react-oauth/google';
 import { useAuth } from '../../context/AuthContext';
+import { OtpInput } from '../../components/auth';
+import { authService } from '../../services/authService';
 
 function GoogleOAuthSafe({ onSuccess, onError, fallback }) {
   let hasProvider = false;
@@ -40,9 +45,12 @@ function GoogleOAuthSafe({ onSuccess, onError, fallback }) {
 
 export default function RegisterPage() {
   const navigate = useNavigate();
-  const { register, googleLogin } = useAuth();
+  const { register, googleLogin, verifyRegistrationOtp } = useAuth();
 
-  // State
+  // Workflow Step State: 'credentials' | 'otp'
+  const [step, setStep] = useState('credentials');
+
+  // Credentials State
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -51,9 +59,26 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(true);
+
+  // OTP Verification State
+  const [otp, setOtp] = useState('');
+  const [cooldown, setCooldown] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isResending, setIsResending] = useState(false);
   const [authError, setAuthError] = useState('');
-  const role = 'client';
+  const [successMsg, setSuccessMsg] = useState('');
+
+  // 60-Second Cooldown Countdown Timer
+  useEffect(() => {
+    let timer = null;
+    if (cooldown > 0) {
+      timer = setTimeout(() => {
+        setCooldown((c) => c - 1);
+      }, 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [cooldown]);
 
   // Password Rules & Validation
   const passwordRules = [
@@ -69,9 +94,11 @@ export default function RegisterPage() {
 
   const passwordsMatch = confirmPassword.length === 0 || password === confirmPassword;
 
-  const handleRegister = async (e) => {
+  // Step 1: Validate credentials and initiate 6-digit email OTP
+  const handleInitiateOtp = async (e) => {
     if (e) e.preventDefault();
     setAuthError('');
+    setSuccessMsg('');
 
     if (!agreeTerms) {
       setAuthError('You must agree to the Terms of Service and Privacy Policy to create an account.');
@@ -91,19 +118,87 @@ export default function RegisterPage() {
     setIsSubmitting(true);
 
     try {
-      const payload = { fullName, role };
-      if (phone) payload.phone = phone;
-      const authData = await register(email, password, payload);
-      if (authData?.requiresEmailVerification) {
-        navigate('/verify-email', { state: { email } });
+      const payload = {
+        fullName: fullName.trim(),
+        email: email.trim().toLowerCase(),
+        password,
+        role: 'client',
+      };
+      if (phone.trim()) payload.phone = phone.trim();
+
+      const res = await authService.initiateRegistrationOtp(payload);
+      setCooldown(res?.data?.cooldownSeconds || 60);
+      setStep('otp');
+      setOtp('');
+
+      if (res?.data?.devOtp) {
+        setSuccessMsg(`A 6-digit verification code has been dispatched to ${email.trim().toLowerCase()}. (Dev Test Code: ${res.data.devOtp})`);
       } else {
-        const targetRole = authData?.user?.role || 'client';
-        navigate(`/${targetRole}/dashboard`);
+        setSuccessMsg(`A 6-digit verification code has been dispatched to ${email.trim().toLowerCase()}.`);
       }
     } catch (err) {
-      setAuthError(err.message || 'Unable to complete registration. Please try again.');
+      setAuthError(err.message || 'Unable to initiate verification code. Please try again.');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // Step 2: Verify 6-digit OTP and establish session
+  const handleVerifyOtp = async (codeOverride) => {
+    const code = codeOverride || otp;
+    if (!code || code.length !== 6) {
+      setAuthError('Please enter the complete 6-digit verification code.');
+      return;
+    }
+
+    setAuthError('');
+    setIsVerifying(true);
+
+    try {
+      const payload = {
+        email: email.trim().toLowerCase(),
+        otp: code,
+        password,
+        fullName: fullName.trim(),
+        role: 'client',
+      };
+      if (phone.trim()) payload.phone = phone.trim();
+
+      const authData = verifyRegistrationOtp
+        ? await verifyRegistrationOtp(payload)
+        : await authService.verifyRegistrationOtp(payload);
+
+      setSuccessMsg('Email verified successfully! Redirecting to client portal...');
+      setTimeout(() => {
+        const targetRole = authData?.user?.role || 'client';
+        navigate(`/${targetRole}/dashboard`);
+      }, 600);
+    } catch (err) {
+      setAuthError(err.message || 'Verification failed. Please check your 6-digit code.');
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  // Resend 6-Digit OTP
+  const handleResendOtp = async () => {
+    if (cooldown > 0 || isResending) return;
+    setAuthError('');
+    setIsResending(true);
+
+    try {
+      const res = await authService.resendRegistrationOtp(email.trim().toLowerCase());
+      setCooldown(res?.data?.cooldownSeconds || 60);
+      setOtp('');
+      if (res?.data?.devOtp) {
+        setSuccessMsg(`A fresh verification code has been sent. (Dev Test Code: ${res.data.devOtp})`);
+      } else {
+        setSuccessMsg('A fresh verification code has been dispatched to your email.');
+      }
+    } catch (err) {
+      setAuthError(err.message || 'Failed to resend verification code. Please wait.');
+    } finally {
+      setIsResending(false);
     }
   };
 
@@ -153,18 +248,25 @@ export default function RegisterPage() {
 
             {/* Bottom: Editorial Slogan & 3-Pill Carousel Indicator in Lower Left Corner */}
             <div className="max-w-[480px] space-y-4">
-              <div className="space-y-2">
-                <h1 className="font-serif text-3xl sm:text-4xl lg:text-[44px] xl:text-[48px] font-normal leading-[1.14] tracking-tight text-white drop-shadow-sm">
-                  Capturing Moments,<br />
-                  <span className="italic text-[#fcf1eb] font-light">Creating Memories</span>
-                </h1>
-              </div>
+              <span className="font-mono text-xs tracking-widest text-[#a8b8b0] uppercase">
+                {step === 'otp' ? 'Step 02 / Verification' : 'Step 01 / Identity Onboarding'}
+              </span>
 
-              {/* 3-Pill Carousel Indicator */}
-              <div className="flex items-center gap-2 pt-1" aria-hidden="true">
-                <span className="w-2.5 h-1.5 rounded-full bg-white/40" />
-                <span className="w-2.5 h-1.5 rounded-full bg-white/40" />
-                <span className="w-9 h-1.5 rounded-full bg-white shadow-md" />
+              <h1 className="font-serif text-3xl sm:text-4xl lg:text-[42px] font-medium tracking-tight text-white leading-[1.15]">
+                {step === 'otp' ? 'Verification with Precision' : 'Quiet Precision, Cadastral Clarity'}
+              </h1>
+
+              <p className="font-sans text-xs sm:text-sm text-[#e1e5df] font-light leading-relaxed">
+                {step === 'otp'
+                  ? 'Secure single-use One-Time Password validation ensures verified registry access for accredited high-value acquisitions.'
+                  : 'Experience modern luxury real estate infrastructure engineered for accredited investors, corporate buyers, and discerning clientele.'}
+              </p>
+
+              {/* 3-Pill Carousel Indicators in Lower Left Corner */}
+              <div className="flex items-center gap-2 pt-2">
+                <span className={`h-1.5 rounded-full transition-all duration-300 ${step === 'credentials' ? 'w-8 bg-[#c4683c]' : 'w-4 bg-white/40'}`} />
+                <span className={`h-1.5 rounded-full transition-all duration-300 ${step === 'otp' ? 'w-8 bg-[#c4683c]' : 'w-4 bg-white/40'}`} />
+                <span className="h-1.5 w-4 rounded-full bg-white/40" />
               </div>
             </div>
 
@@ -176,15 +278,23 @@ export default function RegisterPage() {
             ========================================================================= */}
         <section className="w-full lg:w-1/2 min-h-full lg:h-full bg-[#ffffff] relative flex flex-col justify-center items-center px-6 py-12 sm:px-12 lg:px-16 xl:px-24 overflow-y-auto border-0">
 
-          {/* Back to Home Button in the Upper Left Corner of White Background (Out from the container) */}
+          {/* Back to Home / Back to Details Button */}
           <div className="absolute top-6 left-6 sm:top-8 sm:left-8 z-20">
             <button
               type="button"
-              onClick={() => navigate('/')}
+              onClick={() => {
+                if (step === 'otp') {
+                  setStep('credentials');
+                  setAuthError('');
+                  setSuccessMsg('');
+                } else {
+                  navigate('/');
+                }
+              }}
               className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[#f4f5f2] hover:bg-[#e1e5df] border border-[#e1e5df] hover:border-[#c2c9bf] rounded-full text-xs font-medium text-[#183d3b] transition-all hover:-translate-x-0.5 shadow-sm cursor-pointer"
             >
               <span>←</span>
-              <span>Back to home</span>
+              <span>{step === 'otp' ? 'Back to details' : 'Back to home'}</span>
             </button>
           </div>
 
@@ -194,33 +304,58 @@ export default function RegisterPage() {
             {/* Header */}
             <div className="space-y-1">
               <h2 className="font-serif text-2xl sm:text-3xl lg:text-[34px] font-medium tracking-tight text-[#1c2224] leading-tight">
-                Create an account
+                {step === 'otp' ? 'Verify your email' : 'Create an account'}
               </h2>
               <p className="font-sans text-xs sm:text-sm text-[#5f6b6f]">
-                Already have an account?{' '}
-                <button
-                  type="button"
-                  onClick={() => navigate('/login')}
-                  className="text-[#183d3b] hover:text-[#c4683c] font-semibold underline underline-offset-4 ml-1 cursor-pointer transition-colors"
-                >
-                  Log in
-                </button>
+                {step === 'otp' ? (
+                  <span>
+                    Enter the 6-digit verification code dispatched to your inbox.
+                  </span>
+                ) : (
+                  <>
+                    Already have an account?{' '}
+                    <button
+                      type="button"
+                      onClick={() => navigate('/login')}
+                      className="text-[#183d3b] hover:text-[#c4683c] font-semibold underline underline-offset-4 ml-1 cursor-pointer transition-colors"
+                    >
+                      Log in
+                    </button>
+                  </>
+                )}
               </p>
             </div>
 
-            {/* Agent / Broker Invitation Info Callout */}
-            <div className="p-3 bg-[#F0FDFA] border border-[#0F766E]/20 rounded-xl text-left">
-              <p className="font-sans text-xs text-[#0F766E] leading-relaxed">
-                <strong>Licensed Real Estate Professional?</strong> Real estate agent onboarding requires a broker invitation token under RESA RA 9646.{' '}
-                <button
-                  type="button"
-                  onClick={() => navigate('/register/agent')}
-                  className="font-semibold underline hover:text-[#115E59] cursor-pointer"
+            {/* Agent / Broker Invitation Info Callout (Step 1 Only) */}
+            {step === 'credentials' && (
+              <div className="p-3 bg-[#F0FDFA] border border-[#0F766E]/20 rounded-xl text-left">
+                <p className="font-sans text-xs text-[#0F766E] leading-relaxed">
+                  <strong>Licensed Real Estate Professional?</strong> Real estate agent onboarding requires a broker invitation token under RESA RA 9646.{' '}
+                  <button
+                    type="button"
+                    onClick={() => navigate('/register/agent')}
+                    className="font-semibold underline hover:text-[#115E59] cursor-pointer"
+                  >
+                    Enter broker invite code
+                  </button>
+                </p>
+              </div>
+            )}
+
+            {/* Success Feedback Banner */}
+            <AnimatePresence>
+              {successMsg && (
+                <motion.div
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  className="p-3 bg-[#F0FDF4] border border-[#22C55E]/30 text-[#15803D] text-xs rounded-xl font-sans flex items-start gap-2.5 shadow-sm text-left"
                 >
-                  Enter broker invite code
-                </button>
-              </p>
-            </div>
+                  <IconCheck className="w-4 h-4 shrink-0 text-[#22C55E] mt-0.5" />
+                  <span>{successMsg}</span>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Inline Error Banner */}
             <AnimatePresence>
@@ -229,7 +364,7 @@ export default function RegisterPage() {
                   initial={{ opacity: 0, y: -6 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -6 }}
-                  className="p-3 bg-[#fcf1eb] border border-[#c4683c]/30 text-[#b0572d] text-xs rounded-xl font-sans flex items-start gap-2.5 shadow-sm"
+                  className="p-3 bg-[#fcf1eb] border border-[#c4683c]/30 text-[#b0572d] text-xs rounded-xl font-sans flex items-start gap-2.5 shadow-sm text-left"
                 >
                   <IconAlertCircle className="w-4 h-4 shrink-0 text-[#c4683c] mt-0.5" />
                   <span>{authError}</span>
@@ -237,230 +372,350 @@ export default function RegisterPage() {
               )}
             </AnimatePresence>
 
-            {/* Registration Form */}
-            <form onSubmit={handleRegister} className="space-y-3.5 sm:space-y-4">
+            {/* STEP 1: CREDENTIALS INTAKE FORM */}
+            {step === 'credentials' && (
+              <form onSubmit={handleInitiateOtp} className="space-y-3.5 sm:space-y-4">
 
-              {/* Full Name with Header Label (Uniform h-[54px]) */}
-              <div className="space-y-1.5 text-left">
-                <label htmlFor="reg-fullname" className="block font-sans text-xs font-semibold text-[#1c2224] tracking-wide">
-                  Full Name
-                </label>
-                <div className="relative bg-[#f4f5f2] border border-[#e1e5df] focus-within:border-[#183d3b] focus-within:ring-2 focus-within:ring-[#183d3b]/10 focus-within:bg-white rounded-xl transition-all overflow-hidden">
-                  <input
-                    id="reg-fullname"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    className="w-full h-[54px] px-4 bg-transparent text-xs sm:text-sm text-[#1c2224] placeholder-[#7a868a] outline-none font-sans"
-                    placeholder="Enter your full name"
-                    type="text"
-                    autoComplete="name"
-                    required
-                  />
+                {/* Full Name with Header Label */}
+                <div className="space-y-1.5 text-left">
+                  <label htmlFor="reg-fullname" className="block font-sans text-xs font-semibold text-[#1c2224] tracking-wide">
+                    Full Name
+                  </label>
+                  <div className="relative bg-[#f4f5f2] border border-[#e1e5df] focus-within:border-[#183d3b] focus-within:ring-2 focus-within:ring-[#183d3b]/10 focus-within:bg-white rounded-xl transition-all overflow-hidden">
+                    <input
+                      id="reg-fullname"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      className="w-full h-[54px] px-4 bg-transparent text-xs sm:text-sm text-[#1c2224] placeholder-[#7a868a] outline-none font-sans"
+                      placeholder="Enter your full name"
+                      type="text"
+                      autoComplete="name"
+                      required
+                    />
+                  </div>
                 </div>
-              </div>
 
-              {/* Email with Header Label (Uniform h-[54px]) */}
-              <div className="space-y-1.5 text-left">
-                <label htmlFor="reg-email" className="block font-sans text-xs font-semibold text-[#1c2224] tracking-wide">
-                  Email
-                </label>
-                <div className="relative bg-[#f4f5f2] border border-[#e1e5df] focus-within:border-[#183d3b] focus-within:ring-2 focus-within:ring-[#183d3b]/10 focus-within:bg-white rounded-xl transition-all overflow-hidden">
-                  <input
-                    id="reg-email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full h-[54px] px-4 bg-transparent text-xs sm:text-sm text-[#1c2224] placeholder-[#7a868a] outline-none font-sans"
-                    placeholder="name@domain.com"
-                    type="email"
-                    autoComplete="email"
-                    required
-                  />
+                {/* Email with Header Label */}
+                <div className="space-y-1.5 text-left">
+                  <label htmlFor="reg-email" className="block font-sans text-xs font-semibold text-[#1c2224] tracking-wide">
+                    Email
+                  </label>
+                  <div className="relative bg-[#f4f5f2] border border-[#e1e5df] focus-within:border-[#183d3b] focus-within:ring-2 focus-within:ring-[#183d3b]/10 focus-within:bg-white rounded-xl transition-all overflow-hidden">
+                    <input
+                      id="reg-email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full h-[54px] px-4 bg-transparent text-xs sm:text-sm text-[#1c2224] placeholder-[#7a868a] outline-none font-sans"
+                      placeholder="name@domain.com"
+                      type="email"
+                      autoComplete="email"
+                      required
+                    />
+                  </div>
                 </div>
-              </div>
 
-              {/* Contact Number with Header Label (Uniform h-[54px]) */}
-              <div className="space-y-1.5 text-left">
-                <label htmlFor="reg-phone" className="block font-sans text-xs font-semibold text-[#1c2224] tracking-wide">
-                  Contact Number
-                </label>
-                <div className="relative bg-[#f4f5f2] border border-[#e1e5df] focus-within:border-[#183d3b] focus-within:ring-2 focus-within:ring-[#183d3b]/10 focus-within:bg-white rounded-xl transition-all overflow-hidden">
-                  <input
-                    id="reg-phone"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="w-full h-[54px] px-4 bg-transparent text-xs sm:text-sm text-[#1c2224] placeholder-[#7a868a] outline-none font-sans"
-                    placeholder="+63 917 000 0000"
-                    type="tel"
-                    autoComplete="tel"
-                  />
+                {/* Contact Number with Header Label */}
+                <div className="space-y-1.5 text-left">
+                  <label htmlFor="reg-phone" className="block font-sans text-xs font-semibold text-[#1c2224] tracking-wide">
+                    Contact Number
+                  </label>
+                  <div className="relative bg-[#f4f5f2] border border-[#e1e5df] focus-within:border-[#183d3b] focus-within:ring-2 focus-within:ring-[#183d3b]/10 focus-within:bg-white rounded-xl transition-all overflow-hidden">
+                    <input
+                      id="reg-phone"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      className="w-full h-[54px] px-4 bg-transparent text-xs sm:text-sm text-[#1c2224] placeholder-[#7a868a] outline-none font-sans"
+                      placeholder="+63 917 000 0000"
+                      type="tel"
+                      autoComplete="tel"
+                    />
+                  </div>
                 </div>
-              </div>
 
-              {/* Create Password with Header Label (Full Width, Uniform h-[54px]) */}
-              <div className="space-y-1.5 text-left">
-                <label htmlFor="reg-password" className="block font-sans text-xs font-semibold text-[#1c2224] tracking-wide">
-                  Password
-                </label>
-                <div className="relative bg-[#f4f5f2] border border-[#e1e5df] focus-within:border-[#183d3b] focus-within:ring-2 focus-within:ring-[#183d3b]/10 focus-within:bg-white rounded-xl transition-all flex items-center pr-2 overflow-hidden">
-                  <input
-                    id="reg-password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full h-[54px] px-4 bg-transparent text-xs sm:text-sm text-[#1c2224] placeholder-[#7a868a] outline-none font-sans"
-                    placeholder="Create secure passphrase"
-                    type={showPassword ? "text" : "password"}
-                    autoComplete="new-password"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="text-[#7a868a] hover:text-[#183d3b] p-2 transition-colors cursor-pointer"
-                    aria-label={showPassword ? "Hide password" : "Show password"}
-                  >
-                    {showPassword ? <IconEyeOff className="w-4 h-4" /> : <IconEye className="w-4 h-4" />}
-                  </button>
+                {/* Create Password */}
+                <div className="space-y-1.5 text-left">
+                  <label htmlFor="reg-password" className="block font-sans text-xs font-semibold text-[#1c2224] tracking-wide">
+                    Password
+                  </label>
+                  <div className="relative bg-[#f4f5f2] border border-[#e1e5df] focus-within:border-[#183d3b] focus-within:ring-2 focus-within:ring-[#183d3b]/10 focus-within:bg-white rounded-xl transition-all flex items-center pr-2 overflow-hidden">
+                    <input
+                      id="reg-password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full h-[54px] px-4 bg-transparent text-xs sm:text-sm text-[#1c2224] placeholder-[#7a868a] outline-none font-sans"
+                      placeholder="Create secure passphrase"
+                      type={showPassword ? "text" : "password"}
+                      autoComplete="new-password"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="text-[#7a868a] hover:text-[#183d3b] p-2 transition-colors cursor-pointer"
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                    >
+                      {showPassword ? <IconEyeOff className="w-4 h-4" /> : <IconEye className="w-4 h-4" />}
+                    </button>
+                  </div>
                 </div>
-              </div>
 
-              {/* Confirm Password with Header Label (Full Width, Uniform h-[54px]) */}
-              <div className="space-y-1.5 text-left">
-                <label htmlFor="reg-confirm-password" className="block font-sans text-xs font-semibold text-[#1c2224] tracking-wide">
-                  Confirm Password
-                </label>
-                <div className={`relative bg-[#f4f5f2] border ${!passwordsMatch ? 'border-red-400 focus-within:border-red-500' : 'border-[#e1e5df] focus-within:border-[#183d3b]'} focus-within:ring-2 focus-within:ring-[#183d3b]/10 focus-within:bg-white rounded-xl transition-all flex items-center pr-2 overflow-hidden`}>
-                  <input
-                    id="reg-confirm-password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full h-[54px] px-4 bg-transparent text-xs sm:text-sm text-[#1c2224] placeholder-[#7a868a] outline-none font-sans"
-                    placeholder="Re-enter passphrase"
-                    type={showConfirmPassword ? "text" : "password"}
-                    autoComplete="new-password"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="text-[#7a868a] hover:text-[#183d3b] p-2 transition-colors cursor-pointer"
-                    aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
-                  >
-                    {showConfirmPassword ? <IconEyeOff className="w-4 h-4" /> : <IconEye className="w-4 h-4" />}
-                  </button>
+                {/* Confirm Password */}
+                <div className="space-y-1.5 text-left">
+                  <label htmlFor="reg-confirm-password" className="block font-sans text-xs font-semibold text-[#1c2224] tracking-wide">
+                    Confirm Password
+                  </label>
+                  <div className={`relative bg-[#f4f5f2] border ${!passwordsMatch ? 'border-red-400 focus-within:border-red-500' : 'border-[#e1e5df] focus-within:border-[#183d3b]'} focus-within:ring-2 focus-within:ring-[#183d3b]/10 focus-within:bg-white rounded-xl transition-all flex items-center pr-2 overflow-hidden`}>
+                    <input
+                      id="reg-confirm-password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="w-full h-[54px] px-4 bg-transparent text-xs sm:text-sm text-[#1c2224] placeholder-[#7a868a] outline-none font-sans"
+                      placeholder="Re-enter passphrase"
+                      type={showConfirmPassword ? "text" : "password"}
+                      autoComplete="new-password"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="text-[#7a868a] hover:text-[#183d3b] p-2 transition-colors cursor-pointer"
+                      aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                    >
+                      {showConfirmPassword ? <IconEyeOff className="w-4 h-4" /> : <IconEye className="w-4 h-4" />}
+                    </button>
+                  </div>
                 </div>
-              </div>
 
-              {/* Password Mismatch Feedback */}
-              {!passwordsMatch && (
-                <div className="flex items-center gap-1.5 text-xs text-red-500 font-sans">
-                  <IconAlertCircle className="w-3.5 h-3.5 shrink-0" />
-                  <span>Passphrases do not match. Please verify your credentials.</span>
-                </div>
-              )}
+                {/* Password Mismatch Feedback */}
+                {!passwordsMatch && (
+                  <div className="flex items-center gap-1.5 text-xs text-red-500 font-sans">
+                    <IconAlertCircle className="w-3.5 h-3.5 shrink-0" />
+                    <span>Passphrases do not match. Please verify your credentials.</span>
+                  </div>
+                )}
 
-              {/* Password Strength Checklist */}
-              {password.length > 0 && (
-                <div className="p-3 bg-[#f4f5f2] border border-[#e1e5df] rounded-xl space-y-2.5">
-                  <div className="flex items-center gap-1.5">
-                    {[1, 2, 3, 4].map((step) => (
-                      <div
-                        key={step}
-                        className={`h-1 flex-1 rounded-full transition-colors duration-300 ${metRulesCount >= step ? strengthColors[metRulesCount] : 'bg-[#e1e5df]'
-                          }`}
-                      />
-                    ))}
-                    <span className="font-mono text-[9px] text-[#7a868a] uppercase ml-1">
-                      {strengthLabels[metRulesCount]}
+                {/* Password Strength Checklist */}
+                {password.length > 0 && (
+                  <div className="p-3 bg-[#f4f5f2] border border-[#e1e5df] rounded-xl space-y-2.5">
+                    <div className="flex items-center gap-1.5">
+                      {[1, 2, 3, 4].map((step) => (
+                        <div
+                          key={step}
+                          className={`h-1 flex-1 rounded-full transition-colors duration-300 ${metRulesCount >= step ? strengthColors[metRulesCount] : 'bg-[#e1e5df]'
+                            }`}
+                        />
+                      ))}
+                      <span className="font-mono text-[9px] text-[#7a868a] uppercase ml-1">
+                        {strengthLabels[metRulesCount]}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-1.5 text-[11px] font-sans">
+                      {passwordRules.map((rule) => (
+                        <div
+                          key={rule.id}
+                          className={`flex items-center gap-1.5 transition-colors ${rule.met ? 'text-[#2d6a4f] font-medium' : 'text-[#7a868a]'
+                            }`}
+                        >
+                          {rule.met ? (
+                            <IconCheck className="w-3.5 h-3.5 text-[#2d6a4f] shrink-0" />
+                          ) : (
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#bec8c8] shrink-0" />
+                          )}
+                          <span>{rule.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Agreement Checkbox */}
+                <div className="pt-0.5">
+                  <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      aria-label="I agree to the Terms of Service and Privacy Policy"
+                      checked={agreeTerms}
+                      onChange={(e) => setAgreeTerms(e.target.checked)}
+                      className="w-4 h-4 mt-0.5 rounded text-[#183d3b] accent-[#183d3b] cursor-pointer shrink-0"
+                    />
+                    <span className="font-sans text-xs sm:text-[13px] text-[#5f6b6f] leading-snug">
+                      I agree to the <span className="text-[#183d3b] font-semibold hover:underline">Terms of Service</span> and <span className="text-[#183d3b] font-semibold hover:underline">Privacy Policy</span>.
                     </span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-1.5 text-[11px] font-sans">
-                    {passwordRules.map((rule) => (
-                      <div
-                        key={rule.id}
-                        className={`flex items-center gap-1.5 transition-colors ${rule.met ? 'text-[#2d6a4f] font-medium' : 'text-[#7a868a]'
-                          }`}
-                      >
-                        {rule.met ? (
-                          <IconCheck className="w-3.5 h-3.5 text-[#2d6a4f] shrink-0" />
-                        ) : (
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#bec8c8] shrink-0" />
-                        )}
-                        <span>{rule.label}</span>
-                      </div>
-                    ))}
-                  </div>
+                  </label>
                 </div>
-              )}
 
-              {/* Agreement Checkbox */}
-              <div className="pt-0.5">
-                <label className="flex items-start gap-2.5 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    aria-label="I agree to the Terms of Service and Privacy Policy"
-                    checked={agreeTerms}
-                    onChange={(e) => setAgreeTerms(e.target.checked)}
-                    className="w-4 h-4 mt-0.5 rounded text-[#183d3b] accent-[#183d3b] cursor-pointer shrink-0"
+                {/* Submit Button */}
+                <div className="pt-1.5">
+                  <motion.button
+                    whileTap={{ scale: 0.99 }}
+                    type="submit"
+                    disabled={isSubmitting || !passwordsMatch}
+                    className="w-full h-[54px] bg-[#183d3b] hover:bg-[#122e2c] text-white font-sans text-xs sm:text-sm font-semibold tracking-wider uppercase rounded-xl transition-all duration-300 flex items-center justify-center gap-2.5 shadow-[0_10px_25px_-5px_rgba(24,61,59,0.35)] hover:shadow-[0_14px_28px_-5px_rgba(24,61,59,0.45)] cursor-pointer disabled:opacity-50"
+                  >
+                    {isSubmitting ? (
+                      <span className="inline-flex items-center gap-2">
+                        <IconRefresh className="w-4 h-4 animate-spin" />
+                        <span>Sending Verification Code...</span>
+                      </span>
+                    ) : (
+                      <span>Continue to Verification</span>
+                    )}
+                  </motion.button>
+                </div>
+
+              </form>
+            )}
+
+            {/* STEP 2: IN-PLACE 6-DIGIT EMAIL OTP VERIFICATION */}
+            {step === 'otp' && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="space-y-5 text-left"
+              >
+                {/* Email Chip with Quick Edit Action */}
+                <div className="p-3.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5 overflow-hidden">
+                    <div className="w-8 h-8 rounded-lg bg-[#0F766E]/10 text-[#0F766E] flex items-center justify-center shrink-0">
+                      <IconMailCheck className="w-4 h-4" />
+                    </div>
+                    <div className="truncate">
+                      <p className="text-[11px] font-mono uppercase tracking-wider text-[#64748B]">Target Recipient</p>
+                      <p className="text-xs font-semibold text-[#1E293B] truncate">{email}</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStep('credentials');
+                      setAuthError('');
+                      setSuccessMsg('');
+                    }}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-[#0F766E] hover:bg-[#0F766E]/10 rounded-lg transition-colors cursor-pointer shrink-0"
+                    title="Change email"
+                  >
+                    <IconEdit className="w-3.5 h-3.5" />
+                    <span>Edit</span>
+                  </button>
+                </div>
+
+                {/* 6-Digit Otp Input Box */}
+                <div className="space-y-2 py-2">
+                  <label className="block text-center font-sans text-xs font-semibold text-[#1E293B] tracking-wide">
+                    6-Digit Security Code
+                  </label>
+                  <OtpInput
+                    value={otp}
+                    onChange={(val) => {
+                      setOtp(val);
+                      if (authError) setAuthError('');
+                    }}
+                    onComplete={(completeCode) => handleVerifyOtp(completeCode)}
+                    disabled={isVerifying}
+                    error={Boolean(authError)}
+                    autoFocus
                   />
-                  <span className="font-sans text-xs sm:text-[13px] text-[#5f6b6f] leading-snug">
-                    I agree to the <span className="text-[#183d3b] font-semibold hover:underline">Terms of Service</span> and <span className="text-[#183d3b] font-semibold hover:underline">Privacy Policy</span>.
-                  </span>
-                </label>
-              </div>
+                  <p className="text-center font-sans text-[11px] text-[#64748B]">
+                    Code expires in 10 minutes.
+                  </p>
+                </div>
 
-              {/* Submit Button (Uniform h-[54px]) */}
-              <div className="pt-1.5">
-                <motion.button
-                  whileTap={{ scale: 0.99 }}
-                  type="submit"
-                  disabled={isSubmitting || !passwordsMatch}
-                  className="w-full h-[54px] bg-[#183d3b] hover:bg-[#122e2c] text-white font-sans text-xs sm:text-sm font-semibold tracking-wider uppercase rounded-xl transition-all duration-300 flex items-center justify-center gap-2.5 shadow-[0_10px_25px_-5px_rgba(24,61,59,0.35)] hover:shadow-[0_14px_28px_-5px_rgba(24,61,59,0.45)] cursor-pointer disabled:opacity-50"
-                >
-                  {isSubmitting ? (
-                    <span className="inline-flex items-center gap-2">
-                      <IconRefresh className="w-4 h-4 animate-spin" />
-                      <span>Creating Account...</span>
+                {/* Cooldown Timer & Resend Link */}
+                <div className="flex items-center justify-center text-xs font-sans text-[#64748B] pt-1">
+                  {cooldown > 0 ? (
+                    <span className="flex items-center gap-1.5">
+                      <span>Resend code in</span>
+                      <strong className="font-mono text-[#0F766E] font-bold">
+                        0:{cooldown < 10 ? '0' : ''}{cooldown}
+                      </strong>
                     </span>
                   ) : (
-                    <span>Create Account</span>
+                    <button
+                      type="button"
+                      onClick={handleResendOtp}
+                      disabled={isResending}
+                      className="font-semibold text-[#0F766E] hover:underline cursor-pointer flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                    >
+                      {isResending && <IconRefresh className="w-3.5 h-3.5 animate-spin" />}
+                      <span>Resend verification code</span>
+                    </button>
                   )}
-                </motion.button>
-              </div>
+                </div>
 
-            </form>
+                {/* Submit Verification Button */}
+                <div className="pt-2">
+                  <motion.button
+                    whileTap={{ scale: 0.99 }}
+                    type="button"
+                    onClick={() => handleVerifyOtp(otp)}
+                    disabled={isVerifying || otp.length !== 6}
+                    className="w-full h-[54px] bg-[#0F766E] hover:bg-[#115E59] text-white font-sans text-xs sm:text-sm font-semibold tracking-wider uppercase rounded-xl transition-all duration-300 flex items-center justify-center gap-2.5 shadow-[0_10px_25px_-5px_rgba(15,118,110,0.35)] hover:shadow-[0_14px_28px_-5px_rgba(15,118,110,0.45)] cursor-pointer disabled:opacity-50"
+                  >
+                    {isVerifying ? (
+                      <span className="inline-flex items-center gap-2">
+                        <IconRefresh className="w-4 h-4 animate-spin" />
+                        <span>Verifying Security Code...</span>
+                      </span>
+                    ) : (
+                      <span>Verify & Complete Registration</span>
+                    )}
+                  </motion.button>
+                </div>
 
-            {/* Perfectly Centered Divider: "Or register with" */}
-            <div className="w-full flex items-center justify-center pt-2">
-              <div className="h-[1px] bg-[#e1e5df] flex-1" />
-              <span className="px-4 font-sans text-xs text-[#7a868a] select-none text-center whitespace-nowrap">
-                Or register with
-              </span>
-              <div className="h-[1px] bg-[#e1e5df] flex-1" />
-            </div>
-
-            {/* Social SSO Button (Google OAuth One-Tap & Button) */}
-            <div className="w-full pt-0.5">
-              <GoogleOAuthSafe
-                onSuccess={handleGoogleSuccess}
-                onError={handleGoogleError}
-                fallback={
+                {/* Back to Step 1 */}
+                <div className="pt-1 text-center">
                   <button
                     type="button"
-                    onClick={() => setAuthError('Google authentication requires an active Google Client ID.')}
-                    className="w-full h-[54px] px-4 rounded-xl border border-[#e1e5df] bg-[#ffffff] hover:bg-[#f4f5f2] font-sans text-xs sm:text-sm font-semibold text-[#1c2224] flex items-center justify-center gap-2.5 transition-all cursor-pointer shadow-sm hover:border-[#c2c9bf]"
+                    onClick={() => {
+                      setStep('credentials');
+                      setAuthError('');
+                      setSuccessMsg('');
+                    }}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#64748B] hover:text-[#1E293B] transition-colors cursor-pointer"
                   >
-                    <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
-                      <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.65v3.03h3.88c2.27-2.09 3.665-5.17 3.665-9.12z" />
-                      <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.03c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.24v3.13C3.26 21.43 7.31 24 12 24z" />
-                      <path fill="#FBBC05" d="M5.28 14.29c-.25-.72-.38-1.49-.38-2.29s.13-1.57.38-2.29V6.58H1.24C.45 8.15 0 9.99 0 12s.45 3.85 1.24 5.42l4.04-3.13z" />
-                      <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.57 1.24 6.58l4.04 3.13c.95-2.83 3.6-4.96 6.72-4.96z" />
-                    </svg>
-                    <span>Google</span>
+                    <IconArrowLeft className="w-3.5 h-3.5" />
+                    <span>Back to credentials</span>
                   </button>
-                }
-              />
-            </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Social SSO Button (Google OAuth - Step 1 Only) */}
+            {step === 'credentials' && (
+              <>
+                <div className="w-full flex items-center justify-center pt-2">
+                  <div className="h-[1px] bg-[#e1e5df] flex-1" />
+                  <span className="px-4 font-sans text-xs text-[#7a868a] select-none text-center whitespace-nowrap">
+                    Or register with
+                  </span>
+                  <div className="h-[1px] bg-[#e1e5df] flex-1" />
+                </div>
+
+                <div className="w-full pt-0.5">
+                  <GoogleOAuthSafe
+                    onSuccess={handleGoogleSuccess}
+                    onError={handleGoogleError}
+                    fallback={
+                      <button
+                        type="button"
+                        onClick={() => setAuthError('Google authentication requires an active Google Client ID.')}
+                        className="w-full h-[54px] px-4 rounded-xl border border-[#e1e5df] bg-[#ffffff] hover:bg-[#f4f5f2] font-sans text-xs sm:text-sm font-semibold text-[#1c2224] flex items-center justify-center gap-2.5 transition-all cursor-pointer shadow-sm hover:border-[#c2c9bf]"
+                      >
+                        <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+                          <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.65v3.03h3.88c2.27-2.09 3.665-5.17 3.665-9.12z" />
+                          <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.03c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.24v3.13C3.26 21.43 7.31 24 12 24z" />
+                          <path fill="#FBBC05" d="M5.28 14.29c-.25-.72-.38-1.49-.38-2.29s.13-1.57.38-2.29V6.58H1.24C.45 8.15 0 9.99 0 12s.45 3.85 1.24 5.42l4.04-3.13z" />
+                          <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.57 1.24 6.58l4.04 3.13c.95-2.83 3.6-4.96 6.72-4.96z" />
+                        </svg>
+                        <span>Google</span>
+                      </button>
+                    }
+                  />
+                </div>
+              </>
+            )}
 
           </div>
         </section>

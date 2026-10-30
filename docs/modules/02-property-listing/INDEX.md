@@ -2,7 +2,7 @@
 module: 02-property-listing
 title: Property Listing Module
 last_updated: 2026-10-30
-total_documents: 53
+total_documents: 60
 ---
 
 # Property Listing Module — Master Index
@@ -77,6 +77,13 @@ All updates and technical reports for this module are ordered chronologically by
 | `2026-10-29` | [2026-10-29-subdivision-ai-picture-vector-layout.md](./2026-10-29-subdivision-ai-picture-vector-layout.md) | Verification Record — Subdivision AI Picture Analysis & Vector Polygon Layout Generation (FR-SM-056) |
 | `2026-10-30` | [2026-10-30-properties-google-map-interface-and-scroll-fix.md](./2026-10-30-properties-google-map-interface-and-scroll-fix.md) | Verification Record — Public Properties Google Maps Interface & Card Scroll Fix |
 | `2026-10-30` | [2026-10-30-clean-filter-redesign-and-hide-toggle.md](./2026-10-30-clean-filter-redesign-and-hide-toggle.md) | Verification Record — Clean Property Filter Redesign, "Hide Filters" Functionality & Database Data Validation |
+| `2026-10-30` | [2026-10-30-restore-clean-2-row-filter-toolbar.md](./2026-10-30-restore-clean-2-row-filter-toolbar.md) | Verification Record — Restored Clean 2-Row Filter Toolbar Layout |
+| `2026-10-30` | [2026-10-30-status-tabs-to-dropdown-refactor.md](./2026-10-30-status-tabs-to-dropdown-refactor.md) | Verification Record — Property Filter Status Tabs to Dropdown Refactor |
+| `2026-10-30` | [2026-10-30-card-design-behavior-and-sold-retention.md](./2026-10-30-card-design-behavior-and-sold-retention.md) | Verification Record — State-Driven Property Card Design & Sold Publication Retention |
+| `2026-10-30` | [2026-10-30-remove-subdivision-master-plan-from-listings.md](./2026-10-30-remove-subdivision-master-plan-from-listings.md) | Verification Record — Removal of Subdivision Master Plan Banner from Listing Studio |
+| `2026-10-30` | [2026-10-30-minimal-google-map-public-properties.md](./2026-10-30-minimal-google-map-public-properties.md) | Verification Record — Minimal Google Map Interface & Multi-Property Visible Pins |
+| `2026-10-30` | [2026-10-30-remove-broker-property-detail-and-quick-edit.md](./2026-10-30-remove-broker-property-detail-and-quick-edit.md) | Verification Record — Removal of Broker Property Detail View & Quick Edit Slide Bar |
+| `2026-10-30` | [2026-10-30-remove-available-properties-header-and-sort.md](./2026-10-30-remove-available-properties-header-and-sort.md) | Verification Record — Removal of "Available Properties" Header & Sort Row with In-Drawer Sorting Relocation |
 
 ---
 

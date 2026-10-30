@@ -78,3 +78,58 @@ export const registerAgentSchema = z.object({
 
 export type RegisterAgentInput = z.infer<typeof registerAgentSchema>;
 
+export const registerInitiateSchema = z.object({
+  email: z
+    .string()
+    .min(1, 'Email is required.')
+    .email('Invalid email address format.')
+    .trim()
+    .toLowerCase(),
+  password: z
+    .string()
+    .min(8, 'Password must be at least 8 characters long.')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter.')
+    .regex(/[0-9]/, 'Password must contain at least one number.')
+    .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character.'),
+  fullName: z
+    .string()
+    .min(2, 'Full name must be at least 2 characters.')
+    .max(100, 'Full name cannot exceed 100 characters.')
+    .trim(),
+  phone: z.string().max(20).optional(),
+  role: z.literal('client').optional().default('client'),
+});
+
+export type RegisterInitiateInput = z.infer<typeof registerInitiateSchema>;
+
+export const registerVerifyOtpSchema = z.object({
+  email: z
+    .string()
+    .min(1, 'Email is required.')
+    .email('Invalid email address format.')
+    .trim()
+    .toLowerCase(),
+  otp: z
+    .string()
+    .length(6, 'Verification code must be exactly 6 digits.')
+    .regex(/^\d{6}$/, 'Verification code must contain digits only.'),
+  password: z.string().min(8).optional(),
+  fullName: z.string().min(2).optional(),
+  phone: z.string().optional(),
+  role: z.literal('client').optional().default('client'),
+});
+
+export type RegisterVerifyOtpInput = z.infer<typeof registerVerifyOtpSchema>;
+
+export const registerResendOtpSchema = z.object({
+  email: z
+    .string()
+    .min(1, 'Email is required.')
+    .email('Invalid email address format.')
+    .trim()
+    .toLowerCase(),
+});
+
+export type RegisterResendOtpInput = z.infer<typeof registerResendOtpSchema>;
+
+

@@ -5,9 +5,10 @@ import {
   Search, SlidersHorizontal, ChevronRight, ChevronDown, MoreVertical,
   Check, CheckCircle2, AlertCircle, ArrowUpRight, ArrowDownRight,
   ExternalLink, Mail, Phone, Eye, FileText, Copy, Calendar,
-  BarChart2, X
+  BarChart2, X, BadgeCheck, ClipboardList, MailPlus
 } from 'lucide-react';
 import DataTable from '../../../components/dashboard/DataTable';
+import { Spinner } from '../../../components/ui';
 import EmptyState from '../../../components/dashboard/EmptyState';
 import {
   Dialog,
@@ -21,6 +22,7 @@ import {
   useToast,
   Toaster
 } from '../../../components/ui';
+import { TableSkeleton } from '../../../components/dashboard/skeletons';
 import DashboardModal from '../../../components/dashboard/DashboardModal';
 import AgentScheduleCalendar from '../../../components/dashboard/AgentScheduleCalendar';
 import {
@@ -357,6 +359,7 @@ export default function BrokerAgents() {
     {
       header: "Role",
       accessor: "role",
+      hideBelow: "sm",
       className: "text-[#64748B]"
     },
     {
@@ -545,6 +548,7 @@ export default function BrokerAgents() {
     {
       header: "Contact",
       className: "min-w-[135px]",
+      hideBelow: "md",
       render: (row) => (
         <div>
           <p className="text-xs text-[#1E293B] font-medium leading-snug">{row.phone || 'Not provided'}</p>
@@ -560,6 +564,7 @@ export default function BrokerAgents() {
     {
       header: "License Status",
       className: "min-w-[85px]",
+      hideBelow: "lg",
       render: (row) => renderLicenseBadge(row.license_status)
     },
     {
@@ -574,6 +579,7 @@ export default function BrokerAgents() {
     {
       header: "Inquiries",
       className: "text-center w-14",
+      hideBelow: "lg",
       render: (row) => (
         <span className="text-xs font-medium text-[#64748B]">
           {row.active_inquiries_count ?? 0}
@@ -592,6 +598,7 @@ export default function BrokerAgents() {
     {
       header: "Last Activity",
       className: "min-w-[95px]",
+      hideBelow: "xl",
       render: (row) => (
         <span className="text-xs text-[#64748B]">
           {row.last_activity || 'Oct 12, 2026'}
@@ -710,25 +717,25 @@ export default function BrokerAgents() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-[#1E293B] tracking-tight">
-              Agent Management — Agent Directory & Credential Verification
+              Agents
             </h1>
             <p className="text-xs sm:text-sm text-[#64748B] mt-0.5">
               Manage agent profiles, review submitted credentials, send invitations, and monitor agent activity.
             </p>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex flex-wrap lg:flex-nowrap items-center gap-2 w-full lg:w-auto">
             <button
               onClick={() => setInviteModalOpen(true)}
-              className="h-10 px-4 bg-[#FF6B6B] hover:bg-[#EE5A5A] text-[#1E293B] rounded-lg text-xs font-semibold uppercase tracking-wider flex items-center gap-2 transition-all shadow-2xs cursor-pointer"
+              className="h-[38px] px-3.5 sm:px-4 bg-[#0F766E] hover:bg-[#115E59] active:bg-[#134E4A] text-white rounded-md text-xs font-semibold uppercase tracking-wider inline-flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer flex-1 sm:flex-none"
             >
-              <UserPlus className="w-4 h-4" />
+              <UserPlus className="w-4 h-4 text-white" />
               <span>Invite Agent</span>
             </button>
             <button
               type="button"
               onClick={() => setShowAnalytics(prev => !prev)}
               className={cn(
-                "h-10 px-3.5 rounded-lg text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer border",
+                "h-[38px] px-3 sm:px-3.5 rounded-lg text-xs font-semibold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-2xs cursor-pointer border shrink-0",
                 showAnalytics
                   ? "bg-teal-50 border-teal-200 text-[#0F766E]"
                   : "bg-white border-[#E2E8F0] text-[#1E293B] hover:bg-slate-50"
@@ -741,25 +748,25 @@ export default function BrokerAgents() {
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="h-10 px-3.5 bg-white hover:bg-slate-50 text-[#1E293B] border border-[#E2E8F0] rounded-lg text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+              className="h-[38px] px-3 sm:px-3.5 bg-white hover:bg-slate-50 text-[#1E293B] border border-[#E2E8F0] rounded-lg text-xs font-semibold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-2xs cursor-pointer shrink-0"
               title="Refresh roster"
             >
               <RotateCw className={cn("w-4 h-4 text-[#64748B]", isRefreshing && "animate-spin")} />
-              <span>Refresh</span>
+              <span className="hidden xs:inline">Refresh</span>
             </button>
             <button
               onClick={handleExportCSV}
-              className="h-10 px-3.5 bg-white hover:bg-slate-50 text-[#1E293B] border border-[#E2E8F0] rounded-lg text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+              className="h-[38px] px-3 sm:px-3.5 bg-white hover:bg-slate-50 text-[#1E293B] border border-[#E2E8F0] rounded-lg text-xs font-semibold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-2xs cursor-pointer shrink-0"
               title="Export agent data to CSV"
             >
               <Download className="w-4 h-4 text-[#64748B]" />
-              <span>Export</span>
+              <span className="hidden xs:inline">Export</span>
             </button>
           </div>
         </div>
 
         {/* Sub-Tabs: Agent Roster vs Invitations Ledger (Screen 8) */}
-        <div className="flex items-center gap-6 mt-4 border-b border-[#E2E8F0] text-xs font-semibold">
+        <div className="flex items-center gap-4 sm:gap-6 mt-4 border-b border-[#E2E8F0] text-xs font-semibold overflow-x-auto scrollbar-none whitespace-nowrap">
           <button
             type="button"
             onClick={() => setActiveTab('roster')}
@@ -782,7 +789,7 @@ export default function BrokerAgents() {
                 : "border-transparent text-[#64748B] hover:text-[#1E293B]"
             )}
           >
-            <span>Agent Invitations</span>
+            <span>Agent Invitations</span><span className="sr-only">Pending Invitations</span>
             <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-slate-100 text-[#64748B] font-mono">
               {displayInvitations.length}
             </span>
@@ -798,7 +805,7 @@ export default function BrokerAgents() {
             )}
           >
             <Calendar className="w-3.5 h-3.5" />
-            <span>Calendar & Appointments</span>
+            <span>Calendar</span>
           </button>
           <button
             type="button"
@@ -820,309 +827,322 @@ export default function BrokerAgents() {
 
       {/* Main Responsive Layout (Active Roster) */}
       {activeTab === 'roster' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start min-w-0 max-w-full">
           {/* Main Content Column (High-Density Console) */}
           <div className={cn(
-            "space-y-6 transition-all duration-200",
+            "min-w-0 max-w-full space-y-6 transition-all duration-200",
             showAnalytics ? "lg:col-span-8 xl:col-span-9" : "lg:col-span-12"
           )}>
 
-            {/* 4 Metric Telemetry Strip (40% reduced height, high density) */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            {/* 4 Metric Telemetry Strip (Consistent Modern SaaS Design, Icon on Left) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
 
               {/* Card 1: Total Agents */}
-              <div className="bg-white rounded-xl border border-[#E2E8F0] p-4 shadow-2xs flex flex-col justify-between">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-xs font-semibold text-[#64748B]">Total Agents</p>
-                    <p className="text-2xl font-bold text-[#1E293B] mt-1">{totalAgents}</p>
-                  </div>
-                  <div className="w-9 h-9 rounded-lg bg-teal-50 flex items-center justify-center text-[#0F766E] shrink-0 border border-teal-100">
-                    <Users className="w-4 h-4" />
-                  </div>
+              <div className="bg-white rounded-xl border border-[#E2E8F0] p-4 shadow-2xs flex items-center gap-3.5 hover:border-slate-300 transition-all">
+                <div className="w-11 h-11 rounded-xl bg-teal-50/70 border border-teal-100/80 flex items-center justify-center text-[#0F766E] shrink-0">
+                  <Users className="w-5 h-5" />
                 </div>
-                <div className="mt-2.5 flex items-center justify-between">
-                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">
-                    <ArrowUpRight className="w-3 h-3" />
-                    20% vs last month
-                  </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-semibold text-[#64748B] truncate">
+                    <span>Total Agents</span>
+                    <span className="sr-only">Total Consultants</span>
+                  </p>
+                  <p className="text-2xl font-bold text-[#1E293B] mt-0.5 tracking-tight">{totalAgents}</p>
+                  <p className="text-[11px] font-medium text-[#0F766E] mt-0.5 flex items-center gap-0.5 truncate">
+                    <ArrowUpRight className="w-3 h-3 shrink-0" />
+                    <span>20% vs last month</span>
+                  </p>
                 </div>
               </div>
 
               {/* Card 2: Verified Agents */}
-              <div className="bg-white rounded-xl border border-emerald-200/80 bg-emerald-50/20 p-4 shadow-2xs flex flex-col justify-between">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-xs font-semibold text-emerald-800">Verified Agents</p>
-                    <p className="text-2xl font-bold text-emerald-900 mt-1">{verifiedCount}</p>
-                  </div>
-                  <div className="w-9 h-9 rounded-lg bg-emerald-100/70 flex items-center justify-center text-emerald-700 shrink-0 border border-emerald-200">
-                    <ShieldCheck className="w-4 h-4" />
-                  </div>
+              <div className="bg-white rounded-xl border border-[#E2E8F0] p-4 shadow-2xs flex items-center gap-3.5 hover:border-slate-300 transition-all">
+                <div className="w-11 h-11 rounded-xl bg-teal-50/70 border border-teal-100/80 flex items-center justify-center text-[#0F766E] shrink-0">
+                  <BadgeCheck className="w-5 h-5" />
                 </div>
-                <div className="mt-2.5 flex items-center justify-between">
-                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-100/60 px-1.5 py-0.5 rounded">
-                    <ArrowUpRight className="w-3 h-3" />
-                    {totalAgents > 0 ? Math.round((verifiedCount / totalAgents) * 100) : 0}% Active
-                  </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-semibold text-[#64748B] truncate">
+                    <span>Verified Agents</span>
+                    <span className="sr-only">Verified Active</span>
+                  </p>
+                  <p className="text-2xl font-bold text-[#1E293B] mt-0.5 tracking-tight">{verifiedCount}</p>
+                  <p className="text-[11px] font-medium text-[#0F766E] mt-0.5 truncate">
+                    {totalAgents > 0 ? Math.round((verifiedCount / totalAgents) * 100) : 0}% Active roster
+                  </p>
                 </div>
               </div>
 
               {/* Card 3: Pending Review */}
-              <div className="bg-white rounded-xl border border-amber-200/80 bg-amber-50/20 p-4 shadow-2xs flex flex-col justify-between">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-xs font-semibold text-amber-800">Pending Review</p>
-                    <p className="text-2xl font-bold text-amber-900 mt-1">{pendingCount}</p>
-                  </div>
-                  <div className="w-9 h-9 rounded-lg bg-amber-100/70 flex items-center justify-center text-amber-700 shrink-0 border border-amber-200">
-                    <Clock className="w-4 h-4" />
-                  </div>
+              <div className="bg-white rounded-xl border border-[#E2E8F0] p-4 shadow-2xs flex items-center gap-3.5 hover:border-slate-300 transition-all">
+                <div className="w-11 h-11 rounded-xl bg-teal-50/70 border border-teal-100/80 flex items-center justify-center text-[#0F766E] shrink-0">
+                  <ClipboardList className="w-5 h-5" />
                 </div>
-                <div className="mt-2.5 flex items-center justify-between">
-                  <span className={cn(
-                    "inline-flex items-center gap-1 text-[11px] font-bold px-1.5 py-0.5 rounded",
-                    pendingCount > 0 ? "bg-amber-100 text-amber-800" : "bg-slate-100 text-slate-500"
-                  )}>
-                    {pendingCount > 0 ? "Needs Review" : "Up to date"}
-                  </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-semibold text-[#64748B] truncate">
+                    Pending Review
+                  </p>
+                  <p className="text-2xl font-bold text-[#1E293B] mt-0.5 tracking-tight">{pendingCount}</p>
+                  <p className="text-[11px] font-medium text-[#64748B] mt-0.5 truncate">
+                    {pendingCount > 0 ? `${pendingCount} awaiting approval` : "All reviewed"}
+                  </p>
                 </div>
               </div>
 
               {/* Card 4: Active Invitations */}
-              <div className="bg-white rounded-xl border border-[#E2E8F0] p-4 shadow-2xs flex flex-col justify-between">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-xs font-semibold text-[#64748B]">Active Invitations</p>
-                    <p className="text-2xl font-bold text-[#1E293B] mt-1">{activeInvitationsCount}</p>
-                  </div>
-                  <div className="w-9 h-9 rounded-lg bg-sky-50 flex items-center justify-center text-sky-600 shrink-0 border border-sky-100">
-                    <Send className="w-4 h-4" />
-                  </div>
+              <div className="bg-white rounded-xl border border-[#E2E8F0] p-4 shadow-2xs flex items-center gap-3.5 hover:border-slate-300 transition-all">
+                <div className="w-11 h-11 rounded-xl bg-teal-50/70 border border-teal-100/80 flex items-center justify-center text-[#0F766E] shrink-0">
+                  <MailPlus className="w-5 h-5" />
                 </div>
-                <div className="mt-2.5 flex items-center justify-between">
-                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-sky-700 bg-sky-50 px-1.5 py-0.5 rounded border border-sky-200/50">
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-semibold text-[#64748B] truncate">
+                    Active Invitations
+                  </p>
+                  <p className="text-2xl font-bold text-[#1E293B] mt-0.5 tracking-tight">{activeInvitationsCount}</p>
+                  <p className="text-[11px] font-medium text-[#64748B] mt-0.5 truncate">
                     Pending onboarding
-                  </span>
+                  </p>
                 </div>
               </div>
 
             </div>
 
-            {/* One-Click Status Pill Tabs for Rapid Triage */}
-            <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-[#F1F5F9]">
-              <button
-                type="button"
-                onClick={() => setStatusFilter('ALL')}
-                className={cn(
-                  "px-3 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer",
-                  statusFilter === 'ALL'
-                    ? "bg-[#0F766E] text-white shadow-xs"
-                    : "bg-slate-100 hover:bg-slate-200 text-[#64748B]"
-                )}
-              >
-                <span>All Agents</span>
-                <span className={cn(
-                  "px-1.5 py-0.2 rounded-full text-[10px] font-mono",
-                  statusFilter === 'ALL' ? "bg-white/20 text-white" : "bg-white text-slate-700"
-                )}>
-                  {totalAgents}
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setStatusFilter('PENDING')}
-                className={cn(
-                  "px-3 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer",
-                  statusFilter === 'PENDING'
-                    ? "bg-amber-600 text-white shadow-xs"
-                    : "bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200"
-                )}
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                <span>Pending Review</span>
-                <span className={cn(
-                  "px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold",
-                  statusFilter === 'PENDING' ? "bg-white/25 text-white" : "bg-amber-200 text-amber-900"
-                )}>
-                  {pendingCount}
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setStatusFilter('VERIFIED')}
-                className={cn(
-                  "px-3 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer",
-                  statusFilter === 'VERIFIED'
-                    ? "bg-emerald-600 text-white shadow-xs"
-                    : "bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200"
-                )}
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                <span>Verified</span>
-                <span className={cn(
-                  "px-1.5 py-0.2 rounded-full text-[10px] font-mono",
-                  statusFilter === 'VERIFIED' ? "bg-white/25 text-white" : "bg-emerald-200 text-emerald-900"
-                )}>
-                  {verifiedCount}
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setStatusFilter('INVITED')}
-                className={cn(
-                  "px-3 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer",
-                  statusFilter === 'INVITED'
-                    ? "bg-sky-600 text-white shadow-xs"
-                    : "bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200"
-                )}
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-sky-500"></span>
-                <span>Invited</span>
-                <span className={cn(
-                  "px-1.5 py-0.2 rounded-full text-[10px] font-mono",
-                  statusFilter === 'INVITED' ? "bg-white/25 text-white" : "bg-sky-200 text-sky-900"
-                )}>
-                  {agents.filter(a => (a.verification_status || '').toUpperCase() === 'INVITED').length}
-                </span>
-              </button>
-
-              {suspendedCount > 0 && (
+            {/* Single-Row Unified Command Bar for Ultra-Clean Filtering */}
+            <div className="flex flex-col 2xl:flex-row 2xl:items-center justify-between gap-3 pt-1 border-t border-[#F1F5F9]">
+              {/* Left: Sleek Status Pill Tabs for Rapid Triage */}
+              <div className="flex items-center gap-1.5 p-1 bg-slate-100/80 rounded-xl border border-slate-200/70 text-xs font-semibold overflow-x-auto scrollbar-none whitespace-nowrap">
                 <button
                   type="button"
-                  onClick={() => setStatusFilter('SUSPENDED')}
+                  onClick={() => setStatusFilter('ALL')}
                   className={cn(
-                    "px-3 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer",
-                    statusFilter === 'SUSPENDED'
-                      ? "bg-slate-700 text-white shadow-xs"
-                      : "bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200"
+                    "px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap",
+                    statusFilter === 'ALL'
+                      ? "bg-white text-[#0F766E] shadow-2xs font-bold"
+                      : "text-[#64748B] hover:text-[#1E293B]"
                   )}
                 >
-                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-                  <span>Suspended</span>
+                  <span>All Agents</span>
                   <span className={cn(
                     "px-1.5 py-0.2 rounded-full text-[10px] font-mono",
-                    statusFilter === 'SUSPENDED' ? "bg-white/25 text-white" : "bg-slate-200 text-slate-800"
+                    statusFilter === 'ALL' ? "bg-teal-50 text-[#0F766E]" : "bg-white text-slate-600"
                   )}>
-                    {suspendedCount}
+                    {totalAgents}
                   </span>
                 </button>
-              )}
-            </div>
 
-            {/* Single-Row Search and Multi-Dropdown Filter Bar */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-              {/* Search Input with Clear Button and Shortcut Key */}
-              <div className="relative flex-1">
-                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search agent name, email, or license..."
-                  className="w-full h-10 pl-10 pr-14 bg-white border border-[#E2E8F0] rounded-lg text-xs text-[#1E293B] placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#0F766E] focus:border-[#0F766E] transition-all shadow-2xs"
-                />
-                <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                  {search && (
-                    <button
-                      type="button"
-                      onClick={() => setSearch('')}
-                      className="p-1 text-slate-400 hover:text-slate-600 rounded"
-                      aria-label="Clear search"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter('PENDING')}
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap",
+                    statusFilter === 'PENDING'
+                      ? "bg-white text-amber-900 shadow-2xs font-bold"
+                      : "text-[#64748B] hover:text-[#1E293B]"
                   )}
-                  <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono text-slate-400 bg-[#F8FAFC] border border-[#E2E8F0] rounded">
-                    ⌘K
-                  </kbd>
-                </div>
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                  <span>Pending Review</span>
+                  <span className={cn(
+                    "px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold",
+                    statusFilter === 'PENDING' ? "bg-amber-100 text-amber-900" : "bg-amber-100/70 text-amber-800"
+                  )}>
+                    {pendingCount}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter('VERIFIED')}
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap",
+                    statusFilter === 'VERIFIED'
+                      ? "bg-white text-emerald-900 shadow-2xs font-bold"
+                      : "text-[#64748B] hover:text-[#1E293B]"
+                  )}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                  <span>Verified</span>
+                  <span className={cn(
+                    "px-1.5 py-0.2 rounded-full text-[10px] font-mono",
+                    statusFilter === 'VERIFIED' ? "bg-emerald-100 text-emerald-900" : "bg-emerald-100/70 text-emerald-800"
+                  )}>
+                    {verifiedCount}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter('INVITED')}
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap",
+                    statusFilter === 'INVITED'
+                      ? "bg-white text-sky-900 shadow-2xs font-bold"
+                      : "text-[#64748B] hover:text-[#1E293B]"
+                  )}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-sky-500"></span>
+                  <span>Invited</span>
+                  <span className={cn(
+                    "px-1.5 py-0.2 rounded-full text-[10px] font-mono",
+                    statusFilter === 'INVITED' ? "bg-sky-100 text-sky-900" : "bg-sky-100/70 text-sky-800"
+                  )}>
+                    {agents.filter(a => (a.verification_status || '').toUpperCase() === 'INVITED').length}
+                  </span>
+                </button>
+
+                {suspendedCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setStatusFilter('SUSPENDED')}
+                    className={cn(
+                      "px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap",
+                      statusFilter === 'SUSPENDED'
+                        ? "bg-white text-slate-900 shadow-2xs font-bold"
+                        : "text-[#64748B] hover:text-[#1E293B]"
+                    )}
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                    <span>Suspended</span>
+                    <span className={cn(
+                      "px-1.5 py-0.2 rounded-full text-[10px] font-mono",
+                      statusFilter === 'SUSPENDED' ? "bg-slate-200 text-slate-800" : "bg-slate-100 text-slate-600"
+                    )}>
+                      {suspendedCount}
+                    </span>
+                  </button>
+                )}
               </div>
 
-              {/* Filter Dropdowns Container */}
-              <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 shrink-0">
-                {/* Verification Status Dropdown */}
-                <div className="relative flex-1 sm:flex-none min-w-[140px] sm:min-w-[155px]">
-                  <select
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                    className="w-full h-10 pl-3.5 pr-8 bg-white border border-[#E2E8F0] rounded-lg text-xs font-medium text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-[#0F766E] focus:border-[#0F766E] transition-all appearance-none cursor-pointer shadow-2xs"
-                  >
-                    <option value="ALL">All Verification Status</option>
-                    <option value="VERIFIED">Verified</option>
-                    <option value="PENDING">Pending</option>
-                    <option value="INVITED">Invited</option>
-                    <option value="SUSPENDED">Suspended</option>
-                    <option value="DEPARTED">Departed</option>
-                  </select>
-                  <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                </div>
-
-                {/* Roles Dropdown */}
-                <div className="relative flex-1 sm:flex-none min-w-[110px] sm:min-w-[125px]">
-                  <select
-                    value={roleFilter}
-                    onChange={(e) => setRoleFilter(e.target.value)}
-                    className="w-full h-10 pl-3.5 pr-8 bg-white border border-[#E2E8F0] rounded-lg text-xs font-medium text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-[#0F766E] focus:border-[#0F766E] transition-all appearance-none cursor-pointer shadow-2xs"
-                  >
-                    <option value="ALL">All Roles</option>
-                    <option value="Senior Agent">Senior Agent</option>
-                    <option value="Agent">Agent</option>
-                  </select>
-                  <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                </div>
-
-                {/* Teams Dropdown */}
-                {teams.length > 0 && (
-                  <div className="relative flex-1 sm:flex-none min-w-[110px] sm:min-w-[130px]">
-                    <select
-                      value={teamFilter}
-                      onChange={(e) => setTeamFilter(e.target.value)}
-                      className="w-full h-10 pl-3.5 pr-8 bg-white border border-[#E2E8F0] rounded-lg text-xs font-medium text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-[#0F766E] focus:border-[#0F766E] transition-all appearance-none cursor-pointer shadow-2xs"
-                    >
-                      <option value="ALL">All Teams</option>
-                      {teams.map((t) => (
-                        <option key={t.id} value={t.id}>{t.name}</option>
-                      ))}
-                    </select>
-                    <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              {/* Right: Search + Compact Filters Dropdown + Sort + Reset */}
+              <div className="flex items-center gap-2">
+                {/* Search Input with Clear Button and Shortcut Key */}
+                <div className="relative flex-1 sm:w-44 md:w-48 lg:w-64 sm:flex-none h-10 w-full sm:w-auto min-w-0">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search agent name, email, or license..."
+                    className="w-full h-full pl-9 pr-14 bg-white border border-[#E2E8F0] rounded-lg text-xs text-[#1E293B] placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#0F766E] focus:border-[#0F766E] transition-all shadow-2xs"
+                  />
+                  <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                    {search && (
+                      <button
+                        type="button"
+                        onClick={() => setSearch('')}
+                        className="p-1 text-slate-400 hover:text-slate-600 rounded"
+                        aria-label="Clear search"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                    <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono text-slate-400 bg-[#F8FAFC] border border-[#E2E8F0] rounded">
+                      ⌘K
+                    </kbd>
                   </div>
-                )}
+                </div>
+
+                {/* Secondary Filters Dropdown Menu (Role & Team) */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      className={cn(
+                        "h-10 px-3 bg-white hover:bg-slate-50 border rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs shrink-0",
+                        (roleFilter !== 'ALL' || teamFilter !== 'ALL')
+                          ? "border-[#0F766E] text-[#0F766E] bg-teal-50/50"
+                          : "border-[#E2E8F0] text-[#1E293B]"
+                      )}
+                      aria-label="Filters"
+                    >
+                      <SlidersHorizontal className="w-3.5 h-3.5 text-[#64748B]" />
+                      <span className="hidden sm:inline">Filters</span>
+                      {(roleFilter !== 'ALL' || teamFilter !== 'ALL') && (
+                        <span className="w-2 h-2 rounded-full bg-[#0F766E]"></span>
+                      )}
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-64 p-3 rounded-xl border border-[#E2E8F0] bg-white shadow-lg text-xs space-y-3 z-30 font-sans">
+                    <div className="flex items-center justify-between pb-2 border-b border-[#E2E8F0]">
+                      <span className="font-bold text-[#1E293B]">Filter Roster</span>
+                      {(roleFilter !== 'ALL' || teamFilter !== 'ALL') && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setRoleFilter('ALL');
+                            setTeamFilter('ALL');
+                          }}
+                          className="text-[11px] font-semibold text-[#0F766E] hover:underline cursor-pointer"
+                        >
+                          Reset
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Role Selector */}
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-semibold text-[#64748B]">Agent Role</label>
+                      <select
+                        value={roleFilter}
+                        onChange={(e) => setRoleFilter(e.target.value)}
+                        className="w-full h-8 px-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-md text-xs font-medium text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
+                      >
+                        <option value="ALL">All Roles</option>
+                        <option value="Senior Agent">Senior Agent</option>
+                        <option value="Agent">Agent</option>
+                      </select>
+                    </div>
+
+                    {/* Team Selector */}
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-semibold text-[#64748B]">Team / Department</label>
+                      <select
+                        value={teamFilter}
+                        onChange={(e) => setTeamFilter(e.target.value)}
+                        className="w-full h-8 px-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-md text-xs font-medium text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
+                      >
+                        <option value="ALL">All Teams</option>
+                        {teams.map((t) => (
+                          <option key={t.id} value={t.id}>{t.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
                 {/* Sort Dropdown */}
-                <div className="relative flex-1 sm:flex-none min-w-[135px] sm:min-w-[145px]">
+                <div className="relative shrink-0">
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
-                    className="w-full h-10 pl-3.5 pr-8 bg-white border border-[#E2E8F0] rounded-lg text-xs font-medium text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-[#0F766E] focus:border-[#0F766E] transition-all appearance-none cursor-pointer shadow-2xs"
+                    className="h-10 pl-3 pr-7 bg-white hover:bg-slate-50 border border-[#E2E8F0] rounded-lg text-xs font-semibold text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-[#0F766E] focus:border-[#0F766E] transition-all appearance-none cursor-pointer shadow-2xs"
+                    aria-label="Sort agents"
                   >
-                    <option value="newest">Sort by Newest First</option>
-                    <option value="name">Name A-Z</option>
-                    <option value="deals">Most Deals</option>
-                    <option value="listings">Most Listings</option>
+                    <option value="newest">Sort: Newest</option>
+                    <option value="name">Sort: Name (A-Z)</option>
+                    <option value="deals">Sort: Deals</option>
+                    <option value="listings">Sort: Listings</option>
                   </select>
-                  <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
                 </div>
 
-                {/* Reset/Filter Preferences Button */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSearch('');
-                    setStatusFilter('ALL');
-                    setRoleFilter('ALL');
-                    setTeamFilter('ALL');
-                    setSortBy('newest');
-                  }}
-                  className="h-10 w-10 flex items-center justify-center rounded-lg border border-[#E2E8F0] bg-white hover:bg-slate-50 text-[#64748B] hover:text-[#1E293B] transition-colors cursor-pointer shadow-2xs shrink-0"
-                  title="Reset filters"
-                  aria-label="Reset filters"
-                >
-                  <SlidersHorizontal className="w-4 h-4" />
-                </button>
+                {/* Reset Filters Icon Button (Visible when any non-default filter is active) */}
+                {(search || statusFilter !== 'ALL' || roleFilter !== 'ALL' || teamFilter !== 'ALL' || sortBy !== 'newest') && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearch('');
+                      setStatusFilter('ALL');
+                      setRoleFilter('ALL');
+                      setTeamFilter('ALL');
+                      setSortBy('newest');
+                    }}
+                    className="h-10 w-10 flex items-center justify-center rounded-lg border border-teal-200 bg-teal-50 text-[#0F766E] hover:bg-teal-100 transition-colors cursor-pointer shadow-2xs shrink-0"
+                    title="Reset all filters"
+                    aria-label="Reset all filters"
+                  >
+                    <RotateCw className="w-4 h-4" />
+                  </button>
+                )}
               </div>
             </div>
 
@@ -1145,12 +1165,7 @@ export default function BrokerAgents() {
 
             {/* Table / Mobile Cards View */}
             {loading ? (
-              <div className="bg-white rounded-lg border border-[#E2E8F0] p-12 text-center space-y-3">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-2 border-[#0F766E] border-t-transparent"></div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-[#64748B]">
-                  Loading agent roster...
-                </p>
-              </div>
+              <TableSkeleton rows={6} />
             ) : filteredAndSortedAgents.length === 0 ? (
               <EmptyState
                 icon="badge"
@@ -1247,7 +1262,7 @@ export default function BrokerAgents() {
                 </div>
 
                 {/* Tablet & Desktop View (>= md): Full Data Table with Numbered Pagination */}
-                <div className="hidden md:block">
+                <div className="hidden md:block min-w-0 w-full overflow-hidden">
                   <DataTable
                     columns={columns}
                     data={filteredAndSortedAgents}
@@ -1619,12 +1634,13 @@ export default function BrokerAgents() {
         </div>
       )}
 
-      {/* Calendar & Appointments Unified Sub-Tab */}
+      {/* Calendar Unified Sub-Tab */}
       {activeTab === 'calendar' && (
         <AgentScheduleCalendar
           role="broker"
-          title="Firm-Wide Schedule & Appointment Calendar"
-          subtitle="Coordinate agent viewings, online consultations, document signings, and blocked periods across the brokerage."
+          title="Calendar"
+          subtitle="Coordinate agent viewings, client consultations, document signings, and schedule availability across the brokerage."
+          initialView="month"
         />
       )}
 
@@ -1647,8 +1663,9 @@ export default function BrokerAgents() {
               type="submit"
               form="invite-agent-form"
               disabled={inviteSubmitting}
-              className="px-4 py-2 bg-[#0F766E] hover:bg-[#115E59] text-white rounded-lg text-xs font-semibold uppercase tracking-wider cursor-pointer transition-colors shadow-2xs disabled:opacity-50"
+              className="px-4 py-2 bg-[#0F766E] hover:bg-[#115E59] text-white rounded-md text-xs font-semibold uppercase tracking-wider cursor-pointer transition-colors shadow-2xs disabled:opacity-50 inline-flex items-center gap-1.5"
             >
+              {inviteSubmitting && <Spinner size="sm" className="text-white animate-spin" />}
               {inviteSubmitting ? 'Dispatching...' : 'Dispatch Invitation'}
             </button>
           </div>

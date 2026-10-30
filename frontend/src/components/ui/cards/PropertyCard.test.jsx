@@ -62,7 +62,7 @@ describe('PropertyCard Component', () => {
     expect(banner).toBeInTheDocument();
   });
 
-  it('renders closed/sold property with Slate "Closed / Sold" badge and desaturated image class', () => {
+  it('renders closed/sold property with translucent card, bold "SOLD / CLOSED" badge, and "View Past Sale" CTA', () => {
     const closedProp = {
       ...baseProperty,
       id: 'prop-closed',
@@ -76,15 +76,29 @@ describe('PropertyCard Component', () => {
       </MemoryRouter>
     );
 
+    // Translucent card styling (80% opacity)
+    const card = screen.getByTestId('property-card');
+    expect(card).toHaveClass('opacity-80');
+
+    // Bold SOLD / CLOSED badge
     const badge = screen.getByTestId('card-status-badge');
     expect(badge).toBeInTheDocument();
-    expect(badge).toHaveTextContent(/Closed \/ Sold/i);
-    expect(badge).toHaveClass('text-slate-700', 'bg-slate-100/95');
+    expect(badge).toHaveTextContent(/SOLD \/ CLOSED/i);
+    expect(badge).toHaveClass('text-white', 'bg-rose-600');
 
+    // Closed / Sold contextual banner
+    expect(screen.getByText(/Transaction Closed • Sold Benchmark/i)).toBeInTheDocument();
+
+    // Price label indicates sold benchmark
+    expect(screen.getByText('Sold benchmark')).toBeInTheDocument();
+
+    // Button label is "View Past Sale"
+    expect(screen.getByText(/View Past Sale/i)).toBeInTheDocument();
+
+    // Image has subtle desaturation
     const img = screen.getByAltText('Luxury Villa in Tagaytay');
-    expect(img.className).toContain('grayscale-[35%]');
+    expect(img.className).toContain('grayscale-[20%]');
     expect(img.className).toContain('opacity-90');
-    expect(screen.queryByText(/Backup Inquiries Welcome/i)).not.toBeInTheDocument();
   });
 
   it('renders with isSelected or isHovered styling ring and elevated shadow', () => {

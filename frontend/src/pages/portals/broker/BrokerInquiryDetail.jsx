@@ -18,6 +18,8 @@ import {
   Toaster
 } from '../../../components/ui';
 import { inquiryService } from '../../../services/inquiryService';
+import { Spinner, ViewPropertyButton } from '../../../components/ui';
+import { InquiryDetailSkeleton } from '../../../components/dashboard/skeletons';
 import { agentService } from '../../../services/agentService';
 
 export default function BrokerInquiryDetail() {
@@ -105,12 +107,9 @@ export default function BrokerInquiryDetail() {
 
   if (loading) {
     return (
-      <Card data-testid="broker-card" className="bg-white dark:bg-slate-900 rounded-lg border border-[#E2E8F0] dark:border-slate-800 p-16 text-center space-y-3 max-w-6xl mx-auto shadow-xs">
-        <div className="inline-block animate-spin rounded-full h-8 w-8 border-3 border-[#0F766E] border-t-transparent" />
-        <p className="text-xs font-bold uppercase tracking-wider text-[#64748B] dark:text-slate-400 font-sans">
-          Loading inquiry dossier &amp; audit history...
-        </p>
-      </Card>
+      <div className="max-w-6xl mx-auto py-12">
+        <InquiryDetailSkeleton />
+      </div>
     );
   }
 
@@ -304,12 +303,14 @@ export default function BrokerInquiryDetail() {
               </h3>
               <p className="font-bold text-sm text-[#1E293B] dark:text-slate-100 font-sans">{inquiry.property_title}</p>
               <p className="text-base font-bold font-display text-[#0F766E] dark:text-teal-400">{inquiry.property_price}</p>
-              <Link
-                to={`/broker/properties/${inquiry.property_id}`}
-                className="inline-block pt-1 text-xs font-bold text-[#0F766E] dark:text-teal-400 uppercase tracking-wider font-sans hover:underline"
-              >
-                Inspect Property Dossier →
-              </Link>
+                            <div className="pt-2">
+                <ViewPropertyButton
+                  to={`/broker/properties/${inquiry.property_id}/edit`}
+                  size="sm"
+                  label="Edit property"
+                  title="Edit Property in Studio"
+                />
+              </div>
             </Card>
           </div>
         </div>

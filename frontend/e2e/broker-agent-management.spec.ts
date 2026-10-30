@@ -1,18 +1,21 @@
 import { test, expect } from '@playwright/test';
 
-test.describe.configure({ mode: 'serial' });
-
 test.describe('Broker Agent Management — High-Density Command Console Flow', () => {
+  test.describe.configure({ mode: 'serial' });
+
   test.beforeEach(async ({ page }) => {
     // Authenticate as broker using proven account-profile pattern
-    await page.goto('/login');
-    const identifierInput = page.locator('#login-identifier');
-    if (await identifierInput.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await identifierInput.fill('broker@pt.com');
-      await page.locator('#login-password').fill('brokerPassword123!');
-      await page.locator('button[type="submit"]').click();
-      await page.waitForURL(url => !url.pathname.includes('/login'), { timeout: 10000 }).catch(() => {});
-      await page.waitForLoadState('networkidle').catch(() => {});
+    await page.goto('/broker/dashboard');
+    await page.waitForLoadState('networkidle');
+    if (page.url().includes('/login')) {
+      const identifierInput = page.locator('#login-identifier');
+      if (await identifierInput.isVisible({ timeout: 5000 }).catch(() => false)) {
+        await identifierInput.fill('broker@pt.com');
+        await page.locator('#login-password').fill('brokerPassword123!');
+        await page.locator('button[type="submit"]').click();
+        await page.waitForURL(url => url.pathname.includes('/broker/'), { timeout: 10000 }).catch(() => {});
+        await page.waitForLoadState('networkidle').catch(() => {});
+      }
     }
   });
 
@@ -21,8 +24,8 @@ test.describe('Broker Agent Management — High-Density Command Console Flow', (
     await page.waitForLoadState('networkidle');
 
     // Breadcrumbs & Header
-    await expect(page.locator('h1')).toContainText('Agent Management');
-    await expect(page.locator('text=Agent Directory & Credential Verification')).toBeVisible();
+    await expect(page.locator('h1:has-text("Agents")')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('text=Manage agent profiles')).toBeVisible();
 
     // 4-Stat Metric Strip
     await expect(page.locator('text=Total Agents')).toBeVisible();
@@ -119,5 +122,49 @@ test.describe('Broker Agent Management — High-Density Command Console Flow', (
     // Press Escape to dismiss
     await page.keyboard.press('Escape');
     await expect(page.locator('text=View Dossier')).not.toBeVisible();
+  });
+
+  test('renders unified single-row filter bar and filters popover', async ({ page }) => {
+    await page.goto('/broker/agents');
+    await page.waitForLoadState('networkidle');
+
+    // Single-row filter container
+    const filterContainer = page.locator('div:has(> input[placeholder*="Search agent name"])').first();
+    await expect(filterContainer).toBeVisible();
+
+    // Filters Popover trigger button
+    const filtersBtn = page.getByRole('button', { name: /Filters/i });
+    await expect(filtersBtn).toBeVisible();
+
+    // Click Filters Popover
+    await filtersBtn.click();
+    await expect(page.locator('text=Agent Role')).toBeVisible();
+    await expect(page.locator('text=Team / Department')).toBeVisible();
+
+    // Close popover
+    await page.keyboard.press('Escape');
+  });
+
+  test('renders giant calendar with interactive side mini-calendar on Calendar tab', async ({ page }) => {
+    await page.goto('/broker/agents?tab=calendar');
+    await page.waitForLoadState('networkidle');
+
+    // Title should be Calendar
+    await expect(page.locator('h1:has-text("Calendar")')).toBeVisible();
+
+    // Mini Side Calendar should be visible
+    const miniCalendar = page.locator('[data-testid="mini-side-calendar"]');
+    await expect(miniCalendar).toBeVisible();
+
+    // Giant Month View should be default
+    const monthView = page.locator('[data-testid="calendar-month-view"]');
+    await expect(monthView).toBeVisible();
+
+    // Status legend should be visible
+    await expect(page.locator('[data-testid="calendar-status-legend"]')).toBeVisible();
+
+    // Day Snapshot or Filters card
+    await expect(page.locator('text=Calendar Filters')).toBeVisible();
+    await expect(page.locator('text=Day Snapshot')).toBeVisible();
   });
 });

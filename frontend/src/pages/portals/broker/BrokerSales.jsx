@@ -18,6 +18,8 @@ import {
   useToast,
   Toaster
 } from '../../../components/ui';
+import { Spinner } from '../../../components/ui';
+import { TableSkeleton } from '../../../components/dashboard/skeletons';
 import { saleService } from '../../../services/saleService';
 import { agentService } from '../../../services/agentService';
 
@@ -47,7 +49,7 @@ export default function BrokerSales() {
     } catch (err) {
       const msg = err.message ? `Failed to load firm sales registry: ${err.message}` : 'Failed to load firm sales registry.';
       setError(msg);
-      toast({ title: 'Error Loading Sales', description: msg, variant: 'destructive' });
+      toast({ title: 'Error Loading Sales', description: 'Could not synchronize sales transactions.', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -144,10 +146,11 @@ export default function BrokerSales() {
       render: (row) => (
         <button
           onClick={(e) => { e.stopPropagation(); setSelectedSale(row); }}
-          aria-label={`Inspect sale record for ${row.property_title}`}
-          className="px-3 py-1.5 rounded-lg bg-[#F8FAFC] dark:bg-slate-800 hover:bg-[#0F766E] hover:text-white dark:hover:bg-[#0F766E] text-xs font-bold font-sans uppercase tracking-wider transition-colors cursor-pointer border border-[#E2E8F0] dark:border-slate-700 text-[#1E293B] dark:text-slate-200"
+          aria-label="Inspect Record"
+          className="px-3 py-1.5 rounded-md bg-[#0F766E] hover:bg-[#115E59] active:bg-[#134E4A] text-white text-xs font-semibold font-sans uppercase tracking-wider inline-flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
         >
-          Inspect Record
+          <span className="material-symbols-outlined text-[14px] text-white">visibility</span>
+          <span>Inspect Record</span>
         </button>
       )
     }
@@ -230,12 +233,7 @@ export default function BrokerSales() {
       />
 
       {loading ? (
-        <div className="py-24 flex flex-col items-center justify-center text-[#64748B] gap-3 bg-white dark:bg-slate-900 rounded-2xl border border-[#E2E8F0] dark:border-slate-800">
-          <span className="material-symbols-outlined animate-spin text-[40px] text-[#0F766E]">
-            progress_activity
-          </span>
-          <p className="text-sm font-sans font-medium">Loading conveyance registry...</p>
-        </div>
+        <TableSkeleton rows={5} />
       ) : (
         <Card data-testid="broker-card" className="border border-[#E2E8F0] dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-xs">
           <DataTable

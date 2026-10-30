@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useVirtualizer } from '@tanstack/react-virtual';
@@ -139,14 +139,17 @@ export default function PropertiesPage() {
 
   useEffect(() => {
     const handleResize = () => {
-      const isMobile = window.innerWidth < 768;
-      const isTablet = window.innerWidth < 1024;
+      const width = window.innerWidth;
       if (viewMode === 'split') {
-        setColumns(isMobile ? 1 : 2);
+        if (width < 640) setColumns(1);
+        else if (width < 1024) setColumns(2); // full width on mobileTab === 'list'
+        else if (width < 1280) setColumns(1); // 50% split on 1024px laptop
+        else setColumns(2);                   // 50% split on 1280px+ desktop
       } else {
-        if (isMobile) setColumns(1);
-        else if (isTablet) setColumns(2);
-        else setColumns(3);
+        if (width < 640) setColumns(1);
+        else if (width < 1024) setColumns(2);
+        else if (width < 1536) setColumns(3);
+        else setColumns(4);
       }
     };
     handleResize();
@@ -165,33 +168,79 @@ export default function PropertiesPage() {
     setDisplayLimit((prev) => Math.min(prev + 6, filteredProperties.length));
   };
 
-  const handleSelectProperty = (property) => {
-    const propId = property.id || property.ListingKey || property.listingKey || property.ListingId || property.listingId;
+  const hoverScrollTimeoutRef = useRef(null);
+
+  const scrollToPropertyCard = useCallback((propId) => {
+    if (!propId) return;
+
+    // Check if property is within current displayLimit; if beyond, expand displayLimit to render it
+    const fullIndex = sortedProperties.findIndex((p) => String(p.id) === String(propId));
+    if (fullIndex !== -1 && fullIndex >= displayLimit) {
+      setDisplayLimit((prev) => Math.max(prev, fullIndex + 4));
+    }
+
+    // Scroll using rowVirtualizer if index is known
+    if (fullIndex !== -1) {
+      const rowIndex = Math.floor(fullIndex / columns);
+      if (rowVirtualizer && typeof rowVirtualizer.scrollToIndex === 'function') {
+        rowVirtualizer.scrollToIndex(rowIndex, { align: 'center', behavior: 'smooth' });
+      }
+    }
+
+    // Also attempt DOM element scroll for smooth centering
+    setTimeout(() => {
+      const cardEl =
+        document.getElementById(`property-card-${propId}`) ||
+        document.getElementById(`property-card-${String(propId)}`);
+      if (cardEl) {
+        cardEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 60);
+  }, [sortedProperties, displayLimit, columns, rowVirtualizer]);
+
+  const handleSelectProperty = useCallback((property) => {
+    const propId =
+      property?.id ||
+      property?.ListingKey ||
+      property?.listingKey ||
+      property?.ListingId ||
+      property?.listingId;
+    if (!propId) return;
     setSelectedPropertyId(propId);
     if (window.innerWidth < 1024) {
       setMobileTab('list');
     }
-    setTimeout(() => {
-      const cardEl = document.getElementById(`property-card-${propId}`) || document.getElementById(`property-card-${property.id}`);
-      if (cardEl) {
-        cardEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    }, 100);
-  };
+    scrollToPropertyCard(propId);
+  }, [scrollToPropertyCard]);
+
+  const handleHoverProperty = useCallback((property) => {
+    if (!property) {
+      setHoveredPropertyId(null);
+      return;
+    }
+    const propId = property.id || property;
+    setHoveredPropertyId(propId);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (hoverScrollTimeoutRef.current) clearTimeout(hoverScrollTimeoutRef.current);
+    };
+  }, []);
 
   return (
     <div className="bg-[#F8FAFC] h-screen overflow-hidden w-full flex flex-col">
       {/* Top spacing below fixed navigation header */}
       <div 
         className={`shrink-0 transition-all duration-300 ease-in-out ${
-          isHeaderVisible ? 'h-[80px]' : 'h-0'
+          isHeaderVisible ? 'h-16 md:h-20' : 'h-0'
         }`} 
       />
 
       {/* Main Container */}
-      <div className="flex-1 w-full px-4 md:px-6 lg:px-8 flex flex-col overflow-hidden pb-4 min-h-0">
+      <div className="flex-1 w-full px-3 sm:px-4 md:px-6 lg:px-8 flex flex-col overflow-hidden pb-4 min-h-0">
         {/* Unified Search Bar & Quick District Chips (Non-sticky) */}
-        <div className="shrink-0 pt-2 pb-3 transition-all z-20">
+        <div className="shrink-0 pt-2 pb-2 transition-all z-20">
           <UnifiedSearchBar
             filters={filters}
             setFilter={setFilter}
@@ -200,81 +249,48 @@ export default function PropertiesPage() {
             viewMode={viewMode}
             setViewMode={setViewMode}
             onFlyToDistrict={(preset) => setTargetDistrict(preset)}
-            initialShowFilters={false}
           />
         </div>
 
-        {/* Portfolio Section Header */}
-        <div className="shrink-0 flex flex-col md:flex-row justify-between items-start md:items-end my-4 border-b border-gray-200/60 pb-4 gap-4">
-          <div>
-            {activeFilterCount > 0 && (
-              <div className="flex flex-wrap items-center gap-2 mb-3 min-h-[32px]">
-                <div className="flex items-center gap-1.5 text-[11px] font-bold font-sans uppercase tracking-[0.15em] text-[#0F766E] shrink-0 mr-1">
-                  <span className="material-symbols-outlined text-[16px]">tune</span>
-                  Active Filtering ({activeFilterCount})
-                </div>
+        {/* Active Filter Chips Ribbon (only rendered when filters are active) */}
+        {activeFilterCount > 0 && (
+          <div className="shrink-0 flex items-center gap-2 py-1 mb-2 overflow-x-auto no-scrollbar">
+            <div className="flex items-center gap-1.5 text-[10px] font-bold font-sans uppercase tracking-wider text-[#0F766E] shrink-0 mr-1">
+              <span className="material-symbols-outlined text-[14px]">tune</span>
+              <span>Filtered ({activeFilterCount})</span>
+            </div>
 
-                <div className="flex flex-wrap items-center gap-2">
-                      {Object.entries(filters).map(([key, value]) => {
-                        if (!value || value === '' || value === 'Any' || key === 'mapBounds') return null;
-                        if (Array.isArray(value) && value.length === 0) return null;
-                        
-                        let displayValue = String(value);
-                        if (key === 'minPrice') displayValue = `> ₱${(value / 1000000).toFixed(0)}M`;
-                        else if (key === 'maxPrice') displayValue = `< ₱${(value / 1000000).toFixed(0)}M`;
-                        else if (key === 'keyword') displayValue = `Search: "${value}"`;
-                        else if (key === 'propertyType') displayValue = `Type: ${value}`;
-                        else if (key === 'district') displayValue = `District: ${value}`;
-                        else if (key === 'beds') displayValue = `Beds: ${value}`;
-                        else if (key === 'baths') displayValue = `Baths: ${value}`;
+            <div className="flex items-center gap-1.5 shrink-0">
+              {Object.entries(filters).map(([key, value]) => {
+                if (!value || value === '' || value === 'Any' || key === 'mapBounds') return null;
+                if (Array.isArray(value) && value.length === 0) return null;
+                
+                let displayValue = String(value);
+                if (key === 'minPrice') displayValue = `> ₱${(value / 1000000).toFixed(0)}M`;
+                else if (key === 'maxPrice') displayValue = `< ₱${(value / 1000000).toFixed(0)}M`;
+                else if (key === 'keyword') displayValue = `"${value}"`;
+                else if (key === 'propertyType') displayValue = `Type: ${value}`;
+                else if (key === 'district') displayValue = `District: ${value}`;
+                else if (key === 'beds') displayValue = `${value} Beds`;
+                else if (key === 'baths') displayValue = `${value} Baths`;
 
-                        if (!displayValue || displayValue.trim() === '') return null;
+                if (!displayValue || displayValue.trim() === '') return null;
 
-                        return (
-                          <div key={key} className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#0F766E]/10 text-[#0F766E] rounded-full text-[10px] font-bold font-sans uppercase tracking-wider border border-[#0F766E]/20 transition-all hover:bg-[#0F766E]/15 shrink-0">
-                            <span>{displayValue}</span>
-                            <button type="button" onClick={() => clearSpecificFilter(key)} className="hover:text-red-500 cursor-pointer flex items-center justify-center transition-colors">
-                              <span className="material-symbols-outlined text-[14px]">close</span>
-                            </button>
-                          </div>
-                        );
-                      })}
-                      {activeFilterCount > 0 && (
-                        <button type="button" onClick={clearFilters} className="text-[10px] font-bold text-gray-500 hover:text-gray-800 uppercase tracking-widest cursor-pointer ml-1 transition-colors shrink-0">
-                          Clear All
-                        </button>
-                      )}
-                </div>
-              </div>
-            )}
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold font-display text-[#0F766E] tracking-tight">
-              Available Properties
-            </h1>
-          </div>
-
-          {/* Controls: Sort Dropdown */}
-          <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end">
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400 font-sans">
-                Sort
-              </span>
-              <div className="relative">
-                <select
-                  className="appearance-none bg-white border border-gray-200 rounded-xl text-[12px] font-bold uppercase tracking-wider text-[#0F766E] font-sans py-2 pr-9 pl-3.5 focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-sm cursor-pointer transition-all hover:border-[#0F766E]/50"
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                >
-                  <option value="Newest">Newest Additions</option>
-                  <option value="Price: High to Low">Price: High to Low</option>
-                  <option value="Price: Low to High">Price: Low to High</option>
-                </select>
-                <span className="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-[#0F766E]/50 text-[18px]">
-                  expand_more
-                </span>
-              </div>
+                return (
+                  <div key={key} className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#0F766E]/10 text-[#0F766E] rounded-full text-[10px] font-bold font-sans uppercase tracking-wider border border-[#0F766E]/20 transition-all hover:bg-[#0F766E]/15 shrink-0">
+                    <span>{displayValue}</span>
+                    <button type="button" onClick={() => clearSpecificFilter(key)} className="hover:text-red-500 cursor-pointer flex items-center justify-center transition-colors">
+                      <span className="material-symbols-outlined text-[13px]">close</span>
+                    </button>
+                  </div>
+                );
+              })}
+              <button type="button" onClick={clearFilters} className="text-[10px] font-bold text-gray-500 hover:text-gray-800 uppercase tracking-widest cursor-pointer ml-1 transition-colors shrink-0">
+                Clear All
+              </button>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Results Area */}
         {isLoading ? (
@@ -282,17 +298,138 @@ export default function PropertiesPage() {
             <div className="w-10 h-10 border-3 border-[#0F766E]/20 border-t-[#0F766E] rounded-full animate-spin mb-4" />
             <p className="text-sm font-medium text-slate-500">Loading firm property listings...</p>
           </div>
-        ) : displayedProperties && displayedProperties.length > 0 ? (
-          <div className={`flex-1 overflow-hidden w-full min-h-0 ${viewMode === 'split' ? 'grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start h-full' : 'h-full'}`}>
-            {/* Left Pane: Property Cards Grid (Visible on mobile when mobileTab === 'list' or in grid mode) */}
+        ) : viewMode === 'split' ? (
+          <div className="flex-1 overflow-hidden w-full min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start h-full">
+            {/* Left Pane: Property Cards Grid or Empty State */}
             <div
               ref={parentRef}
               data-lenis-prevent="true"
               data-testid="properties-scroll-container"
-              className={`h-full min-h-0 overflow-y-auto overscroll-contain pr-2 custom-scrollbar w-full ${viewMode === 'split'
-                  ? `lg:col-span-6 xl:col-span-6 ${mobileTab === 'map' ? 'hidden lg:block' : 'block'}`
-                  : 'w-full'
-                }`}
+              className={`h-full min-h-0 overflow-y-auto overscroll-contain pr-2 custom-scrollbar w-full lg:col-span-6 xl:col-span-6 ${
+                mobileTab === 'map' ? 'hidden lg:block' : 'block'
+              }`}
+            >
+              {displayedProperties && displayedProperties.length > 0 ? (
+                <>
+                  <div
+                    className="w-full relative"
+                    style={{ height: `${rowVirtualizer.getTotalSize()}px` }}
+                  >
+                    {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                      const startIndex = virtualRow.index * columns;
+                      const rowItems = displayedProperties.slice(startIndex, startIndex + columns);
+
+                      return (
+                        <div
+                          key={virtualRow.index}
+                          ref={rowVirtualizer.measureElement}
+                          data-index={virtualRow.index}
+                          style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            transform: `translateY(${virtualRow.start}px)`,
+                          }}
+                          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 pb-8"
+                        >
+                          {rowItems.map((property, idx) => (
+                            <motion.div
+                              key={property.id}
+                              id={`property-card-${property.id}`}
+                              className={`h-full transition-all duration-300 rounded-2xl ${
+                                selectedPropertyId === property.id
+                                  ? 'ring-3 ring-[#0F766E] shadow-2xl scale-[1.02] bg-teal-50/20'
+                                  : hoveredPropertyId === property.id
+                                    ? 'ring-2 ring-[#0F766E] shadow-lg scale-[1.01] bg-teal-50/10'
+                                    : ''
+                              }`}
+                              onMouseEnter={() => setHoveredPropertyId(property.id)}
+                              onMouseLeave={() => setHoveredPropertyId(null)}
+                              initial={{ opacity: 0, scale: 0.95, y: 30 }}
+                              animate={{ opacity: 1, scale: 1, y: 0 }}
+                              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1], delay: idx * 0.08 }}
+                            >
+                              <PropertyCard
+                                property={property}
+                                variant="vertical"
+                                isSelected={selectedPropertyId === property.id}
+                                isHovered={hoveredPropertyId === property.id}
+                                onMouseEnter={() => setHoveredPropertyId(property.id)}
+                                onMouseLeave={() => setHoveredPropertyId(null)}
+                              />
+                            </motion.div>
+                          ))}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Pagination / Load More Footer */}
+                  {filteredProperties && displayedProperties.length < filteredProperties.length && (
+                    <div className="flex flex-col items-center justify-center mt-12 mb-16 gap-4">
+                      <Button
+                        variant="primary"
+                        size="lg"
+                        icon="expand_more"
+                        onClick={handleLoadMore}
+                        className="bg-[#0F766E] hover:bg-[#115E59] text-white shadow-[0_10px_30px_rgba(15,118,110,0.2)] hover:-translate-y-1 transition-all border-none font-bold tracking-widest text-[12px] px-8 cursor-pointer"
+                      >
+                        Load More Residences
+                      </Button>
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 font-sans">
+                        Showing {displayedProperties.length} of {filteredProperties.length}
+                      </span>
+                    </div>
+                  )}
+
+                  {displayedProperties.length === filteredProperties.length && filteredProperties.length > 0 && (
+                    <div className="flex justify-center mt-16 mb-16">
+                      <div className="inline-flex items-center gap-3 px-6 py-2 bg-gray-50 rounded-full border border-gray-100">
+                        <span className="material-symbols-outlined text-[#0F766E] text-sm">check_circle</span>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500 font-sans">
+                          All {filteredProperties.length} Residences Displayed
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="py-8">
+                  <FilterEmptyState
+                    tightestFilter={tightestFilter}
+                    onClearFilter={() => tightestFilter && clearSpecificFilter(tightestFilter.key)}
+                    onResetAll={clearFilters}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Right Pane: Interactive Geographical Map Split Plane (RIGHT SIDE) */}
+            <div
+              className={`w-full h-full lg:col-span-6 xl:col-span-6 rounded-3xl overflow-hidden shadow-lg border border-gray-200/90 z-20 bg-gray-50 ${
+                mobileTab === 'list' ? 'hidden lg:block' : 'block'
+              }`}
+            >
+              <GooglePropertyMap
+                properties={filteredProperties}
+                selectedPropertyId={selectedPropertyId}
+                hoveredPropertyId={hoveredPropertyId}
+                onSelectProperty={handleSelectProperty}
+                onHoverProperty={handleHoverProperty}
+                onBoundsChange={(bounds) => setFilter('mapBounds', bounds)}
+                targetDistrict={targetDistrict}
+                onOpenStreetView={(coords) => setStreetViewData({ coordinates: coords, title: 'Luxury Residence' })}
+              />
+            </div>
+          </div>
+        ) : displayedProperties && displayedProperties.length > 0 ? (
+          <div className="flex-1 overflow-hidden w-full min-h-0 h-full">
+            <div
+              ref={parentRef}
+              data-lenis-prevent="true"
+              data-testid="properties-scroll-container"
+              className="h-full min-h-0 overflow-y-auto overscroll-contain pr-2 custom-scrollbar w-full"
             >
               <div
                 className="w-full relative"
@@ -314,10 +451,7 @@ export default function PropertiesPage() {
                         width: '100%',
                         transform: `translateY(${virtualRow.start}px)`,
                       }}
-                      className={`grid ${viewMode === 'split'
-                          ? 'grid-cols-1 sm:grid-cols-2 gap-6 pb-8'
-                          : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 lg:gap-x-12 pb-12'
-                        }`}
+                      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8 pb-12"
                     >
                       {rowItems.map((property, idx) => (
                         <motion.div
@@ -325,9 +459,9 @@ export default function PropertiesPage() {
                           id={`property-card-${property.id}`}
                           className={`h-full transition-all duration-300 rounded-2xl ${
                             selectedPropertyId === property.id
-                              ? 'ring-2 ring-[#0F766E] shadow-xl scale-[1.01]'
+                              ? 'ring-3 ring-[#0F766E] shadow-2xl scale-[1.02] bg-teal-50/20'
                               : hoveredPropertyId === property.id
-                                ? 'ring-2 ring-[#0F766E]/50 shadow-md'
+                                ? 'ring-2 ring-[#0F766E] shadow-lg scale-[1.01] bg-teal-50/10'
                                 : ''
                           }`}
                           onMouseEnter={() => setHoveredPropertyId(property.id)}
@@ -336,9 +470,9 @@ export default function PropertiesPage() {
                           animate={{ opacity: 1, scale: 1, y: 0 }}
                           transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1], delay: idx * 0.08 }}
                         >
-                          <PropertyCard 
-                            property={property} 
-                            variant="vertical" 
+                          <PropertyCard
+                            property={property}
+                            variant="vertical"
                             isSelected={selectedPropertyId === property.id}
                             isHovered={hoveredPropertyId === property.id}
                             onMouseEnter={() => setHoveredPropertyId(property.id)}
@@ -380,27 +514,9 @@ export default function PropertiesPage() {
                 </div>
               )}
             </div>
-
-            {/* Right Pane: Interactive Geographical Map Split Plane (RIGHT SIDE) */}
-            {viewMode === 'split' && (
-              <div
-                className={`w-full h-full lg:col-span-6 xl:col-span-6 rounded-3xl overflow-hidden shadow-lg border border-gray-200/90 z-20 bg-gray-50 ${mobileTab === 'list' ? 'hidden lg:block' : 'block'
-                  }`}
-              >
-                <GooglePropertyMap
-                  properties={filteredProperties}
-                  selectedPropertyId={selectedPropertyId}
-                  hoveredPropertyId={hoveredPropertyId}
-                  onSelectProperty={handleSelectProperty}
-                  onBoundsChange={(bounds) => setFilter('mapBounds', bounds)}
-                  targetDistrict={targetDistrict}
-                  onOpenStreetView={(coords) => setStreetViewData({ coordinates: coords, title: 'Luxury Residence' })}
-                />
-              </div>
-            )}
           </div>
         ) : (
-          /* Algorithmic Empty State Recovery */
+          /* Algorithmic Empty State Recovery in Grid Mode */
           <div className="mt-8 mb-16">
             <FilterEmptyState
               tightestFilter={tightestFilter}
@@ -436,6 +552,8 @@ export default function PropertiesPage() {
         facets={facets}
         totalCount={filteredProperties.length}
         onClearAll={clearFilters}
+        sortBy={sortBy}
+        setSortBy={setSortBy}
       />
       {/* 360° Street View Modal */}
       {streetViewData && (

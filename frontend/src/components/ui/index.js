@@ -2,10 +2,12 @@
 
 // shadcn/ui Unified Design System Primitives
 export { Button as ShadcnButton, buttonVariants } from './button';
+export { default as ViewPropertyButton } from './buttons/ViewPropertyButton';
 export { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from './card';
 export { Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooter, TableCaption } from './table';
 export { Badge, badgeVariants } from './badge';
 export { Skeleton } from './skeleton';
+export { Spinner } from './spinner';
 export { Input } from './input';
 export { Textarea } from './textarea';
 export { Label } from './label';

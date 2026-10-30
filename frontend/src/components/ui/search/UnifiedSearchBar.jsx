@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   IconSearch, 
@@ -10,9 +10,7 @@ import {
   IconLayoutGrid, 
   IconLayoutSidebar, 
   IconX, 
-  IconChevronDown,
-  IconEye,
-  IconEyeOff
+  IconChevronDown 
 } from '@tabler/icons-react';
 import { mapsService } from '../../../services/mapsService';
 
@@ -43,29 +41,8 @@ export default function UnifiedSearchBar({
   viewMode = 'split',
   setViewMode,
   onFlyToDistrict,
-  isSticky = false,
-  initialShowFilters = false,
-  showFilters,
-  onToggleShowFilters,
+  isSticky = false
 }) {
-  const [internalShowFilters, setInternalShowFilters] = useState(initialShowFilters);
-  const isFiltersVisible = showFilters !== undefined ? showFilters : internalShowFilters;
-
-  const toggleFiltersVisible = () => {
-    const next = !isFiltersVisible;
-    setInternalShowFilters(next);
-    if (onToggleShowFilters) onToggleShowFilters(next);
-  };
-
-  const activeQuickFilterCount = useMemo(() => {
-    let count = 0;
-    if (filters.propertyType && filters.propertyType !== 'All') count++;
-    if (filters.minPrice || filters.maxPrice) count++;
-    if (filters.beds && filters.beds !== 'Any') count++;
-    if (filters.district && filters.district !== 'All' && filters.district !== 'All Metro Manila') count++;
-    return count;
-  }, [filters]);
-
   const [showPricePopover, setShowPricePopover] = useState(false);
   const [showBedPopover, setShowBedPopover] = useState(false);
   const pricePopoverRef = useRef(null);
@@ -337,6 +314,192 @@ export default function UnifiedSearchBar({
           </AnimatePresence>
         </div>
 
+        {/* Property Type Dropdown */}
+        <div className="relative shrink-0">
+          <div className="relative">
+            <select
+              value={filters.propertyType || 'All'}
+              onChange={(e) => setFilter('propertyType', e.target.value)}
+              className={`h-11 pl-9 pr-8 rounded-xl text-xs font-semibold border transition-all cursor-pointer appearance-none outline-none ${
+                filters.propertyType && filters.propertyType !== 'All'
+                  ? 'bg-teal-50/70 border-[#0F766E] text-[#0F766E]'
+                  : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700'
+              }`}
+            >
+              <option value="All">All Property Types</option>
+              <option value="House">House</option>
+              <option value="Condominium">Condominium</option>
+              <option value="Townhouse">Townhouse</option>
+              <option value="Lot">Lot</option>
+            </select>
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+              <IconHome size={15} stroke={2} className={filters.propertyType && filters.propertyType !== 'All' ? 'text-[#0F766E]' : 'text-slate-400'} />
+            </div>
+            <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+              <IconChevronDown size={14} stroke={2} />
+            </div>
+          </div>
+        </div>
+
+        {/* Price Range Popover Button */}
+        <div className="relative shrink-0" ref={pricePopoverRef}>
+          <button
+            type="button"
+            onClick={() => setShowPricePopover(!showPricePopover)}
+            className={`h-11 px-3.5 rounded-xl text-xs font-semibold border flex items-center justify-between gap-2 transition-all cursor-pointer ${
+              filters.minPrice || filters.maxPrice
+                ? 'bg-teal-50/70 border-[#0F766E] text-[#0F766E]'
+                : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700'
+            }`}
+          >
+            <div className="flex items-center gap-1.5">
+              <IconCurrencyPeso size={15} stroke={2} className={filters.minPrice || filters.maxPrice ? 'text-[#0F766E]' : 'text-slate-400'} />
+              <span>{getPriceLabel()}</span>
+            </div>
+            <IconChevronDown size={14} stroke={2} className="text-slate-400" />
+          </button>
+
+          {/* Interactive Price Popover Card */}
+          <AnimatePresence>
+            {showPricePopover && (
+              <motion.div
+                initial={{ opacity: 0, y: 8, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 8, scale: 0.97 }}
+                transition={{ duration: 0.16 }}
+                className="absolute top-[48px] left-0 md:right-0 md:left-auto w-80 bg-white rounded-2xl shadow-xl border border-slate-200 p-4 z-[80]"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-[#0F766E]">Price Budget (PHP)</h4>
+                  {(filters.minPrice || filters.maxPrice) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFilter('minPrice', null);
+                        setFilter('maxPrice', null);
+                      }}
+                      className="text-[11px] font-semibold text-slate-400 hover:text-[#FF6B6B] cursor-pointer"
+                    >
+                      Reset
+                    </button>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-2.5 mb-3">
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-slate-400 block mb-1">Min Price</label>
+                    <input
+                      type="number"
+                      placeholder="₱ 0"
+                      value={filters.minPrice || ''}
+                      onChange={(e) => setFilter('minPrice', e.target.value ? Number(e.target.value) : null)}
+                      className="w-full h-9 px-3 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 outline-none focus:border-[#0F766E]"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-slate-400 block mb-1">Max Price</label>
+                    <input
+                      type="number"
+                      placeholder="Any"
+                      value={filters.maxPrice || ''}
+                      onChange={(e) => setFilter('maxPrice', e.target.value ? Number(e.target.value) : null)}
+                      className="w-full h-9 px-3 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 outline-none focus:border-[#0F766E]"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1 pt-2 border-t border-slate-100">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Quick Select</span>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {PRICE_PRESETS.map((p) => (
+                      <button
+                        key={p.label}
+                        type="button"
+                        onClick={() => {
+                          setFilter('minPrice', p.min);
+                          setFilter('maxPrice', p.max);
+                        }}
+                        className="py-1.5 px-2 bg-slate-50 hover:bg-teal-50 hover:text-[#0F766E] rounded-lg text-[11px] font-semibold text-slate-600 transition-colors text-center border border-slate-200/60 cursor-pointer"
+                      >
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Bedroom Popover (Clean compact popover replacing sprawling 6 buttons) */}
+        <div className="relative shrink-0" ref={bedPopoverRef}>
+          <button
+            type="button"
+            onClick={() => setShowBedPopover(!showBedPopover)}
+            className={`h-11 px-3.5 rounded-xl text-xs font-semibold border flex items-center justify-between gap-2 transition-all cursor-pointer ${
+              filters.beds && filters.beds !== 'Any'
+                ? 'bg-teal-50/70 border-[#0F766E] text-[#0F766E]'
+                : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700'
+            }`}
+          >
+            <div className="flex items-center gap-1.5">
+              <IconBed size={15} stroke={2} className={filters.beds && filters.beds !== 'Any' ? 'text-[#0F766E]' : 'text-slate-400'} />
+              <span>{filters.beds && filters.beds !== 'Any' ? `${filters.beds} Beds` : 'Bedrooms'}</span>
+            </div>
+            <IconChevronDown size={14} stroke={2} className="text-slate-400" />
+          </button>
+
+          <AnimatePresence>
+            {showBedPopover && (
+              <motion.div
+                initial={{ opacity: 0, y: 8, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 8, scale: 0.97 }}
+                transition={{ duration: 0.15 }}
+                className="absolute top-[48px] left-0 w-64 bg-white rounded-2xl shadow-xl border border-slate-200 p-4 z-[80]"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-[#0F766E]">Bedrooms</h4>
+                  {filters.beds && filters.beds !== 'Any' && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFilter('beds', '');
+                        setShowBedPopover(false);
+                      }}
+                      className="text-[11px] font-semibold text-slate-400 hover:text-[#FF6B6B] cursor-pointer"
+                    >
+                      Reset
+                    </button>
+                  )}
+                </div>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {BED_OPTIONS.map((opt) => {
+                    const isSelected = (filters.beds || 'Any') === opt;
+                    return (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => {
+                          setFilter('beds', opt === 'Any' ? '' : opt);
+                          setShowBedPopover(false);
+                        }}
+                        className={`py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer text-center ${
+                          isSelected
+                            ? 'bg-[#0F766E] text-white shadow-2xs'
+                            : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200/60'
+                        }`}
+                      >
+                        {opt === 'Any' ? 'Any' : opt === 'Studio' ? 'Studio' : `${opt} Bed${opt === '1' ? '' : 's'}`}
+                      </button>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
         {/* 'All Filters' Drawer Trigger */}
         <button
           type="button"
@@ -353,34 +516,6 @@ export default function UnifiedSearchBar({
             <span className="w-5 h-5 rounded-full bg-[#FF6B6B] text-white text-[10px] font-extrabold flex items-center justify-center ml-0.5">
               {activeFilterCount}
             </span>
-          )}
-        </button>
-
-        {/* 'Hide / Show Quick Filters' Toggle */}
-        <button
-          type="button"
-          data-testid="toggle-filters-visibility-btn"
-          onClick={toggleFiltersVisible}
-          className={`h-11 px-3.5 rounded-xl text-xs font-semibold border flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
-            isFiltersVisible
-              ? 'bg-teal-50/80 border-[#0F766E] text-[#0F766E] shadow-2xs'
-              : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700'
-          }`}
-          title={isFiltersVisible ? 'Hide quick filters' : 'Show quick filters'}
-        >
-          {isFiltersVisible ? (
-            <>
-              <IconEyeOff size={15} stroke={2} className="text-[#0F766E]" />
-              <span>Hide Filters</span>
-            </>
-          ) : (
-            <>
-              <IconEye size={15} stroke={2} className="text-slate-500" />
-              <span>Show Filters</span>
-              {activeQuickFilterCount > 0 && (
-                <span className="w-2 h-2 rounded-full bg-[#FF6B6B] ml-0.5" />
-              )}
-            </>
           )}
         </button>
 
@@ -420,245 +555,35 @@ export default function UnifiedSearchBar({
         )}
       </div>
 
-      {/* Collapsible Secondary Quick Filter Bar & District Scroller */}
-      <AnimatePresence>
-        {isFiltersVisible && (
-          <motion.div
-            key="collapsible-filters"
-            initial={{ opacity: 0, height: 0, marginTop: 0 }}
-            animate={{ opacity: 1, height: 'auto', marginTop: 12 }}
-            exit={{ opacity: 0, height: 0, marginTop: 0 }}
-            transition={{ duration: 0.22, ease: 'easeInOut' }}
-            className="overflow-hidden border-t border-slate-100 pt-3"
-            data-testid="collapsible-quick-filters-tray"
-          >
-            <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-3">
-              {/* Quick Dropdowns (Type, Price, Beds) */}
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-[#0F766E] shrink-0 mr-1">
-                  Quick Filters
-                </span>
-
-                {/* Property Type Dropdown */}
-                <div className="relative shrink-0">
-                  <div className="relative">
-                    <select
-                      value={filters.propertyType || 'All'}
-                      onChange={(e) => setFilter('propertyType', e.target.value)}
-                      className={`h-9 pl-8 pr-7 rounded-lg text-xs font-semibold border transition-all cursor-pointer appearance-none outline-none ${
-                        filters.propertyType && filters.propertyType !== 'All'
-                          ? 'bg-teal-50/70 border-[#0F766E] text-[#0F766E]'
-                          : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700'
-                      }`}
-                    >
-                      <option value="All">All Property Types</option>
-                      <option value="House">House</option>
-                      <option value="Condominium">Condominium</option>
-                      <option value="Townhouse">Townhouse</option>
-                      <option value="Lot">Lot</option>
-                    </select>
-                    <div className="absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                      <IconHome size={14} stroke={2} className={filters.propertyType && filters.propertyType !== 'All' ? 'text-[#0F766E]' : 'text-slate-400'} />
-                    </div>
-                    <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                      <IconChevronDown size={13} stroke={2} />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Price Range Popover Button */}
-                <div className="relative shrink-0" ref={pricePopoverRef}>
-                  <button
-                    type="button"
-                    onClick={() => setShowPricePopover(!showPricePopover)}
-                    className={`h-9 px-3 rounded-lg text-xs font-semibold border flex items-center justify-between gap-2 transition-all cursor-pointer ${
-                      filters.minPrice || filters.maxPrice
-                        ? 'bg-teal-50/70 border-[#0F766E] text-[#0F766E]'
-                        : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700'
-                    }`}
-                  >
-                    <div className="flex items-center gap-1.5">
-                      <IconCurrencyPeso size={14} stroke={2} className={filters.minPrice || filters.maxPrice ? 'text-[#0F766E]' : 'text-slate-400'} />
-                      <span>{getPriceLabel()}</span>
-                    </div>
-                    <IconChevronDown size={13} stroke={2} className="text-slate-400" />
-                  </button>
-
-                  {/* Interactive Price Popover Card */}
-                  <AnimatePresence>
-                    {showPricePopover && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 8, scale: 0.97 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 8, scale: 0.97 }}
-                        transition={{ duration: 0.16 }}
-                        className="absolute top-[42px] left-0 md:right-0 md:left-auto w-80 bg-white rounded-2xl shadow-xl border border-slate-200 p-4 z-[80]"
-                      >
-                        <div className="flex items-center justify-between mb-3">
-                          <h4 className="text-xs font-bold uppercase tracking-wider text-[#0F766E]">Price Budget (PHP)</h4>
-                          {(filters.minPrice || filters.maxPrice) && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setFilter('minPrice', null);
-                                setFilter('maxPrice', null);
-                              }}
-                              className="text-[11px] font-semibold text-slate-400 hover:text-[#FF6B6B] cursor-pointer"
-                            >
-                              Reset
-                            </button>
-                          )}
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-2.5 mb-3">
-                          <div>
-                            <label className="text-[10px] font-bold uppercase text-slate-400 block mb-1">Min Price</label>
-                            <input
-                              type="number"
-                              placeholder="₱ 0"
-                              value={filters.minPrice || ''}
-                              onChange={(e) => setFilter('minPrice', e.target.value ? Number(e.target.value) : null)}
-                              className="w-full h-9 px-3 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 outline-none focus:border-[#0F766E]"
-                            />
-                          </div>
-                          <div>
-                            <label className="text-[10px] font-bold uppercase text-slate-400 block mb-1">Max Price</label>
-                            <input
-                              type="number"
-                              placeholder="Any"
-                              value={filters.maxPrice || ''}
-                              onChange={(e) => setFilter('maxPrice', e.target.value ? Number(e.target.value) : null)}
-                              className="w-full h-9 px-3 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 outline-none focus:border-[#0F766E]"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="space-y-1 pt-2 border-t border-slate-100">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Quick Select</span>
-                          <div className="grid grid-cols-2 gap-1.5">
-                            {PRICE_PRESETS.map((p) => (
-                              <button
-                                key={p.label}
-                                type="button"
-                                onClick={() => {
-                                  setFilter('minPrice', p.min);
-                                  setFilter('maxPrice', p.max);
-                                }}
-                                className="py-1.5 px-2 bg-slate-50 hover:bg-teal-50 hover:text-[#0F766E] rounded-lg text-[11px] font-semibold text-slate-600 transition-colors text-center border border-slate-200/60 cursor-pointer"
-                              >
-                                {p.label}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-
-                {/* Bedroom Popover */}
-                <div className="relative shrink-0" ref={bedPopoverRef}>
-                  <button
-                    type="button"
-                    onClick={() => setShowBedPopover(!showBedPopover)}
-                    className={`h-9 px-3 rounded-lg text-xs font-semibold border flex items-center justify-between gap-2 transition-all cursor-pointer ${
-                      filters.beds && filters.beds !== 'Any'
-                        ? 'bg-teal-50/70 border-[#0F766E] text-[#0F766E]'
-                        : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700'
-                    }`}
-                  >
-                    <div className="flex items-center gap-1.5">
-                      <IconBed size={14} stroke={2} className={filters.beds && filters.beds !== 'Any' ? 'text-[#0F766E]' : 'text-slate-400'} />
-                      <span>{filters.beds && filters.beds !== 'Any' ? `${filters.beds} Beds` : 'Bedrooms'}</span>
-                    </div>
-                    <IconChevronDown size={13} stroke={2} className="text-slate-400" />
-                  </button>
-
-                  <AnimatePresence>
-                    {showBedPopover && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 8, scale: 0.97 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 8, scale: 0.97 }}
-                        transition={{ duration: 0.15 }}
-                        className="absolute top-[42px] left-0 w-64 bg-white rounded-2xl shadow-xl border border-slate-200 p-4 z-[80]"
-                      >
-                        <div className="flex items-center justify-between mb-3">
-                          <h4 className="text-xs font-bold uppercase tracking-wider text-[#0F766E]">Bedrooms</h4>
-                          {filters.beds && filters.beds !== 'Any' && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setFilter('beds', '');
-                                setShowBedPopover(false);
-                              }}
-                              className="text-[11px] font-semibold text-slate-400 hover:text-[#FF6B6B] cursor-pointer"
-                            >
-                              Reset
-                            </button>
-                          )}
-                        </div>
-                        <div className="grid grid-cols-3 gap-1.5">
-                          {BED_OPTIONS.map((opt) => {
-                            const isSelected = (filters.beds || 'Any') === opt;
-                            return (
-                              <button
-                                key={opt}
-                                type="button"
-                                onClick={() => {
-                                  setFilter('beds', opt === 'Any' ? '' : opt);
-                                  setShowBedPopover(false);
-                                }}
-                                className={`py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer text-center ${
-                                  isSelected
-                                    ? 'bg-[#0F766E] text-white shadow-2xs'
-                                    : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200/60'
-                                }`}
-                              >
-                                {opt === 'Any' ? 'Any' : opt === 'Studio' ? 'Studio' : `${opt} Bed${opt === '1' ? '' : 's'}`}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              </div>
-
-              {/* Clean Horizontal District Scroller */}
-              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar w-full xl:w-auto pt-1 xl:pt-0">
-                <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-400 uppercase tracking-wider shrink-0 pl-0.5">
-                  <IconMapPin size={13} stroke={2} className="text-[#0F766E]" />
-                  <span>Districts:</span>
-                </div>
-                <div className="flex items-center gap-1.5 shrink-0">
-                  {DISTRICT_PRESETS.map((preset) => {
-                    const isSelected =
-                      preset.name === 'All Metro Manila'
-                        ? !filters.district
-                        : filters.district === preset.name;
-                    return (
-                      <button
-                        key={preset.name}
-                        type="button"
-                        onClick={() => handleDistrictClick(preset)}
-                        className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-all border cursor-pointer ${
-                          isSelected
-                            ? 'bg-[#0F766E] text-white border-[#0F766E] shadow-2xs'
-                            : 'bg-slate-50 text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-100'
-                        }`}
-                      >
-                        {preset.name}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Lower Row: Clean Horizontal District Scroller */}
+      <div className="flex items-center gap-2 pt-2.5 mt-2.5 border-t border-slate-100 overflow-x-auto no-scrollbar">
+        <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-400 uppercase tracking-wider shrink-0 pl-0.5">
+          <IconMapPin size={13} stroke={2} className="text-[#0F766E]" />
+          <span>Districts:</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          {DISTRICT_PRESETS.map((preset) => {
+            const isSelected =
+              preset.name === 'All Metro Manila'
+                ? !filters.district
+                : filters.district === preset.name;
+            return (
+              <button
+                key={preset.name}
+                type="button"
+                onClick={() => handleDistrictClick(preset)}
+                className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-all border cursor-pointer ${
+                  isSelected
+                    ? 'bg-[#0F766E] text-white border-[#0F766E] shadow-2xs'
+                    : 'bg-slate-50 text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-100'
+                }`}
+              >
+                {preset.name}
+              </button>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }

@@ -98,6 +98,13 @@ export function AuthProvider({ children }) {
   const register = async (email, password, metadata) => {
     return registerUser({ email, password, fullName: metadata?.fullName, role: metadata?.role });
   };
+  const verifyRegistrationOtp = async (payload) => {
+    setError(null);
+    const authData = await authService.verifyRegistrationOtp(payload);
+    setUser(authData.user);
+    setIdleWarning(false);
+    return authData;
+  };
   const googleLogin = async (idToken, role = 'agent') => {
     setError(null);
     const authData = await authService.googleLogin(idToken, role);
@@ -116,6 +123,7 @@ export function AuthProvider({ children }) {
     idleWarning,
     loginWithCredentials,
     registerUser,
+    verifyRegistrationOtp,
     logout,
     refreshSession,
     validateSession,

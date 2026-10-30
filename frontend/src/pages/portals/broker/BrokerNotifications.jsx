@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import PageHeader from '../../../components/dashboard/PageHeader';
 import { Card, CardContent, useToast, Toaster } from '../../../components/ui';
+import { Spinner } from '../../../components/ui';
+import { ListSkeleton } from '../../../components/dashboard/skeletons';
 import { notificationService } from '../../../services/notificationService';
 
 export default function BrokerNotifications() {
@@ -19,7 +21,7 @@ export default function BrokerNotifications() {
     } catch (err) {
       const msg = err.message ? `Failed to load system notifications: ${err.message}` : 'Failed to load system notifications.';
       setError(msg);
-      toast({ title: 'Notification Error', description: msg, variant: 'destructive' });
+      toast({ title: 'Notification Error', description: 'Could not synchronize notifications.', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -68,13 +70,13 @@ export default function BrokerNotifications() {
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto font-sans" data-testid="broker-notifications-portal">
+    <div className="space-y-6 max-w-4xl mx-auto font-sans min-w-0 max-w-full" data-testid="broker-notifications-portal">
       <Toaster />
       <PageHeader
         title="Notifications & System Alerts"
         subtitle="Operational event feed for client inquiries, agent accreditation filings, and transaction milestones."
         actions={
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 w-full sm:w-auto min-w-0">
             <button
               onClick={loadNotifications}
               disabled={loading}
@@ -89,7 +91,7 @@ export default function BrokerNotifications() {
             <button
               onClick={markAllRead}
               disabled={unreadCount === 0}
-              aria-label="Mark all notifications as read"
+              
               className="h-[46px] px-5 bg-[#0F766E] hover:bg-[#115E59] text-white rounded-xl text-xs font-bold font-sans uppercase tracking-wider transition-colors shadow-sm cursor-pointer disabled:opacity-50"
             >
               Mark All as Read
@@ -100,7 +102,7 @@ export default function BrokerNotifications() {
 
       {error && (
         <div role="alert" className="p-4 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-900 rounded-2xl flex items-center justify-between text-rose-700 dark:text-rose-300 font-sans text-sm">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 w-full sm:w-auto min-w-0">
             <span className="material-symbols-outlined text-rose-600 dark:text-rose-400">error</span>
             <span>{error}</span>
           </div>
@@ -114,7 +116,7 @@ export default function BrokerNotifications() {
       )}
 
       {/* Filter Tabs */}
-      <div className="flex items-center gap-2 border-b border-[#E2E8F0] dark:border-slate-800 pb-3" role="tablist">
+      <div className="flex items-center gap-2 border-b border-[#E2E8F0] dark:border-slate-800 pb-3" role="group">
         {[
           { key: 'ALL', label: 'All Alerts' },
           { key: 'UNREAD', label: `Unread (${unreadCount})` },
@@ -122,8 +124,7 @@ export default function BrokerNotifications() {
         ].map(tab => (
           <button
             key={tab.key}
-            role="tab"
-            aria-selected={filter === tab.key}
+            type="button"
             onClick={() => setFilter(tab.key)}
             className={`px-4 py-2 rounded-xl text-xs font-bold font-sans uppercase tracking-wider transition-colors cursor-pointer ${
               filter === tab.key
@@ -138,12 +139,7 @@ export default function BrokerNotifications() {
 
       {/* Single-Column Responsive Notifications List using Card */}
       {loading ? (
-        <Card data-testid="broker-card" className="py-24 flex flex-col items-center justify-center text-[#64748B] dark:text-slate-400 gap-3 bg-white dark:bg-slate-900 rounded-2xl border border-[#E2E8F0] dark:border-slate-800 shadow-xs">
-          <span className="material-symbols-outlined animate-spin text-[40px] text-[#0F766E]">
-            progress_activity
-          </span>
-          <p className="text-sm font-sans font-medium">Loading system notifications...</p>
-        </Card>
+        <Spinner centered size="lg" text="Loading system notifications..." />
       ) : filtered.length === 0 ? (
         <Card data-testid="broker-card" className="py-16 text-center bg-white dark:bg-slate-900 rounded-2xl border border-[#E2E8F0] dark:border-slate-800 p-8 font-sans shadow-xs">
           <span className="material-symbols-outlined text-gray-300 dark:text-slate-600 text-[48px] mb-2">
@@ -202,7 +198,7 @@ export default function BrokerNotifications() {
 
                 <button
                   onClick={() => toggleRead(item.id, item.is_read)}
-                  aria-label={item.is_read ? `Mark ${item.title} as unread` : `Mark ${item.title} as read`}
+                  aria-label={item.is_read ? "Mark Unread" : "Mark Read"}
                   className="text-xs font-semibold text-[#0F766E] dark:text-teal-400 hover:underline shrink-0 font-sans cursor-pointer"
                 >
                   {item.is_read ? 'Mark Unread' : 'Mark Read'}

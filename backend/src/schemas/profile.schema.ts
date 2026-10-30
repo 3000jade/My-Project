@@ -20,6 +20,9 @@ export const updateProfileSchema = z.object({
   investmentBudget: z.string().optional(),
   notification_preferences: z.record(z.string(), z.boolean()).optional(),
   notificationPreferences: z.record(z.string(), z.boolean()).optional(),
+  ui_preferences: z.record(z.string(), z.any()).optional(),
+  uiPreferences: z.record(z.string(), z.any()).optional(),
+  font_size_preference: z.enum(['compact', 'standard', 'comfortable']).optional(),
   verification_status: z.enum(['VERIFIED', 'PENDING', 'REJECTED', 'SUSPENDED']).optional(),
   role: z.enum(['admin', 'broker', 'agent', 'client']).optional(),
 });

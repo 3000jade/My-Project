@@ -1,8 +1,8 @@
 ---
 module: 01-user-management
 title: User Management Module
-last_updated: 2026-10-28
-total_documents: 9
+last_updated: 2026-10-29
+total_documents: 15
 ---
 
 # User Management Module — Master Index
@@ -28,6 +28,13 @@ All updates and technical reports for this module are ordered chronologically by
 | `2026-10-18` | [2026-10-18-session-management-technical-specification.docx](./2026-10-18-session-management-technical-specification.docx) | Session Management Technical Specification |
 | `2026-10-27` | [2026-10-27-session-timeout-relogin-fix-report.md](./2026-10-27-session-timeout-relogin-fix-report.md) | Session Timeout Inactivity Timer & Re-Login Redirect Fix Report |
 | `2026-10-28` | [2026-10-28-account-profile-fullstack-implementation.md](./2026-10-28-account-profile-fullstack-implementation.md) | Full-Stack Account Profile Management & Design Modernization Report |
+| `2026-10-29` | [2026-10-29-broker-dashboard-font-size-density.md](./2026-10-29-broker-dashboard-font-size-density.md) | Broker Dashboard Font Size & Typography Density Adjustment |
+| `2026-10-29` | [2026-10-29-client-registration-email-otp.md](./2026-10-29-client-registration-email-otp.md) | Client Self-Registration with In-Place Email OTP Verification Report |
+| `2026-10-29` | [2026-10-29-broker-portal-standardized-skeleton-loading.md](./2026-10-29-broker-portal-standardized-skeleton-loading.md) | Broker Portal Standardized Skeleton Loading Suite |
+| `2026-10-29` | [2026-10-29-contrast-teal-coral-pill-buttons-and-sidebar.md](./2026-10-29-contrast-teal-coral-pill-buttons-and-sidebar.md) | Contrast Teal & Coral Pill Button & Sidebar Redesign |
+| `2026-10-29` | [2026-10-29-unified-shadcn-icon-loading-state.md](./2026-10-29-unified-shadcn-icon-loading-state.md) | Unified Shadcn UI Icon Loading State Suite |
+| `2026-10-29` | [2026-10-29-broker-portal-layout-tailored-skeleton-loading.md](./2026-10-29-broker-portal-layout-tailored-skeleton-loading.md) | Broker Portal Layout-Tailored Skeleton Loading Suite & Button Spinners |
+| `2026-10-29` | [2026-10-29-broker-portal-overlapping-elements-and-dynamic-layout.md](./2026-10-29-broker-portal-overlapping-elements-and-dynamic-layout.md) | Verification Record — Broker Portal Overlapping Elements & Dynamic Layout Resolution |
 
 ---
 

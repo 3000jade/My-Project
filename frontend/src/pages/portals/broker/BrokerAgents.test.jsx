@@ -87,7 +87,7 @@ describe('BrokerAgents Component', () => {
   it('renders page header, title, and action buttons', async () => {
     renderComponent();
 
-    expect(screen.getByRole('heading', { name: /Agent Management/i, level: 1 })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Agents/i, level: 1 })).toBeInTheDocument();
     expect(screen.getByText(/Manage agent profiles, review submitted credentials/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Invite Agent/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Refresh/i })).toBeInTheDocument();

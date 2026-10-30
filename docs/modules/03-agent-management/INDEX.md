@@ -1,8 +1,8 @@
 ---
 module: 03-agent-management
 title: Agent Management Module
-last_updated: 2026-10-28
-total_documents: 13
+last_updated: 2026-10-29
+total_documents: 15
 ---
 
 # Agent Management Module — Master Index
@@ -33,6 +33,8 @@ All updates and technical reports for this module are ordered chronologically by
 | `2026-10-27` | [2026-10-27-agent-portal-playwright-e2e-report.md](./2026-10-27-agent-portal-playwright-e2e-report.md) | Sales Agent Portal Playwright MCP E2E Verification Report |
 | `2026-10-28` | [2026-10-28-property-input-and-agent-assignment-scope-redefinition.md](../02-property-listing/2026-10-28-property-input-and-agent-assignment-scope-redefinition.md) | Scope and Limitation Redefinition — Moving Property Assignment to Agent Management |
 | `2026-10-28` | [2026-10-28-decouple-property-agent-assignment-verification.md](../02-property-listing/2026-10-28-decouple-property-agent-assignment-verification.md) | Verification Record — Decoupled Property Listings & Agent Assignment |
+| `2026-10-29` | [2026-10-29-dual-workspace-calendar-and-clean-filters.md](./2026-10-29-dual-workspace-calendar-and-clean-filters.md) | Dual-Workspace Calendar Interface & Clean Single-Row Filter Command Bar Verification Record |
+| `2026-10-29` | [2026-10-29-broker-agents-dynamic-responsive-adaptation.md](./2026-10-29-broker-agents-dynamic-responsive-adaptation.md) | Broker Agents Dynamic Responsive Layout Refactoring Report |
 
 ---
 

@@ -29,18 +29,160 @@ const mockProperties = [
   }
 ];
 
-describe('GooglePropertyMap component (Embed Interface)', () => {
+describe('GooglePropertyMap component (Minimal Interactive Interface with Regular Teardrop Pins)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('renders official Google Maps embed iframe with accurate coordinates', () => {
+  it('renders interactive map canvas with visible teardrop pins and manual zoom controls', () => {
+    const handleSelect = vi.fn();
+
+    render(
+      <MemoryRouter>
+        <GooglePropertyMap
+          properties={mockProperties}
+          onSelectProperty={handleSelect}
+          showControls={true}
+        />
+      </MemoryRouter>
+    );
+
+    // Verify interactive container is rendered with momentum scroll protection
+    expect(screen.getByTestId('google-property-map-interactive')).toBeDefined();
+
+    // Verify visible markers exist for all property listings
+    const marker1 = screen.getByTestId('map-marker-prop-1');
+    const marker2 = screen.getByTestId('map-marker-prop-2');
+    expect(marker1).toBeDefined();
+    expect(marker2).toBeDefined();
+
+    // Verify accessible ARIA labels for assistive technologies
+    expect(marker1.getAttribute('aria-label')).toContain('Rockwell Sky Penthouse');
+    expect(marker2.getAttribute('aria-label')).toContain('BGC Luxury Villa');
+
+    // Verify regular SVG teardrop pins without price text
+    expect(marker1.querySelector('svg')).toBeDefined();
+    expect(marker1.innerHTML).toContain('#0F766E'); // Default Teal fill
+    expect(marker1.innerHTML).toContain('Rockwell Sky Penthouse'); // Tooltip
+
+    // Verify HUD controls and manual zoom controls
+    expect(screen.getByText('Street')).toBeDefined();
+    expect(screen.getByText('Satellite')).toBeDefined();
+    expect(screen.getByText('Fit All')).toBeDefined();
+    expect(screen.getByTestId('manual-zoom-controls')).toBeDefined();
+    expect(screen.getByTitle('Zoom In')).toBeDefined();
+    expect(screen.getByTitle('Zoom Out')).toBeDefined();
+  });
+
+  it('turns pin to active coral when selected and triggers onSelectProperty on click', () => {
+    const handleSelect = vi.fn();
+
+    const { rerender } = render(
+      <MemoryRouter>
+        <GooglePropertyMap
+          properties={mockProperties}
+          selectedPropertyId={null}
+          onSelectProperty={handleSelect}
+          showControls={true}
+        />
+      </MemoryRouter>
+    );
+
+    // Clicking marker triggers selection callback
+    const marker1 = screen.getByTestId('map-marker-prop-1');
+    fireEvent.click(marker1);
+    expect(handleSelect).toHaveBeenCalledWith(expect.objectContaining({ id: 'prop-1' }));
+
+    // Rerender with selectedPropertyId="prop-1"
+    rerender(
+      <MemoryRouter>
+        <GooglePropertyMap
+          properties={mockProperties}
+          selectedPropertyId="prop-1"
+          onSelectProperty={handleSelect}
+          showControls={true}
+        />
+      </MemoryRouter>
+    );
+
+    // Marker 1 should now be active coral (#FF6B6B)
+    const updatedMarker1 = screen.getByTestId('map-marker-prop-1');
+    expect(updatedMarker1.innerHTML).toContain('#FF6B6B');
+  });
+
+  it('triggers onHoverProperty callback when marker is hovered', () => {
+    const handleHover = vi.fn();
+
+    render(
+      <MemoryRouter>
+        <GooglePropertyMap
+          properties={mockProperties}
+          onHoverProperty={handleHover}
+          showControls={true}
+        />
+      </MemoryRouter>
+    );
+
+    const marker1 = screen.getByTestId('map-marker-prop-1');
+    fireEvent.mouseEnter(marker1);
+    expect(handleHover).toHaveBeenCalledWith(expect.objectContaining({ id: 'prop-1' }));
+
+    fireEvent.mouseLeave(marker1);
+    expect(handleHover).toHaveBeenCalledWith(null);
+  });
+
+  it('toggles layer between Street and Satellite in interactive mode', () => {
+    render(
+      <MemoryRouter>
+        <GooglePropertyMap
+          properties={mockProperties}
+          showControls={true}
+        />
+      </MemoryRouter>
+    );
+
+    const satBtn = screen.getByText('Satellite');
+    fireEvent.click(satBtn);
+
+    const roadBtn = screen.getByText('Street');
+    fireEvent.click(roadBtn);
+
+    expect(screen.getByTestId('google-property-map-interactive')).toBeDefined();
+  });
+
+  it('handles manual zoom button clicks without throwing', () => {
+    render(
+      <MemoryRouter>
+        <GooglePropertyMap
+          properties={mockProperties}
+          showControls={true}
+        />
+      </MemoryRouter>
+    );
+
+    const zoomInBtn = screen.getByTitle('Zoom In');
+    const zoomOutBtn = screen.getByTitle('Zoom Out');
+
+    fireEvent.click(zoomInBtn);
+    fireEvent.click(zoomOutBtn);
+
+    expect(screen.getByTestId('manual-zoom-controls')).toBeDefined();
+  });
+});
+
+describe('GooglePropertyMap component (Embed Fallback Interface)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('renders official Google Maps embed iframe with accurate coordinates when forceEmbed is true', () => {
     render(
       <MemoryRouter>
         <GooglePropertyMap
           properties={mockProperties}
           selectedPropertyId="prop-1"
           showControls={true}
+          forceEmbed={true}
         />
       </MemoryRouter>
     );
@@ -64,13 +206,14 @@ describe('GooglePropertyMap component (Embed Interface)', () => {
     expect(screen.getByText(/View Residence/i)).toBeDefined();
   });
 
-  it('updates Google Maps layer dynamically when layer button is clicked', () => {
+  it('updates Google Maps layer dynamically when layer button is clicked in embed mode', () => {
     render(
       <MemoryRouter>
         <GooglePropertyMap
           properties={mockProperties}
           selectedPropertyId="prop-1"
           showControls={true}
+          forceEmbed={true}
         />
       </MemoryRouter>
     );
@@ -88,13 +231,14 @@ describe('GooglePropertyMap component (Embed Interface)', () => {
     expect(iframeTerrain.getAttribute('src')).toContain('t=p');
   });
 
-  it('centers Google Maps view on newly selected property', () => {
+  it('centers Google Maps view on newly selected property in embed mode', () => {
     const { rerender } = render(
       <MemoryRouter>
         <GooglePropertyMap
           properties={mockProperties}
           selectedPropertyId="prop-1"
           showControls={true}
+          forceEmbed={true}
         />
       </MemoryRouter>
     );
@@ -108,6 +252,7 @@ describe('GooglePropertyMap component (Embed Interface)', () => {
           properties={mockProperties}
           selectedPropertyId="prop-2"
           showControls={true}
+          forceEmbed={true}
         />
       </MemoryRouter>
     );

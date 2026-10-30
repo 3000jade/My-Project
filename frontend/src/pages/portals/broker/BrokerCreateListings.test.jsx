@@ -163,6 +163,24 @@ describe('BrokerCreateListings - Form Fields & Step Navigation', () => {
     // Verify Active Property Type badge and Change link exist
     expect(screen.getByText(/Type:/i)).toBeInTheDocument();
     expect(screen.getByText(/Change/i)).toBeInTheDocument();
+
+    // Verify Property Status & Lifecycle group is merged into Section 1 Listing Overview
+    expect(screen.getByTestId('listing-overview-status-group')).toBeInTheDocument();
+    expect(screen.getByText('Property Status & Lifecycle')).toBeInTheDocument();
+    expect(screen.getByTestId('property-inventory-status-select')).toBeInTheDocument();
+    expect(screen.getByTestId('property-standard-status-select')).toBeInTheDocument();
+    expect(screen.getByTestId('property-title-status-select')).toBeInTheDocument();
+
+    // Verify changing inventory status updates value and syncs standard status
+    const inventorySelect = screen.getByTestId('property-inventory-status-select');
+    fireEvent.change(inventorySelect, { target: { value: 'RESERVED' } });
+    expect(inventorySelect.value).toBe('RESERVED');
+    expect(screen.getByTestId('property-standard-status-select').value).toBe('Active Under Contract');
+
+    // Verify setting status to SOLD syncs to Closed and remains published (not unpublished)
+    fireEvent.change(inventorySelect, { target: { value: 'SOLD' } });
+    expect(inventorySelect.value).toBe('SOLD');
+    expect(screen.getByTestId('property-standard-status-select').value).toBe('Closed');
   });
 
   it('navigates to Section 2 (Location & Address) and verifies tailored subdivision block/lot fields', () => {
@@ -303,21 +321,22 @@ describe('BrokerCreateListings - Form Fields & Step Navigation', () => {
     expect(screen.getByText(/Type:\s*Condominium/i)).toBeInTheDocument();
   });
 
-  it('renders Subdivision Master Plan banner in Step 2 and opens lot picker modal', () => {
+  it('does not render Subdivision Master Plan banner in Step 2 while preserving standard subdivision fields', () => {
     mockLocation = { search: '?type=houseAndLot', state: null };
     renderComponent();
 
     // Navigate to Step 2 (Location)
     fireEvent.click(screen.getAllByText(/Location/i)[0]);
 
-    // Check Subdivision Master Plan banner
-    expect(screen.getByText(/Subdivision Master Plan/i)).toBeInTheDocument();
-    const selectBtn = screen.getByRole('button', { name: /Select from Subdivision Plan/i });
-    expect(selectBtn).toBeInTheDocument();
+    // Verify Subdivision Master Plan banner is removed
+    expect(screen.queryByText(/Subdivision Master Plan/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Select from Subdivision Plan/i })).not.toBeInTheDocument();
 
-    // Trigger modal open
-    fireEvent.click(selectBtn);
-    expect(screen.getByText(/Select from Subdivision Master Plan/i)).toBeInTheDocument();
+    // Standard subdivision address inputs remain accessible
+    expect(screen.getByPlaceholderText(/e\.g\. Havila Highlands/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Phase 2')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Block 12')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Lot 4')).toBeInTheDocument();
   });
 
   it('renders condition state badge and agent placeholder in the listing preview card', () => {

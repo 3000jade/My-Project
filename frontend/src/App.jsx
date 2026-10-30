@@ -60,7 +60,6 @@ import AgentProfile from './pages/portals/agent/AgentProfile';
 // Broker Portal Pages
 import BrokerDashboard from './pages/portals/broker/BrokerDashboard';
 import BrokerProperties from './pages/portals/broker/BrokerProperties';
-import BrokerPropertyDetail from './pages/portals/broker/BrokerPropertyDetail';
 import BrokerCreateListings from './pages/portals/broker/BrokerCreateListings';
 import BrokerPropertyTypeSelect from './pages/portals/broker/BrokerPropertyTypeSelect';
 import BrokerInquiries from './pages/portals/broker/BrokerInquiries';
@@ -75,7 +74,7 @@ import BrokerReports from './pages/portals/broker/BrokerReports';
 import BrokerAudit from './pages/portals/broker/BrokerAudit';
 import BrokerNotifications from './pages/portals/broker/BrokerNotifications';
 import BrokerProfile from './pages/portals/broker/BrokerProfile';
-import BrokerSubdivisions from './pages/portals/broker/BrokerSubdivisions';
+import BrokerSubdivisionInventory from './pages/portals/broker/BrokerSubdivisionInventory';
 import SubdivisionMapEditor from './pages/portals/broker/SubdivisionMapEditor';
 import BrokerFullViewMap from './pages/portals/broker/BrokerFullViewMap';
 
@@ -177,7 +176,7 @@ function AppRoutes({ isAppLoading }) {
           <Route path="properties/create" element={<BrokerCreateListings />} />
           <Route path="properties/new" element={<BrokerCreateListings />} />
           <Route path="properties/:id/edit" element={<BrokerCreateListings />} />
-          <Route path="properties/:id" element={<BrokerPropertyDetail />} />
+          <Route path="properties/:id" element={<Navigate to="edit" replace />} />
           <Route path="inquiries" element={<BrokerInquiries />} />
           <Route path="inquiries/:id" element={<BrokerInquiryDetail />} />
           <Route path="appointments" element={<BrokerAppointments />} />
@@ -191,7 +190,8 @@ function AppRoutes({ isAppLoading }) {
           <Route path="audit" element={<BrokerAudit />} />
           <Route path="notifications" element={<BrokerNotifications />} />
           <Route path="profile" element={<BrokerProfile />} />
-          <Route path="subdivisions" element={<BrokerSubdivisions />} />
+          <Route path="subdivisions" element={<Navigate to="/broker/properties" replace />} />
+          <Route path="subdivisions/:id/inventory" element={<BrokerSubdivisionInventory />} />
         </Route>
         {/* Fullscreen Subdivision Map Editor (Protected for Broker & Admin) */}
         <Route

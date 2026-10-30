@@ -1,3 +1,4 @@
+import { Spinner } from '@/components/ui';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { 
   ShieldCheck, Search, Filter, Download, FileText, CheckCircle2, 
@@ -220,11 +221,11 @@ export default function BrokerAudit() {
 
             <Button
               onClick={handleExport}
-              disabled={exporting}
-              className="gap-2 h-10 bg-[#FF6B6B] text-[#1E293B] hover:bg-[#ff5252] shadow-sm font-semibold border-none cursor-pointer"
+              loading={exporting}
+              className="gap-2 h-[38px] px-4 rounded-md cursor-pointer"
               aria-label="Export compliance audit log"
             >
-              <Download className="w-4 h-4 text-[#1E293B]" />
+              {!exporting && <Download className="w-4 h-4 text-white" />}
               <span>{exporting ? 'Generating Bundle...' : 'Export Compliance Log'}</span>
             </Button>
           </div>
@@ -353,13 +354,17 @@ export default function BrokerAudit() {
       </div>
 
       {/* 4. Primary Audit Events Data Table */}
-      <DataTable
-        columns={columns}
-        data={filteredEvents}
-        keyField="id"
-        pageSize={10}
-        emptyMessage="No audit events matched your search or facet filters."
-      />
+      {loading ? (
+        <Spinner centered size="lg" text="Loading audit event trail..." />
+      ) : (
+        <DataTable
+          columns={columns}
+          data={filteredEvents}
+          keyField="id"
+          pageSize={10}
+          emptyMessage="No audit events matched your search or facet filters."
+        />
+      )}
 
       {/* 5. Mutation Diff Inspection Side Drawer */}
       <Sheet open={Boolean(activeEvent)} onOpenChange={(open) => !open && setActiveEvent(null)}>

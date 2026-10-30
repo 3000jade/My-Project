@@ -17,14 +17,14 @@ export default function BrokerReports() {
   const maxVolume = Math.max(...salesByDate.map(d => d.volume));
 
   return (
-    <div className="space-y-8 font-sans max-w-[1440px] mx-auto" data-testid="broker-reports-portal">
+    <div className="space-y-8 font-sans max-w-[1440px] mx-auto min-w-0 max-w-full" data-testid="broker-reports-portal">
       <PageHeader
         title="Broker Operations & Sales Reports"
         subtitle="Executive analytical summaries across historical closed sales, consultant rankings, and client engagement."
       />
 
       {/* High-level Summary KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 min-w-0 max-w-full">
         <MetricCard
           title="Total Firm Inbound Leads"
           value={inquiryActivity.total}

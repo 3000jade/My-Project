@@ -99,6 +99,11 @@ export default function PropertyDetailModal() {
 
   const isSaved = property ? isInViewingList(property.id) : false;
 
+  const standardStatus = property?.standard_status || property?.standardStatus || (property?.status === 'AVAILABLE' ? 'Active' : property?.status === 'SOLD' ? 'Closed' : property?.status === 'RESERVED' ? 'Active Under Contract' : property?.status || 'Active');
+  const lowerStatus = String(standardStatus).toLowerCase();
+  const isUnderContract = lowerStatus.includes('contract') || lowerStatus.includes('reserved') || property?.status === 'RESERVED';
+  const isClosed = lowerStatus.includes('closed') || lowerStatus.includes('sold') || property?.status === 'SOLD';
+
   const images = property?.images || property?.gallery || (property?.mainImage ? [property.mainImage] : []);
 
   return (
@@ -180,9 +185,17 @@ export default function PropertyDetailModal() {
                   <div>
                     <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[#E2E8F0]">
                       <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs">
-                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                          {property.status || 'AVAILABLE'}
+                        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${
+                          isClosed
+                            ? 'bg-rose-50 text-rose-800 border-rose-300'
+                            : isUnderContract
+                            ? 'bg-amber-50 text-amber-800 border-amber-300'
+                            : 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                        }`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${
+                            isClosed ? 'bg-rose-600' : isUnderContract ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'
+                          }`}></span>
+                          {isClosed ? 'SOLD / CLOSED' : isUnderContract ? 'UNDER CONTRACT' : (property.status || 'AVAILABLE')}
                         </span>
                         <span className="text-slate-300">|</span>
                         <span className="font-semibold text-[#1E293B] text-[11px]">
@@ -221,7 +234,7 @@ export default function PropertyDetailModal() {
                   {/* Price Banner */}
                   <div className="p-4 bg-[#F8FAFC] border border-[#CBD5E1] rounded-lg flex items-center justify-between">
                     <div>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Valuation Price</span>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#64748B]">{isClosed ? "Sold Price Benchmark" : isUnderContract ? "Contract Pending Price" : "Valuation Price"}</span>
                       <div className="text-2xl font-bold font-mono text-[#0F766E] mt-0.5">
                         {property.price || `₱${(property.price_raw || 0).toLocaleString()}`}
                       </div>
@@ -258,17 +271,30 @@ export default function PropertyDetailModal() {
 
                   {/* Action Buttons */}
                   <div className="space-y-2.5 pt-1">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        handleAction('Schedule Tour', { propertyId: property.id }, '/api/scheduling/tour');
-                        setIsScheduleModalOpen(true);
-                      }}
-                      className="w-full h-11 rounded-lg bg-[#FF6B6B] hover:bg-[#EE5A5A] text-white text-xs font-bold shadow-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
-                    >
-                      <Calendar className="w-4 h-4" />
-                      <span>Schedule Free Site Viewing</span>
-                    </button>
+                    {isClosed ? (
+                      <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-center space-y-1">
+                        <p className="text-xs font-bold text-slate-800">Transaction Closed • Sold Benchmark</p>
+                        <p className="text-[11px] text-slate-500 leading-tight">
+                          This property has been successfully closed and remains visible as a price and architectural benchmark. Inquire below for comparable listings in this district.
+                        </p>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleAction('Schedule Tour', { propertyId: property.id }, '/api/scheduling/tour');
+                          setIsScheduleModalOpen(true);
+                        }}
+                        className={`w-full h-11 rounded-lg text-white text-xs font-bold shadow-xs flex items-center justify-center gap-2 transition-colors cursor-pointer ${
+                          isUnderContract
+                            ? 'bg-amber-600 hover:bg-amber-700'
+                            : 'bg-[#FF6B6B] hover:bg-[#EE5A5A]'
+                        }`}
+                      >
+                        <Calendar className="w-4 h-4" />
+                        <span>{isUnderContract ? 'Submit Backup Offer / Viewing' : 'Schedule Free Site Viewing'}</span>
+                      </button>
+                    )}
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                       <button

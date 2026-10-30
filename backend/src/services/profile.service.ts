@@ -20,6 +20,7 @@ export interface UserProfileData {
   preferred_location?: string;
   investment_budget?: string;
   notification_preferences?: Record<string, boolean>;
+  ui_preferences?: Record<string, any>;
   verification_status: 'VERIFIED' | 'PENDING' | 'REJECTED' | 'SUSPENDED';
   updated_at?: string;
 }
@@ -43,6 +44,7 @@ const defaultProfiles: Record<string, UserProfileData> = {
     preferred_location: 'Bonifacio Global City, Taguig',
     investment_budget: '₱50,000,000 - ₱120,000,000',
     notification_preferences: { email: true, sms: true, priceDrops: true },
+    ui_preferences: { font_size: 'standard' },
     verification_status: 'VERIFIED',
     updated_at: new Date().toISOString(),
   },
@@ -61,6 +63,7 @@ const defaultProfiles: Record<string, UserProfileData> = {
     dhsud_validity: '2027-04-30',
     firm_name: 'Precision Trust Realty Operations Inc.',
     experience_years: 12,
+    ui_preferences: { font_size: 'standard' },
     verification_status: 'VERIFIED',
     updated_at: new Date().toISOString(),
   },
@@ -79,6 +82,7 @@ const defaultProfiles: Record<string, UserProfileData> = {
     dhsud_validity: '2026-12-31',
     firm_name: 'Precision Trust Realty Operations Inc.',
     experience_years: 6,
+    ui_preferences: { font_size: 'standard' },
     verification_status: 'VERIFIED',
     updated_at: new Date().toISOString(),
   },
@@ -131,6 +135,7 @@ export class ProfileService {
             preferred_location: data.preferred_location || fallbackProfile.preferred_location,
             investment_budget: data.investment_budget || fallbackProfile.investment_budget,
             notification_preferences: data.notification_preferences || fallbackProfile.notification_preferences,
+            ui_preferences: data.ui_preferences || fallbackProfile.ui_preferences || { font_size: 'standard' },
             verification_status: data.verification_status || 'VERIFIED',
             updated_at: data.updated_at,
           };
@@ -168,6 +173,11 @@ export class ProfileService {
     const updatedLocation = updates.preferred_location || updates.preferredLocation || current.preferred_location;
     const updatedBudget = updates.investment_budget || updates.investmentBudget || current.investment_budget;
     const updatedNotifications = updates.notification_preferences || updates.notificationPreferences || current.notification_preferences;
+    const updatedUiPreferences = updates.ui_preferences || updates.uiPreferences || (
+      updates.font_size_preference 
+        ? { ...(current.ui_preferences || {}), font_size: updates.font_size_preference }
+        : current.ui_preferences || { font_size: 'standard' }
+    );
 
     // Anti-tampering guard: only admin can alter role or verification_status
     const finalRole = isAdmin && updates.role ? updates.role : current.role;
@@ -184,6 +194,7 @@ export class ProfileService {
       preferred_location: updatedLocation,
       investment_budget: updatedBudget,
       notification_preferences: updatedNotifications,
+      ui_preferences: updatedUiPreferences,
       updated_at: new Date().toISOString(),
     };
 
@@ -205,6 +216,7 @@ export class ProfileService {
             dhsud_validity: updatedData.dhsud_validity,
             experience_years: updatedData.experience_years,
             notification_preferences: updatedData.notification_preferences,
+            ui_preferences: updatedData.ui_preferences,
             updated_at: updatedData.updated_at,
           })
           .eq('id', userId)

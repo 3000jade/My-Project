@@ -13,3 +13,4 @@ export { default as AuthSubmitButton } from './AuthSubmitButton';
 export { default as AuthFeedback } from './AuthFeedback';
 export { default as SessionManagementPanel } from './SessionManagementPanel';
 export { default as RolePermissionEditor } from './RolePermissionEditor';
+export { default as OtpInput } from './OtpInput';
