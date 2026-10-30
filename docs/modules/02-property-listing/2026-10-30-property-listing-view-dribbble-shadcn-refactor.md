@@ -32,6 +32,7 @@ affected_files:
   - Prevent all maps (Leaflet and Google Maps) from escaping their container or overlaying other components (sticky navigation bar, fixed headers, modals).
   - Strip HTML tags (e.g. `<p>test</p>` -> `test`) in Property Description so raw markup is never exposed.
   - Relocate in-page navigation bar beneath the key specifications ribbon (Bedrooms, Bathrooms, Floor Area, Lot Size, Parking icons).
+  - Replace all instances of "Asking Price" with "Price" across public views, cards, forms, and templates.
   - Verify visually and interactively using Playwright MCP.
 
 ---
@@ -103,6 +104,7 @@ affected_files:
   }
   ```
 - **Screenshots Captured:**
+  - `price-label-sidebar-verified.png`
   - `nav-beneath-specs-and-clean-tag-verified.png`
   - `map-scrolled-under-nav-verified.png`
   - `image-resolved-hero.png`

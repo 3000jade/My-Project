@@ -1555,7 +1555,7 @@ export default function DemoUIUXPage() {
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <span className="text-[10px] text-stone-400 uppercase tracking-wider">Asking Price</span>
+                      <span className="text-[10px] text-stone-400 uppercase tracking-wider">Price</span>
                       <p className="text-xl font-extrabold text-[#174849]">₱28,500,000</p>
                     </div>
                     <button

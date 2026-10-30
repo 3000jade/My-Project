@@ -3517,14 +3517,14 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
             <div className="space-y-4">
               <h4 className="text-xs font-bold text-[#0F766E] uppercase tracking-wider flex items-center gap-1.5 pb-1 border-b border-slate-100">
                 <span className="material-symbols-outlined text-[16px]">price_change</span>
-                <span>{formData.transaction_type === 'For Rent' ? 'Rental Valuation' : 'Asking Price Valuation'}</span>
+                <span>{formData.transaction_type === 'For Rent' ? 'Rental Valuation' : 'Price Valuation'}</span>
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 
-                {/* Asking Price / Rent input with dynamic currency symbol */}
+                {/* Price / Rent input with dynamic currency symbol */}
                 <div className="space-y-1.5 md:col-span-2">
                   <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
-                    {formData.transaction_type === 'For Rent' ? 'Rent' : 'Asking Price'} <span className="text-[#FF6B6B] ml-0.5">*</span>
+                    {formData.transaction_type === 'For Rent' ? 'Rent' : 'Price'} <span className="text-[#FF6B6B] ml-0.5">*</span>
                   </label>
                   <div className="flex items-center rounded-lg border border-[#CBD5E1] bg-white hover:border-slate-400 focus-within:border-[#0F766E] focus-within:ring-1 focus-within:ring-[#0F766E] shadow-2xs transition-colors overflow-hidden">
                     <div className="h-11 px-3.5 bg-[#F8FAFC] border-r border-[#CBD5E1] flex items-center justify-center text-sm font-bold text-[#0F766E] select-none">
@@ -5822,10 +5822,10 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
           {/* Subtle Horizontal Divider */}
           <div className="border-t border-slate-100 pt-3" />
 
-          {/* Footer: Asking Price & View Property Pill Button */}
+          {/* Footer: Price & View Property Pill Button */}
           <div className="flex items-end justify-between gap-2 pt-0.5">
             <div>
-              <span className="block text-[11px] text-slate-400 font-medium">Asking price</span>
+              <span className="block text-[11px] text-slate-400 font-medium">Price</span>
               <p className="text-xl sm:text-2xl font-bold text-[#0F4C5C] tracking-tight">
                 {formData.price 
                   ? `₱ ${Number(formData.price).toLocaleString()}` 

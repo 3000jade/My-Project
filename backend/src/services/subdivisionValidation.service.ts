@@ -244,7 +244,7 @@ export class SubdivisionValidationService {
           blockNumber: lot.block_number,
           lotNumber: lot.lot_number,
           code: 'UNPRICED_SALEABLE_LOT',
-          message: `${lotRef}: Asking price is not set for this saleable lot.`,
+          message: `${lotRef}: Price is not set for this saleable lot.`,
           severity: 'warning',
         });
       }

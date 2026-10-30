@@ -279,7 +279,7 @@ export function buildPropertyAssignmentEmailHtml(data: PropertyAssignmentEmailDa
         
         <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
           <h2 style="margin: 0 0 8px 0; font-size: 16px; color: #0F766E;">${data.propertyTitle}</h2>
-          <p style="margin: 0 0 6px 0; font-size: 14px; font-weight: 600; color: #1E293B;">Asking Price: ${formattedPrice}</p>
+          <p style="margin: 0 0 6px 0; font-size: 14px; font-weight: 600; color: #1E293B;">Price: ${formattedPrice}</p>
           <p style="margin: 0; font-size: 13px; color: #64748B;">Location: ${data.propertyAddress || 'Address on file'}</p>
         </div>
 

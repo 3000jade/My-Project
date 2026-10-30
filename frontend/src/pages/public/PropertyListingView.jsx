@@ -1298,7 +1298,7 @@ export default function PropertyListingView() {
                 {/* Price Display */}
                 <div>
                   <span className="text-[11px] font-semibold uppercase tracking-wider text-[#64748B] block">
-                    {isRent ? 'Rental Rate' : 'Asking Price'}
+                    {isRent ? 'Rental Rate' : 'Price'}
                   </span>
                   <div className="text-3xl font-extrabold text-[#0F766E] tracking-tight mt-0.5">
                     {formattedPriceDisplay}

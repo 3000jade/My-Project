@@ -272,10 +272,10 @@ export default function SubdivisionLotInspector({
           />
         </div>
 
-        {/* Asking Price in PHP (FR-024) */}
+        {/* Price in PHP (FR-024) */}
         {lot.boundary_type === 'SaleableLot' && (
           <div>
-            <label className="font-semibold text-[#1E293B] block mb-1">Asking Price (PHP ₱)</label>
+            <label className="font-semibold text-[#1E293B] block mb-1">Price (PHP ₱)</label>
             <input
               type="number"
               min="0"

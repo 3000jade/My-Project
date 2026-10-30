@@ -325,11 +325,11 @@ export default function PropertyCard({
           {/* Subtle Horizontal Divider */}
           <div className="border-t border-slate-100 pt-3" />
 
-          {/* Footer: Asking Price & View Property Pill Button */}
+          {/* Footer: Price & View Property Pill Button */}
           <div className="flex items-end justify-between gap-2 pt-0.5">
             <div>
               <span className="block text-[11px] text-slate-400 font-medium">
-                {isClosed ? 'Sold benchmark' : isUnderContract ? 'Contract pending' : 'Asking price'}
+                {isClosed ? 'Sold benchmark' : isUnderContract ? 'Contract pending' : 'Price'}
               </span>
               <p className={`text-xl sm:text-2xl font-bold tracking-tight ${
                 isClosed ? 'text-slate-700 font-mono' : 'text-[#0F4C5C]'
