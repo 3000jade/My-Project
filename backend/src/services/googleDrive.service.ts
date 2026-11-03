@@ -1,5 +1,6 @@
 import { google } from 'googleapis';
 import { Readable } from 'stream';
+import fs from 'fs';
 import { config } from '../config';
 import { supabaseAdmin, isSupabaseConfigured } from '../config/supabase';
 import logger from '../utils/logger';

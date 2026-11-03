@@ -26,6 +26,8 @@ import { useAuth } from '../../../context/AuthContext';
 import mapsService from '../../../services/mapsService';
 import phLocationService from '../../../services/phLocationService';
 import driveService from '../../../services/driveService';
+import subdivisionService from '../../../services/subdivisionService';
+import SubdivisionCreateModal from '../../../components/ui/map/SubdivisionCreateModal';
 import { CadastralLocationPicker } from '../../../components/ui/map';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -224,6 +226,8 @@ function SearchableSelect({
         </div>
       )}
       <Toaster />
+
+
     </div>
   );
 }
@@ -396,6 +400,14 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
   const [isLoading, setIsLoading] = useState(isEditing);
   const [isDirty, setIsDirty] = useState(false);
 
+  // Subdivision project selection & cadastral lot picker states
+  const [subdivisionsList, setSubdivisionsList] = useState([]);
+  const [isLoadingSubdivisions, setIsLoadingSubdivisions] = useState(false);
+  const [isSubdivisionModalOpen, setIsSubdivisionModalOpen] = useState(false);
+  const [availableLots, setAvailableLots] = useState([]);
+  const [isLoadingLots, setIsLoadingLots] = useState(false);
+  const [isCustomSubdivisionMode, setIsCustomSubdivisionMode] = useState(false);
+
   // =========================================================================
   // Section 6: Media & Documents Dedicated States
   // =========================================================================
@@ -497,6 +509,131 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
       console.warn('[BrokerCreateListings] Error restoring draft from sessionStorage:', err);
     }
   }, []);
+
+  // Fetch registered subdivisions for combobox
+  useEffect(() => {
+    let isMounted = true;
+    async function loadSubdivisions() {
+      setIsLoadingSubdivisions(true);
+      try {
+        const res = await subdivisionService.getSubdivisions();
+        const list = res?.data?.data || res?.data || [];
+        if (isMounted) {
+          setSubdivisionsList(Array.isArray(list) ? list : []);
+        }
+      } catch (err) {
+        console.warn('[BrokerCreateListings] Failed to load subdivisions:', err);
+      } finally {
+        if (isMounted) setIsLoadingSubdivisions(false);
+      }
+    }
+    loadSubdivisions();
+    return () => { isMounted = false; };
+  }, []);
+
+  // Fetch cadastral lots whenever selected subdivision project changes
+  useEffect(() => {
+    let isMounted = true;
+    async function loadLots() {
+      if (!formData.subdivision_project_id) {
+        setAvailableLots([]);
+        return;
+      }
+      setIsLoadingLots(true);
+      try {
+        const res = await subdivisionService.getLots(formData.subdivision_project_id);
+        const lots = res?.data?.data || res?.data || [];
+        if (isMounted) {
+          setAvailableLots(Array.isArray(lots) ? lots : []);
+        }
+      } catch (err) {
+        console.warn('[BrokerCreateListings] Failed to load child lots for project:', err);
+        if (isMounted) setAvailableLots([]);
+      } finally {
+        if (isMounted) setIsLoadingLots(false);
+      }
+    }
+    loadLots();
+    return () => { isMounted = false; };
+  }, [formData.subdivision_project_id]);
+
+  const handleSubdivisionSelect = (projectId) => {
+    setIsDirty(true);
+    if (!projectId || projectId === '__CUSTOM__') {
+      setIsCustomSubdivisionMode(true);
+      setFormData(prev => ({
+        ...prev,
+        subdivision_project_id: null,
+        subdivision_lot_id: null,
+      }));
+      return;
+    }
+
+    const selectedProj = subdivisionsList.find(s => s.id === projectId);
+    if (selectedProj) {
+      setIsCustomSubdivisionMode(false);
+      const parsedLat = selectedProj.latitude != null ? String(selectedProj.latitude) : '';
+      const parsedLng = selectedProj.longitude != null ? String(selectedProj.longitude) : '';
+      setFormData(prev => ({
+        ...prev,
+        subdivision_project_id: selectedProj.id,
+        subdivision_name: selectedProj.name,
+        subdivision: selectedProj.name,
+        city: selectedProj.city || prev.city,
+        state_or_province: selectedProj.province_state || prev.state_or_province,
+        province: selectedProj.province_state || prev.province,
+        address: selectedProj.location_address || prev.address,
+        subdivision_lot_id: null,
+        ...(parsedLat && parsedLng ? {
+          latitude: parsedLat,
+          longitude: parsedLng,
+        } : {})
+      }));
+    }
+  };
+
+  const handleCadastralLotSelect = (lotId) => {
+    setIsDirty(true);
+    if (!lotId) {
+      setFormData(prev => ({
+        ...prev,
+        subdivision_lot_id: null,
+      }));
+      return;
+    }
+    const lot = availableLots.find(l => l.id === lotId);
+    if (lot) {
+      const areaVal = lot.verified_area_sqm != null ? Math.round(Number(lot.verified_area_sqm) * 100) / 100 : '';
+      const lotPrice = lot.price ? String(lot.price) : '';
+      const centroidLat = lot.centroid?.lat != null ? String(lot.centroid.lat) : '';
+      const centroidLng = lot.centroid?.lng != null ? String(lot.centroid.lng) : '';
+
+      setFormData(prev => ({
+        ...prev,
+        subdivision_lot_id: lot.id,
+        block: lot.block_number || prev.block,
+        lot: lot.lot_number || prev.lot,
+        lot_size_area: areaVal || prev.lot_size_area,
+        lot_area: areaVal || prev.lot_area,
+        lot_size_units: 'Square Meters',
+        cadastral_reference: `Block ${lot.block_number || '1'}, Lot ${lot.lot_number || ''}`,
+        cadastralLotId: `Block ${lot.block_number || '1'}, Lot ${lot.lot_number || ''}`,
+        ...(lotPrice && !prev.price ? { price: lotPrice } : {}),
+        ...(centroidLat && centroidLng ? {
+          latitude: centroidLat,
+          longitude: centroidLng,
+        } : {})
+      }));
+    }
+  };
+
+  const handleSubdivisionCreated = (newProject) => {
+    if (newProject) {
+      setSubdivisionsList(prev => [newProject, ...prev.filter(p => p.id !== newProject.id)]);
+      handleSubdivisionSelect(newProject.id);
+    }
+    setIsSubdivisionModalOpen(false);
+  };
 
   const handleOpenFullViewMap = () => {
     try {
@@ -1237,24 +1374,16 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
       });
     } catch (err) {
       console.warn('[BrokerCreateListings] Remote Drive upload unavailable:', err);
-      // If unauthorized (e.g. session expired or preview mode), preserve local object URL so user is not blocked
-      if (err.status === 401 || err.message?.includes('Unauthorized')) {
-        const localBlobUrl = URL.createObjectURL(file);
-        updateItemCallback({
-          isUploading: false,
-          progress: 100,
-          error: null,
-          mediaUrl: localBlobUrl,
-          imageUrl: localBlobUrl,
-          mimeType: file.type || (category === 'Photos' ? 'image/jpeg' : 'application/octet-stream')
-        });
-      } else {
-        updateItemCallback({
-          isUploading: false,
-          progress: 0,
-          error: err.response?.data?.error || err.message || 'Upload failed'
-        });
-      }
+      const isAuth = err.status === 401 || err.message?.includes('Unauthorized') || err.response?.status === 401;
+      updateItemCallback({
+        isUploading: false,
+        progress: 0,
+        error: isAuth
+          ? 'Cloud session expired. Please re-authenticate before uploading media.'
+          : (err.response?.data?.error || err.message || 'Upload failed'),
+        mediaUrl: null,
+        imageUrl: null
+      });
     }
   };
 
@@ -1703,7 +1832,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
       
       // Serialize property_images (Photos)
       const formattedPropertyImages = mediaPhotos
-        .filter(p => (p.imageUrl || p.mediaUrl) && !p.error)
+        .filter(p => (p.imageUrl || p.mediaUrl) && !p.error && !String(p.mediaUrl || p.imageUrl || '').startsWith('blob:'))
         .map((p, idx) => ({
           imageUrl: p.mediaUrl || p.imageUrl,
           displayOrder: idx + 1
@@ -1712,7 +1841,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
       // Serialize property_media (Photos, FloorPlan, Video, VirtualTour, Document)
       const formattedMedia = [
         ...mediaPhotos
-          .filter(p => (p.mediaUrl || p.imageUrl) && !p.error)
+          .filter(p => (p.mediaUrl || p.imageUrl) && !p.error && !String(p.mediaUrl || p.imageUrl || '').startsWith('blob:'))
           .map((p, idx) => ({
             mediaUrl: p.mediaUrl || p.imageUrl,
             mediaCategory: 'Photo',
@@ -2571,78 +2700,192 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                      <div className="space-y-1.5 md:col-span-6">
-                        <label htmlFor="subdivision-input" className="text-xs font-semibold text-[#1E293B] block">
-                          Subdivision / Village Name
-                        </label>
-                        <input
-                          id="subdivision-input"
-                          type="text"
-                          placeholder="e.g. Havila Highlands Executive Subdivision, Ayala Alabang"
-                          value={formData.subdivision_name || formData.subdivision || ''}
-                          onChange={e => {
-                            setIsDirty(true);
-                            setFormData({
-                              ...formData,
-                              subdivision: e.target.value,
-                              subdivision_name: e.target.value,
-                            });
-                          }}
-                          className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
-                        />
+                    <div className="p-4 sm:p-5 bg-slate-50/80 border border-[#CBD5E1] rounded-xl space-y-4">
+                      {/* Master Subdivision Project Header & Actions */}
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-slate-200">
+                        <div>
+                          <label className="text-xs font-bold text-[#0F766E] uppercase tracking-wider flex items-center gap-1.5">
+                            <span className="material-symbols-outlined text-[16px]">domain</span>
+                            <span>Master Subdivision Project</span>
+                          </label>
+                          <p className="text-[11px] text-[#64748B]">
+                            Select a registered master project to unlock Cadastral Studio mapped lots
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setIsCustomSubdivisionMode(!isCustomSubdivisionMode)}
+                            className="text-[11px] font-semibold text-[#0F766E] hover:underline cursor-pointer"
+                          >
+                            {isCustomSubdivisionMode ? '← Pick from Master Projects' : 'Enter Custom / Unlisted Name'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setIsSubdivisionModalOpen(true)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-semibold rounded-lg shadow-2xs transition-colors cursor-pointer"
+                          >
+                            <span className="material-symbols-outlined text-[14px]">add</span>
+                            <span>New Project</span>
+                          </button>
+                        </div>
                       </div>
 
-                      <div className="space-y-1.5 md:col-span-2">
-                        <label htmlFor="phase-input" className="text-xs font-semibold text-[#1E293B] block">
-                          Phase
-                        </label>
-                        <input
-                          id="phase-input"
-                          type="text"
-                          placeholder="Phase 2"
-                          value={formData.phase || ''}
-                          onChange={e => {
-                            setIsDirty(true);
-                            setFormData({ ...formData, phase: e.target.value });
-                          }}
-                          className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
-                        />
+                      <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                        <div className="space-y-1.5 md:col-span-6">
+                          <label htmlFor="subdivision-input" className="text-xs font-semibold text-[#1E293B] block">
+                            Subdivision Name <span className="text-[#FF6B6B]">*</span>
+                          </label>
+                          {isCustomSubdivisionMode ? (
+                            <input
+                              id="subdivision-input"
+                              type="text"
+                              placeholder="e.g. Havila Highlands Executive Subdivision, Ayala Alabang"
+                              value={formData.subdivision_name || formData.subdivision || ''}
+                              onChange={e => {
+                                setIsDirty(true);
+                                setFormData({
+                                  ...formData,
+                                  subdivision: e.target.value,
+                                  subdivision_name: e.target.value,
+                                  subdivision_project_id: null,
+                                  subdivision_lot_id: null,
+                                });
+                              }}
+                              className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
+                            />
+                          ) : (
+                            <select
+                              id="subdivision-project-select"
+                              value={formData.subdivision_project_id || ''}
+                              onChange={e => handleSubdivisionSelect(e.target.value)}
+                              className="w-full h-11 px-3 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm font-medium text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors cursor-pointer"
+                            >
+                              <option value="">-- Select Master Subdivision Project --</option>
+                              {subdivisionsList.map(proj => (
+                                <option key={proj.id} value={proj.id}>
+                                  {proj.name} {proj.city ? `(${proj.city})` : ''} {proj.developer_name ? `• ${proj.developer_name}` : ''}
+                                </option>
+                              ))}
+                              <option value="__CUSTOM__">-- Other / Unlisted Subdivision --</option>
+                            </select>
+                          )}
+                        </div>
+
+                        <div className="space-y-1.5 md:col-span-2">
+                          <label htmlFor="phase-input" className="text-xs font-semibold text-[#1E293B] block">
+                            Phase
+                          </label>
+                          <input
+                            id="phase-input"
+                            type="text"
+                            placeholder="Phase 2"
+                            value={formData.phase || ''}
+                            onChange={e => {
+                              setIsDirty(true);
+                              setFormData({ ...formData, phase: e.target.value });
+                            }}
+                            className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
+                          />
+                        </div>
+
+                        <div className="space-y-1.5 md:col-span-2">
+                          <label htmlFor="block-input" className="text-xs font-semibold text-[#1E293B] block">
+                            Block
+                          </label>
+                          <input
+                            id="block-input"
+                            type="text"
+                            placeholder="Block 12"
+                            value={formData.block || ''}
+                            onChange={e => {
+                              setIsDirty(true);
+                              setFormData({ ...formData, block: e.target.value });
+                            }}
+                            className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
+                          />
+                        </div>
+
+                        <div className="space-y-1.5 md:col-span-2">
+                          <label htmlFor="lot-input" className="text-xs font-semibold text-[#1E293B] block">
+                            Lot
+                          </label>
+                          <input
+                            id="lot-input"
+                            type="text"
+                            placeholder="Lot 4"
+                            value={formData.lot || ''}
+                            onChange={e => {
+                              setIsDirty(true);
+                              setFormData({ ...formData, lot: e.target.value });
+                            }}
+                            className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
+                          />
+                        </div>
                       </div>
 
-                      <div className="space-y-1.5 md:col-span-2">
-                        <label htmlFor="block-input" className="text-xs font-semibold text-[#1E293B] block">
-                          Block
-                        </label>
-                        <input
-                          id="block-input"
-                          type="text"
-                          placeholder="Block 12"
-                          value={formData.block || ''}
-                          onChange={e => {
-                            setIsDirty(true);
-                            setFormData({ ...formData, block: e.target.value });
-                          }}
-                          className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
-                        />
-                      </div>
+                      {/* Cadastral Studio Lots Integration Card */}
+                      {Boolean(formData.subdivision_project_id) && (
+                        <div className="pt-3 mt-1 border-t border-slate-200">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                            <span className="text-xs font-bold text-teal-800 flex items-center gap-1.5">
+                              <span className="material-symbols-outlined text-[16px] text-[#0F766E]">map</span>
+                              <span>Cadastral Mapped Lots</span>
+                              {isLoadingLots && <span className="text-[11px] text-slate-400 font-normal">Loading lots...</span>}
+                              {!isLoadingLots && (
+                                <span className="text-[10px] font-semibold bg-teal-100 text-teal-800 px-1.5 py-0.5 rounded-full">
+                                  {availableLots.length} {availableLots.length === 1 ? 'lot' : 'lots'} mapped
+                                </span>
+                              )}
+                            </span>
+                            <a
+                              href={`/broker/properties/studio?subdivision_id=${formData.subdivision_project_id}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs font-semibold text-[#0F766E] hover:underline inline-flex items-center gap-1"
+                            >
+                              <span>Open in Cadastral Studio</span>
+                              <span className="material-symbols-outlined text-[14px]">open_in_new</span>
+                            </a>
+                          </div>
 
-                      <div className="space-y-1.5 md:col-span-2">
-                        <label htmlFor="lot-input" className="text-xs font-semibold text-[#1E293B] block">
-                          Lot
-                        </label>
-                        <input
-                          id="lot-input"
-                          type="text"
-                          placeholder="Lot 4"
-                          value={formData.lot || ''}
-                          onChange={e => {
-                            setIsDirty(true);
-                            setFormData({ ...formData, lot: e.target.value });
-                          }}
-                          className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
-                        />
-                      </div>
+                          {availableLots.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
+                              <div className="md:col-span-8">
+                                <select
+                                  id="cadastral-lot-picker"
+                                  value={formData.subdivision_lot_id || ''}
+                                  onChange={e => handleCadastralLotSelect(e.target.value)}
+                                  className="w-full h-10 px-3 bg-white border border-teal-300 rounded-lg text-xs font-medium text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs cursor-pointer"
+                                >
+                                  <option value="">-- Choose Cadastral Mapped Lot (Auto-Fills Details) --</option>
+                                  {availableLots.map(lot => (
+                                    <option key={lot.id} value={lot.id}>
+                                      Block {lot.block_number}, Lot {lot.lot_number} — {lot.verified_area_sqm} m² ({lot.availability_status || 'Available'}{lot.price ? ` • ₱${Number(lot.price).toLocaleString()}` : ''})
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                              <div className="md:col-span-4 text-[11px] text-[#64748B]">
+                                Selecting a mapped lot auto-populates lot area (m²), block, lot, and coordinates.
+                              </div>
+                            </div>
+                          ) : !isLoadingLots ? (
+                            <div className="p-3 bg-white/70 border border-dashed border-slate-300 rounded-lg text-xs text-[#64748B] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                              <span>No cadastral parcels mapped for this project yet. You can draw boundaries in Studio.</span>
+                              <a
+                                href={`/broker/properties/studio?subdivision_id=${formData.subdivision_project_id}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="px-2.5 py-1 bg-white hover:bg-slate-50 border border-slate-200 text-[#0F766E] font-semibold text-xs rounded-md shadow-2xs inline-flex items-center gap-1 shrink-0"
+                              >
+                                <span className="material-symbols-outlined text-[14px]">draw</span>
+                                <span>Draw Lots in Studio</span>
+                              </a>
+                            </div>
+                          ) : null}
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -3575,10 +3818,23 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                     </div>
                   </div>
                   {formData.price ? (
-                    <p className="text-[11px] font-mono text-[#0F766E] flex items-center gap-1 font-medium pt-0.5">
-                      <span className="material-symbols-outlined text-[13px]">check_circle</span>
-                      Formatted: {currencyOptions.find(c => c.code === formData.currency)?.symbol || '₱'}{Number(formData.price).toLocaleString()} {formData.transaction_type === 'For Rent' ? `/ ${formData.rent_frequency?.toLowerCase() || 'month'}` : ''}
-                    </p>
+                    <>
+                      <p className="text-[11px] font-mono text-[#0F766E] flex items-center gap-1 font-medium pt-0.5">
+                        <span className="material-symbols-outlined text-[13px]">check_circle</span>
+                        Formatted: {currencyOptions.find(c => c.code === formData.currency)?.symbol || '₱'}{Number(formData.price).toLocaleString()} {formData.transaction_type === 'For Rent' ? `/ ${formData.rent_frequency?.toLowerCase() || 'month'}` : ''}
+                      </p>
+                      {Boolean(formData.price && formData.lot_size_area && Number(formData.lot_size_area) > 0) && (
+                        <div className="mt-2 p-2.5 bg-teal-50/80 border border-teal-200/70 rounded-lg flex items-center justify-between">
+                          <div className="flex items-center gap-1.5 text-xs text-teal-900 font-medium">
+                            <span className="material-symbols-outlined text-[16px] text-[#0F766E]">calculate</span>
+                            <span>Calculated Rate per m²:</span>
+                          </div>
+                          <span className="text-xs font-bold font-mono text-[#0F766E] bg-white px-2 py-0.5 rounded border border-teal-200 shadow-2xs">
+                            ₱{Math.round(Number(formData.price) / Number(formData.lot_size_area)).toLocaleString()} / m²
+                          </span>
+                        </div>
+                      )}
+                    </>
                   ) : (
                     <p className="text-[11px] text-[#64748B]">Enter total valuation amount</p>
                   )}
@@ -6164,6 +6420,13 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
           </div>
         </div>
       )}
+
+      {/* In-Place Subdivision Project Creation Modal */}
+      <SubdivisionCreateModal
+        isOpen={isSubdivisionModalOpen}
+        onClose={() => setIsSubdivisionModalOpen(false)}
+        onCreated={handleSubdivisionCreated}
+      />
 
       {/* Remove Confirmation Modal */}
       {itemToDelete && (

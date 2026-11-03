@@ -168,9 +168,9 @@
     "semantic_hash": ""
   },
   "backend/data/sessions.json": {
-    "mtime": 1793690377.7235656,
-    "seen": 1793690495.176772,
-    "ast_hash": "be0ac531710a3bb75524a8deeb78da0f",
+    "mtime": 1793711751.5760808,
+    "seen": 1793711877.5250647,
+    "ast_hash": "3e12567e4f6c90005764e0971b5649dc",
     "semantic_hash": ""
   },
   "backend/package.json": {
@@ -288,9 +288,9 @@
     "semantic_hash": ""
   },
   "backend/src/controllers/property.controller.ts": {
-    "mtime": 1793004660.3721519,
-    "seen": 1793660940.0028594,
-    "ast_hash": "17f6980f6ac0e2ee5276c9df63ee24b7",
+    "mtime": 1793710456.5109646,
+    "seen": 1793710509.9969325,
+    "ast_hash": "718377364505743b0ee6a134f338d383",
     "semantic_hash": ""
   },
   "backend/src/controllers/sale.controller.ts": {
@@ -468,9 +468,9 @@
     "semantic_hash": ""
   },
   "backend/src/routes/property.routes.ts": {
-    "mtime": 1792964422.2127671,
-    "seen": 1793660940.0028594,
-    "ast_hash": "0351616214d018df61c632393a2cd486",
+    "mtime": 1793710402.3750465,
+    "seen": 1793710510.0129404,
+    "ast_hash": "0325b7a58b1691efeb629d059e054e84",
     "semantic_hash": ""
   },
   "backend/src/routes/sale.routes.ts": {
@@ -756,9 +756,9 @@
     "semantic_hash": ""
   },
   "backend/src/services/googleDrive.service.ts": {
-    "mtime": 1792958866.4172566,
-    "seen": 1793660940.0028594,
-    "ast_hash": "53c2197f6b63022a7fc66aaa2f4f8b15",
+    "mtime": 1793710378.0540702,
+    "seen": 1793710510.036934,
+    "ast_hash": "106a55327297bfec7f4adff4c9b2a1b5",
     "semantic_hash": ""
   },
   "backend/src/services/googleMaps.service.ts": {
@@ -816,9 +816,9 @@
     "semantic_hash": ""
   },
   "backend/src/services/property.service.ts": {
-    "mtime": 1793334851.425812,
-    "seen": 1793660940.0028594,
-    "ast_hash": "78ac70f51c7515531f50a18527cff291",
+    "mtime": 1793711455.4879022,
+    "seen": 1793711877.5522578,
+    "ast_hash": "f50b4ee27f40f84e69e86ccecf41da29",
     "semantic_hash": ""
   },
   "backend/src/services/sale.service.ts": {
@@ -1038,9 +1038,9 @@
     "semantic_hash": ""
   },
   "frontend/src/App.jsx": {
-    "mtime": 1793662626.6986601,
-    "seen": 1793662811.2745068,
-    "ast_hash": "93efc65130ab57577fb0a12c6ce452c2",
+    "mtime": 1793710586.3232424,
+    "seen": 1793711877.561258,
+    "ast_hash": "76b22faa5586b9285cec805eafcaa13c",
     "semantic_hash": ""
   },
   "frontend/src/api/apiClient.js": {
@@ -2315,12 +2315,6 @@
     "ast_hash": "e918def1b164dd04133a575eb28d1719",
     "semantic_hash": ""
   },
-  "frontend/src/pages/portals/agent/AgentPropertyCreate.jsx": {
-    "mtime": 1793137979.4668622,
-    "seen": 1793660940.0028594,
-    "ast_hash": "032e5cca537b19f25441b61ea70e14be",
-    "semantic_hash": ""
-  },
   "frontend/src/pages/portals/agent/AgentPropertyDetail.jsx": {
     "mtime": 1793334851.7941496,
     "seen": 1793660940.0028594,
@@ -2388,9 +2382,9 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/portals/broker/BrokerCreateListings.jsx": {
-    "mtime": 1793662710.3576984,
-    "seen": 1793662811.3487337,
-    "ast_hash": "e091307a784ee73924749b4901616af3",
+    "mtime": 1793711815.7027555,
+    "seen": 1793711877.6223593,
+    "ast_hash": "0dba463be5a6a352d38cbad8e27abc50",
     "semantic_hash": ""
   },
   "frontend/src/pages/portals/broker/BrokerCreateListings.test.jsx": {
@@ -2460,9 +2454,9 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/portals/broker/BrokerProperties.jsx": {
-    "mtime": 1793662670.4322207,
-    "seen": 1793662811.3518739,
-    "ast_hash": "258713393ea9d84e7a31e9388d1a1d29",
+    "mtime": 1793709907.8592896,
+    "seen": 1793710510.1426926,
+    "ast_hash": "40e32a0d3d40531113a7a6f4b4cd214a",
     "semantic_hash": ""
   },
   "frontend/src/pages/portals/broker/BrokerProperties.test.jsx": {

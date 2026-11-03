@@ -48,7 +48,6 @@ import DashboardLayout from './components/dashboard/DashboardLayout';
 // Agent Portal Pages
 import AgentDashboard from './pages/portals/agent/AgentDashboard';
 import AgentProperties from './pages/portals/agent/AgentProperties';
-import AgentPropertyCreate from './pages/portals/agent/AgentPropertyCreate';
 import AgentPropertyDetail from './pages/portals/agent/AgentPropertyDetail';
 import AgentInquiries from './pages/portals/agent/AgentInquiries';
 import AgentInquiryDetail from './pages/portals/agent/AgentInquiryDetail';
@@ -149,8 +148,6 @@ function AppRoutes({ isAppLoading }) {
           <Route index element={<Navigate to="/agent/dashboard" replace />} />
           <Route path="dashboard" element={<AgentDashboard />} />
           <Route path="properties" element={<AgentProperties />} />
-          <Route path="properties/new" element={<AgentPropertyCreate />} />
-          <Route path="properties/create" element={<AgentPropertyCreate />} />
           <Route path="properties/:id" element={<AgentPropertyDetail />} />
           <Route path="inquiries" element={<AgentInquiries />} />
           <Route path="inquiries/:id" element={<AgentInquiryDetail />} />

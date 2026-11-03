@@ -1,3 +1,4 @@
+import fs from 'fs';
 import { Request, Response } from 'express';
 import { PropertyService } from '../services/property.service';
 import { AgentService } from '../services/agent.service';
@@ -66,7 +67,8 @@ export class PropertyController {
           $skip: $skip ? Number($skip) : undefined,
           $orderby: $orderby as string,
         },
-        userRole
+        userRole,
+        authenticatedUserId
       );
 
       res.status(200).json({
@@ -111,8 +113,9 @@ export class PropertyController {
       const id = String(req.params.id);
       const expand = (req.query.$expand as string) || (req.query.expand as string);
       const userRole = (req as AuthenticatedRequest).user?.role;
+      const userId = (req as AuthenticatedRequest).user?.id;
 
-      const property = await PropertyService.findPropertyById(id, expand, userRole);
+      const property = await PropertyService.findPropertyById(id, expand, userRole, userId);
 
       if (!property) {
         res.status(404).json({
@@ -246,9 +249,9 @@ export class PropertyController {
     req: AuthenticatedRequest,
     res: Response<ApiResponse>
   ): Promise<void> {
+    const files = (req.files as Express.Multer.File[]) || [];
     try {
       const propertyId = String(req.params.id);
-      const files = req.files as Express.Multer.File[];
       const category = (req.body.category as any) || 'Photos';
 
       if (!files || files.length === 0) {
@@ -278,6 +281,17 @@ export class PropertyController {
         error: err.message || 'Error uploading media.',
         timestamp: new Date().toISOString(),
       });
+    } finally {
+      // Remove temporary disk files created by multer.diskStorage
+      for (const file of files) {
+        if (file.path && fs.existsSync(file.path)) {
+          try {
+            fs.unlinkSync(file.path);
+          } catch (cleanupErr: any) {
+            logger.warn('[PropertyController] Temp file cleanup warning:', file.path);
+          }
+        }
+      }
     }
   }
 
@@ -291,7 +305,8 @@ export class PropertyController {
     try {
       const id = String(req.params.id);
       const userId = req.user?.id;
-      const deleted = await PropertyService.deleteProperty(id, userId);
+      const userRole = req.user?.role;
+      const deleted = await PropertyService.deleteProperty(id, userId, userRole);
 
       if (!deleted) {
         res.status(404).json({
@@ -308,7 +323,8 @@ export class PropertyController {
         timestamp: new Date().toISOString(),
       });
     } catch (err: any) {
-      res.status(500).json({
+      const statusCode = err.message?.startsWith('Forbidden') ? 403 : 500;
+      res.status(statusCode).json({
         success: false,
         error: err.message || 'Could not delete property.',
         timestamp: new Date().toISOString(),

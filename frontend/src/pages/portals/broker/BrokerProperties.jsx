@@ -4,7 +4,7 @@ import {
   Building2, CheckCircle2, Plus, RotateCw, Edit3, ExternalLink,
   MapPin, Maximize2, Bed, Bath, Copy, MoreVertical, ChevronRight,
   Search, X, SlidersHorizontal, AlertCircle, Home,
-  List, LayoutGrid, Map as MapIcon, Archive, Trash2, RotateCcw
+  List, LayoutGrid, Map as MapIcon, Archive, Trash2, RotateCcw, UserCheck
 } from 'lucide-react';
 import { GooglePropertyMap } from '../../../components/ui/map';
 import DataTable from '../../../components/dashboard/DataTable';
@@ -1011,6 +1011,16 @@ export default function BrokerProperties() {
                 >
                   <Edit3 className="w-3.5 h-3.5 text-[#0F766E]" />
                   <span>Edit Property</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setReassignProp(row);
+                    setIsReassignModalOpen(true);
+                  }}
+                  className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-[#1E293B] hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"
+                >
+                  <UserCheck className="w-3.5 h-3.5 text-[#0F766E]" />
+                  <span>Assign / Reassign Agent</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={(e) => handleDuplicate(e, row)}

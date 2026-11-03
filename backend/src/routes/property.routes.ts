@@ -12,10 +12,18 @@ import {
   queryEditRequestsSchema
 } from '../schemas/property.schema';
 import multer from 'multer';
+import os from 'os';
+import path from 'path';
+import fs from 'fs';
+
+const uploadDir = path.join(os.tmpdir(), 'cp-uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
 
 const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 50 * 1024 * 1024 } // 50MB per file
+  dest: uploadDir,
+  limits: { fileSize: 15 * 1024 * 1024 } // 15MB per file to avoid disk exhaustion
 });
 
 const router = Router();
@@ -94,6 +102,7 @@ router.put(
   '/:id',
   requireAuth,
   requireRole(['broker', 'admin']),
+  validateBody(createPropertySchema.partial()),
   PropertyController.updateProperty
 );
 

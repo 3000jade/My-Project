@@ -391,10 +391,16 @@ export class PropertyService {
    */
   public static redactConfidential<T extends Record<string, any>>(
     property: T,
-    userRole?: string
+    userRole?: string,
+    userId?: string
   ): T {
-    const isAuthorized = userRole && ['agent', 'broker', 'admin'].includes(userRole);
-    if (isAuthorized) return property;
+    // Admin and Broker roles are authorized across brokerage listings
+    if (userRole === 'admin' || userRole === 'broker') return property;
+
+    // Assigned agent is authorized for their assigned properties
+    const creatorId = property.createdBy || property.created_by;
+    const assignedAgentId = property.listAgentKey || property.list_agent_key || property.agentId || property.agent_id;
+    if (userRole === 'agent' && userId && (assignedAgentId === userId || creatorId === userId)) return property;
 
     const sanitized = { ...property };
     delete sanitized.confidential;
@@ -535,7 +541,7 @@ export class PropertyService {
             : (row.standard_status === 'Active')),
       createdAt: row.created_at || new Date().toISOString(),
       updatedAt: row.updated_at || new Date().toISOString(),
-      createdBy: row.created_by || null,
+      createdBy: row.created_by || row.custom_reso_attributes?.created_by || null,
       listAgentKey: row.list_agent_key || null,
       agentName: 'Elena Rossi',
       agentId: row.list_agent_key || row.created_by || 'agent-1',
@@ -551,7 +557,8 @@ export class PropertyService {
    */
   public static async findProperties(
     query: PropertyFilterQuery = {},
-    userRole?: string
+    userRole?: string,
+    userId?: string
   ): Promise<{
     properties: PropertyItem[];
     total: number;
@@ -624,7 +631,10 @@ export class PropertyService {
           dbQuery = dbQuery.gte('baths', query.baths);
         }
         if (query.search) {
-          dbQuery = dbQuery.or(`title.ilike.%${query.search}%,address.ilike.%${query.search}%,city.ilike.%${query.search}%`);
+          const cleanSearch = String(query.search).replace(/[,()'"%]/g, ' ').replace(/\s+/g, ' ').trim();
+          if (cleanSearch) {
+            dbQuery = dbQuery.or(`title.ilike.%${cleanSearch}%,address.ilike.%${cleanSearch}%,city.ilike.%${cleanSearch}%`);
+          }
         }
 
         const from = (page - 1) * limit;
@@ -640,8 +650,9 @@ export class PropertyService {
           const total = count ?? data.length;
 
           if (data.length === 0) {
-            if (localPropertiesState.length > 0) {
-              return this.filterLocalProperties(query, userRole, page, limit);
+            const hasAgentQuery = query.agentId || query.list_agent_key || query.listAgentKey;
+            if (hasAgentQuery && localPropertiesState.some((p) => p.agentId === hasAgentQuery || p.listAgentKey === hasAgentQuery)) {
+              return this.filterLocalProperties(query, userRole, page, limit, userId);
             }
             return {
               properties: [],
@@ -700,7 +711,7 @@ export class PropertyService {
 
           const mapped: PropertyItem[] = data.map((row: any) => {
             const item = PropertyService.mapDatabaseRow(row, imageMap);
-            return this.redactConfidential(item, userRole);
+            return this.redactConfidential(item, userRole, userId);
           });
 
           return {
@@ -727,7 +738,8 @@ export class PropertyService {
     query: PropertyFilterQuery = {},
     userRole?: string,
     page: number = 1,
-    limit: number = 10
+    limit: number = 10,
+    userId?: string
   ): {
     properties: PropertyItem[];
     total: number;
@@ -795,7 +807,7 @@ export class PropertyService {
     }
 
     // Confidential field redaction for client requests
-    filtered = filtered.map((item) => this.redactConfidential(item, userRole));
+    filtered = filtered.map((item) => this.redactConfidential(item, userRole, userId));
 
     const total = filtered.length;
     const startIndex = (page - 1) * limit;
@@ -813,8 +825,8 @@ export class PropertyService {
   /**
    * Count properties based on filter query
    */
-  public static async listProperties(query: PropertyFilterQuery = {}, userRole?: string) {
-    return this.findProperties(query, userRole);
+  public static async listProperties(query: PropertyFilterQuery = {}, userRole?: string, userId?: string) {
+    return this.findProperties(query, userRole, userId);
   }
 
   public static async countProperties(query: any) {
@@ -828,7 +840,8 @@ export class PropertyService {
   public static async findPropertyById(
     id: string,
     expand?: string,
-    userRole?: string
+    userRole?: string,
+    userId?: string
   ): Promise<PropertyItem | null> {
     if (isSupabaseConfigured) {
       try {
@@ -929,7 +942,7 @@ export class PropertyService {
                   : (data.standard_status === 'Active')),
             createdAt: data.created_at,
             updatedAt: data.updated_at,
-            createdBy: data.created_by,
+            createdBy: data.created_by || data.custom_reso_attributes?.created_by || data.custom_reso_attributes?.createdBy || null,
             listAgentKey: data.list_agent_key,
             agentName: 'Elena Rossi',
             agentId: data.list_agent_key || data.created_by || 'agent-1',
@@ -1077,7 +1090,7 @@ export class PropertyService {
             }
           }
 
-          return this.redactConfidential(item, userRole);
+          return this.redactConfidential(item, userRole, userId);
         }
       } catch (err: any) {
         logger.warn('[PropertyService] DB getById exception:', err.message);
@@ -1089,7 +1102,7 @@ export class PropertyService {
     );
     if (!found) return null;
 
-    return this.redactConfidential({ ...found }, userRole);
+    return this.redactConfidential({ ...found }, userRole, userId);
   }
 
   /**
@@ -1279,6 +1292,8 @@ export class PropertyService {
         features: data.features || [],
         interiorFeatures: data.interiorFeatures || [],
         exteriorFeatures: data.exteriorFeatures || [],
+        created_by: userId,
+        createdBy: userId,
       },
       architecturalStyle: data.architecturalStyle || 'Modern Architectural',
       standardStatus: initialStatus,
@@ -1348,6 +1363,8 @@ export class PropertyService {
             public_remarks: newProperty.publicRemarks,
             custom_reso_attributes: {
               ...(newProperty.customResoAttributes || {}),
+              created_by: userId,
+              createdBy: userId,
               assignment_status: newProperty.assignmentStatus,
               assignment_declined_reason: newProperty.assignmentDeclinedReason,
               assigned_at: newProperty.assignedAt,
@@ -1378,9 +1395,12 @@ export class PropertyService {
           .select()
           .single();
 
-        if (error && (error.code === 'PGRST204' || error.code === '42703' || String(error.message).includes('column') || String(error.message).includes('assignment_status'))) {
-          logger.warn('[PropertyService] Retrying properties insert without dedicated lifecycle columns (stored in custom_reso_attributes):', error.message);
+        if (error && (error.code === 'PGRST204' || error.code === '42703' || error.code === '23503' || String(error.message).includes('column') || String(error.message).includes('assignment_status') || String(error.message).includes('fkey'))) {
+          logger.warn('[PropertyService] Retrying properties insert with sanitized payload:', error.message);
           const safePayload = { ...insertPayload };
+          if (error.code === '23503' || String(error.message).includes('created_by') || String(error.message).includes('fkey')) {
+            safePayload.created_by = null;
+          }
           delete safePayload.assignment_status;
           delete safePayload.assignment_declined_reason;
           delete safePayload.assigned_at;
@@ -1388,11 +1408,22 @@ export class PropertyService {
           delete safePayload.is_published;
           delete safePayload.images;
           delete safePayload.main_image;
-          const retry = await supabaseAdmin
+          let retry = await supabaseAdmin
             .from('properties')
             .insert(safePayload)
             .select()
             .single();
+
+          // If foreign key constraint failed on retry, clear created_by and retry once more
+          if (retry.error && (retry.error.code === '23503' || String(retry.error.message).includes('fkey') || String(retry.error.message).includes('created_by'))) {
+            safePayload.created_by = null;
+            retry = await supabaseAdmin
+              .from('properties')
+              .insert(safePayload)
+              .select()
+              .single();
+          }
+
           inserted = retry.data;
           error = retry.error;
         }
@@ -1404,6 +1435,7 @@ export class PropertyService {
             hint: error.hint,
             code: error.code,
           });
+          throw new Error(`Failed to create property in database: ${error.message}`);
         } else if (inserted) {
           newProperty.id = inserted.id;
 
@@ -1593,6 +1625,12 @@ export class PropertyService {
 
     const existing = await this.findPropertyById(id);
     if (!existing) return null;
+
+    // Tenant / Owner isolation: only creator broker or admin can modify
+    const existingOwner = existing.createdBy || (existing as any).customResoAttributes?.created_by;
+    if (userRole !== 'admin' && userId && existingOwner && existingOwner !== userId) {
+      throw new Error('Forbidden: You do not have permission to modify this property listing.');
+    }
 
     // Broker Approval Enforcement:
     // If transitioning standard_status to 'Active' from another status, require role 'broker' or 'admin'
@@ -1838,15 +1876,21 @@ export class PropertyService {
   /**
    * Delete a property listing
    */
-  public static async deleteProperty(id: string, userId?: string): Promise<boolean> {
+  public static async deleteProperty(id: string, userId?: string, userRole?: string): Promise<boolean> {
     const exists = await this.findPropertyById(id);
     if (!exists) return false;
 
+    // Tenant / Owner isolation: only creator broker or admin can delete
+    const existingOwner = exists.createdBy || (exists as any).customResoAttributes?.created_by;
+    if (userRole !== 'admin' && userId && existingOwner && existingOwner !== userId) {
+      throw new Error('Forbidden: You do not have permission to delete this property listing.');
+    }
+
     if (isSupabaseConfigured) {
-      try {
-        await supabaseAdmin.from('properties').delete().eq('id', id);
-      } catch (err: any) {
-        logger.warn('[PropertyService] DB delete exception:', err.message);
+      const { error } = await supabaseAdmin.from('properties').delete().eq('id', id);
+      if (error) {
+        logger.error('[PropertyService] DB delete exception:', error.message);
+        throw new Error(`Failed to delete property from database: ${error.message}`);
       }
     }
 
