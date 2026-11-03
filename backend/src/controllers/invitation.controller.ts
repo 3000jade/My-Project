@@ -53,10 +53,15 @@ export class InvitationController {
         invitedBy
       );
 
+      const responseMessage =
+        invitation.delivery_status === 'failed'
+          ? `Invitation created for ${email}, but email delivery failed. You may copy the invite link manually.`
+          : `Agent onboarding invitation sent to ${email}.`;
+
       res.status(201).json({
         success: true,
         data: invitation,
-        message: `Agent onboarding invitation sent to ${email}.`,
+        message: responseMessage,
         timestamp: new Date().toISOString(),
       });
     } catch (err: any) {
@@ -135,10 +140,15 @@ export class InvitationController {
       const id = String(req.params.id);
       const updated = await InvitationService.resendInvitation(id);
 
+      const responseMessage =
+        updated.delivery_status === 'failed'
+          ? `Invitation refreshed for ${updated.email}, but email delivery failed.`
+          : `Invitation resent to ${updated.email}.`;
+
       res.status(200).json({
         success: true,
         data: updated,
-        message: `Invitation resent to ${updated.email}.`,
+        message: responseMessage,
         timestamp: new Date().toISOString(),
       });
     } catch (err: any) {

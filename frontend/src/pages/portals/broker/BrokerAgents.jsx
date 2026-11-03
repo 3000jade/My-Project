@@ -23,8 +23,9 @@ import {
   Toaster
 } from '../../../components/ui';
 import { TableSkeleton } from '../../../components/dashboard/skeletons';
-import DashboardModal from '../../../components/dashboard/DashboardModal';
 import AgentScheduleCalendar from '../../../components/dashboard/AgentScheduleCalendar';
+import BrokerInviteModal from '../../../components/dashboard/BrokerInviteModal';
+import AgentTelemetryStrip from '../../../components/dashboard/AgentTelemetryStrip';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -102,12 +103,6 @@ export default function BrokerAgents() {
   const [newTeamBranch, setNewTeamBranch] = useState('Manila Head Office');
   const [creatingTeam, setCreatingTeam] = useState(false);
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteAgency, setInviteAgency] = useState('Human Shelter Realty Manila');
-  const [inviteMessage, setInviteMessage] = useState('');
-  const [inviteSubmitting, setInviteSubmitting] = useState(false);
-  const [inviteError, setInviteError] = useState('');
-  const [inviteSuccess, setInviteSuccess] = useState('');
   const [toastMessage, setToastMessage] = useState('');
 
   const displayInvitations = invitations || [];
@@ -189,40 +184,10 @@ export default function BrokerAgents() {
     }
   };
 
-  const handleSendInvite = async (e, allowReissue = false) => {
-    if (e && e.preventDefault) e.preventDefault();
-    setInviteSubmitting(true);
-    setInviteError('');
-    setInviteSuccess('');
-
-    try {
-      await invitationService.createInvitation({
-        email: inviteEmail,
-        brokerAgency: inviteAgency,
-        message: inviteMessage,
-        allowReissue,
-      });
-
-      setInviteSuccess(`Invitation dispatched to ${inviteEmail}.`);
-      showToast(`Invitation successfully sent to ${inviteEmail}`);
-      setInviteEmail('');
-      setInviteMessage('');
-      await loadInvitations();
-      await loadAgents();
-      setActiveTab('invitations');
-      setTimeout(() => {
-        setInviteModalOpen(false);
-        setInviteSuccess('');
-      }, 1200);
-    } catch (err) {
-      setInviteError(err.message || 'Failed to dispatch invitation.');
-    } finally {
-      setInviteSubmitting(false);
-    }
-  };
-
-  const handleReissueInvite = () => {
-    handleSendInvite(null, true);
+  const handleInviteSuccess = async ({ email }) => {
+    showToast(`Invitation successfully sent to ${email}`);
+    await Promise.all([loadInvitations(), loadAgents()]);
+    setActiveTab('invitations');
   };
 
   const handleResend = async (agent) => {
@@ -835,76 +800,12 @@ export default function BrokerAgents() {
           )}>
 
             {/* 4 Metric Telemetry Strip (Consistent Modern SaaS Design, Icon on Left) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-
-              {/* Card 1: Total Agents */}
-              <div className="bg-white rounded-xl border border-[#E2E8F0] p-4 shadow-2xs flex items-center gap-3.5 hover:border-slate-300 transition-all">
-                <div className="w-11 h-11 rounded-xl bg-teal-50/70 border border-teal-100/80 flex items-center justify-center text-[#0F766E] shrink-0">
-                  <Users className="w-5 h-5" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold text-[#64748B] truncate">
-                    <span>Total Agents</span>
-                    <span className="sr-only">Total Consultants</span>
-                  </p>
-                  <p className="text-2xl font-bold text-[#1E293B] mt-0.5 tracking-tight">{totalAgents}</p>
-                  <p className="text-[11px] font-medium text-[#0F766E] mt-0.5 flex items-center gap-0.5 truncate">
-                    <ArrowUpRight className="w-3 h-3 shrink-0" />
-                    <span>20% vs last month</span>
-                  </p>
-                </div>
-              </div>
-
-              {/* Card 2: Verified Agents */}
-              <div className="bg-white rounded-xl border border-[#E2E8F0] p-4 shadow-2xs flex items-center gap-3.5 hover:border-slate-300 transition-all">
-                <div className="w-11 h-11 rounded-xl bg-teal-50/70 border border-teal-100/80 flex items-center justify-center text-[#0F766E] shrink-0">
-                  <BadgeCheck className="w-5 h-5" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold text-[#64748B] truncate">
-                    <span>Verified Agents</span>
-                    <span className="sr-only">Verified Active</span>
-                  </p>
-                  <p className="text-2xl font-bold text-[#1E293B] mt-0.5 tracking-tight">{verifiedCount}</p>
-                  <p className="text-[11px] font-medium text-[#0F766E] mt-0.5 truncate">
-                    {totalAgents > 0 ? Math.round((verifiedCount / totalAgents) * 100) : 0}% Active roster
-                  </p>
-                </div>
-              </div>
-
-              {/* Card 3: Pending Review */}
-              <div className="bg-white rounded-xl border border-[#E2E8F0] p-4 shadow-2xs flex items-center gap-3.5 hover:border-slate-300 transition-all">
-                <div className="w-11 h-11 rounded-xl bg-teal-50/70 border border-teal-100/80 flex items-center justify-center text-[#0F766E] shrink-0">
-                  <ClipboardList className="w-5 h-5" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold text-[#64748B] truncate">
-                    Pending Review
-                  </p>
-                  <p className="text-2xl font-bold text-[#1E293B] mt-0.5 tracking-tight">{pendingCount}</p>
-                  <p className="text-[11px] font-medium text-[#64748B] mt-0.5 truncate">
-                    {pendingCount > 0 ? `${pendingCount} awaiting approval` : "All reviewed"}
-                  </p>
-                </div>
-              </div>
-
-              {/* Card 4: Active Invitations */}
-              <div className="bg-white rounded-xl border border-[#E2E8F0] p-4 shadow-2xs flex items-center gap-3.5 hover:border-slate-300 transition-all">
-                <div className="w-11 h-11 rounded-xl bg-teal-50/70 border border-teal-100/80 flex items-center justify-center text-[#0F766E] shrink-0">
-                  <MailPlus className="w-5 h-5" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold text-[#64748B] truncate">
-                    Active Invitations
-                  </p>
-                  <p className="text-2xl font-bold text-[#1E293B] mt-0.5 tracking-tight">{activeInvitationsCount}</p>
-                  <p className="text-[11px] font-medium text-[#64748B] mt-0.5 truncate">
-                    Pending onboarding
-                  </p>
-                </div>
-              </div>
-
-            </div>
+            <AgentTelemetryStrip
+              totalAgents={totalAgents}
+              verifiedCount={verifiedCount}
+              pendingCount={pendingCount}
+              activeInvitationsCount={activeInvitationsCount}
+            />
 
             {/* Single-Row Unified Command Bar for Ultra-Clean Filtering */}
             <div className="flex flex-col 2xl:flex-row 2xl:items-center justify-between gap-3 pt-1 border-t border-[#F1F5F9]">
@@ -1645,110 +1546,11 @@ export default function BrokerAgents() {
       )}
 
       {/* Issue Agent Invitation Modal */}
-      <DashboardModal
+      <BrokerInviteModal
         isOpen={inviteModalOpen}
         onClose={() => setInviteModalOpen(false)}
-        title="Issue Agent Invitation"
-        subtitle="Generate a single-use onboarding token valid for 72 hours and dispatch via email."
-        actions={
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => setInviteModalOpen(false)}
-              className="px-4 py-2 text-xs font-semibold uppercase tracking-wider text-[#64748B] hover:text-[#1E293B] cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              form="invite-agent-form"
-              disabled={inviteSubmitting}
-              className="px-4 py-2 bg-[#0F766E] hover:bg-[#115E59] text-white rounded-md text-xs font-semibold uppercase tracking-wider cursor-pointer transition-colors shadow-2xs disabled:opacity-50 inline-flex items-center gap-1.5"
-            >
-              {inviteSubmitting && <Spinner size="sm" className="text-white animate-spin" />}
-              {inviteSubmitting ? 'Dispatching...' : 'Dispatch Invitation'}
-            </button>
-          </div>
-        }
-      >
-        <form id="invite-agent-form" onSubmit={handleSendInvite} className="space-y-4">
-          {inviteError && (
-            <div className="p-3 rounded-lg bg-red-50 text-red-700 text-xs border border-red-200">
-              <p>{inviteError}</p>
-              {inviteError.toLowerCase().includes('already exists') && (
-                <div className="mt-2.5 pt-2 border-t border-red-200 flex items-center justify-between gap-3">
-                  <span className="text-[11px] text-red-800">
-                    Active pending invite found. Generate fresh 72h onboarding token?
-                  </span>
-                  <button
-                    type="button"
-                    onClick={handleReissueInvite}
-                    disabled={inviteSubmitting}
-                    className="px-2.5 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-semibold transition-colors cursor-pointer shrink-0 shadow-2xs"
-                  >
-                    Re-issue Invite
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-          {inviteSuccess && (
-            <div className="p-3 rounded-lg bg-emerald-50 text-emerald-700 text-xs border border-emerald-200">
-              {inviteSuccess}
-            </div>
-          )}
-
-          <div>
-            <label className="block text-xs font-semibold text-[#1E293B] uppercase tracking-wider mb-1">
-              Prospective Agent Email *
-            </label>
-            <input
-              type="email"
-              required
-              placeholder="agent@example.com"
-              value={inviteEmail}
-              onChange={(e) => setInviteEmail(e.target.value)}
-              className="w-full h-10 px-3 bg-white border border-[#E2E8F0] rounded-lg text-xs text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-[#0F766E] focus:border-[#0F766E]"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-[#1E293B] uppercase tracking-wider mb-1">
-              Brokerage / Branch Agency
-            </label>
-            <input
-              type="text"
-              value={inviteAgency}
-              onChange={(e) => setInviteAgency(e.target.value)}
-              className="w-full h-10 px-3 bg-white border border-[#E2E8F0] rounded-lg text-xs text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-[#0F766E] focus:border-[#0F766E]"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-[#1E293B] uppercase tracking-wider mb-1">
-              Personalized Welcome Note (Optional)
-            </label>
-            <textarea
-              rows={3}
-              placeholder="Add welcoming instructions or office orientation details..."
-              value={inviteMessage}
-              onChange={(e) => setInviteMessage(e.target.value)}
-              className="w-full p-3 bg-white border border-[#E2E8F0] rounded-lg text-xs text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-[#0F766E] focus:border-[#0F766E]"
-            />
-          </div>
-
-          <div className="pt-2 text-center text-xs text-[#64748B] border-t border-[#E2E8F0]">
-            Prefer the complete onboarding wizard?{" "}
-            <Link
-              to="/broker/agents/invite"
-              onClick={() => setInviteModalOpen(false)}
-              className="text-[#0F766E] font-semibold hover:underline"
-            >
-              Open Full Multi-Step Invite Wizard →
-            </Link>
-          </div>
-        </form>
-      </DashboardModal>
+        onSuccess={handleInviteSuccess}
+      />
     </div>
   );
 }

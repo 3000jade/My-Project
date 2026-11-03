@@ -271,13 +271,18 @@ export class AgentController {
       const id = String(req.params.id);
       const user = req.user;
 
-      if (user && user.role === 'agent' && user.id !== id) {
-        res.status(403).json({
-          success: false,
-          error: 'Forbidden: Agents can only update their own profile.',
-          timestamp: new Date().toISOString(),
-        });
-        return;
+      if (user) {
+        const isBrokerOrAdmin = user.role === 'broker' || user.role === 'admin';
+        const isSelfAgent = user.role === 'agent' && user.id === id;
+
+        if (!isBrokerOrAdmin && !isSelfAgent) {
+          res.status(403).json({
+            success: false,
+            error: 'Forbidden: You do not have permission to update this agent profile.',
+            timestamp: new Date().toISOString(),
+          });
+          return;
+        }
       }
 
       const actor = user ? { id: user.id, role: user.role || 'agent' } : undefined;

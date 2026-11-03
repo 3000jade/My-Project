@@ -1248,6 +1248,15 @@ export default function BrokerProperties() {
             <Plus className="w-4 h-4 stroke-[2.5]" />
             <span className="font-medium">Add New Property</span>
           </Link>
+
+          <Link
+            to="/broker/properties/studio"
+            className="h-9 sm:h-10 px-3 sm:px-4 flex items-center gap-1.5 rounded-lg border border-[#0F766E]/40 bg-teal-50/70 hover:bg-teal-100 text-[#0F766E] text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
+            title="Open Cadastral Multi-Lot Map Studio"
+          >
+            <MapIcon className="w-4 h-4 stroke-[2.2]" />
+            <span>Map Studio</span>
+          </Link>
         </div>
       </div>
 

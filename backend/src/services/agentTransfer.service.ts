@@ -284,6 +284,7 @@ export class AgentTransferService {
         )
       : [];
 
+    const sourceLocal = AgentService.getLocalAgentById(sourceAgentId);
     let status: ResponsibilityTransferResultDTO['status'] = 'completed';
     let errorDetails: string | null = null;
 
@@ -295,116 +296,161 @@ export class AgentTransferService {
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetAgentId);
 
     // 3. Apply relational updates in Supabase when UUIDs are valid
+    const updatedCollections = {
+      listingsMoved: [] as string[],
+      inquiriesMoved: [] as string[],
+      appointmentsMoved: [] as string[],
+    };
+
     if (isSupabaseConfigured && isSourceUuid && isTargetUuid) {
       try {
         if (listingsToMove.length > 0) {
           const listingIds = listingsToMove.map((l: ResponsibilityPreviewItem) => l.id);
-          await supabaseAdmin
+          const { error: propErr } = await supabaseAdmin
             .from('properties')
             .update({ list_agent_key: targetAgentId })
             .in('id', listingIds);
+          if (propErr) {
+            throw new Error(`Properties update failed: ${propErr.message}`);
+          }
+          updatedCollections.listingsMoved = listingIds;
         }
 
         if (inquiriesToMove.length > 0) {
           const inquiryIds = inquiriesToMove.map((i: ResponsibilityPreviewItem) => i.id);
-          await supabaseAdmin
+          const { error: inqErr } = await supabaseAdmin
             .from('inquiries')
             .update({ assigned_agent_id: targetAgentId })
             .in('id', inquiryIds);
+          if (inqErr) {
+            throw new Error(`Inquiries update failed: ${inqErr.message}`);
+          }
+          updatedCollections.inquiriesMoved = inquiryIds;
         }
 
         if (appointmentsToMove.length > 0) {
           const apptIds = appointmentsToMove.map((a: ResponsibilityPreviewItem) => a.id);
-          await supabaseAdmin
+          const { error: apptErr } = await supabaseAdmin
             .from('appointments')
             .update({ agent_id: targetAgentId })
             .in('id', apptIds);
+          if (apptErr) {
+            throw new Error(`Appointments update failed: ${apptErr.message}`);
+          }
+          updatedCollections.appointmentsMoved = apptIds;
         }
       } catch (err: any) {
-        logger.warn('[AgentTransferService] Partial failure during relational transfer:', err.message);
-        status = 'partial_failure';
+        logger.error('[AgentTransferService] Relational transfer failed, executing rollback:', err.message);
+        status = 'failed';
         errorDetails = err.message;
-      }
-    }
 
-    // 4. Update local mock responsibility store & AppointmentService local store
-    if (appointmentsToMove.length > 0) {
-      for (const apptItem of appointmentsToMove) {
+        // Compensating Rollback: Revert any successfully moved records back to sourceAgentId
         try {
-          await AppointmentService.reassignAppointment(
-            apptItem.id,
-            {
-              target_agent_id: targetAgentId,
-              reason: payload.notes || `Transferred via ${payload.triggerType || 'manual'} responsibility transfer`,
-            },
-            { id: actorId, role: 'broker', brokerage_id: brokerageId }
-          );
-        } catch (err: any) {
-          logger.warn(`[AgentTransferService] Failed to reassign appointment ${apptItem.id}:`, err.message);
+          if (updatedCollections.listingsMoved.length > 0) {
+            await supabaseAdmin
+              .from('properties')
+              .update({ list_agent_key: sourceAgentId })
+              .in('id', updatedCollections.listingsMoved);
+          }
+          if (updatedCollections.inquiriesMoved.length > 0) {
+            await supabaseAdmin
+              .from('inquiries')
+              .update({ assigned_agent_id: sourceAgentId })
+              .in('id', updatedCollections.inquiriesMoved);
+          }
+          if (updatedCollections.appointmentsMoved.length > 0) {
+            await supabaseAdmin
+              .from('appointments')
+              .update({ agent_id: sourceAgentId })
+              .in('id', updatedCollections.appointmentsMoved);
+          }
+          logger.info('[AgentTransferService] Compensating rollback completed successfully.');
+        } catch (rollbackErr: any) {
+          logger.error('[AgentTransferService] Compensating rollback failed:', rollbackErr.message);
+          errorDetails += ` | Rollback failed: ${rollbackErr.message}`;
         }
       }
     }
 
-    if (localResponsibilitiesStore[sourceAgentId]) {
-      const movedListingIds = new Set(listingsToMove.map((l: ResponsibilityPreviewItem) => l.id));
-      const movedInquiryIds = new Set(inquiriesToMove.map((i: ResponsibilityPreviewItem) => i.id));
-      const movedApptIds = new Set(appointmentsToMove.map((a: ResponsibilityPreviewItem) => a.id));
+    // 4. Update local mock responsibility store & AppointmentService local store only on success
+    if (status === 'completed') {
+      if (appointmentsToMove.length > 0) {
+        for (const apptItem of appointmentsToMove) {
+          try {
+            await AppointmentService.reassignAppointment(
+              apptItem.id,
+              {
+                target_agent_id: targetAgentId,
+                reason: payload.notes || `Transferred via ${payload.triggerType || 'manual'} responsibility transfer`,
+              },
+              { id: actorId, role: 'broker', brokerage_id: brokerageId }
+            );
+          } catch (err: any) {
+            logger.warn(`[AgentTransferService] Failed to reassign appointment ${apptItem.id}:`, err.message);
+          }
+        }
+      }
 
-      localResponsibilitiesStore[sourceAgentId].listings =
-        localResponsibilitiesStore[sourceAgentId].listings.filter((l: { id: string }) => !movedListingIds.has(l.id));
-      localResponsibilitiesStore[sourceAgentId].inquiries =
-        localResponsibilitiesStore[sourceAgentId].inquiries.filter((i: { id: string }) => !movedInquiryIds.has(i.id));
-      localResponsibilitiesStore[sourceAgentId].appointments =
-        localResponsibilitiesStore[sourceAgentId].appointments.filter((a: { id: string }) => !movedApptIds.has(a.id));
+      if (localResponsibilitiesStore[sourceAgentId]) {
+        const movedListingIds = new Set(listingsToMove.map((l: ResponsibilityPreviewItem) => l.id));
+        const movedInquiryIds = new Set(inquiriesToMove.map((i: ResponsibilityPreviewItem) => i.id));
+        const movedApptIds = new Set(appointmentsToMove.map((a: ResponsibilityPreviewItem) => a.id));
+
+        localResponsibilitiesStore[sourceAgentId].listings =
+          localResponsibilitiesStore[sourceAgentId].listings.filter((l: { id: string }) => !movedListingIds.has(l.id));
+        localResponsibilitiesStore[sourceAgentId].inquiries =
+          localResponsibilitiesStore[sourceAgentId].inquiries.filter((i: { id: string }) => !movedInquiryIds.has(i.id));
+        localResponsibilitiesStore[sourceAgentId].appointments =
+          localResponsibilitiesStore[sourceAgentId].appointments.filter((a: { id: string }) => !movedApptIds.has(a.id));
+
+        if (targetAgentId) {
+          if (!localResponsibilitiesStore[targetAgentId]) {
+            localResponsibilitiesStore[targetAgentId] = {
+              listings: [],
+              inquiries: [],
+              appointments: [],
+            };
+          }
+          localResponsibilitiesStore[targetAgentId].listings.push(...listingsToMove);
+          localResponsibilitiesStore[targetAgentId].inquiries.push(...inquiriesToMove);
+          localResponsibilitiesStore[targetAgentId].appointments.push(...appointmentsToMove);
+        }
+      }
+
+      // Adjust local cached counts on source and target agents
+      if (sourceLocal) {
+        sourceLocal.assigned_properties_count = Math.max(
+          0,
+          (sourceLocal.assigned_properties_count || 0) - listingsToMove.length
+        );
+        sourceLocal.active_inquiries_count = Math.max(
+          0,
+          (sourceLocal.active_inquiries_count || 0) - inquiriesToMove.length
+        );
+        sourceLocal.upcoming_appointments_count = Math.max(
+          0,
+          (sourceLocal.upcoming_appointments_count || 0) - appointmentsToMove.length
+        );
+        AgentService.addAgent(sourceLocal);
+      }
 
       if (targetAgentId) {
-        if (!localResponsibilitiesStore[targetAgentId]) {
-          localResponsibilitiesStore[targetAgentId] = {
-            listings: [],
-            inquiries: [],
-            appointments: [],
-          };
+        const targetLocal = AgentService.getLocalAgentById(targetAgentId);
+        if (targetLocal) {
+          targetLocal.assigned_properties_count =
+            (targetLocal.assigned_properties_count || 0) + listingsToMove.length;
+          targetLocal.active_inquiries_count =
+            (targetLocal.active_inquiries_count || 0) + inquiriesToMove.length;
+          targetLocal.upcoming_appointments_count =
+            (targetLocal.upcoming_appointments_count || 0) + appointmentsToMove.length;
+          AgentService.addAgent(targetLocal);
         }
-        localResponsibilitiesStore[targetAgentId].listings.push(...listingsToMove);
-        localResponsibilitiesStore[targetAgentId].inquiries.push(...inquiriesToMove);
-        localResponsibilitiesStore[targetAgentId].appointments.push(...appointmentsToMove);
-      }
-    }
-
-    // Adjust local cached counts on source and target agents (NOTE: recorded_sales_count & total_sales_value are NEVER moved!)
-    const sourceLocal = AgentService.getLocalAgentById(sourceAgentId);
-    if (sourceLocal) {
-      sourceLocal.assigned_properties_count = Math.max(
-        0,
-        (sourceLocal.assigned_properties_count || 0) - listingsToMove.length
-      );
-      sourceLocal.active_inquiries_count = Math.max(
-        0,
-        (sourceLocal.active_inquiries_count || 0) - inquiriesToMove.length
-      );
-      sourceLocal.upcoming_appointments_count = Math.max(
-        0,
-        (sourceLocal.upcoming_appointments_count || 0) - appointmentsToMove.length
-      );
-      AgentService.addAgent(sourceLocal);
-    }
-
-    if (targetAgentId) {
-      const targetLocal = AgentService.getLocalAgentById(targetAgentId);
-      if (targetLocal) {
-        targetLocal.assigned_properties_count =
-          (targetLocal.assigned_properties_count || 0) + listingsToMove.length;
-        targetLocal.active_inquiries_count =
-          (targetLocal.active_inquiries_count || 0) + inquiriesToMove.length;
-        targetLocal.upcoming_appointments_count =
-          (targetLocal.upcoming_appointments_count || 0) + appointmentsToMove.length;
-        AgentService.addAgent(targetLocal);
       }
     }
 
     const nowIso = new Date().toISOString();
 
-    const itemStatus = targetAgentId ? 'transferred' : 'queued_unassigned';
+    const itemStatus = status === 'failed' ? 'failed' : (targetAgentId ? 'transferred' : 'queued_unassigned');
     const transferred_items: TransferredItemResult[] = [
       ...listingsToMove.map((l: ResponsibilityPreviewItem): TransferredItemResult => ({
         entityType: 'listing',
@@ -445,7 +491,7 @@ export class AgentTransferService {
         listings: listingsToMove.length,
         inquiries: inquiriesToMove.length,
         appointments: appointmentsToMove.length,
-        failed: status === 'partial_failure' ? 1 : 0,
+        failed: status !== 'completed' ? 1 : 0,
       },
       transferred_items,
       notes: payload.notes || (errorDetails ? `Errors: ${errorDetails}` : null),
@@ -484,7 +530,7 @@ export class AgentTransferService {
     });
 
     // Notify target agent if assigned
-    if (targetAgentId) {
+    if (status === 'completed' && targetAgentId) {
       try {
         await NotificationService.createNotification({
           title: 'Portfolio Responsibilities Transferred to You',

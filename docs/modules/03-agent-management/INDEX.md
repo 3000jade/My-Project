@@ -1,8 +1,8 @@
 ---
 module: 03-agent-management
 title: Agent Management Module
-last_updated: 2026-10-29
-total_documents: 15
+last_updated: 2026-11-03
+total_documents: 16
 ---
 
 # Agent Management Module — Master Index
@@ -35,6 +35,9 @@ All updates and technical reports for this module are ordered chronologically by
 | `2026-10-28` | [2026-10-28-decouple-property-agent-assignment-verification.md](../02-property-listing/2026-10-28-decouple-property-agent-assignment-verification.md) | Verification Record — Decoupled Property Listings & Agent Assignment |
 | `2026-10-29` | [2026-10-29-dual-workspace-calendar-and-clean-filters.md](./2026-10-29-dual-workspace-calendar-and-clean-filters.md) | Dual-Workspace Calendar Interface & Clean Single-Row Filter Command Bar Verification Record |
 | `2026-10-29` | [2026-10-29-broker-agents-dynamic-responsive-adaptation.md](./2026-10-29-broker-agents-dynamic-responsive-adaptation.md) | Broker Agents Dynamic Responsive Layout Refactoring Report |
+| `2026-11-03` | [2026-11-03-agent-security-and-robust-handover-report.md](./2026-11-03-agent-security-and-robust-handover-report.md) | Agent Security & Robust Handover Implementation Report |
+| `2026-11-03` | [2026-11-03-broker-agents-component-refactoring-report.md](./2026-11-03-broker-agents-component-refactoring-report.md) | BrokerAgents Monolith Component Refactoring Report |
+| `2026-11-03` | [2026-11-03-agent-email-service-refactoring-report.md](./2026-11-03-agent-email-service-refactoring-report.md) | Agent Management Email Service & Lifecycle Notification Report |
 
 ---
 

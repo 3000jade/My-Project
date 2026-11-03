@@ -78,6 +78,32 @@ export class AgentEligibilityService {
       changed_fields: event.changed_fields || {},
       created_at: event.created_at || new Date().toISOString(),
     });
+
+    if (isSupabaseConfigured) {
+      const isActorUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(event.actor_id);
+      const isTargetUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(event.target_id);
+      if (isActorUuid && isTargetUuid) {
+        void (async () => {
+          try {
+            const { error } = await supabaseAdmin.from('agent_audit_events').insert({
+              actor_id: event.actor_id,
+              target_id: event.target_id,
+              prior_status: event.prior_status,
+              new_status: event.new_status,
+              reason: event.reason || null,
+              changed_fields: event.changed_fields || {},
+              created_at: event.created_at || new Date().toISOString(),
+            });
+            if (error) {
+              logger.warn('[AgentEligibilityService] Supabase audit insert warning: ' + error.message);
+            }
+          } catch (err: any) {
+            logger.warn('[AgentEligibilityService] Exception inserting audit event: ' + err.message);
+          }
+        })();
+      }
+    }
+
     return id;
   }
 

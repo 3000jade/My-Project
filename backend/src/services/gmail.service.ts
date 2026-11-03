@@ -7,11 +7,14 @@ import {
   buildInquiryEmailHtml,
   buildTourConfirmationEmailHtml,
   buildAgentInvitationEmailHtml,
+  buildAgentVerificationStatusEmailHtml,
   buildPropertyAssignmentEmailHtml,
   buildAssignmentAcceptedEmailHtml,
   buildAssignmentDeclinedEmailHtml,
   InquiryEmailData,
   TourConfirmationEmailData,
+  AgentInvitationEmailData,
+  AgentVerificationStatusEmailData,
   PropertyAssignmentEmailData,
   AssignmentAcceptedEmailData,
   AssignmentDeclinedEmailData,
@@ -181,6 +184,10 @@ export class GmailService {
       return dispatchResult;
     }
 
+    if (!config.integrations.isMockMode) {
+      return { success: false };
+    }
+
     // Mock Mode / Development fallback
     const mockId = `mock-msg-${Date.now()}`;
     logger.warn(`[GmailService] Mock mode active: sending inquiry email to ${data.agentEmail} (Mock ID: ${mockId})`);
@@ -201,6 +208,10 @@ export class GmailService {
       return dispatchResult;
     }
 
+    if (!config.integrations.isMockMode) {
+      return { success: false };
+    }
+
     // Mock Mode / Development fallback
     const mockId = `mock-tour-msg-${Date.now()}`;
     logger.warn(`[GmailService] Mock mode active: sending tour confirmation to ${data.clientEmail}`);
@@ -214,13 +225,26 @@ export class GmailService {
     to: string;
     inviteUrl: string;
     expiresInHours?: number;
+    candidateName?: string;
+    brokerAgency?: string;
+    customMessage?: string;
+    invitedByName?: string;
     isResend?: boolean;
   }): Promise<{ success: boolean; messageId?: string }> {
+    const agency = data.brokerAgency || 'CP_kerby';
     const subject = data.isResend
-      ? 'Updated Invitation to Join CP_kerby as Licensed Property Consultant'
-      : 'Invitation to Join CP_kerby as Licensed Property Consultant';
-    const html = buildAgentInvitationEmailHtml({ agentEmail: data.to, inviteUrl: data.inviteUrl, expiresInHours: data.expiresInHours });
-    const fromName = 'Human Shelter Realty Compliance';
+      ? `Updated Invitation to Join ${agency} as Licensed Property Consultant`
+      : `Invitation to Join ${agency} as Licensed Property Consultant`;
+    const html = buildAgentInvitationEmailHtml({
+      agentEmail: data.to,
+      inviteUrl: data.inviteUrl,
+      expiresInHours: data.expiresInHours,
+      candidateName: data.candidateName,
+      brokerAgency: data.brokerAgency,
+      customMessage: data.customMessage,
+      invitedByName: data.invitedByName,
+    });
+    const fromName = data.brokerAgency ? `${data.brokerAgency} Compliance` : 'Human Shelter Realty Compliance';
     const fromEmail = config.integrations.gmailUserEmail || 'compliance@cpkerby.luxury';
 
     const dispatchResult = await this.dispatchEmail(data.to, fromEmail, fromName, subject, html);
@@ -228,10 +252,49 @@ export class GmailService {
       return dispatchResult;
     }
 
+    if (!config.integrations.isMockMode) {
+      return { success: false };
+    }
+
     // Mock Mode / Development fallback: Always log invitation link
     const mockId = `mock-invite-msg-${Date.now()}`;
     logger.warn(`[GmailService] Mock mode active: sending agent invitation email to ${data.to}`);
     logger.info(`[GmailService] Onboarding Invitation Link: ${data.inviteUrl}`);
+    return {
+      success: true,
+      messageId: mockId,
+    };
+  }
+
+  /**
+   * Send agent credential verification status email (approval, rejection with remarks, or suspension)
+   */
+  public static async sendAgentVerificationStatusEmail(
+    data: AgentVerificationStatusEmailData
+  ): Promise<{ success: boolean; messageId?: string }> {
+    const agency = data.brokerAgency || 'CP_kerby Luxury Real Estate';
+    const subject =
+      data.status === 'VERIFIED'
+        ? `Accreditation Confirmed: Welcome to ${agency}`
+        : data.status === 'REJECTED'
+        ? `Action Required: Agent License Credentials Revision Requested (${agency})`
+        : `Notice: Agent Account Status Update (${agency})`;
+
+    const html = buildAgentVerificationStatusEmailHtml(data);
+    const fromName = `${agency} Brokerage Compliance`;
+    const fromEmail = config.integrations.gmailUserEmail || 'compliance@cpkerby.luxury';
+
+    const dispatchResult = await this.dispatchEmail(data.agentEmail, fromEmail, fromName, subject, html);
+    if (dispatchResult.success) {
+      return dispatchResult;
+    }
+
+    if (!config.integrations.isMockMode) {
+      return { success: false };
+    }
+
+    const mockId = `mock-verif-msg-${Date.now()}`;
+    logger.warn(`[GmailService] Mock mode active: sending verification status email (${data.status}) to ${data.agentEmail}`);
     return {
       success: true,
       messageId: mockId,
@@ -252,6 +315,10 @@ export class GmailService {
     const dispatchResult = await this.dispatchEmail(data.agentEmail, fromEmail, fromName, subject, html);
     if (dispatchResult.success) {
       return dispatchResult;
+    }
+
+    if (!config.integrations.isMockMode) {
+      return { success: false };
     }
 
     const mockId = `mock-assign-msg-${Date.now()}`;
@@ -278,6 +345,10 @@ export class GmailService {
       return dispatchResult;
     }
 
+    if (!config.integrations.isMockMode) {
+      return { success: false };
+    }
+
     const mockId = `mock-accept-msg-${Date.now()}`;
     logger.warn(`[GmailService] Mock mode active: sending assignment accepted email to ${data.brokerEmail}`);
     return {
@@ -300,6 +371,10 @@ export class GmailService {
     const dispatchResult = await this.dispatchEmail(data.brokerEmail, fromEmail, fromName, subject, html);
     if (dispatchResult.success) {
       return dispatchResult;
+    }
+
+    if (!config.integrations.isMockMode) {
+      return { success: false };
     }
 
     const mockId = `mock-decline-msg-${Date.now()}`;

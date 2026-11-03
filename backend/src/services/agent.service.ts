@@ -3,6 +3,7 @@ import logger from '../utils/logger';
 import { AgentEligibilityService, AgentVerificationStatus } from './agentEligibility.service';
 import { AgentTeamService } from './agentTeam.service';
 import { NotificationService } from './notification.service';
+import { GmailService } from './gmail.service';
 import type {
   MembershipStatus,
   OnboardingStatus,
@@ -873,7 +874,7 @@ export class AgentService {
       localAgentsState[localIdx] = { ...enriched };
     }
 
-    // Emit notification for status transition
+    // Emit in-app notification for status transition
     try {
       await NotificationService.createNotification({
         title: `Agent Status Updated: ${status}`,
@@ -892,6 +893,18 @@ export class AgentService {
       });
     } catch {
       // Ignore notification failures
+    }
+
+    // Emit transactional email for credential verification status transition
+    if (enriched.email && (status === 'VERIFIED' || status === 'REJECTED' || status === 'SUSPENDED')) {
+      GmailService.sendAgentVerificationStatusEmail({
+        agentName: enriched.name,
+        agentEmail: enriched.email,
+        status,
+        remarks: rejectionRemarks || agent.suspension_reason || undefined,
+      }).catch((emailErr: any) => {
+        logger.warn(`[AgentService] Status email notification skipped for ${enriched.email}: ${emailErr.message}`);
+      });
     }
 
     return enriched;
@@ -927,7 +940,7 @@ export class AgentService {
     const agent = await this.getAgentById(id);
     if (!agent) return null;
 
-    const isBrokerOrAdmin = actor?.role === 'broker' || actor?.role === 'admin' || !actor;
+    const isBrokerOrAdmin = actor ? (actor.role === 'broker' || actor.role === 'admin') : false;
 
     if (profileData.name !== undefined) agent.name = profileData.name;
     if (profileData.phone !== undefined) agent.phone = profileData.phone;

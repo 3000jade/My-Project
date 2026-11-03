@@ -73,6 +73,7 @@ router.put(
 router.put(
   '/:id',
   requireAuth,
+  requireRole(['broker', 'admin', 'agent']),
   validateBody(updateAgentProfileSchema),
   AgentController.updateProfile
 );
@@ -80,6 +81,7 @@ router.put(
 router.post(
   '/:id/resubmit-credentials',
   requireAuth,
+  requireRole(['broker', 'admin', 'agent']),
   AgentController.resubmitCredentials
 );
 

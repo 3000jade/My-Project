@@ -24,6 +24,12 @@ export class MailController {
 
       if (type === 'tour') {
         result = await GmailService.sendTourConfirmation(data);
+      } else if (type === 'invitation') {
+        result = await GmailService.sendAgentInvitationEmail(data);
+      } else if (type === 'agent-verification') {
+        result = await GmailService.sendAgentVerificationStatusEmail(data);
+      } else if (type === 'property-assignment') {
+        result = await GmailService.sendPropertyAssignmentEmail(data);
       } else {
         result = await GmailService.sendInquiryNotification(data);
       }

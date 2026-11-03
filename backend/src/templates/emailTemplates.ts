@@ -175,30 +175,46 @@ export interface AgentInvitationEmailData {
   agentEmail: string;
   inviteUrl: string;
   expiresInHours?: number;
+  candidateName?: string;
+  brokerAgency?: string;
+  customMessage?: string;
+  invitedByName?: string;
 }
 
 export function buildAgentInvitationEmailHtml(data: AgentInvitationEmailData): string {
   const hours = data.expiresInHours || 72;
+  const greeting = data.candidateName ? `Hello ${data.candidateName},` : 'Hello,';
+  const agency = data.brokerAgency ? `<strong>${data.brokerAgency}</strong>` : '<strong>CP_kerby Luxury Real Estate</strong>';
+  const customMessageBlock = data.customMessage
+    ? `<div style="border-left: 3px solid #0D4446; padding: 14px 18px; background-color: #F4F5F4; border-radius: 0 8px 8px 0; margin-bottom: 24px; font-style: italic; color: #141717; font-size: 14px; line-height: 1.5;">
+        "${data.customMessage}"
+        ${data.invitedByName ? `<div style="margin-top: 8px; font-style: normal; font-weight: 600; font-size: 12px; color: #5C6768;">— ${data.invitedByName}</div>` : ''}
+      </div>`
+    : '';
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Invitation to Join CP_kerby as Licensed Property Consultant</title>
+  <title>Invitation to Join ${data.brokerAgency || 'CP_kerby'} as Licensed Property Consultant</title>
 </head>
 <body style="margin: 0; padding: 32px 16px; background-color: #FBFBF9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #141717;">
   <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; background-color: #FFFFFF; border: 1px solid #D8DFDF; border-radius: 14px; overflow: hidden; box-shadow: 0 4px 16px rgba(13, 68, 70, 0.04);">
     <tr>
       <td style="padding: 28px 32px; background-color: #0D4446; text-align: left;">
-        <span style="font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #14B8A6; font-weight: 700;">CP_KERBY LUXURY REAL ESTATE</span>
+        <span style="font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #14B8A6; font-weight: 700;">${data.brokerAgency ? data.brokerAgency.toUpperCase() : 'CP_KERBY LUXURY REAL ESTATE'}</span>
         <h1 style="margin: 6px 0 0 0; color: #FFFFFF; font-size: 22px; font-weight: 700; letter-spacing: -0.02em;">Consultant Onboarding Invitation</h1>
       </td>
     </tr>
     <tr>
       <td style="padding: 32px;">
-        <p style="margin: 0 0 16px 0; font-size: 15px; color: #5C6768;">Hello,</p>
+        <p style="margin: 0 0 16px 0; font-size: 15px; color: #5C6768;">${greeting}</p>
         <p style="margin: 0 0 20px 0; font-size: 15px; line-height: 1.6; color: #141717;">
-          You have been formally invited to join the <strong>CP_kerby Luxury Real Estate</strong> brokerage network as a licensed real estate consultant.
+          You have been formally invited to join the ${agency} brokerage network as a licensed real estate consultant.
         </p>
+
+        ${customMessageBlock}
+
         <p style="margin: 0 0 24px 0; font-size: 14px; line-height: 1.5; color: #5C6768;">
           To complete your onboarding, please click the secure link below to submit your PRC license details, DHSUD accreditation, and verification documents. This invitation is valid for <strong>${hours} hours</strong>.
         </p>
@@ -224,7 +240,119 @@ export function buildAgentInvitationEmailHtml(data: AgentInvitationEmailData): s
     </tr>
     <tr>
       <td style="padding: 20px 32px; background-color: #FBFBF9; border-top: 1px solid #E5EBEB; text-align: center; font-size: 12px; color: #8E9A9B;">
-        CP_kerby Luxury Architectural Platform &bull; Compliance & Broker Operations
+        ${data.brokerAgency || 'CP_kerby Luxury Architectural Platform'} &bull; Compliance & Broker Operations
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
+export interface AgentVerificationStatusEmailData {
+  agentName: string;
+  agentEmail: string;
+  status: 'VERIFIED' | 'REJECTED' | 'SUSPENDED';
+  remarks?: string;
+  loginUrl?: string;
+  resubmitUrl?: string;
+  brokerAgency?: string;
+}
+
+export function buildAgentVerificationStatusEmailHtml(data: AgentVerificationStatusEmailData): string {
+  const isVerified = data.status === 'VERIFIED';
+  const isRejected = data.status === 'REJECTED';
+  const agency = data.brokerAgency || 'CP_kerby Luxury Real Estate';
+
+  const headerBg = isVerified ? '#0F766E' : isRejected ? '#DC2626' : '#D97706';
+  const headerSubtitle = isVerified
+    ? 'Accreditation Approved & Active'
+    : isRejected
+    ? 'License Revision Required'
+    : 'Account Status Notice';
+  const headerTitle = isVerified
+    ? 'Credentials Verified'
+    : isRejected
+    ? 'Application Revision Requested'
+    : 'Account Temporarily On Hold';
+
+  const actionUrl = isVerified
+    ? (data.loginUrl || 'http://localhost:5173/agent/dashboard')
+    : (data.resubmitUrl || 'http://localhost:5173/agent/profile');
+  const actionLabel = isVerified
+    ? 'Access Agent Portal'
+    : isRejected
+    ? 'Resubmit License Documents'
+    : 'Review Account Status';
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>${headerTitle} - ${agency}</title>
+</head>
+<body style="margin: 0; padding: 32px 16px; background-color: #F8FAFC; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1E293B;">
+  <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 14px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.04);">
+    <tr>
+      <td style="padding: 28px 32px; background-color: ${headerBg}; text-align: left;">
+        <span style="font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #FFFFFF; opacity: 0.85; font-weight: 700;">${agency.toUpperCase()} &bull; ${headerSubtitle.toUpperCase()}</span>
+        <h1 style="margin: 6px 0 0 0; color: #FFFFFF; font-size: 22px; font-weight: 700; letter-spacing: -0.02em;">${headerTitle}</h1>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 32px;">
+        <p style="margin: 0 0 16px 0; font-size: 15px; color: #64748B;">Dear <strong>${data.agentName}</strong>,</p>
+
+        ${isVerified ? `
+        <p style="margin: 0 0 20px 0; font-size: 15px; line-height: 1.6; color: #1E293B;">
+          We are pleased to inform you that your Professional Regulation Commission (PRC) license and DHSUD accreditation have been verified and approved by your managing broker.
+        </p>
+        <div style="background-color: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 8px; padding: 18px; margin-bottom: 24px;">
+          <p style="margin: 0 0 6px 0; font-size: 14px; font-weight: 700; color: #15803D;">Status: Verified Consultant</p>
+          <p style="margin: 0; font-size: 13px; color: #166534; line-height: 1.5;">
+            Your profile is now active on the network. You may now receive client inquiries, manage assigned listings, and schedule private showings.
+          </p>
+        </div>` : ''}
+
+        ${isRejected ? `
+        <p style="margin: 0 0 20px 0; font-size: 15px; line-height: 1.6; color: #1E293B;">
+          Your managing broker has reviewed your submitted license credentials and determined that updates are required before accreditation can be completed.
+        </p>
+        <div style="background-color: #FEF2F2; border: 1px solid #FECACA; border-radius: 8px; padding: 18px; margin-bottom: 24px;">
+          <p style="margin: 0 0 6px 0; font-size: 14px; font-weight: 700; color: #991B1B;">Broker Review Remarks:</p>
+          <p style="margin: 0; font-size: 13px; color: #7F1D1D; font-style: italic; line-height: 1.5;">
+            "${data.remarks || 'Credentials require revision. Please verify your PRC ID card expiration date and DHSUD accreditation certificate.'}"
+          </p>
+        </div>
+        <p style="margin: 0 0 24px 0; font-size: 14px; line-height: 1.5; color: #64748B;">
+          Please log into your portal and update your license information or upload clear replacement documents.
+        </p>` : ''}
+
+        ${!isVerified && !isRejected ? `
+        <p style="margin: 0 0 20px 0; font-size: 15px; line-height: 1.6; color: #1E293B;">
+          Your consultant account has been placed on temporary hold pending review.
+        </p>
+        <div style="background-color: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; padding: 18px; margin-bottom: 24px;">
+          <p style="margin: 0 0 6px 0; font-size: 14px; font-weight: 700; color: #92400E;">Reason for Hold:</p>
+          <p style="margin: 0; font-size: 13px; color: #78350F; font-style: italic; line-height: 1.5;">
+            "${data.remarks || 'Administrative review in progress.'}"
+          </p>
+        </div>` : ''}
+
+        <!-- CTA Button -->
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 24px;">
+          <tr>
+            <td align="center">
+              <a href="${actionUrl}" style="display: inline-block; padding: 14px 32px; background-color: ${headerBg}; color: #FFFFFF; text-decoration: none; font-weight: 700; font-size: 13px; letter-spacing: 0.05em; text-transform: uppercase; border-radius: 8px;">
+                ${actionLabel}
+              </a>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 16px 32px; background-color: #F8FAFC; border-top: 1px solid #E2E8F0; text-align: center; font-size: 12px; color: #94A3B8;">
+        ${agency} &bull; Compliance & Broker Operations
       </td>
     </tr>
   </table>

@@ -295,6 +295,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
     unparsed_address: '',
     latitude: '',
     longitude: '',
+    lot_boundary: null,
     description: '',
     // Specifications Fields
     bedrooms_total: '3',
@@ -822,6 +823,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
             postal_code: p.location?.postalCode || p.postal_code || '',
             latitude: p.location?.coordinates?.lat || p.latitude || '',
             longitude: p.location?.coordinates?.lng || p.longitude || '',
+            lot_boundary: p.lot_boundary || p.boundary || null,
             description: p.publicRemarks || p.description || '',
             status: p.status || 'AVAILABLE',
             standard_status: p.standard_status || p.standardStatus || 'Active',
@@ -2272,6 +2274,11 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
               <CadastralLocationPicker
                 latitude={formData.latitude}
                 longitude={formData.longitude}
+                boundary={formData.lot_boundary}
+                onBoundaryChange={(geoJson) => {
+                  setIsDirty(true);
+                  setFormData(prev => ({ ...prev, lot_boundary: geoJson }));
+                }}
                 address={formData.address}
                 onPositionChange={(pos) => {
                   handleMapPositionChange(pos);
@@ -2280,6 +2287,17 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                 onOpenFullView={handleOpenFullViewMap}
                 className="w-full"
               />
+
+              <div className="flex items-center justify-between px-3 py-2 bg-teal-50/70 border border-teal-200/80 rounded-lg text-xs">
+                <span className="text-teal-950 font-medium">Mapping multiple subdivided lots or an entire phase?</span>
+                <Link
+                  to="/broker/properties/studio"
+                  className="font-bold text-[#0F766E] hover:text-teal-900 hover:underline inline-flex items-center gap-1 cursor-pointer"
+                >
+                  <span>Open Map Studio</span>
+                  <span className="text-sm font-bold">→</span>
+                </Link>
+              </div>
 
               {/* Coordinates: Latitude & Longitude Inputs */}
               <div className="p-3.5 bg-slate-50 border border-[#E2E8F0] rounded-lg">

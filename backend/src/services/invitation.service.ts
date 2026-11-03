@@ -121,7 +121,7 @@ export class InvitationService {
       email: normalizedEmail,
       token,
       token_digest: tokenDigest,
-      delivery_status: 'sent',
+      delivery_status: 'pending',
       status: 'pending',
       expires_at: expiresAt.toISOString(),
       invited_by: safeInvitedBy || undefined,
@@ -197,13 +197,29 @@ export class InvitationService {
     // Dispatch invitation email via GmailService
     const inviteUrl = this.getInviteUrl(token);
     try {
-      await GmailService.sendAgentInvitationEmail({
+      const emailResult = await GmailService.sendAgentInvitationEmail({
         to: normalizedEmail,
         inviteUrl,
         expiresInHours: 72,
+        candidateName: fullName,
+        brokerAgency: brokerAgency,
+        customMessage: message,
       });
+      newInvitation.delivery_status = emailResult.success ? 'sent' : 'failed';
     } catch (err: any) {
       logger.warn('[InvitationService] Failed to send email via GmailService:', err.message);
+      newInvitation.delivery_status = 'failed';
+    }
+
+    if (isSupabaseConfigured && newInvitation.id && !newInvitation.id.startsWith('inv-')) {
+      try {
+        await supabaseAdmin
+          .from('agent_invitations')
+          .update({ delivery_status: newInvitation.delivery_status })
+          .eq('id', newInvitation.id);
+      } catch {
+        // Non-blocking if delivery_status column not present in schema
+      }
     }
 
     return newInvitation;
@@ -445,12 +461,32 @@ export class InvitationService {
     }
 
     const inviteUrl = this.getInviteUrl(inv.token);
-    await GmailService.sendAgentInvitationEmail({
-      to: inv.email,
-      inviteUrl,
-      expiresInHours: 72,
-      isResend: true,
-    });
+    try {
+      const emailResult = await GmailService.sendAgentInvitationEmail({
+        to: inv.email,
+        inviteUrl,
+        expiresInHours: 72,
+        candidateName: inv.full_name,
+        brokerAgency: inv.broker_agency,
+        customMessage: inv.message,
+        isResend: true,
+      });
+      inv.delivery_status = emailResult.success ? 'sent' : 'failed';
+    } catch (err: any) {
+      logger.warn('[InvitationService] Failed to send email via GmailService on resend:', err.message);
+      inv.delivery_status = 'failed';
+    }
+
+    if (isSupabaseConfigured && inv.id && !inv.id.startsWith('inv-')) {
+      try {
+        await supabaseAdmin
+          .from('agent_invitations')
+          .update({ delivery_status: inv.delivery_status })
+          .eq('id', inv.id);
+      } catch {
+        // Non-blocking if delivery_status column not present in schema
+      }
+    }
 
     return inv;
   }
