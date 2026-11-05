@@ -567,7 +567,7 @@ export class PropertyService {
     totalPages: number;
   }> {
     const page = Math.max(1, Number(query.page) || 1);
-    const limit = Math.max(1, Math.min(100, Number(query.limit) || 10));
+    const limit = Math.max(1, Math.min(250, Number(query.limit) || 50));
 
     if (isSupabaseConfigured) {
       try {
@@ -738,7 +738,7 @@ export class PropertyService {
     query: PropertyFilterQuery = {},
     userRole?: string,
     page: number = 1,
-    limit: number = 10,
+    limit: number = 50,
     userId?: string
   ): {
     properties: PropertyItem[];
@@ -1124,12 +1124,15 @@ export class PropertyService {
     const initialAssignmentStatus = hasAgent 
       ? (data.assignmentStatus || 'PENDING_CONFIRMATION') 
       : (data.assignmentStatus || 'UNASSIGNED');
+    const requestedStandardStatus = data.standard_status || data.standardStatus;
     const initialStatus = initialAssignmentStatus === 'ACCEPTED' 
-      ? (data.standardStatus || 'Active') 
-      : (hasAgent ? 'Pending Confirmation' : (data.standardStatus || 'Active'));
-    const initialIsPublished = initialAssignmentStatus === 'ACCEPTED' 
-      ? Boolean(data.isPublished ?? true) 
-      : (!hasAgent ? Boolean(data.isPublished ?? true) : false);
+      ? (requestedStandardStatus || 'Active') 
+      : (hasAgent ? 'Pending Confirmation' : (requestedStandardStatus || 'Active'));
+    const initialIsPublished = requestedStandardStatus === 'Draft'
+      ? false
+      : (initialAssignmentStatus === 'ACCEPTED' 
+        ? Boolean(data.isPublished ?? true) 
+        : (!hasAgent ? Boolean(data.isPublished ?? true) : false));
 
     let coordinates = data.location?.coordinates;
     let resolvedPostal = data.location?.postalCode || data.location?.postal_code || null;
@@ -1372,7 +1375,7 @@ export class PropertyService {
               is_published: newProperty.isPublished,
             },
             standard_status: newProperty.standardStatus,
-            status: newProperty.status,
+            status: ['available', 'pending', 'sold'].includes(String(newProperty.status).toLowerCase()) ? String(newProperty.status).toLowerCase() : 'pending',
             assignment_status: newProperty.assignmentStatus,
             assignment_declined_reason: newProperty.assignmentDeclinedReason,
             assigned_at: newProperty.assignedAt,

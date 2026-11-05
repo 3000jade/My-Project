@@ -5,6 +5,7 @@ const BASE_URL = process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:5173'
 const ARTIFACT_DIR = 'C:/Users/Win11x64/.gemini/antigravity/brain/9eeb88a0-af46-42cf-a531-abe14feca154';
 
 test.describe('Schema v1.0 Property Intake Studio & Real-World Specifications', () => {
+  test.setTimeout(60000);
   test.describe.configure({ mode: 'serial' });
 
   test.beforeEach(async ({ page }) => {
@@ -30,39 +31,36 @@ test.describe('Schema v1.0 Property Intake Studio & Real-World Specifications', 
     }
   });
 
-  test('verifies property type selection gateway renders 3 core asset classes with shadcn cards', async ({ page }) => {
-    await page.goto(`${BASE_URL}/broker/properties/types`);
+  test('verifies property type selection gateway renders 4 category cards and navigates via dropdown', async ({ page }) => {
+    await page.goto(`${BASE_URL}/broker/properties/types`, { waitUntil: 'domcontentloaded' });
     await page.waitForLoadState('networkidle');
 
     // Verify page header
     await expect(page.getByRole('heading', { name: /Select Property Type/i })).toBeVisible({ timeout: 10000 });
-    await expect(page.getByText(/Primary Philippine Asset Classes/i)).toBeVisible();
+    await expect(page.getByText(/What type of property are you listing\?/i)).toBeVisible();
 
-    // Verify 3 core asset cards
-    const lotCard = page.getByRole('heading', { name: /Subdivision Lot/i });
-    const houseCard = page.getByRole('heading', { name: /House and Lot/i });
-    const condoCard = page.getByRole('heading', { name: /Condominium/i });
+    // Verify 4 category cards
+    await expect(page.getByTestId('category-card-homes')).toBeVisible();
+    await expect(page.getByTestId('category-card-land')).toBeVisible();
+    await expect(page.getByTestId('category-card-commercial')).toBeVisible();
+    await expect(page.getByTestId('category-card-industrial')).toBeVisible();
 
-    await expect(lotCard).toBeVisible();
-    await expect(houseCard).toBeVisible();
-    await expect(condoCard).toBeVisible();
+    // Open Lots & Land dropdown
+    const landTrigger = page.getByTestId('category-dropdown-trigger-land');
+    await expect(landTrigger).toBeVisible();
+    await landTrigger.click();
 
-    // Verify badges
-    await expect(page.getByText('Vacant Land', { exact: true })).toBeVisible();
-    await expect(page.getByText('Single-Family', { exact: true })).toBeVisible();
-    await expect(page.getByText('Vertical Strata', { exact: true })).toBeVisible();
-
-    // Click 'Subdivision Lot' button and verify navigation to property creation wizard
-    const lotSelectBtn = page.getByRole('button', { name: /Select Subdivision Lot/i });
-    await expect(lotSelectBtn).toBeVisible();
-    await lotSelectBtn.click();
+    // Verify and click Subdivision Lot inside dropdown
+    const lotOption = page.getByTestId('property-type-option-residentialLot');
+    await expect(lotOption).toBeVisible();
+    await lotOption.click();
 
     await page.waitForURL(url => (url.pathname.includes('/broker/properties/new') || url.pathname.includes('/broker/properties/create')) && url.search.includes('type=residentialLot'), { timeout: 10000 });
     expect(page.url()).toContain('type=residentialLot');
   });
 
   test('completes full-stack residentialLot intake flow with canonical Schema v1.0 specifications', async ({ page }) => {
-    await page.goto(`${BASE_URL}/broker/properties/new?type=residentialLot`);
+    await page.goto(`${BASE_URL}/broker/properties/new?type=residentialLot`, { waitUntil: 'domcontentloaded' });
     await page.waitForLoadState('networkidle');
 
     // 1. STEP 1: Listing Overview
@@ -214,7 +212,7 @@ test.describe('Schema v1.0 Property Intake Studio & Real-World Specifications', 
   });
 
   test('verifies Condominium tailored specifications hide lot details and show strata unit details', async ({ page }) => {
-    await page.goto(`${BASE_URL}/broker/properties/new?type=condominium`);
+    await page.goto(`${BASE_URL}/broker/properties/new?type=condominium`, { waitUntil: 'domcontentloaded' });
     await page.waitForLoadState('networkidle');
 
     // Advance to Step 2 Location

@@ -404,12 +404,12 @@ export function toApiPayload(item = {}) {
   // Canonical Schema v1.0 payload construction
   const rawPropType = String(item.property_type || item.propertyType || '').toLowerCase();
   let canonicalPropertyType = 'houseAndLot';
-  if (rawPropType.includes('lot') || rawPropType.includes('land')) {
-    canonicalPropertyType = 'residentialLot';
+  if (rawPropType.includes('house') || rawPropType.includes('townhouse') || rawPropType.includes('villa')) {
+    canonicalPropertyType = 'houseAndLot';
   } else if (rawPropType.includes('condo') || rawPropType.includes('apartment') || rawPropType.includes('penthouse')) {
     canonicalPropertyType = 'condominium';
-  } else if (rawPropType.includes('house') || rawPropType.includes('townhouse') || rawPropType.includes('villa')) {
-    canonicalPropertyType = 'houseAndLot';
+  } else if (rawPropType.includes('lot') || rawPropType.includes('land')) {
+    canonicalPropertyType = 'residentialLot';
   }
 
   const assignedAgentObj = item.assignedAgent ? {
@@ -517,6 +517,19 @@ export function toApiPayload(item = {}) {
       bedrooms: bedroomsTotal || 1,
       bathrooms: bathroomsTotalInteger || 1,
       carport: parkingTotal || 0,
+      rooms: {
+        bedrooms: bedroomsTotal || 1,
+        bathrooms: bathroomsTotalInteger || 1,
+        stories: storiesTotal || 1
+      },
+      parking: {
+        spaces: parkingTotal || 0
+      },
+      cadastralInfo: {
+        phase: item.phase || item.subdivision_phase || '',
+        block: item.block || item.subdivision_block || '',
+        lot: item.lot || item.subdivision_lot || ''
+      },
       maidsRoom: Boolean(item.has_maids_room || item.hasMaidsRoom),
       title: {
         type: item.title_type || item.titleType || 'tct',
@@ -710,7 +723,8 @@ export const propertyService = {
    * Fetch properties with optional query filters (city, propertyType, minPrice, maxPrice, status, agentId, page, limit)
    */
   async getProperties(params = {}) {
-    const response = await apiClient.get('/properties', { params });
+    const queryParams = { limit: 100, ...params };
+    const response = await apiClient.get('/properties', { params: queryParams });
     const rawList = Array.isArray(response?.data)
       ? response.data
       : (Array.isArray(response) ? response : []);
@@ -722,7 +736,7 @@ export const propertyService = {
       data: normalizedList,
       total: response?.total ?? normalizedList.length,
       page: response?.page ?? 1,
-      limit: response?.limit ?? 10,
+      limit: response?.limit ?? queryParams.limit ?? 100,
       totalPages: response?.totalPages ?? 1,
     };
   },

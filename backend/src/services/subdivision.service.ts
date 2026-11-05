@@ -2,6 +2,11 @@ import { supabase, supabaseAdmin, isSupabaseConfigured } from '../config/supabas
 import { subdivisionValidationService, LotInput, ValidationResult } from './subdivisionValidation.service';
 import logger from '../utils/logger';
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+function isValidUuid(id?: string | null): boolean {
+  return Boolean(id && UUID_REGEX.test(id));
+}
+
 export interface SubdivisionProject {
   id: string;
   name: string;
@@ -69,6 +74,27 @@ export interface SubdivisionMapVersion {
 }
 
 export class SubdivisionService {
+  async verifyProjectOwnership(
+    projectId: string,
+    userId?: string,
+    userRole?: string
+  ): Promise<SubdivisionProject> {
+    const project = await this.getProjectById(projectId);
+    if (!project) {
+      throw new Error(`Subdivision project #${projectId} not found.`);
+    }
+    if (userRole === 'admin') {
+      return project;
+    }
+    if (project.created_by && userId && project.created_by !== userId) {
+      const err: any = new Error('Forbidden: You do not own this subdivision project');
+      err.name = 'ForbiddenException';
+      err.status = 403;
+      throw err;
+    }
+    return project;
+  }
+
   // In-memory fallback stores
   private memProjects: Map<string, SubdivisionProject> = new Map();
   private memPlans: Map<string, SubdivisionPlan> = new Map();
@@ -318,8 +344,10 @@ export class SubdivisionService {
       image_width: number;
       image_height: number;
     },
-    userId?: string
+    userId?: string,
+    userRole?: string
   ): Promise<SubdivisionPlan> {
+    await this.verifyProjectOwnership(projectId, userId, userRole);
     const aspectRatio =
       data.image_width && data.image_height
         ? Number((data.image_width / data.image_height).toFixed(4))
@@ -449,12 +477,20 @@ export class SubdivisionService {
     projectId: string,
     planId: string,
     lots: LotInput[],
-    userId?: string
+    userId?: string,
+    userRole?: string
   ): Promise<SubdivisionLot[]> {
+    await this.verifyProjectOwnership(projectId, userId, userRole);
+
+    const activePlan = await this.getActivePlan(projectId);
+    const resolvedPlanId = (planId && planId !== 'default' && isValidUuid(planId))
+      ? planId
+      : (activePlan?.id && isValidUuid(activePlan.id) ? activePlan.id : planId);
+
     const savedLots: SubdivisionLot[] = lots.map((lot, idx) => ({
       id: lot.id || `lot-${Date.now()}-${idx}`,
       project_id: projectId,
-      plan_id: planId,
+      plan_id: resolvedPlanId || lot.plan_id || 'sub-plan-001',
       block_number: String(lot.block_number).trim(),
       lot_number: String(lot.lot_number).trim(),
       boundary_type: lot.boundary_type || 'SaleableLot',
@@ -472,34 +508,62 @@ export class SubdivisionService {
 
     if (isSupabaseConfigured) {
       try {
+        // Sync deletions: find existing lots in DB that are not in incoming draft lots
+        const { data: existingLots } = await supabaseAdmin
+          .from('subdivision_lots')
+          .select('id, block_number, lot_number')
+          .eq('project_id', projectId);
+
+        if (existingLots && existingLots.length > 0) {
+          const incomingKeys = new Set(savedLots.map((l) => `${l.block_number}:${l.lot_number}`));
+          const toDeleteIds = existingLots
+            .filter((el) => !incomingKeys.has(`${el.block_number}:${el.lot_number}`))
+            .map((el) => el.id);
+
+          if (toDeleteIds.length > 0) {
+            await supabaseAdmin
+              .from('subdivision_lots')
+              .delete()
+              .in('id', toDeleteIds);
+          }
+        }
+
         // Upsert draft lots
+        const upsertPayload = savedLots.map((l) => {
+          const item: any = {
+            project_id: l.project_id,
+            block_number: l.block_number,
+            lot_number: l.lot_number,
+            boundary_type: l.boundary_type,
+            availability_status: l.availability_status,
+            verified_area_sqm: l.verified_area_sqm,
+            price: l.price,
+            description: l.description,
+            coordinates: l.coordinates,
+            is_verified: l.is_verified,
+            updated_by: isValidUuid(userId) ? userId : null,
+          };
+          if (isValidUuid(l.plan_id)) {
+            item.plan_id = l.plan_id;
+          } else if (activePlan?.id && isValidUuid(activePlan.id)) {
+            item.plan_id = activePlan.id;
+          }
+          return item;
+        });
+
         const { data, error } = await supabaseAdmin
           .from('subdivision_lots')
-          .upsert(
-            savedLots.map((l) => ({
-              project_id: l.project_id,
-              plan_id: l.plan_id,
-              block_number: l.block_number,
-              lot_number: l.lot_number,
-              boundary_type: l.boundary_type,
-              availability_status: l.availability_status,
-              verified_area_sqm: l.verified_area_sqm,
-              price: l.price,
-              description: l.description,
-              coordinates: l.coordinates,
-              is_verified: l.is_verified,
-              updated_by: userId,
-            })),
-            { onConflict: 'project_id,block_number,lot_number' }
-          )
+          .upsert(upsertPayload, { onConflict: 'project_id,block_number,lot_number' })
           .select();
 
-        if (!error && data) {
+        if (error) {
+          logger.warn('[SubdivisionService] Supabase batchSaveDraftLots upsert warning:', error.message);
+        } else if (data) {
           this.memLots.set(projectId, data);
           return data;
         }
-      } catch (err) {
-        logger.warn('[SubdivisionService] Supabase batchSaveDraftLots fallback to memory:', err);
+      } catch (err: any) {
+        logger.warn('[SubdivisionService] Supabase batchSaveDraftLots fallback to memory:', err?.message || err);
       }
     }
 
@@ -518,12 +582,15 @@ export class SubdivisionService {
 
   async publishMapVersion(
     projectId: string,
-    planId: string,
+    planId?: string,
     notes?: string,
-    userId: string = 'b0000000-0000-0000-0000-000000000001'
+    userId: string = 'b0000000-0000-0000-0000-000000000001',
+    userRole?: string
   ): Promise<{ success: boolean; version?: SubdivisionMapVersion; validation: ValidationResult }> {
+    await this.verifyProjectOwnership(projectId, userId, userRole);
+
     const lots = await this.getDraftLots(projectId);
-    const plan = (await this.getActivePlan(projectId)) || {};
+    const plan = (await this.getActivePlan(projectId)) || ({} as any);
 
     // 1. Run Pre-Flight Validation
     const validation = subdivisionValidationService.validateDraft(lots);
@@ -539,10 +606,14 @@ export class SubdivisionService {
         ? Math.max(...existingVersions.map((v) => v.version_number)) + 1
         : 1;
 
+    const resolvedPlanId = (planId && planId !== 'default' && isValidUuid(planId))
+      ? planId
+      : (plan?.id && isValidUuid(plan.id) ? plan.id : null);
+
     const newVersion: SubdivisionMapVersion = {
       id: `ver-${Date.now()}`,
       project_id: projectId,
-      plan_id: planId,
+      plan_id: resolvedPlanId || plan?.id || 'sub-plan-001',
       version_number: nextVersionNumber,
       snapshot_data: {
         lots,
@@ -556,27 +627,39 @@ export class SubdivisionService {
 
     if (isSupabaseConfigured) {
       try {
+        const insertPayload: any = {
+          project_id: projectId,
+          version_number: nextVersionNumber,
+          snapshot_data: newVersion.snapshot_data,
+          notes: newVersion.notes,
+        };
+
+        if (resolvedPlanId) {
+          insertPayload.plan_id = resolvedPlanId;
+        } else if (plan?.id && isValidUuid(plan.id)) {
+          insertPayload.plan_id = plan.id;
+        }
+
+        if (isValidUuid(userId)) {
+          insertPayload.published_by = userId;
+        }
+
         const { data, error } = await supabaseAdmin
           .from('subdivision_map_versions')
-          .insert({
-            project_id: projectId,
-            plan_id: planId,
-            version_number: nextVersionNumber,
-            snapshot_data: newVersion.snapshot_data,
-            published_by: userId,
-            notes: newVersion.notes,
-          })
+          .insert(insertPayload)
           .select()
           .single();
 
-        if (!error && data) {
+        if (error) {
+          logger.warn('[SubdivisionService] Supabase publishMapVersion insert warning:', error.message);
+        } else if (data) {
           const versions = this.memVersions.get(projectId) || [];
           versions.unshift(data);
           this.memVersions.set(projectId, versions);
           return { success: true, version: data, validation };
         }
-      } catch (err) {
-        logger.warn('[SubdivisionService] Supabase publishMapVersion fallback to memory:', err);
+      } catch (err: any) {
+        logger.warn('[SubdivisionService] Supabase publishMapVersion fallback to memory:', err?.message || err);
       }
     }
 
@@ -611,8 +694,11 @@ export class SubdivisionService {
   async restoreVersion(
     projectId: string,
     versionNumber: number,
-    userId: string
+    userId: string,
+    userRole?: string
   ): Promise<{ success: boolean; restoredVersion: SubdivisionMapVersion; draftLots: SubdivisionLot[] }> {
+    await this.verifyProjectOwnership(projectId, userId, userRole);
+
     const versions = await this.listVersions(projectId);
     const target = versions.find((v) => v.version_number === versionNumber);
 
@@ -626,8 +712,17 @@ export class SubdivisionService {
       updated_at: new Date().toISOString(),
     }));
 
+    // Clean up draft lots in Supabase before restoring to prevent zombie / orphan lots
+    if (isSupabaseConfigured) {
+      try {
+        await supabaseAdmin.from('subdivision_lots').delete().eq('project_id', projectId);
+      } catch (err: any) {
+        logger.warn('[SubdivisionService] Error clearing existing draft lots before restore:', err?.message || err);
+      }
+    }
+
     // 2. Overwrite working draft in lots table
-    await this.batchSaveDraftLots(projectId, target.plan_id, restoredLots, userId);
+    await this.batchSaveDraftLots(projectId, target.plan_id, restoredLots, userId, userRole);
 
     // 3. Monotonically publish new version recording restored_from_version
     const nextVersionNumber = Math.max(...versions.map((v) => v.version_number)) + 1;
@@ -646,17 +741,23 @@ export class SubdivisionService {
 
     if (isSupabaseConfigured) {
       try {
-        await supabaseAdmin.from('subdivision_map_versions').insert({
+        const insertPayload: any = {
           project_id: projectId,
-          plan_id: target.plan_id,
           version_number: nextVersionNumber,
           snapshot_data: rollbackVersionRecord.snapshot_data,
-          published_by: userId,
           restored_from_version: versionNumber,
           notes: rollbackVersionRecord.notes,
-        });
-      } catch (err) {
-        logger.warn('[SubdivisionService] Supabase restoreVersion fallback:', err);
+        };
+        if (isValidUuid(target.plan_id)) {
+          insertPayload.plan_id = target.plan_id;
+        }
+        if (isValidUuid(userId)) {
+          insertPayload.published_by = userId;
+        }
+
+        await supabaseAdmin.from('subdivision_map_versions').insert(insertPayload);
+      } catch (err: any) {
+        logger.warn('[SubdivisionService] Supabase restoreVersion fallback:', err?.message || err);
       }
     }
 

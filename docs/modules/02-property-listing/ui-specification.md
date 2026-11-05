@@ -212,15 +212,17 @@ flowchart TD
 - **Role Access:** Broker, Admin
 
 #### 5.2.1 Visual Hierarchy & Tokens
-- **Wizard Progress Bar:** Sticky top navigation using `Tabs` / step breadcrumb indicators:
+- **Wizard Progress Header:** Seven horizontal numbered-circle step buttons, with `aria-current="step"` on the active control and native keyboard activation. Narrow screens scroll the step track horizontally; the page itself does not overflow.
   - Completed steps: Teal `#0F766E` with checkmark icon.
   - Active step: Teal ring with bold text `#1E293B`.
   - Upcoming steps: Muted Slate `#64748B` with outline border `#E2E8F0`.
-- **Form Surface:** White `#FFFFFF` card with 24px internal padding (`p-6 sm:p-8`), rounded-xl geometry, subtle shadow-xs.
+- **Form Surface:** Compact white card with 16px internal padding, 8px corners, and one subtle shadow. Parent-owned gaps separate groups by 16px; fields use 12px row gaps, 16px column gaps, and 8px label gaps.
+- **Control Density:** 44px below `md`, 40px desktop, and 44px touch areas on coarse pointers. Essential labels/values use 14px text. Family-specific fields retain their contracts and conversions. The shared cadastral map remains unchanged.
+- **Property Preview Exception:** The listing preview subtree, public preview, and media lightbox retain their original styling and behavior: 28px outer radius, 20px image radius, 16:11 cover ratio. Compact grid spacing may change available width, but does not restyle the card.
 - **Footer Navigation Bar:** Fixed/sticky bottom console with:
-  - "Save Draft" (`Button` variant `outline`)
-  - "Previous Step" (`Button` variant `ghost`)
-  - "Next Step" / "Publish Listing" (`Button` variant `coral` with Slate text `#1E293B` for review step; variant `default` for intermediate steps).
+  - 12px padding, 16px parent-owned form separation, wrapping/stacked actions, and no extra top margin or negative horizontal margins.
+  - Existing Back, Cancel & Exit, Next Section, Return to Review, Save Draft, and role-specific publish/update/approval actions retain their labels, variants, and handlers.
+- **Verification:** [2026-11-05 compact wizard record](./2026-11-05-listing-wizard-compact-spacing-verification.md) reports automated, source-preservation, and mocked browser checks, including their limits. This does not mark unrelated module refactoring as verified.
 
 #### 5.2.2 7-Step Architecture & shadcn/ui Refactoring (FR-PL-022)
 
@@ -236,7 +238,7 @@ Step 7: Review & Publish (Audit summary, draft vs publication requirements check
 
 | Studio Component / Section | Target shadcn/ui Primitive | Implementation Path | Variant / Configuration |
 | :--- | :--- | :--- | :--- |
-| Step progress header | `Tabs`, `TabsList`, `TabsTrigger` | `frontend/src/components/ui/tabs.jsx` | 7-step accessible navigation tablist with ARIA state |
+| Step progress header | Native step buttons | `frontend/src/pages/portals/broker/BrokerCreateListings.jsx` | Seven named buttons with active-step semantics and horizontal overflow inside the track |
 | Text inputs & numbers | `Input` | `frontend/src/components/ui/input.jsx` | `h-[44px]`, numeric formatting with `font-mono` prefix `₱` |
 | Textareas & descriptions | `Textarea` | `frontend/src/components/ui/textarea.jsx` | Min-height 120px, character counter at bottom right |
 | Category & Type Selector | Option Cards Grid + `Select` fallback | `frontend/src/components/portals/broker/BrokerCreateListings.jsx` | 7 interactive option cards (`House & Lot`, `Condominium`, `Townhouse`, `Penthouse`, `Estate`, `Vacant Land / Lot`, `Commercial`) with Lucide icons, badges, and descriptions |
@@ -592,6 +594,7 @@ import StatusBadge from '@/components/dashboard/StatusBadge';
 
 | Date | Affected Screen / Requirements | Change Description | Record Reference |
 | :--- | :--- | :--- | :--- |
+| `2026-11-05` | `M02-SCR-02` | Applied compact spacing across all seven wizard steps and private type-specific fields; retained property preview and form behavior | [Compact wizard verification](./2026-11-05-listing-wizard-compact-spacing-verification.md) |
 | `2026-10-27` | All Module 02 Functions | Initial ISO/IEC/IEEE functional specification delivered | `2026-10-27-property-listings-functions-specification.md` |
 | `2026-10-28` | `M02-SCR-02`, `M02-SCR-03` | Decoupled sales agent assignment from intake; relocated assignment to Agent Management | `2026-10-28-property-input-and-agent-assignment-scope-redefinition.md` |
 | `2026-10-28` | All Module 02 Screens | Established comprehensive UI specification and shadcn/ui refactoring blueprint adhering to `design.md` | `ui-specification.md` (this document) |

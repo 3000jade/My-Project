@@ -29,6 +29,19 @@ import driveService from '../../../services/driveService';
 import subdivisionService from '../../../services/subdivisionService';
 import SubdivisionCreateModal from '../../../components/ui/map/SubdivisionCreateModal';
 import { CadastralLocationPicker } from '../../../components/ui/map';
+import {
+  isLandFamily,
+  isStrataFamily,
+  isDwellingFamily,
+  getAssetFamily,
+} from './components/property-form/propertyTypeConfig';
+import SubdivisionLocationFields from './components/property-form/SubdivisionLocationFields';
+import CondoLocationFields from './components/property-form/CondoLocationFields';
+import SubdivisionLotSpecs from './components/property-form/SubdivisionLotSpecs';
+import CondominiumSpecs from './components/property-form/CondominiumSpecs';
+import HouseAndLotSpecs from './components/property-form/HouseAndLotSpecs';
+import CategoryAmenitiesPicker from './components/property-form/CategoryAmenitiesPicker';
+import { validatePropertyForm } from './components/property-form/typeAwareValidator';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -137,7 +150,7 @@ function SearchableSelect({
   return (
     <div className={`relative ${className}`} ref={containerRef}>
       {label && (
-        <label htmlFor={id} className="text-xs font-semibold text-[#1E293B] block mb-1.5">
+        <label htmlFor={id} className="text-sm font-semibold text-[#1E293B] block mb-2">
           {label} {required && <span className="text-[#FF6B6B]">*</span>}
         </label>
       )}
@@ -149,7 +162,7 @@ function SearchableSelect({
             setTimeout(() => inputRef.current?.focus(), 50);
           }
         }}
-        className={`w-full h-11 px-3 bg-white border rounded-lg text-xs font-medium flex items-center justify-between gap-2 transition-all cursor-pointer ${
+        className={`w-full h-11 md:h-10 [@media(pointer:coarse)]:h-11 px-3 bg-white border rounded-md text-sm font-medium flex items-center justify-between gap-2 transition-all cursor-pointer ${
           disabled 
             ? 'bg-slate-50 text-slate-400 border-[#E2E8F0] cursor-not-allowed'
             : isOpen 
@@ -166,7 +179,7 @@ function SearchableSelect({
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder={selectedOption ? selectedOption.label : placeholder}
-              className="w-full bg-transparent outline-none text-xs text-[#1E293B] placeholder-slate-400 font-medium"
+              className="min-w-0 w-full bg-transparent outline-none text-sm text-[#1E293B] placeholder-slate-400 font-medium"
               onClick={(e) => e.stopPropagation()}
               onKeyDown={(e) => {
                 if (e.key === 'Escape') setIsOpen(false);
@@ -199,7 +212,7 @@ function SearchableSelect({
       </div>
 
       {isOpen && !disabled && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-[#CBD5E1] rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto divide-y divide-slate-100 animate-in fade-in zoom-in-95 duration-100">
+        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-[#CBD5E1] rounded-md shadow-lg z-50 max-h-60 overflow-y-auto divide-y divide-slate-100 animate-in fade-in zoom-in-95 duration-100">
           {filteredOptions.length > 0 ? (
             filteredOptions.map((opt) => {
               const isSelected = String(opt.value) === String(value);
@@ -406,7 +419,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
   const [isSubdivisionModalOpen, setIsSubdivisionModalOpen] = useState(false);
   const [availableLots, setAvailableLots] = useState([]);
   const [isLoadingLots, setIsLoadingLots] = useState(false);
-  const [isCustomSubdivisionMode, setIsCustomSubdivisionMode] = useState(false);
+  const [isCustomSubdivisionMode, setIsCustomSubdivisionMode] = useState(true);
 
   // =========================================================================
   // Section 6: Media & Documents Dedicated States
@@ -438,6 +451,17 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
 
   // 7 Canonical Form Sections per PROPERTY_LISTING_FORM.md
   const [currentStep, setCurrentStep] = useState(1);
+  const stepTrackRef = useRef(null);
+
+  useEffect(() => {
+    const track = stepTrackRef.current;
+    const activeStep = track?.querySelector('[aria-current="step"]');
+    if (!activeStep) return;
+    const viewport = track.getBoundingClientRect();
+    const active = activeStep.getBoundingClientRect();
+    if (active.left < viewport.left) track.scrollLeft += active.left - viewport.left;
+    else if (active.right > viewport.right) track.scrollLeft += active.right - viewport.right;
+  }, [currentStep]);
   const [isGeocoding, setIsGeocoding] = useState(false);
 
   // PSGC Geographic Reference States
@@ -1707,70 +1731,17 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
     ...mediaDocuments
   ].some(item => Boolean(item.error));
 
-  // Validation audit for Step 7: Distinguish database constraints (Draft requirements) from full publication requirements
-  const draftValidationErrors = [];
-  if (!formData.title || formData.title.trim().length === 0) {
-    draftValidationErrors.push({ field: 'Title', step: 1, message: 'Property title is required by the database schema.' });
-  }
-  if (!formData.price || Number(formData.price) <= 0) {
-    draftValidationErrors.push({ field: 'Price / Rent', step: 4, message: 'Valid positive price/rent amount is required by the database schema.' });
-  }
-  if (!formData.address || formData.address.trim().length === 0) {
-    draftValidationErrors.push({ field: 'Street Address', step: 2, message: 'Street address is required by the database schema.' });
-  }
-  if (!formData.location && !formData.city) {
-    draftValidationErrors.push({ field: 'City / Municipality', step: 2, message: 'City / Municipality is required by the database schema.' });
-  }
-  if (!formData.property_type) {
-    draftValidationErrors.push({ field: 'Property Type', step: 1, message: 'Property type classification is required.' });
-  }
-
-  const finalValidationErrors = [...draftValidationErrors];
-  if (formData.title && formData.title.trim().length < 3) {
-    finalValidationErrors.push({ field: 'Title', step: 1, message: 'Provide a title with at least 3 characters.' });
-  }
-  if (!formData.region && !formData.region_psgc_code) {
-    finalValidationErrors.push({ field: 'Region', step: 2, message: 'Select a region.' });
-  }
-  const isProvRequired = formData.region_psgc_code 
-    ? phLocationService.isProvinceApplicable(formData.region_psgc_code) 
-    : false;
-  if (isProvRequired && !formData.province && !formData.state_or_province) {
-    finalValidationErrors.push({ field: 'Province', step: 2, message: 'Select a province.' });
-  }
-  if (!formData.city && !formData.location) {
-    finalValidationErrors.push({ field: 'City / Municipality', step: 2, message: 'Select a city or municipality.' });
-  }
-  if (!formData.barangay) {
-    finalValidationErrors.push({ field: 'Barangay', step: 2, message: 'Select a barangay.' });
-  }
-  if (!formData.currency) {
-    finalValidationErrors.push({ field: 'Currency', step: 4, message: 'Select currency.' });
-  }
-  if (formData.transaction_type === 'For Rent' && !formData.rent_frequency) {
-    finalValidationErrors.push({ field: 'Rent Frequency', step: 4, message: 'Select rent frequency.' });
-  }
-  if (!formData.latitude || !formData.longitude) {
-    finalValidationErrors.push({ field: 'Confirm map location', step: 2, message: 'Confirm map location pin.' });
-  }
-  if (mediaPhotos.length === 0) {
-    finalValidationErrors.push({ field: 'Add a cover photo', step: 6, message: 'Add at least 1 cover photo.' });
-  }
-
-  const validationSummary = {
-    hasTitle: Boolean(formData.title && formData.title.trim().length >= 3),
-    hasPrice: Boolean(formData.price && Number(formData.price) > 0),
-    hasAddress: Boolean(formData.address && formData.address.trim().length > 0),
-    hasRegion: Boolean(formData.region || formData.region_psgc_code),
-    hasProvince: isProvRequired ? Boolean(formData.province || formData.state_or_province) : true,
-    hasCity: Boolean((formData.location || formData.city) && (formData.location || formData.city).trim().length > 0),
-    hasBarangay: Boolean(formData.barangay && formData.barangay.trim().length > 0),
-    hasCoordinates: Boolean(formData.latitude && formData.longitude),
-    hasMedia: (mediaPhotos.length + mediaFloorPlans.length + mediaVideos.length + mediaVirtualTours.length + mediaDocuments.length) > 0,
-    hasCoverPhoto: mediaPhotos.length > 0,
-    draftErrors: draftValidationErrors,
-    finalErrors: finalValidationErrors,
-  };
+  const validationSummary = validatePropertyForm({
+    formData,
+    mediaPhotos,
+    mediaFloorPlans,
+    mediaVideos,
+    mediaVirtualTours,
+    mediaDocuments,
+    isProvinceApplicable: phLocationService.isProvinceApplicable,
+  });
+  const draftValidationErrors = validationSummary.draftErrors;
+  const finalValidationErrors = validationSummary.finalErrors;
 
   // Submit action handler supporting explicit Draft vs Publish vs Review workflows
   const executeSubmission = async (targetStandardStatus = 'Active') => {
@@ -1946,16 +1917,16 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
     );
   }
 
-  const isCondo = ['condominium', 'Condominium', 'Penthouse', 'Apartment', 'apartment'].includes(formData.property_type);
-  const isLand = ['residentialLot', 'Subdivision Lot', 'Lot / Land', 'Vacant Land / Lot', 'Land'].includes(formData.property_type);
-  const isHouseAndLot = ['houseAndLot', 'House and Lot', 'House & Lot', 'Townhouse', 'townhouse', 'Villa', 'villa'].includes(formData.property_type);
+    const isCondo = isStrataFamily(formData.property_type);
+  const isLand = isLandFamily(formData.property_type);
+  const isHouseAndLot = isDwellingFamily(formData.property_type);
 
   return (
-    <div className={`space-y-6 max-w-[1440px] mx-auto ${isDrawer ? 'pb-6' : 'pb-16'}`}>
+    <div className={`mx-auto w-full max-w-7xl flex flex-col gap-4 p-4 md:p-6 ${isDrawer ? 'pb-6' : 'pb-16'}`}>
       {!isDrawer && (
         <PageHeader
           title={isEditing ? "Edit Property Listing" : "Add Property"}
-          className="mb-6"
+          className="mb-0!"
           breadcrumbs={[
             { label: 'Properties', to: '/broker/properties' },
             { label: isEditing ? 'Edit Listing' : 'New Listing' }
@@ -1973,10 +1944,10 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
       )}
 
       {/* 7-Step Navigation Stepper Header */}
-      <Card data-testid="broker-card" className="bg-white dark:bg-slate-900 border-[#E2E8F0] dark:border-slate-800 shadow-xs mb-6 overflow-hidden">
-        <div className="p-4 sm:p-5 flex flex-col gap-4">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
+      <Card data-testid="broker-card" className="min-w-0 bg-white dark:bg-slate-900 border-[#E2E8F0] dark:border-slate-800 shadow-xs rounded-md overflow-hidden">
+        <div className="p-4 flex flex-col gap-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
               <Badge variant="default" className="font-bold">
                 Step {currentStep} of 7
               </Badge>
@@ -1989,21 +1960,24 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
             </div>
           </div>
 
-          <div className="overflow-x-auto custom-scrollbar pt-1 pb-1">
+          <div ref={stepTrackRef} className="overflow-x-auto custom-scrollbar py-1">
             <div className="flex items-center justify-between min-w-[720px] relative">
-              <div className="absolute top-4 left-8 right-8 h-[2px] bg-[#E2E8F0] dark:bg-slate-800 -z-0" />
+              <div className="absolute top-[22px] left-8 right-8 h-[2px] bg-[#E2E8F0] dark:bg-slate-800 -z-0" />
 
               {stepTitles.map((title, idx) => {
                 const stepNum = idx + 1;
                 const isActive = currentStep === stepNum;
                 const isCompleted = currentStep > stepNum;
                 return (
-                  <div 
+                  <button
                     key={stepNum} 
-                    className="flex flex-col items-center flex-1 cursor-pointer transition-all hover:opacity-95 relative z-10"
+                    type="button"
+                    aria-label={`Step ${stepNum}: ${title}`}
+                    aria-current={isActive ? 'step' : undefined}
+                    className="flex min-h-11 flex-col items-center flex-1 rounded-md p-1 cursor-pointer transition-colors hover:opacity-95 relative z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#0F766E]"
                     onClick={() => setCurrentStep(stepNum)}
                   >
-                    <div className={`size-9 rounded-full flex items-center justify-center text-xs font-bold mb-2 transition-all shadow-2xs ${
+                    <span className={`size-9 rounded-full flex items-center justify-center text-xs font-bold mb-2 transition-all shadow-2xs ${
                       isActive 
                         ? 'bg-[#0F766E] text-white ring-4 ring-[#0F766E]/15 border border-[#0F766E]' 
                         : isCompleted 
@@ -2011,13 +1985,13 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                         : 'bg-white dark:bg-slate-900 text-slate-500 border border-[#E2E8F0] dark:border-slate-700 hover:border-slate-400'
                     }`}>
                       {isCompleted ? <Check className="size-4 stroke-[2.5]" /> : stepNum}
-                    </div>
+                    </span>
                     <span className={`text-xs text-center transition-colors px-1 ${
                       isActive ? 'text-[#0F766E] dark:text-teal-400 font-bold' : isCompleted ? 'text-[#1E293B] dark:text-slate-200 font-medium' : 'text-[#64748B] dark:text-slate-400'
                     }`}>
                       {title}
                     </span>
-                  </div>
+                  </button>
                 );
               })}
             </div>
@@ -2025,22 +1999,22 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
         </div>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 items-start gap-4">
         {/* Left Form Column (8 Cols) */}
-        <div className="lg:col-span-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="min-w-0 lg:col-span-8 flex flex-col gap-4">
+          <form onSubmit={handleSubmit} className="flex min-w-0 flex-col gap-4">
 
         {/* ========================================================================= */}
         {/* SECTION 1: BASIC PROPERTY INFORMATION */}
         {/* ========================================================================= */}
         {currentStep === 1 && (
-          <div data-testid="broker-card" className="bg-white rounded-lg border border-[#E2E8F0] p-6 sm:p-8 shadow-xs space-y-6 animate-in fade-in slide-in-from-bottom-2">
-            <div className="pb-3 border-b border-[#E2E8F0] flex items-center justify-between">
-              <h3 className="text-base font-bold text-[#1E293B] flex items-center gap-2">
+          <div data-testid="broker-card" className="bg-white rounded-md border border-[#E2E8F0] p-4 shadow-xs flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2">
+            <div className="pb-3 border-b border-[#E2E8F0] flex flex-wrap items-center justify-between gap-2">
+              <h3 className="text-base font-semibold text-[#1E293B] flex items-center gap-2">
                 <FileText className="w-4 h-4 text-[#0F766E]" />
                 <span>Section 1: Listing Overview</span>
               </h3>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="outline" className="text-xs font-semibold text-[#0F766E] border-teal-200 bg-teal-50">
                   Type: {(() => {
                     const match = COMMON_PROPERTY_TYPES.find(c => c.id === formData.property_type || c.name === formData.property_type);
@@ -2056,10 +2030,10 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
               </div>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-1.5 md:col-span-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
+              <div className="flex flex-col gap-2 md:col-span-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <label className="text-sm font-semibold text-[#1E293B]">
                     Listing Title <span className="text-[#FF6B6B]">*</span>
                   </label>
                   <span className="text-[11px] text-[#64748B]">
@@ -2073,14 +2047,14 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                   placeholder="e.g. Modernist Cantilever Estate at Ayala Alabang"
                   value={formData.title}
                   onChange={e => { setIsDirty(true); setFormData({ ...formData, title: e.target.value }); }}
-                  className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none transition-colors shadow-2xs"
+                  className="w-full px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-md text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none transition-colors shadow-none h-11 md:h-10 [@media(pointer:coarse)]:h-11"
                 />
               </div>
 
               {/* Tagline / Marketing Headline */}
-              <div className="space-y-1.5 md:col-span-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
+              <div className="flex flex-col gap-2 md:col-span-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <label className="text-sm font-semibold text-[#1E293B]">
                     Headline / Marketing Tagline
                   </label>
                   <span className="text-[11px] text-[#64748B]">
@@ -2093,22 +2067,22 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                   placeholder="e.g. Elevated residential lot overlooking Laguna de Bay"
                   value={formData.tagline || ''}
                   onChange={e => { setIsDirty(true); setFormData({ ...formData, tagline: e.target.value }); }}
-                  className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none transition-colors shadow-2xs"
+                  className="w-full px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-md text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none transition-colors shadow-none h-11 md:h-10 [@media(pointer:coarse)]:h-11"
                 />
               </div>
 
               {/* Transaction Purpose */}
-              <div className="space-y-1.5 md:col-span-2">
-                <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B] block h-5">
+              <div className="flex flex-col gap-2 md:col-span-2">
+                <label className="text-sm font-semibold text-[#1E293B] block">
                   Transaction Purpose <span className="text-[#FF6B6B]">*</span>
                 </label>
-                <div className="flex bg-[#F8FAFC] p-1 rounded-lg border border-[#CBD5E1] h-11 items-center shadow-2xs max-w-md">
+                <div className="flex bg-[#F8FAFC] rounded-md items-center max-w-xs">
                   {['For Sale', 'For Rent'].map(type => (
                     <button
                       key={type}
                       type="button"
                       onClick={() => { setIsDirty(true); setFormData({ ...formData, transaction_type: type }); }}
-                      className={`flex-1 h-9 text-xs font-semibold rounded-md transition-all cursor-pointer ${
+                      className={`flex-1 h-11 md:h-10 [@media(pointer:coarse)]:h-11 text-sm font-semibold rounded-md transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0F766E] ${
                         formData.transaction_type === type
                           ? 'bg-white text-[#0F766E] shadow-sm font-bold border border-[#0F766E]/20'
                           : 'text-[#64748B] hover:text-[#1E293B]'
@@ -2121,15 +2095,15 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
               </div>
 
               {/* Merged Property Status & Lifecycle Overview */}
-              <div className="space-y-3 md:col-span-2 p-4 bg-slate-50/80 rounded-xl border border-slate-200/80" data-testid="listing-overview-status-group">
-                <div className="flex items-center justify-between pb-2 border-b border-slate-200/60">
-                  <div className="flex items-center gap-2">
+              <div className="flex min-w-0 flex-col gap-3 md:col-span-2 p-3 bg-slate-50/80 rounded-md border border-slate-200/80" data-testid="listing-overview-status-group">
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-200/60">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span className="material-symbols-outlined text-[18px] text-[#0F766E]">verified</span>
                     <span className="text-xs font-bold uppercase tracking-wider text-[#1E293B]">
                       Property Status & Lifecycle
                     </span>
                   </div>
-                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${
+                  <span className={`inline-flex max-w-full items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${
                     formData.status === 'AVAILABLE' || formData.standard_status === 'Active'
                       ? 'bg-teal-50 text-[#0F766E] border-teal-200'
                       : formData.status === 'RESERVED' || formData.standard_status === 'Active Under Contract'
@@ -2149,10 +2123,10 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3 pt-1">
                   {/* 1. Transaction / Inventory Status */}
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-600 block">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-sm font-semibold text-slate-600 block">
                       Inventory Status <span className="text-[#FF6B6B]">*</span>
                     </label>
                     <select
@@ -2183,7 +2157,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                           is_published: nextPublished
                         });
                       }}
-                      className="w-full h-10 px-3 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-xs font-semibold text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none cursor-pointer shadow-2xs transition-colors"
+                      className="w-full px-3 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-md text-sm font-semibold text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none cursor-pointer shadow-none transition-colors h-11 md:h-10 [@media(pointer:coarse)]:h-11"
                     >
                       <option value="AVAILABLE">AVAILABLE (Active Inventory)</option>
                       <option value="RESERVED">RESERVED (Under Contract)</option>
@@ -2193,8 +2167,8 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                   </div>
 
                   {/* 2. RESO Standard Status / Listing Publication */}
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-600 block">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-sm font-semibold text-slate-600 block">
                       Listing Publication Status
                     </label>
                     <select
@@ -2225,7 +2199,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                           is_published: nextPublished
                         });
                       }}
-                      className="w-full h-10 px-3 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-xs font-semibold text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none cursor-pointer shadow-2xs transition-colors"
+                      className="w-full px-3 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-md text-sm font-semibold text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none cursor-pointer shadow-none transition-colors h-11 md:h-10 [@media(pointer:coarse)]:h-11"
                     >
                       <option value="Active">Active (Live on Market)</option>
                       <option value="Active Under Contract">Active Under Contract</option>
@@ -2234,33 +2208,13 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                       <option value="Closed">Closed (Completed)</option>
                     </select>
                   </div>
-
-                  {/* 3. Title Ownership Status */}
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-600 block">
-                      Property Title Status
-                    </label>
-                    <select
-                      data-testid="property-title-status-select"
-                      value={formData.title_status || 'clean'}
-                      onChange={e => {
-                        setIsDirty(true);
-                        setFormData({ ...formData, title_status: e.target.value });
-                      }}
-                      className="w-full h-10 px-3 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-xs font-semibold text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none cursor-pointer shadow-2xs transition-colors"
-                    >
-                      <option value="clean">Clean Title (TCT/CCT)</option>
-                      <option value="mortgaged">Under Bank Mortgage</option>
-                      <option value="tax_declaration">Tax Declaration Only</option>
-                    </select>
-                  </div>
                 </div>
               </div>
 
               {/* Development Condition Selector */}
-              <div className="space-y-1.5 md:col-span-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
+              <div className="flex flex-col gap-2 md:col-span-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <label className="text-sm font-semibold text-[#1E293B]">
                     Development Stage & Condition
                   </label>
                 </div>
@@ -2280,7 +2234,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                           setIsDirty(true);
                           setFormData({ ...formData, development_condition: cond, property_condition: cond });
                         }}
-                        className={`px-3.5 py-2 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
+                        className={`min-h-11 md:min-h-10 [@media(pointer:coarse)]:min-h-11 px-3 py-2 text-sm whitespace-normal font-semibold rounded-md border transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0F766E] ${
                           isSelected
                             ? 'bg-[#0F766E] text-white border-[#0F766E] shadow-xs'
                             : 'bg-white hover:bg-slate-50 border-[#CBD5E1] text-[#1E293B]'
@@ -2293,11 +2247,11 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                 </div>
               </div>
 
-              <div className="space-y-1.5 md:col-span-2">
-                <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B] block h-5">
+              <div className="flex flex-col gap-2 md:col-span-2">
+                <label className="text-sm font-semibold text-[#1E293B] block">
                   Property Description <span className="text-[#FF6B6B]">*</span>
                 </label>
-                <div className="bg-white rounded-lg border border-[#CBD5E1] hover:border-slate-400 overflow-hidden shadow-2xs transition-colors focus-within:border-[#0F766E] focus-within:ring-1 focus-within:ring-[#0F766E]">
+                <div className="bg-white rounded-md border border-[#CBD5E1] hover:border-slate-400 overflow-hidden shadow-2xs transition-colors focus-within:border-[#0F766E] focus-within:ring-1 focus-within:ring-[#0F766E]">
                   <ReactQuill
                     theme="snow"
                     modules={QUILL_MODULES}
@@ -2316,27 +2270,27 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
         {/* SECTION 2: PROPERTY LOCATION */}
         {/* ========================================================================= */}
         {currentStep === 2 && (
-          <div data-testid="broker-card" className="bg-white rounded-lg border border-[#E2E8F0] p-6 sm:p-8 shadow-xs space-y-6 animate-in fade-in slide-in-from-bottom-2">
+          <div data-testid="broker-card" className="bg-white rounded-md border border-[#E2E8F0] p-4 shadow-xs flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2">
             
             {/* Dynamic Notice Banner for Cascading Clears */}
             {locationNotice && (
-              <div className="p-3.5 bg-teal-50 border border-teal-200 rounded-lg text-xs text-[#0F766E] flex items-start gap-2.5 animate-in fade-in slide-in-from-top-1">
+              <div className="p-3 bg-teal-50 border border-teal-200 rounded-md text-xs text-[#0F766E] flex items-start gap-2.5 animate-in fade-in slide-in-from-top-1">
                 <span className="material-symbols-outlined text-[18px] shrink-0 mt-0.5">info</span>
                 <span className="leading-relaxed font-medium">{locationNotice.message}</span>
               </div>
             )}
 
             {/* 1. Map Location */}
-            <div className="space-y-4">
+            <div className="flex flex-col gap-3">
               <div className="pb-2 border-b border-[#E2E8F0] flex items-center justify-between">
-                <h3 className="text-sm font-bold text-[#1E293B] flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-[#1E293B] flex items-center gap-2">
                   <span className="material-symbols-outlined text-[#0F766E] text-[18px]">pin_drop</span>
                   <span>Map Location</span>
                 </h3>
               </div>
 
               {/* Predictive Search & URL Paste Strip */}
-              <div className="p-4 bg-[#F8FAFC] rounded-lg border border-[#E2E8F0] space-y-3 relative z-30">
+              <div className="p-4 bg-[#F8FAFC] rounded-md border border-[#E2E8F0] flex flex-col gap-3 relative z-30">
                 <div className="flex flex-col sm:flex-row gap-2 relative z-30" ref={mapSearchContainerRef}>
                   <div className="relative flex-1 z-30">
                     <span className="material-symbols-outlined absolute left-3 top-3 text-slate-400 text-[18px]">search</span>
@@ -2346,7 +2300,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                       value={mapSearchQuery}
                       onChange={e => setMapSearchQuery(e.target.value)}
                       onKeyDown={e => { if (e.key === 'Enter') handleGeocode(e); }}
-                      className="w-full h-11 pl-10 pr-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] shadow-2xs transition-colors"
+                      className="w-full pl-10 pr-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-md text-sm text-[#1E293B] outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] shadow-none transition-colors h-11 md:h-10 [@media(pointer:coarse)]:h-11"
                     />
                     {isLoadingSuggestions && (
                       <div className="absolute right-3 top-3.5">
@@ -2354,7 +2308,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                       </div>
                     )}
                     {showAddressSuggestions && addressSuggestions.length > 0 && (
-                      <div className="absolute top-12 left-0 right-0 bg-white border border-[#CBD5E1] rounded-lg shadow-xl z-50 max-h-56 overflow-y-auto divide-y divide-slate-100 animate-in fade-in zoom-in-95 duration-100">
+                      <div className="absolute top-full mt-1 left-0 right-0 bg-white border border-[#CBD5E1] rounded-md shadow-xl z-50 max-h-56 overflow-y-auto divide-y divide-slate-100 animate-in fade-in zoom-in-95 duration-100">
                         {addressSuggestions.map((item, idx) => (
                           <div
                             key={item.placeId || idx}
@@ -2381,20 +2335,20 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                     type="button"
                     onClick={handleGeocode}
                     disabled={isGeocoding}
-                    className="h-11 px-5 bg-[#0F766E] text-white rounded-lg text-xs font-semibold hover:bg-[#115E59] transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs shrink-0"
+                    className="h-auto min-h-11 md:min-h-10 [@media(pointer:coarse)]:min-h-11 whitespace-normal py-2 px-5 bg-[#0F766E] text-white rounded-md text-xs font-semibold hover:bg-[#115E59] transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs shrink-0"
                   >
                     {isGeocoding ? <span className="material-symbols-outlined text-[16px] animate-spin">sync</span> : <span className="material-symbols-outlined text-[16px]">travel_explore</span>}
                     Locate
                   </button>
                 </div>
 
-                <div className="flex items-center gap-2 pt-1 border-t border-[#E2E8F0] text-xs text-[#64748B]">
-                  <span className="whitespace-nowrap">Or paste Google Maps Pin URL:</span>
+                <div className="flex min-w-0 flex-col gap-2 pt-1 border-t border-[#E2E8F0] text-xs text-[#64748B] md:flex-row md:items-center">
+                  <span className="shrink-0">Or paste Google Maps Pin URL:</span>
                   <input
                     type="text"
                     placeholder="https://maps.app.goo.gl/... or @14.55,121.05"
                     onChange={handleGoogleMapsUrlPaste}
-                    className="flex-1 h-8 px-3 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-md text-xs text-[#1E293B] outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] transition-colors"
+                    className="min-w-0 flex-none md:flex-1 px-3 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-md text-sm text-[#1E293B] outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] transition-colors h-11 md:h-10 [@media(pointer:coarse)]:h-11"
                   />
                 </div>
               </div>
@@ -2417,7 +2371,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                 className="w-full"
               />
 
-              <div className="flex items-center justify-between px-3 py-2 bg-teal-50/70 border border-teal-200/80 rounded-lg text-xs">
+              <div className="flex items-center justify-between px-3 py-2 bg-teal-50/70 border border-teal-200/80 rounded-md text-xs">
                 <span className="text-teal-950 font-medium">Mapping multiple subdivided lots or an entire phase?</span>
                 <Link
                   to="/broker/properties/studio"
@@ -2429,7 +2383,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
               </div>
 
               {/* Coordinates: Latitude & Longitude Inputs */}
-              <div className="p-3.5 bg-slate-50 border border-[#E2E8F0] rounded-lg">
+              <div className="p-3 bg-slate-50 border border-[#E2E8F0] rounded-md">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-semibold text-[#1E293B] flex items-center gap-1.5">
                     <span className="material-symbols-outlined text-[#0F766E] text-[15px]">my_location</span>
@@ -2440,8 +2394,8 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                   </span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label htmlFor="geo-latitude" className="text-[11px] font-medium text-[#64748B] block">
+                  <div className="flex flex-col gap-1">
+                    <label htmlFor="geo-latitude" className="text-sm font-medium text-[#64748B] block">
                       Latitude
                     </label>
                     <div className="relative">
@@ -2454,12 +2408,12 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                           setIsDirty(true);
                           setFormData(prev => ({ ...prev, latitude: e.target.value }));
                         }}
-                        className="w-full h-9 px-3 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-md text-xs font-mono text-[#1E293B] outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] transition-colors"
+                        className="w-full px-3 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-md text-sm font-mono text-[#1E293B] outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] transition-colors h-11 md:h-10 [@media(pointer:coarse)]:h-11"
                       />
                     </div>
                   </div>
-                  <div className="space-y-1">
-                    <label htmlFor="geo-longitude" className="text-[11px] font-medium text-[#64748B] block">
+                  <div className="flex flex-col gap-1">
+                    <label htmlFor="geo-longitude" className="text-sm font-medium text-[#64748B] block">
                       Longitude
                     </label>
                     <div className="relative">
@@ -2472,7 +2426,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                           setIsDirty(true);
                           setFormData(prev => ({ ...prev, longitude: e.target.value }));
                         }}
-                        className="w-full h-9 px-3 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-md text-xs font-mono text-[#1E293B] outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] transition-colors"
+                        className="w-full px-3 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-md text-sm font-mono text-[#1E293B] outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] transition-colors h-11 md:h-10 [@media(pointer:coarse)]:h-11"
                       />
                     </div>
                   </div>
@@ -2481,15 +2435,15 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
             </div>
 
             {/* 2. Area */}
-            <div className="p-5 bg-white border border-[#CBD5E1] rounded-lg shadow-2xs space-y-4">
+            <div className="flex flex-col gap-3">
               <div className="pb-2 border-b border-slate-100">
-                <h4 className="text-xs font-bold text-[#0F766E] uppercase tracking-wider flex items-center gap-1.5">
+                <h4 className="text-sm font-semibold text-[#0F766E] flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-[16px]">map</span>
                   <span>Area</span>
                 </h4>
               </div>
 
-              <div className="space-y-4">
+              <div className="flex flex-col gap-3">
                 {/* First Row: Region | Province */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Region */}
@@ -2559,20 +2513,20 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
             </div>
 
             {/* 3. Street Address */}
-            <div className="p-5 bg-white border border-[#CBD5E1] rounded-lg shadow-2xs space-y-4">
+            <div className="flex flex-col gap-3">
               <div className="pb-2 border-b border-slate-100">
-                <h4 className="text-xs font-bold text-[#0F766E] uppercase tracking-wider flex items-center gap-1.5">
+                <h4 className="text-sm font-semibold text-[#0F766E] flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-[16px]">home</span>
                   <span>Street Address</span>
                 </h4>
               </div>
 
-              <div className="space-y-4">
+              <div className="flex flex-col gap-3">
                 {/* First Row: House / Unit / Street (more width) | ZIP Code */}
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
                   {/* House / Unit / Street */}
-                  <div className="space-y-1.5 md:col-span-8">
-                    <label htmlFor="street-address-input" className="text-xs font-semibold text-[#1E293B] block">
+                  <div className="flex flex-col gap-2 md:col-span-8">
+                    <label htmlFor="street-address-input" className="text-sm font-semibold text-[#1E293B] block">
                       House / Unit / Street <span className="text-[#FF6B6B]">*</span>
                     </label>
                     <input
@@ -2582,13 +2536,13 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                       placeholder="e.g. 142 Acacia Avenue, Phase 2"
                       value={formData.address}
                       onChange={e => { setIsDirty(true); setFormData({ ...formData, address: e.target.value }); }}
-                      className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
+                      className="w-full px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-md text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-none transition-colors h-11 md:h-10 [@media(pointer:coarse)]:h-11"
                     />
                   </div>
 
                   {/* ZIP Code */}
-                  <div className="space-y-1.5 md:col-span-4">
-                    <label htmlFor="zip-code-input" className="text-xs font-semibold text-[#1E293B] block">
+                  <div className="flex flex-col gap-2 md:col-span-4">
+                    <label htmlFor="zip-code-input" className="text-sm font-semibold text-[#1E293B] block">
                       ZIP Code
                     </label>
                     <input
@@ -2598,7 +2552,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                       maxLength={10}
                       value={formData.postal_code}
                       onChange={e => { setIsDirty(true); setFormData({ ...formData, postal_code: e.target.value }); }}
-                      className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm font-mono text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
+                      className="w-full px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-md text-sm font-mono text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-none transition-colors h-11 md:h-10 [@media(pointer:coarse)]:h-11"
                     />
 
                     {/* Suggestions */}
@@ -2629,202 +2583,25 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
 
                 {/* Tailored Address Branching: Condo vs Subdivision */}
                 {isCondo ? (
-                  <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                    <div className="space-y-1.5 md:col-span-6">
-                      <label htmlFor="building-name-input" className="text-xs font-semibold text-[#1E293B] block">
-                        Building Name <span className="text-[#FF6B6B]">*</span>
-                      </label>
-                      <input
-                        id="building-name-input"
-                        type="text"
-                        placeholder="e.g. The Proscenium at Rockwell, Two Serendra"
-                        value={formData.building_name || ''}
-                        onChange={e => {
-                          setIsDirty(true);
-                          setFormData({ ...formData, building_name: e.target.value });
-                        }}
-                        className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
-                      />
-                    </div>
-
-                    <div className="space-y-1.5 md:col-span-6">
-                      <label htmlFor="tower-name-input" className="text-xs font-semibold text-[#1E293B] block">
-                        Tower / Wing
-                      </label>
-                      <input
-                        id="tower-name-input"
-                        type="text"
-                        placeholder="e.g. The Lincoln Tower"
-                        value={formData.tower_name || ''}
-                        onChange={e => {
-                          setIsDirty(true);
-                          setFormData({ ...formData, tower_name: e.target.value });
-                        }}
-                        className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
-                      />
-                    </div>
-
-                    <div className="space-y-1.5 md:col-span-6">
-                      <label htmlFor="floor-level-input" className="text-xs font-semibold text-[#1E293B] block">
-                        Floor Level
-                      </label>
-                      <input
-                        id="floor-level-input"
-                        type="text"
-                        placeholder="e.g. 28"
-                        value={formData.floor_level || ''}
-                        onChange={e => {
-                          setIsDirty(true);
-                          setFormData({ ...formData, floor_level: e.target.value });
-                        }}
-                        className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
-                      />
-                    </div>
-
-                    <div className="space-y-1.5 md:col-span-6">
-                      <label htmlFor="unit-number-input" className="text-xs font-semibold text-[#1E293B] block">
-                        Unit Number
-                      </label>
-                      <input
-                        id="unit-number-input"
-                        type="text"
-                        placeholder="e.g. Unit 28B"
-                        value={formData.unit_number || ''}
-                        onChange={e => {
-                          setIsDirty(true);
-                          setFormData({ ...formData, unit_number: e.target.value });
-                        }}
-                        className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
-                      />
-                    </div>
-                  </div>
+                  <CondoLocationFields
+                    formData={formData}
+                    setFormData={setFormData}
+                    setIsDirty={setIsDirty}
+                  />
                 ) : (
-                  <div className="space-y-4">
-                    <div className="p-4 sm:p-5 bg-slate-50/80 border border-[#CBD5E1] rounded-xl space-y-4">
-                      {/* Master Subdivision Project Header & Actions */}
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-slate-200">
-                        <div>
-                          <label className="text-xs font-bold text-[#0F766E] uppercase tracking-wider flex items-center gap-1.5">
-                            <span className="material-symbols-outlined text-[16px]">domain</span>
-                            <span>Master Subdivision Project</span>
-                          </label>
-                          <p className="text-[11px] text-[#64748B]">
-                            Select a registered master project to unlock Cadastral Studio mapped lots
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => setIsCustomSubdivisionMode(!isCustomSubdivisionMode)}
-                            className="text-[11px] font-semibold text-[#0F766E] hover:underline cursor-pointer"
-                          >
-                            {isCustomSubdivisionMode ? '← Pick from Master Projects' : 'Enter Custom / Unlisted Name'}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setIsSubdivisionModalOpen(true)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-semibold rounded-lg shadow-2xs transition-colors cursor-pointer"
-                          >
-                            <span className="material-symbols-outlined text-[14px]">add</span>
-                            <span>New Project</span>
-                          </button>
-                        </div>
-                      </div>
+                  <div className="flex flex-col gap-3">
+                    <SubdivisionLocationFields
+                      formData={formData}
+                      setFormData={setFormData}
+                      setIsDirty={setIsDirty}
+                      subdivisionsList={subdivisionsList}
+                      isCustomSubdivisionMode={isCustomSubdivisionMode}
+                      setIsCustomSubdivisionMode={setIsCustomSubdivisionMode}
+                      setIsSubdivisionModalOpen={setIsSubdivisionModalOpen}
+                      handleSubdivisionSelect={handleSubdivisionSelect}
+                    />
 
-                      <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                        <div className="space-y-1.5 md:col-span-6">
-                          <label htmlFor="subdivision-input" className="text-xs font-semibold text-[#1E293B] block">
-                            Subdivision Name <span className="text-[#FF6B6B]">*</span>
-                          </label>
-                          {isCustomSubdivisionMode ? (
-                            <input
-                              id="subdivision-input"
-                              type="text"
-                              placeholder="e.g. Havila Highlands Executive Subdivision, Ayala Alabang"
-                              value={formData.subdivision_name || formData.subdivision || ''}
-                              onChange={e => {
-                                setIsDirty(true);
-                                setFormData({
-                                  ...formData,
-                                  subdivision: e.target.value,
-                                  subdivision_name: e.target.value,
-                                  subdivision_project_id: null,
-                                  subdivision_lot_id: null,
-                                });
-                              }}
-                              className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
-                            />
-                          ) : (
-                            <select
-                              id="subdivision-project-select"
-                              value={formData.subdivision_project_id || ''}
-                              onChange={e => handleSubdivisionSelect(e.target.value)}
-                              className="w-full h-11 px-3 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm font-medium text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors cursor-pointer"
-                            >
-                              <option value="">-- Select Master Subdivision Project --</option>
-                              {subdivisionsList.map(proj => (
-                                <option key={proj.id} value={proj.id}>
-                                  {proj.name} {proj.city ? `(${proj.city})` : ''} {proj.developer_name ? `• ${proj.developer_name}` : ''}
-                                </option>
-                              ))}
-                              <option value="__CUSTOM__">-- Other / Unlisted Subdivision --</option>
-                            </select>
-                          )}
-                        </div>
-
-                        <div className="space-y-1.5 md:col-span-2">
-                          <label htmlFor="phase-input" className="text-xs font-semibold text-[#1E293B] block">
-                            Phase
-                          </label>
-                          <input
-                            id="phase-input"
-                            type="text"
-                            placeholder="Phase 2"
-                            value={formData.phase || ''}
-                            onChange={e => {
-                              setIsDirty(true);
-                              setFormData({ ...formData, phase: e.target.value });
-                            }}
-                            className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
-                          />
-                        </div>
-
-                        <div className="space-y-1.5 md:col-span-2">
-                          <label htmlFor="block-input" className="text-xs font-semibold text-[#1E293B] block">
-                            Block
-                          </label>
-                          <input
-                            id="block-input"
-                            type="text"
-                            placeholder="Block 12"
-                            value={formData.block || ''}
-                            onChange={e => {
-                              setIsDirty(true);
-                              setFormData({ ...formData, block: e.target.value });
-                            }}
-                            className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
-                          />
-                        </div>
-
-                        <div className="space-y-1.5 md:col-span-2">
-                          <label htmlFor="lot-input" className="text-xs font-semibold text-[#1E293B] block">
-                            Lot
-                          </label>
-                          <input
-                            id="lot-input"
-                            type="text"
-                            placeholder="Lot 4"
-                            value={formData.lot || ''}
-                            onChange={e => {
-                              setIsDirty(true);
-                              setFormData({ ...formData, lot: e.target.value });
-                            }}
-                            className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Cadastral Studio Lots Integration Card */}
+                    {/* Cadastral Studio Lots Integration Card */}
                       {Boolean(formData.subdivision_project_id) && (
                         <div className="pt-3 mt-1 border-t border-slate-200">
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
@@ -2856,7 +2633,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                                   id="cadastral-lot-picker"
                                   value={formData.subdivision_lot_id || ''}
                                   onChange={e => handleCadastralLotSelect(e.target.value)}
-                                  className="w-full h-10 px-3 bg-white border border-teal-300 rounded-lg text-xs font-medium text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs cursor-pointer"
+                                  className="w-full px-3 bg-white border border-teal-300 rounded-md text-sm font-medium text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-none cursor-pointer h-11 md:h-10 [@media(pointer:coarse)]:h-11"
                                 >
                                   <option value="">-- Choose Cadastral Mapped Lot (Auto-Fills Details) --</option>
                                   {availableLots.map(lot => (
@@ -2871,7 +2648,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                               </div>
                             </div>
                           ) : !isLoadingLots ? (
-                            <div className="p-3 bg-white/70 border border-dashed border-slate-300 rounded-lg text-xs text-[#64748B] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div className="p-3 bg-white/70 border border-dashed border-slate-300 rounded-md text-xs text-[#64748B] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                               <span>No cadastral parcels mapped for this project yet. You can draw boundaries in Studio.</span>
                               <a
                                 href={`/broker/properties/studio?subdivision_id=${formData.subdivision_project_id}`}
@@ -2886,21 +2663,20 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                           ) : null}
                         </div>
                       )}
-                    </div>
                   </div>
                 )}
               </div>
             </div>
 
             {/* 4. Full Address Preview */}
-            <div className="p-5 bg-white border border-[#CBD5E1] rounded-lg shadow-2xs space-y-3">
+            <div className="flex flex-col gap-3">
               <div className="pb-2 border-b border-slate-100">
-                <h4 className="text-xs font-bold text-[#0F766E] uppercase tracking-wider flex items-center gap-1.5">
+                <h4 className="text-sm font-semibold text-[#0F766E] flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-[16px]">visibility</span>
                   <span>Full Address Preview</span>
                 </h4>
               </div>
-              <div className="p-4 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg">
+              <div className="p-4 bg-[#F8FAFC] border border-[#E2E8F0] rounded-md">
                 <p className="text-xs font-medium text-[#1E293B] leading-relaxed break-words">
                   {liveUnparsedAddress || <span className="text-slate-400 italic">Complete address details to preview full mailing address...</span>}
                 </p>
@@ -2914,10 +2690,10 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
         {/* SECTION 3: SPECIFICATIONS */}
         {/* ========================================================================= */}
         {currentStep === 3 && (
-          <div data-testid="broker-card" className="bg-white rounded-lg border border-[#E2E8F0] p-6 sm:p-8 shadow-xs space-y-8 animate-in fade-in slide-in-from-bottom-2">
-            <div className="pb-3 border-b border-[#E2E8F0] flex items-center justify-between">
+          <div data-testid="broker-card" className="bg-white rounded-md border border-[#E2E8F0] p-4 shadow-xs flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2">
+            <div className="pb-3 border-b border-[#E2E8F0] flex flex-wrap items-center justify-between gap-2">
               <div>
-                <h3 className="text-base font-bold text-[#1E293B] flex items-center gap-2">
+                <h3 className="text-base font-semibold text-[#1E293B] flex items-center gap-2">
                   <span className="material-symbols-outlined text-[#0F766E]">straighten</span>
                   <span>Section 3: Property Specifications</span>
                 </h3>
@@ -2930,829 +2706,20 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
 
             {/* Subtype conditional messaging */}
             {isLand && (
-              <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-900 flex items-center gap-2">
+              <div className="p-4 bg-amber-50 border border-amber-200 rounded-md text-xs text-amber-900 flex items-center gap-2">
                 <span className="material-symbols-outlined text-[18px]">info</span>
                 <span>Vacant Land listing selected: interior room specs, sanitary facilities, and room breakdowns are conditionally bypassed.</span>
               </div>
             )}
 
-            {/* 1. DIMENSIONS & AREAS */}
-            <div className="space-y-4">
-              <h4 className="text-xs font-bold text-[#0F766E] uppercase tracking-wider flex items-center gap-1.5 pb-1 border-b border-slate-100">
-                <span className="material-symbols-outlined text-[16px]">aspect_ratio</span>
-                <span>Dimensions & Areas</span>
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                
-                {/* Floor Area & Unit */}
-                {!isLand && (
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
-                      Floor Area
-                    </label>
-                    <div className="flex border border-[#CBD5E1] hover:border-slate-400 rounded-lg overflow-hidden bg-white focus-within:border-[#0F766E] focus-within:ring-1 focus-within:ring-[#0F766E] shadow-2xs transition-colors">
-                      <input
-                        type="number"
-                        step="any"
-                        min="0"
-                        placeholder={isCondo ? "e.g. 118" : "e.g. 450"}
-                        value={formData.living_area}
-                        onChange={e => {
-                          const val = e.target.value === '' ? '' : Math.max(0, parseFloat(e.target.value) || 0);
-                          setIsDirty(true);
-                          setFormData({ ...formData, living_area: val, floor_area: val });
-                        }}
-                        className="flex-1 min-w-0 h-11 px-4 bg-transparent outline-none text-sm font-semibold text-[#1E293B]"
-                      />
-                      <select
-                        aria-label="Floor Area Unit"
-                        value={formData.living_area_units}
-                        onChange={e => {
-                          setIsDirty(true);
-                          setFormData({ ...formData, living_area_units: e.target.value, floor_area_unit: e.target.value === 'Square Meters' ? 'sqm' : 'sqft' });
-                        }}
-                        className="h-11 px-3 bg-slate-50 border-l border-[#CBD5E1] text-xs font-bold text-[#1E293B] outline-none cursor-pointer hover:bg-slate-100 transition-colors shrink-0"
-                      >
-                        <option value="Square Meters">Square Meters (sqm)</option>
-                        <option value="Square Feet">Square Feet (sqft)</option>
-                      </select>
-                    </div>
-                    {formData.living_area && (
-                      <p className="text-[11px] text-[#64748B]">
-                        Equivalent: {formData.living_area_units === 'Square Meters' 
-                          ? `${Math.round(Number(formData.living_area) * 10.7639).toLocaleString()} sqft` 
-                          : `${(Number(formData.living_area) / 10.7639).toFixed(2)} sqm`}
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                {/* Lot Area & Unit */}
-                {!isCondo && (
-                  <div className="space-y-1.5">
-                    <label htmlFor="lot-size-area-input" className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
-                      Lot Area <span className="text-[#FF6B6B]">*</span>
-                    </label>
-                    <div className="flex border border-[#CBD5E1] hover:border-slate-400 rounded-lg overflow-hidden bg-white focus-within:border-[#0F766E] focus-within:ring-1 focus-within:ring-[#0F766E] shadow-2xs transition-colors">
-                      <input
-                        id="lot-size-area-input"
-                        aria-label="Lot Area"
-                        required={!isCondo}
-                        type="number"
-                        step="any"
-                        min="0"
-                        placeholder="e.g. 600"
-                        value={formData.lot_size_area}
-                        onChange={e => {
-                          const val = e.target.value === '' ? '' : Math.max(0, parseFloat(e.target.value) || 0);
-                          setIsDirty(true);
-                          setFormData({ ...formData, lot_size_area: val, lot_area: val });
-                        }}
-                        className="flex-1 min-w-0 h-11 px-4 bg-transparent outline-none text-sm font-semibold text-[#1E293B]"
-                      />
-                      <select
-                        aria-label="Lot Area Unit"
-                        value={formData.lot_size_units}
-                        onChange={e => {
-                          setIsDirty(true);
-                          setFormData({ ...formData, lot_size_units: e.target.value, lot_area_unit: e.target.value === 'Square Meters' ? 'sqm' : 'sqft' });
-                        }}
-                        className="h-11 px-3 bg-slate-50 border-l border-[#CBD5E1] text-xs font-bold text-[#1E293B] outline-none cursor-pointer hover:bg-slate-100 transition-colors shrink-0"
-                      >
-                        <option value="Square Meters">Square Meters (sqm)</option>
-                        <option value="Square Feet">Square Feet (sqft)</option>
-                      </select>
-                    </div>
-                  </div>
-                )}
-
-                {/* Land Specific: Dimensions, Position, Terrain, Title */}
-                {isLand && (
-                  <>
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
-                        Road Frontage (m) <span className="text-[#FF6B6B]">*</span>
-                      </label>
-                      <input
-                        id="frontage-meters-input"
-                        type="number"
-                        min="0"
-                        step="any"
-                        placeholder="e.g. 15"
-                        value={formData.frontage_meters || ''}
-                        onChange={e => {
-                          setIsDirty(true);
-                          setFormData({ ...formData, frontage_meters: e.target.value, lot_frontage: `${e.target.value}m frontage` });
-                        }}
-                        className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
-                      />
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
-                        Lot Depth (m) <span className="text-[#FF6B6B]">*</span>
-                      </label>
-                      <input
-                        id="depth-meters-input"
-                        type="number"
-                        min="0"
-                        step="any"
-                        placeholder="e.g. 18"
-                        value={formData.depth_meters || ''}
-                        onChange={e => {
-                          setIsDirty(true);
-                          setFormData({ ...formData, depth_meters: e.target.value });
-                        }}
-                        className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
-                      />
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
-                        Lot Position / Cut
-                      </label>
-                      <select
-                        value={formData.lot_position || 'corner'}
-                        onChange={e => {
-                          setIsDirty(true);
-                          setFormData({ ...formData, lot_position: e.target.value });
-                        }}
-                        className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
-                      >
-                        <option value="corner">Corner Lot</option>
-                        <option value="inner">Regular / Inner Lot</option>
-                        <option value="through">Through Lot (Dual Road Access)</option>
-                        <option value="end">End / Cul-de-sac Lot</option>
-                      </select>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
-                        Topography / Terrain
-                      </label>
-                      <select
-                        value={formData.terrain || 'level'}
-                        onChange={e => {
-                          setIsDirty(true);
-                          setFormData({ ...formData, terrain: e.target.value });
-                        }}
-                        className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
-                      >
-                        <option value="level">Flat / Level</option>
-                        <option value="rolling">Gently Rolling</option>
-                        <option value="sloping">Sloping / Hillside</option>
-                        <option value="elevated">Elevated (Overlooking / Ridge)</option>
-                      </select>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
-                        Sun Orientation / Facing
-                      </label>
-                      <select
-                        value={formData.facing_direction || 'east'}
-                        onChange={e => {
-                          setIsDirty(true);
-                          setFormData({ ...formData, facing_direction: e.target.value });
-                        }}
-                        className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
-                      >
-                        <option value="east">East (Morning Sun)</option>
-                        <option value="west">West (Afternoon Sun)</option>
-                        <option value="north">North</option>
-                        <option value="south">South</option>
-                      </select>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
-                        Property Title Status
-                      </label>
-                      <select
-                        value={formData.title_status || 'clean'}
-                        onChange={e => {
-                          setIsDirty(true);
-                          setFormData({ ...formData, title_status: e.target.value });
-                        }}
-                        className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
-                      >
-                        <option value="clean">Clean Title (TCT)</option>
-                        <option value="mortgaged">Under Bank Mortgage</option>
-                        <option value="tax_declaration">Tax Declaration Only</option>
-                      </select>
-                    </div>
-
-                    <div className="space-y-1.5 md:col-span-2">
-                      <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
-                        Cadastral Survey Reference
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="e.g. Lot 4, Block 12, Psd-04-098231"
-                        value={formData.cadastral_reference || formData.cadastralLotId || ''}
-                        onChange={e => {
-                          setIsDirty(true);
-                          setFormData({ ...formData, cadastral_reference: e.target.value, cadastralLotId: e.target.value });
-                        }}
-                        className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors font-mono"
-                      />
-                    </div>
-                  </>
-                )}
-
-              </div>
-            </div>
-
-            {/* 2. ROOMS & BATHROOM COUNTS */}
-            {!isLand && (
-              <div className="space-y-4">
-                <h4 className="text-xs font-bold text-[#0F766E] uppercase tracking-wider flex items-center gap-1.5 pb-1 border-b border-slate-100">
-                  <span className="material-symbols-outlined text-[16px]">hotel</span>
-                  <span>Bedrooms & Bathrooms</span>
-                </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-                  
-                  {/* Bedrooms */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
-                      Bedrooms
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="1"
-                      placeholder="0"
-                      value={formData.bedrooms_total}
-                      onChange={e => {
-                        const val = e.target.value === '' ? '' : Math.max(0, parseInt(e.target.value, 10) || 0);
-                        setIsDirty(true);
-                        setFormData({ ...formData, bedrooms_total: val, bedrooms: String(val) });
-                      }}
-                      className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm font-semibold text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
-                    />
-                  </div>
-
-                  {/* Total Bathrooms */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
-                      Total Bathrooms
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="1"
-                      placeholder="0"
-                      value={formData.bathrooms_total_integer}
-                      onChange={e => {
-                        const val = e.target.value === '' ? '' : Math.max(0, parseInt(e.target.value, 10) || 0);
-                        setIsDirty(true);
-                        setFormData({ ...formData, bathrooms_total_integer: val, bathrooms: String(val) });
-                      }}
-                      className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm font-semibold text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
-                    />
-                  </div>
-
-                  {/* Full Bathrooms */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
-                      Full Bathrooms
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="1"
-                      placeholder="0"
-                      value={formData.bathrooms_full}
-                      onChange={e => {
-                        const val = e.target.value === '' ? '' : Math.max(0, parseInt(e.target.value, 10) || 0);
-                        setIsDirty(true);
-                        setFormData({ ...formData, bathrooms_full: val });
-                      }}
-                      className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm font-semibold text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
-                    />
-                  </div>
-
-                  {/* Half Bathrooms */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
-                      Half Bathrooms
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="1"
-                      placeholder="0"
-                      value={formData.bathrooms_half}
-                      onChange={e => {
-                        const val = e.target.value === '' ? '' : Math.max(0, parseInt(e.target.value, 10) || 0);
-                        setIsDirty(true);
-                        setFormData({ ...formData, bathrooms_half: val });
-                      }}
-                      className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm font-semibold text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
-                    />
-                  </div>
-
-                </div>
-              </div>
+            {/* Adaptive Property Specifications Component */}
+            {isLand ? (
+              <SubdivisionLotSpecs formData={formData} setFormData={setFormData} setIsDirty={setIsDirty} />
+            ) : isCondo ? (
+              <CondominiumSpecs formData={formData} setFormData={setFormData} setIsDirty={setIsDirty} />
+            ) : (
+              <HouseAndLotSpecs formData={formData} setFormData={setFormData} setIsDirty={setIsDirty} />
             )}
-
-            {/* 3. STRUCTURE, ARCHITECTURE & CONDITION */}
-            <div className="space-y-4">
-              <h4 className="text-xs font-bold text-[#0F766E] uppercase tracking-wider flex items-center gap-1.5 pb-1 border-b border-slate-100">
-                <span className="material-symbols-outlined text-[16px]">domain</span>
-                <span>Structure & Character</span>
-              </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-                
-                {/* Number of Floors */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
-                    Number of Floors
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    step="1"
-                    placeholder="1"
-                    value={formData.stories_total}
-                    onChange={e => {
-                      const val = e.target.value === '' ? '' : Math.max(1, parseInt(e.target.value, 10) || 1);
-                      setIsDirty(true);
-                      setFormData({ ...formData, stories_total: val });
-                    }}
-                    className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm font-semibold text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
-                  />
-                </div>
-
-                {/* Year Built */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
-                    Year Built
-                  </label>
-                  <input
-                    type="number"
-                    min="1800"
-                    max={new Date().getFullYear() + 10}
-                    placeholder="e.g. 2024"
-                    value={formData.year_built}
-                    onChange={e => { setIsDirty(true); setFormData({ ...formData, year_built: e.target.value }); }}
-                    className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm font-semibold text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
-                  />
-                </div>
-
-                {/* Architectural Style */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
-                    Architectural Style
-                  </label>
-                  <select
-                    value={formData.architectural_style}
-                    onChange={e => { setIsDirty(true); setFormData({ ...formData, architectural_style: e.target.value }); }}
-                    className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none cursor-pointer shadow-2xs transition-colors"
-                  >
-                    {architecturalStyleOptions.map(style => (
-                      <option key={style} value={style}>{style}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Property Condition */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
-                    Property Condition
-                  </label>
-                  <select
-                    value={formData.property_condition}
-                    onChange={e => { setIsDirty(true); setFormData({ ...formData, property_condition: e.target.value }); }}
-                    className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none cursor-pointer shadow-2xs transition-colors"
-                  >
-                    {propertyConditionOptions.map(c => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
-                </div>
-
-              </div>
-
-              {/* Condo Specific: Floor Level, Tower, Balcony & Layout */}
-              {isCondo && (
-                <div className="space-y-4 pt-2">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
-                        Floor Level
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="e.g. 28th Floor, Unit 2804"
-                        value={formData.floor_level}
-                        onChange={e => { setIsDirty(true); setFormData({ ...formData, floor_level: e.target.value }); }}
-                        className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
-                        Tower / Building Name
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="e.g. Horizon Tower B"
-                        value={formData.tower_name}
-                        onChange={e => { setIsDirty(true); setFormData({ ...formData, tower_name: e.target.value }); }}
-                        className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="border-t border-slate-100 pt-3">
-                    <h5 className="text-xs font-bold text-[#0F766E] uppercase tracking-wider flex items-center gap-1.5 pb-2">
-                      <span className="material-symbols-outlined text-[16px]">balcony</span>
-                      <span>Balcony Details & Strata Unit Configuration</span>
-                    </h5>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
-                          Unit Layout
-                        </label>
-                        <select
-                          value={formData.condo_unit_type || '2bedroom'}
-                          onChange={e => {
-                            setIsDirty(true);
-                            setFormData({ ...formData, condo_unit_type: e.target.value });
-                          }}
-                          className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
-                        >
-                          <option value="studio">Studio Unit</option>
-                          <option value="1bedroom">1-Bedroom Executive</option>
-                          <option value="2bedroom">2-Bedroom Suite</option>
-                          <option value="3bedroom">3-Bedroom Prime</option>
-                          <option value="penthouse">Penthouse Suite</option>
-                        </select>
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
-                          Balcony Area (sqm)
-                        </label>
-                        <input
-                          type="number"
-                          min="0"
-                          step="any"
-                          placeholder="e.g. 12"
-                          value={formData.balcony_area || ''}
-                          onChange={e => {
-                            const val = e.target.value;
-                            setIsDirty(true);
-                            setFormData({ ...formData, balcony_area: val, has_balcony: Boolean(parseFloat(val) > 0) });
-                          }}
-                          className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
-                        />
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
-                          Balcony View Facing
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="e.g. Makati CBD Skyline & Pasig River"
-                          value={formData.balcony_facing || ''}
-                          onChange={e => {
-                            setIsDirty(true);
-                            setFormData({ ...formData, balcony_facing: e.target.value });
-                          }}
-                          className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
-                        />
-                      </div>
-
-                      <div className="space-y-1.5 sm:col-span-3">
-                        <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
-                          Dedicated Parking Slot Number
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="e.g. Basement 2, Slot #142"
-                          value={formData.parking_slot_number || ''}
-                          onChange={e => {
-                            setIsDirty(true);
-                            setFormData({ ...formData, parking_slot_number: e.target.value, has_dedicated_parking_slot: Boolean(e.target.value.trim()) });
-                          }}
-                          className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors font-mono"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* 4. PARKING SPACES BREAKDOWN */}
-            <div className="space-y-4">
-              <h4 className="text-xs font-bold text-[#0F766E] uppercase tracking-wider flex items-center gap-1.5 pb-1 border-b border-slate-100">
-                <span className="material-symbols-outlined text-[16px]">directions_car</span>
-                <span>Parking Capacity</span>
-              </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                
-                {/* Total Parking Spaces */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
-                    Total Parking Spaces
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="1"
-                    placeholder="0"
-                    value={formData.parking_total}
-                    onChange={e => {
-                      const val = e.target.value === '' ? '' : Math.max(0, parseInt(e.target.value, 10) || 0);
-                      setIsDirty(true);
-                      setFormData({ ...formData, parking_total: val, parking: String(val) });
-                    }}
-                    className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm font-semibold text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
-                  />
-                </div>
-
-                {/* Covered Parking Spaces */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
-                    Covered Parking Spaces
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="1"
-                    placeholder="0"
-                    value={formData.parking_covered}
-                    onChange={e => {
-                      const val = e.target.value === '' ? '' : Math.max(0, parseInt(e.target.value, 10) || 0);
-                      setIsDirty(true);
-                      setFormData({ ...formData, parking_covered: val });
-                    }}
-                    className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm font-semibold text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
-                  />
-                </div>
-
-                {/* Open Parking Spaces */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
-                    Open Parking Spaces
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="1"
-                    placeholder="0"
-                    value={formData.parking_open}
-                    onChange={e => {
-                      const val = e.target.value === '' ? '' : Math.max(0, parseInt(e.target.value, 10) || 0);
-                      setIsDirty(true);
-                      setFormData({ ...formData, parking_open: val });
-                    }}
-                    className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm font-semibold text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none shadow-2xs transition-colors"
-                  />
-                </div>
-
-              </div>
-            </div>
-
-            {/* 5. REPEATABLE ROOM DETAILS SECTION */}
-            {!isLand && (
-              <div className="space-y-4 pt-2">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b border-slate-100 gap-2">
-                  <div>
-                    <h4 className="text-xs font-bold text-[#0F766E] uppercase tracking-wider flex items-center gap-1.5">
-                      <span className="material-symbols-outlined text-[16px]">meeting_room</span>
-                      <span>Room Details ({formData.rooms?.length || 0})</span>
-                    </h4>
-                    <p className="text-xs text-[#64748B] mt-0.5">Itemize individual rooms, dimensions, levels, and special architectural features.</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsDirty(true);
-                      setFormData(prev => ({
-                        ...prev,
-                        rooms: [
-                          ...(prev.rooms || []),
-                          {
-                            id: `room-${Date.now()}`,
-                            room_type: 'Bedroom',
-                            room_level: '2nd Floor',
-                            room_length: '',
-                            room_width: '',
-                            room_dimensions_units: 'Meters',
-                            room_features: []
-                          }
-                        ]
-                      }));
-                    }}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-[#0F766E] bg-teal-50 hover:bg-teal-100/80 border border-teal-200 rounded-lg cursor-pointer transition-colors shadow-2xs shrink-0 self-start sm:self-auto"
-                  >
-                    <span className="material-symbols-outlined text-[16px]">add_circle</span>
-                    <span>Add Room</span>
-                  </button>
-                </div>
-
-                {/* Rooms List */}
-                {(!formData.rooms || formData.rooms.length === 0) ? (
-                  <div className="p-8 text-center border border-dashed border-[#CBD5E1] rounded-lg bg-[#F8FAFC]">
-                    <span className="material-symbols-outlined text-3xl text-slate-400">meeting_room</span>
-                    <p className="text-xs font-semibold text-[#1E293B] mt-2">No individual room details added yet</p>
-                    <p className="text-xs text-[#64748B] mt-1">Click "Add Room" to record dimensions and features for specific bedrooms, suites, and common areas.</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {formData.rooms.map((room, roomIndex) => (
-                      <div 
-                        key={room.id || `room-${roomIndex}`} 
-                        className="bg-[#F8FAFC] border border-[#E2E8F0] hover:border-slate-300 rounded-lg p-5 space-y-4 transition-colors"
-                      >
-                        <div className="flex items-center justify-between pb-3 border-b border-slate-200/80">
-                          <div className="flex items-center gap-2">
-                            <span className="w-6 h-6 rounded-full bg-[#0F766E] text-white text-xs font-bold flex items-center justify-center">
-                              {roomIndex + 1}
-                            </span>
-                            <span className="text-xs font-bold text-[#1E293B]">
-                              {room.room_type || `Room #${roomIndex + 1}`}
-                            </span>
-                            {room.room_level && (
-                              <span className="text-[11px] text-[#64748B] bg-white px-2 py-0.5 rounded border border-[#E2E8F0]">
-                                {room.room_level}
-                              </span>
-                            )}
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setIsDirty(true);
-                              setFormData(prev => ({
-                                ...prev,
-                                rooms: prev.rooms.filter((_, idx) => idx !== roomIndex)
-                              }));
-                            }}
-                            className="inline-flex items-center gap-1 text-xs font-medium text-red-600 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded cursor-pointer transition-colors"
-                          >
-                            <span className="material-symbols-outlined text-[16px]">delete</span>
-                            <span>Remove Room</span>
-                          </button>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                          
-                          {/* Room Type */}
-                          <div className="space-y-1.5 lg:col-span-2">
-                            <label className="text-[11px] font-semibold uppercase tracking-wider text-[#1E293B]">
-                              Room Type <span className="text-[#FF6B6B]">*</span>
-                            </label>
-                            <select
-                              value={room.room_type}
-                              onChange={e => {
-                                setIsDirty(true);
-                                const updatedRooms = [...formData.rooms];
-                                updatedRooms[roomIndex] = { ...room, room_type: e.target.value };
-                                setFormData({ ...formData, rooms: updatedRooms });
-                              }}
-                              className="w-full h-10 px-3 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-xs font-semibold text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none cursor-pointer shadow-2xs transition-colors"
-                            >
-                              {roomTypeOptions.map(t => (
-                                <option key={t} value={t}>{t}</option>
-                              ))}
-                            </select>
-                          </div>
-
-                          {/* Room Level / Floor */}
-                          <div className="space-y-1.5">
-                            <label className="text-[11px] font-semibold uppercase tracking-wider text-[#1E293B]">
-                              Floor / Level
-                            </label>
-                            <select
-                              value={room.room_level}
-                              onChange={e => {
-                                setIsDirty(true);
-                                const updatedRooms = [...formData.rooms];
-                                updatedRooms[roomIndex] = { ...room, room_level: e.target.value };
-                                setFormData({ ...formData, rooms: updatedRooms });
-                              }}
-                              className="w-full h-10 px-3 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-xs font-semibold text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none cursor-pointer shadow-2xs transition-colors"
-                            >
-                              {roomLevelOptions.map(lvl => (
-                                <option key={lvl} value={lvl}>{lvl}</option>
-                              ))}
-                            </select>
-                          </div>
-
-                          {/* Dimensions: Length x Width */}
-                          <div className="space-y-1.5">
-                            <label className="text-[11px] font-semibold uppercase tracking-wider text-[#1E293B]">
-                              Length
-                            </label>
-                            <div className="flex border border-[#CBD5E1] hover:border-slate-400 rounded-lg overflow-hidden bg-white focus-within:border-[#0F766E] focus-within:ring-1 focus-within:ring-[#0F766E] shadow-2xs transition-colors">
-                              <input
-                                type="number"
-                                step="any"
-                                min="0"
-                                placeholder="e.g. 5.5"
-                                value={room.room_length}
-                                onChange={e => {
-                                  const val = e.target.value === '' ? '' : Math.max(0, parseFloat(e.target.value) || 0);
-                                  setIsDirty(true);
-                                  const updatedRooms = [...formData.rooms];
-                                  updatedRooms[roomIndex] = { ...room, room_length: val };
-                                  setFormData({ ...formData, rooms: updatedRooms });
-                                }}
-                                className="flex-1 min-w-0 h-10 px-3 bg-transparent outline-none text-xs font-semibold text-[#1E293B]"
-                              />
-                              <select
-                                aria-label="Length Unit"
-                                value={room.room_dimensions_units || 'Meters'}
-                                onChange={e => {
-                                  setIsDirty(true);
-                                  const updatedRooms = [...formData.rooms];
-                                  updatedRooms[roomIndex] = { ...room, room_dimensions_units: e.target.value };
-                                  setFormData({ ...formData, rooms: updatedRooms });
-                                }}
-                                className="h-10 px-2 bg-slate-100 border-l border-[#CBD5E1] text-[11px] font-bold text-[#1E293B] outline-none cursor-pointer hover:bg-slate-200 transition-colors shrink-0"
-                              >
-                                <option value="Meters">m</option>
-                                <option value="Feet">ft</option>
-                              </select>
-                            </div>
-                          </div>
-
-                          <div className="space-y-1.5">
-                            <label className="text-[11px] font-semibold uppercase tracking-wider text-[#1E293B]">
-                              Width
-                            </label>
-                            <div className="flex border border-[#CBD5E1] hover:border-slate-400 rounded-lg overflow-hidden bg-white focus-within:border-[#0F766E] focus-within:ring-1 focus-within:ring-[#0F766E] shadow-2xs transition-colors">
-                              <input
-                                type="number"
-                                step="any"
-                                min="0"
-                                placeholder="e.g. 4.2"
-                                value={room.room_width}
-                                onChange={e => {
-                                  const val = e.target.value === '' ? '' : Math.max(0, parseFloat(e.target.value) || 0);
-                                  setIsDirty(true);
-                                  const updatedRooms = [...formData.rooms];
-                                  updatedRooms[roomIndex] = { ...room, room_width: val };
-                                  setFormData({ ...formData, rooms: updatedRooms });
-                                }}
-                                className="flex-1 min-w-0 h-10 px-3 bg-transparent outline-none text-xs font-semibold text-[#1E293B]"
-                              />
-                              <select
-                                aria-label="Measurement Unit"
-                                value={room.room_dimensions_units || 'Meters'}
-                                onChange={e => {
-                                  setIsDirty(true);
-                                  const updatedRooms = [...formData.rooms];
-                                  updatedRooms[roomIndex] = { ...room, room_dimensions_units: e.target.value };
-                                  setFormData({ ...formData, rooms: updatedRooms });
-                                }}
-                                className="h-10 px-2 bg-slate-100 border-l border-[#CBD5E1] text-[11px] font-bold text-[#1E293B] outline-none cursor-pointer hover:bg-slate-200 transition-colors shrink-0"
-                              >
-                                <option value="Meters">m</option>
-                                <option value="Feet">ft</option>
-                              </select>
-                            </div>
-                          </div>
-
-                        </div>
-
-                        {/* Room Features & Highlights Rich Text Editor */}
-                        <div className="space-y-1.5 pt-1">
-                          <div className="flex items-center justify-between">
-                            <label className="text-[11px] font-semibold uppercase tracking-wider text-[#1E293B]">
-                              Room Features & Highlights
-                            </label>
-                            <span className="text-[10px] text-[#64748B] font-medium">Rich text enabled (bullet points, finishes, custom built-ins)</span>
-                          </div>
-                          <div className="border border-[#CBD5E1] hover:border-slate-400 rounded-lg overflow-hidden bg-white focus-within:border-[#0F766E] focus-within:ring-1 focus-within:ring-[#0F766E] shadow-2xs transition-colors">
-                            <ReactQuill
-                              theme="snow"
-                              value={typeof room.room_features === 'string' ? room.room_features : (Array.isArray(room.room_features) ? (room.room_features.length > 0 ? `<ul>${room.room_features.map(f => `<li>${f}</li>`).join('')}</ul>` : '') : '')}
-                              onChange={content => {
-                                setIsDirty(true);
-                                const updatedRooms = [...formData.rooms];
-                                updatedRooms[roomIndex] = { ...room, room_features: content };
-                                setFormData({ ...formData, rooms: updatedRooms });
-                              }}
-                              modules={ROOM_QUILL_MODULES}
-                              placeholder="Detail finishes, fixtures, built-ins, and specific amenities (e.g. Ensuite Marble Bath, Walk-in Dressing Room, Private Veranda)..."
-                              className="room-features-quill bg-white [&_.ql-toolbar]:border-none [&_.ql-toolbar]:border-b [&_.ql-toolbar]:border-[#E2E8F0] [&_.ql-toolbar]:bg-slate-50/70 [&_.ql-container]:border-none [&_.ql-editor]:min-h-[85px] [&_.ql-editor]:text-xs [&_.ql-editor]:text-[#1E293B] [&_.ql-editor]:leading-relaxed"
-                            />
-                          </div>
-                        </div>
-
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
           </div>
         )}
 
@@ -3760,10 +2727,10 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
         {/* SECTION 4: PRICING AND TERMS */}
         {/* ========================================================================= */}
         {currentStep === 4 && (
-          <div data-testid="broker-card" className="bg-white rounded-lg border border-[#E2E8F0] p-6 sm:p-8 shadow-xs space-y-8 animate-in fade-in slide-in-from-bottom-2">
+          <div data-testid="broker-card" className="bg-white rounded-md border border-[#E2E8F0] p-4 shadow-xs flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2">
             <div className="pb-3 border-b border-[#E2E8F0] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
-                <h3 className="text-base font-bold text-[#1E293B] flex items-center gap-2">
+                <h3 className="text-base font-semibold text-[#1E293B] flex items-center gap-2">
                   <span className="material-symbols-outlined text-[#0F766E]">payments</span>
                   <span>Section 4: Pricing & Terms</span>
                 </h3>
@@ -3775,20 +2742,20 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
             </div>
 
             {/* 1. PRICE GROUP */}
-            <div className="space-y-4">
-              <h4 className="text-xs font-bold text-[#0F766E] uppercase tracking-wider flex items-center gap-1.5 pb-1 border-b border-slate-100">
+            <div className="flex flex-col gap-3">
+              <h4 className="text-sm font-semibold text-[#0F766E] flex items-center gap-1.5 pb-1 border-b border-slate-100">
                 <span className="material-symbols-outlined text-[16px]">price_change</span>
                 <span>{formData.transaction_type === 'For Rent' ? 'Rental Valuation' : 'Price Valuation'}</span>
               </h4>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
                 
                 {/* Price / Rent input with dynamic currency symbol */}
-                <div className="space-y-1.5 md:col-span-2">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
+                <div className="flex min-w-0 flex-col gap-2">
+                  <label className="text-sm font-medium text-[#1E293B]">
                     {formData.transaction_type === 'For Rent' ? 'Rent' : 'Price'} <span className="text-[#FF6B6B] ml-0.5">*</span>
                   </label>
-                  <div className="flex items-center rounded-lg border border-[#CBD5E1] bg-white hover:border-slate-400 focus-within:border-[#0F766E] focus-within:ring-1 focus-within:ring-[#0F766E] shadow-2xs transition-colors overflow-hidden">
-                    <div className="h-11 px-3.5 bg-[#F8FAFC] border-r border-[#CBD5E1] flex items-center justify-center text-sm font-bold text-[#0F766E] select-none">
+                  <div className="flex items-center rounded-md border border-[#CBD5E1] bg-white hover:border-slate-400 focus-within:border-[#0F766E] focus-within:ring-1 focus-within:ring-[#0F766E] shadow-none transition-colors overflow-hidden">
+                    <div className="px-3.5 bg-[#F8FAFC] border-r border-[#CBD5E1] flex items-center justify-center text-sm font-bold text-[#0F766E] select-none h-11 md:h-10 [@media(pointer:coarse)]:h-11">
                       {currencyOptions.find(c => c.code === formData.currency)?.symbol || '₱'}
                     </div>
                     <input
@@ -3799,7 +2766,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                       onChange={handlePriceChange}
                       onBlur={handlePriceBlur}
                       onFocus={handlePriceFocus}
-                      className="flex-1 h-11 px-4 bg-transparent text-base font-mono font-bold text-[#0F766E] placeholder:text-slate-400 outline-none min-w-0"
+                      className="flex-1 px-4 bg-transparent text-sm font-mono font-bold text-[#0F766E] placeholder:text-slate-400 outline-none min-w-0 h-11 md:h-10 [@media(pointer:coarse)]:h-11"
                     />
                     <div className="border-l border-[#CBD5E1] shrink-0">
                       <select
@@ -3809,7 +2776,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                           setIsDirty(true);
                           setFormData({ ...formData, currency: e.target.value });
                         }}
-                        className="h-11 px-3 bg-slate-50 text-xs font-bold text-[#1E293B] outline-none cursor-pointer hover:bg-slate-100 transition-colors"
+                        className="px-3 bg-slate-50 text-sm font-bold text-[#1E293B] outline-none cursor-pointer hover:bg-slate-100 transition-colors h-11 md:h-10 [@media(pointer:coarse)]:h-11"
                       >
                         {currencyOptions.map(curr => (
                           <option key={curr.code} value={curr.code}>{curr.code}</option>
@@ -3824,12 +2791,12 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                         Formatted: {currencyOptions.find(c => c.code === formData.currency)?.symbol || '₱'}{Number(formData.price).toLocaleString()} {formData.transaction_type === 'For Rent' ? `/ ${formData.rent_frequency?.toLowerCase() || 'month'}` : ''}
                       </p>
                       {Boolean(formData.price && formData.lot_size_area && Number(formData.lot_size_area) > 0) && (
-                        <div className="mt-2 p-2.5 bg-teal-50/80 border border-teal-200/70 rounded-lg flex items-center justify-between">
+                        <div className="mt-2 p-2.5 bg-teal-50/80 border border-teal-200/70 rounded-md flex flex-wrap items-center justify-between gap-2">
                           <div className="flex items-center gap-1.5 text-xs text-teal-900 font-medium">
                             <span className="material-symbols-outlined text-[16px] text-[#0F766E]">calculate</span>
                             <span>Calculated Rate per m²:</span>
                           </div>
-                          <span className="text-xs font-bold font-mono text-[#0F766E] bg-white px-2 py-0.5 rounded border border-teal-200 shadow-2xs">
+                          <span className="text-xs font-bold font-mono text-[#0F766E] bg-white px-2 py-0.5 rounded border border-teal-200 shadow-none">
                             ₱{Math.round(Number(formData.price) / Number(formData.lot_size_area)).toLocaleString()} / m²
                           </span>
                         </div>
@@ -3841,9 +2808,9 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                 </div>
 
                 {/* Transactional Status */}
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
+                <div className="flex min-w-0 flex-col gap-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <label className="text-sm font-medium text-[#1E293B]">
                       Transaction Status
                     </label>
                     <span className="text-[10px] text-[#0F766E] font-medium">Synced with Overview</span>
@@ -3860,7 +2827,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                       else if (nextStatus === 'INACTIVE') nextStandard = 'Draft';
                       setFormData({ ...formData, status: nextStatus, standard_status: nextStandard });
                     }}
-                    className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm font-semibold text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none cursor-pointer shadow-2xs transition-colors"
+                    className="w-full px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-md text-sm font-semibold text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none cursor-pointer shadow-none transition-colors h-11 md:h-10 [@media(pointer:coarse)]:h-11"
                   >
                     <option value="AVAILABLE">AVAILABLE (Active Inventory)</option>
                     <option value="RESERVED">RESERVED / UNDER CONTRACT</option>
@@ -3873,20 +2840,20 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
             </div>
 
             {/* 2. ASSOCIATION DUES GROUP */}
-            <div className="space-y-4">
-              <h4 className="text-xs font-bold text-[#0F766E] uppercase tracking-wider flex items-center gap-1.5 pb-1 border-b border-slate-100">
+            <div className="flex flex-col gap-3">
+              <h4 className="text-sm font-semibold text-[#0F766E] flex items-center gap-1.5 pb-1 border-b border-slate-100">
                 <span className="material-symbols-outlined text-[16px]">account_balance</span>
                 <span>Association Dues & Assessments</span>
               </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
                 
                 {/* Association Dues Amount */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
+                <div className="flex min-w-0 flex-col gap-2">
+                  <label className="text-sm font-medium text-[#1E293B]">
                     Association Dues
                   </label>
-                  <div className="flex items-center rounded-lg border border-[#CBD5E1] bg-white hover:border-slate-400 focus-within:border-[#0F766E] focus-within:ring-1 focus-within:ring-[#0F766E] shadow-2xs transition-colors overflow-hidden">
-                    <div className="h-11 px-3 bg-[#F8FAFC] border-r border-[#CBD5E1] flex items-center justify-center text-xs font-bold text-[#64748B] select-none">
+                  <div className="flex items-center rounded-md border border-[#CBD5E1] bg-white hover:border-slate-400 focus-within:border-[#0F766E] focus-within:ring-1 focus-within:ring-[#0F766E] shadow-none transition-colors overflow-hidden">
+                    <div className="px-3 bg-[#F8FAFC] border-r border-[#CBD5E1] flex items-center justify-center text-xs font-bold text-[#64748B] select-none h-11 md:h-10 [@media(pointer:coarse)]:h-11">
                       {currencyOptions.find(c => c.code === formData.currency)?.symbol || '₱'}
                     </div>
                     <input
@@ -3900,7 +2867,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                         setIsDirty(true);
                         setFormData({ ...formData, association_fee: val, associationFee: val });
                       }}
-                      className="flex-1 h-11 px-4 bg-transparent text-sm font-semibold text-[#1E293B] outline-none min-w-0"
+                      className="flex-1 px-4 bg-transparent text-sm font-semibold text-[#1E293B] outline-none min-w-0 h-11 md:h-10 [@media(pointer:coarse)]:h-11"
                     />
                   </div>
                   {formData.association_fee && Number(formData.association_fee) > 0 && (
@@ -3911,8 +2878,8 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                 </div>
 
                 {/* Dues Frequency */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
+                <div className="flex min-w-0 flex-col gap-2">
+                  <label className="text-sm font-medium text-[#1E293B]">
                     Dues Frequency
                   </label>
                   <select
@@ -3921,7 +2888,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                       setIsDirty(true);
                       setFormData({ ...formData, association_fee_frequency: e.target.value, associationFeeFrequency: e.target.value });
                     }}
-                    className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none cursor-pointer shadow-2xs transition-colors"
+                    className="w-full px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-md text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none cursor-pointer shadow-none transition-colors h-11 md:h-10 [@media(pointer:coarse)]:h-11"
                   >
                     {associationFeeFrequencyOptions.map(freq => (
                       <option key={freq} value={freq}>{freq}</option>
@@ -3930,17 +2897,19 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                 </div>
 
                 {/* Services Included in Dues (Multiple Selection) */}
-                <div className="space-y-2 md:col-span-2">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B] flex items-center justify-between">
+                <div className="flex flex-col gap-2 md:col-span-2">
+                  <label className="text-sm font-medium text-[#1E293B] flex flex-wrap items-center justify-between gap-2">
                     <span>Services Included in Dues</span>
                     <span className="text-[10px] text-[#64748B] font-normal">Select all common services covered</span>
                   </label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5 pt-1">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-0">
                     {associationFeeIncludesOptions.map(service => {
                       const isChecked = Array.isArray(formData.association_fee_includes) && formData.association_fee_includes.includes(service);
                       return (
                         <button
                           key={service}
+                          role="checkbox"
+                          aria-checked={isChecked}
                           type="button"
                           onClick={() => {
                             setIsDirty(true);
@@ -3954,16 +2923,16 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                               };
                             });
                           }}
-                          className={`flex items-center gap-2 p-2.5 rounded-lg border text-left text-xs transition-colors cursor-pointer ${
+                          className={`flex min-h-11 md:min-h-8 [@media(pointer:coarse)]:min-h-11 items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0F766E] ${
                             isChecked
-                              ? 'bg-teal-50 border-teal-300 text-[#0F766E] font-semibold shadow-2xs'
-                              : 'bg-white border-[#CBD5E1] text-[#475569] hover:bg-slate-50'
+                              ? 'bg-teal-50 text-[#0F766E] font-medium'
+                              : 'bg-white text-[#475569] hover:bg-slate-50'
                           }`}
                         >
-                          <span className={`material-symbols-outlined text-[16px] ${isChecked ? 'text-[#0F766E]' : 'text-slate-400'}`}>
+                          <span className={`material-symbols-outlined shrink-0 text-[18px] ${isChecked ? 'text-[#0F766E]' : 'text-slate-400'}`}>
                             {isChecked ? 'check_box' : 'check_box_outline_blank'}
                           </span>
-                          <span className="leading-snug">{service}</span>
+                          <span className="min-w-0 leading-5">{service}</span>
                         </button>
                       );
                     })}
@@ -3975,19 +2944,19 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
 
             {/* 3. RENTAL TERMS GROUP (Conditionally rendered only for For Rent) */}
             {formData.transaction_type === 'For Rent' && (
-              <div className="space-y-4 pt-2 border-t border-slate-100">
+              <div className="flex flex-col gap-3 pt-2 border-t border-slate-100">
                 <div className="pb-1 border-b border-slate-100">
-                  <h4 className="text-xs font-bold text-[#0F766E] uppercase tracking-wider flex items-center gap-1.5">
+                  <h4 className="text-sm font-semibold text-[#0F766E] flex items-center gap-1.5">
                     <span className="material-symbols-outlined text-[16px]">history_edu</span>
                     <span>Rental Terms & Tenancy Conditions</span>
                   </h4>
                   <p className="text-xs text-[#64748B] mt-0.5">Define periodic frequency, minimum lease commitment, and tenant security guarantees.</p>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-x-4 gap-y-3">
                   
                   {/* Rent Frequency */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
+                  <div className="flex min-w-0 flex-col gap-2">
+                    <label className="text-sm font-medium text-[#1E293B]">
                       Rent Frequency <span className="text-[#FF6B6B]">*</span>
                     </label>
                     <select
@@ -3996,7 +2965,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                         setIsDirty(true);
                         setFormData({ ...formData, rent_frequency: e.target.value });
                       }}
-                      className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm font-semibold text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none cursor-pointer shadow-2xs transition-colors"
+                      className="w-full px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-md text-sm font-semibold text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none cursor-pointer shadow-none transition-colors h-11 md:h-10 [@media(pointer:coarse)]:h-11"
                     >
                       {rentFrequencyOptions.map(freq => (
                         <option key={freq} value={freq}>{freq}</option>
@@ -4005,8 +2974,8 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                   </div>
 
                   {/* Lease Term */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
+                  <div className="flex min-w-0 flex-col gap-2">
+                    <label className="text-sm font-medium text-[#1E293B]">
                       Lease Term
                     </label>
                     <select
@@ -4015,7 +2984,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                         setIsDirty(true);
                         setFormData({ ...formData, lease_term: e.target.value });
                       }}
-                      className="w-full h-11 px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none cursor-pointer shadow-2xs transition-colors"
+                      className="w-full px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-md text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none cursor-pointer shadow-none transition-colors h-11 md:h-10 [@media(pointer:coarse)]:h-11"
                     >
                       {leaseTermOptions.map(term => (
                         <option key={term} value={term}>{term}</option>
@@ -4024,12 +2993,12 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                   </div>
 
                   {/* Security Deposit Amount */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
+                  <div className="flex min-w-0 flex-col gap-2">
+                    <label className="text-sm font-medium text-[#1E293B]">
                       Security Deposit
                     </label>
-                    <div className="flex items-center rounded-lg border border-[#CBD5E1] bg-white hover:border-slate-400 focus-within:border-[#0F766E] focus-within:ring-1 focus-within:ring-[#0F766E] shadow-2xs transition-colors overflow-hidden">
-                      <div className="h-11 px-3 bg-[#F8FAFC] border-r border-[#CBD5E1] flex items-center justify-center text-xs font-bold text-[#64748B] select-none">
+                    <div className="flex items-center rounded-md border border-[#CBD5E1] bg-white hover:border-slate-400 focus-within:border-[#0F766E] focus-within:ring-1 focus-within:ring-[#0F766E] shadow-none transition-colors overflow-hidden">
+                      <div className="px-3 bg-[#F8FAFC] border-r border-[#CBD5E1] flex items-center justify-center text-xs font-bold text-[#64748B] select-none h-11 md:h-10 [@media(pointer:coarse)]:h-11">
                         {currencyOptions.find(c => c.code === formData.currency)?.symbol || '₱'}
                       </div>
                       <input
@@ -4043,18 +3012,18 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                           setIsDirty(true);
                           setFormData({ ...formData, security_deposit: val });
                         }}
-                        className="flex-1 h-11 px-4 bg-transparent text-sm font-semibold text-[#1E293B] outline-none min-w-0"
+                        className="flex-1 px-4 bg-transparent text-sm font-semibold text-[#1E293B] outline-none min-w-0 h-11 md:h-10 [@media(pointer:coarse)]:h-11"
                       />
                     </div>
                   </div>
 
                   {/* Advance Rent Amount */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
+                  <div className="flex min-w-0 flex-col gap-2">
+                    <label className="text-sm font-medium text-[#1E293B]">
                       Advance Rent
                     </label>
-                    <div className="flex items-center rounded-lg border border-[#CBD5E1] bg-white hover:border-slate-400 focus-within:border-[#0F766E] focus-within:ring-1 focus-within:ring-[#0F766E] shadow-2xs transition-colors overflow-hidden">
-                      <div className="h-11 px-3 bg-[#F8FAFC] border-r border-[#CBD5E1] flex items-center justify-center text-xs font-bold text-[#64748B] select-none">
+                    <div className="flex items-center rounded-md border border-[#CBD5E1] bg-white hover:border-slate-400 focus-within:border-[#0F766E] focus-within:ring-1 focus-within:ring-[#0F766E] shadow-none transition-colors overflow-hidden">
+                      <div className="px-3 bg-[#F8FAFC] border-r border-[#CBD5E1] flex items-center justify-center text-xs font-bold text-[#64748B] select-none h-11 md:h-10 [@media(pointer:coarse)]:h-11">
                         {currencyOptions.find(c => c.code === formData.currency)?.symbol || '₱'}
                       </div>
                       <input
@@ -4068,7 +3037,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                           setIsDirty(true);
                           setFormData({ ...formData, advance_rent: val });
                         }}
-                        className="flex-1 h-11 px-4 bg-transparent text-sm font-semibold text-[#1E293B] outline-none min-w-0"
+                        className="flex-1 px-4 bg-transparent text-sm font-semibold text-[#1E293B] outline-none min-w-0 h-11 md:h-10 [@media(pointer:coarse)]:h-11"
                       />
                     </div>
                   </div>
@@ -4084,11 +3053,11 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
         {/* SECTION 5: FEATURES AND AMENITIES */}
         {/* ========================================================================= */}
         {currentStep === 5 && (
-          <div data-testid="broker-card" className="bg-white rounded-lg border border-[#E2E8F0] p-6 sm:p-8 shadow-xs space-y-6 animate-in fade-in slide-in-from-bottom-2">
+          <div data-testid="broker-card" className="bg-white rounded-md border border-[#E2E8F0] p-4 shadow-xs flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2">
             <div className="pb-3 border-b border-[#E2E8F0] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <h3 className="text-base font-bold text-[#1E293B] flex items-center gap-2">
+              <h3 className="text-base font-semibold text-[#1E293B] flex items-center gap-2">
                 <span className="material-symbols-outlined text-[#0F766E]">tune</span>
-                Section 5: Features and Amenities
+                <span>Section 5: Features and Amenities</span>
               </h3>
               <div className="flex items-center gap-3">
                 <span className="text-xs font-medium text-[#64748B] hidden sm:inline-flex items-center">
@@ -4097,140 +3066,14 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                   </span>
                   selected
                 </span>
-                <div className="relative">
-                  <span className="material-symbols-outlined absolute left-2.5 top-2 text-slate-400 text-[18px]">search</span>
-                  <input
-                    type="text"
-                    placeholder="Filter amenities..."
-                    value={amenitySearch}
-                    onChange={e => setAmenitySearch(e.target.value)}
-                    className="h-9 pl-8 pr-7 text-xs bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] text-[#1E293B] shadow-2xs transition-colors"
-                  />
-                  {amenitySearch && (
-                    <button
-                      type="button"
-                      onClick={() => setAmenitySearch('')}
-                      className="absolute right-2 top-2 text-slate-400 hover:text-slate-600 cursor-pointer"
-                    >
-                      <span className="material-symbols-outlined text-[16px]">close</span>
-                    </button>
-                  )}
-                </div>
               </div>
             </div>
 
-            {/* Categorized Taxonomies */}
-            <div className="space-y-6">
-              
-              {/* 5A: Interior Features */}
-              <div className="space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-[#0F766E] flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-[16px]">chair</span>
-                    Interior & Spatial Finishes
-                  </span>
-                  <span className="text-[11px] text-[#64748B] font-medium">
-                    {formData.interior_features?.length || 0} selected
-                  </span>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {interiorAmenitiesList.filter(a => a.toLowerCase().includes(amenitySearch.toLowerCase())).map(item => {
-                    const isSelected = formData.interior_features.includes(item);
-                    return (
-                      <button
-                        type="button"
-                        key={item}
-                        onClick={() => handleAmenityToggle(item, 'interior_features')}
-                        className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs ${
-                          isSelected 
-                            ? 'border-[#0F766E] bg-[#0F766E] text-white font-semibold' 
-                            : 'border-[#CBD5E1] text-[#1E293B] bg-white hover:border-slate-400 hover:bg-slate-50'
-                        }`}
-                      >
-                        {isSelected && <span className="material-symbols-outlined text-[14px]">check</span>}
-                        {item}
-                      </button>
-                    );
-                  })}
-                  {interiorAmenitiesList.filter(a => a.toLowerCase().includes(amenitySearch.toLowerCase())).length === 0 && (
-                    <p className="text-xs text-slate-400 italic py-1">No matching interior features</p>
-                  )}
-                </div>
-              </div>
-
-              {/* 5B: Exterior Features */}
-              <div className="space-y-2.5 pt-4 border-t border-[#E2E8F0]">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-[#0F766E] flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-[16px]">deck</span>
-                    Exterior & Grounds Architecture
-                  </span>
-                  <span className="text-[11px] text-[#64748B] font-medium">
-                    {formData.exterior_features?.length || 0} selected
-                  </span>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {exteriorAmenitiesList.filter(a => a.toLowerCase().includes(amenitySearch.toLowerCase())).map(item => {
-                    const isSelected = formData.exterior_features.includes(item);
-                    return (
-                      <button
-                        type="button"
-                        key={item}
-                        onClick={() => handleAmenityToggle(item, 'exterior_features')}
-                        className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs ${
-                          isSelected 
-                            ? 'border-[#0F766E] bg-[#0F766E] text-white font-semibold' 
-                            : 'border-[#CBD5E1] text-[#1E293B] bg-white hover:border-slate-400 hover:bg-slate-50'
-                        }`}
-                      >
-                        {isSelected && <span className="material-symbols-outlined text-[14px]">check</span>}
-                        {item}
-                      </button>
-                    );
-                  })}
-                  {exteriorAmenitiesList.filter(a => a.toLowerCase().includes(amenitySearch.toLowerCase())).length === 0 && (
-                    <p className="text-xs text-slate-400 italic py-1">No matching exterior features</p>
-                  )}
-                </div>
-              </div>
-
-              {/* 5C: Community & Security */}
-              <div className="space-y-2.5 pt-4 border-t border-[#E2E8F0]">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-[#0F766E] flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-[16px]">shield</span>
-                    Community, Utilities & Security Infrastructure
-                  </span>
-                  <span className="text-[11px] text-[#64748B] font-medium">
-                    {formData.amenities?.length || 0} selected
-                  </span>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {communityAmenitiesList.filter(a => a.toLowerCase().includes(amenitySearch.toLowerCase())).map(item => {
-                    const isSelected = formData.amenities.includes(item);
-                    return (
-                      <button
-                        type="button"
-                        key={item}
-                        onClick={() => handleAmenityToggle(item, 'amenities')}
-                        className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs ${
-                          isSelected 
-                            ? 'border-[#0F766E] bg-[#0F766E] text-white font-semibold' 
-                            : 'border-[#CBD5E1] text-[#1E293B] bg-white hover:border-slate-400 hover:bg-slate-50'
-                        }`}
-                      >
-                        {isSelected && <span className="material-symbols-outlined text-[14px]">check</span>}
-                        {item}
-                      </button>
-                    );
-                  })}
-                  {communityAmenitiesList.filter(a => a.toLowerCase().includes(amenitySearch.toLowerCase())).length === 0 && (
-                    <p className="text-xs text-slate-400 italic py-1">No matching community amenities</p>
-                  )}
-                </div>
-              </div>
-
-            </div>
+            <CategoryAmenitiesPicker
+              formData={formData}
+              setFormData={setFormData}
+              setIsDirty={setIsDirty}
+            />
           </div>
         )}
 
@@ -4238,10 +3081,10 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
         {/* SECTION 6: MEDIA & DOCUMENTS */}
         {/* ========================================================================= */}
         {currentStep === 6 && (
-          <div data-testid="broker-card" className="bg-white rounded-lg border border-[#E2E8F0] p-6 sm:p-8 shadow-xs space-y-8 animate-in fade-in slide-in-from-bottom-2">
+          <div data-testid="broker-card" className="bg-white rounded-md border border-[#E2E8F0] p-4 shadow-xs flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2">
             <div className="pb-3 border-b border-[#E2E8F0] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
-                <h3 className="text-base font-bold text-[#1E293B] flex items-center gap-2">
+                <h3 className="text-base font-semibold text-[#1E293B] flex items-center gap-2">
                   <span className="material-symbols-outlined text-[#0F766E]">perm_media</span>
                   Section 6: Media & Documents
                 </h3>
@@ -4268,10 +3111,10 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
             {/* --------------------------------------------------------------------- */}
             {/* 1. PHOTOS SECTION */}
             {/* --------------------------------------------------------------------- */}
-            <div className="space-y-4">
+            <div className="flex flex-col gap-3">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-100">
                 <div>
-                  <h4 className="text-xs font-bold text-[#0F766E] uppercase tracking-wider flex items-center gap-1.5">
+                  <h4 className="text-sm font-semibold text-[#0F766E] flex items-center gap-1.5">
                     <span className="material-symbols-outlined text-[16px]">photo_camera</span>
                     <span>Photos</span>
                     <span className="text-slate-400 font-normal">({mediaPhotos.length})</span>
@@ -4291,7 +3134,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                   />
                   <label
                     htmlFor="photos-file-input"
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-semibold rounded-lg cursor-pointer transition-colors shadow-2xs"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#0F766E] hover:bg-[#115E59] text-white text-sm font-semibold rounded-md cursor-pointer transition-colors shadow-2xs min-h-11 md:min-h-10 [@media(pointer:coarse)]:min-h-11 justify-center whitespace-normal"
                   >
                     <span className="material-symbols-outlined text-[16px]">add_photo_alternate</span>
                     <span>Upload Photos</span>
@@ -4300,13 +3143,13 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
               </div>
 
               {mediaPhotos.length === 0 ? (
-                <div className="p-8 border border-dashed border-[#CBD5E1] rounded-lg text-center bg-[#F8FAFC]">
-                  <span className="material-symbols-outlined text-[36px] text-slate-300 mb-1">image_not_supported</span>
+                <div className="p-4 border border-dashed border-[#CBD5E1] rounded-md text-center bg-[#F8FAFC]">
+                  <span className="material-symbols-outlined inline-block max-w-full overflow-hidden text-[36px] text-slate-300 mb-1">image_not_supported</span>
                   <p className="text-xs font-semibold text-[#64748B]">No photos added.</p>
                   <p className="text-[11px] text-slate-400 mt-0.5">Click “Upload Photos” to add property imagery (up to 50MB per file).</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                   {mediaPhotos.map((photo, index) => {
                     const isCover = index === 0;
                     return (
@@ -4361,14 +3204,14 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                                 <button
                                   type="button"
                                   onClick={() => handlePhotoRetry(index)}
-                                  className="px-2 py-1 bg-white text-red-700 hover:bg-red-50 text-[10px] font-bold rounded cursor-pointer"
+                                  className="px-2 py-1 bg-white text-red-700 hover:bg-red-50 text-[10px] font-bold rounded cursor-pointer min-h-11 min-w-11 md:min-h-10 md:min-w-8 [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"
                                 >
                                   Retry Upload
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => setMediaPhotos(prev => prev.filter((_, idx) => idx !== index))}
-                                  className="px-2 py-1 bg-red-800 text-white hover:bg-red-700 text-[10px] font-medium rounded cursor-pointer"
+                                  className="px-2 py-1 bg-red-800 text-white hover:bg-red-700 text-[10px] font-medium rounded cursor-pointer min-h-11 min-w-11 md:min-h-10 md:min-w-8 [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"
                                 >
                                   Cancel Upload
                                 </button>
@@ -4380,7 +3223,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                           <button
                             type="button"
                             onClick={() => setPreviewMediaItem({ type: 'image', url: photo.imageUrl, title: `Photo #${index + 1}` })}
-                            className="absolute bottom-2 right-2 p-1.5 rounded bg-slate-900/70 hover:bg-slate-900 text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer shadow-xs"
+                            className="absolute bottom-2 right-2 p-1.5 rounded bg-slate-900/70 hover:bg-slate-900 text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer shadow-xs min-h-11 min-w-11 md:min-h-8 md:min-w-8 [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"
                             title="Preview"
                           >
                             <span className="material-symbols-outlined text-[14px]">visibility</span>
@@ -4398,7 +3241,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                                 type="button"
                                 disabled={index === 0}
                                 onClick={() => handlePhotoMove(index, index - 1)}
-                                className="p-1 text-slate-500 hover:text-[#0F766E] disabled:text-slate-300 disabled:cursor-not-allowed cursor-pointer"
+                                className="p-1 text-slate-500 hover:text-[#0F766E] disabled:text-slate-300 disabled:cursor-not-allowed cursor-pointer min-h-11 min-w-11 md:min-h-8 md:min-w-8 [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"
                                 title="Move Up"
                               >
                                 <span className="material-symbols-outlined text-[16px]">arrow_upward</span>
@@ -4407,7 +3250,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                                 type="button"
                                 disabled={index === mediaPhotos.length - 1}
                                 onClick={() => handlePhotoMove(index, index + 1)}
-                                className="p-1 text-slate-500 hover:text-[#0F766E] disabled:text-slate-300 disabled:cursor-not-allowed cursor-pointer"
+                                className="p-1 text-slate-500 hover:text-[#0F766E] disabled:text-slate-300 disabled:cursor-not-allowed cursor-pointer min-h-11 min-w-11 md:min-h-8 md:min-w-8 [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"
                                 title="Move Down"
                               >
                                 <span className="material-symbols-outlined text-[16px]">arrow_downward</span>
@@ -4421,7 +3264,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                               <button
                                 type="button"
                                 onClick={() => handlePhotoSetCover(index)}
-                                className="px-2 py-1 bg-slate-50 hover:bg-teal-50 text-[#0F766E] rounded border border-slate-200 text-center font-semibold cursor-pointer"
+                                className="px-2 py-1 bg-slate-50 hover:bg-teal-50 text-[#0F766E] rounded border border-slate-200 text-center font-semibold cursor-pointer min-h-11 min-w-11 md:min-h-10 md:min-w-8 [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"
                               >
                                 Set as Cover
                               </button>
@@ -4443,7 +3286,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                                   }
                                 });
                               }}
-                              className="px-2 py-1 bg-slate-50 hover:bg-red-50 text-red-600 rounded border border-slate-200 text-center font-semibold cursor-pointer"
+                              className="px-2 py-1 bg-slate-50 hover:bg-red-50 text-red-600 rounded border border-slate-200 text-center font-semibold cursor-pointer min-h-11 min-w-11 md:min-h-10 md:min-w-8 [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"
                             >
                               Remove
                             </button>
@@ -4459,10 +3302,10 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
             {/* --------------------------------------------------------------------- */}
             {/* 2. FLOOR PLANS SECTION */}
             {/* --------------------------------------------------------------------- */}
-            <div className="space-y-4 pt-4 border-t border-[#E2E8F0]">
+            <div className="flex flex-col gap-3">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-100">
                 <div>
-                  <h4 className="text-xs font-bold text-[#0F766E] uppercase tracking-wider flex items-center gap-1.5">
+                  <h4 className="text-sm font-semibold text-[#0F766E] flex items-center gap-1.5">
                     <span className="material-symbols-outlined text-[16px]">architecture</span>
                     <span>Floor Plans</span>
                     <span className="text-slate-400 font-normal">({mediaFloorPlans.length})</span>
@@ -4482,7 +3325,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                   />
                   <label
                     htmlFor="floorplans-file-input"
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-[#F8FAFC] text-[#0F766E] border border-[#0F766E] text-xs font-semibold rounded-lg cursor-pointer transition-colors shadow-2xs"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-[#F8FAFC] text-[#0F766E] border border-[#0F766E] text-sm font-semibold rounded-md cursor-pointer transition-colors shadow-2xs min-h-11 md:min-h-10 [@media(pointer:coarse)]:min-h-11 justify-center whitespace-normal"
                   >
                     <span className="material-symbols-outlined text-[16px]">upload_file</span>
                     <span>Upload Floor Plans</span>
@@ -4491,19 +3334,19 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
               </div>
 
               {mediaFloorPlans.length === 0 ? (
-                <div className="p-6 border border-dashed border-[#CBD5E1] rounded-lg text-center bg-[#F8FAFC]">
-                  <span className="material-symbols-outlined text-[32px] text-slate-300 mb-1">architecture</span>
+                <div className="p-4 border border-dashed border-[#CBD5E1] rounded-md text-center bg-[#F8FAFC]">
+                  <span className="material-symbols-outlined text-[32px] text-slate-300 mb-1 inline-block max-w-full overflow-hidden">architecture</span>
                   <p className="text-xs font-semibold text-[#64748B]">No floor plans added.</p>
                   <p className="text-[11px] text-slate-400 mt-0.5">PDF and high-res floor plan images supported.</p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="flex flex-col gap-3">
                   {mediaFloorPlans.map((plan, index) => {
                     const isPdf = plan.mimeType?.includes('pdf') || plan.mediaUrl?.toLowerCase().endsWith('.pdf');
                     return (
                       <div
                         key={plan.id}
-                        className="p-3.5 bg-white border border-[#CBD5E1] rounded-lg flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-2xs"
+                        className="p-3 bg-white border border-[#CBD5E1] rounded-md flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-2xs"
                       >
                         <div className="flex items-center gap-3 min-w-0 flex-1">
                           {/* Thumbnail / Icon */}
@@ -4516,7 +3359,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                           </div>
 
                           {/* Description Input & Upload Progress */}
-                          <div className="flex-1 min-w-0 space-y-1">
+                          <div className="flex-1 min-w-0 flex flex-col gap-1">
                             <input
                               type="text"
                               value={plan.shortDescription}
@@ -4525,7 +3368,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                                 setIsDirty(true);
                                 setMediaFloorPlans(prev => prev.map((p, idx) => idx === index ? { ...p, shortDescription: e.target.value } : p));
                               }}
-                              className="w-full h-8 px-2.5 bg-[#F8FAFC] border border-[#CBD5E1] rounded text-xs text-[#1E293B] focus:border-[#0F766E] focus:bg-white outline-none"
+                              className="w-full px-2.5 bg-[#F8FAFC] border border-[#CBD5E1] rounded text-sm text-[#1E293B] focus:border-[#0F766E] focus:bg-white outline-none h-11 md:h-10 [@media(pointer:coarse)]:h-11"
                             />
                             {plan.isUploading && (
                               <div className="flex items-center gap-2 text-[10px] text-[#0F766E]">
@@ -4536,7 +3379,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                             {plan.error && (
                               <div className="flex items-center gap-2 text-[10px] text-red-600">
                                 <span>Error: {plan.error}</span>
-                                <button type="button" onClick={() => uploadSingleMediaFile(plan.file, 'CAD', (u) => setMediaFloorPlans(prev => prev.map((p, idx) => idx === index ? { ...p, ...u } : p)))} className="underline font-bold">
+                                <button type="button" onClick={() => uploadSingleMediaFile(plan.file, 'CAD', (u) => setMediaFloorPlans(prev => prev.map((p, idx) => idx === index ? { ...p, ...u } : p)))} className="underline font-bold min-h-11 min-w-11 md:min-h-10 md:min-w-8 [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11">
                                   Retry Upload
                                 </button>
                               </div>
@@ -4552,7 +3395,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                               type="button"
                               disabled={index === 0}
                               onClick={() => handleFloorPlanMove(index, index - 1)}
-                              className="px-1.5 py-1 text-slate-500 hover:bg-slate-100 disabled:text-slate-300 disabled:cursor-not-allowed cursor-pointer"
+                              className="px-1.5 py-1 text-slate-500 hover:bg-slate-100 disabled:text-slate-300 disabled:cursor-not-allowed cursor-pointer min-h-11 min-w-11 md:min-h-10 md:min-w-8 [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"
                               title="Move Up"
                             >
                               <span className="material-symbols-outlined text-[14px]">arrow_upward</span>
@@ -4561,7 +3404,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                               type="button"
                               disabled={index === mediaFloorPlans.length - 1}
                               onClick={() => handleFloorPlanMove(index, index + 1)}
-                              className="px-1.5 py-1 text-slate-500 hover:bg-slate-100 disabled:text-slate-300 disabled:cursor-not-allowed cursor-pointer"
+                              className="px-1.5 py-1 text-slate-500 hover:bg-slate-100 disabled:text-slate-300 disabled:cursor-not-allowed cursor-pointer min-h-11 min-w-11 md:min-h-10 md:min-w-8 [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"
                               title="Move Down"
                             >
                               <span className="material-symbols-outlined text-[14px]">arrow_downward</span>
@@ -4578,7 +3421,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                                 setPreviewMediaItem({ type: 'image', url: plan.mediaUrl, title: plan.shortDescription || 'Floor Plan' });
                               }
                             }}
-                            className="px-2.5 py-1.5 bg-[#F8FAFC] hover:bg-slate-100 text-[#1E293B] border border-slate-200 rounded text-xs font-semibold cursor-pointer"
+                            className="px-2.5 py-1.5 bg-[#F8FAFC] hover:bg-slate-100 text-[#1E293B] border border-slate-200 rounded text-xs font-semibold cursor-pointer min-h-11 min-w-11 md:min-h-10 md:min-w-8 [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"
                           >
                             {isPdf ? 'Open Document' : 'Preview'}
                           </button>
@@ -4597,7 +3440,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                                 }
                               });
                             }}
-                            className="px-2.5 py-1.5 bg-white hover:bg-red-50 text-red-600 border border-slate-200 rounded text-xs font-semibold cursor-pointer"
+                            className="px-2.5 py-1.5 bg-white hover:bg-red-50 text-red-600 border border-slate-200 rounded text-xs font-semibold cursor-pointer min-h-11 min-w-11 md:min-h-10 md:min-w-8 [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"
                           >
                             Remove
                           </button>
@@ -4612,10 +3455,10 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
             {/* --------------------------------------------------------------------- */}
             {/* 3. VIDEOS SECTION */}
             {/* --------------------------------------------------------------------- */}
-            <div className="space-y-4 pt-4 border-t border-[#E2E8F0]">
+            <div className="flex flex-col gap-3">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-100">
                 <div>
-                  <h4 className="text-xs font-bold text-[#0F766E] uppercase tracking-wider flex items-center gap-1.5">
+                  <h4 className="text-sm font-semibold text-[#0F766E] flex items-center gap-1.5">
                     <span className="material-symbols-outlined text-[16px]">movie</span>
                     <span>Videos</span>
                     <span className="text-slate-400 font-normal">({mediaVideos.length})</span>
@@ -4625,11 +3468,11 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                   </p>
                 </div>
                 {/* Video Source Switcher */}
-                <div className="inline-flex rounded-lg border border-[#CBD5E1] p-0.5 bg-[#F8FAFC]">
+                <div className="inline-flex rounded-md border border-[#CBD5E1] p-0.5 bg-[#F8FAFC]">
                   <button
                     type="button"
                     onClick={() => setVideoSourceMode('upload')}
-                    className={`px-3 py-1 rounded text-xs font-semibold transition-colors cursor-pointer ${
+                    className={`px-3 py-1 rounded text-sm font-semibold transition-colors cursor-pointer min-h-11 md:min-h-10 [@media(pointer:coarse)]:min-h-11 ${
                       videoSourceMode === 'upload' ? 'bg-[#0F766E] text-white shadow-2xs' : 'text-[#64748B] hover:text-[#1E293B]'
                     }`}
                   >
@@ -4638,7 +3481,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                   <button
                     type="button"
                     onClick={() => setVideoSourceMode('link')}
-                    className={`px-3 py-1 rounded text-xs font-semibold transition-colors cursor-pointer ${
+                    className={`px-3 py-1 rounded text-sm font-semibold transition-colors cursor-pointer min-h-11 md:min-h-10 [@media(pointer:coarse)]:min-h-11 ${
                       videoSourceMode === 'link' ? 'bg-[#0F766E] text-white shadow-2xs' : 'text-[#64748B] hover:text-[#1E293B]'
                     }`}
                   >
@@ -4649,7 +3492,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
 
               {/* Video Input Controls based on Source */}
               {videoSourceMode === 'upload' ? (
-                <div className="p-4 border border-dashed border-[#CBD5E1] rounded-lg bg-[#F8FAFC] flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div className="p-4 border border-dashed border-[#CBD5E1] rounded-md bg-[#F8FAFC] flex flex-col sm:flex-row items-center justify-between gap-3">
                   <div className="text-center sm:text-left">
                     <p className="text-xs font-bold text-[#1E293B]">Select Video File</p>
                     <p className="text-[11px] text-[#64748B]">MP4, WebM or MOV video up to 100MB.</p>
@@ -4664,7 +3507,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                     />
                     <label
                       htmlFor="video-file-input"
-                      className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-semibold rounded-lg cursor-pointer transition-colors shadow-2xs"
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#0F766E] hover:bg-[#115E59] text-white text-sm font-semibold rounded-md cursor-pointer transition-colors shadow-2xs min-h-11 md:min-h-10 [@media(pointer:coarse)]:min-h-11 justify-center whitespace-normal"
                     >
                       <span className="material-symbols-outlined text-[16px]">video_call</span>
                       <span>Upload Video</span>
@@ -4672,32 +3515,32 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                   </div>
                 </div>
               ) : (
-                <div className="p-4 border border-[#CBD5E1] rounded-lg bg-[#F8FAFC] space-y-3">
+                <div className="p-4 border border-[#CBD5E1] rounded-md bg-[#F8FAFC] flex flex-col gap-3">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <label className="text-[11px] font-semibold text-[#1E293B] uppercase">Video URL</label>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-sm font-semibold text-[#1E293B]">Video URL</label>
                       <input
                         type="url"
                         placeholder="https://www.youtube.com/watch?v=... or Vimeo link"
                         value={newVideoUrl}
                         onChange={(e) => setNewVideoUrl(e.target.value)}
-                        className="w-full h-9 px-3 bg-white border border-[#CBD5E1] rounded text-xs text-[#1E293B] outline-none focus:border-[#0F766E]"
+                        className="w-full px-3 bg-white border border-[#CBD5E1] rounded text-sm text-[#1E293B] outline-none focus:border-[#0F766E] h-11 md:h-10 [@media(pointer:coarse)]:h-11"
                       />
                     </div>
-                    <div className="space-y-1">
-                      <label className="text-[11px] font-semibold text-[#1E293B] uppercase">Short Description</label>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-sm font-semibold text-[#1E293B]">Short Description</label>
                       <div className="flex gap-2">
                         <input
                           type="text"
                           placeholder="e.g. Master Penthouse Drone Tour"
                           value={newVideoDesc}
                           onChange={(e) => setNewVideoDesc(e.target.value)}
-                          className="flex-1 h-9 px-3 bg-white border border-[#CBD5E1] rounded text-xs text-[#1E293B] outline-none focus:border-[#0F766E]"
+                          className="flex-1 px-3 bg-white border border-[#CBD5E1] rounded text-sm text-[#1E293B] outline-none focus:border-[#0F766E] h-11 md:h-10 [@media(pointer:coarse)]:h-11 min-w-0"
                         />
                         <button
                           type="button"
                           onClick={handleAddVideoUrl}
-                          className="px-4 h-9 bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-semibold rounded cursor-pointer shadow-2xs shrink-0"
+                          className="px-4 h-auto bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-semibold rounded cursor-pointer shadow-2xs shrink-0 min-h-11 min-w-11 md:min-h-10 md:min-w-8 [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"
                         >
                           Add Link
                         </button>
@@ -4708,22 +3551,22 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
               )}
 
               {mediaVideos.length === 0 ? (
-                <div className="p-6 border border-dashed border-[#CBD5E1] rounded-lg text-center bg-[#F8FAFC]">
-                  <span className="material-symbols-outlined text-[32px] text-slate-300 mb-1">videocam_off</span>
+                <div className="p-4 border border-dashed border-[#CBD5E1] rounded-md text-center bg-[#F8FAFC]">
+                  <span className="material-symbols-outlined text-[32px] text-slate-300 mb-1 inline-block max-w-full overflow-hidden">videocam_off</span>
                   <p className="text-xs font-semibold text-[#64748B]">No videos added.</p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="flex flex-col gap-3">
                   {mediaVideos.map((vid, index) => (
                     <div
                       key={vid.id}
-                      className="p-3.5 bg-white border border-[#CBD5E1] rounded-lg flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-2xs"
+                      className="p-3 bg-white border border-[#CBD5E1] rounded-md flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-2xs"
                     >
                       <div className="flex items-center gap-3 min-w-0 flex-1">
                         <div className="w-16 h-12 rounded bg-slate-900 text-white shrink-0 flex items-center justify-center">
                           <span className="material-symbols-outlined text-[24px]">play_circle</span>
                         </div>
-                        <div className="flex-1 min-w-0 space-y-1">
+                        <div className="flex-1 min-w-0 flex flex-col gap-1">
                           <input
                             type="text"
                             value={vid.shortDescription}
@@ -4732,7 +3575,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                               setIsDirty(true);
                               setMediaVideos(prev => prev.map((v, idx) => idx === index ? { ...v, shortDescription: e.target.value } : v));
                             }}
-                            className="w-full h-8 px-2.5 bg-[#F8FAFC] border border-[#CBD5E1] rounded text-xs text-[#1E293B] focus:border-[#0F766E] focus:bg-white outline-none"
+                            className="w-full px-2.5 bg-[#F8FAFC] border border-[#CBD5E1] rounded text-sm text-[#1E293B] focus:border-[#0F766E] focus:bg-white outline-none h-11 md:h-10 [@media(pointer:coarse)]:h-11"
                           />
                           <p className="text-[11px] text-[#64748B] truncate font-mono">{vid.mediaUrl}</p>
                           {vid.isUploading && (
@@ -4750,7 +3593,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                             type="button"
                             disabled={index === 0}
                             onClick={() => handleVideoMove(index, index - 1)}
-                            className="px-1.5 py-1 text-slate-500 hover:bg-slate-100 disabled:text-slate-300 disabled:cursor-not-allowed cursor-pointer"
+                            className="px-1.5 py-1 text-slate-500 hover:bg-slate-100 disabled:text-slate-300 disabled:cursor-not-allowed cursor-pointer min-h-11 min-w-11 md:min-h-10 md:min-w-8 [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"
                             title="Move Up"
                           >
                             <span className="material-symbols-outlined text-[14px]">arrow_upward</span>
@@ -4759,7 +3602,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                             type="button"
                             disabled={index === mediaVideos.length - 1}
                             onClick={() => handleVideoMove(index, index + 1)}
-                            className="px-1.5 py-1 text-slate-500 hover:bg-slate-100 disabled:text-slate-300 disabled:cursor-not-allowed cursor-pointer"
+                            className="px-1.5 py-1 text-slate-500 hover:bg-slate-100 disabled:text-slate-300 disabled:cursor-not-allowed cursor-pointer min-h-11 min-w-11 md:min-h-10 md:min-w-8 [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"
                             title="Move Down"
                           >
                             <span className="material-symbols-outlined text-[14px]">arrow_downward</span>
@@ -4774,7 +3617,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                               setPreviewMediaItem({ type: 'video', url: vid.mediaUrl, title: vid.shortDescription || 'Listing Video' });
                             }
                           }}
-                          className="px-2.5 py-1.5 bg-[#F8FAFC] hover:bg-slate-100 text-[#1E293B] border border-slate-200 rounded text-xs font-semibold cursor-pointer"
+                          className="px-2.5 py-1.5 bg-[#F8FAFC] hover:bg-slate-100 text-[#1E293B] border border-slate-200 rounded text-xs font-semibold cursor-pointer min-h-11 min-w-11 md:min-h-10 md:min-w-8 [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"
                         >
                           Preview
                         </button>
@@ -4791,7 +3634,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                               }
                             });
                           }}
-                          className="px-2.5 py-1.5 bg-white hover:bg-red-50 text-red-600 border border-slate-200 rounded text-xs font-semibold cursor-pointer"
+                          className="px-2.5 py-1.5 bg-white hover:bg-red-50 text-red-600 border border-slate-200 rounded text-xs font-semibold cursor-pointer min-h-11 min-w-11 md:min-h-10 md:min-w-8 [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"
                         >
                           Remove
                         </button>
@@ -4805,9 +3648,9 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
             {/* --------------------------------------------------------------------- */}
             {/* 4. VIRTUAL TOURS SECTION */}
             {/* --------------------------------------------------------------------- */}
-            <div className="space-y-4 pt-4 border-t border-[#E2E8F0]">
+            <div className="flex flex-col gap-3">
               <div className="pb-2 border-b border-slate-100">
-                <h4 className="text-xs font-bold text-[#0F766E] uppercase tracking-wider flex items-center gap-1.5">
+                <h4 className="text-sm font-semibold text-[#0F766E] flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-[16px]">view_in_ar</span>
                   <span>Virtual Tours</span>
                   <span className="text-slate-400 font-normal">({mediaVirtualTours.length})</span>
@@ -4818,32 +3661,32 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
               </div>
 
               {/* Add Tour Inputs */}
-              <div className="p-4 border border-[#CBD5E1] rounded-lg bg-[#F8FAFC] space-y-3">
+              <div className="p-4 border border-[#CBD5E1] rounded-md bg-[#F8FAFC] flex flex-col gap-3">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-semibold text-[#1E293B] uppercase">Tour URL</label>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-sm font-semibold text-[#1E293B]">Tour URL</label>
                     <input
                       type="url"
                       placeholder="https://my.matterport.com/show/?m=..."
                       value={newTourUrl}
                       onChange={(e) => setNewTourUrl(e.target.value)}
-                      className="w-full h-9 px-3 bg-white border border-[#CBD5E1] rounded text-xs text-[#1E293B] outline-none focus:border-[#0F766E]"
+                      className="w-full px-3 bg-white border border-[#CBD5E1] rounded text-sm text-[#1E293B] outline-none focus:border-[#0F766E] h-11 md:h-10 [@media(pointer:coarse)]:h-11"
                     />
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-semibold text-[#1E293B] uppercase">Short Description</label>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-sm font-semibold text-[#1E293B]">Short Description</label>
                     <div className="flex gap-2">
                       <input
                         type="text"
                         placeholder="e.g. 3D Digital Twin Matterport Walkthrough"
                         value={newTourDesc}
                         onChange={(e) => setNewTourDesc(e.target.value)}
-                        className="flex-1 h-9 px-3 bg-white border border-[#CBD5E1] rounded text-xs text-[#1E293B] outline-none focus:border-[#0F766E]"
+                        className="flex-1 px-3 bg-white border border-[#CBD5E1] rounded text-sm text-[#1E293B] outline-none focus:border-[#0F766E] h-11 md:h-10 [@media(pointer:coarse)]:h-11 min-w-0"
                       />
                       <button
                         type="button"
                         onClick={handleAddVirtualTour}
-                        className="px-4 h-9 bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-semibold rounded cursor-pointer shadow-2xs shrink-0"
+                        className="px-4 h-auto bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-semibold rounded cursor-pointer shadow-2xs shrink-0 min-h-11 min-w-11 md:min-h-10 md:min-w-8 [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"
                       >
                         Add Tour
                       </button>
@@ -4853,22 +3696,22 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
               </div>
 
               {mediaVirtualTours.length === 0 ? (
-                <div className="p-6 border border-dashed border-[#CBD5E1] rounded-lg text-center bg-[#F8FAFC]">
-                  <span className="material-symbols-outlined text-[32px] text-slate-300 mb-1">view_in_ar</span>
+                <div className="p-4 border border-dashed border-[#CBD5E1] rounded-md text-center bg-[#F8FAFC]">
+                  <span className="material-symbols-outlined text-[32px] text-slate-300 mb-1 inline-block max-w-full overflow-hidden">view_in_ar</span>
                   <p className="text-xs font-semibold text-[#64748B]">No virtual tours added.</p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="flex flex-col gap-3">
                   {mediaVirtualTours.map((tour, index) => (
                     <div
                       key={tour.id}
-                      className="p-3.5 bg-white border border-[#CBD5E1] rounded-lg flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-2xs"
+                      className="p-3 bg-white border border-[#CBD5E1] rounded-md flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-2xs"
                     >
                       <div className="flex items-center gap-3 min-w-0 flex-1">
                         <div className="w-12 h-12 rounded bg-teal-50 border border-teal-200 text-[#0F766E] shrink-0 flex items-center justify-center">
                           <span className="material-symbols-outlined text-[24px]">view_in_ar</span>
                         </div>
-                        <div className="flex-1 min-w-0 space-y-1">
+                        <div className="flex-1 min-w-0 flex flex-col gap-1">
                           <input
                             type="text"
                             value={tour.shortDescription}
@@ -4877,7 +3720,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                               setIsDirty(true);
                               setMediaVirtualTours(prev => prev.map((t, idx) => idx === index ? { ...t, shortDescription: e.target.value } : t));
                             }}
-                            className="w-full h-8 px-2.5 bg-[#F8FAFC] border border-[#CBD5E1] rounded text-xs text-[#1E293B] focus:border-[#0F766E] focus:bg-white outline-none"
+                            className="w-full px-2.5 bg-[#F8FAFC] border border-[#CBD5E1] rounded text-sm text-[#1E293B] focus:border-[#0F766E] focus:bg-white outline-none h-11 md:h-10 [@media(pointer:coarse)]:h-11"
                           />
                           <p className="text-[11px] text-[#64748B] truncate font-mono">{tour.mediaUrl}</p>
                         </div>
@@ -4889,7 +3732,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                             type="button"
                             disabled={index === 0}
                             onClick={() => handleTourMove(index, index - 1)}
-                            className="px-1.5 py-1 text-slate-500 hover:bg-slate-100 disabled:text-slate-300 disabled:cursor-not-allowed cursor-pointer"
+                            className="px-1.5 py-1 text-slate-500 hover:bg-slate-100 disabled:text-slate-300 disabled:cursor-not-allowed cursor-pointer min-h-11 min-w-11 md:min-h-10 md:min-w-8 [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"
                             title="Move Up"
                           >
                             <span className="material-symbols-outlined text-[14px]">arrow_upward</span>
@@ -4898,7 +3741,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                             type="button"
                             disabled={index === mediaVirtualTours.length - 1}
                             onClick={() => handleTourMove(index, index + 1)}
-                            className="px-1.5 py-1 text-slate-500 hover:bg-slate-100 disabled:text-slate-300 disabled:cursor-not-allowed cursor-pointer"
+                            className="px-1.5 py-1 text-slate-500 hover:bg-slate-100 disabled:text-slate-300 disabled:cursor-not-allowed cursor-pointer min-h-11 min-w-11 md:min-h-10 md:min-w-8 [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"
                             title="Move Down"
                           >
                             <span className="material-symbols-outlined text-[14px]">arrow_downward</span>
@@ -4907,7 +3750,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                         <button
                           type="button"
                           onClick={() => window.open(tour.mediaUrl, '_blank', 'noopener,noreferrer')}
-                          className="px-2.5 py-1.5 bg-[#F8FAFC] hover:bg-slate-100 text-[#1E293B] border border-slate-200 rounded text-xs font-semibold cursor-pointer"
+                          className="px-2.5 py-1.5 bg-[#F8FAFC] hover:bg-slate-100 text-[#1E293B] border border-slate-200 rounded text-xs font-semibold cursor-pointer min-h-11 min-w-11 md:min-h-10 md:min-w-8 [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"
                         >
                           Open Tour
                         </button>
@@ -4924,7 +3767,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                               }
                             });
                           }}
-                          className="px-2.5 py-1.5 bg-white hover:bg-red-50 text-red-600 border border-slate-200 rounded text-xs font-semibold cursor-pointer"
+                          className="px-2.5 py-1.5 bg-white hover:bg-red-50 text-red-600 border border-slate-200 rounded text-xs font-semibold cursor-pointer min-h-11 min-w-11 md:min-h-10 md:min-w-8 [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"
                         >
                           Remove
                         </button>
@@ -4938,10 +3781,10 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
             {/* --------------------------------------------------------------------- */}
             {/* 5. DOCUMENTS SECTION */}
             {/* --------------------------------------------------------------------- */}
-            <div className="space-y-4 pt-4 border-t border-[#E2E8F0]">
+            <div className="flex flex-col gap-3">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-100">
                 <div>
-                  <h4 className="text-xs font-bold text-[#0F766E] uppercase tracking-wider flex items-center gap-1.5">
+                  <h4 className="text-sm font-semibold text-[#0F766E] flex items-center gap-1.5">
                     <span className="material-symbols-outlined text-[16px]">description</span>
                     <span>Documents</span>
                     <span className="text-slate-400 font-normal">({mediaDocuments.length})</span>
@@ -4961,7 +3804,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                   />
                   <label
                     htmlFor="documents-file-input"
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-[#F8FAFC] text-[#0F766E] border border-[#0F766E] text-xs font-semibold rounded-lg cursor-pointer transition-colors shadow-2xs"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-[#F8FAFC] text-[#0F766E] border border-[#0F766E] text-sm font-semibold rounded-md cursor-pointer transition-colors shadow-2xs min-h-11 md:min-h-10 [@media(pointer:coarse)]:min-h-11 justify-center whitespace-normal"
                   >
                     <span className="material-symbols-outlined text-[16px]">upload_file</span>
                     <span>Upload Documents</span>
@@ -4970,22 +3813,22 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
               </div>
 
               {mediaDocuments.length === 0 ? (
-                <div className="p-6 border border-dashed border-[#CBD5E1] rounded-lg text-center bg-[#F8FAFC]">
-                  <span className="material-symbols-outlined text-[32px] text-slate-300 mb-1">folder_off</span>
+                <div className="p-4 border border-dashed border-[#CBD5E1] rounded-md text-center bg-[#F8FAFC]">
+                  <span className="material-symbols-outlined text-[32px] text-slate-300 mb-1 inline-block max-w-full overflow-hidden">folder_off</span>
                   <p className="text-xs font-semibold text-[#64748B]">No documents added.</p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="flex flex-col gap-3">
                   {mediaDocuments.map((doc, index) => (
                     <div
                       key={doc.id}
-                      className="p-3.5 bg-white border border-[#CBD5E1] rounded-lg flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-2xs"
+                      className="p-3 bg-white border border-[#CBD5E1] rounded-md flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-2xs"
                     >
                       <div className="flex items-center gap-3 min-w-0 flex-1">
                         <div className="w-12 h-12 rounded bg-slate-100 border border-slate-200 text-slate-600 shrink-0 flex items-center justify-center">
                           <span className="material-symbols-outlined text-[24px]">description</span>
                         </div>
-                        <div className="flex-1 min-w-0 space-y-1">
+                        <div className="flex-1 min-w-0 flex flex-col gap-1">
                           <input
                             type="text"
                             value={doc.shortDescription}
@@ -4994,7 +3837,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                               setIsDirty(true);
                               setMediaDocuments(prev => prev.map((d, idx) => idx === index ? { ...d, shortDescription: e.target.value } : d));
                             }}
-                            className="w-full h-8 px-2.5 bg-[#F8FAFC] border border-[#CBD5E1] rounded text-xs text-[#1E293B] focus:border-[#0F766E] focus:bg-white outline-none"
+                            className="w-full px-2.5 bg-[#F8FAFC] border border-[#CBD5E1] rounded text-sm text-[#1E293B] focus:border-[#0F766E] focus:bg-white outline-none h-11 md:h-10 [@media(pointer:coarse)]:h-11"
                           />
                           {doc.isUploading && (
                             <div className="text-[10px] text-[#0F766E] flex items-center gap-1.5">
@@ -5005,7 +3848,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                           {doc.error && (
                             <div className="text-[10px] text-red-600 flex items-center gap-2">
                               <span>Error: {doc.error}</span>
-                              <button type="button" onClick={() => uploadSingleMediaFile(doc.file, 'Document', (u) => setMediaDocuments(prev => prev.map((d, idx) => idx === index ? { ...d, ...u } : d)))} className="underline font-bold">
+                              <button type="button" onClick={() => uploadSingleMediaFile(doc.file, 'Document', (u) => setMediaDocuments(prev => prev.map((d, idx) => idx === index ? { ...d, ...u } : d)))} className="underline font-bold min-h-11 min-w-11 md:min-h-10 md:min-w-8 [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11">
                                 Retry Upload
                               </button>
                             </div>
@@ -5019,7 +3862,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                             type="button"
                             disabled={index === 0}
                             onClick={() => handleDocumentMove(index, index - 1)}
-                            className="px-1.5 py-1 text-slate-500 hover:bg-slate-100 disabled:text-slate-300 disabled:cursor-not-allowed cursor-pointer"
+                            className="px-1.5 py-1 text-slate-500 hover:bg-slate-100 disabled:text-slate-300 disabled:cursor-not-allowed cursor-pointer min-h-11 min-w-11 md:min-h-10 md:min-w-8 [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"
                             title="Move Up"
                           >
                             <span className="material-symbols-outlined text-[14px]">arrow_upward</span>
@@ -5028,7 +3871,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                             type="button"
                             disabled={index === mediaDocuments.length - 1}
                             onClick={() => handleDocumentMove(index, index + 1)}
-                            className="px-1.5 py-1 text-slate-500 hover:bg-slate-100 disabled:text-slate-300 disabled:cursor-not-allowed cursor-pointer"
+                            className="px-1.5 py-1 text-slate-500 hover:bg-slate-100 disabled:text-slate-300 disabled:cursor-not-allowed cursor-pointer min-h-11 min-w-11 md:min-h-10 md:min-w-8 [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"
                             title="Move Down"
                           >
                             <span className="material-symbols-outlined text-[14px]">arrow_downward</span>
@@ -5037,7 +3880,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                         <button
                           type="button"
                           onClick={() => window.open(doc.mediaUrl, '_blank', 'noopener,noreferrer')}
-                          className="px-2.5 py-1.5 bg-[#F8FAFC] hover:bg-slate-100 text-[#1E293B] border border-slate-200 rounded text-xs font-semibold cursor-pointer"
+                          className="px-2.5 py-1.5 bg-[#F8FAFC] hover:bg-slate-100 text-[#1E293B] border border-slate-200 rounded text-xs font-semibold cursor-pointer min-h-11 min-w-11 md:min-h-10 md:min-w-8 [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"
                         >
                           Open Document
                         </button>
@@ -5054,7 +3897,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                               }
                             });
                           }}
-                          className="px-2.5 py-1.5 bg-white hover:bg-red-50 text-red-600 border border-slate-200 rounded text-xs font-semibold cursor-pointer"
+                          className="px-2.5 py-1.5 bg-white hover:bg-red-50 text-red-600 border border-slate-200 rounded text-xs font-semibold cursor-pointer min-h-11 min-w-11 md:min-h-10 md:min-w-8 [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"
                         >
                           Remove
                         </button>
@@ -5066,15 +3909,15 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
             </div>
 
             {/* Confidential Broker Section */}
-            <div className="p-5 bg-[#F8FAFC] border border-[#CBD5E1] rounded-lg space-y-4">
+            <div className="p-4 bg-[#F8FAFC] border border-[#CBD5E1] rounded-md flex flex-col gap-3">
               <div className="flex items-center gap-2 pb-2 border-b border-[#E2E8F0] text-xs font-semibold uppercase tracking-wider text-[#1E293B]">
                 <span className="material-symbols-outlined text-[18px] text-[#0F766E]">lock</span>
                 Confidential Broker Governance (Private & Redacted from Clients)
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-semibold text-[#64748B] uppercase">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-4 gap-y-3">
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-semibold text-[#64748B]">
                     Buyer Agency Commission
                   </label>
                   <input
@@ -5082,12 +3925,12 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                     placeholder="e.g. 3.0%"
                     value={formData.commissionSplit}
                     onChange={e => { setIsDirty(true); setFormData({ ...formData, commissionSplit: e.target.value }); }}
-                    className="w-full h-11 px-3 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-xs font-medium text-[#1E293B] outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] shadow-2xs transition-colors"
+                    className="w-full px-3 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-md text-sm font-medium text-[#1E293B] outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] shadow-none transition-colors h-11 md:h-10 [@media(pointer:coarse)]:h-11"
                   />
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-semibold text-[#64748B] uppercase">
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-semibold text-[#64748B]">
                     Lockbox Passcode
                   </label>
                   <input
@@ -5095,12 +3938,12 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                     placeholder="e.g. 4821"
                     value={formData.lockboxCode}
                     onChange={e => { setIsDirty(true); setFormData({ ...formData, lockboxCode: e.target.value }); }}
-                    className="w-full h-11 px-3 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-xs font-mono font-medium text-[#1E293B] outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] shadow-2xs transition-colors"
+                    className="w-full px-3 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-md text-sm font-mono font-medium text-[#1E293B] outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] shadow-none transition-colors h-11 md:h-10 [@media(pointer:coarse)]:h-11"
                   />
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-semibold text-[#64748B] uppercase">
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-semibold text-[#64748B]">
                     Owner Direct Phone
                   </label>
                   <input
@@ -5108,12 +3951,12 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                     placeholder="+63 917 000 0000"
                     value={formData.seller_direct_phone}
                     onChange={e => { setIsDirty(true); setFormData({ ...formData, seller_direct_phone: e.target.value }); }}
-                    className="w-full h-11 px-3 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-xs font-medium text-[#1E293B] outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] shadow-2xs transition-colors"
+                    className="w-full px-3 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-md text-sm font-medium text-[#1E293B] outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] shadow-none transition-colors h-11 md:h-10 [@media(pointer:coarse)]:h-11"
                   />
                 </div>
 
-                <div className="space-y-1.5 sm:col-span-3">
-                  <label className="text-[11px] font-semibold text-[#64748B] uppercase">
+                <div className="flex flex-col gap-2 md:col-span-2 xl:col-span-3">
+                  <label className="text-sm font-semibold text-[#64748B]">
                     Internal Showing Notes / Lockbox Location
                   </label>
                   <input
@@ -5121,7 +3964,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                     placeholder="e.g. Call listing agent 24 hours in advance. Keybox located at side gate column."
                     value={formData.showingInstructions}
                     onChange={e => { setIsDirty(true); setFormData({ ...formData, showingInstructions: e.target.value }); }}
-                    className="w-full h-11 px-3 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-xs font-medium text-[#1E293B] outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] shadow-2xs transition-colors"
+                    className="w-full px-3 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-md text-sm font-medium text-[#1E293B] outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] shadow-none transition-colors h-11 md:h-10 [@media(pointer:coarse)]:h-11"
                   />
                 </div>
               </div>
@@ -5137,12 +3980,12 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
         {/* SECTION 7: REVIEW AND SUBMIT */}
         {/* ========================================================================= */}
         {currentStep === 7 && (
-          <div data-testid="broker-card" className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
+          <div data-testid="broker-card" className="flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2">
             {/* Header */}
-            <div className="bg-white rounded-lg border border-[#E2E8F0] p-6 shadow-xs">
+            <div className="bg-white rounded-md border border-[#E2E8F0] p-4 shadow-xs">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <h3 className="text-lg font-bold text-[#1E293B] flex items-center gap-2">
+                  <h3 className="text-base font-semibold text-[#1E293B] flex items-center gap-2">
                     <span className="material-symbols-outlined text-[#0F766E] text-[22px]">fact_check</span>
                     <span>Review Listing</span>
                   </h3>
@@ -5157,6 +4000,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                     label="Preview Listing"
                     size="sm"
                     title="Preview Listing"
+                    className="min-h-11 md:min-h-10 [@media(pointer:coarse)]:min-h-11"
                   />
                 </div>
               </div>
@@ -5164,7 +4008,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
 
             {/* Submission Error Banner */}
             {submissionError && (
-              <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700 space-y-2">
+              <div className="p-4 bg-red-50 border border-red-200 rounded-md text-sm text-red-700 flex flex-col gap-2">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2 font-bold text-red-800">
                     <span className="material-symbols-outlined text-[18px]">error</span>
@@ -5173,14 +4017,14 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                   <button
                     type="button"
                     onClick={() => setSubmissionError(null)}
-                    className="text-red-500 hover:text-red-800 cursor-pointer font-bold text-sm"
+                    className="text-red-500 hover:text-red-800 cursor-pointer font-bold text-sm min-h-11 min-w-11 md:min-h-8 md:min-w-8 [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"
                   >
                     ✕
                   </button>
                 </div>
                 <p className="text-red-600">{submissionError.message}</p>
                 {Array.isArray(submissionError.errors) && submissionError.errors.length > 0 && (
-                  <ul className="list-disc pl-5 space-y-1 text-red-600">
+                  <ul className="list-disc pl-5 flex flex-col gap-1 text-red-600">
                     {submissionError.errors.map((err, idx) => (
                       <li key={idx}>
                         <strong className="text-red-800">{err.field}:</strong> {err.message}{' '}
@@ -5190,7 +4034,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                             setReturnToReview(true);
                             setCurrentStep(err.step);
                           }}
-                          className="text-[#0F766E] font-semibold underline hover:text-[#115E59] ml-1 cursor-pointer"
+                          className="text-[#0F766E] font-semibold underline hover:text-[#115E59] ml-1 cursor-pointer min-h-11 min-w-11 md:min-h-8 md:min-w-8 [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"
                         >
                           Fix in step {err.step}
                         </button>
@@ -5208,7 +4052,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                         executeSubmission(isEditing ? formData.standard_status : 'Active');
                       }
                     }}
-                    className="px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white font-semibold text-xs rounded shadow-xs cursor-pointer transition-colors"
+                    className="px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white font-semibold text-xs rounded shadow-xs cursor-pointer transition-colors min-h-11 min-w-11 md:min-h-8 md:min-w-8 [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"
                   >
                     Retry Submission
                   </button>
@@ -5218,9 +4062,9 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
 
             {/* Compact Missing Information Banner (Only displayed when required items are missing) */}
             {validationSummary.finalErrors.length > 0 && (
-              <div className="p-4 bg-amber-50/80 border border-amber-200 rounded-lg space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-xs font-bold text-amber-900">
+              <div className="p-4 bg-amber-50/80 border border-amber-200 rounded-md space-y-2.5">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 text-sm font-bold text-amber-900">
                     <span className="material-symbols-outlined text-[18px] text-amber-600">warning</span>
                     <span>Missing Information</span>
                   </div>
@@ -5230,15 +4074,15 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
                   {validationSummary.finalErrors.map((err, idx) => (
-                    <div key={idx} className="flex items-center justify-between gap-2 p-2 bg-white/90 border border-amber-200 rounded-md text-xs">
-                      <span className="text-slate-700 truncate font-medium">{err.field}</span>
+                    <div key={idx} className="flex items-center justify-between gap-2 p-2 bg-white/90 border border-amber-200 rounded-md text-sm">
+                      <span className="min-w-0 break-words text-slate-700 font-medium">{err.field}</span>
                       <button
                         type="button"
                         onClick={() => {
                           setReturnToReview(true);
                           setCurrentStep(err.step);
                         }}
-                        className="text-[#0F766E] hover:text-[#115E59] font-semibold hover:underline shrink-0 text-[11px] flex items-center gap-0.5 cursor-pointer"
+                        className="text-[#0F766E] hover:text-[#115E59] font-semibold hover:underline shrink-0 text-[11px] flex items-center gap-0.5 cursor-pointer min-h-11 min-w-11 md:min-h-8 md:min-w-8 [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"
                       >
                         <span>Fix</span>
                         <ArrowRight className="w-3 h-3" />
@@ -5250,12 +4094,12 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
             )}
 
             {/* Single Clean Stacked Review Panel */}
-            <div className="bg-white rounded-lg border border-[#E2E8F0] shadow-xs divide-y divide-[#E2E8F0]">
+            <div className="bg-white rounded-md border border-[#E2E8F0] shadow-xs divide-y divide-[#E2E8F0]">
               
               {/* 1. Basic Info */}
-              <div className="p-5 sm:p-6 space-y-4">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-bold text-[#1E293B] flex items-center gap-2">
+              <div className="p-4 flex flex-col gap-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h4 className="text-sm font-semibold text-[#1E293B] flex items-center gap-2">
                     <span className="material-symbols-outlined text-[#0F766E] text-[18px]">info</span>
                     <span>Basic Info</span>
                   </h4>
@@ -5265,13 +4109,13 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                       setReturnToReview(true);
                       setCurrentStep(1);
                     }}
-                    className="inline-flex items-center gap-1 text-xs font-semibold text-[#0F766E] hover:text-[#115E59] hover:underline cursor-pointer"
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-[#0F766E] hover:text-[#115E59] hover:underline cursor-pointer min-h-11 min-w-11 md:min-h-8 md:min-w-8 [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"
                   >
                     <span>Edit</span>
                     <ArrowRight className="w-3 h-3" />
                   </button>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-6 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-4 text-sm">
                   <div className="sm:col-span-2">
                     <span className="text-[#64748B] block mb-0.5">Title</span>
                     <span className="font-semibold text-[#1E293B] text-sm">
@@ -5298,7 +4142,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                     <div className="sm:col-span-2 pt-1 border-t border-slate-100">
                       <span className="text-[#64748B] block mb-1">Description</span>
                       <div 
-                        className="text-slate-700 bg-slate-50 p-3 rounded-lg text-xs leading-relaxed max-h-40 overflow-y-auto"
+                        className="text-slate-700 bg-slate-50 p-3 rounded-md text-sm leading-relaxed max-h-40 overflow-y-auto"
                         dangerouslySetInnerHTML={{ __html: formData.description }}
                       />
                     </div>
@@ -5307,9 +4151,9 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
               </div>
 
               {/* 2. Location */}
-              <div className="p-5 sm:p-6 space-y-4">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-bold text-[#1E293B] flex items-center gap-2">
+              <div className="p-4 flex flex-col gap-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h4 className="text-sm font-semibold text-[#1E293B] flex items-center gap-2">
                     <span className="material-symbols-outlined text-[#0F766E] text-[18px]">location_on</span>
                     <span>Location</span>
                   </h4>
@@ -5319,16 +4163,16 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                       setReturnToReview(true);
                       setCurrentStep(2);
                     }}
-                    className="inline-flex items-center gap-1 text-xs font-semibold text-[#0F766E] hover:text-[#115E59] hover:underline cursor-pointer"
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-[#0F766E] hover:text-[#115E59] hover:underline cursor-pointer min-h-11 min-w-11 md:min-h-8 md:min-w-8 [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"
                   >
                     <span>Edit</span>
                     <ArrowRight className="w-3 h-3" />
                   </button>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-6 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-4 text-sm">
                   <div className="sm:col-span-2">
                     <span className="text-[#64748B] block mb-0.5">Generated Address</span>
-                    <span className="font-medium text-[#1E293B] bg-slate-50 p-2.5 rounded-lg border border-slate-200 block text-xs">
+                    <span className="font-medium text-[#1E293B] bg-slate-50 p-2.5 rounded-md border border-slate-200 block text-xs">
                       {liveUnparsedAddress || 'Not provided'}
                     </span>
                   </div>
@@ -5408,7 +4252,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                   </div>
 
                   {formData.latitude && formData.longitude && (
-                    <div className="sm:col-span-2 mt-2 rounded-lg overflow-hidden border border-[#CBD5E1] bg-slate-50 relative aspect-[21/9]">
+                    <div className="sm:col-span-2 mt-2 rounded-md overflow-hidden border border-[#CBD5E1] bg-slate-50 relative aspect-[21/9]">
                       <iframe
                         title="Review Google Maps Cadastral Pinpoint"
                         src={`https://maps.google.com/maps?q=${Number(formData.latitude).toFixed(6)},${Number(formData.longitude).toFixed(6)}&t=m&z=15&output=embed`}
@@ -5421,9 +4265,9 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
               </div>
 
               {/* 3. Specifications */}
-              <div className="p-5 sm:p-6 space-y-4">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-bold text-[#1E293B] flex items-center gap-2">
+              <div className="p-4 flex flex-col gap-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h4 className="text-sm font-semibold text-[#1E293B] flex items-center gap-2">
                     <span className="material-symbols-outlined text-[#0F766E] text-[18px]">tune</span>
                     <span>Specifications</span>
                   </h4>
@@ -5433,13 +4277,13 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                       setReturnToReview(true);
                       setCurrentStep(3);
                     }}
-                    className="inline-flex items-center gap-1 text-xs font-semibold text-[#0F766E] hover:text-[#115E59] hover:underline cursor-pointer"
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-[#0F766E] hover:text-[#115E59] hover:underline cursor-pointer min-h-11 min-w-11 md:min-h-8 md:min-w-8 [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"
                   >
                     <span>Edit</span>
                     <ArrowRight className="w-3 h-3" />
                   </button>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-6 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-4 text-sm">
                   <div>
                     <span className="text-[#64748B] block mb-0.5">Bedrooms</span>
                     <span className="font-medium text-[#1E293B]">{formData.bedrooms_total !== '' && formData.bedrooms_total !== undefined ? formData.bedrooms_total : (formData.bedrooms !== '' && formData.bedrooms !== undefined ? formData.bedrooms : 'Not provided')}</span>
@@ -5476,9 +4320,9 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
               </div>
 
               {/* 4. Pricing & Terms */}
-              <div className="p-5 sm:p-6 space-y-4">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-bold text-[#1E293B] flex items-center gap-2">
+              <div className="p-4 flex flex-col gap-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h4 className="text-sm font-semibold text-[#1E293B] flex items-center gap-2">
                     <span className="material-symbols-outlined text-[#0F766E] text-[18px]">payments</span>
                     <span>Pricing & Terms</span>
                   </h4>
@@ -5488,13 +4332,13 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                       setReturnToReview(true);
                       setCurrentStep(4);
                     }}
-                    className="inline-flex items-center gap-1 text-xs font-semibold text-[#0F766E] hover:text-[#115E59] hover:underline cursor-pointer"
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-[#0F766E] hover:text-[#115E59] hover:underline cursor-pointer min-h-11 min-w-11 md:min-h-8 md:min-w-8 [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"
                   >
                     <span>Edit</span>
                     <ArrowRight className="w-3 h-3" />
                   </button>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-6 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-4 text-sm">
                   <div>
                     <span className="text-[#64748B] block mb-0.5">Price</span>
                     <span className="font-mono font-bold text-[#0F766E] text-base">
@@ -5529,9 +4373,9 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
               </div>
 
               {/* 5. Features & Amenities */}
-              <div className="p-5 sm:p-6 space-y-4">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-bold text-[#1E293B] flex items-center gap-2">
+              <div className="p-4 flex flex-col gap-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h4 className="text-sm font-semibold text-[#1E293B] flex items-center gap-2">
                     <span className="material-symbols-outlined text-[#0F766E] text-[18px]">auto_awesome</span>
                     <span>Features & Amenities</span>
                   </h4>
@@ -5541,13 +4385,13 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                       setReturnToReview(true);
                       setCurrentStep(5);
                     }}
-                    className="inline-flex items-center gap-1 text-xs font-semibold text-[#0F766E] hover:text-[#115E59] hover:underline cursor-pointer"
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-[#0F766E] hover:text-[#115E59] hover:underline cursor-pointer min-h-11 min-w-11 md:min-h-8 md:min-w-8 [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"
                   >
                     <span>Edit</span>
                     <ArrowRight className="w-3 h-3" />
                   </button>
                 </div>
-                <div className="space-y-3 text-xs">
+                <div className="flex flex-col gap-3 text-sm">
                   <div>
                     <span className="text-[#64748B] block mb-1 font-medium">Shared Amenities ({formData.amenities.length})</span>
                     <div className="flex flex-wrap gap-1.5">
@@ -5594,9 +4438,9 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
               </div>
 
               {/* 6. Media & Documents */}
-              <div className="p-5 sm:p-6 space-y-4">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-bold text-[#1E293B] flex items-center gap-2">
+              <div className="p-4 flex flex-col gap-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h4 className="text-sm font-semibold text-[#1E293B] flex items-center gap-2">
                     <span className="material-symbols-outlined text-[#0F766E] text-[18px]">photo_library</span>
                     <span>Media & Documents</span>
                   </h4>
@@ -5606,13 +4450,13 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                       setReturnToReview(true);
                       setCurrentStep(6);
                     }}
-                    className="inline-flex items-center gap-1 text-xs font-semibold text-[#0F766E] hover:text-[#115E59] hover:underline cursor-pointer"
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-[#0F766E] hover:text-[#115E59] hover:underline cursor-pointer min-h-11 min-w-11 md:min-h-8 md:min-w-8 [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"
                   >
                     <span>Edit</span>
                     <ArrowRight className="w-3 h-3" />
                   </button>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                   <div className="flex items-center gap-3">
                     {mediaPhotos[0] ? (
                       <img
@@ -5634,7 +4478,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                       </p>
                     </div>
                   </div>
-                  <div className="space-y-1">
+                  <div className="flex flex-col gap-1">
                     <p className="text-[#64748B]">Additional Assets</p>
                     <p className="font-medium text-[#1E293B]">
                       {mediaVideos.length} Video{mediaVideos.length === 1 ? '' : 's'} • {mediaVirtualTours.length} Virtual tour{mediaVirtualTours.length === 1 ? '' : 's'} • {mediaDocuments.length} Document{mediaDocuments.length === 1 ? '' : 's'}
@@ -5646,16 +4490,16 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
             </div>
 
             {/* Listing Settings */}
-            <div className="p-5 sm:p-6 bg-white border border-[#E2E8F0] rounded-lg space-y-4 shadow-xs">
-              <div className="flex items-center gap-2 pb-2 border-b border-slate-100 text-xs font-bold text-[#1E293B]">
+            <div className="p-4 bg-white border border-[#E2E8F0] rounded-md flex flex-col gap-3 shadow-xs">
+              <div className="flex items-center gap-2 pb-2 border-b border-slate-100 text-sm font-bold text-[#1E293B]">
                 <span className="material-symbols-outlined text-[18px] text-[#0F766E]">settings</span>
                 <span>Listing Settings</span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-center">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 items-center">
                 {/* Listing Status Badge */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-[#1E293B] block">
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-semibold text-[#1E293B] block">
                     Listing Status
                   </label>
                   <div className="flex items-center gap-3">
@@ -5687,9 +4531,9 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
 
                 {/* Featured Property Toggle (Authorized Staff) */}
                 {(!user || ['broker', 'admin'].includes(user?.role)) ? (
-                  <div className="space-y-1.5">
+                  <div className="flex flex-col gap-2">
                     <div className="flex items-center justify-between sm:justify-start sm:gap-4">
-                      <label htmlFor="featured-toggle" className="text-xs font-semibold text-[#1E293B] cursor-pointer">
+                      <label htmlFor="featured-toggle" className="text-sm font-semibold text-[#1E293B] cursor-pointer">
                         Featured Property
                       </label>
                       <button
@@ -5701,7 +4545,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                           setIsDirty(true);
                           setFormData(prev => ({ ...prev, is_featured: !prev.is_featured }));
                         }}
-                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none after:absolute after:-inset-y-2.5 after:-inset-x-1 ${
                           formData.is_featured ? 'bg-[#0F766E]' : 'bg-slate-300'
                         }`}
                       >
@@ -5717,8 +4561,8 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-1.5 opacity-60">
-                    <label className="text-xs font-semibold text-[#1E293B] block">
+                  <div className="flex flex-col gap-2 opacity-60">
+                    <label className="text-sm font-semibold text-[#1E293B] block">
                       Featured Property
                     </label>
                     <p className="text-[11px] text-[#64748B]">
@@ -5731,11 +4575,11 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
 
             {/* Internal Information (Collapsible Section) */}
             {(!user || ['broker', 'agent', 'admin'].includes(user?.role)) && (
-              <div className="bg-white border border-[#E2E8F0] rounded-lg shadow-xs overflow-hidden">
+              <div className="bg-white border border-[#E2E8F0] rounded-md shadow-xs overflow-hidden">
                 <button
                   type="button"
                   onClick={() => setIsInternalInfoOpen(prev => !prev)}
-                  className="w-full p-5 flex items-center justify-between bg-white hover:bg-slate-50 transition-colors text-left cursor-pointer"
+                  className="w-full p-4 flex items-center justify-between bg-white hover:bg-slate-50 transition-colors text-left cursor-pointer min-h-11 min-w-11 md:min-h-8 md:min-w-8 [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"
                 >
                   <div className="flex items-center gap-2">
                     <span className="material-symbols-outlined text-[18px] text-[#0F766E]">lock</span>
@@ -5748,10 +4592,10 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                 </button>
 
                 {isInternalInfoOpen && (
-                  <div className="p-5 pt-0 border-t border-slate-100 space-y-4 animate-in fade-in duration-150">
+                  <div className="p-4 pt-0 border-t border-slate-100 flex flex-col gap-3 animate-in fade-in duration-150">
                     {/* Private Notes */}
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-[#1E293B] block">
+                    <div className="flex flex-col gap-2">
+                      <label className="text-sm font-semibold text-[#1E293B] block">
                         Private Notes
                       </label>
                       <textarea
@@ -5762,13 +4606,13 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                           setIsDirty(true);
                           setFormData({ ...formData, privateNotes: e.target.value });
                         }}
-                        className="w-full p-3 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-xs text-[#1E293B] outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] shadow-2xs transition-colors"
+                        className="w-full p-3 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-md text-sm text-[#1E293B] outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] shadow-2xs transition-colors"
                       />
                     </div>
 
                     {/* Showing Instructions */}
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-[#1E293B] block">
+                    <div className="flex flex-col gap-2">
+                      <label className="text-sm font-semibold text-[#1E293B] block">
                         Showing Instructions
                       </label>
                       <textarea
@@ -5779,7 +4623,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                           setIsDirty(true);
                           setFormData({ ...formData, showingInstructions: e.target.value });
                         }}
-                        className="w-full p-3 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-lg text-xs text-[#1E293B] outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] shadow-2xs transition-colors"
+                        className="w-full p-3 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-md text-sm text-[#1E293B] outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] shadow-2xs transition-colors"
                       />
                     </div>
                   </div>
@@ -5791,7 +4635,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
         )}
 
         {/* Wizard Navigation Footer / Bottom Action Bar (Visible while scrolling) */}
-        <div className="sticky bottom-0 z-40 bg-white/95 backdrop-blur-sm border-t border-[#E2E8F0] p-4 sm:p-5 -mx-4 sm:-mx-6 lg:-mx-8 mt-8 shadow-md">
+        <div className="sticky bottom-0 z-40 bg-white/95 backdrop-blur-sm border-t border-[#E2E8F0] p-3 rounded-md shadow-xs">
           <div className="max-w-[1440px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="flex items-center gap-3 w-full sm:w-auto">
               <Button
@@ -5799,7 +4643,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                 variant="outline"
                 disabled={currentStep === 1 || isSubmitting}
                 onClick={() => setCurrentStep(prev => Math.max(1, prev - 1))}
-                className="h-11 px-5"
+                className="h-auto min-h-11 md:min-h-10 [@media(pointer:coarse)]:min-h-11 whitespace-normal py-2 px-5"
               >
                 <ArrowLeft className="size-3.5" />
                 <span>Back</span>
@@ -5809,14 +4653,14 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                   type="button"
                   variant="outline"
                   onClick={onClose}
-                  className="h-11 px-4 text-slate-600 hover:text-[#1E293B]"
+                  className="h-auto min-h-11 md:min-h-10 [@media(pointer:coarse)]:min-h-11 whitespace-normal py-2 px-4 text-slate-600 hover:text-[#1E293B]"
                 >
                   Cancel & Exit
                 </Button>
               ) : (
                 <Link
                   to="/broker/properties"
-                  className="h-11 px-4 rounded-lg border border-[#CBD5E1] bg-white hover:bg-[#F8FAFC] text-slate-600 hover:text-[#1E293B] text-xs font-semibold flex items-center transition-colors shadow-2xs"
+                  className="h-auto min-h-11 md:min-h-10 [@media(pointer:coarse)]:min-h-11 whitespace-normal py-2 px-4 rounded-md border border-[#CBD5E1] bg-white hover:bg-[#F8FAFC] text-slate-600 hover:text-[#1E293B] text-xs font-semibold flex items-center transition-colors shadow-2xs"
                 >
                   Cancel & Exit
                 </Link>
@@ -5834,7 +4678,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                         setReturnToReview(false);
                         setCurrentStep(7);
                       }}
-                      className="w-full sm:w-auto h-11 px-5 bg-teal-50 hover:bg-teal-100 text-[#0F766E] border-teal-300"
+                      className="w-full sm:w-auto h-auto min-h-11 md:min-h-10 [@media(pointer:coarse)]:min-h-11 whitespace-normal py-2 px-5 bg-teal-50 hover:bg-teal-100 text-[#0F766E] border-teal-300"
                     >
                       <span>Return to Review</span>
                       <ArrowRight className="size-3.5" />
@@ -5844,7 +4688,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                     type="button"
                     variant="default"
                     onClick={() => setCurrentStep(prev => Math.min(7, prev + 1))}
-                    className="w-full sm:w-auto h-11 px-6"
+                    className="w-full sm:w-auto h-auto min-h-11 md:min-h-10 [@media(pointer:coarse)]:min-h-11 whitespace-normal py-2 px-6"
                   >
                     <span>Next Section</span>
                     <ArrowRight className="size-3.5" />
@@ -5858,7 +4702,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                     variant="outline"
                     disabled={isSubmitting}
                     onClick={() => executeSubmission('Draft')}
-                    className="w-full sm:w-auto h-11 px-5"
+                    className="w-full sm:w-auto h-auto min-h-11 md:min-h-10 [@media(pointer:coarse)]:min-h-11 whitespace-normal py-2 px-5"
                   >
                     {isSubmitting && activeActionLabel === 'Saving...' ? (
                       <span className="material-symbols-outlined text-[16px] animate-spin">sync</span>
@@ -5880,7 +4724,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                             variant="coral"
                             disabled={isSubmitting}
                             onClick={() => executeSubmission('Pending Approval')}
-                            className="w-full sm:w-auto h-11 px-7 font-bold"
+                            className="w-full sm:w-auto h-auto min-h-11 md:min-h-10 [@media(pointer:coarse)]:min-h-11 whitespace-normal py-2 px-7 font-bold"
                           >
                             {isSubmitting ? (
                               <span className="material-symbols-outlined text-[16px] animate-spin">sync</span>
@@ -5897,7 +4741,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                           variant="default"
                           disabled={isSubmitting}
                           onClick={() => executeSubmission(formData.standard_status || 'Active')}
-                          className="w-full sm:w-auto h-11 px-7 font-bold"
+                          className="w-full sm:w-auto h-auto min-h-11 md:min-h-10 [@media(pointer:coarse)]:min-h-11 whitespace-normal py-2 px-7 font-bold"
                         >
                           {isSubmitting ? (
                             <span className="material-symbols-outlined text-[16px] animate-spin">sync</span>
@@ -5916,7 +4760,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                           variant="coral"
                           disabled={isSubmitting}
                           onClick={() => executeSubmission('Pending Approval')}
-                          className="w-full sm:w-auto h-11 px-7 font-bold"
+                          className="w-full sm:w-auto h-auto min-h-11 md:min-h-10 [@media(pointer:coarse)]:min-h-11 whitespace-normal py-2 px-7 font-bold"
                         >
                           {isSubmitting ? (
                             <span className="material-symbols-outlined text-[16px] animate-spin">sync</span>
@@ -5934,7 +4778,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                         variant="coral"
                         disabled={isSubmitting}
                         onClick={() => executeSubmission('Active')}
-                        className="w-full sm:w-auto h-11 px-7 font-bold"
+                        className="w-full sm:w-auto h-auto min-h-11 md:min-h-10 [@media(pointer:coarse)]:min-h-11 whitespace-normal py-2 px-7 font-bold"
                       >
                         {isSubmitting ? (
                           <span className="material-symbols-outlined text-[16px] animate-spin">sync</span>

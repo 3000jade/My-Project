@@ -168,7 +168,8 @@ export class SubdivisionController {
           image_width: Number(image_width) || 1600,
           image_height: Number(image_height) || 1000,
         },
-        req.user?.id
+        req.user?.id,
+        req.user?.role
       );
 
       res.status(201).json({
@@ -178,6 +179,14 @@ export class SubdivisionController {
         timestamp: new Date().toISOString(),
       });
     } catch (err: any) {
+      if (err.status === 403 || err.name === 'ForbiddenException') {
+        res.status(403).json({
+          success: false,
+          error: err.message || 'Forbidden: You do not own this subdivision project',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
       logger.error('[SubdivisionController] uploadPlan failed:', err);
       res.status(500).json({
         success: false,
@@ -250,9 +259,10 @@ export class SubdivisionController {
 
       const savedLots = await subdivisionService.batchSaveDraftLots(
         projectId,
-        plan_id || 'default',
+        plan_id || undefined,
         lots,
-        req.user?.id
+        req.user?.id,
+        req.user?.role
       );
 
       res.status(200).json({
@@ -262,6 +272,14 @@ export class SubdivisionController {
         timestamp: new Date().toISOString(),
       });
     } catch (err: any) {
+      if (err.status === 403 || err.name === 'ForbiddenException') {
+        res.status(403).json({
+          success: false,
+          error: err.message || 'Forbidden: You do not own this subdivision project',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
       logger.error('[SubdivisionController] batchSaveLots failed:', err);
       res.status(500).json({
         success: false,
@@ -303,9 +321,10 @@ export class SubdivisionController {
 
       const result = await subdivisionService.publishMapVersion(
         projectId,
-        plan_id || 'default',
+        plan_id || undefined,
         notes,
-        req.user?.id || 'b0000000-0000-0000-0000-000000000001'
+        req.user?.id || 'b0000000-0000-0000-0000-000000000001',
+        req.user?.role
       );
 
       if (!result.success) {
@@ -325,6 +344,14 @@ export class SubdivisionController {
         timestamp: new Date().toISOString(),
       });
     } catch (err: any) {
+      if (err.status === 403 || err.name === 'ForbiddenException') {
+        res.status(403).json({
+          success: false,
+          error: err.message || 'Forbidden: You do not own this subdivision project',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
       logger.error('[SubdivisionController] publishVersion failed:', err);
       res.status(500).json({
         success: false,
@@ -376,7 +403,8 @@ export class SubdivisionController {
       const result = await subdivisionService.restoreVersion(
         projectId,
         versionNumber,
-        req.user?.id || 'b0000000-0000-0000-0000-000000000001'
+        req.user?.id || 'b0000000-0000-0000-0000-000000000001',
+        req.user?.role
       );
 
       res.status(200).json({
@@ -386,6 +414,14 @@ export class SubdivisionController {
         timestamp: new Date().toISOString(),
       });
     } catch (err: any) {
+      if (err.status === 403 || err.name === 'ForbiddenException') {
+        res.status(403).json({
+          success: false,
+          error: err.message || 'Forbidden: You do not own this subdivision project',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
       logger.error('[SubdivisionController] restoreVersion failed:', err);
       res.status(500).json({
         success: false,

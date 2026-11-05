@@ -76,11 +76,25 @@ export default function PublicSubdivisionMap() {
 
   // Statistics calculation
   const stats = useMemo(() => {
-    const saleable = lots.filter(l => l.lot_type === 'SALEABLE_LOT' || !l.lot_type);
-    const available = saleable.filter(l => l.availability_status === 'AVAILABLE').length;
-    const reserved = saleable.filter(l => l.availability_status === 'RESERVED').length;
-    const sold = saleable.filter(l => l.availability_status === 'SOLD').length;
-    const totalArea = saleable.reduce((acc, curr) => acc + (Number(curr.verified_area_sqm) || 0), 0);
+    const saleable = lots.filter(
+      (l) =>
+        (l.boundary_type && l.boundary_type.toLowerCase() === 'saleablelot') ||
+        (l.lot_type && l.lot_type.toLowerCase() === 'saleable_lot') ||
+        (!l.boundary_type && !l.lot_type)
+    );
+    const available = saleable.filter(
+      (l) => String(l.availability_status || '').toUpperCase() === 'AVAILABLE'
+    ).length;
+    const reserved = saleable.filter(
+      (l) => String(l.availability_status || '').toUpperCase() === 'RESERVED'
+    ).length;
+    const sold = saleable.filter(
+      (l) => String(l.availability_status || '').toUpperCase() === 'SOLD'
+    ).length;
+    const totalArea = saleable.reduce(
+      (acc, curr) => acc + (Number(curr.verified_area_sqm) || 0),
+      0
+    );
     return {
       total: saleable.length,
       available,
@@ -93,12 +107,18 @@ export default function PublicSubdivisionMap() {
   // Filter lots for list view
   const filteredLots = useMemo(() => {
     return lots.filter((lot) => {
-      const isSaleable = lot.lot_type === 'SALEABLE_LOT' || !lot.lot_type;
+      const isSaleable =
+        (lot.boundary_type && lot.boundary_type.toLowerCase() === 'saleablelot') ||
+        (lot.lot_type && lot.lot_type.toLowerCase() === 'saleable_lot') ||
+        (!lot.boundary_type && !lot.lot_type);
       if (!isSaleable) return false;
 
-      const matchesStatus = statusFilter === 'ALL' || lot.availability_status === statusFilter;
+      const lotStatusUpper = String(lot.availability_status || '').toUpperCase();
+      const matchesStatus =
+        statusFilter === 'ALL' || lotStatusUpper === String(statusFilter).toUpperCase();
       const term = searchTerm.trim().toLowerCase();
-      const matchesSearch = !term ||
+      const matchesSearch =
+        !term ||
         String(lot.block_number).toLowerCase().includes(term) ||
         String(lot.lot_number).toLowerCase().includes(term) ||
         `block ${lot.block_number} lot ${lot.lot_number}`.toLowerCase().includes(term);

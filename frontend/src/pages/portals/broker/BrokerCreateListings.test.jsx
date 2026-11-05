@@ -117,6 +117,15 @@ describe('BrokerCreateListings - Form Fields & Step Navigation', () => {
     );
   };
 
+  it('opens a named step using its native navigation control', () => {
+    renderComponent();
+    const step = screen.getByRole('button', { name: /Step 4: Pricing & Terms/i });
+    expect(step.tagName).toBe('BUTTON');
+    fireEvent.click(step);
+    expect(step).toHaveAttribute('aria-current', 'step');
+    expect(screen.getByPlaceholderText('150,000,000')).toBeInTheDocument();
+  });
+
   it('renders the 7-step navigation header with real-world broker milestone names and step badge', () => {
     renderComponent();
 
@@ -169,7 +178,8 @@ describe('BrokerCreateListings - Form Fields & Step Navigation', () => {
     expect(screen.getByText('Property Status & Lifecycle')).toBeInTheDocument();
     expect(screen.getByTestId('property-inventory-status-select')).toBeInTheDocument();
     expect(screen.getByTestId('property-standard-status-select')).toBeInTheDocument();
-    expect(screen.getByTestId('property-title-status-select')).toBeInTheDocument();
+    // Title status is de-duplicated and lives in Section 3 specifications
+    expect(screen.queryByTestId('property-title-status-select')).not.toBeInTheDocument();
 
     // Verify changing inventory status updates value and syncs standard status
     const inventorySelect = screen.getByTestId('property-inventory-status-select');
@@ -209,6 +219,7 @@ describe('BrokerCreateListings - Form Fields & Step Navigation', () => {
     // Check presence of Section 3 heading and floor area input
     expect(screen.getByText(/Section 3:.*Specifications/i)).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/e\.g\. 450/i)).toBeInTheDocument();
+    expect(screen.getByTestId('property-title-status-select')).toBeInTheDocument();
   });
 
   it('navigates to Section 4 (Pricing & Terms) and verifies price formatting', () => {

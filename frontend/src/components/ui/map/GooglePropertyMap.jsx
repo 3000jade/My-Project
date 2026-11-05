@@ -9,7 +9,7 @@ import {
   createPriceBadgeElement,
   formatPriceBadge,
 } from './googleMapMarkers';
-import { getPropertyCoordinates } from '../../../utils/propertyCoordinates';
+import { getPropertyCoordinates, DEFAULT_METRO_MANILA_COORDS } from '../../../utils/propertyCoordinates';
 
 /**
  * Modern SaaS cartographic styling JSON for Google Maps Vector Canvas.
@@ -96,6 +96,7 @@ export default function GooglePropertyMap({
   initialZoom = 14,
   onOpenStreetView,
   forceEmbed = false,
+  recenterTrigger = 0,
   markerVariant = 'pin', // 'pin' (default teardrop) | 'dot' | 'pill'
 }) {
   const containerRef = useRef(null);
@@ -143,7 +144,7 @@ export default function GooglePropertyMap({
       const c = getPropertyCoordinates(activeProperty);
       if (c && c.lat && c.lng) return c;
     }
-    return { lat: 14.5489, lng: 121.0503 }; // Default Metro Manila
+    return { ...DEFAULT_METRO_MANILA_COORDS };
   }, [activeProperty]);
 
   // Construct official Google Maps Embed URL (used only if forceEmbed is requested)
@@ -161,7 +162,7 @@ export default function GooglePropertyMap({
         if (c && c.lat && c.lng) return [c.lat, c.lng];
       }
     }
-    return [14.5489, 121.0503];
+    return [DEFAULT_METRO_MANILA_COORDS.lat, DEFAULT_METRO_MANILA_COORDS.lng];
   }, [properties]);
 
   // ==========================================
@@ -481,6 +482,14 @@ export default function GooglePropertyMap({
     if (properties.length === 0) return;
 
     if (mapEngine === 'google' && googleMapInstanceRef.current && window.google) {
+      if (singlePropertyMode || properties.length === 1) {
+        const c = getPropertyCoordinates(properties[0]);
+        if (c && c.lat && c.lng) {
+          googleMapInstanceRef.current.setCenter({ lat: c.lat, lng: c.lng });
+          googleMapInstanceRef.current.setZoom(16);
+          return;
+        }
+      }
       const bounds = new window.google.maps.LatLngBounds();
       let hasCoords = false;
       properties.forEach((prop) => {
@@ -502,10 +511,14 @@ export default function GooglePropertyMap({
         }
       });
       if (latLngs.length > 0) {
-        leafletMapInstanceRef.current.fitBounds(latLngs, {
-          padding: [48, 48],
-          maxZoom: 16,
-        });
+        if (singlePropertyMode || latLngs.length === 1) {
+          leafletMapInstanceRef.current.setView(latLngs[0], 16);
+        } else {
+          leafletMapInstanceRef.current.fitBounds(latLngs, {
+            padding: [48, 48],
+            maxZoom: 16,
+          });
+        }
       }
     }
   }, [properties, mapEngine]);
@@ -531,6 +544,21 @@ export default function GooglePropertyMap({
       leafletMapInstanceRef.current.panTo([c.lat, c.lng], { animate: true });
     }
   }, [selectedPropertyId, properties, mapEngine]);
+
+  // Handle active recenter trigger (e.g. from EnlargedMapModal "Center on Property")
+  useEffect(() => {
+    if (recenterTrigger == null || recenterTrigger === 0) return;
+    if (activeCoords && activeCoords.lat && activeCoords.lng) {
+      const targetZoom = singlePropertyMode ? 16 : 15;
+      if (mapEngine === 'google' && googleMapInstanceRef.current) {
+        googleMapInstanceRef.current.panTo({ lat: activeCoords.lat, lng: activeCoords.lng });
+        googleMapInstanceRef.current.setZoom(targetZoom);
+      } else if (mapEngine === 'leaflet' && leafletMapInstanceRef.current) {
+        leafletMapInstanceRef.current.panTo([activeCoords.lat, activeCoords.lng], { animate: true });
+        leafletMapInstanceRef.current.setZoom(targetZoom);
+      }
+    }
+  }, [recenterTrigger, activeCoords, mapEngine, singlePropertyMode]);
 
   // Manual zoom control handlers
   const handleZoomIn = () => {

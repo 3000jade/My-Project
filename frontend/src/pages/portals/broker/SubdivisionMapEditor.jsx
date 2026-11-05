@@ -568,6 +568,7 @@ export default function SubdivisionMapEditor() {
   // Pre-Flight Validation Check (FR-031, FR-032)
   const handleRunValidation = async () => {
     try {
+      await saveDraftLots(lots);
       const res = await subdivisionService.validateMap(projectId);
       const data = res?.data || res;
       if (data) {
@@ -582,23 +583,18 @@ export default function SubdivisionMapEditor() {
   // Publish Version Snapshot (FR-033, FR-036)
   const handlePublishVersion = async () => {
     try {
+      // Synchronize latest canvas draft lots to backend before publishing
+      await saveDraftLots(lots);
+
       const res = await subdivisionService.publishMap(
         projectId,
         publishNotes || `Release Version ${versions.length + 1}`
       );
       const data = res?.data || res;
 
-      if (!res?.success && !data?.version_number) {
-        setShowPublishModal(false);
-        setValidationResult(data);
-        setShowValidationModal(true);
-        toast.error('Publication blocked by pre-flight validation errors.');
-        return;
-      }
-
       setShowPublishModal(false);
       setPublishNotes('');
-      toast.success(`Published Version ${data.version_number} successfully!`);
+      toast.success(`Published Version ${data?.version_number || 1} successfully!`);
 
       // Refresh version list
       const versRes = await subdivisionService.listVersions(projectId);
@@ -607,7 +603,15 @@ export default function SubdivisionMapEditor() {
         setVersions(versData);
       }
     } catch (err) {
-      toast.error('Failed to publish map version.');
+      const validationData = err?.data?.data || err?.response?.data?.data || err?.data;
+      if (err?.status === 422 || err?.response?.status === 422 || validationData?.errors) {
+        setShowPublishModal(false);
+        setValidationResult(validationData);
+        setShowValidationModal(true);
+        toast.error('Publication blocked by pre-flight validation errors.');
+        return;
+      }
+      toast.error(err?.message || 'Failed to publish map version.');
     }
   };
 

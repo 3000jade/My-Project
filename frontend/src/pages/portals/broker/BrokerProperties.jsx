@@ -342,13 +342,13 @@ export default function BrokerProperties() {
     }
 
     try {
-      const response = await propertyService.getProperties();
+      const response = await propertyService.getProperties({ limit: 100 });
       const rawList = response?.data && Array.isArray(response.data)
         ? response.data
         : Array.isArray(response)
         ? response
         : [];
-      setProperties(rawList.map(normalizeProperty));
+      setProperties(rawList);
       setError(null);
     } catch (err) {
       console.warn('API fetch failed:', err);
@@ -615,6 +615,7 @@ export default function BrokerProperties() {
   const handleInlineApprove = async (e, row) => {
     e.stopPropagation();
     const targetId = row.id || row.listingKey;
+    const previousProperties = properties;
     setProperties(prev => prev.map(p => {
       if ((p.id || p.listingKey) === targetId) {
         return {
@@ -626,38 +627,54 @@ export default function BrokerProperties() {
       }
       return p;
     }));
-    showToast(`Approved & published "${row.title}"`);
     try {
       await propertyService.updateProperty(targetId, {
         standardStatus: 'Active',
         status: 'AVAILABLE'
       });
+      showToast(`Approved & published "${row.title}"`);
     } catch (err) {
-      console.warn('API update failed, preserved locally:', err);
+      console.error('API update failed, reverting:', err);
+      setProperties(previousProperties);
+      showToast(`Failed to approve "${row.title}". Reverted changes.`);
     }
   };
 
   // Duplicate listing
-  const handleDuplicate = (e, row) => {
+  const handleDuplicate = async (e, row) => {
     e.stopPropagation();
-    const clone = {
-      ...row,
-      id: `copy-${Date.now()}`,
-      listingKey: `HSR-${Math.floor(10000000 + Math.random() * 90000000)}`,
-      title: `${row.title} (Copy)`,
-      standard_status: 'Draft',
-      standardStatus: 'Draft',
-      status: 'INACTIVE',
-      created_at: new Date().toISOString(),
-      createdAt: new Date().toISOString()
-    };
-    setProperties(prev => [clone, ...prev]);
-    showToast(`Duplicated listing as "${clone.title}"`);
+    try {
+      const clonePayload = {
+        title: `${row.title || 'Untitled Property'} (Copy)`,
+        price: Number(row.price_raw || row.price) || 0,
+        property_type: row.property_type || row.propertyType || 'Residential',
+        standard_status: 'Draft',
+        status: 'INACTIVE',
+        city: row.city || row.location || 'Metro Manila',
+        address: row.address || '',
+        beds: Number(row.bedrooms ?? row.beds) || 0,
+        baths: Number(row.bathrooms ?? row.baths) || 0,
+        living_area: Number(row.living_area || row.livingArea || row.sqm) || 0,
+        description: row.description || '',
+        features: Array.isArray(row.features) ? row.features : [],
+        images: Array.isArray(row.images) && row.images.length > 0 ? row.images : (row.mainImage ? [row.mainImage] : []),
+      };
+      const created = await propertyService.createProperty(clonePayload);
+      if (created) {
+        setProperties(prev => [created, ...prev]);
+        showToast(`Duplicated listing as "${created.title}"`);
+      }
+    } catch (err) {
+      console.error('Failed to duplicate listing:', err);
+      showToast('Failed to duplicate listing. Please try again.');
+    }
   };
 
   // Batch Status Update
   const handleBatchStatusUpdate = async (newStatus, newStandardStatus) => {
     const keysToUpdate = Array.from(selectedKeys);
+    if (keysToUpdate.length === 0) return;
+    const previousProperties = properties;
     setProperties(prev => prev.map(p => {
       const key = p.listingKey || p.id;
       if (selectedKeys.has(key)) {
@@ -670,18 +687,26 @@ export default function BrokerProperties() {
       }
       return p;
     }));
-    showToast(`Updated ${keysToUpdate.length} listings to "${newStatus}"`);
     setSelectedKeys(new Set());
 
     try {
-      await Promise.allSettled(
+      const results = await Promise.allSettled(
         keysToUpdate.map(id => propertyService.updateProperty(id, {
           status: newStatus,
           standardStatus: newStandardStatus || newStatus
         }))
       );
+      const failures = results.filter(r => r.status === 'rejected');
+      if (failures.length > 0) {
+        showToast(`Partial failure: ${failures.length} listings failed to update. Re-syncing...`);
+        fetchProperties(true);
+      } else {
+        showToast(`Updated ${keysToUpdate.length} listings to "${newStatus}"`);
+      }
     } catch (err) {
-      console.warn('Batch update API dispatch partial failure:', err);
+      console.error('Batch update API dispatch failure:', err);
+      setProperties(previousProperties);
+      showToast('Batch update failed. Reverted changes.');
     }
   };
 

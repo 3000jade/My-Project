@@ -7,6 +7,8 @@ export const PHILIPPINES_BBOX = {
   maxLng: 127.0
 };
 
+export const DEFAULT_METRO_MANILA_COORDS = { lat: 14.5547, lng: 121.0244 };
+
 /**
  * Validates whether given coordinates fall within the Philippine archipelago bounds
  */
@@ -61,57 +63,77 @@ export const DISTRICT_CENTERS = {
 
 /**
  * Resolves latitude and longitude for any property
- * Returns { lat, lng }
+ * Guaranteed to return a valid Philippine coordinate { lat, lng }
  */
 export function getPropertyCoordinates(property) {
-  if (!property) return { lat: 14.5547, lng: 121.0244 };
+  if (!property) return { ...DEFAULT_METRO_MANILA_COORDS };
 
-  // Explicit coordinates on property record
-  if (property.latitude != null && property.longitude != null) {
-    const lat = Number(property.latitude);
-    const lng = Number(property.longitude);
-    if (!isNaN(lat) && !isNaN(lng)) {
-      return { lat, lng };
-    }
-  }
-  if (property.lat && property.lng) {
-    const lat = Number(property.lat);
-    const lng = Number(property.lng);
-    if (!isNaN(lat) && !isNaN(lng)) {
-      return { lat, lng };
-    }
-  }
-  if (property.coordinates && property.coordinates.lat && property.coordinates.lng) {
-    const lat = Number(property.coordinates.lat);
-    const lng = Number(property.coordinates.lng);
-    if (!isNaN(lat) && !isNaN(lng)) {
-      return { lat, lng };
+  // Explicit coordinate candidates on property record
+  const candidateCoords = [
+    // 1. Direct latitude / longitude properties (ignore empty string or 0)
+    property.latitude != null && property.longitude != null && property.latitude !== '' && property.longitude !== ''
+      ? { lat: Number(property.latitude), lng: Number(property.longitude) }
+      : null,
+    // 2. lat / lng properties
+    property.lat != null && property.lng != null && property.lat !== '' && property.lng !== ''
+      ? { lat: Number(property.lat), lng: Number(property.lng) }
+      : null,
+    // 3. coordinates object
+    property.coordinates && property.coordinates.lat != null && property.coordinates.lng != null && property.coordinates.lat !== '' && property.coordinates.lng !== ''
+      ? { lat: Number(property.coordinates.lat), lng: Number(property.coordinates.lng) }
+      : null,
+    // 4. nested location.coordinates object
+    property.location?.coordinates && property.location.coordinates.lat != null && property.location.coordinates.lng != null && property.location.coordinates.lat !== '' && property.location.coordinates.lng !== ''
+      ? { lat: Number(property.location.coordinates.lat), lng: Number(property.location.coordinates.lng) }
+      : null,
+  ];
+
+  for (const c of candidateCoords) {
+    if (c && !isNaN(c.lat) && !isNaN(c.lng) && isWithinPhilippineBounds(c.lat, c.lng)) {
+      return c;
     }
   }
 
   // Known mock ID
   const known = KNOWN_PROPERTY_COORDINATES[property.id];
-  if (known) {
+  if (known && isWithinPhilippineBounds(known.lat, known.lng)) {
     return { lat: known.lat, lng: known.lng };
   }
 
-  // Match by location / address keywords
-  const fullText = `${property.location || ''} ${property.address || ''} ${property.city || ''} ${property.district || ''}`.toLowerCase();
+  // Match by location / address keywords (safely parse location whether object or string)
+  const locObj = typeof property.location === 'object' && property.location !== null ? property.location : {};
+  const locText = typeof property.location === 'string' ? property.location : '';
+  const fullText = [
+    locText,
+    locObj.city,
+    locObj.address,
+    locObj.subdivisionName,
+    locObj.stateOrProvince,
+    property.city,
+    property.address,
+    property.subdivision_name || property.subdivisionName,
+    property.district,
+    property.title,
+  ].filter(Boolean).join(' ').toLowerCase();
+
   for (const [key, coords] of Object.entries(DISTRICT_CENTERS)) {
     if (fullText.includes(key)) {
       // Deterministic jitter so overlapping pins don't completely cover each other
-      const hash = String(property.id || property.name || '0').split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+      const hash = String(property.id || property.name || property.title || '0').split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
       const jitterLat = ((hash % 17) - 8) * 0.003;
       const jitterLng = (((hash * 3) % 17) - 8) * 0.003;
-      return {
+      const res = {
         lat: coords.lat + jitterLat,
         lng: coords.lng + jitterLng
       };
+      if (isWithinPhilippineBounds(res.lat, res.lng)) {
+        return res;
+      }
     }
   }
 
-  // Default to Metro Manila center (Makati / BGC corridor)
-  return { lat: 14.5547, lng: 121.0350 };
+  // Default to canonical Metro Manila center (Makati / BGC corridor)
+  return { ...DEFAULT_METRO_MANILA_COORDS };
 }
 
 /**

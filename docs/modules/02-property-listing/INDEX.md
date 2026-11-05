@@ -1,8 +1,8 @@
 ---
 module: 02-property-listing
 title: Property Listing Module
-last_updated: 2026-10-30
-total_documents: 62
+last_updated: 2026-11-05
+total_documents: 63
 ---
 
 # Property Listing Module — Master Index
@@ -15,6 +15,8 @@ total_documents: 62
 ---
 
 ## 1. Document Registry & Change History
+
+- `2026-11-05`: [Listing wizard compact spacing verification](./2026-11-05-listing-wizard-compact-spacing-verification.md) — Seven-step compact layout, preview preservation, tests, and mocked-browser evidence.
 
 All updates and technical reports for this module are ordered chronologically by ISO date (`YYYY-MM-DD`):
 

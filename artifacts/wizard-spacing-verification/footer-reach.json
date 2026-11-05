@@ -1,0 +1,182 @@
+[
+  {
+    "width": 375,
+    "step": 1,
+    "last": "DIV",
+    "bottom": 746.640625,
+    "top": 704.1875,
+    "footerTop": 810.5,
+    "viewport": 1000,
+    "accessible": true
+  },
+  {
+    "width": 375,
+    "step": 2,
+    "last": "lot-input",
+    "bottom": 631.703125,
+    "top": 587.703125,
+    "footerTop": 810.546875,
+    "viewport": 1000,
+    "accessible": true
+  },
+  {
+    "width": 375,
+    "step": 3,
+    "last": "house-title-status-select",
+    "bottom": 721.5,
+    "top": 677.5,
+    "footerTop": 810.5,
+    "viewport": 1000,
+    "accessible": true
+  },
+  {
+    "width": 375,
+    "step": 4,
+    "last": "SELECT",
+    "bottom": 199.84375,
+    "top": 155.84375,
+    "footerTop": 811.125,
+    "viewport": 1000,
+    "accessible": true
+  },
+  {
+    "width": 375,
+    "step": 5,
+    "last": "Add custom feature...",
+    "bottom": 725.5,
+    "top": 681.5,
+    "footerTop": 810.5,
+    "viewport": 1000,
+    "accessible": true
+  },
+  {
+    "width": 375,
+    "step": 6,
+    "last": "e.g. Call listing agent 24 hours in advance. Keybox located at side gate column.",
+    "bottom": 760.71875,
+    "top": 716.71875,
+    "footerTop": 810.71875,
+    "viewport": 1000,
+    "accessible": true
+  },
+  {
+    "width": 768,
+    "step": 1,
+    "last": "DIV",
+    "bottom": 821.796875,
+    "top": 779.34375,
+    "footerTop": 910.5,
+    "viewport": 1000,
+    "accessible": true
+  },
+  {
+    "width": 768,
+    "step": 2,
+    "last": "lot-input",
+    "bottom": 751.75,
+    "top": 711.75,
+    "footerTop": 911.09375,
+    "viewport": 1000,
+    "accessible": true
+  },
+  {
+    "width": 768,
+    "step": 3,
+    "last": "house-title-status-select",
+    "bottom": 832.5,
+    "top": 792.5,
+    "footerTop": 865.5,
+    "viewport": 1000,
+    "accessible": true
+  },
+  {
+    "width": 768,
+    "step": 4,
+    "last": "SELECT",
+    "bottom": 627.6875,
+    "top": 587.6875,
+    "footerTop": 910.6875,
+    "viewport": 1000,
+    "accessible": true
+  },
+  {
+    "width": 768,
+    "step": 5,
+    "last": "Add custom feature...",
+    "bottom": 791.5,
+    "top": 751.5,
+    "footerTop": 824.5,
+    "viewport": 1000,
+    "accessible": true
+  },
+  {
+    "width": 768,
+    "step": 6,
+    "last": "e.g. Call listing agent 24 hours in advance. Keybox located at side gate column.",
+    "bottom": 860.71875,
+    "top": 820.71875,
+    "footerTop": 910.71875,
+    "viewport": 1000,
+    "accessible": true
+  },
+  {
+    "width": 1280,
+    "step": 1,
+    "last": "DIV",
+    "bottom": 821.796875,
+    "top": 779.34375,
+    "footerTop": 910.5,
+    "viewport": 1000,
+    "accessible": true
+  },
+  {
+    "width": 1280,
+    "step": 2,
+    "last": "lot-input",
+    "bottom": 751.75,
+    "top": 711.75,
+    "footerTop": 911.09375,
+    "viewport": 1000,
+    "accessible": true
+  },
+  {
+    "width": 1280,
+    "step": 3,
+    "last": "house-title-status-select",
+    "bottom": 694.5,
+    "top": 654.5,
+    "footerTop": 727.5,
+    "viewport": 1000,
+    "accessible": true
+  },
+  {
+    "width": 1280,
+    "step": 4,
+    "last": "SELECT",
+    "bottom": 642.6875,
+    "top": 602.6875,
+    "footerTop": 911.390625,
+    "viewport": 1000,
+    "accessible": true
+  },
+  {
+    "width": 1280,
+    "step": 5,
+    "last": "Add custom feature...",
+    "bottom": 733.5,
+    "top": 693.5,
+    "footerTop": 766.5,
+    "viewport": 1000,
+    "accessible": true
+  },
+  {
+    "width": 1280,
+    "step": 6,
+    "last": "e.g. Call listing agent 24 hours in advance. Keybox located at side gate column.",
+    "bottom": 860.875,
+    "top": 820.875,
+    "footerTop": 910.875,
+    "viewport": 1000,
+    "accessible": true
+  }
+]

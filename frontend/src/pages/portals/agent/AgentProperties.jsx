@@ -11,6 +11,27 @@ import { Building2, Clock, CheckCircle2, AlertTriangle, XCircle, Check } from 'l
 import { Button, buttonVariants, Badge } from '../../../components/ui';
 import AgentAssignmentActionModal from '../../../components/dashboard/AgentAssignmentActionModal';
 
+function AgentPropertyThumbnail({ src, title }) {
+  const [hasError, setHasError] = useState(false);
+  const showPlaceholder = !src || hasError;
+
+  return (
+    <div className="w-12 h-12 rounded-lg bg-slate-100 overflow-hidden border border-[#E2E8F0] shrink-0 flex items-center justify-center">
+      {showPlaceholder ? (
+        <Building2 className="w-5 h-5 text-slate-400" aria-hidden="true" />
+      ) : (
+        <img
+          src={src}
+          alt={title || 'Property photo'}
+          referrerPolicy="no-referrer"
+          className="w-full h-full object-cover"
+          onError={() => setHasError(true)}
+        />
+      )}
+    </div>
+  );
+}
+
 export default function AgentProperties() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -30,7 +51,7 @@ export default function AgentProperties() {
   const loadAgentProperties = async () => {
     setIsLoading(true);
     try {
-      const queryParams = user?.id ? { agentId: user.id, listAgentKey: user.id } : {};
+      const queryParams = user?.id ? { agentId: user.id, listAgentKey: user.id, limit: 100 } : { limit: 100 };
       const [propsRes, editsRes] = await Promise.allSettled([
         propertyService.getProperties(queryParams),
         propertyService.getEditRequests({ status: 'PENDING' }),
@@ -81,10 +102,9 @@ export default function AgentProperties() {
       header: "Property",
       render: (row) => (
         <div className="flex items-center gap-3">
-          <img
-            src={row.mainImage || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=200'}
-            alt={row.title}
-            className="w-12 h-12 rounded-lg object-cover border border-[#E2E8F0]"
+          <AgentPropertyThumbnail
+            src={row.mainImage || (Array.isArray(row.images) && row.images.length > 0 ? row.images[0] : null)}
+            title={row.title}
           />
           <div>
             <div className="flex items-center gap-2">
@@ -119,11 +139,16 @@ export default function AgentProperties() {
     },
     {
       header: "Specs",
-      render: (row) => (
-        <span className="text-xs font-mono text-slate-500">
-          {row.bedrooms ?? row.specs?.beds ?? 0} Beds • {row.bathrooms ?? row.specs?.baths ?? 0} Baths • {row.sqm || (row.specs?.livingArea ? `${row.specs.livingArea} sqm` : '—')}
-        </span>
-      )
+      render: (row) => {
+        const beds = row.beds ?? row.bedrooms ?? row.specs?.beds ?? 0;
+        const baths = row.baths ?? row.bathrooms ?? row.specs?.baths ?? 0;
+        const area = row.living_area ?? row.livingArea ?? row.sqm ?? row.specs?.livingArea;
+        return (
+          <span className="text-xs font-mono text-slate-500">
+            {beds} Beds • {baths} Baths • {area ? `${area} sqm` : '—'}
+          </span>
+        );
+      }
     },
     {
       header: "Status",

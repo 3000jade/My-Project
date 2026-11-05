@@ -24,13 +24,28 @@ export default function DataTable({
   selectedKeys = new Set(),
   onToggleSelect,
   onToggleSelectAll,
-  stickyFirstColumn = false
+  stickyFirstColumn = false,
+  totalRecords,
+  page,
+  onPageChange
 }) {
-  const [currentPage, setCurrentPage] = useState(1);
+  const [internalPage, setInternalPage] = useState(1);
+  const isServerPaginated = typeof totalRecords === 'number';
+  const currentPage = isServerPaginated && typeof page === 'number' ? page : internalPage;
 
-  const totalPages = Math.ceil(data.length / pageSize) || 1;
+  const totalCount = isServerPaginated ? totalRecords : data.length;
+  const totalPages = Math.ceil(totalCount / pageSize) || 1;
   const startIndex = (currentPage - 1) * pageSize;
-  const currentData = data.slice(startIndex, startIndex + pageSize);
+  const currentData = isServerPaginated ? data : data.slice(startIndex, startIndex + pageSize);
+
+  const handlePageChange = (newPage) => {
+    if (newPage < 1 || newPage > totalPages) return;
+    if (isServerPaginated && onPageChange) {
+      onPageChange(newPage);
+    } else {
+      setInternalPage(newPage);
+    }
+  };
 
   const isAllSelected = currentData.length > 0 && currentData.every(row => selectedKeys.has(row[keyField]));
   const isSomeSelected = currentData.some(row => selectedKeys.has(row[keyField])) && !isAllSelected;
@@ -161,16 +176,16 @@ export default function DataTable({
       {/* Numbered Pagination Controls Matching Mockup */}
       <div className="px-4 py-3.5 border-t border-[#E2E8F0] bg-white flex items-center justify-between text-xs text-[#64748B]">
         <div>
-          Showing <span className="font-semibold text-[#1E293B]">{data.length > 0 ? startIndex + 1 : 0}</span> to{" "}
+          Showing <span className="font-semibold text-[#1E293B]">{totalCount > 0 ? startIndex + 1 : 0}</span> to{" "}
           <span className="font-semibold text-[#1E293B]">
-            {Math.min(startIndex + pageSize, data.length)}
+            {Math.min(startIndex + (isServerPaginated ? data.length : pageSize), totalCount)}
           </span>{" "}
-          of <span className="font-semibold text-[#1E293B]">{data.length}</span> results
+          of <span className="font-semibold text-[#1E293B]">{totalCount}</span> results
         </div>
         {totalPages > 1 && (
           <div className="flex items-center gap-1">
             <button
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1}
               className="w-7 h-7 rounded-md border border-[#E2E8F0] bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center text-slate-500 cursor-pointer shadow-2xs"
               title="Previous page"
@@ -187,7 +202,7 @@ export default function DataTable({
               ) : (
                 <button
                   key={`page-${num}`}
-                  onClick={() => setCurrentPage(num)}
+                  onClick={() => handlePageChange(num)}
                   className={cn(
                     "w-7 h-7 rounded-md text-xs font-medium flex items-center justify-center transition-colors cursor-pointer",
                     currentPage === num
@@ -202,7 +217,7 @@ export default function DataTable({
             )}
 
             <button
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
               className="w-7 h-7 rounded-md border border-[#E2E8F0] bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center text-slate-500 cursor-pointer shadow-2xs"
               title="Next page"

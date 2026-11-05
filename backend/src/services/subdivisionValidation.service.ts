@@ -144,6 +144,25 @@ export class SubdivisionValidationService {
   validateDraft(lots: LotInput[]): ValidationResult {
     const errors: ValidationError[] = [];
     const warnings: ValidationError[] = [];
+
+    if (!lots || lots.length === 0) {
+      errors.push({
+        code: 'NO_LOTS_DEFINED',
+        message: 'Subdivision must have at least one defined lot boundary before publishing.',
+        severity: 'error',
+      });
+      return {
+        isValid: false,
+        errors,
+        warnings,
+        stats: {
+          totalLots: 0,
+          saleableLots: 0,
+          unverifiedCount: 0,
+          totalAreaSqm: 0,
+        },
+      };
+    }
     const blockLotMap = new Set<string>();
 
     let totalAreaSqm = 0;

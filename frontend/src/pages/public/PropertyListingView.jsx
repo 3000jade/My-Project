@@ -35,7 +35,8 @@ import { propertyService } from '../../services/propertyService';
 import { inquiryService } from '../../services/inquiryService';
 import useViewingList from '../../hooks/useViewingList';
 import AuthContext from '../../context/AuthContext';
-import { getPropertyCoordinates } from '../../utils/propertyCoordinates';
+import { mapsService } from '../../services/mapsService';
+import { getPropertyCoordinates, DEFAULT_METRO_MANILA_COORDS, isWithinPhilippineBounds } from '../../utils/propertyCoordinates';
 import { resolveDriveImageUrl } from '../../services/driveService';
 import InspectionScheduleModal from '../../components/ui/modals/InspectionScheduleModal';
 import PublicAgentProfileModal from '../../components/ui/modals/PublicAgentProfileModal';
@@ -253,7 +254,33 @@ export default function PropertyListingView() {
     return parts.length > 0 ? parts.join(', ') : locationHeader;
   }, [property, locationHeader]);
 
-  const propertyCoords = useMemo(() => property ? getPropertyCoordinates(property) : { lat: 14.5995, lng: 120.9842 }, [property]);
+  const [geocodedCoords, setGeocodedCoords] = useState(null);
+  const baseCoords = useMemo(() => property ? getPropertyCoordinates(property) : { ...DEFAULT_METRO_MANILA_COORDS }, [property]);
+  const propertyCoords = geocodedCoords || baseCoords;
+
+  useEffect(() => {
+    let isMounted = true;
+    setGeocodedCoords(null);
+    const rawLat = Number(property?.latitude || property?.location?.coordinates?.lat);
+    const rawLng = Number(property?.longitude || property?.location?.coordinates?.lng);
+    const hasRawGps = !isNaN(rawLat) && !isNaN(rawLng) && isWithinPhilippineBounds(rawLat, rawLng);
+
+    if (!hasRawGps && fullAddress && !fullAddress.includes('Address pending')) {
+      mapsService.geocode(fullAddress).then((res) => {
+        if (isMounted && res && res.latitude && res.longitude) {
+          const lat = Number(res.latitude);
+          const lng = Number(res.longitude);
+          if (isWithinPhilippineBounds(lat, lng)) {
+            setGeocodedCoords({ lat, lng });
+          }
+        }
+      }).catch(() => {});
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [property?.id, fullAddress]);
 
   // Key Specifications
   const bedrooms = property?.BedroomsTotal ?? property?.bedrooms_total ?? property?.bedroomsTotal ?? property?.specs?.bedroomsTotal ?? property?.specs?.beds ?? property?.bedrooms ?? property?.beds ?? null;
@@ -1098,7 +1125,9 @@ export default function PropertyListingView() {
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="font-mono text-[11px] text-[#0F766E] bg-teal-50 border border-teal-200 px-2.5 py-1 rounded">
-                        {propertyCoords.lat.toFixed(4)}°N, {propertyCoords.lng.toFixed(4)}°E
+                        {fullAddress.includes('Address pending')
+                          ? 'Approx. District Centroid'
+                          : `${propertyCoords.lat.toFixed(4)}°N, ${propertyCoords.lng.toFixed(4)}°E`}
                       </span>
                       <Button
                         variant="default"
@@ -1125,7 +1154,7 @@ export default function PropertyListingView() {
                   {/* Interactive Google Map Canvas */}
                   <div className="relative isolate z-0 w-full h-[320px] sm:h-[360px] rounded-lg overflow-hidden border border-[#E2E8F0] bg-slate-50" data-lenis-prevent="true">
                     <GooglePropertyMap
-                      properties={property ? [property] : []}
+                      properties={property ? [{ ...property, latitude: propertyCoords.lat, longitude: propertyCoords.lng }] : []}
                       selectedPropertyId={property?.id}
                       singlePropertyMode={true}
                       showControls={false}
@@ -1643,7 +1672,7 @@ export default function PropertyListingView() {
       <EnlargedMapModal
         isOpen={isEnlargedMapOpen}
         onClose={() => setIsEnlargedMapOpen(false)}
-        currentProperty={property}
+        currentProperty={property ? { ...property, latitude: propertyCoords.lat, longitude: propertyCoords.lng } : null}
       />
 
     </div>

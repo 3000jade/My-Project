@@ -1,0 +1,9 @@
+{
+  "uploadingCount": 2,
+  "failedCount": 2,
+  "cancelledLeavesOne": true,
+  "retrySucceeded": true,
+  "photosBeforeReorder": 2,
+  "currentCoverCount": 1,
+  "deleteDialog": 1
+}

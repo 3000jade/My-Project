@@ -10,7 +10,7 @@ import {
 import GooglePropertyMap from './GooglePropertyMap';
 import propertyService from '../../../services/propertyService';
 import { mockProperties } from '../../../mockData/mockProperties';
-import { getPropertyCoordinates } from '../../../utils/propertyCoordinates';
+import { getPropertyCoordinates, DEFAULT_METRO_MANILA_COORDS } from '../../../utils/propertyCoordinates';
 
 /**
  * EnlargedMapModal: Fullscreen interactive map dialog to explore
@@ -27,6 +27,7 @@ export default function EnlargedMapModal({
   const [properties, setProperties] = useState(initialProperties || []);
   const [selectedPropertyId, setSelectedPropertyId] = useState(currentProperty?.id || null);
   const [isLoading, setIsLoading] = useState(!initialProperties || initialProperties.length === 0);
+  const [recenterCount, setRecenterCount] = useState(0);
 
   // Sync selectedPropertyId with currentProperty when modal opens
   useEffect(() => {
@@ -96,7 +97,7 @@ export default function EnlargedMapModal({
 
   // Current property coordinates
   const currentCoords = useMemo(() => {
-    return currentProperty ? getPropertyCoordinates(currentProperty) : { lat: 14.5547, lng: 121.0244 };
+    return currentProperty ? getPropertyCoordinates(currentProperty) : { ...DEFAULT_METRO_MANILA_COORDS };
   }, [currentProperty]);
 
   // Handle re-center on current property
@@ -104,6 +105,7 @@ export default function EnlargedMapModal({
     if (currentProperty?.id) {
       setSelectedPropertyId(currentProperty.id);
     }
+    setRecenterCount((c) => c + 1);
   }, [currentProperty?.id]);
 
   if (!isOpen) return null;
@@ -190,6 +192,7 @@ export default function EnlargedMapModal({
           interactive={true}
           showControls={true}
           searchAsMove={false}
+          recenterTrigger={recenterCount}
           className="w-full h-full"
           onSelectProperty={(p) => {
             setSelectedPropertyId(p?.id);

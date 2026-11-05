@@ -1,0 +1,22 @@
+[
+  {
+    "width": 375,
+    "marginBottom": "0px",
+    "gap": 16
+  },
+  {
+    "width": 768,
+    "marginBottom": "0px",
+    "gap": 16
+  },
+  {
+    "width": 1280,
+    "marginBottom": "0px",
+    "gap": 16
+  },
+  {
+    "width": 1440,
+    "marginBottom": "0px",
+    "gap": 16
+  }
+]

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { mapsService } from '../../../services/mapsService';
+import { isWithinPhilippineBounds, DEFAULT_METRO_MANILA_COORDS } from '../../../utils/propertyCoordinates';
 
 export default function CommuteAnalysisCard({
   latitude,
@@ -10,14 +11,19 @@ export default function CommuteAnalysisCard({
   const [commutes, setCommutes] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
+  const numLat = Number(latitude);
+  const numLng = Number(longitude);
+  const hasValidCoords = !isNaN(numLat) && !isNaN(numLng) && isWithinPhilippineBounds(numLat, numLng);
+  const effectiveLat = hasValidCoords ? numLat : DEFAULT_METRO_MANILA_COORDS.lat;
+  const effectiveLng = hasValidCoords ? numLng : DEFAULT_METRO_MANILA_COORDS.lng;
+
   useEffect(() => {
     let isMounted = true;
 
     async function loadCommutes() {
-      if (!latitude || !longitude) return;
       setIsLoading(true);
       try {
-        const results = await mapsService.getCommute(Number(latitude), Number(longitude));
+        const results = await mapsService.getCommute(effectiveLat, effectiveLng);
         if (isMounted) {
           setCommutes(Array.isArray(results) ? results : []);
         }
@@ -33,9 +39,7 @@ export default function CommuteAnalysisCard({
     return () => {
       isMounted = false;
     };
-  }, [latitude, longitude]);
-
-  if (!latitude || !longitude) return null;
+  }, [effectiveLat, effectiveLng]);
 
   return (
     <div
@@ -49,7 +53,9 @@ export default function CommuteAnalysisCard({
             Lifestyle & Commercial Connectivity
           </h3>
         </div>
-        <span className="text-[11px] text-[#64748B]">Driving Durations</span>
+        <span className="text-[11px] text-[#64748B]">
+          {hasValidCoords ? 'Driving Durations' : 'Estimated from Central District'}
+        </span>
       </div>
 
       {isLoading ? (

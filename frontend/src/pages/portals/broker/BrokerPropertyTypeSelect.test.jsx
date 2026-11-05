@@ -22,7 +22,7 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
-describe('BrokerPropertyTypeSelect - Property Type Selection Screen', () => {
+describe('BrokerPropertyTypeSelect - 4-Grid Category Cards with Dropdowns', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -35,78 +35,82 @@ describe('BrokerPropertyTypeSelect - Property Type Selection Screen', () => {
     );
   };
 
-  it('renders breadcrumbs, clean title, and all property type cards with icons and names only', () => {
+  it('renders clean breadcrumbs, title, and all 4 category cards without category descriptions or quick-pick pills', () => {
     renderComponent();
 
     expect(screen.getByText('Select Property Type')).toBeInTheDocument();
     expect(screen.getByText('What type of property are you listing?')).toBeInTheDocument();
 
-    // Verify all 8 property type cards render by accessible name
-    expect(screen.getByRole('button', { name: /^Subdivision Lot$/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /^House and Lot$/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /^Condominium$/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /^Townhouse$/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /^Commercial$/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /^Apartment$/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /^Villa$/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /^Warehouse$/i })).toBeInTheDocument();
+    // Verify 4 category cards render
+    expect(screen.getByTestId('category-card-homes')).toBeInTheDocument();
+    expect(screen.getByTestId('category-card-land')).toBeInTheDocument();
+    expect(screen.getByTestId('category-card-commercial')).toBeInTheDocument();
+    expect(screen.getByTestId('category-card-industrial')).toBeInTheDocument();
+
+    expect(screen.getByText('Homes & Living')).toBeInTheDocument();
+    expect(screen.getByText('Lots & Land')).toBeInTheDocument();
+    expect(screen.getByText('Commercial & Office')).toBeInTheDocument();
+    expect(screen.getByText('Industrial & Storage')).toBeInTheDocument();
+
+    // Verify no category description text is rendered
+    expect(screen.queryByText(/Single-family homes, townhouses/i)).toBeNull();
+    expect(screen.queryByText(/Subdivision lots, agricultural/i)).toBeNull();
+
+    // Verify quick-pick tags are removed
+    expect(screen.queryByTestId('quick-pick-houseAndLot')).toBeNull();
   });
 
-  it('removes dense clutter: badges, specs, and secondary headers', () => {
+  it('toggles the embedded dropdown box and displays property types with icon and name only (no item descriptions)', () => {
     renderComponent();
 
-    // Verify removed badges and headers
-    expect(screen.queryByText(/Tailored Intake Studio/i)).toBeNull();
-    expect(screen.queryByText(/Primary Philippine Asset Classes/i)).toBeNull();
-    expect(screen.queryByText(/Schema v1.0 Tailored/i)).toBeNull();
-    expect(screen.queryByText(/Commercial & Other Asset Classes/i)).toBeNull();
+    // Initially menu is closed
+    expect(screen.queryByTestId('category-dropdown-menu-homes')).not.toBeInTheDocument();
 
-    // Verify removed sub-badges
-    expect(screen.queryByText('Vacant Land')).toBeNull();
-    expect(screen.queryByText('Single-Family')).toBeNull();
-    expect(screen.queryByText('Vertical Strata')).toBeNull();
+    // Click Homes trigger
+    const trigger = screen.getByTestId('category-dropdown-trigger-homes');
+    fireEvent.click(trigger);
 
-    // Verify removed spec pills
-    expect(screen.queryByText(/Road Frontage/i)).toBeNull();
-    expect(screen.queryByText(/Cadastral Lot Ref/i)).toBeNull();
-  });
+    // Menu opens
+    expect(screen.getByTestId('category-dropdown-menu-homes')).toBeInTheDocument();
+    expect(screen.getByText('House and Lot')).toBeInTheDocument();
+    expect(screen.getByText('Condominium')).toBeInTheDocument();
 
-  it('navigates to creation studio when clicking any property type card', () => {
-    renderComponent();
+    // Verify item description is removed
+    expect(screen.queryByText(/Standalone house with private yard/i)).toBeNull();
 
-    const lotBtn = screen.getByRole('button', { name: /^Subdivision Lot$/i });
-    fireEvent.click(lotBtn);
-    expect(mockNavigate).toHaveBeenCalledWith('/broker/properties/create?type=residentialLot');
-
-    const houseBtn = screen.getByRole('button', { name: /^House and Lot$/i });
-    fireEvent.click(houseBtn);
+    // Click an option inside the dropdown
+    const houseOption = screen.getByTestId('property-type-option-houseAndLot');
+    fireEvent.click(houseOption);
     expect(mockNavigate).toHaveBeenCalledWith('/broker/properties/create?type=houseAndLot');
-
-    const condoBtn = screen.getByRole('button', { name: /^Condominium$/i });
-    fireEvent.click(condoBtn);
-    expect(mockNavigate).toHaveBeenCalledWith('/broker/properties/create?type=condominium');
-
-    const townhouseBtn = screen.getByRole('button', { name: /^Townhouse$/i });
-    fireEvent.click(townhouseBtn);
-    expect(mockNavigate).toHaveBeenCalledWith('/broker/properties/create?type=townhouse');
   });
 
-  it('supports keyboard navigation via Enter and Space keys', () => {
+  it('navigates when selecting a land type from the Lots & Land dropdown', () => {
     renderComponent();
 
-    const villaBtn = screen.getByRole('button', { name: /^Villa$/i });
-    fireEvent.keyDown(villaBtn, { key: 'Enter' });
-    expect(mockNavigate).toHaveBeenCalledWith('/broker/properties/create?type=villa');
+    const trigger = screen.getByTestId('category-dropdown-trigger-land');
+    fireEvent.click(trigger);
 
-    const warehouseBtn = screen.getByRole('button', { name: /^Warehouse$/i });
-    fireEvent.keyDown(warehouseBtn, { key: ' ' });
+    const lotOption = screen.getByTestId('property-type-option-residentialLot');
+    fireEvent.click(lotOption);
+    expect(mockNavigate).toHaveBeenCalledWith('/broker/properties/create?type=residentialLot');
+  });
+
+  it('supports selecting Warehouse from Industrial dropdown with keyboard enter', () => {
+    renderComponent();
+
+    // Open Industrial dropdown
+    const indTrigger = screen.getByTestId('category-dropdown-trigger-industrial');
+    fireEvent.click(indTrigger);
+
+    const whOption = screen.getByTestId('property-type-option-warehouse');
+    fireEvent.keyDown(whOption, { key: 'Enter' });
     expect(mockNavigate).toHaveBeenCalledWith('/broker/properties/create?type=warehouse');
   });
 
-  it('renders back navigation button to return to properties ledger', () => {
-    renderComponent();
-    const backBtn = screen.getByText('Back to Properties');
-    expect(backBtn).toBeInTheDocument();
-    expect(backBtn.closest('a')).toHaveAttribute('href', '/broker/properties');
+  it('exports valid property type collections for backward compatibility', () => {
+    expect(Array.isArray(PRIMARY_PROPERTY_TYPES)).toBe(true);
+    expect(Array.isArray(SECONDARY_PROPERTY_TYPES)).toBe(true);
+    expect(Array.isArray(COMMON_PROPERTY_TYPES)).toBe(true);
+    expect(COMMON_PROPERTY_TYPES.length).toBeGreaterThan(5);
   });
 });
