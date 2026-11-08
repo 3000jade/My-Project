@@ -5,6 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import { getPropertyCoordinates, formatPricePill } from '../../../utils/propertyCoordinates';
 import { PHILIPPINE_BASEMAPS, MOCK_PH_DISTRICTS } from '../../../mockData/mockMapDistricts';
 import MapLayerControl from './MapLayerControl';
+import MultiUnitDrawer from './MultiUnitDrawer';
+import { groupPropertiesByCoordinates } from '../../../utils/groupPropertiesByCoordinates';
 
 export default function PropertyMap({
   properties = [],
@@ -31,6 +33,7 @@ export default function PropertyMap({
   const [activeBasemap, setActiveBasemap] = useState('osm-standard');
   const [showDistricts, setShowDistricts] = useState(false);
   const [mapReady, setMapReady] = useState(false);
+  const [activeDrawerCluster, setActiveDrawerCluster] = useState(null);
 
   // Initialize Map Instance
   useEffect(() => {
@@ -212,112 +215,128 @@ export default function PropertyMap({
 
     const bounds = L.latLngBounds([]);
 
-    properties.forEach((property) => {
-      const { lat, lng } = getPropertyCoordinates(property);
-      const isSelected = selectedPropertyId === property.id;
-      const isHovered = hoveredPropertyId === property.id;
+    const clusters = groupPropertiesByCoordinates(properties);
+
+    clusters.forEach((cluster) => {
+      const lat = cluster.lat;
+      const lng = cluster.lng;
+      const isMulti = cluster.isCluster;
+      const isSelected = isMulti
+        ? cluster.properties.some((p) => p.id === selectedPropertyId)
+        : selectedPropertyId === cluster.properties[0].id;
+      const isHovered = isMulti
+        ? cluster.properties.some((p) => p.id === hoveredPropertyId)
+        : hoveredPropertyId === cluster.properties[0].id;
       const isHighlighted = isSelected || isHovered;
-      const pricePill = formatPricePill(property.price, property.price_raw);
 
-      // Custom Luxury HTML Pin Marker
-      const markerHtml = `
-        <div class="property-map-pin ${isHighlighted ? 'is-active' : ''}" style="cursor: pointer;">
-          <div class="pin-pill ${
-            isHighlighted
-              ? 'bg-[#174849] text-white shadow-xl scale-110 border-[#E76F51]'
-              : 'bg-white text-[#174849] border-gray-200/90 shadow-md hover:border-[#174849] hover:scale-105'
-          }"
-               style="
-                 display: inline-flex;
-                 align-items: center;
-                 gap: 4px;
-                 padding: 6px 12px;
-                 border-radius: 9999px;
-                 font-family: inherit;
-                 font-size: 11px;
-                 font-weight: 800;
-                 letter-spacing: -0.01em;
-                 border-width: ${isHighlighted ? '2px' : '1px'};
-                 white-space: nowrap;
-                 transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-                 transform-origin: center bottom;
-               ">
-            <span style="display:inline-block; width: 6px; height: 6px; border-radius: 9999px; background-color: ${
-              isHighlighted ? '#E76F51' : '#174849'
-            };"></span>
-            <span>${pricePill}</span>
+      let customIcon;
+
+      if (isMulti) {
+        const markerHtml = `
+          <div class="property-map-pin is-cluster ${isHighlighted ? 'is-active' : ''}" style="cursor: pointer;" data-testid="stacked-marker-${cluster.id}">
+            <div class="pin-pill ${
+              isHighlighted
+                ? 'bg-[#FF6B6B] text-white shadow-xl scale-110 border-[#E05353]'
+                : 'bg-[#0F766E] text-white border-teal-800/80 shadow-md hover:scale-105'
+            }"
+                 style="
+                   display: inline-flex;
+                   align-items: center;
+                   gap: 6px;
+                   padding: 6px 12px;
+                   border-radius: 9999px;
+                   font-family: inherit;
+                   font-size: 11px;
+                   font-weight: 800;
+                   letter-spacing: -0.01em;
+                   border-width: 1px;
+                   white-space: nowrap;
+                   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+                   transform-origin: center bottom;
+                 ">
+              <span style="display:inline-block; padding: 1px 6px; border-radius: 4px; background-color: rgba(255,255,255,0.25); font-weight: 900;">
+                ${cluster.count} Units
+              </span>
+              <span>${cluster.priceRange || cluster.title}</span>
+            </div>
+            <div class="pin-arrow" style="
+              width: 0;
+              height: 0;
+              border-left: 5px solid transparent;
+              border-right: 5px solid transparent;
+              border-top: 5px solid ${isHighlighted ? '#FF6B6B' : '#0F766E'};
+              margin: -1px auto 0 auto;
+            "></div>
           </div>
-          <div class="pin-arrow" style="
-            width: 0;
-            height: 0;
-            border-left: 5px solid transparent;
-            border-right: 5px solid transparent;
-            border-top: 5px solid ${isHighlighted ? '#174849' : '#ffffff'};
-            margin: -1px auto 0 auto;
-          "></div>
-        </div>
-      `;
+        `;
 
-      const customIcon = L.divIcon({
-        className: 'custom-property-div-icon',
-        html: markerHtml,
-        iconSize: [80, 36],
-        iconAnchor: [40, 36],
-        popupAnchor: [0, -38]
-      });
-
-      const marker = L.marker([lat, lng], {
-        icon: customIcon,
-        zIndexOffset: isHighlighted ? 1000 : 100
-      });
-
-      // Interactive popup preview
-      const popupContent = document.createElement('div');
-      popupContent.className = 'property-popup-card';
-      popupContent.setAttribute('data-lenis-prevent', 'true');
-      popupContent.innerHTML = `
-        <div style="width: 240px; font-family: system-ui, -apple-system, sans-serif; overflow: hidden; border-radius: 16px;">
-          <div style="position: relative; width: 100%; height: 130px; overflow: hidden; background: #f3f4f6;">
-            <img src="${property.image || property.mainImage || ''}" alt="${property.name}" style="width: 100%; height: 100%; object-fit: cover;" />
-            <div style="position: absolute; bottom: 8px; left: 8px; background: rgba(23,72,73,0.9); backdrop-filter: blur(8px); color: white; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 800;">
-              ${property.price || ''}
+        customIcon = L.divIcon({
+          className: 'custom-property-div-icon',
+          html: markerHtml,
+          iconSize: [140, 36],
+          iconAnchor: [70, 36],
+          popupAnchor: [0, -38]
+        });
+      } else {
+        const property = cluster.properties[0];
+        const pricePill = formatPricePill(property.price, property.price_raw);
+        const markerHtml = `
+          <div class="property-map-pin ${isHighlighted ? 'is-active' : ''}" style="cursor: pointer;" data-testid="map-marker-${property.id}">
+            <div class="pin-pill ${
+              isHighlighted
+                ? 'bg-[#174849] text-white shadow-xl scale-110 border-[#E76F51]'
+                : 'bg-white text-[#174849] border-gray-200/90 shadow-md hover:border-[#174849] hover:scale-105'
+            }"
+                 style="
+                   display: inline-flex;
+                   align-items: center;
+                   gap: 4px;
+                   padding: 6px 12px;
+                   border-radius: 9999px;
+                   font-family: inherit;
+                   font-size: 11px;
+                   font-weight: 800;
+                   letter-spacing: -0.01em;
+                   border-width: ${isHighlighted ? '2px' : '1px'};
+                   white-space: nowrap;
+                   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+                   transform-origin: center bottom;
+                 ">
+              <span style="display:inline-block; width: 6px; height: 6px; border-radius: 9999px; background-color: ${
+                isHighlighted ? '#E76F51' : '#174849'
+              };"></span>
+              <span>${pricePill}</span>
             </div>
+            <div class="pin-arrow" style="
+              width: 0;
+              height: 0;
+              border-left: 5px solid transparent;
+              border-right: 5px solid transparent;
+              border-top: 5px solid ${isHighlighted ? '#174849' : '#ffffff'};
+              margin: -1px auto 0 auto;
+            "></div>
           </div>
-          <div style="padding: 12px;">
-            <div style="font-size: 13px; font-weight: 700; color: #174849; line-height: 1.25; margin-bottom: 4px; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;">
-              ${property.name}
-            </div>
-            <div style="font-size: 11px; color: #6b7280; margin-bottom: 8px; display: flex; align-items: center; gap: 4px;">
-              <span>📍</span> <span>${property.location || property.city || ''}</span>
-            </div>
-            <div style="display: flex; gap: 8px; font-size: 10px; font-weight: 700; color: #4b5563; margin-bottom: 10px; text-transform: uppercase;">
-              <span>${property.beds || 0} Beds</span> • <span>${property.baths || 0} Baths</span> • <span>${property.area || property.sqm || ''}</span>
-            </div>
-            <button id="view-property-btn-${property.id}" style="width: 100%; background: #174849; color: white; border: none; padding: 7px 0; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; transition: background 0.2s;">
-              View Residence →
-            </button>
-          </div>
-        </div>
-      `;
+        `;
 
-      // Bind button click inside popup
-      const btn = popupContent.querySelector(`#view-property-btn-${property.id}`);
-      if (btn) {
-        btn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          navigate(`/properties/${property.id}`);
+        customIcon = L.divIcon({
+          className: 'custom-property-div-icon',
+          html: markerHtml,
+          iconSize: [80, 36],
+          iconAnchor: [40, 36],
+          popupAnchor: [0, -38]
         });
       }
 
-      marker.bindPopup(popupContent, {
-        maxWidth: 260,
-        className: 'custom-leaflet-popup',
-        closeButton: true
+      const marker = L.marker([lat, lng], {
+        icon: customIcon,
+        zIndexOffset: isHighlighted || isMulti ? 1000 : 100
       });
 
       marker.on('click', () => {
-        if (onSelectProperty) {
-          onSelectProperty(property);
+        if (isMulti) {
+          setActiveDrawerCluster(cluster);
+        } else if (onSelectProperty) {
+          onSelectProperty(cluster.properties[0]);
         }
       });
 

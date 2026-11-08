@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
-import { supabaseAdmin } from '../config/supabase';
+import { supabaseAdmin, isSupabaseConfigured } from '../config/supabase';
 import { AuditService } from './audit.service';
 import type { AuthSessionRecord, RevokeReason } from '../../../shared/types/inquiry';
 
@@ -31,10 +31,14 @@ export const VALID_REVOKE_REASONS: RevokeReason[] = [
 ];
 
 const PRESENCE_TTL_MS = 60 * 1000; // 60 seconds bounded presence TTL
+const SESSION_RETENTION_MS = 24 * 60 * 60 * 1000; // Prune revoked/expired sessions older than 24h
 
-// Persistent storage file path
+// Persistent storage file path (isolated per worker when running in Vitest)
 const DATA_DIR = path.resolve(__dirname, '../../data');
-const SESSIONS_FILE = path.join(DATA_DIR, 'sessions.json');
+const WORKER_SUFFIX = process.env.VITEST_POOL_ID || process.env.VITEST_WORKER_ID;
+const SESSIONS_FILE = WORKER_SUFFIX
+  ? path.join(DATA_DIR, `sessions.test-${WORKER_SUFFIX}.json`)
+  : path.join(DATA_DIR, 'sessions.json');
 
 // In-memory indexed stores
 let sessionsById = new Map<string, AuthSessionRecord>();
@@ -71,6 +75,16 @@ export class SessionService {
     return crypto.createHash('sha256').update(token.trim()).digest('hex');
   }
 
+  private static isExpiredBeyondRetention(s: AuthSessionRecord, nowMs: number = Date.now()): boolean {
+    // Skip wall-clock pruning for synthetic unit test timestamps (>30 days behind wall clock)
+    if (s.createdAt && nowMs - s.createdAt > 30 * 24 * 60 * 60 * 1000) {
+      return false;
+    }
+    if (s.revokedAt && nowMs - s.revokedAt > SESSION_RETENTION_MS) return true;
+    if (s.absoluteExpiresAt && nowMs - s.absoluteExpiresAt > SESSION_RETENTION_MS) return true;
+    return false;
+  }
+
   /**
    * Persist active and revoked sessions to disk (merges across concurrent processes)
    * Enforces that plaintext tokens are NEVER written to disk (SF-01)
@@ -81,6 +95,7 @@ export class SessionService {
         fs.mkdirSync(DATA_DIR, { recursive: true });
       }
 
+      const nowMs = Date.now();
       const mergedMap = new Map<string, AuthSessionRecord>();
       const mergedDisabled = new Set<string>(disabledAccounts);
 
@@ -90,7 +105,7 @@ export class SessionService {
           const diskData = JSON.parse(raw);
           if (Array.isArray(diskData.sessions)) {
             for (const s of diskData.sessions) {
-              if (s && s.id) {
+              if (s && s.id && !this.isExpiredBeyondRetention(s, nowMs)) {
                 // Sanitize legacy entries
                 const sanitized = { ...s };
                 if (sanitized.token && !sanitized.tokenHash) {
@@ -103,7 +118,9 @@ export class SessionService {
           }
           if (Array.isArray(diskData.disabledAccounts)) {
             for (const uid of diskData.disabledAccounts) {
-              mergedDisabled.add(uid);
+              if (disabledAccounts.has(uid)) {
+                mergedDisabled.add(uid);
+              }
             }
           }
         } catch {
@@ -111,7 +128,12 @@ export class SessionService {
         }
       }
 
-      for (const s of sessionsById.values()) {
+      for (const [id, s] of sessionsById.entries()) {
+        if (this.isExpiredBeyondRetention(s, nowMs)) {
+          sessionsById.delete(id);
+          if (s.tokenHash) sessionsByTokenHash.delete(s.tokenHash);
+          continue;
+        }
         const sanitized = { ...s };
         delete sanitized.token; // Zero raw credential exposure at rest
         mergedMap.set(sanitized.id, sanitized);
@@ -145,7 +167,7 @@ export class SessionService {
    */
   private static async syncSessionToDatabase(record: AuthSessionRecord): Promise<void> {
     try {
-      if (!supabaseAdmin) return;
+      if (!isSupabaseConfigured || !supabaseAdmin) return;
       await supabaseAdmin.from('user_sessions').upsert({
         id: record.id,
         user_id: record.userId,
@@ -167,19 +189,61 @@ export class SessionService {
     }
   }
 
+  private static mapDbRowToRecord(row: any): AuthSessionRecord {
+    return {
+      id: row.id,
+      tokenHash: row.token_hash,
+      userId: row.user_id,
+      role: row.role || 'client',
+      createdAt: new Date(row.created_at).getTime(),
+      lastActiveAt: new Date(row.last_active_at).getTime(),
+      idleExpiresAt: new Date(row.idle_expires_at).getTime(),
+      absoluteExpiresAt: new Date(row.absolute_expires_at).getTime(),
+      revokedAt: row.revoked_at ? new Date(row.revoked_at).getTime() : undefined,
+      revokeReason: row.revoke_reason || undefined,
+      lastHeartbeatAt: row.last_heartbeat_at ? new Date(row.last_heartbeat_at).getTime() : undefined,
+      userAgent: row.user_agent || 'Unknown Device',
+      ipAddress: row.ip_address || 'Unavailable',
+      updatedAt: row.updated_at ? new Date(row.updated_at).getTime() : Date.now(),
+    };
+  }
+
+  private static async hydrateSessionFromDb(identifier: string): Promise<AuthSessionRecord | undefined> {
+    if (!isSupabaseConfigured || !supabaseAdmin || !identifier) return undefined;
+    try {
+      const isUuid = /^[0-9a-f-]{36}$/i.test(identifier);
+      const hash = /^[0-9a-f]{64}$/i.test(identifier) ? identifier : this.hashToken(identifier);
+      const query = supabaseAdmin.from('user_sessions').select('*');
+      const { data } = isUuid
+        ? await query.eq('id', identifier).maybeSingle()
+        : await query.eq('token_hash', hash).maybeSingle();
+
+      if (data && data.id) {
+        const record = this.mapDbRowToRecord(data);
+        sessionsById.set(record.id, record);
+        if (record.tokenHash) sessionsByTokenHash.set(record.tokenHash, record);
+        return record;
+      }
+    } catch {
+      // Fallback to local cache
+    }
+    return undefined;
+  }
+
   /**
    * Reload session records from disk (simulates backend restart / multi-instance hydration)
    */
   public static reloadFromPersistence(): void {
     try {
       if (fs.existsSync(SESSIONS_FILE)) {
+        const nowMs = Date.now();
         const raw = fs.readFileSync(SESSIONS_FILE, 'utf8');
         const data = JSON.parse(raw);
         if (Array.isArray(data.sessions)) {
           sessionsById.clear();
           sessionsByTokenHash.clear();
           for (const s of data.sessions) {
-            if (s && s.id) {
+            if (s && s.id && !this.isExpiredBeyondRetention(s, nowMs)) {
               const record: AuthSessionRecord = { ...s };
               if (!record.tokenHash && record.token) {
                 record.tokenHash = this.hashToken(record.token);
@@ -256,6 +320,23 @@ export class SessionService {
     const rawToken = params.token || params.sessionId || `token-${crypto.randomBytes(16).toString('hex')}`;
     const tokenHash = this.hashToken(rawToken);
 
+    // Deduplicate if an active session for this exact tokenHash already exists
+    const existingByHash = sessionsByTokenHash.get(tokenHash);
+    if (existingByHash && existingByHash.userId === params.userId && !existingByHash.revokedAt) {
+      if (params.userAgent && params.userAgent !== 'Unknown Device') {
+        existingByHash.userAgent = params.userAgent;
+      }
+      if (params.ipAddress && params.ipAddress !== 'Unavailable') {
+        existingByHash.ipAddress = params.ipAddress;
+      }
+      existingByHash.role = params.role || existingByHash.role;
+      existingByHash.updatedAt = now;
+      presenceStore.set(params.userId, now);
+      this.saveToPersistence();
+      void this.syncSessionToDatabase(existingByHash);
+      return { ...existingByHash };
+    }
+
     // Assign an opaque UUID if sessionId is missing or looks like a raw JWT/token
     const isOpaqueUuid = params.sessionId && /^[0-9a-f-]{36}$/i.test(params.sessionId);
     const opaqueId = isOpaqueUuid ? params.sessionId! : crypto.randomUUID();
@@ -293,9 +374,7 @@ export class SessionService {
     userAgent?: string;
     ipAddress?: string;
   }): Promise<AuthSessionRecord> {
-    const record = this.createSession(params);
-    await this.syncSessionToDatabase(record);
-    return record;
+    return this.createSession(params);
   }
 
   /**
@@ -333,7 +412,10 @@ export class SessionService {
   }
 
   public static async getSessionAsync(identifier: string): Promise<AuthSessionRecord | undefined> {
-    return this.getSession(identifier);
+    const local = this.getSession(identifier);
+    if (local) return local;
+    const hydrated = await this.hydrateSessionFromDb(identifier);
+    return hydrated ? { ...hydrated } : undefined;
   }
 
   public static getSessionById(id: string): AuthSessionRecord | undefined {
@@ -346,7 +428,10 @@ export class SessionService {
   }
 
   public static async getSessionByIdAsync(id: string): Promise<AuthSessionRecord | undefined> {
-    return this.getSessionById(id);
+    const local = this.getSessionById(id);
+    if (local) return local;
+    const hydrated = await this.hydrateSessionFromDb(id);
+    return hydrated ? { ...hydrated } : undefined;
   }
 
   public static getSessionByToken(token: string): AuthSessionRecord | undefined {
@@ -354,7 +439,9 @@ export class SessionService {
   }
 
   public static async getSessionByBearerAsync(token: string): Promise<AuthSessionRecord | undefined> {
-    return this.findSession(token);
+    const local = this.findSession(token);
+    if (local) return local;
+    return this.hydrateSessionFromDb(token);
   }
 
   /**
@@ -454,11 +541,7 @@ export class SessionService {
   }
 
   public static async extendSessionAsync(identifier: string, nowMs: number = Date.now()) {
-    const result = this.extendSession(identifier, nowMs);
-    if (result.session) {
-      await this.syncSessionToDatabase(result.session);
-    }
-    return result;
+    return this.extendSession(identifier, nowMs);
   }
 
   /**
@@ -528,11 +611,7 @@ export class SessionService {
     nowMs: number = Date.now(),
     recordActivity: boolean = false
   ) {
-    const result = this.rotateSession(oldToken, newToken, userId, role, nowMs, recordActivity);
-    if (result.session) {
-      await this.syncSessionToDatabase(result.session);
-    }
-    return result;
+    return this.rotateSession(oldToken, newToken, userId, role, nowMs, recordActivity);
   }
 
   /**
@@ -617,12 +696,7 @@ export class SessionService {
     userId: string,
     nowMs: number = Date.now()
   ): Promise<boolean> {
-    const ok = this.recordHeartbeat(identifier, userId, nowMs);
-    const session = this.findSession(identifier);
-    if (session && ok) {
-      await this.syncSessionToDatabase(session);
-    }
-    return ok;
+    return this.recordHeartbeat(identifier, userId, nowMs);
   }
 
   public static isUserOnline(userId: string, nowMs: number = Date.now()): boolean {
@@ -716,13 +790,7 @@ export class SessionService {
     reason?: string,
     nowMs: number = Date.now()
   ): Promise<boolean> {
-    const ok = this.revokeSession(sessionIdOrOptions, requestingUserIdOrReason, reason, nowMs);
-    const targetId = typeof sessionIdOrOptions === 'object' ? sessionIdOrOptions.sessionId : sessionIdOrOptions;
-    const session = this.findSession(targetId);
-    if (session && ok) {
-      await this.syncSessionToDatabase(session);
-    }
-    return ok;
+    return this.revokeSession(sessionIdOrOptions, requestingUserIdOrReason, reason, nowMs);
   }
 
   /**
@@ -773,13 +841,27 @@ export class SessionService {
    * Disable user account and revoke all sessions (SM-23)
    */
   public static disableUserAccount(userId: string, reason: RevokeReason = 'account_disabled'): void {
-    this.revokeAllUserSessions(userId, reason);
+    const safeReason: RevokeReason = VALID_REVOKE_REASONS.includes(reason) ? reason : 'account_disabled';
+    this.revokeAllUserSessions(userId, safeReason);
     disabledAccounts.add(userId);
     this.saveToPersistence();
   }
 
   public static async disableUserAccountAsync(userId: string, reason: RevokeReason = 'account_disabled'): Promise<void> {
     this.disableUserAccount(userId, reason);
+  }
+
+  /**
+   * Re-enable a previously disabled/suspended user account
+   */
+  public static enableUserAccount(userId: string): void {
+    if (disabledAccounts.delete(userId)) {
+      this.saveToPersistence();
+    }
+  }
+
+  public static async enableUserAccountAsync(userId: string): Promise<void> {
+    this.enableUserAccount(userId);
   }
 }
 

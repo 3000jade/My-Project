@@ -1,3 +1,4 @@
+import apiClient from './apiClient';
 import propertyService from './propertyService';
 import profileService from './profileService';
 import { mockProperties } from '../mockData/mockProperties';
@@ -120,7 +121,11 @@ export const clientUserService = {
     if (!newPassword || newPassword.length < 8) {
       throw new Error('New password must be at least 8 characters.');
     }
-    return { success: true, message: 'Password successfully updated.' };
+    const response = await apiClient.post('/auth/change-password', {
+      currentPassword,
+      newPassword,
+    });
+    return response.data;
   },
 
   /**

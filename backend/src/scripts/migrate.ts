@@ -25,6 +25,8 @@ async function runMigrations() {
       'property_assignment_confirmation_migration.sql',
       'user_profiles_preferences_migration.sql',
       'subdivision_map_tables_migration.sql',
+      'communication_audit_session_migration.sql',
+      'user_sessions_migration.sql',
     ];
 
     for (const file of files) {

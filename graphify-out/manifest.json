@@ -168,33 +168,33 @@
     "semantic_hash": ""
   },
   "backend/data/sessions.json": {
-    "mtime": 1793857616.7737527,
-    "seen": 1793857709.2623155,
-    "ast_hash": "ccd319e228ee2709be6efc16257f0ee6",
+    "mtime": 1794049521.2933602,
+    "seen": 1794050944.2377114,
+    "ast_hash": "753b76836921b6c7c95e6e0252bcebd8",
     "semantic_hash": ""
   },
   "backend/package.json": {
-    "mtime": 1792707056.7958076,
-    "seen": 1793660940.0028594,
-    "ast_hash": "778fb0d6de49221de40fd58e00d0ba9a",
+    "mtime": 1794047120.4713235,
+    "seen": 1794050944.2387054,
+    "ast_hash": "cdf6350101233dd53bd9e7108f0101e4",
     "semantic_hash": ""
   },
   "backend/src/config/index.ts": {
-    "mtime": 1792002995.7946634,
-    "seen": 1793660940.0028594,
-    "ast_hash": "1f71ffeb50185ba99107af9ac04c3fe8",
+    "mtime": 1794043396.7399764,
+    "seen": 1794044403.9927156,
+    "ast_hash": "5fbcd3e66bbbe3f92d3923bfa8fd44ab",
     "semantic_hash": ""
   },
   "backend/src/config/supabase.ts": {
-    "mtime": 1790253031.8132136,
-    "seen": 1793660940.0028594,
-    "ast_hash": "e4ada8f42d07c887896b96cab1dd79dc",
+    "mtime": 1793883282.1882634,
+    "seen": 1793884150.5738716,
+    "ast_hash": "f811a001806cfcfd12fe2f1c7e1b6b66",
     "semantic_hash": ""
   },
   "backend/src/controllers/admin.controller.ts": {
-    "mtime": 1792729232.1773336,
-    "seen": 1793660940.0028594,
-    "ast_hash": "4b796acb792d33c20a74adb26e9d0be3",
+    "mtime": 1793883283.4352152,
+    "seen": 1793884150.5738716,
+    "ast_hash": "aa54626782a92305989900efb4b243ac",
     "semantic_hash": ""
   },
   "backend/src/controllers/agent.controller.ts": {
@@ -222,9 +222,9 @@
     "semantic_hash": ""
   },
   "backend/src/controllers/auth.controller.ts": {
-    "mtime": 1793334851.3825572,
-    "seen": 1793660940.0028594,
-    "ast_hash": "7f2c21e300d9909a2bb895dd15749143",
+    "mtime": 1794043397.036736,
+    "seen": 1794044403.9957194,
+    "ast_hash": "14d46f8fa9c0ec12ae50e2dc1ceb9284",
     "semantic_hash": ""
   },
   "backend/src/controllers/chat.controller.ts": {
@@ -288,9 +288,9 @@
     "semantic_hash": ""
   },
   "backend/src/controllers/property.controller.ts": {
-    "mtime": 1793710456.5109646,
-    "seen": 1793710509.9969325,
-    "ast_hash": "718377364505743b0ee6a134f338d383",
+    "mtime": 1794043397.443549,
+    "seen": 1794044403.9997163,
+    "ast_hash": "881b28aa387d2c38200c320a69a90903",
     "semantic_hash": ""
   },
   "backend/src/controllers/sale.controller.ts": {
@@ -318,15 +318,15 @@
     "semantic_hash": ""
   },
   "backend/src/index.ts": {
-    "mtime": 1793334851.3902123,
-    "seen": 1793660940.0028594,
-    "ast_hash": "3bf26048e4b0752dd28713ea7837d40d",
+    "mtime": 1794043007.1030245,
+    "seen": 1794043270.4291465,
+    "ast_hash": "dce99729d2b24243ed0e8ca861208c60",
     "semantic_hash": ""
   },
   "backend/src/middleware/auth.middleware.ts": {
-    "mtime": 1792760209.1989722,
-    "seen": 1793660940.0028594,
-    "ast_hash": "dd823bf6be891072e2cfbbf3937daa8b",
+    "mtime": 1793880491.8208957,
+    "seen": 1793881417.1859698,
+    "ast_hash": "228dd032c6308996e330420fefde14c8",
     "semantic_hash": ""
   },
   "backend/src/middleware/error.middleware.ts": {
@@ -396,9 +396,9 @@
     "semantic_hash": ""
   },
   "backend/src/routes/auth.routes.ts": {
-    "mtime": 1793334851.398202,
-    "seen": 1793660940.0028594,
-    "ast_hash": "a28718a3f0326f6302238fd73c61e298",
+    "mtime": 1793883285.9197302,
+    "seen": 1793884150.583391,
+    "ast_hash": "292d681f7b8e7ededebac3f43674d23f",
     "semantic_hash": ""
   },
   "backend/src/routes/chat.routes.ts": {
@@ -588,9 +588,9 @@
     "semantic_hash": ""
   },
   "backend/src/scripts/migrate.ts": {
-    "mtime": 1793334851.416838,
-    "seen": 1793660940.0028594,
-    "ast_hash": "0bebe66a1f82e70d0df4bb3a3206a839",
+    "mtime": 1793883286.932242,
+    "seen": 1793884150.5931647,
+    "ast_hash": "af16b2e78953c159e39747abc11b3d8c",
     "semantic_hash": ""
   },
   "backend/src/scripts/seed-users.ts": {
@@ -696,9 +696,9 @@
     "semantic_hash": ""
   },
   "backend/src/services/agentRegistration.service.ts": {
-    "mtime": 1792573327.835101,
-    "seen": 1793660940.0028594,
-    "ast_hash": "6245dacb80546d792cdef6fd199b4573",
+    "mtime": 1793883287.082709,
+    "seen": 1793884150.5981705,
+    "ast_hash": "c785ceed91833ca37dd213e5e7a975ba",
     "semantic_hash": ""
   },
   "backend/src/services/agentTeam.service.ts": {
@@ -726,9 +726,9 @@
     "semantic_hash": ""
   },
   "backend/src/services/auth.service.ts": {
-    "mtime": 1792729215.9865701,
-    "seen": 1793660940.0028594,
-    "ast_hash": "9a0b8d6e3943ea75a53bec3d7d8494e5",
+    "mtime": 1793883287.6260798,
+    "seen": 1793884150.5991476,
+    "ast_hash": "aa3c58ac491fb5c15c0d627f11a899e5",
     "semantic_hash": ""
   },
   "backend/src/services/chat.service.ts": {
@@ -750,9 +750,9 @@
     "semantic_hash": ""
   },
   "backend/src/services/googleAuth.service.ts": {
-    "mtime": 1792700860.2208064,
-    "seen": 1793660940.0028594,
-    "ast_hash": "b5056b6a0ed6a34304537c002ef6d322",
+    "mtime": 1793883287.8822308,
+    "seen": 1793884150.6001449,
+    "ast_hash": "acc8fcb11e9c84110c4508b1ec07586b",
     "semantic_hash": ""
   },
   "backend/src/services/googleDrive.service.ts": {
@@ -828,9 +828,9 @@
     "semantic_hash": ""
   },
   "backend/src/services/session.service.ts": {
-    "mtime": 1792760093.9924102,
-    "seen": 1793660940.0028594,
-    "ast_hash": "3e2ba33603f49f7c0f7713a045832bcc",
+    "mtime": 1793883288.6580367,
+    "seen": 1793884150.603702,
+    "ast_hash": "63f4ab4d73667840523fbb6265c8256e",
     "semantic_hash": ""
   },
   "backend/src/services/subdivision.service.ts": {
@@ -882,9 +882,9 @@
     "semantic_hash": ""
   },
   "backend/tsconfig.json": {
-    "mtime": 1792701123.016877,
-    "seen": 1793660940.0028594,
-    "ast_hash": "d9f42e13b988e581bedd4474e00b05a7",
+    "mtime": 1794043398.074421,
+    "seen": 1794044404.0387154,
+    "ast_hash": "9c34765edc6fbbbd8d8f6e7d282156c2",
     "semantic_hash": ""
   },
   "backend/vitest.config.mjs": {
@@ -1026,9 +1026,9 @@
     "semantic_hash": ""
   },
   "frontend/package.json": {
-    "mtime": 1793660712.6890101,
-    "seen": 1793660940.0028594,
-    "ast_hash": "67aa79ba14c0e6e368fdcef79144e506",
+    "mtime": 1794050626.724003,
+    "seen": 1794050944.3040674,
+    "ast_hash": "3239eb319ff9ffc878baa20414b16fdb",
     "semantic_hash": ""
   },
   "frontend/playwright.config.ts": {
@@ -1038,21 +1038,15 @@
     "semantic_hash": ""
   },
   "frontend/src/App.jsx": {
-    "mtime": 1793710586.3232424,
-    "seen": 1793711877.561258,
-    "ast_hash": "76b22faa5586b9285cec805eafcaa13c",
+    "mtime": 1794043399.716618,
+    "seen": 1794044404.0507236,
+    "ast_hash": "d1c453ef989b1c9d0460011a96b80695",
     "semantic_hash": ""
   },
   "frontend/src/api/apiClient.js": {
     "mtime": 1789360854.0402927,
     "seen": 1793660940.0028594,
     "ast_hash": "9bd6cec49f9aa29c9bf5260692847d5c",
-    "semantic_hash": ""
-  },
-  "frontend/src/components/3d/CinematicPropertyViewer.jsx": {
-    "mtime": 1788967868.170372,
-    "seen": 1793660940.0028594,
-    "ast_hash": "54596c30bb3aa91aa327450f716628c3",
     "semantic_hash": ""
   },
   "frontend/src/components/auth/AuthFeedback.jsx": {
@@ -1085,18 +1079,6 @@
     "ast_hash": "224492ce707f697f43f1cd7002b28179",
     "semantic_hash": ""
   },
-  "frontend/src/components/auth/LoginForm.jsx": {
-    "mtime": 1792002994.7261078,
-    "seen": 1793660940.0028594,
-    "ast_hash": "b09ed90f52d3b5177290d9fdd720fb6c",
-    "semantic_hash": ""
-  },
-  "frontend/src/components/auth/MfaChallengeModal.jsx": {
-    "mtime": 1792002994.9867125,
-    "seen": 1793660940.0028594,
-    "ast_hash": "74f356bad8bfa46896b47b5d28e02bda",
-    "semantic_hash": ""
-  },
   "frontend/src/components/auth/OtpInput.jsx": {
     "mtime": 1793334851.5986118,
     "seen": 1793660940.0028594,
@@ -1115,28 +1097,16 @@
     "ast_hash": "54c1df7edeafed32c66fb81e5c822058",
     "semantic_hash": ""
   },
-  "frontend/src/components/auth/PermissionGate.jsx": {
-    "mtime": 1792002994.8563125,
-    "seen": 1793660940.0028594,
-    "ast_hash": "6cadee256f317f04a66a9314286efdc5",
-    "semantic_hash": ""
-  },
   "frontend/src/components/auth/ProtectedRoute.jsx": {
     "mtime": 1792705800.3143077,
     "seen": 1793660940.0028594,
     "ast_hash": "9793cb942c8a6b4dd45804546dd2ebf2",
     "semantic_hash": ""
   },
-  "frontend/src/components/auth/RegisterForm.jsx": {
-    "mtime": 1792703127.9666257,
-    "seen": 1793660940.0028594,
-    "ast_hash": "51a7265bc21e762f29d63ef7a100a5b8",
-    "semantic_hash": ""
-  },
   "frontend/src/components/auth/RolePermissionEditor.jsx": {
-    "mtime": 1792708929.861044,
-    "seen": 1793660940.0028594,
-    "ast_hash": "81bc12b496865a8a6c6960ecfecefd40",
+    "mtime": 1793883291.2873514,
+    "seen": 1793884150.6172776,
+    "ast_hash": "9a2d5a769ee7a2e0020dfda7285c5b69",
     "semantic_hash": ""
   },
   "frontend/src/components/auth/RolePermissionEditor.test.jsx": {
@@ -1146,9 +1116,9 @@
     "semantic_hash": ""
   },
   "frontend/src/components/auth/SessionManagementPanel.jsx": {
-    "mtime": 1792731948.4641962,
-    "seen": 1793660940.0028594,
-    "ast_hash": "1f4fe43327ddeb62749af25a124a341f",
+    "mtime": 1793883291.568794,
+    "seen": 1793884150.6182778,
+    "ast_hash": "8dfc306f21d4e01856ee665982d26f86",
     "semantic_hash": ""
   },
   "frontend/src/components/auth/SessionTimeoutModal.jsx": {
@@ -1158,9 +1128,9 @@
     "semantic_hash": ""
   },
   "frontend/src/components/auth/SessionWatcher.jsx": {
-    "mtime": 1793113082.4320126,
-    "seen": 1793660940.0028594,
-    "ast_hash": "e27ca77e7e13a1de4102e6a7ac9acf45",
+    "mtime": 1793883292.2944686,
+    "seen": 1793884150.6182778,
+    "ast_hash": "c888789e627b902cf23c6ea573b63cc5",
     "semantic_hash": ""
   },
   "frontend/src/components/auth/SessionWatcher.test.jsx": {
@@ -1170,9 +1140,9 @@
     "semantic_hash": ""
   },
   "frontend/src/components/auth/index.js": {
-    "mtime": 1793334851.6061468,
-    "seen": 1793660940.0028594,
-    "ast_hash": "5e489f18d903bf0b77241835c4f95b2b",
+    "mtime": 1793883292.5241666,
+    "seen": 1793884150.6182778,
+    "ast_hash": "3cfdb0e928945c707102ec332bd99094",
     "semantic_hash": ""
   },
   "frontend/src/components/cms/ProposalReviewDrawer.jsx": {
@@ -1596,15 +1566,15 @@
     "semantic_hash": ""
   },
   "frontend/src/components/ui/cards/PropertyCard.jsx": {
-    "mtime": 1793344201.364707,
-    "seen": 1793660940.0028594,
-    "ast_hash": "1999aa0f2ccd0fe9d5196b1a8c6227d2",
+    "mtime": 1794161493.6737568,
+    "seen": 1794161623.6881278,
+    "ast_hash": "a55d70fffd3feb35f53aa110003c214d",
     "semantic_hash": ""
   },
   "frontend/src/components/ui/cards/PropertyCard.test.jsx": {
-    "mtime": 1793334851.7203069,
-    "seen": 1793660940.0028594,
-    "ast_hash": "b89a69984f0a67ea2cb33f8cfce36255",
+    "mtime": 1794161169.485016,
+    "seen": 1794161284.2352614,
+    "ast_hash": "6e7455360dca25207eea7608c7c6a0aa",
     "semantic_hash": ""
   },
   "frontend/src/components/ui/checkbox.jsx": {
@@ -1623,12 +1593,6 @@
     "mtime": 1790262338.2685733,
     "seen": 1793660940.0028594,
     "ast_hash": "f930396ad53c9f0dcf7eb249d21f36f6",
-    "semantic_hash": ""
-  },
-  "frontend/src/components/ui/core/DynamicBackground.jsx": {
-    "mtime": 1787630338.4878857,
-    "seen": 1793660940.0028594,
-    "ast_hash": "8e05af4c56c701fca3c470c206e2fb91",
     "semantic_hash": ""
   },
   "frontend/src/components/ui/core/FilterEmptyState.jsx": {
@@ -1686,9 +1650,9 @@
     "semantic_hash": ""
   },
   "frontend/src/components/ui/index.js": {
-    "mtime": 1793334851.7279162,
-    "seen": 1793660940.0028594,
-    "ast_hash": "8b5a2b86b7e87714e9473fbabbc4f273",
+    "mtime": 1794043400.055006,
+    "seen": 1794044404.09573,
+    "ast_hash": "14d9e1322c6d49a67247445b81c5f635",
     "semantic_hash": ""
   },
   "frontend/src/components/ui/input.jsx": {
@@ -1728,15 +1692,15 @@
     "semantic_hash": ""
   },
   "frontend/src/components/ui/map/GooglePropertyMap.jsx": {
-    "mtime": 1793764322.4983535,
-    "seen": 1793764638.0019643,
-    "ast_hash": "028baa1585bdf2576a302af7fee3fd47",
+    "mtime": 1794161075.919195,
+    "seen": 1794161284.241794,
+    "ast_hash": "a134641a0fa733ef6d1147a9aafa37ef",
     "semantic_hash": ""
   },
   "frontend/src/components/ui/map/GooglePropertyMap.test.jsx": {
-    "mtime": 1793334851.7376087,
-    "seen": 1793660940.0028594,
-    "ast_hash": "95c17582d349b5db13bb71b1d26023dd",
+    "mtime": 1793880360.1813393,
+    "seen": 1793881417.2528837,
+    "ast_hash": "ffef9289474a7a4f378eab892e07fe6b",
     "semantic_hash": ""
   },
   "frontend/src/components/ui/map/MapLayerControl.jsx": {
@@ -1746,9 +1710,9 @@
     "semantic_hash": ""
   },
   "frontend/src/components/ui/map/PropertyMap.jsx": {
-    "mtime": 1793342489.6376493,
-    "seen": 1793660940.0028594,
-    "ast_hash": "de2e868c4b9bd4d8cf80e0e647addaf6",
+    "mtime": 1793880398.985428,
+    "seen": 1793881417.2570524,
+    "ast_hash": "a695d41ff5abbd7f581b29db4b735ac9",
     "semantic_hash": ""
   },
   "frontend/src/components/ui/map/StreetViewModal.jsx": {
@@ -1758,9 +1722,9 @@
     "semantic_hash": ""
   },
   "frontend/src/components/ui/map/googleMapMarkers.js": {
-    "mtime": 1793336569.7586384,
-    "seen": 1793660940.0028594,
-    "ast_hash": "d4c4ba8464375b30c6bd3bbb1d943aea",
+    "mtime": 1793883297.1243064,
+    "seen": 1793884150.6530907,
+    "ast_hash": "559a130b3ef969bdbd6e529bb40bb1b6",
     "semantic_hash": ""
   },
   "frontend/src/components/ui/map/index.js": {
@@ -1830,15 +1794,15 @@
     "semantic_hash": ""
   },
   "frontend/src/components/ui/search/UnifiedSearchBar.jsx": {
-    "mtime": 1793336763.2407444,
-    "seen": 1793660940.0028594,
-    "ast_hash": "ca828d570cb148ace99ff9b6e548bcfc",
+    "mtime": 1793954011.7826529,
+    "seen": 1793954549.939894,
+    "ast_hash": "7ffc3f4b65f72bbfb57aa0ee4aa687de",
     "semantic_hash": ""
   },
   "frontend/src/components/ui/search/UnifiedSearchBar.test.jsx": {
-    "mtime": 1793334851.7648697,
-    "seen": 1793660940.0028594,
-    "ast_hash": "f07cf79af80281c973c941a929387024",
+    "mtime": 1793883908.862363,
+    "seen": 1793884150.6597939,
+    "ast_hash": "bd4518d7c9be8b79713c52170366a1f6",
     "semantic_hash": ""
   },
   "frontend/src/components/ui/sections/AgentBrokerSection.jsx": {
@@ -1932,9 +1896,9 @@
     "semantic_hash": ""
   },
   "frontend/src/components/ui/sections/ListingHeroGallery.jsx": {
-    "mtime": 1790357813.9959488,
-    "seen": 1793660940.0028594,
-    "ast_hash": "23b7b9acea0ef6130ccefa94feccee7f",
+    "mtime": 1794043400.3843122,
+    "seen": 1794044404.118019,
+    "ast_hash": "77fc2df433c5c8759934fcff1ca197aa",
     "semantic_hash": ""
   },
   "frontend/src/components/ui/sections/LocationNeighborhoodSection.jsx": {
@@ -2112,9 +2076,9 @@
     "semantic_hash": ""
   },
   "frontend/src/main.jsx": {
-    "mtime": 1787630338.496896,
-    "seen": 1793660940.0028594,
-    "ast_hash": "2499abb510b16fce31b4db39765b24d6",
+    "mtime": 1794047122.4332933,
+    "seen": 1794050944.3652134,
+    "ast_hash": "b563d2741e82a197a6d2fda7bcb8d02c",
     "semantic_hash": ""
   },
   "frontend/src/mockData/mockAbout.js": {
@@ -2298,9 +2262,9 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/portals/agent/AgentProfile.jsx": {
-    "mtime": 1793138482.598645,
-    "seen": 1793660940.0028594,
-    "ast_hash": "0e2ba35da54647d6e7b223dbdedb7741",
+    "mtime": 1793880879.104097,
+    "seen": 1793881417.294491,
+    "ast_hash": "d41f2b8cc3651cab4eb838075e9e1ecd",
     "semantic_hash": ""
   },
   "frontend/src/pages/portals/agent/AgentProfile.test.jsx": {
@@ -2382,15 +2346,15 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/portals/broker/BrokerCreateListings.jsx": {
-    "mtime": 1793857072.0126534,
-    "seen": 1793857709.4407454,
-    "ast_hash": "99fdeb4bd8b0929901b52a8a1dee611d",
+    "mtime": 1793859641.252379,
+    "seen": 1793881417.2974849,
+    "ast_hash": "29ea7f732276dadc2d767198d96efa19",
     "semantic_hash": ""
   },
   "frontend/src/pages/portals/broker/BrokerCreateListings.test.jsx": {
-    "mtime": 1793853850.1020088,
-    "seen": 1793854014.5210614,
-    "ast_hash": "5be93bfd9ee8ecc554b0053243baebb1",
+    "mtime": 1793858578.5456166,
+    "seen": 1793881417.2974849,
+    "ast_hash": "740ac627ee83ba658713b7088d237578",
     "semantic_hash": ""
   },
   "frontend/src/pages/portals/broker/BrokerDashboard.jsx": {
@@ -2442,9 +2406,9 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/portals/broker/BrokerProfile.jsx": {
-    "mtime": 1793334851.8846128,
-    "seen": 1793660940.0028594,
-    "ast_hash": "8d240212e09ead6b1303125c59b0090f",
+    "mtime": 1793883293.3007915,
+    "seen": 1793884150.6964307,
+    "ast_hash": "e76396e10b7ecd66918b1028c0088c15",
     "semantic_hash": ""
   },
   "frontend/src/pages/portals/broker/BrokerProfile.test.jsx": {
@@ -2532,9 +2496,9 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/portals/client/ClientProfile.jsx": {
-    "mtime": 1793138061.8483403,
-    "seen": 1793660940.0028594,
-    "ast_hash": "f4d2986076fa5b574e44879b97f478c5",
+    "mtime": 1793880881.892015,
+    "seen": 1793881417.3060045,
+    "ast_hash": "57aa5790ae2e72d462e7670edff622e4",
     "semantic_hash": ""
   },
   "frontend/src/pages/portals/client/ClientSavedProperties.jsx": {
@@ -2574,9 +2538,9 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/public/PropertiesPage.jsx": {
-    "mtime": 1793336472.2749388,
-    "seen": 1793660940.0028594,
-    "ast_hash": "1eb7330ff582cfe0089b58b545d3c385",
+    "mtime": 1794161073.8505733,
+    "seen": 1794161284.3175223,
+    "ast_hash": "1bcf394e8584157f2ccb49f727052a7e",
     "semantic_hash": ""
   },
   "frontend/src/pages/public/PropertiesPage.test.jsx": {
@@ -2586,9 +2550,9 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/public/PropertyListingView.jsx": {
-    "mtime": 1793764137.961411,
-    "seen": 1793764638.0449615,
-    "ast_hash": "31c4e15cfff2d2eb3c505e75997b5412",
+    "mtime": 1794161496.35822,
+    "seen": 1794161623.7858646,
+    "ast_hash": "052c1933d94758f019797050b8c00aa7",
     "semantic_hash": ""
   },
   "frontend/src/pages/public/PropertyListingView.test.jsx": {
@@ -2615,210 +2579,6 @@
     "ast_hash": "35c9ee2328beed046d12bff7920564d9",
     "semantic_hash": ""
   },
-  "frontend/src/sandbox/components/AnimatedVectorShapeShowcase.jsx": {
-    "mtime": 1789046624.7677712,
-    "seen": 1793660940.0028594,
-    "ast_hash": "7eb3d47a666d5a4e4d2aaab55573fd85",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/components/AnimeMorphingAnimalsShowcase.jsx": {
-    "mtime": 1789046681.6751795,
-    "seen": 1793660940.0028594,
-    "ast_hash": "7cfc4a26d187be967b2ede16066b10cd",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/components/AnimeParallaxShowcase.jsx": {
-    "mtime": 1790178837.127236,
-    "seen": 1793660940.0028594,
-    "ast_hash": "a9ad5aa1457b4d3d234976f65d7969be",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/components/BorderlessLuxuryCardShowcase.jsx": {
-    "mtime": 1790178837.1771576,
-    "seen": 1793660940.0028594,
-    "ast_hash": "4b459712aaf2a13866061b8fdb2bcd51",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/components/CatwalkHorizontalShowcase.jsx": {
-    "mtime": 1790178837.1915362,
-    "seen": 1793660940.0028594,
-    "ast_hash": "99c24dd4aaed4a49738e8b1a693acfde",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/components/EditorialRevealsShowcase.jsx": {
-    "mtime": 1790178837.1934347,
-    "seen": 1793660940.0028594,
-    "ast_hash": "498e85b3c59b4a8399aabdc57af00254",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/components/EditorialSplitTextShowcase.jsx": {
-    "mtime": 1789015578.4242067,
-    "seen": 1793660940.0028594,
-    "ast_hash": "09306f38c4f0f2426214ca3abf96ad22",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/components/FramerMotionShowcase.jsx": {
-    "mtime": 1789007630.6925538,
-    "seen": 1793660940.0028594,
-    "ast_hash": "ae11fe11bfedc31d4b4dc240b56a61eb",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/components/HorizontalAndPinnedScrollShowcase.jsx": {
-    "mtime": 1790178837.196924,
-    "seen": 1793660940.0028594,
-    "ast_hash": "3bf2f2118cea0b3c5b7e312e9881807b",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/components/ImmersiveScrollRevealShowcase.jsx": {
-    "mtime": 1790262384.148633,
-    "seen": 1793660940.0028594,
-    "ast_hash": "aac0be6b2beb5a5383f509dd50e5567e",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/components/LiquidKerningShowcase.jsx": {
-    "mtime": 1789015783.7560816,
-    "seen": 1793660940.0028594,
-    "ast_hash": "5260ca5a56e03ecef415175107e4f834",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/components/LookCloserMicroParallax.jsx": {
-    "mtime": 1790178837.199623,
-    "seen": 1793660940.0028594,
-    "ast_hash": "6532b819d215dda6eea57db885a2c42b",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/components/OverlappingOffsetCardShowcase.jsx": {
-    "mtime": 1790178837.2018332,
-    "seen": 1793660940.0028594,
-    "ast_hash": "93247d9b8176e2d5fb220f1ac23d0171",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/components/ParallaxMultiVectorHero.jsx": {
-    "mtime": 1790181462.1122348,
-    "seen": 1793660940.0028594,
-    "ast_hash": "116765c6f993d6dbabd73d12061dadf7",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/components/ParallaxPropertyShowcase.jsx": {
-    "mtime": 1790213132.281592,
-    "seen": 1793660940.0028594,
-    "ast_hash": "768c0319d502eb165c0a910ecd756ab7",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/components/PinnedDollyHeroShowcase.jsx": {
-    "mtime": 1790178837.2074778,
-    "seen": 1793660940.0028594,
-    "ast_hash": "fefa24a1a2b2dd4320eb6c42a7da0012",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/components/PremiumLensTextTransitionShowcase.jsx": {
-    "mtime": 1789015325.2983787,
-    "seen": 1793660940.0028594,
-    "ast_hash": "6b26683845088ba9e240bbbeaa8faf46",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/components/ScrollScrubbedVideoShowcase.jsx": {
-    "mtime": 1789019447.5460403,
-    "seen": 1793660940.0028594,
-    "ast_hash": "347828cbc107e5708ab8166bae28edf7",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/components/ScrollTriggerLandingShowcase.jsx": {
-    "mtime": 1790263498.9972267,
-    "seen": 1793660940.0028594,
-    "ast_hash": "7b89ff80250f857448bcf270e103e1af",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/components/StarTwinkleCanvas.jsx": {
-    "mtime": 1789369862.9039774,
-    "seen": 1793660940.0028594,
-    "ast_hash": "47cef2402d63c1f7076c3a32a0a20c41",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/components/VectorHUDOverlay.jsx": {
-    "mtime": 1789369895.4701822,
-    "seen": 1793660940.0028594,
-    "ast_hash": "97cd7dd4b2def55ea9e76c6299ba8143",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/components/VectorParallaxNatureShowcase.jsx": {
-    "mtime": 1790178837.213098,
-    "seen": 1793660940.0028594,
-    "ast_hash": "b23cf517f7889469ff58cefd1e4498a4",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/components/index.js": {
-    "mtime": 1790178840.817409,
-    "seen": 1793660940.0028594,
-    "ast_hash": "e59ee7e907fe0a7ec7534abfd1de1636",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/layout/SandboxHeader.jsx": {
-    "mtime": 1790262659.3084998,
-    "seen": 1793660940.0028594,
-    "ast_hash": "f403adf3d8f49d28d338c50f3f046c70",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/layout/SandboxLayout.jsx": {
-    "mtime": 1789041338.468072,
-    "seen": 1793660940.0028594,
-    "ast_hash": "8c92eac9e7b807e9f1090f630a3c651f",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/layout/SandboxPinnedButton.jsx": {
-    "mtime": 1789041357.115192,
-    "seen": 1793660940.0028594,
-    "ast_hash": "13f32efdcbade73ab0da37149e3bf89c",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/pages/BlogPage.jsx": {
-    "mtime": 1789036886.6556473,
-    "seen": 1793660940.0028594,
-    "ast_hash": "25ebb49b5e2e2fa6faef28fa84e382bb",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/pages/DemoUIUXPage.jsx": {
-    "mtime": 1793344270.351313,
-    "seen": 1793660940.0028594,
-    "ast_hash": "13c7a618bc1ac39868d4f81fef31bf51",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/pages/Duplex3DPage.jsx": {
-    "mtime": 1790181497.2662694,
-    "seen": 1793660940.0028594,
-    "ast_hash": "8e89a863bdacfa6183664cb1c0dc13e8",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/pages/HomeValuationPage.jsx": {
-    "mtime": 1790181483.5091453,
-    "seen": 1793660940.0028594,
-    "ast_hash": "6de2fc2ef18c421940071df1829e6c29",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/pages/NeighborhoodGuidesPage.jsx": {
-    "mtime": 1790181472.9152913,
-    "seen": 1793660940.0028594,
-    "ast_hash": "28cf2637265365d02369fe1867a901df",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/pages/ParallaxLabPage.jsx": {
-    "mtime": 1790178929.5728354,
-    "seen": 1793660940.0028594,
-    "ast_hash": "8ce0a7b0d0064c1bc9d2850600f6e122",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/pages/SandboxHubPage.jsx": {
-    "mtime": 1790263177.6091173,
-    "seen": 1793660940.0028594,
-    "ast_hash": "0cb78aa6b2ea4bc75d6e28cac8ac3602",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/pages/ScrollRevealPage.jsx": {
-    "mtime": 1790263136.0120974,
-    "seen": 1793660940.0028594,
-    "ast_hash": "42bcfa8ebb3016d671c3e04e1cf7ec6e",
-    "semantic_hash": ""
-  },
   "frontend/src/services/agentCredentialsService.js": {
     "mtime": 1792002996.070206,
     "seen": 1793660940.0028594,
@@ -2832,9 +2592,9 @@
     "semantic_hash": ""
   },
   "frontend/src/services/apiClient.js": {
-    "mtime": 1792981037.425169,
-    "seen": 1793660940.0028594,
-    "ast_hash": "3744a10aaa487faeb44c788d81fe8292",
+    "mtime": 1793883293.6793225,
+    "seen": 1793884150.717576,
+    "ast_hash": "c67f95dc81cd1c1e2cbd0d45c063e364",
     "semantic_hash": ""
   },
   "frontend/src/services/appointmentService.js": {
@@ -2850,9 +2610,9 @@
     "semantic_hash": ""
   },
   "frontend/src/services/authService.js": {
-    "mtime": 1793334851.939665,
-    "seen": 1793660940.0028594,
-    "ast_hash": "f8b7b25cde0ff974830ac32319bd3918",
+    "mtime": 1793883295.0337129,
+    "seen": 1793884150.7185647,
+    "ast_hash": "7e5b42e951ab38030443ebaeb8017b2f",
     "semantic_hash": ""
   },
   "frontend/src/services/authService.test.js": {
@@ -2868,9 +2628,9 @@
     "semantic_hash": ""
   },
   "frontend/src/services/clientUserService.js": {
-    "mtime": 1793334851.9422002,
-    "seen": 1793660940.0038693,
-    "ast_hash": "d0297bbab185cb61b4e7c890fd71b375",
+    "mtime": 1793883295.7846348,
+    "seen": 1793884150.7185647,
+    "ast_hash": "c4c5027be5ee41c101d67bb3810a3470",
     "semantic_hash": ""
   },
   "frontend/src/services/clientUserService.test.js": {
@@ -3006,51 +2766,21 @@
     "semantic_hash": ""
   },
   "frontend/src/utils/propertyCoordinates.js": {
-    "mtime": 1793763987.4911158,
-    "seen": 1793764638.0641606,
-    "ast_hash": "308459698ff405162bf12c5514331e1d",
+    "mtime": 1793883297.9997797,
+    "seen": 1793884150.7260952,
+    "ast_hash": "0001286609f016a8986420f98fcbd6ac",
     "semantic_hash": ""
   },
   "frontend/vercel.json": {
-    "mtime": 1789679968.6002643,
-    "seen": 1793660940.0038693,
-    "ast_hash": "61bd31a2b0ac08f10f13c932b32d6ca1",
+    "mtime": 1794042903.2629793,
+    "seen": 1794043271.273826,
+    "ast_hash": "d45195e7882d81537c22905831ed5190",
     "semantic_hash": ""
   },
   "frontend/vite.config.js": {
-    "mtime": 1792002996.0835173,
-    "seen": 1793660940.0038693,
-    "ast_hash": "32ec315d30563e73ddb516c1255ce078",
-    "semantic_hash": ""
-  },
-  "reorder.js": {
-    "mtime": 1790485932.864931,
-    "seen": 1793660940.0038693,
-    "ast_hash": "9f91b789ef66e9d0e726c12b270f7268",
-    "semantic_hash": ""
-  },
-  "scripts/generate_dream_gate_layers.py": {
-    "mtime": 1789371296.2121234,
-    "seen": 1793660940.0038693,
-    "ast_hash": "2e700f5470c94653a789a08bc6c543b8",
-    "semantic_hash": ""
-  },
-  "scripts/generate_parallax_layers.py": {
-    "mtime": 1789370823.7176685,
-    "seen": 1793660940.0038693,
-    "ast_hash": "f308803463a547929bb92aa3b8eef816",
-    "semantic_hash": ""
-  },
-  "scripts/generate_session_doc.py": {
-    "mtime": 1793003716.6613283,
-    "seen": 1793660940.0038693,
-    "ast_hash": "3195dd69d0596bfbebbb1c2fc8b87dce",
-    "semantic_hash": ""
-  },
-  "scripts/verify_parallax_layers.py": {
-    "mtime": 1789369579.6044905,
-    "seen": 1793660940.0038693,
-    "ast_hash": "7095c2f796f1ffe7dae538629bea5ab1",
+    "mtime": 1794047123.330744,
+    "seen": 1794050944.4068835,
+    "ast_hash": "241af5f66bdcc15cda7a485ba858538a",
     "semantic_hash": ""
   },
   "shared/types/agent.ts": {
@@ -3137,12 +2867,6 @@
     "ast_hash": "cde65308911779b22371ec4ec052a9aa",
     "semantic_hash": ""
   },
-  "skills-lock.json": {
-    "mtime": 1793334851.9821327,
-    "seen": 1793660940.0038693,
-    "ast_hash": "bf841343935ec38031b878a2d3072bcf",
-    "semantic_hash": ""
-  },
   "test files/frontend/auth/AuthContext.test.jsx": {
     "mtime": 1792002994.613944,
     "seen": 1793660940.0038693,
@@ -3153,30 +2877,6 @@
     "mtime": 1792002994.8610957,
     "seen": 1793660940.0038693,
     "ast_hash": "39aaaf767cb81c87db8f993a780c61af",
-    "semantic_hash": ""
-  },
-  "test files/frontend/auth/LoginForm.test.jsx": {
-    "mtime": 1792002994.7310865,
-    "seen": 1793660940.0038693,
-    "ast_hash": "45a7199a6f6e92ff3c42c5e8aa111cd7",
-    "semantic_hash": ""
-  },
-  "test files/frontend/auth/MfaChallengeModal.test.jsx": {
-    "mtime": 1792002994.994457,
-    "seen": 1793660940.0038693,
-    "ast_hash": "48d3c992125c314781a01cac0c4861d7",
-    "semantic_hash": ""
-  },
-  "test files/frontend/auth/PermissionGate.test.jsx": {
-    "mtime": 1792002994.8622935,
-    "seen": 1793660940.0038693,
-    "ast_hash": "6bd22993e7cc64ee89ccad15336c84e0",
-    "semantic_hash": ""
-  },
-  "test files/frontend/auth/RegisterForm.test.jsx": {
-    "mtime": 1792002994.7335017,
-    "seen": 1793660940.0038693,
-    "ast_hash": "77d1f2b0b343dd1537c9f6c9fff54d4d",
     "semantic_hash": ""
   },
   "test files/frontend/auth/SessionTimeoutModal.test.jsx": {
@@ -3207,12 +2907,6 @@
     "mtime": 1792089354.9136083,
     "seen": 1793660940.0038693,
     "ast_hash": "bc1398e81786cb380ad7b3fc36de9fb1",
-    "semantic_hash": ""
-  },
-  "upload_args.json": {
-    "mtime": 1793005557.9256563,
-    "seen": 1793660940.0038693,
-    "ast_hash": "fbd186890e446c4c84786e767a0cdbf8",
     "semantic_hash": ""
   },
   ".agents/rules/database-schema-invariants.md": {
@@ -5411,192 +5105,6 @@
     "ast_hash": "3b7b7942a42cb0450896d4b48cd49ed0",
     "semantic_hash": ""
   },
-  ".superpowers/sdd/2026-09-20-search-filter-engine/progress.md": {
-    "mtime": 1789871325.8871155,
-    "seen": 1793660940.0038693,
-    "ast_hash": "59e16624a4b1d9968437e45b7b9b72cc",
-    "semantic_hash": ""
-  },
-  ".superpowers/sdd/2026-09-20-search-filter-engine/task-1-brief.md": {
-    "mtime": 1789866404.75516,
-    "seen": 1793660940.0038693,
-    "ast_hash": "0950f9f7634a2b2c0056c64c0e90179e",
-    "semantic_hash": ""
-  },
-  ".superpowers/sdd/2026-09-20-search-filter-engine/task-1-diff.txt": {
-    "mtime": 1789866773.317418,
-    "seen": 1793660940.0038693,
-    "ast_hash": "aa9a88fb74dee69d3c5c8841cc1249bc",
-    "semantic_hash": ""
-  },
-  ".superpowers/sdd/2026-09-20-search-filter-engine/task-1-report.md": {
-    "mtime": 1789866728.9420886,
-    "seen": 1793660940.0038693,
-    "ast_hash": "c38676fd65c91bd0e63487ecd5a3ca63",
-    "semantic_hash": ""
-  },
-  ".superpowers/sdd/2026-09-20-search-filter-engine/task-2-brief.md": {
-    "mtime": 1789866901.615365,
-    "seen": 1793660940.0038693,
-    "ast_hash": "7ed3dab4b2bd35700a6c5c8218eb4714",
-    "semantic_hash": ""
-  },
-  ".superpowers/sdd/2026-09-20-search-filter-engine/task-2-diff-utf8.txt": {
-    "mtime": 1789867797.8896255,
-    "seen": 1793660940.0038693,
-    "ast_hash": "cecd0a77c71a15b819589d215cc54ee5",
-    "semantic_hash": ""
-  },
-  ".superpowers/sdd/2026-09-20-search-filter-engine/task-2-diff.txt": {
-    "mtime": 1789867578.6370983,
-    "seen": 1793660940.0038693,
-    "ast_hash": "979985e8ec3bb85ebc92a52887bdb3d1",
-    "semantic_hash": ""
-  },
-  ".superpowers/sdd/2026-09-20-search-filter-engine/task-2-report.md": {
-    "mtime": 1789867553.1852105,
-    "seen": 1793660940.0038693,
-    "ast_hash": "b1a4de834f886504c18afef2ece092e5",
-    "semantic_hash": ""
-  },
-  ".superpowers/sdd/2026-09-20-search-filter-engine/task-3-brief.md": {
-    "mtime": 1789869689.231727,
-    "seen": 1793660940.0038693,
-    "ast_hash": "7db43b356163247e5e736cab29b51384",
-    "semantic_hash": ""
-  },
-  ".superpowers/sdd/2026-09-20-search-filter-engine/task-3-diff.txt": {
-    "mtime": 1789871282.7126985,
-    "seen": 1793660940.0038693,
-    "ast_hash": "1a330a76010c0fd5054331ce49423edb",
-    "semantic_hash": ""
-  },
-  ".superpowers/sdd/2026-09-20-search-filter-engine/task-3-report.md": {
-    "mtime": 1789871258.092977,
-    "seen": 1793660940.0038693,
-    "ast_hash": "140126eefa8a60ae002edc373117efea",
-    "semantic_hash": ""
-  },
-  ".superpowers/sdd/2026-09-20-search-filter-engine/task-4-brief.md": {
-    "mtime": 1789871335.8571985,
-    "seen": 1793660940.0038693,
-    "ast_hash": "f539887dba8ba8571af32dc2a28a75c0",
-    "semantic_hash": ""
-  },
-  ".superpowers/sdd/2026-09-20-search-filter-engine/task-4-diff.txt": {
-    "mtime": 1789871424.024043,
-    "seen": 1793660940.0038693,
-    "ast_hash": "43773b3a032031026ffa4c204f2ac6d0",
-    "semantic_hash": ""
-  },
-  ".superpowers/sdd/2026-09-20-search-filter-engine/task-4-report.md": {
-    "mtime": 1789871874.9750044,
-    "seen": 1793660940.0038693,
-    "ast_hash": "dee5aa7613fdb1abe19de05872dd2c9c",
-    "semantic_hash": ""
-  },
-  ".superpowers/sdd/2026-10-28-property-filter-toolbar/progress.md": {
-    "mtime": 1793137884.483205,
-    "seen": 1793660940.0038693,
-    "ast_hash": "8e8031673943d3bedd27f6ef6761e4b9",
-    "semantic_hash": ""
-  },
-  ".superpowers/sdd/2026-10-28-property-status-alignment/progress.md": {
-    "mtime": 1793334851.3689573,
-    "seen": 1793660940.0038693,
-    "ast_hash": "5d9cf14ef838b1176858205adb55b7e3",
-    "semantic_hash": ""
-  },
-  ".superpowers/sdd/2026-10-28-property-type-selection-page/progress.md": {
-    "mtime": 1793136315.0572307,
-    "seen": 1793660940.0038693,
-    "ast_hash": "75ba25be5673ff774c03212581e1b847",
-    "semantic_hash": ""
-  },
-  ".superpowers/sdd/2026-10-28-public-properties-immersive-status-and-layout/progress.md": {
-    "mtime": 1793334851.3707802,
-    "seen": 1793660940.0038693,
-    "ast_hash": "8f4e03e8b614a5ab722e9e7c16a5ac51",
-    "semantic_hash": ""
-  },
-  "ARCHITECTURE_MAP.md": {
-    "mtime": 1793101946.2142239,
-    "seen": 1793660940.0038693,
-    "ast_hash": "2590fa1d8e900b1e5d48b2eb1dfcc620",
-    "semantic_hash": ""
-  },
-  "Analyze/Components/Advance_search_filter.html": {
-    "mtime": 1789041430.7456992,
-    "seen": 1793660940.0038693,
-    "ast_hash": "920c713919bef26314656ca9993c0006",
-    "semantic_hash": ""
-  },
-  "Analyze/Components/loginPage.html": {
-    "mtime": 1789627292.8768973,
-    "seen": 1793660940.0038693,
-    "ast_hash": "8a152896ef96730e03e81c49a90b2407",
-    "semantic_hash": ""
-  },
-  "Analyze/Components/propertyDetail.html": {
-    "mtime": 1789041430.748958,
-    "seen": 1793660940.0038693,
-    "ast_hash": "6a98d6164443caf497ab1a78fffee566",
-    "semantic_hash": ""
-  },
-  "DATABASE_GUIDE.md": {
-    "mtime": 1790867494.4247713,
-    "seen": 1793660940.0038693,
-    "ast_hash": "5cf79f6213b2214cea9a26f77e581163",
-    "semantic_hash": ""
-  },
-  "DATABASE_SCHEMA.md": {
-    "mtime": 1792088285.5603085,
-    "seen": 1793660940.0038693,
-    "ast_hash": "d1bc2b84a39ddc23ad7a61b4b9cc2307",
-    "semantic_hash": ""
-  },
-  "Design-layout.md": {
-    "mtime": 1790486959.005382,
-    "seen": 1793660940.0038693,
-    "ast_hash": "982c2e113e195e1cee0aa644013c5a47",
-    "semantic_hash": ""
-  },
-  "TECHSTACK.md": {
-    "mtime": 1790920661.8225513,
-    "seen": 1793660940.0038693,
-    "ast_hash": "8531149622388dbe360877435d0ebfa7",
-    "semantic_hash": ""
-  },
-  "backend/backend_infrastructure_summary.txt": {
-    "mtime": 1787630338.4593565,
-    "seen": 1793660940.0038693,
-    "ast_hash": "48d5dae2461e1549217e32852880f238",
-    "semantic_hash": ""
-  },
-  "design-canvas-mockup.html": {
-    "mtime": 1793004811.201903,
-    "seen": 1793660940.0038693,
-    "ast_hash": "f045150ad75d309530c41801dce9f47c",
-    "semantic_hash": ""
-  },
-  "design-canvas-philosophy.md": {
-    "mtime": 1793004726.9438624,
-    "seen": 1793660940.0038693,
-    "ast_hash": "1d116b289eb64cd6068871a92ef1a000",
-    "semantic_hash": ""
-  },
-  "design.md": {
-    "mtime": 1793856724.8409374,
-    "seen": 1793857709.6696534,
-    "ast_hash": "82ee43c3ba1f03e7b7dcd36d6f45b4b9",
-    "semantic_hash": ""
-  },
-  "design_b64.txt": {
-    "mtime": 1793004985.6928196,
-    "seen": 1793660940.0038693,
-    "ast_hash": "4b4cb8efff92d603b35db93533be2f20",
-    "semantic_hash": ""
-  },
   "docs/AGENT_SKILLS_GUIDE.md": {
     "mtime": 1793648306.636691,
     "seen": 1793660940.0038693,
@@ -6180,15 +5688,15 @@
     "semantic_hash": ""
   },
   "docs/modules/02-property-listing/INDEX.md": {
-    "mtime": 1793338097.6226494,
-    "seen": 1793660940.0038693,
-    "ast_hash": "e54bc5e3a0e04262a0c50817df86c16d",
+    "mtime": 1793859796.4692988,
+    "seen": 1793881417.4888227,
+    "ast_hash": "1eaa8a2f87d27fa7f619493791a013ec",
     "semantic_hash": ""
   },
   "docs/modules/02-property-listing/ui-specification.md": {
-    "mtime": 1793334851.5318313,
-    "seen": 1793660940.0038693,
-    "ast_hash": "f49f9804de026fa41328bad4e7d13798",
+    "mtime": 1793859742.9069772,
+    "seen": 1793881417.4888227,
+    "ast_hash": "0fa9ab54f663c846d79043753bc07aa3",
     "semantic_hash": ""
   },
   "docs/modules/03-agent-management/2026-10-14-agent-management-implementation-plan.md": {
@@ -6762,8 +6270,8 @@
     "semantic_hash": ""
   },
   "frontend/index.html": {
-    "mtime": 1793334851.5690916,
-    "seen": 1793660940.0038693,
+    "mtime": 1794052604.7924187,
+    "seen": 1794160402.597953,
     "ast_hash": "717290f735cf8ec0b14d5efbe3b3f795",
     "semantic_hash": ""
   },
@@ -6771,30 +6279,6 @@
     "mtime": 1789547747.2693172,
     "seen": 1793660940.004867,
     "ast_hash": "320cd4b8e379d0b29662cb474641f48b",
-    "semantic_hash": ""
-  },
-  "notes/broker_listing_agent_modal.md": {
-    "mtime": 1792064258.4705062,
-    "seen": 1793660940.004867,
-    "ast_hash": "1c76fa12b4d7b88e29259b97dd540f13",
-    "semantic_hash": ""
-  },
-  "property_status_review_summary.txt": {
-    "mtime": 1792958089.2748373,
-    "seen": 1793660940.004867,
-    "ast_hash": "ce6092a1d277abade368e855496ddbac",
-    "semantic_hash": ""
-  },
-  "stitch-canvas-screen.html": {
-    "mtime": 1793005140.7876863,
-    "seen": 1793660940.004867,
-    "ast_hash": "2650e9471479bec225190d4e3bd9df73",
-    "semantic_hash": ""
-  },
-  "design-canvas-mockup.pdf": {
-    "mtime": 1793004825.0737028,
-    "seen": 1793660940.004867,
-    "ast_hash": "7fd9cc0436a6a988630ad4654e966217",
     "semantic_hash": ""
   },
   ".agents/skills/shadcn/assets/shadcn-small.png": {
@@ -7041,12 +6525,6 @@
     "mtime": 1789629079.1077216,
     "seen": 1793660940.004867,
     "ast_hash": "03bf5612ea09962fcddd3de8cc738e50",
-    "semantic_hash": ""
-  },
-  "design-canvas-mockup.png": {
-    "mtime": 1793004823.7126207,
-    "seen": 1793660940.004867,
-    "ast_hash": "b31ca2ba355e125e1d708c170636e32d",
     "semantic_hash": ""
   },
   "docs/reports/evidence/broker-agent-management/01_broker_agent_roster.png": {
@@ -7493,282 +6971,6 @@
     "ast_hash": "4756e1d5ec330c67c4ebd3ee0a78041c",
     "semantic_hash": ""
   },
-  "frontend/src/sandbox/assets/House_Herosection.svg": {
-    "mtime": 1789379417.524901,
-    "seen": 1793660940.004867,
-    "ast_hash": "6a90448b47f2bbcdffbbc46353c8f4d7",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/assets/cinematic_duplex_twilight.jpg": {
-    "mtime": 1788967766.7817702,
-    "seen": 1793660940.004867,
-    "ast_hash": "bbce36d3f142de757796119a76ba4dc1",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/assets/cinematic_interior_penthouse.jpg": {
-    "mtime": 1788967790.8160977,
-    "seen": 1793660940.004867,
-    "ast_hash": "07ef7f3054e99594ca19d5eb79ccdebb",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/assets/hero-dahlia-cleaned.jpg": {
-    "mtime": 1789373092.1684153,
-    "seen": 1793660940.004867,
-    "ast_hash": "dafe86563ffea8746444b2ea0075dd0a",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/assets/hero-dahlia-estate.jpg": {
-    "mtime": 1789371562.1153872,
-    "seen": 1793660940.004867,
-    "ast_hash": "8c46d9a08498faf4851f0a48db7f2290",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/assets/hero-dahlia-texture-pro.jpg": {
-    "mtime": 1789373261.2089756,
-    "seen": 1793660940.004867,
-    "ast_hash": "5de473c1a6ce7984f890a7635dd51496",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/assets/hero.png": {
-    "mtime": 1784203452.8606281,
-    "seen": 1793660940.004867,
-    "ast_hash": "aead493361b27e7510691c5d7072dfc1",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/assets/luxury_modern_villa.jpg": {
-    "mtime": 1789008118.0620797,
-    "seen": 1793660940.004867,
-    "ast_hash": "ca7e0b7760befe83bc5a7023f5fd84fb",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/assets/luxury_zen_courtyard.jpg": {
-    "mtime": 1789008834.0150552,
-    "seen": 1793660940.004867,
-    "ast_hash": "cf7f68881449ad40ddfcc1ec2a77d1d9",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/assets/macro_craftsmanship_facade.jpg": {
-    "mtime": 1789014724.3241034,
-    "seen": 1793660940.004867,
-    "ast_hash": "ffadb64137b2625ca8621a185c79628e",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/assets/parallax/layer-close-up.jpg": {
-    "mtime": 1789370449.6187909,
-    "seen": 1793660940.004867,
-    "ast_hash": "3e35c5254d43386db72c809cbc34e330",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/assets/parallax/layer-foreground-left.png": {
-    "mtime": 1789370834.3994162,
-    "seen": 1793660940.004867,
-    "ast_hash": "a6e4b22f68c9e4b3ebfb4483bfe59218",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/assets/parallax/layer-foreground-right.png": {
-    "mtime": 1789370834.4818637,
-    "seen": 1793660940.004867,
-    "ast_hash": "d6303bac2bde37c261791ae36bfafd5e",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/assets/parallax/layer-gate-left.png": {
-    "mtime": 1789371304.259576,
-    "seen": 1793660940.004867,
-    "ast_hash": "11c67cc637241a6580211cf9e2967763",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/assets/parallax/layer-gate-right.png": {
-    "mtime": 1789371304.338875,
-    "seen": 1793660940.004867,
-    "ast_hash": "d675d5c5ba7aebecb29114788db85365",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/assets/parallax/layer-ground.png": {
-    "mtime": 1789369608.0243945,
-    "seen": 1793660940.004867,
-    "ast_hash": "0459309c563df9cad1b5031883026c8b",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/assets/parallax/layer-headlight-bloom.png": {
-    "mtime": 1789370834.5167663,
-    "seen": 1793660940.004867,
-    "ast_hash": "de3fdca0ad383b6552f477ddfc49372a",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/assets/parallax/layer-house.png": {
-    "mtime": 1789371304.179468,
-    "seen": 1793660940.004867,
-    "ast_hash": "4640c9f6ec8dfa2d8d9cfac1666d77b5",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/assets/parallax/layer-interior.jpg": {
-    "mtime": 1789370497.4374697,
-    "seen": 1793660940.004867,
-    "ast_hash": "6ddcc8d5b98cadcc2f9df7714aac8a14",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/assets/parallax/layer-sky.png": {
-    "mtime": 1789371304.0112164,
-    "seen": 1793660940.004867,
-    "ast_hash": "bae0947098bd16cdff8ad8b5b6c82b4b",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/assets/parallax/layer-threshold-left.png": {
-    "mtime": 1789371304.4169674,
-    "seen": 1793660940.004867,
-    "ast_hash": "a6e4b22f68c9e4b3ebfb4483bfe59218",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/assets/parallax/layer-threshold-right.png": {
-    "mtime": 1789371304.496407,
-    "seen": 1793660940.004867,
-    "ast_hash": "d6303bac2bde37c261791ae36bfafd5e",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/assets/parallax/layer-villas-clean.jpg": {
-    "mtime": 1789370816.6840484,
-    "seen": 1793660940.004867,
-    "ast_hash": "54aca87973563a150c085de197c3cdb2",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/assets/parallax/layer-villas.png": {
-    "mtime": 1789369607.9442108,
-    "seen": 1793660940.004867,
-    "ast_hash": "f912dabea92f0d4ee1ae869a7fec177c",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/assets/parallax/plate-driveway.png": {
-    "mtime": 1789373789.898659,
-    "seen": 1793660940.004867,
-    "ast_hash": "51029b15d06d5292bc5821aaa873d9ca",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/assets/parallax/plate-gates.png": {
-    "mtime": 1789373789.7420683,
-    "seen": 1793660940.004867,
-    "ast_hash": "f774bf8ac8f61151dbb4610ab3e18584",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/assets/parallax/plate-sky.jpg": {
-    "mtime": 1789373789.333385,
-    "seen": 1793660940.004867,
-    "ast_hash": "883ab74f6067b6c8060e67b33b69d7bf",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/assets/parallax/plate-villa-unoccluded.jpg": {
-    "mtime": 1789373789.3353908,
-    "seen": 1793660940.004867,
-    "ast_hash": "f8baf41836f726b8fa3fe7669782ab2d",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/assets/parallax/svg/dahlia-estate-photographic-cutouts.svg": {
-    "mtime": 1789372924.7500203,
-    "seen": 1793660940.004867,
-    "ast_hash": "050e4a771f340c61219329253c7968d0",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/assets/parallax/svg/layer-0-sky.svg": {
-    "mtime": 1789373298.0704546,
-    "seen": 1793660940.004867,
-    "ast_hash": "5316db682852202e4b4a16c1f3e6568d",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/assets/parallax/svg/layer-1-background-villas.svg": {
-    "mtime": 1789373298.0714684,
-    "seen": 1793660940.004867,
-    "ast_hash": "89e30e151af5f45c703efacae08cff85",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/assets/parallax/svg/layer-2-main-villa.svg": {
-    "mtime": 1789373298.0724702,
-    "seen": 1793660940.004867,
-    "ast_hash": "439747af33f861ced2dd09fd53ab8e6f",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/assets/parallax/svg/layer-3-gate-perimeter.svg": {
-    "mtime": 1789373298.0734653,
-    "seen": 1793660940.004867,
-    "ast_hash": "5f37c6422583c2371c8fc47d9668b8b9",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/assets/parallax/svg/layer-4-tropical-palms.svg": {
-    "mtime": 1789373298.0734653,
-    "seen": 1793660940.004867,
-    "ast_hash": "add988705b70c144f4c15ebd43d74100",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/assets/parallax/svg/layer-5-cobblestone-driveway.svg": {
-    "mtime": 1789373298.074464,
-    "seen": 1793660940.004867,
-    "ast_hash": "4a9da0122e996f904574eee37b14db77",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/assets/parallax/svg/master-dahlia-cutout-layers.svg": {
-    "mtime": 1789373298.0754702,
-    "seen": 1793660940.004867,
-    "ast_hash": "a9cf53167acd069d15b0b51d300ee899",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/assets/react.svg": {
-    "mtime": 1784203452.8616297,
-    "seen": 1793660940.004867,
-    "ast_hash": "f0402b67b6ce880f65666bb49e841696",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/assets/vector_animals_foreground.jpg": {
-    "mtime": 1789017308.1831248,
-    "seen": 1793660940.004867,
-    "ast_hash": "6daaa543fe91cff343039e286c5381b2",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/assets/vector_animals_foreground.png": {
-    "mtime": 1789017564.664928,
-    "seen": 1793660940.004867,
-    "ast_hash": "8ca557c54a72f417ef127fb2578a59f5",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/assets/vector_animals_isolated.png": {
-    "mtime": 1789017528.981474,
-    "seen": 1793660940.004867,
-    "ast_hash": "2755ee2159d884c047d4302ec57149a5",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/assets/vector_hills_midground.jpg": {
-    "mtime": 1789017273.9254985,
-    "seen": 1793660940.004867,
-    "ast_hash": "8b8e6431698b46d6b3b07e2314e96487",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/assets/vector_hills_midground.png": {
-    "mtime": 1789017439.4454896,
-    "seen": 1793660940.004867,
-    "ast_hash": "207737645120e749f4191fc735a4f034",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/assets/vector_mountains_bg.jpg": {
-    "mtime": 1789017256.7831655,
-    "seen": 1793660940.004867,
-    "ast_hash": "b3efcb95069d513097aff259c03e6c2d",
-    "semantic_hash": ""
-  },
-  "frontend/src/sandbox/assets/vite.svg": {
-    "mtime": 1784203452.8636293,
-    "seen": 1793660940.004867,
-    "ast_hash": "6d5180a782d64c8cf51ba01c2a2184d8",
-    "semantic_hash": ""
-  },
-  "image.png": {
-    "mtime": 1793104327.970639,
-    "seen": 1793660940.004867,
-    "ast_hash": "5274b28b69127555f9c23640c88c26dc",
-    "semantic_hash": ""
-  },
-  "stitch-canvas-screen.png": {
-    "mtime": 1793005139.8817341,
-    "seen": 1793660940.004867,
-    "ast_hash": "52632c2f0b23f59fd0fdea82b60e9a72",
-    "semantic_hash": ""
-  },
   "frontend/public/video/generated_villa_flythrough.webm": {
     "mtime": 1789019291.7679832,
     "seen": 1793660940.004867,
@@ -7848,33 +7050,33 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/portals/broker/components/property-form/CondoLocationFields.jsx": {
-    "mtime": 1793851877.4470665,
-    "seen": 1793852029.2244222,
-    "ast_hash": "cd4562a24a2a722a6f187502384bf310",
+    "mtime": 1793880511.1775324,
+    "seen": 1793881417.3034775,
+    "ast_hash": "8ee570b0c90df75dc0ce3d42354cf6ec",
     "semantic_hash": ""
   },
   "frontend/src/pages/portals/broker/components/property-form/CondominiumSpecs.jsx": {
-    "mtime": 1793851878.2047865,
-    "seen": 1793852029.2244222,
-    "ast_hash": "27493ebefe757bc56174283bbeacc591",
+    "mtime": 1793858638.7917063,
+    "seen": 1793881417.3034775,
+    "ast_hash": "a06389a4678d93e5bbbd9e2831dac4b2",
     "semantic_hash": ""
   },
   "frontend/src/pages/portals/broker/components/property-form/HouseAndLotSpecs.jsx": {
-    "mtime": 1793855540.81218,
-    "seen": 1793857709.452743,
-    "ast_hash": "9db2f88541fdabe9182538ad60bbd6e5",
+    "mtime": 1793858638.7907093,
+    "seen": 1793881417.3034775,
+    "ast_hash": "ad2f927896c6a6a674d8f81903f04646",
     "semantic_hash": ""
   },
   "frontend/src/pages/portals/broker/components/property-form/SubdivisionLocationFields.jsx": {
-    "mtime": 1793855541.7437272,
-    "seen": 1793857709.452743,
-    "ast_hash": "829ab0b86b0b03aa488a6b5993ee2745",
+    "mtime": 1793881177.055692,
+    "seen": 1793881417.3034775,
+    "ast_hash": "d74db1b0a516509c1136bec2b2d7981f",
     "semantic_hash": ""
   },
   "frontend/src/pages/portals/broker/components/property-form/SubdivisionLotSpecs.jsx": {
-    "mtime": 1793851878.8067675,
-    "seen": 1793852029.2244222,
-    "ast_hash": "3abd442970812ea09c8e5a1f279e7f90",
+    "mtime": 1793858638.7937093,
+    "seen": 1793881417.3034775,
+    "ast_hash": "c55352f366146482aa0e14eaea98e922",
     "semantic_hash": ""
   },
   "frontend/src/pages/portals/broker/components/property-form/propertyTypeConfig.js": {
@@ -7889,100 +7091,16 @@
     "ast_hash": "ef2d0dad05a6b79c317ed067113fb515",
     "semantic_hash": ""
   },
-  "artifacts/component-cookbook-mockup/philosophy.md": {
-    "mtime": 1793800452.560941,
-    "seen": 1793847520.1305122,
-    "ast_hash": "8e84886bd21bb76799b2b9904a6fef1b",
-    "semantic_hash": ""
-  },
-  "artifacts/ui-library-atlas/README.md": {
-    "mtime": 1793844990.0976503,
-    "seen": 1793847520.1305122,
-    "ast_hash": "9db916e2ead1191a83738b1e70319a45",
-    "semantic_hash": ""
-  },
-  "artifacts/ui-library-atlas/prompts.md": {
-    "mtime": 1793844991.0137725,
-    "seen": 1793847520.1305122,
-    "ast_hash": "f3117bb13d9069800d09ea18d6a7ab11",
-    "semantic_hash": ""
-  },
   "docs/design-reference/ui-design-specification-2026-11-04.md": {
     "mtime": 1793104337.1406868,
     "seen": 1793847520.1345234,
     "ast_hash": "bf4a73b53d567929ee58d2cbf17231bf",
     "semantic_hash": ""
   },
-  "artifacts/component-cookbook-mockup/property-workspace.png": {
-    "mtime": 1793800479.4074721,
-    "seen": 1793847520.2008457,
-    "ast_hash": "b483afd11d1aaee2910c97bef9602b87",
-    "semantic_hash": ""
-  },
-  "artifacts/component-cookbook-mockup/spacing-before-after.png": {
-    "mtime": 1793809775.3748493,
-    "seen": 1793847520.2008457,
-    "ast_hash": "eb5976b30a6e3652027feb5cf7550244",
-    "semantic_hash": ""
-  },
-  "artifacts/ui-library-atlas/sheet-01.png": {
-    "mtime": 1793845046.2965214,
-    "seen": 1793847520.2008457,
-    "ast_hash": "ea2ead88d7162da6a7d1518251e84781",
-    "semantic_hash": ""
-  },
-  "artifacts/ui-library-atlas/sheet-02.png": {
-    "mtime": 1793845109.6167402,
-    "seen": 1793847520.2008457,
-    "ast_hash": "9c67b01fce33bfa6b0bf01344b5f51cb",
-    "semantic_hash": ""
-  },
-  "artifacts/ui-library-atlas/sheet-03.png": {
-    "mtime": 1793845228.9308252,
-    "seen": 1793847520.2008457,
-    "ast_hash": "ad7c62f5927f6a02bd7ccec85463cd42",
-    "semantic_hash": ""
-  },
-  "artifacts/ui-library-atlas/sheet-04.png": {
-    "mtime": 1793845297.034544,
-    "seen": 1793847520.2008457,
-    "ast_hash": "e6cd86f66cdeb710691605b210c67629",
-    "semantic_hash": ""
-  },
-  "artifacts/ui-library-atlas/sheet-05.png": {
-    "mtime": 1793845344.9556317,
-    "seen": 1793847520.2008457,
-    "ast_hash": "2a214e67c82905fe9ada6488a6ccfe2a",
-    "semantic_hash": ""
-  },
-  "artifacts/ui-library-atlas/sheet-06.png": {
-    "mtime": 1793845409.5539706,
-    "seen": 1793847520.2008457,
-    "ast_hash": "4ccd8b1639abf3c561069add2097fcf7",
-    "semantic_hash": ""
-  },
-  "artifacts/ui-library-atlas/sheet-07.png": {
-    "mtime": 1793845455.8750749,
-    "seen": 1793847520.2008457,
-    "ast_hash": "a4012a2aa9ca052856287ed4f2912067",
-    "semantic_hash": ""
-  },
-  "artifacts/ui-library-atlas/sheet-08.png": {
-    "mtime": 1793845518.1473255,
-    "seen": 1793847520.2008457,
-    "ast_hash": "ea1551799aee99fc9bc5754c2a0de027",
-    "semantic_hash": ""
-  },
-  "artifacts/ui-library-atlas/sheet-09.png": {
-    "mtime": 1793845572.3723464,
-    "seen": 1793847520.2008457,
-    "ast_hash": "d6b47e4ae7dae6449a074b1986fb461d",
-    "semantic_hash": ""
-  },
   "frontend/src/pages/portals/broker/components/property-form/CategoryAmenitiesPicker.jsx": {
-    "mtime": 1793851696.3468752,
-    "seen": 1793852029.2244222,
-    "ast_hash": "b1419cb3b79d8c2eccd4c08ef2d81d5f",
+    "mtime": 1793858638.7947075,
+    "seen": 1793881417.3034775,
+    "ast_hash": "d96bb2d6c8b9e6ebe98d11f6a2762d5d",
     "semantic_hash": ""
   },
   "frontend/src/pages/portals/broker/components/property-form/CategoryAmenitiesPicker.test.jsx": {
@@ -7998,39 +7116,471 @@
     "semantic_hash": ""
   },
   "frontend/e2e/house-and-lot-property-intake.spec.ts": {
-    "mtime": 1793857680.2667878,
-    "seen": 1793857709.3254557,
-    "ast_hash": "9c0bcb7e0cbad220c867c7bd3dceb0d6",
-    "semantic_hash": ""
-  },
-  "artifacts/wizard-spacing-proposal/README.md": {
-    "mtime": 1793857546.5412593,
-    "seen": 1793857709.6686614,
-    "ast_hash": "b253b21050e6f79362d490cab26df903",
+    "mtime": 1793883296.767926,
+    "seen": 1793884150.611719,
+    "ast_hash": "ceff8bb5c3d7851743352d9d9b1e89b6",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-11-05-listing-wizard-compact-spacing.md": {
-    "mtime": 1793857543.4624865,
-    "seen": 1793857709.7525988,
-    "ast_hash": "4fdae233092accfb787f33282c740210",
+    "mtime": 1793859797.706449,
+    "seen": 1793881417.511903,
+    "ast_hash": "32326c6da68d85cccd406f5e9f13bafb",
     "semantic_hash": ""
   },
-  "artifacts/component-cookbook-mockup/balanced-vs-compact.png": {
-    "mtime": 1793856465.5656247,
-    "seen": 1793857709.7871792,
-    "ast_hash": "a8d5edf112bd46885cbdcb90dd56df0a",
+  "frontend/src/components/ui/map/MultiUnitDrawer.jsx": {
+    "mtime": 1794160612.041903,
+    "seen": 1794161284.247324,
+    "ast_hash": "72ddc4cd1d9eced8ff3145f46662f7f8",
+    "semantic_hash": ""
+  },
+  "frontend/src/components/ui/map/MultiUnitDrawer.test.jsx": {
+    "mtime": 1793881490.1465216,
+    "seen": 1793884150.6519742,
+    "ast_hash": "e863a766d10594f3aabe672b3a1d2aaf",
+    "semantic_hash": ""
+  },
+  "frontend/src/pages/portals/broker/components/property-form/BuildingCoordinateMatcher.jsx": {
+    "mtime": 1793881490.636536,
+    "seen": 1793884150.6989465,
+    "ast_hash": "c1609cff0f67dc7c4456cf7f006f874a",
+    "semantic_hash": ""
+  },
+  "frontend/src/pages/portals/broker/components/property-form/BuildingCoordinateMatcher.test.jsx": {
+    "mtime": 1793881490.8545177,
+    "seen": 1793884150.6989465,
+    "ast_hash": "e5bbad93ccb704961eb404980e7e1884",
+    "semantic_hash": ""
+  },
+  "frontend/src/utils/groupPropertiesByCoordinates.js": {
+    "mtime": 1793881491.235005,
+    "seen": 1793884150.7260952,
+    "ast_hash": "6c1aa65f676c8f82f62831bc59ceef1c",
+    "semantic_hash": ""
+  },
+  "frontend/src/utils/groupPropertiesByCoordinates.test.js": {
+    "mtime": 1793881491.4183054,
+    "seen": 1793884150.7260952,
+    "ast_hash": "77853fd7bc2dbdbbe42e40712b8b1007",
+    "semantic_hash": ""
+  },
+  "docs/modules/02-property-listing/2026-11-05-listing-wizard-compact-spacing-verification.md": {
+    "mtime": 1793859744.1453283,
+    "seen": 1793881417.4888227,
+    "ast_hash": "4cd5aac20e545bb2b01191f90a514c3c",
+    "semantic_hash": ""
+  },
+  "backend/data/sessions.test-5.json": {
+    "mtime": 1794043108.7383864,
+    "seen": 1794043270.384595,
+    "ast_hash": "24aa577e4dfcb97ba073acdba875ec53",
+    "semantic_hash": ""
+  },
+  "backend/data/sessions.test-7.json": {
+    "mtime": 1794043131.6067398,
+    "seen": 1794043270.384595,
+    "ast_hash": "b2cf2eaeacb974417ba97e20e027f3b2",
+    "semantic_hash": ""
+  },
+  "backend/data/sessions.test-8.json": {
+    "mtime": 1794043125.0555823,
+    "seen": 1794043270.384595,
+    "ast_hash": "33d306fa34affd11a842e066bef1f318",
+    "semantic_hash": ""
+  },
+  "package.json": {
+    "mtime": 1794042867.5622523,
+    "seen": 1794043271.273826,
+    "ast_hash": "707d5a49b1b3c0fe4a76b5d667329308",
+    "semantic_hash": ""
+  },
+  "frontend/src/assets/House_Herosection.svg": {
+    "mtime": 1789379417.524901,
+    "seen": 1794043272.5649953,
+    "ast_hash": "6a90448b47f2bbcdffbbc46353c8f4d7",
+    "semantic_hash": ""
+  },
+  ".agents/skills/impeccable/agents/openai.yaml": {
+    "mtime": 1794049623.9429557,
+    "seen": 1794050944.2297115,
+    "ast_hash": "1232e1e58afd6467b515d20946ad8ba5",
+    "semantic_hash": ""
+  },
+  ".codex/hooks.json": {
+    "mtime": 1794049624.0668585,
+    "seen": 1794050944.2377114,
+    "ast_hash": "48dba42de6ba769377341f46e0981dee",
+    "semantic_hash": ""
+  },
+  ".impeccable/design.json": {
+    "mtime": 1794050763.5708473,
+    "seen": 1794050944.2377114,
+    "ast_hash": "d4f443e570cf783276c96ed94a56746f",
+    "semantic_hash": ""
+  },
+  "frontend/e2e/properties-page.spec.ts": {
+    "mtime": 1794050817.3120544,
+    "seen": 1794050944.303067,
+    "ast_hash": "286b386986c9915129aa66ab4be55ec4",
+    "semantic_hash": ""
+  },
+  "test-results/.last-run.json": {
+    "mtime": 1794050675.4349413,
+    "seen": 1794050944.413885,
+    "ast_hash": "fb92ad2b0b3f2ee88628407af7c0a647",
+    "semantic_hash": ""
+  },
+  ".agents/rules/design-system.md": {
+    "mtime": 1794047668.347455,
+    "seen": 1794050944.4148986,
+    "ast_hash": "0971ecff03d95bfa0ae1974b36d26622",
+    "semantic_hash": ""
+  },
+  ".agents/skills/impeccable/SKILL.md": {
+    "mtime": 1794049623.932953,
+    "seen": 1794050944.428013,
+    "ast_hash": "afdc47902d06abbcf6560ddfc6b93d68",
+    "semantic_hash": ""
+  },
+  ".agents/skills/impeccable/reference/adapt.md": {
+    "mtime": 1794049623.946954,
+    "seen": 1794050944.428013,
+    "ast_hash": "430695dd62438302654025f62e865ffc",
+    "semantic_hash": ""
+  },
+  ".agents/skills/impeccable/reference/adapt.native.md": {
+    "mtime": 1794049623.9489555,
+    "seen": 1794050944.428013,
+    "ast_hash": "3ddd9497ad357d386a08d27e9e6e3f25",
+    "semantic_hash": ""
+  },
+  ".agents/skills/impeccable/reference/android.md": {
+    "mtime": 1794049623.950955,
+    "seen": 1794050944.428013,
+    "ast_hash": "a35783faf7effd696f24bdaafa6b5531",
+    "semantic_hash": ""
+  },
+  ".agents/skills/impeccable/reference/animate.md": {
+    "mtime": 1794049623.9519567,
+    "seen": 1794050944.428013,
+    "ast_hash": "610f85bc3d6d370810836681204b015d",
+    "semantic_hash": ""
+  },
+  ".agents/skills/impeccable/reference/audit.md": {
+    "mtime": 1794049623.953955,
+    "seen": 1794050944.428013,
+    "ast_hash": "f3ca61eae761b7ad53a29d11c96a402b",
+    "semantic_hash": ""
+  },
+  ".agents/skills/impeccable/reference/audit.native.md": {
+    "mtime": 1794049623.9559574,
+    "seen": 1794050944.428013,
+    "ast_hash": "35e0f32a6ca17635594a141394e936b6",
+    "semantic_hash": ""
+  },
+  ".agents/skills/impeccable/reference/bolder.md": {
+    "mtime": 1794049623.9579537,
+    "seen": 1794050944.428013,
+    "ast_hash": "4dc058cbd273b89f9bab0437db1205ed",
+    "semantic_hash": ""
+  },
+  ".agents/skills/impeccable/reference/clarify.md": {
+    "mtime": 1794049623.959969,
+    "seen": 1794050944.428013,
+    "ast_hash": "413da6eb075a6c3ed05de43f760f3be8",
+    "semantic_hash": ""
+  },
+  ".agents/skills/impeccable/reference/colorize.md": {
+    "mtime": 1794049623.961971,
+    "seen": 1794050944.428013,
+    "ast_hash": "0bf2887698d75473acd5a5b0ccbe1d3e",
+    "semantic_hash": ""
+  },
+  ".agents/skills/impeccable/reference/component-review.md": {
+    "mtime": 1794049623.963965,
+    "seen": 1794050944.428013,
+    "ast_hash": "6805984a39edac8cee39fbcb4e09e947",
+    "semantic_hash": ""
+  },
+  ".agents/skills/impeccable/reference/craft-floor.md": {
+    "mtime": 1794049623.9649723,
+    "seen": 1794050944.428013,
+    "ast_hash": "21a02af5805e3dcc438f122492774fd8",
+    "semantic_hash": ""
+  },
+  ".agents/skills/impeccable/reference/craft.md": {
+    "mtime": 1794049623.9669702,
+    "seen": 1794050944.428013,
+    "ast_hash": "9075911f45c58c15a720f8188b2738f4",
+    "semantic_hash": ""
+  },
+  ".agents/skills/impeccable/reference/critique.md": {
+    "mtime": 1794049623.9689653,
+    "seen": 1794050944.428013,
+    "ast_hash": "aaa025b535d5262c7dcb6ee3e2ca7599",
+    "semantic_hash": ""
+  },
+  ".agents/skills/impeccable/reference/degraded/asset-producer.md": {
+    "mtime": 1794049623.9719648,
+    "seen": 1794050944.428013,
+    "ast_hash": "bd704054817484c1188bbb8b8e51406d",
+    "semantic_hash": ""
+  },
+  ".agents/skills/impeccable/reference/degraded/documenter.md": {
+    "mtime": 1794049623.9744844,
+    "seen": 1794050944.428013,
+    "ast_hash": "a38215374db267ad2be047a2a58cc816",
+    "semantic_hash": ""
+  },
+  ".agents/skills/impeccable/reference/degraded/finish-reviewer.md": {
+    "mtime": 1794049623.9765005,
+    "seen": 1794050944.428013,
+    "ast_hash": "0850d34ddae341e50f594e22a3913bd3",
+    "semantic_hash": ""
+  },
+  ".agents/skills/impeccable/reference/degraded/manual-edit-applier.md": {
+    "mtime": 1794049623.9784963,
+    "seen": 1794050944.428013,
+    "ast_hash": "1652cf7a403f11f4d57382e5ccec6999",
+    "semantic_hash": ""
+  },
+  ".agents/skills/impeccable/reference/delight.md": {
+    "mtime": 1794049623.9814968,
+    "seen": 1794050944.428013,
+    "ast_hash": "4a4fb8494ddda3d2b4687b938209eb32",
+    "semantic_hash": ""
+  },
+  ".agents/skills/impeccable/reference/distill.md": {
+    "mtime": 1794049623.983505,
+    "seen": 1794050944.428013,
+    "ast_hash": "2f563d239ebaec997517232b34d5554e",
+    "semantic_hash": ""
+  },
+  ".agents/skills/impeccable/reference/doctor.md": {
+    "mtime": 1794049623.9854999,
+    "seen": 1794050944.428013,
+    "ast_hash": "5ecb5be7c8312aea344770a30689a44f",
+    "semantic_hash": ""
+  },
+  ".agents/skills/impeccable/reference/document.md": {
+    "mtime": 1794049623.9864995,
+    "seen": 1794050944.428013,
+    "ast_hash": "2d441224ab2d8adfb026d9f408c72dc7",
+    "semantic_hash": ""
+  },
+  ".agents/skills/impeccable/reference/extract.md": {
+    "mtime": 1794049623.9884973,
+    "seen": 1794050944.428013,
+    "ast_hash": "88c7e517902f774f1f365d374d517cf4",
+    "semantic_hash": ""
+  },
+  ".agents/skills/impeccable/reference/generate.md": {
+    "mtime": 1794049623.9913087,
+    "seen": 1794050944.428013,
+    "ast_hash": "c88c726a91875ddf46b3c7b692c3671f",
+    "semantic_hash": ""
+  },
+  ".agents/skills/impeccable/reference/harden.md": {
+    "mtime": 1794049623.9923065,
+    "seen": 1794050944.428013,
+    "ast_hash": "26bc1661aceef6a0989faa666f705bea",
+    "semantic_hash": ""
+  },
+  ".agents/skills/impeccable/reference/hooks.md": {
+    "mtime": 1794049623.9943118,
+    "seen": 1794050944.428013,
+    "ast_hash": "71d46986b09c725ebf11150f7271ab0f",
+    "semantic_hash": ""
+  },
+  ".agents/skills/impeccable/reference/init.md": {
+    "mtime": 1794049623.9963098,
+    "seen": 1794050944.428013,
+    "ast_hash": "f78ca04c54e5555e42050d086ebeb52f",
+    "semantic_hash": ""
+  },
+  ".agents/skills/impeccable/reference/ios.md": {
+    "mtime": 1794049623.998309,
+    "seen": 1794050944.428013,
+    "ast_hash": "a8f56b5c246ad44e142853ef59a19039",
+    "semantic_hash": ""
+  },
+  ".agents/skills/impeccable/reference/layout.md": {
+    "mtime": 1794049623.9993155,
+    "seen": 1794050944.428013,
+    "ast_hash": "d4db3672050d72bd68949ef6ca614569",
+    "semantic_hash": ""
+  },
+  ".agents/skills/impeccable/reference/live-setup.md": {
+    "mtime": 1794049624.001321,
+    "seen": 1794050944.428013,
+    "ast_hash": "e870461022ffc424f05fdfdd38ad0367",
+    "semantic_hash": ""
+  },
+  ".agents/skills/impeccable/reference/live.md": {
+    "mtime": 1794049624.0033128,
+    "seen": 1794050944.428013,
+    "ast_hash": "1b7508a03154ed7a0f355cd388da6a20",
+    "semantic_hash": ""
+  },
+  ".agents/skills/impeccable/reference/mode-operate.md": {
+    "mtime": 1794049624.0053358,
+    "seen": 1794050944.428013,
+    "ast_hash": "bf63bc740b342576279715f35922daad",
+    "semantic_hash": ""
+  },
+  ".agents/skills/impeccable/reference/mode-persuade.md": {
+    "mtime": 1794049624.0063238,
+    "seen": 1794050944.428013,
+    "ast_hash": "9536e656c3fab5a8d85f1dcde6df45aa",
+    "semantic_hash": ""
+  },
+  ".agents/skills/impeccable/reference/mode-read.md": {
+    "mtime": 1794049624.008327,
+    "seen": 1794050944.428013,
+    "ast_hash": "09353e7df8b71096238a1d18c6fbfe44",
+    "semantic_hash": ""
+  },
+  ".agents/skills/impeccable/reference/new-work.md": {
+    "mtime": 1794049624.0103226,
+    "seen": 1794050944.428013,
+    "ast_hash": "26e284aea74ca399dccb02b6ecce8656",
+    "semantic_hash": ""
+  },
+  ".agents/skills/impeccable/reference/onboard.md": {
+    "mtime": 1794049624.0113218,
+    "seen": 1794050944.428013,
+    "ast_hash": "3d4dcb0ea41999ec3c8c0c423cc631fe",
+    "semantic_hash": ""
+  },
+  ".agents/skills/impeccable/reference/operate.md": {
+    "mtime": 1794049624.0133276,
+    "seen": 1794050944.428013,
+    "ast_hash": "53a569b985749058f7b178a32e0a157f",
+    "semantic_hash": ""
+  },
+  ".agents/skills/impeccable/reference/optimize.md": {
+    "mtime": 1794049624.0153298,
+    "seen": 1794050944.428013,
+    "ast_hash": "1f3f0852bbbf56f90dc547d00894dd76",
+    "semantic_hash": ""
+  },
+  ".agents/skills/impeccable/reference/overdrive.md": {
+    "mtime": 1794049624.0163286,
+    "seen": 1794050944.428013,
+    "ast_hash": "8e0b7d24a478bc3e4c2429dd6ff8ce42",
+    "semantic_hash": ""
+  },
+  ".agents/skills/impeccable/reference/polish.md": {
+    "mtime": 1794049624.0188377,
+    "seen": 1794050944.428013,
+    "ast_hash": "36ed382b9f9692d0545b34dfd643670b",
+    "semantic_hash": ""
+  },
+  ".agents/skills/impeccable/reference/quieter.md": {
+    "mtime": 1794049624.0208483,
+    "seen": 1794050944.428013,
+    "ast_hash": "9d037f5df3a6084451cc4e7f64628fab",
+    "semantic_hash": ""
+  },
+  ".agents/skills/impeccable/reference/region-map.md": {
+    "mtime": 1794049624.0228496,
+    "seen": 1794050944.428013,
+    "ast_hash": "fbedb05ecee2abb30af4c473de67c343",
+    "semantic_hash": ""
+  },
+  ".agents/skills/impeccable/reference/routing.md": {
+    "mtime": 1794049624.0248528,
+    "seen": 1794050944.428013,
+    "ast_hash": "16cfad4cde91da597491055320b2c3ba",
+    "semantic_hash": ""
+  },
+  ".agents/skills/impeccable/reference/shape.md": {
+    "mtime": 1794049624.0268524,
+    "seen": 1794050944.428013,
+    "ast_hash": "ecf5345d56452d10cd2c9203a7512704",
+    "semantic_hash": ""
+  },
+  ".agents/skills/impeccable/reference/typeset.md": {
+    "mtime": 1794049624.0278528,
+    "seen": 1794050944.428013,
+    "ast_hash": "44fdf5662f8003feebd2251242952563",
+    "semantic_hash": ""
+  },
+  ".agents/skills/impeccable/reference/visualize.md": {
+    "mtime": 1794049624.028857,
+    "seen": 1794050944.428013,
+    "ast_hash": "9030fe80e1bbad7d0eec44029f487433",
+    "semantic_hash": ""
+  },
+  "AGENTS.md": {
+    "mtime": 1794047676.5806012,
+    "seen": 1794050944.5361667,
+    "ast_hash": "59b9a7b89291dc6a25a6ed2f3a2cafdd",
+    "semantic_hash": ""
+  },
+  "DESIGN.md": {
+    "mtime": 1794047567.4594676,
+    "seen": 1794050944.5361667,
+    "ast_hash": "6c1180075356b5b6bfd455b90b462c06",
+    "semantic_hash": ""
+  },
+  "PRODUCT.md": {
+    "mtime": 1794050721.889874,
+    "seen": 1794050944.5361667,
+    "ast_hash": "743647f2f33e479e200b28236ea44fc0",
+    "semantic_hash": ""
+  },
+  "test-results/frontend-e2e-properties-pa-8ac6e--modes-and-fit-all-controls/error-context.md": {
+    "mtime": 1794050672.6108046,
+    "seen": 1794050944.5999005,
+    "ast_hash": "53d0166a1871f3e5c00d6d1674851ebe",
+    "semantic_hash": ""
+  },
+  "test-results/frontend-e2e-properties-pa-b1f3d-oids-FAB-and-toggle-overlap/error-context.md": {
+    "mtime": 1794050675.314145,
+    "seen": 1794050944.5999005,
+    "ast_hash": "ecb5a73172ef6202f5f96d60dcae7fa7",
+    "semantic_hash": ""
+  },
+  "test-results/frontend-e2e-properties-pa-e2371-es-via-filter-action-button/error-context.md": {
+    "mtime": 1794050669.9787884,
+    "seen": 1794050944.5999005,
+    "ast_hash": "56afcbcdc29e3d24af0fa7cf5b906a72",
+    "semantic_hash": ""
+  },
+  "test-results/frontend-e2e-properties-pa-e8110-eanly-without-layout-shifts/error-context.md": {
+    "mtime": 1794050668.4465148,
+    "seen": 1794050944.5999005,
+    "ast_hash": "ee64eb374a44dc12532bd83d153e5cbc",
+    "semantic_hash": ""
+  },
+  "test-results/frontend-e2e-properties-pa-e8779-hout-blank-grey-canvas-void/error-context.md": {
+    "mtime": 1794050674.0119145,
+    "seen": 1794050944.5999005,
+    "ast_hash": "83a031c7bf883593e0a3e218ee89ff75",
+    "semantic_hash": ""
+  },
+  "test-results/frontend-e2e-properties-pa-fa611-een-Split-Map-and-Grid-View/error-context.md": {
+    "mtime": 1794050671.327851,
+    "seen": 1794050944.5999005,
+    "ast_hash": "6cb9519ffc20670527b257f46e59e5da",
+    "semantic_hash": ""
+  },
+  "backend/data/sessions.test-14.json": {
+    "mtime": 1794160162.9133773,
+    "seen": 1794160402.1597054,
+    "ast_hash": "5516c3ac1ff82065a7e45c69ceb39708",
     "semantic_hash": ""
   },
   "backend/package-lock.json": {
-    "mtime": 1792707056.851497,
-    "seen": 1793660940.004867,
-    "ast_hash": "5a626962e45e08ecaed50261d2311171",
+    "mtime": 1794044271.0043147,
+    "seen": 1794044404.5321217,
+    "ast_hash": "bbacfc5ae4c2921f778ad0e7a572dd42",
     "semantic_hash": ""
   },
   "frontend/package-lock.json": {
-    "mtime": 1793660712.8392246,
-    "seen": 1793660940.004867,
-    "ast_hash": "c2c2e94534bda5b1731dbdf7ebe0207b",
+    "mtime": 1794047157.4481256,
+    "seen": 1794050944.6378825,
+    "ast_hash": "a71fb73fa3d5fb3d8588495ea89ed41c",
     "semantic_hash": ""
   }
 }

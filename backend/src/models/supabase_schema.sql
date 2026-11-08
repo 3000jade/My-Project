@@ -101,9 +101,45 @@ CREATE POLICY "Users can insert their own profile."
 DROP POLICY IF EXISTS "Users can update their own profile." ON public.profiles;
 CREATE POLICY "Users can update their own profile."
   ON public.profiles FOR UPDATE
-  USING (auth.uid() = id OR EXISTS (
-    SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'
+  TO authenticated
+  USING ((select auth.uid()) = id OR EXISTS (
+    SELECT 1 FROM public.profiles WHERE id = (select auth.uid()) AND role = 'admin'
+  ))
+  WITH CHECK ((select auth.uid()) = id OR EXISTS (
+    SELECT 1 FROM public.profiles WHERE id = (select auth.uid()) AND role = 'admin'
   ));
+
+-- Prevent non-admin users from escalating their own role or verification_status via PostgREST
+CREATE OR REPLACE FUNCTION public.prevent_profile_privilege_escalation()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_caller_role TEXT;
+BEGIN
+  IF current_user IN ('postgres', 'service_role') OR auth.uid() IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  SELECT role INTO v_caller_role FROM public.profiles WHERE id = auth.uid();
+  IF v_caller_role IS DISTINCT FROM 'admin' THEN
+    IF NEW.role IS DISTINCT FROM OLD.role THEN
+      RAISE EXCEPTION 'Forbidden: Only administrators can modify user roles.';
+    END IF;
+    IF NEW.verification_status IS DISTINCT FROM OLD.verification_status AND v_caller_role IS DISTINCT FROM 'broker' THEN
+      RAISE EXCEPTION 'Forbidden: Only administrators or brokers can modify verification status.';
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_prevent_profile_privilege_escalation ON public.profiles;
+CREATE TRIGGER trg_prevent_profile_privilege_escalation
+  BEFORE UPDATE ON public.profiles
+  FOR EACH ROW EXECUTE FUNCTION public.prevent_profile_privilege_escalation();
 
 -- Automatic profile creation on auth.users insert
 CREATE OR REPLACE FUNCTION public.handle_new_user()
@@ -751,17 +787,33 @@ ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Notifications are viewable by authenticated users." ON public.notifications;
 CREATE POLICY "Notifications are viewable by authenticated users."
   ON public.notifications FOR SELECT
-  USING (true);
+  TO authenticated
+  USING (
+    user_id = (select auth.uid()) OR
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = (select auth.uid()) AND role IN ('broker', 'admin'))
+  );
 
 DROP POLICY IF EXISTS "Notifications can be updated by authenticated users." ON public.notifications;
 CREATE POLICY "Notifications can be updated by authenticated users."
   ON public.notifications FOR UPDATE
-  USING (true);
+  TO authenticated
+  USING (
+    user_id = (select auth.uid()) OR
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = (select auth.uid()) AND role IN ('broker', 'admin'))
+  )
+  WITH CHECK (
+    user_id = (select auth.uid()) OR
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = (select auth.uid()) AND role IN ('broker', 'admin'))
+  );
 
 DROP POLICY IF EXISTS "Notifications can be inserted." ON public.notifications;
 CREATE POLICY "Notifications can be inserted."
   ON public.notifications FOR INSERT
-  WITH CHECK (true);
+  TO authenticated
+  WITH CHECK (
+    user_id = (select auth.uid()) OR
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = (select auth.uid()) AND role IN ('agent', 'broker', 'admin'))
+  );
 
 -- ==============================================================================
 -- 7. SALES CONVEYANCE TABLE
@@ -786,17 +838,29 @@ ALTER TABLE public.sales ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Sales are viewable by authenticated users." ON public.sales;
 CREATE POLICY "Sales are viewable by authenticated users."
   ON public.sales FOR SELECT
-  USING (true);
+  TO authenticated
+  USING (
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = (select auth.uid()) AND role IN ('agent', 'broker', 'admin'))
+  );
 
 DROP POLICY IF EXISTS "Sales can be inserted by authenticated users." ON public.sales;
 CREATE POLICY "Sales can be inserted by authenticated users."
   ON public.sales FOR INSERT
-  WITH CHECK (true);
+  TO authenticated
+  WITH CHECK (
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = (select auth.uid()) AND role IN ('agent', 'broker', 'admin'))
+  );
 
 DROP POLICY IF EXISTS "Sales can be updated by authenticated users." ON public.sales;
 CREATE POLICY "Sales can be updated by authenticated users."
   ON public.sales FOR UPDATE
-  USING (true);
+  TO authenticated
+  USING (
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = (select auth.uid()) AND role IN ('agent', 'broker', 'admin'))
+  )
+  WITH CHECK (
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = (select auth.uid()) AND role IN ('agent', 'broker', 'admin'))
+  );
 
 
 

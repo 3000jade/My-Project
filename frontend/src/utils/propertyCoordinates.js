@@ -78,9 +78,14 @@ export function getPropertyCoordinates(property) {
     property.lat != null && property.lng != null && property.lat !== '' && property.lng !== ''
       ? { lat: Number(property.lat), lng: Number(property.lng) }
       : null,
-    // 3. coordinates object
-    property.coordinates && property.coordinates.lat != null && property.coordinates.lng != null && property.coordinates.lat !== '' && property.coordinates.lng !== ''
-      ? { lat: Number(property.coordinates.lat), lng: Number(property.coordinates.lng) }
+    // 3. coordinates or coords object
+    (property.coordinates || property.coords) &&
+    (property.coordinates?.lat ?? property.coords?.lat) != null &&
+    (property.coordinates?.lng ?? property.coords?.lng) != null
+      ? {
+          lat: Number(property.coordinates?.lat ?? property.coords?.lat),
+          lng: Number(property.coordinates?.lng ?? property.coords?.lng),
+        }
       : null,
     // 4. nested location.coordinates object
     property.location?.coordinates && property.location.coordinates.lat != null && property.location.coordinates.lng != null && property.location.coordinates.lat !== '' && property.location.coordinates.lng !== ''

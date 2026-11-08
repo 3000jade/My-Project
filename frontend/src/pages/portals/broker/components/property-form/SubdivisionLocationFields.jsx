@@ -1,6 +1,7 @@
 import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import BuildingCoordinateMatcher from './BuildingCoordinateMatcher';
 
 export default function SubdivisionLocationFields({
   formData = {},
@@ -54,23 +55,40 @@ export default function SubdivisionLocationFields({
               Subdivision Name <span className="text-[#FF6B6B]">*</span>
             </Label>
             {isCustomSubdivisionMode ? (
-              <Input
-                id="subdivision-input"
-                type="text"
-                placeholder="e.g. Havila Highlands Executive Subdivision, Ayala Alabang"
-                value={formData.subdivision_name || formData.subdivision || ''}
-                onChange={e => {
-                  setIsDirty?.(true);
-                  setFormData?.({
-                    ...formData,
-                    subdivision: e.target.value,
-                    subdivision_name: e.target.value,
-                    subdivision_project_id: null,
-                    subdivision_lot_id: null,
-                  });
-                }}
-                className="h-11 md:h-10 [@media(pointer:coarse)]:h-11 rounded-md text-sm shadow-none"
-              />
+              <>
+                <Input
+                  id="subdivision-input"
+                  type="text"
+                  placeholder="e.g. Havila Highlands Executive Subdivision, Ayala Alabang"
+                  value={formData.subdivision_name || formData.subdivision || ''}
+                  onChange={e => {
+                    setIsDirty?.(true);
+                    setFormData?.({
+                      ...formData,
+                      subdivision: e.target.value,
+                      subdivision_name: e.target.value,
+                      subdivision_project_id: null,
+                      subdivision_lot_id: null,
+                    });
+                  }}
+                  className="h-11 md:h-10 [@media(pointer:coarse)]:h-11 rounded-md text-sm shadow-none"
+                />
+                <BuildingCoordinateMatcher
+                  buildingName={formData.subdivision_name || formData.subdivision}
+                  currentLatitude={formData.latitude}
+                  currentLongitude={formData.longitude}
+                  onApplyCoordinates={(coords) => {
+                    setIsDirty?.(true);
+                    setFormData?.(prev => ({
+                      ...prev,
+                      latitude: coords.latitude,
+                      longitude: coords.longitude,
+                      city: coords.city || prev.city,
+                      barangay: coords.barangay || prev.barangay,
+                    }));
+                  }}
+                />
+              </>
             ) : (
               <select
                 id="subdivision-project-select"

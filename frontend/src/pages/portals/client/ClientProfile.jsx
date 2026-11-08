@@ -21,6 +21,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { EditProfileDialog, ChangePasswordDialog } from '@/components/profile';
+import SessionManagementPanel from '../../../components/auth/SessionManagementPanel';
 
 export default function ClientProfile() {
   const [profile, setProfile] = useState(null);
@@ -330,6 +331,8 @@ export default function ClientProfile() {
           </div>
         </Card>
       </div>
+
+      <SessionManagementPanel />
 
       {/* Reusable Profile Edit Dialog */}
       <EditProfileDialog

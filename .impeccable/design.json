@@ -1,0 +1,196 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-07T19:25:00+08:00",
+  "title": "Design System: Human Shelter Realty",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Spruce Teal",
+        "canonical": "#0F766E",
+        "tonalRamp": ["#134E4A", "#115E59", "#0F766E", "#0D9488", "#14B8A6", "#2DD4BF", "#99F6E4", "#F0FDFA"]
+      },
+      "accent": {
+        "role": "secondary",
+        "displayName": "Conversion Coral",
+        "canonical": "#FF6B6B",
+        "tonalRamp": ["#7F1D1D", "#B91C1C", "#DC2626", "#EF4444", "#FF6B6B", "#FCA5A5", "#FECACA", "#FEF2F2"]
+      },
+      "background": {
+        "role": "neutral",
+        "displayName": "Slate Alabaster Canvas",
+        "canonical": "#F8FAFC",
+        "tonalRamp": ["#0F172A", "#1E293B", "#334155", "#64748B", "#94A3B8", "#CBD5E1", "#E2E8F0", "#F8FAFC"]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Pure White Surface",
+        "canonical": "#FFFFFF",
+        "tonalRamp": ["#0F172A", "#1E293B", "#475569", "#94A3B8", "#CBD5E1", "#E2E8F0", "#F1F5F9", "#FFFFFF"]
+      },
+      "on-surface": {
+        "role": "neutral",
+        "displayName": "Slate 800 Ink",
+        "canonical": "#1E293B",
+        "tonalRamp": ["#020617", "#0F172A", "#1E293B", "#334155", "#475569", "#64748B", "#94A3B8", "#F8FAFC"]
+      },
+      "outline": {
+        "role": "neutral",
+        "displayName": "Slate 200 Hairline",
+        "canonical": "#E2E8F0",
+        "tonalRamp": ["#1E293B", "#334155", "#475569", "#64748B", "#94A3B8", "#CBD5E1", "#E2E8F0", "#F1F5F9"]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display / Hero",
+        "purpose": "Public hero declarations and primary page headers (36px / 44px, 700 weight)."
+      },
+      "headline": {
+        "displayName": "Heading H1",
+        "purpose": "Portal workspace titles and major section headers (28px / 36px, 700 weight)."
+      },
+      "title": {
+        "displayName": "Heading H2",
+        "purpose": "Card headers, modal titles, and wizard step headers (20px / 28px, 600 weight)."
+      },
+      "body": {
+        "displayName": "Body Default",
+        "purpose": "Primary interface copy, table cells, and form inputs (14px / 20px, 400-500 weight)."
+      },
+      "label": {
+        "displayName": "Caption & Mono Data",
+        "purpose": "Uppercase table headers, status badges, PHP prices, and cadastral coordinates (12px / 16px)."
+      }
+    },
+    "shadows": [
+      {
+        "name": "level-0-flat",
+        "value": "none",
+        "purpose": "Inputs, table wrappers, nested panels, and sidebars paired with 1px #E2E8F0 border."
+      },
+      {
+        "name": "level-1-card",
+        "value": "0 1px 3px 0 rgba(0, 0, 0, 0.08), 0 1px 2px -1px rgba(0, 0, 0, 0.06)",
+        "purpose": "Resting KPI cards, property cards, and filter plinths."
+      },
+      {
+        "name": "level-2-hover",
+        "value": "0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.05)",
+        "purpose": "Hovered property cards, dropdown menus, popovers, and active map pins."
+      },
+      {
+        "name": "level-3-modal",
+        "value": "0 20px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08)",
+        "purpose": "Modal dialogs, drawers, and sheets."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out-quart",
+        "value": "cubic-bezier(0.165, 0.84, 0.44, 1)",
+        "purpose": "Primary button hover elevation and glass surface transitions."
+      },
+      {
+        "name": "ease-standard",
+        "value": "cubic-bezier(0.4, 0, 0.2, 1)",
+        "purpose": "Standard reveal and layout state transitions (150ms-200ms)."
+      }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "xl", "value": "1280px" },
+      { "name": "max-container", "value": "1440px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Primary Teal CTA button for single primary page/modal actions.",
+      "html": "<button class=\"ds-btn-primary\">Schedule Viewing</button>",
+      "css": ".ds-btn-primary { background-color: #0F766E; color: #FFFFFF; height: 40px; padding: 0 16px; border-radius: 8px; border: 1px solid transparent; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: background-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease; } .ds-btn-primary:hover { background-color: #115E59; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(15, 118, 110, 0.22); } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.25); }"
+    },
+    {
+      "name": "Conversion Accent Button",
+      "kind": "button",
+      "refersTo": "button-accent",
+      "description": "High-impact Coral CTA button paired strictly with dark Slate 800 text for WCAG AA contrast.",
+      "html": "<button class=\"ds-btn-accent\">Inquire Now</button>",
+      "css": ".ds-btn-accent { background-color: #FF6B6B; color: #1E293B; height: 40px; padding: 0 16px; border-radius: 8px; border: 1px solid transparent; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; transition: background-color 0.18s ease, transform 0.18s ease; } .ds-btn-accent:hover { background-color: #EE5A5A; transform: translateY(-1px); } .ds-btn-accent:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.35); }"
+    },
+    {
+      "name": "Secondary Outline Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Neutral surface button with 1px Slate 200 border for secondary actions.",
+      "html": "<button class=\"ds-btn-secondary\">Reset Filters</button>",
+      "css": ".ds-btn-secondary { background-color: #FFFFFF; color: #1E293B; height: 40px; padding: 0 16px; border-radius: 8px; border: 1px solid #E2E8F0; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: background-color 0.15s ease, border-color 0.15s ease; } .ds-btn-secondary:hover { background-color: #F8FAFC; border-color: #CBD5E1; } .ds-btn-secondary:focus-visible { outline: none; border-color: #0F766E; box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.2); }"
+    },
+    {
+      "name": "Text Input Field",
+      "kind": "input",
+      "refersTo": "input-default",
+      "description": "40px height form input with Slate 200 hairline border and Teal focus ring.",
+      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Search city, subdivision, or project...\" />",
+      "css": ".ds-input { background-color: #FFFFFF; color: #1E293B; height: 40px; width: 280px; padding: 0 12px; border-radius: 8px; border: 1px solid #E2E8F0; font-family: 'Inter', sans-serif; font-size: 14px; transition: border-color 0.15s ease, box-shadow 0.15s ease; } .ds-input::placeholder { color: #64748B; } .ds-input:focus-visible { outline: none; border-color: #0F766E; box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.2); }"
+    },
+    {
+      "name": "Status Badge (Available)",
+      "kind": "chip",
+      "refersTo": "badge-available",
+      "description": "Semantic status pill with indicator dot for active/verified inventory.",
+      "html": "<span class=\"ds-badge-available\"><span class=\"ds-dot\"></span>Available</span>",
+      "css": ".ds-badge-available { display: inline-flex; align-items: center; gap: 6px; background-color: #ECFDF5; color: #15803D; border: 1px solid #A7F3D0; border-radius: 9999px; padding: 2px 10px; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.02em; } .ds-dot { width: 6px; height: 6px; border-radius: 9999px; background-color: #10B981; }"
+    },
+    {
+      "name": "Property Ledger Card",
+      "kind": "card",
+      "refersTo": "card-property",
+      "description": "Elevated white surface card with 1px #E2E8F0 border, 8px radius, and monospace price/area metrics.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-kicker\">HOUSE &amp; LOT · MAKATI</div><div class=\"ds-card-title\">Aurelia Courtyard Residence</div><div class=\"ds-card-meta\">₱42,500,000 · 380 sqm</div></div>",
+      "css": ".ds-card { background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px; width: 280px; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.08); transition: box-shadow 0.2s ease, transform 0.2s ease; font-family: 'Inter', sans-serif; } .ds-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08); } .ds-card-kicker { color: #64748B; font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 4px; } .ds-card-title { color: #1E293B; font-size: 16px; font-weight: 600; margin-bottom: 8px; } .ds-card-meta { color: #0F766E; font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Soft Minimalist SaaS & Architectural Real Estate Ledger",
+    "overview": "Visual hierarchy is built through generous whitespace, crisp 1px hairline borders (#E2E8F0), and typographic contrast rather than heavy gradients, drop shadows, or ornamental chrome. High-contrast primary ink (#1E293B) on a cool alabaster ground (#F8FAFC) reduces eye strain across dense broker/agent property ledgers, cadastral map studios, and public discovery views.",
+    "keyCharacteristics": [
+      "Strict 8-point spatial grid with 8px default border radius",
+      "Primary Spruce Teal (#0F766E) and high-contrast Conversion Coral (#FF6B6B with #1E293B ink)",
+      "Inter + JetBrains Mono typographic pairing for architectural and financial precision",
+      "44px minimum touch targets and isolated z-index: 0 map canvases"
+    ],
+    "rules": [
+      {
+        "name": "The Dark-Ink-On-Coral Rule",
+        "body": "Never pair #FFFFFF text with #FF6B6B backgrounds. Coral backgrounds must use #1E293B text for WCAG AA compliance.",
+        "section": "colors"
+      },
+      {
+        "name": "The Single Primary CTA Rule",
+        "body": "Each view or modal footer may display at most one solid Primary (#0F766E) action button; secondary actions use outline/ghost variants.",
+        "section": "components"
+      },
+      {
+        "name": "The Map Isolation Rule",
+        "body": "All map canvases (Google Maps, Leaflet, subdivision vector editors) must remain isolated at z-index: 0 so map panes never overlap headers, drawers, or modals.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do use multiples of 8px for spacing and 8px (rounded-lg) as the default component radius.",
+      "Do use JetBrains Mono (font-mono tabular-nums) for PHP prices, lot areas (sqm), and coordinates.",
+      "Do pair focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary on all interactive controls."
+    ],
+    "donts": [
+      "Don't write arbitrary pixel utilities like p-[13px], gap-[19px], or text-[15px].",
+      "Don't introduce off-token hex colors outside DESIGN.md Section 2.",
+      "Don't mount a Leaflet or Google Maps canvas without isolation: isolate and z-index: 0.",
+      "Don't ship continuous animations without prefers-reduced-motion fallbacks."
+    ]
+  }
+}

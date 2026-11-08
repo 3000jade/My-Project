@@ -56,18 +56,30 @@ export default function RolePermissionEditor() {
     }
   };
 
-  const handleStatusToggle = async (userId, currentStatus) => {
-    const nextStatus = currentStatus === 'suspended' ? 'active' : 'suspended';
+  const isUserSuspended = (u) => {
+    const raw = String(u?.verification_status || u?.status || '').toUpperCase();
+    return raw === 'SUSPENDED';
+  };
+
+  const getUserDisplayName = (u) => u?.fullName || u?.full_name || 'Unnamed';
+
+  const handleStatusToggle = async (userId, currentlySuspended) => {
+    const nextApiStatus = currentlySuspended ? 'VERIFIED' : 'SUSPENDED';
+    const nextUiLabel = currentlySuspended ? 'active' : 'suspended';
     try {
       setActionLoadingId(userId);
       setFeedback(null);
-      await apiClient.patch(`/admin/users/${userId}/status`, { status: nextStatus });
+      await apiClient.patch(`/admin/users/${userId}/status`, { status: nextApiStatus });
       setUsers((prev) =>
-        prev.map((u) => (u.id === userId ? { ...u, status: nextStatus } : u))
+        prev.map((u) =>
+          u.id === userId
+            ? { ...u, status: nextUiLabel, verification_status: nextApiStatus }
+            : u
+        )
       );
       setFeedback({
         type: 'success',
-        message: `User status changed to ${nextStatus}.`,
+        message: `User status changed to ${nextUiLabel}.`,
       });
     } catch (err) {
       setFeedback({ type: 'error', message: err.message || 'Failed to update status.' });
@@ -78,7 +90,7 @@ export default function RolePermissionEditor() {
 
   const filteredUsers = users.filter((u) => {
     const matchesSearch =
-      (u.fullName || '').toLowerCase().includes(search.toLowerCase()) ||
+      getUserDisplayName(u).toLowerCase().includes(search.toLowerCase()) ||
       (u.email || '').toLowerCase().includes(search.toLowerCase());
     const matchesRole = roleFilter === 'all' || u.role === roleFilter;
     return matchesSearch && matchesRole;
@@ -160,13 +172,13 @@ export default function RolePermissionEditor() {
             </thead>
             <tbody className="divide-y divide-[#E2E8F0]">
               {filteredUsers.map((u) => {
-                const isSuspended = u.status === 'suspended';
+                const isSuspended = isUserSuspended(u);
                 const isWorking = actionLoadingId === u.id;
 
                 return (
                   <tr key={u.id} className="hover:bg-[#F8FAFC] transition-colors">
                     <td className="py-3 px-3">
-                      <div className="font-medium text-[#1E293B]">{u.fullName || 'Unnamed'}</div>
+                      <div className="font-medium text-[#1E293B]">{getUserDisplayName(u)}</div>
                       <div className="text-[11px] text-[#64748B]">{u.email}</div>
                     </td>
                     <td className="py-3 px-3">
@@ -196,7 +208,7 @@ export default function RolePermissionEditor() {
                     <td className="py-3 px-3 text-right">
                       <button
                         type="button"
-                        onClick={() => handleStatusToggle(u.id, u.status)}
+                        onClick={() => handleStatusToggle(u.id, isSuspended)}
                         disabled={isWorking}
                         className={`inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium border transition-colors disabled:opacity-50 ${
                           isSuspended

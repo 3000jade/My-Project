@@ -250,6 +250,14 @@ export const authService = {
   },
 
   /**
+   * Revoke all active sessions for the current user
+   */
+  async revokeAllSessions() {
+    const response = await apiClient.post('/auth/revoke-all');
+    return response.data;
+  },
+
+  /**
    * Log out user and clear stored tokens
    */
   async logout() {

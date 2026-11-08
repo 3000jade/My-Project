@@ -193,3 +193,83 @@ describe('UnifiedSearchBar - Nominatim (OpenStreetMap) Integration', () => {
     );
   });
 });
+
+describe('UnifiedSearchBar Collapsible Behavior', () => {
+  const defaultFilters = {
+    keyword: '',
+    transactionType: 'All',
+    propertyType: 'All',
+    minPrice: null,
+    maxPrice: null,
+    beds: '',
+    district: '',
+  };
+
+  it('renders expanded by default with district chips and all filter buttons visible', () => {
+    render(
+      <UnifiedSearchBar
+        filters={defaultFilters}
+        setFilter={vi.fn()}
+        onOpenFiltersDrawer={vi.fn()}
+        activeFilterCount={0}
+      />
+    );
+
+    // Search input should be visible
+    expect(screen.getByTestId('unified-search-input')).toBeDefined();
+
+    // District presets row should be visible
+    expect(screen.getByText('Districts:')).toBeDefined();
+    expect(screen.getByText('All Metro Manila')).toBeDefined();
+
+    // Collapse toggle button should be present
+    expect(screen.getByTestId('search-bar-collapse-toggle')).toBeDefined();
+    expect(screen.getByTestId('search-bar-collapse-toggle').getAttribute('aria-expanded')).toBe('true');
+  });
+
+  it('collapses secondary filters and districts row when toggle is clicked', () => {
+    render(
+      <UnifiedSearchBar
+        filters={defaultFilters}
+        setFilter={vi.fn()}
+        onOpenFiltersDrawer={vi.fn()}
+        activeFilterCount={0}
+      />
+    );
+
+    const toggleBtn = screen.getByTestId('search-bar-collapse-toggle');
+
+    // Click to collapse
+    fireEvent.click(toggleBtn);
+
+    // Districts row should now be hidden
+    expect(screen.queryByText('Districts:')).toBeNull();
+
+    // Search input should still be accessible
+    expect(screen.getByTestId('unified-search-input')).toBeDefined();
+
+    // Toggle button should now reflect collapsed state
+    expect(toggleBtn.getAttribute('aria-expanded')).toBe('false');
+
+    // Click again to expand
+    fireEvent.click(toggleBtn);
+    expect(screen.getByText('Districts:')).toBeDefined();
+    expect(toggleBtn.getAttribute('aria-expanded')).toBe('true');
+  });
+
+  it('respects defaultCollapsed prop', () => {
+    render(
+      <UnifiedSearchBar
+        filters={defaultFilters}
+        setFilter={vi.fn()}
+        onOpenFiltersDrawer={vi.fn()}
+        activeFilterCount={0}
+        defaultCollapsed={true}
+      />
+    );
+
+    expect(screen.queryByText('Districts:')).toBeNull();
+    const toggleBtn = screen.getByTestId('search-bar-collapse-toggle');
+    expect(toggleBtn.getAttribute('aria-expanded')).toBe('false');
+  });
+});

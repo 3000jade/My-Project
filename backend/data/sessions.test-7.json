@@ -1,0 +1,49 @@
+{
+  "sessions": [
+    {
+      "id": "e9beb25c-4537-4754-b48b-7525605fb3de",
+      "tokenHash": "e71f16ff3617b0b35116d52793dca2511ce9940b66daaae757e4ef41174b6fbc",
+      "userId": "user-suspend-reactivate",
+      "role": "agent",
+      "createdAt": 1794043123940,
+      "lastActiveAt": 1794043123944,
+      "idleExpiresAt": 1794044923944,
+      "absoluteExpiresAt": 1794086323940,
+      "lastHeartbeatAt": 1794043123940,
+      "userAgent": "Unknown Device",
+      "ipAddress": "Unavailable",
+      "updatedAt": 1794043123950,
+      "revokedAt": 1794043123950,
+      "revokeReason": "account_disabled"
+    },
+    {
+      "id": "95c44125-8f62-40bb-9de0-dc67fb2c88f7",
+      "tokenHash": "f74fe0e5497c721fcc59c468d4628af1ff76d056478ed8d91def00249cb14787",
+      "userId": "user-suspend-reactivate",
+      "role": "agent",
+      "createdAt": 1794043123967,
+      "lastActiveAt": 1794043123972,
+      "idleExpiresAt": 1794044923972,
+      "absoluteExpiresAt": 1794086323967,
+      "lastHeartbeatAt": 1794043123967,
+      "userAgent": "Unknown Device",
+      "ipAddress": "Unavailable",
+      "updatedAt": 1794043123972
+    },
+    {
+      "id": "13a6e372-534a-43e6-bf9d-9ddabc3f0737",
+      "tokenHash": "2cc9923cec4c3d9919f99683a92e496a20995964739e52d01829bf0d4f5c7aef",
+      "userId": "dev-google-mock-uid-client",
+      "role": "client",
+      "createdAt": 1794043131602,
+      "lastActiveAt": 1794043131602,
+      "idleExpiresAt": 1794046731602,
+      "absoluteExpiresAt": 1794129531602,
+      "lastHeartbeatAt": 1794043131602,
+      "userAgent": "Unknown Device",
+      "ipAddress": "Unavailable",
+      "updatedAt": 1794043131602
+    }
+  ],
+  "disabledAccounts": []
+}

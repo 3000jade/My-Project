@@ -4,6 +4,7 @@ import { PropertyService } from '../services/property.service';
 import { AgentService } from '../services/agent.service';
 import { GoogleDriveService } from '../services/googleDrive.service';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
+import logger from '../utils/logger';
 import type { ApiResponse, PaginatedResponse } from '../types/api';
 
 export class PropertyController {

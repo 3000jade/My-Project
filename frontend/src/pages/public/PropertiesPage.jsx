@@ -207,11 +207,19 @@ export default function PropertiesPage() {
       property?.listingId;
     if (!propId) return;
     setSelectedPropertyId(propId);
-    if (window.innerWidth < 1024) {
-      setMobileTab('list');
-    }
     scrollToPropertyCard(propId);
   }, [scrollToPropertyCard]);
+
+  const handleCardSelectProperty = useCallback((property) => {
+    const propId =
+      property?.id ||
+      property?.ListingKey ||
+      property?.listingKey ||
+      property?.ListingId ||
+      property?.listingId;
+    if (!propId) return;
+    setSelectedPropertyId(propId);
+  }, []);
 
   const handleHoverProperty = useCallback((property) => {
     if (!property) {
@@ -231,14 +239,13 @@ export default function PropertiesPage() {
   return (
     <div className="bg-[#F8FAFC] h-screen overflow-hidden w-full flex flex-col">
       {/* Top spacing below fixed navigation header */}
-      <div 
-        className={`shrink-0 transition-all duration-300 ease-in-out ${
-          isHeaderVisible ? 'h-16 md:h-20' : 'h-0'
-        }`} 
+      <div
+        className={`shrink-0 transition-all duration-300 ease-in-out ${isHeaderVisible ? 'h-16 md:h-20' : 'h-0'
+          }`}
       />
 
       {/* Main Container */}
-      <div className="flex-1 w-full px-3 sm:px-4 md:px-6 lg:px-8 flex flex-col overflow-hidden pb-4 min-h-0">
+      <div className="flex-1 w-full px-3 sm:px-4 md:px-5 lg:px-6 flex flex-col overflow-hidden pb-3 min-h-0">
         {/* Unified Search Bar & Quick District Chips (Non-sticky) */}
         <div className="shrink-0 pt-2 pb-2 transition-all z-20">
           <UnifiedSearchBar
@@ -264,7 +271,7 @@ export default function PropertiesPage() {
               {Object.entries(filters).map(([key, value]) => {
                 if (!value || value === '' || value === 'Any' || key === 'mapBounds') return null;
                 if (Array.isArray(value) && value.length === 0) return null;
-                
+
                 let displayValue = String(value);
                 if (key === 'minPrice') displayValue = `> ₱${(value / 1000000).toFixed(0)}M`;
                 else if (key === 'maxPrice') displayValue = `< ₱${(value / 1000000).toFixed(0)}M`;
@@ -299,15 +306,14 @@ export default function PropertiesPage() {
             <p className="text-sm font-medium text-slate-500">Loading firm property listings...</p>
           </div>
         ) : viewMode === 'split' ? (
-          <div className="flex-1 overflow-hidden w-full min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start h-full">
+          <div className="flex-1 overflow-hidden w-full min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 lg:gap-5 xl:gap-6 items-start h-full">
             {/* Left Pane: Property Cards Grid or Empty State */}
             <div
               ref={parentRef}
               data-lenis-prevent="true"
               data-testid="properties-scroll-container"
-              className={`h-full min-h-0 overflow-y-auto overscroll-contain pr-2 custom-scrollbar w-full lg:col-span-6 xl:col-span-6 ${
-                mobileTab === 'map' ? 'hidden lg:block' : 'block'
-              }`}
+              className={`h-full min-h-0 overflow-y-auto overscroll-contain pr-1 sm:pr-2 pb-24 lg:pb-6 custom-scrollbar w-full lg:col-span-7 xl:col-span-7 2xl:col-span-7 ${mobileTab === 'map' ? 'hidden lg:block' : 'block'
+                }`}
             >
               {displayedProperties && displayedProperties.length > 0 ? (
                 <>
@@ -331,7 +337,7 @@ export default function PropertiesPage() {
                             width: '100%',
                             transform: `translateY(${virtualRow.start}px)`,
                           }}
-                          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 pt-1.5 pb-6 px-0.5"
+                          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-3 sm:gap-4 xl:gap-5 pt-1 pb-5 px-0.5"
                         >
                           {rowItems.map((property, idx) => (
                             <motion.div
@@ -347,8 +353,9 @@ export default function PropertiesPage() {
                               <PropertyCard
                                 property={property}
                                 variant="vertical"
-                                isSelected={selectedPropertyId === property.id}
-                                isHovered={hoveredPropertyId === property.id}
+                                isSelected={String(selectedPropertyId) === String(property.id)}
+                                isHovered={String(hoveredPropertyId) === String(property.id)}
+                                onSelect={handleCardSelectProperty}
                               />
                             </motion.div>
                           ))}
@@ -399,9 +406,8 @@ export default function PropertiesPage() {
 
             {/* Right Pane: Interactive Geographical Map Split Plane (RIGHT SIDE) */}
             <div
-              className={`w-full h-full lg:col-span-6 xl:col-span-6 rounded-3xl overflow-hidden shadow-lg border border-gray-200/90 z-20 bg-gray-50 ${
-                mobileTab === 'list' ? 'hidden lg:block' : 'block'
-              }`}
+              className={`w-full h-full lg:col-span-5 xl:col-span-5 2xl:col-span-5 rounded-2xl sm:rounded-3xl overflow-hidden shadow-lg border border-gray-200/90 z-20 bg-gray-50 ${mobileTab === 'list' ? 'hidden lg:block' : 'block'
+                }`}
             >
               <GooglePropertyMap
                 properties={filteredProperties}
@@ -411,6 +417,7 @@ export default function PropertiesPage() {
                 onHoverProperty={handleHoverProperty}
                 onBoundsChange={(bounds) => setFilter('mapBounds', bounds)}
                 targetDistrict={targetDistrict}
+                recenterTrigger={mobileTab}
                 onOpenStreetView={(coords) => setStreetViewData({ coordinates: coords, title: 'Luxury Residence' })}
               />
             </div>
@@ -421,7 +428,7 @@ export default function PropertiesPage() {
               ref={parentRef}
               data-lenis-prevent="true"
               data-testid="properties-scroll-container"
-              className="h-full min-h-0 overflow-y-auto overscroll-contain pr-2 custom-scrollbar w-full"
+              className="h-full min-h-0 overflow-y-auto overscroll-contain pr-2 pb-24 lg:pb-8 custom-scrollbar w-full"
             >
               <div
                 className="w-full relative"
@@ -449,20 +456,20 @@ export default function PropertiesPage() {
                         <motion.div
                           key={property.id}
                           id={`property-card-${property.id}`}
-                              className="h-full"
-                              onMouseEnter={() => setHoveredPropertyId(property.id)}
-                              onMouseLeave={() => setHoveredPropertyId(null)}
-                              initial={{ opacity: 0, y: 20 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1], delay: idx * 0.05 }}
-                            >
-                              <PropertyCard
-                                property={property}
-                                variant="vertical"
-                                isSelected={selectedPropertyId === property.id}
-                                isHovered={hoveredPropertyId === property.id}
-                              />
-                            </motion.div>
+                          className="h-full"
+                          onMouseEnter={() => setHoveredPropertyId(property.id)}
+                          onMouseLeave={() => setHoveredPropertyId(null)}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1], delay: idx * 0.05 }}
+                        >
+                          <PropertyCard
+                            property={property}
+                            variant="vertical"
+                            isSelected={selectedPropertyId === property.id}
+                            isHovered={hoveredPropertyId === property.id}
+                          />
+                        </motion.div>
                       ))}
                     </div>
                   );

@@ -107,3 +107,15 @@ reso-token*.json
 .agents/*.local.json
 !.antigravity/mcp.json
 !.agents/mcp_config.json
+
+# 11. Workspace Scratch, Notes & Analysis Artifacts
+Analyze/
+ExternalFiles/
+notes/
+scratch/
+artifacts/
+.superpowers/
+scripts/
+upload_args.json
+backend/backend_infrastructure_summary.txt
+

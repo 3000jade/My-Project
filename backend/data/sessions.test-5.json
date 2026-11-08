@@ -1,0 +1,77 @@
+{
+  "sessions": [
+    {
+      "id": "d5ff0501-1662-470e-b1a0-50f018e96e88",
+      "tokenHash": "efc5cda61d18551d028d041af95ef5c9edfa06a9832bcda00f82b007d12d4179",
+      "userId": "0c966456-b232-46fa-8290-106a5048fceb",
+      "role": "client",
+      "createdAt": 1794043106124,
+      "lastActiveAt": 1794043106124,
+      "idleExpiresAt": 1794046706124,
+      "absoluteExpiresAt": 1794129506124,
+      "lastHeartbeatAt": 1794043106124,
+      "userAgent": "Unknown Device",
+      "ipAddress": "Unavailable",
+      "updatedAt": 1794043106124
+    },
+    {
+      "id": "d8225d6f-1279-43be-957f-1e0f62d2af93",
+      "tokenHash": "452a5d2501215475968a7d74b11ff1d8bb9600344501447a402bc92502be57df",
+      "userId": "test-staff-1",
+      "role": "agent",
+      "createdAt": 1794043106145,
+      "lastActiveAt": 1794043706145,
+      "idleExpiresAt": 1794045506145,
+      "absoluteExpiresAt": 1794086306145,
+      "lastHeartbeatAt": 1794043106145,
+      "userAgent": "Unknown Device",
+      "ipAddress": "Unavailable",
+      "updatedAt": 1794043706145
+    },
+    {
+      "id": "5f7e4119-ea3b-4b43-ab82-f07a470a3b69",
+      "tokenHash": "25b416c373e247768cc1a3ed4a20a13888f6b9f5288378f4756ce227d05b7710",
+      "userId": "test-user-rotate",
+      "role": "client",
+      "createdAt": 1794043106169,
+      "lastActiveAt": 1794043106169,
+      "idleExpiresAt": 1794046706169,
+      "absoluteExpiresAt": 1794129506169,
+      "lastHeartbeatAt": 1794043106169,
+      "userAgent": "Unknown Device",
+      "ipAddress": "Unavailable",
+      "updatedAt": 1794044006169
+    },
+    {
+      "id": "538ded7b-b6d9-436b-8b4d-5f7ec73e9962",
+      "tokenHash": "24939669e5055be008ec2d112d9104e7577f21ccfdb2c701866b1b7c65045b10",
+      "userId": "787d7182-e5d8-4571-861e-05c614bf18ca",
+      "role": "broker",
+      "createdAt": 1794043107434,
+      "lastActiveAt": 1794043107434,
+      "idleExpiresAt": 1794044907434,
+      "absoluteExpiresAt": 1794086307434,
+      "lastHeartbeatAt": 1794043107434,
+      "userAgent": "Unknown Device",
+      "ipAddress": "Unavailable",
+      "updatedAt": 1794043107434
+    },
+    {
+      "id": "098555f8-1cbb-452a-bbd6-e83eb20baf18",
+      "tokenHash": "568375ac34ce045a0faf856781250156874da1384ffd5b6d07a88f2b5460f43f",
+      "userId": "test-user-revoke",
+      "role": "agent",
+      "createdAt": 1794043108730,
+      "lastActiveAt": 1794043108730,
+      "idleExpiresAt": 1794044908730,
+      "absoluteExpiresAt": 1794086308730,
+      "lastHeartbeatAt": 1794043108730,
+      "userAgent": "Unknown Device",
+      "ipAddress": "Unavailable",
+      "updatedAt": 1794043108735,
+      "revokedAt": 1794043108735,
+      "revokeReason": "User manual logout"
+    }
+  ],
+  "disabledAccounts": []
+}

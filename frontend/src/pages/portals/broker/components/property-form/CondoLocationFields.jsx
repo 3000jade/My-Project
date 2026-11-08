@@ -1,6 +1,7 @@
 import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import BuildingCoordinateMatcher from './BuildingCoordinateMatcher';
 
 export default function CondoLocationFields({ formData = {}, setFormData, setIsDirty }) {
   const updateField = (key, val) => {
@@ -21,6 +22,21 @@ export default function CondoLocationFields({ formData = {}, setFormData, setIsD
           value={formData.building_name || ''}
           onChange={e => updateField('building_name', e.target.value)}
           className="h-11 md:h-10 [@media(pointer:coarse)]:h-11 rounded-md text-sm shadow-none"
+        />
+        <BuildingCoordinateMatcher
+          buildingName={formData.building_name}
+          currentLatitude={formData.latitude}
+          currentLongitude={formData.longitude}
+          onApplyCoordinates={(coords) => {
+            setIsDirty?.(true);
+            setFormData?.(prev => ({
+              ...prev,
+              latitude: coords.latitude,
+              longitude: coords.longitude,
+              city: coords.city || prev.city,
+              barangay: coords.barangay || prev.barangay,
+            }));
+          }}
         />
       </div>
 

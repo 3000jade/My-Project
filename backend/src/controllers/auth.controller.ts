@@ -5,7 +5,7 @@ import { AgentRegistrationService } from '../services/agentRegistration.service'
 import { SessionService } from '../services/session.service';
 import { OtpService } from '../services/otp.service';
 import { supabaseAdmin, isSupabaseConfigured } from '../config/supabase';
-import { AuthenticatedRequest } from '../middleware/auth.middleware';
+import { AuthenticatedRequest, invalidateAuthCache } from '../middleware/auth.middleware';
 import type { ApiResponse } from '../types/api';
 
 export class AuthController {
@@ -33,8 +33,8 @@ export class AuthController {
           token: authData.token,
           userId: authData.user.id,
           role: authData.user.role || role || 'client',
-          userAgent: (req.headers['user-agent'] as string) || 'Unknown Device',
-          ipAddress: req.ip || (req.headers['x-forwarded-for'] as string) || 'Unavailable',
+          userAgent: (req.headers?.['user-agent'] as string) || 'Unknown Device',
+          ipAddress: req.ip || (req.headers?.['x-forwarded-for'] as string) || 'Unavailable',
         });
       }
 
@@ -69,17 +69,10 @@ export class AuthController {
         return;
       }
 
-      const authData = await AuthService.signIn(email, password);
-      if (authData?.token && authData?.user?.id) {
-        SessionService.createSession({
-          sessionId: authData.token,
-          token: authData.token,
-          userId: authData.user.id,
-          role: authData.user.role || 'client',
-          userAgent: (req.headers['user-agent'] as string) || 'Unknown Device',
-          ipAddress: req.ip || (req.headers['x-forwarded-for'] as string) || 'Unavailable',
-        });
-      }
+      const authData = await AuthService.signIn(email, password, {
+        userAgent: (req.headers?.['user-agent'] as string) || 'Unknown Device',
+        ipAddress: req.ip || (req.headers?.['x-forwarded-for'] as string) || 'Unavailable',
+      });
 
       res.status(200).json({
         success: true,
@@ -261,12 +254,15 @@ export class AuthController {
           if (createData?.user) {
             userId = createData.user.id;
           } else if (createErr) {
-            // If already exists in auth, confirm email and update password
-            const { data: listUser } = await supabaseAdmin.auth.admin.listUsers();
-            const found = listUser?.users?.find((u) => u.email === email);
-            if (found) {
-              userId = found.id;
-              await supabaseAdmin.auth.admin.updateUserById(userId, {
+            // If already exists in auth, look up id via indexed profiles table
+            const { data: foundProfile } = await supabaseAdmin
+              .from('profiles')
+              .select('id')
+              .ilike('email', email)
+              .maybeSingle();
+            if (foundProfile?.id) {
+              userId = foundProfile.id;
+              await supabaseAdmin.auth.admin.updateUserById(foundProfile.id, {
                 password: finalPassword,
                 email_confirm: true,
               });
@@ -298,20 +294,10 @@ export class AuthController {
           await supabaseAdmin.from('profiles').upsert(profilePayload);
 
           // Authenticate and obtain live JWT session
-          try {
-            authData = await AuthService.signIn(email, finalPassword);
-          } catch {
-            authData = {
-              user: {
-                id: userId,
-                email,
-                role: 'client',
-                fullName: finalFullName,
-              },
-              token: `token-verified-${userId}`,
-              refreshToken: `refresh-verified-${userId}`,
-            };
-          }
+          authData = await AuthService.signIn(email, finalPassword, {
+            userAgent: (req.headers['user-agent'] as string) || 'Unknown Device',
+            ipAddress: req.ip || (req.headers['x-forwarded-for'] as string) || 'Unavailable',
+          });
         }
       } else {
         authData = await AuthService.signUp(email, finalPassword, {
@@ -320,7 +306,7 @@ export class AuthController {
         });
       }
 
-      // Create active session in SessionService
+      // Create active session in SessionService (deduplicates if signIn already created it)
       if (authData?.token && authData?.user?.id) {
         SessionService.createSession({
           sessionId: authData.token,
@@ -544,10 +530,10 @@ export class AuthController {
         return;
       }
 
-      // Invariant check: If old session was tracked, verify it was not revoked or disabled
+      // Invariant check: If old session was tracked, verify it is still valid without extending idle timeout (isHeartbeat = true)
       if (oldToken) {
-        const existingCheck = await SessionService.validateSessionAsync(oldToken, Date.now(), false);
-        if (!existingCheck.valid && existingCheck.reason !== 'SESSION_IDLE_EXPIRED') {
+        const existingCheck = await SessionService.validateSessionAsync(oldToken, Date.now(), true);
+        if (!existingCheck.valid) {
           res.status(401).json({
             success: false,
             error: `Refresh rejected: ${existingCheck.reason || 'Session invalid or revoked'}`,
@@ -562,12 +548,20 @@ export class AuthController {
       if (authData?.token && authData?.user?.id) {
         const existing = await SessionService.getSessionAsync(oldToken);
         if (oldToken && existing) {
-          await SessionService.rotateSessionAsync(
+          const rotated = await SessionService.rotateSessionAsync(
             oldToken,
             authData.token,
             authData.user.id,
             authData.user.role || 'client'
           );
+          if (!rotated.valid) {
+            res.status(401).json({
+              success: false,
+              error: `Refresh rejected: ${rotated.reason || 'Session invalid or revoked'}`,
+              timestamp: new Date().toISOString(),
+            });
+            return;
+          }
         } else {
           await SessionService.createSessionAsync({
             sessionId: authData.token,
@@ -645,9 +639,12 @@ export class AuthController {
         return;
       }
 
-      await AuthService.updateUserPassword(newPassword, token);
+      const updateResult = await AuthService.updateUserPassword(newPassword, token);
 
-      if (token) {
+      if (updateResult.userId) {
+        await SessionService.revokeAllUserSessionsAsync(updateResult.userId, 'password_reset');
+        invalidateAuthCache(updateResult.userId);
+      } else if (token) {
         await SessionService.revokeSessionAsync({
           sessionId: token,
           reason: 'password_reset',
@@ -663,6 +660,40 @@ export class AuthController {
       res.status(400).json({
         success: false,
         error: err.message || 'Failed to reset password.',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
+  /**
+   * POST /api/auth/change-password
+   * Authenticated user password change
+   */
+  public static async changePassword(req: AuthenticatedRequest, res: Response<ApiResponse>): Promise<void> {
+    try {
+      const user = req.user;
+      const { currentPassword, newPassword } = req.body;
+
+      if (!user?.id || !user?.email) {
+        res.status(401).json({
+          success: false,
+          error: 'Authentication required.',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      await AuthService.changePassword(user.id, user.email, currentPassword, newPassword);
+
+      res.status(200).json({
+        success: true,
+        message: 'Password successfully updated.',
+        timestamp: new Date().toISOString(),
+      });
+    } catch (err: any) {
+      res.status(400).json({
+        success: false,
+        error: err.message || 'Failed to change password.',
         timestamp: new Date().toISOString(),
       });
     }

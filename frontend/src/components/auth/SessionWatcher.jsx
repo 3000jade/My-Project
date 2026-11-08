@@ -23,32 +23,43 @@ export default function SessionWatcher() {
   const warningWindowSeconds = 120; // Show modal 2 minutes before idle expiry
 
   const lastActivityRef = useRef(Date.now());
+  const lastServerSyncRef = useRef(Date.now());
   const isExtendingRef = useRef(false);
   const isLoggingOutRef = useRef(false);
   const prevUserRef = useRef(user);
+  const SERVER_SYNC_INTERVAL_MS = 5 * 60 * 1000; // Sync active DOM interactions to server at most once per 5m
 
   // Reset activity tracker and modal state whenever user logs in, logs out, or switches accounts
   useEffect(() => {
     if (user && (!prevUserRef.current || prevUserRef.current.id !== user.id)) {
-      lastActivityRef.current = Date.now();
+      const now = Date.now();
+      lastActivityRef.current = now;
+      lastServerSyncRef.current = now;
       isLoggingOutRef.current = false;
       setIsModalOpen(false);
       setSecondsRemaining(warningWindowSeconds);
     } else if (!user && prevUserRef.current) {
-      lastActivityRef.current = Date.now();
+      const now = Date.now();
+      lastActivityRef.current = now;
+      lastServerSyncRef.current = now;
       isLoggingOutRef.current = false;
       setIsModalOpen(false);
     }
     prevUserRef.current = user;
   }, [user, warningWindowSeconds]);
 
-  // Throttled activity tracker (resets idle clock only when warning is NOT showing)
+  // Throttled activity tracker (resets idle clock only when warning is NOT showing, and syncs to server every 5m)
   const handleUserActivity = useCallback(() => {
     // Once warning modal is active, user must explicitly click "Extend Session"
     if (!isModalOpen) {
-      lastActivityRef.current = Date.now();
+      const now = Date.now();
+      lastActivityRef.current = now;
+      if (now - lastServerSyncRef.current >= SERVER_SYNC_INTERVAL_MS && !isExtendingRef.current) {
+        lastServerSyncRef.current = now;
+        Promise.resolve(authService.extendSession?.()).catch(() => {});
+      }
     }
-  }, [isModalOpen]);
+  }, [isModalOpen, SERVER_SYNC_INTERVAL_MS]);
 
   // Extend session: hits backend server extension endpoint and updates local timestamp
   const handleExtendSession = async () => {

@@ -261,3 +261,83 @@ describe('GooglePropertyMap component (Embed Fallback Interface)', () => {
     expect(screen.getByText('BGC Luxury Villa')).toBeDefined();
   });
 });
+
+describe('GooglePropertyMap Multi-Property Pinpoint & MultiUnitDrawer', () => {
+  const coLocatedProperties = [
+    {
+      id: 'tower-u1',
+      title: 'One Serendra Unit 10A',
+      building_name: 'One Serendra',
+      price_raw: 28000000,
+      price: '₱28,000,000',
+      currency: 'PHP',
+      city: 'Taguig',
+      latitude: 14.5512,
+      longitude: 121.0501,
+      unit_number: '10A',
+      bedrooms: 1,
+      bathrooms: 1,
+    },
+    {
+      id: 'tower-u2',
+      title: 'One Serendra Unit 24C',
+      building_name: 'One Serendra',
+      price_raw: 45000000,
+      price: '₱45,000,000',
+      currency: 'PHP',
+      city: 'Taguig',
+      latitude: 14.5512,
+      longitude: 121.0501,
+      unit_number: '24C',
+      bedrooms: 2,
+      bathrooms: 2,
+    },
+    {
+      id: 'single-lot',
+      title: 'Ayala Alabang Lot',
+      price_raw: 80000000,
+      price: '₱80,000,000',
+      currency: 'PHP',
+      city: 'Muntinlupa',
+      latitude: 14.4239,
+      longitude: 121.0264,
+    },
+  ];
+
+  it('renders stacked anchor pin with unit count and price range for co-located properties', () => {
+    const handleSelect = vi.fn();
+
+    render(
+      <MemoryRouter>
+        <GooglePropertyMap
+          properties={coLocatedProperties}
+          onSelectProperty={handleSelect}
+          showControls={true}
+        />
+      </MemoryRouter>
+    );
+
+    // Verify stacked anchor marker exists for co-located properties
+    const stackedMarker = screen.getByTestId('stacked-marker-anchor-14.551200-121.050100');
+    expect(stackedMarker).toBeDefined();
+    expect(stackedMarker.textContent).toContain('2 Units');
+    expect(stackedMarker.textContent).toContain('₱28M - ₱45M');
+
+    // Verify single standalone property is still rendered as regular teardrop marker
+    const singleMarker = screen.getByTestId('map-marker-single-lot');
+    expect(singleMarker).toBeDefined();
+
+    // Click the stacked anchor marker to open MultiUnitDrawer
+    fireEvent.click(stackedMarker);
+
+    // MultiUnitDrawer should now be open displaying both tower units
+    expect(screen.getByRole('dialog', { name: /Listings at One Serendra/i })).toBeDefined();
+    expect(screen.getByText('One Serendra Unit 10A')).toBeDefined();
+    expect(screen.getByText('One Serendra Unit 24C')).toBeDefined();
+
+    // Click one of the units inside drawer
+    const unit10ACard = screen.getByTestId('unit-card-tower-u1');
+    fireEvent.click(unit10ACard);
+    expect(handleSelect).toHaveBeenCalledWith(coLocatedProperties[0]);
+  });
+});

@@ -29,7 +29,13 @@ if (config.supabaseUrl && !isValidHttpUrl(config.supabaseUrl)) {
 
 export const supabase: SupabaseClient = createClient(
   resolvedUrl,
-  config.supabaseAnonKey || fallbackKey
+  config.supabaseAnonKey || fallbackKey,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  }
 );
 
 export const supabaseAdmin: SupabaseClient = createClient(

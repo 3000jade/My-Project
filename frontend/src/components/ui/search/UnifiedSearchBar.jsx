@@ -10,7 +10,8 @@ import {
   IconLayoutGrid, 
   IconLayoutSidebar, 
   IconX, 
-  IconChevronDown 
+  IconChevronDown,
+  IconChevronUp
 } from '@tabler/icons-react';
 import { mapsService } from '../../../services/mapsService';
 
@@ -41,8 +42,10 @@ export default function UnifiedSearchBar({
   viewMode = 'split',
   setViewMode,
   onFlyToDistrict,
-  isSticky = false
+  isSticky = false,
+  defaultCollapsed = false
 }) {
+  const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
   const [showPricePopover, setShowPricePopover] = useState(false);
   const [showBedPopover, setShowBedPopover] = useState(false);
   const pricePopoverRef = useRef(null);
@@ -188,7 +191,7 @@ export default function UnifiedSearchBar({
       {/* Upper Row: Transaction Mode + Location Search + Core Dropdowns + View Switcher */}
       <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2 sm:gap-2.5 flex-wrap xl:flex-nowrap">
         {/* Transaction Mode Segmented Pill */}
-        <div className="flex items-center bg-slate-100 p-0.5 sm:p-1 rounded-xl border border-slate-200/60 self-start lg:self-auto shrink-0 h-11">
+        <div className="flex items-center bg-slate-100 p-0.5 sm:p-1 rounded-xl border border-slate-200/60 self-start lg:self-auto shrink-0 h-11 max-w-full overflow-x-auto no-scrollbar">
           {['All', 'For Sale', 'For Rent', 'Pre-Selling'].map((type) => {
             const isSelected = (filters.transactionType || 'All') === type;
             return (
@@ -208,7 +211,7 @@ export default function UnifiedSearchBar({
         </div>
 
         {/* Location Search Input with Nominatim OSM Autocomplete */}
-        <div className="relative flex-1 min-w-[160px]" ref={searchContainerRef}>
+        <div className="relative flex-1 min-w-[160px] w-full lg:w-auto" ref={searchContainerRef}>
           <div className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 flex items-center justify-center">
             {isLoadingSuggestions ? (
               <div className="w-4 h-4 border-2 border-slate-200 border-t-[#0F766E] rounded-full animate-spin" />
@@ -314,7 +317,9 @@ export default function UnifiedSearchBar({
           </AnimatePresence>
         </div>
 
-        {/* Property Type Dropdown */}
+        {!isCollapsed && (
+          <>
+            {/* Property Type Dropdown */}
         <div className="relative shrink-0">
           <div className="relative">
             <select
@@ -499,25 +504,56 @@ export default function UnifiedSearchBar({
             )}
           </AnimatePresence>
         </div>
+          </>
+        )}
 
-        {/* 'All Filters' Drawer Trigger */}
-        <button
-          type="button"
-          onClick={onOpenFiltersDrawer}
-          className={`h-11 px-3.5 rounded-xl text-xs font-semibold border flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
-            activeFilterCount > 0
-              ? 'bg-teal-50 border-[#0F766E] text-[#0F766E] shadow-2xs'
-              : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700'
-          }`}
-        >
-          <IconAdjustmentsHorizontal size={15} stroke={2} className={activeFilterCount > 0 ? 'text-[#0F766E]' : 'text-slate-500'} />
-          <span>Filters</span>
-          {activeFilterCount > 0 && (
-            <span className="w-5 h-5 rounded-full bg-[#FF6B6B] text-white text-[10px] font-extrabold flex items-center justify-center ml-0.5">
-              {activeFilterCount}
-            </span>
-          )}
-        </button>
+        {/* Right Action Cluster: Collapse/Expand + All Filters Drawer */}
+        <div className="flex items-center gap-2 shrink-0 self-stretch sm:self-auto justify-end sm:justify-start">
+          {/* Collapse / Expand Toggle Button */}
+          <button
+            type="button"
+            data-testid="search-bar-collapse-toggle"
+            aria-expanded={!isCollapsed}
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            title={isCollapsed ? 'Expand Filters & Districts' : 'Collapse to compact bar'}
+            className={`flex-1 sm:flex-none h-11 px-3 sm:px-3.5 rounded-xl text-xs font-semibold border flex items-center justify-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
+              isCollapsed
+                ? 'bg-teal-50 border-[#0F766E] text-[#0F766E]'
+                : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-600'
+            }`}
+          >
+            {isCollapsed ? (
+              <>
+                <IconChevronDown size={15} stroke={2} />
+                <span>Expand</span>
+              </>
+            ) : (
+              <>
+                <IconChevronUp size={15} stroke={2} />
+                <span>Compact</span>
+              </>
+            )}
+          </button>
+
+          {/* 'All Filters' Drawer Trigger */}
+          <button
+            type="button"
+            onClick={onOpenFiltersDrawer}
+            className={`flex-1 sm:flex-none h-11 px-3.5 rounded-xl text-xs font-semibold border flex items-center justify-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
+              activeFilterCount > 0
+                ? 'bg-teal-50 border-[#0F766E] text-[#0F766E] shadow-2xs'
+                : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700'
+            }`}
+          >
+            <IconAdjustmentsHorizontal size={15} stroke={2} className={activeFilterCount > 0 ? 'text-[#0F766E]' : 'text-slate-500'} />
+            <span>Filters</span>
+            {activeFilterCount > 0 && (
+              <span className="w-5 h-5 rounded-full bg-[#FF6B6B] text-white text-[10px] font-extrabold flex items-center justify-center ml-0.5">
+                {activeFilterCount}
+              </span>
+            )}
+          </button>
+        </div>
 
         {/* View Mode Toggle: Split Map vs Grid View */}
         {setViewMode && (
@@ -556,6 +592,7 @@ export default function UnifiedSearchBar({
       </div>
 
       {/* Lower Row: Clean Horizontal District Scroller */}
+      {!isCollapsed && (
       <div className="flex items-center gap-2 pt-2.5 mt-2.5 border-t border-slate-100 overflow-x-auto no-scrollbar">
         <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-400 uppercase tracking-wider shrink-0 pl-0.5">
           <IconMapPin size={13} stroke={2} className="text-[#0F766E]" />
@@ -584,6 +621,7 @@ export default function UnifiedSearchBar({
           })}
         </div>
       </div>
+      )}
     </div>
   );
 }

@@ -2,7 +2,7 @@ import { Response } from 'express';
 import { supabaseAdmin, isSupabaseConfigured } from '../config/supabase';
 import { SessionService } from '../services/session.service';
 import { AuditService } from '../services/audit.service';
-import { AuthenticatedRequest } from '../middleware/auth.middleware';
+import { AuthenticatedRequest, invalidateAuthCache } from '../middleware/auth.middleware';
 import type { ApiResponse } from '../types/api';
 
 export class AdminController {
@@ -18,24 +18,30 @@ export class AdminController {
             id: 'usr-admin-1',
             email: 'admin@pt.com',
             full_name: 'System Administrator',
+            fullName: 'System Administrator',
             role: 'admin',
             verification_status: 'VERIFIED',
+            status: 'active',
             created_at: new Date(Date.now() - 30 * 86400000).toISOString(),
           },
           {
             id: 'usr-broker-1',
             email: 'broker@pt.com',
             full_name: 'Principal Broker',
+            fullName: 'Principal Broker',
             role: 'broker',
             verification_status: 'VERIFIED',
+            status: 'active',
             created_at: new Date(Date.now() - 20 * 86400000).toISOString(),
           },
           {
             id: 'usr-agent-1',
             email: 'agent@pt.com',
             full_name: 'Licensed Agent Vance',
+            fullName: 'Licensed Agent Vance',
             role: 'agent',
             verification_status: 'VERIFIED',
+            status: 'active',
             prc_license_no: '0098765',
             created_at: new Date(Date.now() - 10 * 86400000).toISOString(),
           },
@@ -43,8 +49,10 @@ export class AdminController {
             id: 'usr-client-1',
             email: 'client@pt.com',
             full_name: 'Investor Clara',
+            fullName: 'Investor Clara',
             role: 'client',
             verification_status: 'VERIFIED',
+            status: 'active',
             created_at: new Date(Date.now() - 2 * 86400000).toISOString(),
           },
         ];
@@ -67,9 +75,15 @@ export class AdminController {
         throw new Error(error.message);
       }
 
+      const users = (data || []).map((u: any) => ({
+        ...u,
+        fullName: u.full_name || u.fullName || 'Unnamed',
+        status: u.verification_status === 'SUSPENDED' ? 'suspended' : 'active',
+      }));
+
       res.status(200).json({
         success: true,
-        data: { users: data || [], total: count || 0 },
+        data: { users, total: count || 0 },
         message: 'Admin users loaded successfully.',
         timestamp: new Date().toISOString(),
       });
@@ -113,6 +127,8 @@ export class AdminController {
         }
       }
 
+      invalidateAuthCache(id);
+
       void AuditService.recordEvent({
         eventType: 'admin.user_role_updated',
         actorId: req.user?.id || 'admin',
@@ -147,7 +163,9 @@ export class AdminController {
     try {
       const rawId = req.params.id;
       const id = Array.isArray(rawId) ? rawId[0] : rawId;
-      const { status, reason } = req.body;
+      const rawStatus = String(req.body.status || '').trim().toUpperCase();
+      const status = rawStatus === 'ACTIVE' ? 'VERIFIED' : rawStatus;
+      const { reason } = req.body;
 
       if (!status || !['VERIFIED', 'SUSPENDED', 'PENDING'].includes(status)) {
         res.status(400).json({
@@ -159,8 +177,11 @@ export class AdminController {
       }
 
       if (status === 'SUSPENDED') {
-        SessionService.disableUserAccount(id, reason || 'admin_suspended');
+        SessionService.disableUserAccount(id, 'account_disabled');
+      } else if (status === 'VERIFIED') {
+        SessionService.enableUserAccount(id);
       }
+      invalidateAuthCache(id);
 
       if (isSupabaseConfigured) {
         const { error } = await supabaseAdmin

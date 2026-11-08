@@ -105,10 +105,6 @@ export class AgentRegistrationService {
           }
           return true;
         }
-
-        const { data: usersList } = await supabaseAdmin.auth.admin.listUsers();
-        const matched = usersList?.users?.find((u) => u.email?.toLowerCase() === email.toLowerCase());
-        if (matched) return true;
       } catch {
         // Fallback
       }

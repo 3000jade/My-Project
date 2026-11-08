@@ -6,9 +6,12 @@ import Footer from './components/layout/Footer';
 import Home from './pages/public/Home';
 import { PageLoader } from './components/ui';
 import { ReactLenis, useLenis } from 'lenis/react';
-import { Agentation } from 'agentation';
 import { AuthProvider } from './context/AuthContext';
 import { GoogleOAuthProvider } from '@react-oauth/google';
+
+const DevAgentation = import.meta.env.DEV
+  ? lazy(() => import('agentation').then((m) => ({ default: m.Agentation })))
+  : () => null;
 
 // Safe fallback if env var is missing during dev
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'mock-client-id-for-dev';
@@ -28,55 +31,44 @@ const UnauthorizedPage = lazy(() => import('./pages/public/UnauthorizedPage'));
 const DemoApiPage = lazy(() => import('./pages/public/DemoApiPage'));
 const PublicSubdivisionMap = lazy(() => import('./pages/public/PublicSubdivisionMap'));
 
-// Sandbox Staging Pages
-const SandboxLayout = lazy(() => import('./sandbox/layout/SandboxLayout'));
-const SandboxHubPage = lazy(() => import('./sandbox/pages/SandboxHubPage'));
-const DemoUIUXPage = lazy(() => import('./sandbox/pages/DemoUIUXPage'));
-const HomeValuationPage = lazy(() => import('./sandbox/pages/HomeValuationPage'));
-const NeighborhoodGuidesPage = lazy(() => import('./sandbox/pages/NeighborhoodGuidesPage'));
-const BlogPage = lazy(() => import('./sandbox/pages/BlogPage'));
-const Duplex3DPage = lazy(() => import('./sandbox/pages/Duplex3DPage'));
-const ParallaxLabPage = lazy(() => import('./sandbox/pages/ParallaxLabPage'));
-const ScrollRevealPage = lazy(() => import('./sandbox/pages/ScrollRevealPage'));
-
 // Protected Route Guard
 import ProtectedRoute from './components/auth/ProtectedRoute';
 
-// Dashboard Layout
-import DashboardLayout from './components/dashboard/DashboardLayout';
+// Dashboard Layout (Code-split so public visitors don't download portal chrome)
+const DashboardLayout = lazy(() => import('./components/dashboard/DashboardLayout'));
 
-// Agent Portal Pages
-import AgentDashboard from './pages/portals/agent/AgentDashboard';
-import AgentProperties from './pages/portals/agent/AgentProperties';
-import AgentPropertyDetail from './pages/portals/agent/AgentPropertyDetail';
-import AgentInquiries from './pages/portals/agent/AgentInquiries';
-import AgentInquiryDetail from './pages/portals/agent/AgentInquiryDetail';
-import AgentAppointments from './pages/portals/agent/AgentAppointments';
-import AgentAvailability from './pages/portals/agent/AgentAvailability';
-import AgentSales from './pages/portals/agent/AgentSales';
-import AgentProfile from './pages/portals/agent/AgentProfile';
+// Agent Portal Pages (Code-split)
+const AgentDashboard = lazy(() => import('./pages/portals/agent/AgentDashboard'));
+const AgentProperties = lazy(() => import('./pages/portals/agent/AgentProperties'));
+const AgentPropertyDetail = lazy(() => import('./pages/portals/agent/AgentPropertyDetail'));
+const AgentInquiries = lazy(() => import('./pages/portals/agent/AgentInquiries'));
+const AgentInquiryDetail = lazy(() => import('./pages/portals/agent/AgentInquiryDetail'));
+const AgentAppointments = lazy(() => import('./pages/portals/agent/AgentAppointments'));
+const AgentAvailability = lazy(() => import('./pages/portals/agent/AgentAvailability'));
+const AgentSales = lazy(() => import('./pages/portals/agent/AgentSales'));
+const AgentProfile = lazy(() => import('./pages/portals/agent/AgentProfile'));
 
-// Broker Portal Pages
-import BrokerDashboard from './pages/portals/broker/BrokerDashboard';
-import BrokerProperties from './pages/portals/broker/BrokerProperties';
-import BrokerCreateListings from './pages/portals/broker/BrokerCreateListings';
-import BrokerPropertyTypeSelect from './pages/portals/broker/BrokerPropertyTypeSelect';
-import BrokerInquiries from './pages/portals/broker/BrokerInquiries';
-import BrokerInquiryDetail from './pages/portals/broker/BrokerInquiryDetail';
-import BrokerAppointments from './pages/portals/broker/BrokerAppointments';
-import BrokerAgents from './pages/portals/broker/BrokerAgents';
-import BrokerAgentDetail from './pages/portals/broker/BrokerAgentDetail';
-import BrokerInviteAgent from './pages/portals/broker/BrokerInviteAgent';
-import BrokerAgentEdit from './pages/portals/broker/BrokerAgentEdit';
-import BrokerSales from './pages/portals/broker/BrokerSales';
-import BrokerReports from './pages/portals/broker/BrokerReports';
-import BrokerAudit from './pages/portals/broker/BrokerAudit';
-import BrokerNotifications from './pages/portals/broker/BrokerNotifications';
-import BrokerProfile from './pages/portals/broker/BrokerProfile';
-import BrokerSubdivisionInventory from './pages/portals/broker/BrokerSubdivisionInventory';
-import SubdivisionMapEditor from './pages/portals/broker/SubdivisionMapEditor';
-import BrokerFullViewMap from './pages/portals/broker/BrokerFullViewMap';
-import BrokerMultiPropertyMapStudio from './pages/portals/broker/BrokerMultiPropertyMapStudio';
+// Broker Portal Pages (Code-split)
+const BrokerDashboard = lazy(() => import('./pages/portals/broker/BrokerDashboard'));
+const BrokerProperties = lazy(() => import('./pages/portals/broker/BrokerProperties'));
+const BrokerCreateListings = lazy(() => import('./pages/portals/broker/BrokerCreateListings'));
+const BrokerPropertyTypeSelect = lazy(() => import('./pages/portals/broker/BrokerPropertyTypeSelect'));
+const BrokerInquiries = lazy(() => import('./pages/portals/broker/BrokerInquiries'));
+const BrokerInquiryDetail = lazy(() => import('./pages/portals/broker/BrokerInquiryDetail'));
+const BrokerAppointments = lazy(() => import('./pages/portals/broker/BrokerAppointments'));
+const BrokerAgents = lazy(() => import('./pages/portals/broker/BrokerAgents'));
+const BrokerAgentDetail = lazy(() => import('./pages/portals/broker/BrokerAgentDetail'));
+const BrokerInviteAgent = lazy(() => import('./pages/portals/broker/BrokerInviteAgent'));
+const BrokerAgentEdit = lazy(() => import('./pages/portals/broker/BrokerAgentEdit'));
+const BrokerSales = lazy(() => import('./pages/portals/broker/BrokerSales'));
+const BrokerReports = lazy(() => import('./pages/portals/broker/BrokerReports'));
+const BrokerAudit = lazy(() => import('./pages/portals/broker/BrokerAudit'));
+const BrokerNotifications = lazy(() => import('./pages/portals/broker/BrokerNotifications'));
+const BrokerProfile = lazy(() => import('./pages/portals/broker/BrokerProfile'));
+const BrokerSubdivisionInventory = lazy(() => import('./pages/portals/broker/BrokerSubdivisionInventory'));
+const SubdivisionMapEditor = lazy(() => import('./pages/portals/broker/SubdivisionMapEditor'));
+const BrokerFullViewMap = lazy(() => import('./pages/portals/broker/BrokerFullViewMap'));
+const BrokerMultiPropertyMapStudio = lazy(() => import('./pages/portals/broker/BrokerMultiPropertyMapStudio'));
 
 // Client Portal Pages
 const ClientDashboard = lazy(() => import('./pages/portals/client/ClientDashboard'));
@@ -135,157 +127,125 @@ function AppRoutes({ isAppLoading }) {
   // If on Agent, Broker, or Client portals, render dashboard layouts without Public Header/Footer/ChatWidget
   if (isDashboardRoute) {
     return (
-      <Routes>
-        {/* Agent Routes (Protected for Agent & Admin) */}
-        <Route
-          path="/agent"
-          element={
-            <ProtectedRoute allowedRoles={['agent', 'admin']}>
-              <DashboardLayout role="agent" title="Agent Workspace" />
-            </ProtectedRoute>
-          }
-        >
-          <Route index element={<Navigate to="/agent/dashboard" replace />} />
-          <Route path="dashboard" element={<AgentDashboard />} />
-          <Route path="properties" element={<AgentProperties />} />
-          <Route path="properties/:id" element={<AgentPropertyDetail />} />
-          <Route path="inquiries" element={<AgentInquiries />} />
-          <Route path="inquiries/:id" element={<AgentInquiryDetail />} />
-          <Route path="appointments" element={<AgentAppointments />} />
-          <Route path="availability" element={<AgentAvailability />} />
-          <Route path="sales" element={<AgentSales />} />
-          <Route path="profile" element={<AgentProfile />} />
-        </Route>
+      <Suspense fallback={<div className="min-h-screen bg-[#FBFBF9] flex items-center justify-center text-xs font-mono text-[#0D4446]">Loading Workspace...</div>}>
+        <Routes>
+          {/* Agent Routes (Protected for Agent & Admin) */}
+          <Route
+            path="/agent"
+            element={
+              <ProtectedRoute allowedRoles={['agent', 'admin']}>
+                <DashboardLayout role="agent" title="Agent Workspace" />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<Navigate to="/agent/dashboard" replace />} />
+            <Route path="dashboard" element={<AgentDashboard />} />
+            <Route path="properties" element={<AgentProperties />} />
+            <Route path="properties/:id" element={<AgentPropertyDetail />} />
+            <Route path="inquiries" element={<AgentInquiries />} />
+            <Route path="inquiries/:id" element={<AgentInquiryDetail />} />
+            <Route path="appointments" element={<AgentAppointments />} />
+            <Route path="availability" element={<AgentAvailability />} />
+            <Route path="sales" element={<AgentSales />} />
+            <Route path="profile" element={<AgentProfile />} />
+          </Route>
 
-        {/* Broker / Admin Routes (Protected for Broker & Admin) */}
-        <Route
-          path="/broker"
-          element={
-            <ProtectedRoute allowedRoles={['broker', 'admin']}>
-              <DashboardLayout role="broker" title="Dashboard" />
-            </ProtectedRoute>
-          }
-        >
-          <Route index element={<Navigate to="/broker/dashboard" replace />} />
-          <Route path="dashboard" element={<BrokerDashboard />} />
-          <Route path="properties" element={<BrokerProperties />} />
-          <Route path="properties/select-type" element={<BrokerPropertyTypeSelect />} />
-          <Route path="properties/types" element={<BrokerPropertyTypeSelect />} />
-          <Route path="properties/create" element={<BrokerCreateListings />} />
-          <Route path="properties/new" element={<BrokerCreateListings />} />
-          <Route path="properties/:id/edit" element={<BrokerCreateListings />} />
-          <Route path="properties/:id" element={<Navigate to="edit" replace />} />
-          <Route path="inquiries" element={<BrokerInquiries />} />
-          <Route path="inquiries/:id" element={<BrokerInquiryDetail />} />
-          <Route path="appointments" element={<BrokerAppointments />} />
-          <Route path="clients" element={<Navigate to="/broker/inquiries" replace />} />
-          <Route path="agents" element={<BrokerAgents />} />
-          <Route path="agents/invite" element={<BrokerInviteAgent />} />
-          <Route path="agents/:id" element={<BrokerAgentDetail />} />
-          <Route path="agents/:id/edit" element={<BrokerAgentEdit />} />
-          <Route path="sales" element={<BrokerSales />} />
-          <Route path="reports" element={<BrokerReports />} />
-          <Route path="audit" element={<BrokerAudit />} />
-          <Route path="notifications" element={<BrokerNotifications />} />
-          <Route path="profile" element={<BrokerProfile />} />
-          <Route path="subdivisions" element={<Navigate to="/broker/properties" replace />} />
-          <Route path="subdivisions/:id/inventory" element={<BrokerSubdivisionInventory />} />
-        </Route>
-        {/* Fullscreen Subdivision Map Editor (Protected for Broker & Admin) */}
-        <Route
-          path="/broker/subdivisions/:id/editor"
-          element={
-            <ProtectedRoute allowedRoles={['broker', 'admin']}>
-              <SubdivisionMapEditor />
-            </ProtectedRoute>
-          }
-        />
-        {/* Fullscreen Location Pinpoint Map Studio (Protected for Broker & Admin) */}
-        <Route
-          path="/broker/properties/location-map"
-          element={
-            <ProtectedRoute allowedRoles={['broker', 'admin']}>
-              <BrokerFullViewMap />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/broker/properties/map"
-          element={
-            <ProtectedRoute allowedRoles={['broker', 'admin']}>
-              <BrokerFullViewMap />
-            </ProtectedRoute>
-          }
-        />
-        {/* Fullscreen Multi-Property Cadastral Map Studio */}
-        <Route
-          path="/broker/properties/studio"
-          element={
-            <ProtectedRoute allowedRoles={['broker', 'admin']}>
-              <BrokerMultiPropertyMapStudio />
-            </ProtectedRoute>
-          }
-        />
-        {/* Client Routes (Protected for Client, Broker & Admin) */}
-        <Route
-          path="/client"
-          element={
-            <Suspense fallback={<div className="min-h-screen bg-[#FBFBF9] flex items-center justify-center text-xs font-mono text-[#0D4446]">Loading Client Portal...</div>}>
+          {/* Broker / Admin Routes (Protected for Broker & Admin) */}
+          <Route
+            path="/broker"
+            element={
+              <ProtectedRoute allowedRoles={['broker', 'admin']}>
+                <DashboardLayout role="broker" title="Dashboard" />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<Navigate to="/broker/dashboard" replace />} />
+            <Route path="dashboard" element={<BrokerDashboard />} />
+            <Route path="properties" element={<BrokerProperties />} />
+            <Route path="properties/select-type" element={<BrokerPropertyTypeSelect />} />
+            <Route path="properties/types" element={<BrokerPropertyTypeSelect />} />
+            <Route path="properties/create" element={<BrokerCreateListings />} />
+            <Route path="properties/new" element={<BrokerCreateListings />} />
+            <Route path="properties/:id/edit" element={<BrokerCreateListings />} />
+            <Route path="properties/:id" element={<Navigate to="edit" replace />} />
+            <Route path="inquiries" element={<BrokerInquiries />} />
+            <Route path="inquiries/:id" element={<BrokerInquiryDetail />} />
+            <Route path="appointments" element={<BrokerAppointments />} />
+            <Route path="clients" element={<Navigate to="/broker/inquiries" replace />} />
+            <Route path="agents" element={<BrokerAgents />} />
+            <Route path="agents/invite" element={<BrokerInviteAgent />} />
+            <Route path="agents/:id" element={<BrokerAgentDetail />} />
+            <Route path="agents/:id/edit" element={<BrokerAgentEdit />} />
+            <Route path="sales" element={<BrokerSales />} />
+            <Route path="reports" element={<BrokerReports />} />
+            <Route path="audit" element={<BrokerAudit />} />
+            <Route path="notifications" element={<BrokerNotifications />} />
+            <Route path="profile" element={<BrokerProfile />} />
+            <Route path="subdivisions" element={<Navigate to="/broker/properties" replace />} />
+            <Route path="subdivisions/:id/inventory" element={<BrokerSubdivisionInventory />} />
+          </Route>
+          {/* Fullscreen Subdivision Map Editor (Protected for Broker & Admin) */}
+          <Route
+            path="/broker/subdivisions/:id/editor"
+            element={
+              <ProtectedRoute allowedRoles={['broker', 'admin']}>
+                <SubdivisionMapEditor />
+              </ProtectedRoute>
+            }
+          />
+          {/* Fullscreen Location Pinpoint Map Studio (Protected for Broker & Admin) */}
+          <Route
+            path="/broker/properties/location-map"
+            element={
+              <ProtectedRoute allowedRoles={['broker', 'admin']}>
+                <BrokerFullViewMap />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/broker/properties/map"
+            element={
+              <ProtectedRoute allowedRoles={['broker', 'admin']}>
+                <BrokerFullViewMap />
+              </ProtectedRoute>
+            }
+          />
+          {/* Fullscreen Multi-Property Cadastral Map Studio */}
+          <Route
+            path="/broker/properties/studio"
+            element={
+              <ProtectedRoute allowedRoles={['broker', 'admin']}>
+                <BrokerMultiPropertyMapStudio />
+              </ProtectedRoute>
+            }
+          />
+          {/* Client Routes (Protected for Client, Broker & Admin) */}
+          <Route
+            path="/client"
+            element={
               <ProtectedRoute allowedRoles={['client', 'broker', 'agent', 'admin']}>
                 <DashboardLayout role="client" title="Client Portal" />
               </ProtectedRoute>
-            </Suspense>
-          }
-        >
-          <Route index element={<Navigate to="/client/dashboard" replace />} />
-          <Route path="dashboard" element={<ClientDashboard />} />
-          <Route path="saved-properties" element={<ClientSavedProperties />} />
-          <Route path="inquiries" element={<ClientInquiries />} />
-          <Route path="profile" element={<ClientProfile />} />
-        </Route>
+            }
+          >
+            <Route index element={<Navigate to="/client/dashboard" replace />} />
+            <Route path="dashboard" element={<ClientDashboard />} />
+            <Route path="saved-properties" element={<ClientSavedProperties />} />
+            <Route path="inquiries" element={<ClientInquiries />} />
+            <Route path="profile" element={<ClientProfile />} />
+          </Route>
 
-        {/* Super Admin Routes (Protected for Admin) */}
-        <Route
-          path="/admin"
-          element={
-            <Suspense fallback={<div className="min-h-screen bg-[#FBFBF9] flex items-center justify-center text-xs font-mono text-[#0D4446]">Loading Admin Portal...</div>}>
+          {/* Super Admin Routes (Protected for Admin) */}
+          <Route
+            path="/admin"
+            element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <DashboardLayout role="broker" title="Admin Portal" />
               </ProtectedRoute>
-            </Suspense>
-          }
-        >
-          <Route index element={<Navigate to="/admin/users" replace />} />
-          <Route path="users" element={<AdminUsersPage />} />
-        </Route>
-      </Routes>
-    );
-  }
-
-  const isSandboxRoute = location.pathname.startsWith('/sandbox');
-
-  // Dedicated Sandbox Staging Lab Chrome & Router
-  if (isSandboxRoute) {
-    return (
-      <Suspense
-        fallback={
-          <div className="min-h-screen bg-[#070b0b] flex flex-col items-center justify-center gap-4 text-emerald-400 font-mono text-xs uppercase tracking-widest">
-            <div className="w-10 h-10 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-            <span>Loading Sandbox Module...</span>
-          </div>
-        }
-      >
-        <Routes>
-          <Route path="/sandbox" element={<SandboxLayout />}>
-            <Route index element={<SandboxHubPage />} />
-            <Route path="ui-ux-labs" element={<DemoUIUXPage />} />
-            <Route path="valuation" element={<HomeValuationPage />} />
-            <Route path="neighborhoods" element={<NeighborhoodGuidesPage />} />
-            <Route path="journal" element={<BlogPage />} />
-            <Route path="3d-demo" element={<Duplex3DPage />} />
-            <Route path="parallax-lab" element={<ParallaxLabPage />} />
-            <Route path="scroll-reveals" element={<ScrollRevealPage />} />
-            <Route path="scroll-reveal" element={<ScrollRevealPage />} />
+            }
+          >
+            <Route index element={<Navigate to="/admin/users" replace />} />
+            <Route path="users" element={<AdminUsersPage />} />
           </Route>
         </Routes>
       </Suspense>
@@ -306,7 +266,7 @@ function AppRoutes({ isAppLoading }) {
     location.pathname === '/properties' ||
     location.pathname === '/properties/';
 
-  // Client Application Structure (Preserved with lazy loading and 3D duplex route)
+  // Client Application Structure
   return (
     <div className="bg-[#FBFBF9] text-[#141717] min-h-screen">
       {!isAuthRoute && <Header />}
@@ -371,10 +331,13 @@ export default function App() {
             <SessionWatcher />
             <AppRoutes isAppLoading={isAppLoading} />
           </AuthProvider>
-          {import.meta.env.DEV && <Agentation />}
+          {import.meta.env.DEV && (
+            <Suspense fallback={null}>
+              <DevAgentation />
+            </Suspense>
+          )}
         </Router>
       </GoogleOAuthProvider>
     </ReactLenis>
   );
 }
-

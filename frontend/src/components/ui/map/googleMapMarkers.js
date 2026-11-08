@@ -296,6 +296,108 @@ export function createPriceBadgeElement(property, options = {}) {
  * @param {number} count
  * @returns {HTMLDivElement}
  */
+/**
+ * Creates an interactive stacked anchor pin DOM element for multi-unit properties.
+ * Adheres strictly to Modern SaaS design tokens:
+ * - Teal #0F766E background with Coral #FF6B6B active state
+ * - Shows unit count pill, price range, and subtle stacking layered effect
+ *
+ * @param {object} cluster - Anchor cluster object from groupPropertiesByCoordinates
+ * @param {object} [options]
+ * @param {boolean} [options.isSelected=false]
+ * @param {boolean} [options.isHovered=false]
+ * @param {function} [options.onClick]
+ * @param {function} [options.onHover]
+ * @returns {HTMLDivElement}
+ */
+export function createStackedAnchorMarkerElement(cluster, options = {}) {
+  const { isSelected = false, isHovered = false, onClick, onHover } = options;
+  const count = cluster.count || cluster.properties?.length || 2;
+  const title = cluster.title || 'Residences';
+  const priceRange = cluster.priceRange || '';
+
+  const container = document.createElement('div');
+  container.setAttribute('role', 'button');
+  container.setAttribute('tabindex', '0');
+  container.setAttribute(
+    'aria-label',
+    `Anchor Pin: ${count} properties at ${title}`
+  );
+  container.setAttribute('data-anchor-id', String(cluster.id || ''));
+  container.setAttribute('data-testid', `stacked-marker-${cluster.id}`);
+
+  const bgClass = isSelected
+    ? 'bg-[#FF6B6B] text-white border-[#E05353] shadow-xl scale-110 z-50'
+    : isHovered
+      ? 'bg-[#0D9488] text-white border-[#0F766E] shadow-xl scale-105 z-40'
+      : 'bg-[#0F766E] text-white border-teal-800/80 shadow-md hover:scale-105 z-30';
+
+  container.className = `relative flex flex-col items-center cursor-pointer transition-transform duration-200 select-none group`;
+
+  container.innerHTML = `
+    <!-- Top Stacked Pill (Simulating multi-sheet depth) -->
+    <div class="relative flex items-center">
+      <!-- Shadow stack cards behind -->
+      <div class="absolute -top-1 left-1/2 -translate-x-1/2 w-[85%] h-full bg-teal-800/50 rounded-full -z-10"></div>
+      
+      <!-- Main Badge -->
+      <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-bold font-sans ${bgClass} transition-all">
+        <!-- Building Icon -->
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect>
+          <path d="M9 22v-4h6v4"></path>
+          <path d="M8 6h.01"></path>
+          <path d="M16 6h.01"></path>
+          <path d="M8 10h.01"></path>
+          <path d="M16 10h.01"></path>
+          <path d="M8 14h.01"></path>
+          <path d="M16 14h.01"></path>
+        </svg>
+
+        <!-- Count Tag -->
+        <span class="px-1.5 py-0.2 bg-white/20 rounded-md text-[11px] font-black">${count} Units</span>
+
+        ${priceRange ? `<span class="opacity-80 font-medium">·</span><span class="text-[11px] font-semibold">${priceRange}</span>` : ''}
+      </div>
+    </div>
+
+    <!-- Pin Tip Pointing Down -->
+    <div class="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent ${isSelected ? 'border-t-[#FF6B6B]' : isHovered ? 'border-t-[#0D9488]' : 'border-t-[#0F766E]'} border-t-[6px] -mt-[1px]"></div>
+  `;
+
+  // Click & hover events
+  container.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (typeof onClick === 'function') {
+      onClick(cluster);
+    }
+  });
+
+  container.addEventListener('mouseenter', () => {
+    if (typeof onHover === 'function') {
+      onHover(cluster.id);
+    }
+  });
+
+  container.addEventListener('mouseleave', () => {
+    if (typeof onHover === 'function') {
+      onHover(null);
+    }
+  });
+
+  container.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      e.stopPropagation();
+      if (typeof onClick === 'function') {
+        onClick(cluster);
+      }
+    }
+  });
+
+  return container;
+}
+
 export function createClusterBadgeElement(count) {
   const container = document.createElement('div');
   container.className =
@@ -315,4 +417,5 @@ export default {
   createMinimalistMarkerElement,
   createTeardropPinElement,
   createClusterBadgeElement,
+  createStackedAnchorMarkerElement,
 };

@@ -175,4 +175,29 @@ describe('PropertyCard Component', () => {
     expect(agentPlaceholder).toBeInTheDocument();
     expect(agentPlaceholder).toHaveTextContent('John Dela Cruz');
   });
+
+  it('calls onSelect on first click when not selected, and navigates on second click when selected', () => {
+    const handleSelect = vi.fn();
+
+    const { rerender } = render(
+      <MemoryRouter>
+        <PropertyCard property={baseProperty} isSelected={false} onSelect={handleSelect} />
+      </MemoryRouter>
+    );
+
+    const card = screen.getByTestId('property-card');
+    fireEvent.click(card);
+    expect(handleSelect).toHaveBeenCalledTimes(1);
+    expect(handleSelect).toHaveBeenCalledWith(baseProperty);
+
+    // Rerender with isSelected = true after first click
+    rerender(
+      <MemoryRouter>
+        <PropertyCard property={baseProperty} isSelected={true} onSelect={handleSelect} />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByTestId('card-map-focused-badge')).toHaveTextContent(/Pinned on Map/i);
+    expect(screen.getByText('Open details')).toBeInTheDocument();
+  });
 });

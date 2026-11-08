@@ -17,6 +17,27 @@ export default defineConfig({
     fs: {
       allow: ['..'],
     },
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+      },
+    },
+  },
+  build: {
+    target: 'es2022',
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return;
+          if (id.includes('leaflet') || id.includes('@geoman-io') || id.includes('@googlemaps')) return 'vendor-maps';
+          if (id.includes('@mantine')) return 'vendor-mantine';
+          if (id.includes('framer-motion') || id.includes('gsap')) return 'vendor-motion';
+          if (id.includes('quill')) return 'vendor-editor';
+        },
+      },
+    },
   },
   plugins: [
     tailwindcss(),
@@ -30,12 +51,9 @@ export default defineConfig({
       'react-router-dom',
       'framer-motion',
       'gsap',
-      '@gsap/react',
       'lenis',
       'lenis/react',
       '@mantine/core',
-      '@mantine/hooks',
-      '@mantine/carousel',
       '@tabler/icons-react',
       '@tanstack/react-virtual',
     ],

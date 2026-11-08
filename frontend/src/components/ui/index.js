@@ -72,7 +72,6 @@ export { Editable, EditablePreview, EditableInput } from './editable';
 
 // Core Primitives
 export { default as Button } from './core/Button';
-export { default as DynamicBackground } from './core/DynamicBackground';
 export { default as FilterEmptyState } from './core/FilterEmptyState';
 export { default as KeySpecsBar } from './core/KeySpecsBar';
 export { default as PageLoader } from './core/PageLoader';

@@ -28,6 +28,7 @@ router.post('/extend-session', requireAuth, AuthController.extendSession);
 router.post('/refresh', AuthController.refreshSession);
 router.post('/forgot-password', authRateLimiter, AuthController.forgotPassword);
 router.post('/reset-password', authRateLimiter, AuthController.resetPassword);
+router.post('/change-password', requireAuth, authRateLimiter, AuthController.changePassword);
 router.post('/resend-verification', authRateLimiter, AuthController.resendVerification);
 router.post('/revoke-all', requireAuth, AuthController.revokeAllSessions);
 router.get('/sessions', requireAuth, AuthController.listSessions);

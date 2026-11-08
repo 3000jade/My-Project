@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { executeSerializedRefresh } from './sessionCoordinator';
 
 // ==============================================================================
 // Central Axios API Client
@@ -32,14 +33,51 @@ axiosInstance.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response Interceptor: Automatically unwrap response.data and normalize errors
+// Response Interceptor: Automatically unwrap response.data, refresh on 401 when refresh token exists, and normalize errors
 axiosInstance.interceptors.response.use(
   (response) => {
     // Unwraps response payload directly
     return response.data;
   },
-  (error) => {
+  async (error) => {
+    const originalConfig = error.config;
+    const url = originalConfig?.url || '';
+    const isAuthBypassRoute =
+      url.includes('/auth/login') ||
+      url.includes('/auth/refresh') ||
+      url.includes('/auth/logout');
+
     if (error.response?.status === 401) {
+      let storedRefreshToken = null;
+      try {
+        storedRefreshToken = localStorage.getItem('cp_refresh_token');
+      } catch {
+        // Non-browser environment
+      }
+
+      if (originalConfig && !originalConfig._retry && !isAuthBypassRoute && storedRefreshToken) {
+        originalConfig._retry = true;
+        try {
+          const refreshed = await executeSerializedRefresh(async () => {
+            const res = await axiosInstance.post('/auth/refresh', {
+              refreshToken: storedRefreshToken,
+            });
+            return res?.data || res;
+          });
+          if (refreshed?.token) {
+            localStorage.setItem('cp_auth_token', refreshed.token);
+            if (refreshed.refreshToken) {
+              localStorage.setItem('cp_refresh_token', refreshed.refreshToken);
+            }
+            originalConfig.headers = originalConfig.headers || {};
+            originalConfig.headers.Authorization = `Bearer ${refreshed.token}`;
+            return axiosInstance(originalConfig);
+          }
+        } catch {
+          // Refresh failed; fall through to token cleanup
+        }
+      }
+
       try {
         localStorage.removeItem('cp_auth_token');
       } catch {

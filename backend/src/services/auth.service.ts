@@ -18,7 +18,11 @@ export class AuthService {
   /**
    * Authenticate a user using Email and Password via Supabase
    */
-  public static async signIn(email: string, password: string): Promise<AuthResult> {
+  public static async signIn(
+    email: string,
+    password: string,
+    meta?: { userAgent?: string; ipAddress?: string }
+  ): Promise<AuthResult> {
     if (!isSupabaseConfigured) {
       logger.warn('[AuthService] Supabase not configured. Returning local development mock session.');
       const role = email.includes('admin')
@@ -40,8 +44,11 @@ export class AuthService {
       };
       SessionService.createSession({
         sessionId: `dev-mock-jwt-token-${role}`,
+        token: `dev-mock-jwt-token-${role}`,
         userId: result.user.id,
         role,
+        userAgent: meta?.userAgent,
+        ipAddress: meta?.ipAddress,
       });
       return result;
     }
@@ -89,8 +96,11 @@ export class AuthService {
 
     SessionService.createSession({
       sessionId: data.session.access_token,
+      token: data.session.access_token,
       userId: result.user.id,
       role,
+      userAgent: meta?.userAgent,
+      ipAddress: meta?.ipAddress,
     });
 
     return result;
@@ -256,7 +266,10 @@ export class AuthService {
   /**
    * Update user password using recovery session token
    */
-  public static async updateUserPassword(newPassword: string, token?: string): Promise<{ success: boolean }> {
+  public static async updateUserPassword(
+    newPassword: string,
+    token?: string
+  ): Promise<{ success: boolean; userId?: string }> {
     if (!token || token === 'invalid-token-xyz' || token.length < 10) {
       throw new Error('Invalid or expired password reset token.');
     }
@@ -270,23 +283,56 @@ export class AuthService {
       return { success: true };
     }
 
-    if (token) {
-      const { error } = await supabase.auth.admin.updateUserById(token, {
-        password: newPassword,
-      });
-      if (error) {
-        const { error: userError } = await supabase.auth.updateUser({
-          password: newPassword,
-        });
-        if (userError) throw new Error(userError.message || 'Failed to update password.');
-      }
-    } else {
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword,
-      });
-      if (error) {
-        throw new Error(error.message || 'Failed to update password.');
-      }
+    // Verify recovery JWT first to obtain the authenticated user ID; never fall back to shared client state
+    const { data: userData, error: verifyErr } = await supabase.auth.getUser(token);
+    if (verifyErr || !userData?.user?.id) {
+      throw new Error('Invalid or expired password reset token.');
+    }
+
+    const userId = userData.user.id;
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(userId, {
+      password: newPassword,
+    });
+    if (error) {
+      throw new Error(error.message || 'Failed to update password.');
+    }
+
+    return { success: true, userId };
+  }
+
+  /**
+   * Change password for an authenticated user after verifying currentPassword
+   */
+  public static async changePassword(
+    userId: string,
+    email: string,
+    currentPassword: string,
+    newPassword: string
+  ): Promise<{ success: boolean }> {
+    if (!currentPassword) {
+      throw new Error('Current password is required.');
+    }
+    if (!newPassword || newPassword.length < 8) {
+      throw new Error('New password must be at least 8 characters long.');
+    }
+
+    if (!isSupabaseConfigured) {
+      return { success: true };
+    }
+
+    const { error: signInErr } = await supabase.auth.signInWithPassword({
+      email,
+      password: currentPassword,
+    });
+    if (signInErr) {
+      throw new Error('Current password is incorrect.');
+    }
+
+    const { error: updateErr } = await supabaseAdmin.auth.admin.updateUserById(userId, {
+      password: newPassword,
+    });
+    if (updateErr) {
+      throw new Error(updateErr.message || 'Failed to update password.');
     }
 
     return { success: true };
@@ -348,9 +394,9 @@ export class AuthService {
    * Sign out user session
    */
   public static async signOut(token?: string): Promise<void> {
-    if (!isSupabaseConfigured) return;
+    if (!isSupabaseConfigured || !token) return;
     try {
-      await supabase.auth.signOut();
+      await supabaseAdmin.auth.admin.signOut(token, 'local');
     } catch (err: any) {
       logger.warn('Sign out warning:', err.message);
     }

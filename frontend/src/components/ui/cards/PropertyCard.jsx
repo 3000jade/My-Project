@@ -21,6 +21,7 @@ export default function PropertyCard({
   variants,
   isSelected = false,
   isHovered = false,
+  onSelect,
   onMouseEnter,
   onMouseLeave
 }) {
@@ -112,8 +113,21 @@ export default function PropertyCard({
 
   const handleNavigate = () => {
     if (propertyId) {
-      navigate(`/properties/${propertyId}`);
+      navigate(`/properties/${propertyId}`, { state: { property } });
     }
+  };
+
+  // Two-step click behavior when onSelect is provided:
+  // 1st click zooms into the marker on the map; 2nd click navigates to property details.
+  const handleCardAction = (e) => {
+    if (e && typeof e.stopPropagation === 'function') {
+      e.stopPropagation();
+    }
+    if (typeof onSelect === 'function' && !isSelected) {
+      onSelect(property);
+      return;
+    }
+    handleNavigate();
   };
 
   const handleSaveToggle = (e) => {
@@ -126,7 +140,7 @@ export default function PropertyCard({
   return (
     <motion.article
       variants={cardAnimation}
-      onClick={handleNavigate}
+      onClick={handleCardAction}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
       data-testid="property-card"
@@ -146,7 +160,7 @@ export default function PropertyCard({
       onKeyDown={(e) => { 
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
-          handleNavigate();
+          handleCardAction(e);
         }
       }}
     >
@@ -167,7 +181,7 @@ export default function PropertyCard({
           />
 
           {/* Top-Left Pill: • For sale / For rent + Condition State + RESO Status Badges */}
-          <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 flex-wrap max-w-[70%]">
+          <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 flex-wrap max-w-[75%]">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/95 backdrop-blur-xs text-[11px] font-medium text-[#1E293B] shadow-xs">
               <span className={`w-1.5 h-1.5 rounded-full ${isRent ? 'bg-amber-500' : 'bg-emerald-500'}`} />
               <span>{typeBadgeLabel}</span>
@@ -206,6 +220,16 @@ export default function PropertyCard({
             {isFeatured && (
               <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-[#FF6B6B] text-white text-[11px] font-bold shadow-xs uppercase tracking-wide">
                 Featured
+              </span>
+            )}
+
+            {isSelected && typeof onSelect === 'function' && (
+              <span
+                data-testid="card-map-focused-badge"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#0F766E] text-white text-[11px] font-semibold shadow-xs"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-[#FF6B6B] animate-pulse" />
+                <span>Pinned on Map • Click again for details</span>
               </span>
             )}
           </div>
@@ -339,11 +363,25 @@ export default function PropertyCard({
             </div>
 
             <ViewPropertyButton
-              onClick={handleNavigate}
+              onClick={handleCardAction}
               aria-label={isClosed ? 'View Past Sale' : 'View Details'}
-              label={isClosed ? 'View Past Sale' : isUnderContract ? 'View Details' : 'View property'}
+              label={
+                isClosed
+                  ? 'View Past Sale'
+                  : isUnderContract
+                    ? 'View Details'
+                    : isSelected && typeof onSelect === 'function'
+                      ? 'Open details'
+                      : 'View property'
+              }
               className={isClosed ? 'bg-slate-700 hover:bg-slate-800' : ''}
-              title={isClosed ? 'View past sale record' : 'View property'}
+              title={
+                isClosed
+                  ? 'View past sale record'
+                  : isSelected && typeof onSelect === 'function'
+                    ? 'Click again to open property details'
+                    : 'Click to zoom on map, click again for details'
+              }
             />
           </div>
         </div>

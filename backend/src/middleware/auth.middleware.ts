@@ -8,6 +8,21 @@ export interface AuthenticatedRequest extends Request {
   user?: User;
 }
 
+const AUTH_CACHE_TTL_MS = 30 * 1000; // 30-second short TTL cache to avoid 2 Supabase HTTP calls per request
+const authUserCache = new Map<string, { user: any; expiresAt: number }>();
+
+export function invalidateAuthCache(userId?: string): void {
+  if (!userId) {
+    authUserCache.clear();
+    return;
+  }
+  for (const [key, entry] of authUserCache.entries()) {
+    if (entry.user?.id === userId) {
+      authUserCache.delete(key);
+    }
+  }
+}
+
 /**
  * Middleware that requires a valid Supabase Bearer token in the Authorization header
  * and enforces server-side session revocation and idle/absolute expiry (SESSION-01, SESSION-02).
@@ -50,6 +65,22 @@ export const requireAuth = async (
         error: `Unauthorized: ${check.reason || 'Session expired or revoked.'}`,
         timestamp: new Date().toISOString(),
       });
+      return;
+    }
+
+    const tokenHash = existingSession.tokenHash || SessionService.hashToken(token);
+    const cached = authUserCache.get(tokenHash);
+    if (cached && Date.now() < cached.expiresAt) {
+      if (existingSession.userId !== cached.user.id) {
+        res.status(401).json({
+          success: false,
+          error: 'Unauthorized: Session identity mismatch.',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+      req.user = { ...cached.user };
+      next();
       return;
     }
 
@@ -97,6 +128,7 @@ export const requireAuth = async (
     userObj.profile = profile;
     userObj.fullName = profile.full_name || data.user.user_metadata?.full_name || profile.email?.split('@')[0] || 'User';
     userObj.verification_status = profile.verification_status;
+    authUserCache.set(tokenHash, { user: { ...userObj }, expiresAt: Date.now() + AUTH_CACHE_TTL_MS });
     req.user = userObj;
     next();
   } catch (err: any) {

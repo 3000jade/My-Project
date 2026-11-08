@@ -10,7 +10,7 @@ import {
   IconCoin,
   IconShieldCheck
 } from '@tabler/icons-react';
-import houseHeroSvg from '../../../sandbox/assets/House_Herosection.svg';
+import houseHeroSvg from '../../../assets/House_Herosection.svg';
 
 export default function ListingHeroGallery({
   onBookTour,

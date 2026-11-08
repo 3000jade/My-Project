@@ -141,20 +141,7 @@ CREATE TABLE IF NOT EXISTS public.notification_preferences (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
 );
 
--- 8. Create public.auth_sessions (Server-Enforced Idle & Absolute Session Tracking)
-CREATE TABLE IF NOT EXISTS public.auth_sessions (
-  id TEXT PRIMARY KEY,
-  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  role TEXT NOT NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
-  last_active_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
-  idle_expires_at TIMESTAMPTZ NOT NULL,
-  absolute_expires_at TIMESTAMPTZ NOT NULL,
-  revoked_at TIMESTAMPTZ,
-  revoke_reason TEXT
-);
-
--- 9. Performance Indexes
+-- 8. Performance Indexes
 CREATE INDEX IF NOT EXISTS idx_inquiries_business_status ON public.inquiries(business_status, operational_status);
 CREATE INDEX IF NOT EXISTS idx_inquiries_brokerage ON public.inquiries(brokerage_id);
 CREATE INDEX IF NOT EXISTS idx_inquiry_messages_request_id ON public.inquiry_messages(request_id);
@@ -165,7 +152,7 @@ CREATE INDEX IF NOT EXISTS idx_audit_events_inquiry_id ON public.audit_events(in
 CREATE INDEX IF NOT EXISTS idx_audit_events_brokerage ON public.audit_events(brokerage_id, event_type, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_notification_jobs_recipient ON public.notification_jobs(recipient_id, status);
 
--- 10. Row Level Security
+-- 9. Row Level Security
 ALTER TABLE public.inquiry_chat_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.inquiry_follow_up_tasks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.inquiry_ai_summaries ENABLE ROW LEVEL SECURITY;
@@ -173,7 +160,6 @@ ALTER TABLE public.audit_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notification_jobs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notification_delivery_attempts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notification_preferences ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.auth_sessions ENABLE ROW LEVEL SECURITY;
 
 -- Policies for audit_events (Broker/Admin read only; append-only via service)
 DROP POLICY IF EXISTS "Brokers and admins can view audit events." ON public.audit_events;

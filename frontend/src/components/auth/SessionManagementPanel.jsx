@@ -17,23 +17,31 @@ export default function SessionManagementPanel() {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [revokingId, setRevokingId] = useState(null);
+  const [revokingAll, setRevokingAll] = useState(false);
   const [feedback, setFeedback] = useState(null);
 
-  const fetchSessions = async () => {
+  const fetchSessions = async (showError = false) => {
+    if (!authService.isAuthenticated() && !showError) {
+      setSessions([]);
+      setLoading(false);
+      return;
+    }
     try {
       setLoading(true);
       const res = await authService.getActiveSessions();
       const sessionList = res?.data?.sessions || res?.sessions || [];
       setSessions(sessionList);
     } catch (err) {
-      setFeedback({ type: 'error', message: err.message || 'Failed to load active sessions.' });
+      if (showError || authService.isAuthenticated()) {
+        setFeedback({ type: 'error', message: err.message || 'Failed to load active sessions.' });
+      }
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchSessions();
+    fetchSessions(false);
   }, []);
 
   const handleRevoke = async (sessionId) => {
@@ -47,6 +55,20 @@ export default function SessionManagementPanel() {
       setFeedback({ type: 'error', message: err.message || 'Failed to revoke session.' });
     } finally {
       setRevokingId(null);
+    }
+  };
+
+  const handleRevokeAll = async () => {
+    try {
+      setRevokingAll(true);
+      setFeedback(null);
+      await authService.revokeAllSessions();
+      setSessions((prev) => prev.filter((s) => s.isCurrent));
+      setFeedback({ type: 'success', message: 'All active sessions have been revoked.' });
+    } catch (err) {
+      setFeedback({ type: 'error', message: err.message || 'Failed to revoke all sessions.' });
+    } finally {
+      setRevokingAll(false);
     }
   };
 
@@ -65,16 +87,29 @@ export default function SessionManagementPanel() {
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={fetchSessions}
-          disabled={loading}
-          className="p-1.5 text-[#64748B] hover:text-[#0F766E] rounded-md hover:bg-[#F8FAFC] transition-colors"
-          title="Refresh Sessions"
-          aria-label="Refresh Sessions"
-        >
-          <IconRefresh className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-        </button>
+        <div className="flex items-center gap-2">
+          {sessions.length > 1 && (
+            <button
+              type="button"
+              onClick={handleRevokeAll}
+              disabled={revokingAll}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 text-xs font-medium transition-colors cursor-pointer disabled:opacity-50"
+            >
+              <IconTrash className="w-3.5 h-3.5" />
+              <span>{revokingAll ? 'Revoking...' : 'Sign Out All Devices'}</span>
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => fetchSessions(true)}
+            disabled={loading}
+            className="p-1.5 text-[#64748B] hover:text-[#0F766E] rounded-md hover:bg-[#F8FAFC] transition-colors"
+            title="Refresh Sessions"
+            aria-label="Refresh Sessions"
+          >
+            <IconRefresh className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          </button>
+        </div>
       </div>
 
       {feedback && (

@@ -41,17 +41,27 @@ export const config = {
       process.env.GOOGLE_DRIVE_MOCK_MODE === 'true' ||
       process.env.NODE_ENV === 'test' ||
       Boolean(process.env.VITEST) ||
-      !(
-        (process.env.GOOGLE_DRIVE_SERVICE_ACCOUNT_EMAIL && process.env.GOOGLE_DRIVE_PRIVATE_KEY) ||
-        process.env.GOOGLE_DRIVE_REFRESH_TOKEN
-      ),
+      (process.env.NODE_ENV !== 'production' &&
+        !(
+          (process.env.GOOGLE_DRIVE_SERVICE_ACCOUNT_EMAIL && process.env.GOOGLE_DRIVE_PRIVATE_KEY) ||
+          process.env.GOOGLE_DRIVE_REFRESH_TOKEN
+        )),
     isMockMode:
       process.env.NODE_ENV === 'test' || Boolean(process.env.VITEST)
         ? true
         : (process.env.IS_MOCK_MODE !== undefined
           ? process.env.IS_MOCK_MODE === 'true'
-          : (process.env.NODE_ENV !== 'production' || !process.env.GOOGLE_CLIENT_ID)),
+          : (process.env.NODE_ENV !== 'production' && !process.env.GOOGLE_CLIENT_ID)),
   },
 };
+
+if (config.isProduction) {
+  const missing = ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'CLIENT_ORIGIN'].filter(
+    (key) => !process.env[key]
+  );
+  if (missing.length > 0) {
+    console.warn(`[config] Missing required production environment variables: ${missing.join(', ')}`);
+  }
+}
 
 export default config;

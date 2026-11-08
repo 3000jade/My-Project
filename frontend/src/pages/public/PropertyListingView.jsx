@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   IconArrowLeft,
   IconEdit,
@@ -50,11 +50,16 @@ import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/ca
 export default function PropertyListingView() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const passedProperty = location?.state?.property || null;
   const authContext = React.useContext(AuthContext);
   const user = authContext?.user || null;
 
   // 1. Initial State & Data Hydration
   const [property, setProperty] = useState(() => {
+    if (passedProperty && (!id || String(passedProperty.id) === String(id))) {
+      return passedProperty;
+    }
     if (!id) return null;
     return (
       mockProperties.find(
@@ -69,6 +74,9 @@ export default function PropertyListingView() {
     );
   });
   const [isLoading, setIsLoading] = useState(() => {
+    if (passedProperty && (!id || String(passedProperty.id) === String(id))) {
+      return false;
+    }
     if (!id) return false;
     const localMatch = mockProperties.find(
       (p) =>

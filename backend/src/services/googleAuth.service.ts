@@ -11,9 +11,11 @@ export class GoogleAuthService {
     idToken: string,
     requestedRole: 'client' | 'agent' | 'broker' = 'client'
   ): Promise<AuthResult> {
-    // 1. Check for mock/dev tokens, non-JWT test payloads, or unconfigured credentials
+    // 1. Check for mock/dev tokens, non-JWT test payloads, or unconfigured credentials (non-production only)
     const isJwt = idToken.includes('.') && idToken.split('.').length === 3 && idToken.length > 50;
-    const isMock = !isJwt || idToken.startsWith('mock-') || idToken.startsWith('dev-mock-') || !config.integrations.googleClientId;
+    const isMock =
+      process.env.NODE_ENV !== 'production' &&
+      (!isJwt || idToken.startsWith('mock-') || idToken.startsWith('dev-mock-') || !config.integrations.googleClientId);
 
     if (isMock) {
       logger.warn('[GoogleAuthService] Mock mode active: generating mock Google user session.');
@@ -30,7 +32,12 @@ export class GoogleAuthService {
           role: requestedRole,
         },
         token: `dev-mock-jwt-token-google-${requestedRole}`,
+        refreshToken: `dev-mock-refresh-token-google-${requestedRole}`,
       };
+    }
+
+    if (!config.integrations.googleClientId || !isJwt) {
+      throw new Error('Invalid or unconfigured Google OAuth credentials.');
     }
 
     // 2. Verify Google ID token
@@ -111,11 +118,14 @@ export class GoogleAuthService {
         });
 
         if (authCreateError) {
-          // If user exists in auth.users but profile was missing, recover auth id
-          const { data: usersList } = await supabaseAdmin.auth.admin.listUsers();
-          const matched = usersList?.users?.find((u) => u.email?.toLowerCase() === email.toLowerCase());
-          if (matched) {
-            userId = matched.id;
+          // If user exists in auth.users, recover id from indexed profiles table
+          const { data: matchedProfile } = await supabaseAdmin
+            .from('profiles')
+            .select('id')
+            .ilike('email', email)
+            .maybeSingle();
+          if (matchedProfile?.id) {
+            userId = matchedProfile.id;
           } else {
             throw new Error(authCreateError.message);
           }
@@ -141,25 +151,22 @@ export class GoogleAuthService {
     }
 
     // 4. Generate Supabase session token
-    let sessionToken = `token-google-${userId}`;
-    try {
-      const linkRes = await supabaseAdmin.auth.admin.generateLink({
-        type: 'magiclink',
-        email,
-      });
+    const linkRes = await supabaseAdmin.auth.admin.generateLink({
+      type: 'magiclink',
+      email,
+    });
 
-      if (linkRes.data?.properties?.hashed_token) {
-        const verifyRes = await supabase.auth.verifyOtp({
-          token_hash: linkRes.data.properties.hashed_token,
-          type: 'magiclink',
-        });
+    if (!linkRes.data?.properties?.hashed_token) {
+      throw new Error(linkRes.error?.message || 'Failed to generate Supabase session link for Google user.');
+    }
 
-        if (verifyRes.data?.session?.access_token) {
-          sessionToken = verifyRes.data.session.access_token;
-        }
-      }
-    } catch (sessionErr: any) {
-      logger.warn('[GoogleAuthService] Fallback to direct token format:', sessionErr.message);
+    const verifyRes = await supabase.auth.verifyOtp({
+      token_hash: linkRes.data.properties.hashed_token,
+      type: 'magiclink',
+    });
+
+    if (!verifyRes.data?.session?.access_token) {
+      throw new Error(verifyRes.error?.message || 'Failed to verify Supabase session for Google user.');
     }
 
     return {
@@ -170,7 +177,8 @@ export class GoogleAuthService {
         avatarUrl: finalAvatarUrl,
         role: finalRole,
       },
-      token: sessionToken,
+      token: verifyRes.data.session.access_token,
+      refreshToken: verifyRes.data.session.refresh_token,
     };
   }
 }

@@ -21,6 +21,7 @@ import { profileService, mockDefaultProfiles } from '../../../services/profileSe
 import { agentService, computeAgentCompleteness } from '../../../services/agentService';
 import { EditProfileDialog } from '@/components/profile';
 import { Button } from '@/components/ui/button';
+import SessionManagementPanel from '../../../components/auth/SessionManagementPanel';
 
 export default function AgentProfile() {
   const [agent, setAgent] = useState(() => ({
@@ -454,6 +455,8 @@ export default function AgentProfile() {
               <h3 className="text-base font-bold text-[#1E293B]">Executive Biography</h3>
               <p className="text-xs sm:text-sm text-[#64748B] leading-relaxed">{agent.bio}</p>
             </div>
+
+            <SessionManagementPanel />
           </div>
         </div>
       )}

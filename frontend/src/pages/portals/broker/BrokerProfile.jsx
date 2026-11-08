@@ -11,6 +11,7 @@ import { profileService, mockDefaultProfiles } from '../../../services/profileSe
 import { useAuth } from '../../../context/AuthContext';
 import { useDashboardDensity } from '../../../context/DashboardThemeContext';
 import { cn } from '@/utils/cn';
+import SessionManagementPanel from '../../../components/auth/SessionManagementPanel';
 
 export default function BrokerProfile() {
   const navigate = useNavigate();
@@ -390,6 +391,8 @@ export default function BrokerProfile() {
                 </p>
               </div>
             </Card>
+
+            <SessionManagementPanel />
           </div>
         </div>
       )}

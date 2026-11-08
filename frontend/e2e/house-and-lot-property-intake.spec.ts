@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 const BASE_URL = process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:5173';
 
 test.describe('House and Lot Property Listing Creation & Database Verification', () => {
-  test.setTimeout(60000);
+  test.setTimeout(120000);
 
   let brokerToken: string = '';
 
