@@ -47,9 +47,189 @@ export function resolveCanonicalStandardStatus(standardStatus, status) {
 }
 
 /**
+ * Deterministically resolves lifecycle state across status, standardStatus, and transactionType.
+ */
+export function resolvePropertyLifecycleState(input = {}) {
+  let rawStandard = input.standardStatus || input.standard_status;
+  let rawStatus = (input.status || '').toUpperCase();
+  let rawType = input.transactionType || input.transaction_type;
+
+  const key = typeof input === 'string' ? input : (input.propertyStatusKey || input.lifecycleKey || '');
+  if (key) {
+    const k = key.toLowerCase();
+    if (k.includes('rent')) {
+      rawType = 'For Rent';
+      rawStatus = 'AVAILABLE';
+      rawStandard = 'Active';
+    } else if (k.includes('reserve') || k.includes('under contract')) {
+      rawStatus = 'RESERVED';
+      rawStandard = 'Active Under Contract';
+    } else if (k.includes('sold') || k.includes('close')) {
+      rawStatus = 'SOLD';
+      rawStandard = 'Closed';
+    } else if (k.includes('draft') || k.includes('inactive')) {
+      rawStatus = 'INACTIVE';
+      rawStandard = 'Draft';
+    } else if (k.includes('sale') || k.includes('avail') || k.includes('active')) {
+      rawType = 'For Sale';
+      rawStatus = 'AVAILABLE';
+      rawStandard = 'Active';
+    }
+  }
+
+  const standardStatus = resolveCanonicalStandardStatus(rawStandard, rawStatus);
+
+  let status = 'AVAILABLE';
+  let isPublished = true;
+  let dbStatus = 'available';
+  let canonicalAvailability = 'available';
+  let lifecycleKey = 'For Sale';
+
+  const isRent = String(rawType || '').toLowerCase().includes('rent');
+
+  if (standardStatus === 'Active') {
+    status = 'AVAILABLE';
+    isPublished = true;
+    dbStatus = 'available';
+    canonicalAvailability = 'available';
+    lifecycleKey = isRent ? 'For Rent' : 'For Sale';
+  } else if (standardStatus === 'Active Under Contract' || rawStatus === 'RESERVED' || rawStatus.includes('CONTRACT')) {
+    status = 'RESERVED';
+    isPublished = true;
+    dbStatus = 'reserved';
+    canonicalAvailability = 'underContract';
+    lifecycleKey = 'Reserved';
+  } else if (standardStatus === 'Closed' || rawStatus === 'SOLD' || rawStatus === 'CLOSED') {
+    status = 'SOLD';
+    isPublished = false;
+    dbStatus = 'sold';
+    canonicalAvailability = 'sold';
+    lifecycleKey = 'Sold';
+  } else {
+    // Draft, Inactive, or Pending Approval
+    status = 'INACTIVE';
+    isPublished = false;
+    dbStatus = 'pending';
+    canonicalAvailability = 'available';
+    lifecycleKey = 'Draft';
+  }
+
+  const transactionType = isRent ? 'For Rent' : 'For Sale';
+
+  return {
+    lifecycleKey,
+    status,
+    standardStatus,
+    isPublished,
+    dbStatus,
+    canonicalAvailability,
+    transactionType,
+  };
+}
+
+/**
+ * Returns the single clean Pill 1 label and metadata for card rendering.
+ */
+export function formatMergedStatusPill(property = {}) {
+  const lifecycle = resolvePropertyLifecycleState(property);
+  return {
+    label: lifecycle.lifecycleKey,
+    key: lifecycle.lifecycleKey,
+    isClosed: lifecycle.standardStatus === 'Closed',
+    isUnderContract: lifecycle.standardStatus === 'Active Under Contract',
+    isRent: lifecycle.transactionType === 'For Rent',
+    isPublished: lifecycle.isPublished,
+  };
+}
+
+
+/**
  * Normalizes raw property items from Supabase / Express backend or mock fixtures
  * into a consistent, UI-safe format.
  */
+/**
+ * Formats a property's Address heading as Street / Building + City
+ * (e.g. "200 High Street, Taguig"), with clean fallbacks when street details are absent.
+ */
+export function formatPropertyAddressHeading(property = {}, fallback = 'Metro Manila, Philippines') {
+  if (!property || typeof property !== 'object') return fallback;
+
+  const clean = (val) => {
+    const str = String(val || '').trim();
+    return str.toLowerCase() === 'address pending' ? '' : str;
+  };
+
+  const streetOrBuilding = clean(
+    property.address ||
+    property.streetAddress ||
+    property.street_address ||
+    property.location_raw?.address ||
+    (typeof property.location === 'object' && property.location?.address) ||
+    property.building_name ||
+    property.buildingName ||
+    property.location_raw?.buildingName ||
+    (typeof property.location === 'object' && (property.location?.buildingName || property.location?.building_name)) ||
+    property.subdivision_name ||
+    property.subdivisionName ||
+    property.subdivision
+  );
+
+  const city = clean(
+    property.city ||
+    property.City ||
+    property.location_raw?.city ||
+    (typeof property.location === 'object' && property.location?.city)
+  );
+
+  if (streetOrBuilding && city) {
+    const lowerStreet = streetOrBuilding.toLowerCase();
+    const lowerCity = city.toLowerCase();
+    return lowerStreet.includes(lowerCity)
+      ? streetOrBuilding
+      : `${streetOrBuilding}, ${city}`;
+  }
+
+  if (streetOrBuilding) return streetOrBuilding;
+
+  const province = clean(
+    property.state_or_province ||
+    property.province ||
+    property.StateOrProvince ||
+    property.location_raw?.stateOrProvince ||
+    (typeof property.location === 'object' && (property.location?.stateOrProvince || property.location?.state))
+  );
+
+  if (city) {
+    return [city, province].filter(Boolean).join(', ');
+  }
+
+  if (typeof property.location === 'string' && clean(property.location)) {
+    return clean(property.location);
+  }
+
+  if (clean(property.unparsed_address || property.unparsedAddress)) {
+    return clean(property.unparsed_address || property.unparsedAddress);
+  }
+
+  return fallback;
+}
+
+/**
+ * Resolves the Developer Name for DataTable & Form Overview displays.
+ */
+export function formatPropertyDeveloperName(property = {}, fallback = 'Independent Developer') {
+  if (!property || typeof property !== 'object') return fallback;
+  return (
+    property.developer_name ||
+    property.developerName ||
+    property.title ||
+    property.name ||
+    property.building_name ||
+    property.subdivision_name ||
+    fallback
+  );
+}
+
 export function normalizeProperty(rawItem = {}) {
   const mediaPhotos = Array.isArray(rawItem.media)
     ? rawItem.media.filter(m => (m.mediaCategory === 'Photo' || m.media_category === 'Photo') && (m.mediaUrl || m.media_url)).map(m => m.mediaUrl || m.media_url)
@@ -90,18 +270,20 @@ export function normalizeProperty(rawItem = {}) {
     (typeof rawItem.price === 'string' && rawItem.price.startsWith('₱') ? rawItem.price : null) ||
     (rawNumericPrice > 0 ? `₱${rawNumericPrice.toLocaleString()}` : null);
 
-  const canonicalStandardStatus = resolveCanonicalStandardStatus(
-    rawItem.standard_status || rawItem.standardStatus,
-    rawItem.status
-  );
+  const lifecycle = resolvePropertyLifecycleState({
+    status: rawItem.status,
+    standardStatus: rawItem.standard_status || rawItem.standardStatus,
+    transactionType: rawItem.transaction_type || rawItem.transactionType || rawItem.specs?.transactionType || rawItem.customAttributes?.canonicalPayload?.transactionType || (rawItem.pricing?.rentFrequency ? 'For Rent' : 'For Sale'),
+    isPublished: rawItem.is_published !== undefined ? rawItem.is_published : rawItem.isPublished,
+  });
 
-  const normalizedStatus = (rawItem.status || (canonicalStandardStatus === 'Active' ? 'AVAILABLE' : canonicalStandardStatus === 'Closed' ? 'SOLD' : 'PENDING')).toUpperCase();
-
+  const canonicalStandardStatus = lifecycle.standardStatus;
+  const normalizedStatus = lifecycle.status;
   const isPublished = rawItem.is_published !== undefined
     ? Boolean(rawItem.is_published)
     : (rawItem.isPublished !== undefined
         ? Boolean(rawItem.isPublished)
-        : (normalizedStatus !== 'SOLD' && normalizedStatus !== 'INACTIVE'));
+        : lifecycle.isPublished);
 
   const explicitAgentName = rawItem.agent_name || rawItem.agentName || rawItem.agent?.name || '';
   const agentId = rawItem.agent_id || rawItem.agentId || null;
@@ -123,7 +305,9 @@ export function normalizeProperty(rawItem = {}) {
   return {
     ...rawItem,
     id: String(rawItem.id || `prop-${Date.now()}`),
-    title: rawItem.title || rawItem.name || 'Untitled Property',
+    title: rawItem.title || rawItem.developer_name || rawItem.developerName || rawItem.name || 'Untitled Property',
+    developer_name: rawItem.developer_name || rawItem.developerName || rawItem.title || rawItem.name || '',
+    developerName: rawItem.developerName || rawItem.developer_name || rawItem.title || rawItem.name || '',
     tagline: rawItem.tagline || '',
     mainImage,
     image: mainImage || (images.length > 0 ? images[0] : null),
@@ -365,39 +549,22 @@ export function toApiPayload(item = {}) {
               : []))
   })) : undefined;
 
-  // Resolve and synchronize standardStatus, status, and isPublished
-  const rawStandardStatus = item.standardStatus || item.standard_status;
-  const rawStatus = (item.status || '').toUpperCase();
+  // Resolve and synchronize standardStatus, status, and isPublished via resolvePropertyLifecycleState
+  const lifecycle = resolvePropertyLifecycleState({
+    status: item.status,
+    standardStatus: item.standardStatus || item.standard_status,
+    transactionType: item.transactionType || item.transaction_type,
+    propertyStatusKey: item.propertyStatusKey || item.property_status_key || item.propertyStatus,
+    isPublished: item.is_published !== undefined ? item.is_published : item.isPublished,
+  });
 
-  let resolvedStandardStatus = rawStandardStatus;
-  if (!resolvedStandardStatus) {
-    if (rawStatus === 'AVAILABLE' || rawStatus === 'ACTIVE') {
-      resolvedStandardStatus = 'Active';
-    } else if (rawStatus === 'UNDER CONTRACT' || rawStatus === 'ACTIVE UNDER CONTRACT' || rawStatus === 'RESERVED') {
-      resolvedStandardStatus = 'Active Under Contract';
-    } else if (rawStatus === 'SOLD' || rawStatus === 'CLOSED') {
-      resolvedStandardStatus = 'Closed';
-    } else {
-      resolvedStandardStatus = 'Draft';
-    }
-  } else {
-    resolvedStandardStatus = resolveCanonicalStandardStatus(resolvedStandardStatus, item.status);
-  }
-
-  let derivedStatus = 'pending';
-  if (resolvedStandardStatus === 'Active') {
-    derivedStatus = 'available';
-  } else if (resolvedStandardStatus === 'Closed' || rawStatus === 'SOLD') {
-    derivedStatus = 'sold';
-  } else {
-    derivedStatus = 'pending';
-  }
-
+  const resolvedStandardStatus = lifecycle.standardStatus;
+  const derivedStatus = lifecycle.dbStatus;
   const resolvedIsPublished = item.is_published !== undefined
     ? Boolean(item.is_published)
     : (item.isPublished !== undefined
         ? Boolean(item.isPublished)
-        : (resolvedStandardStatus === 'Active'));
+        : lifecycle.isPublished);
 
   const resolvedListAgentKey = item.listAgentKey || item.list_agent_key || item.agentId || item.agent_id || item.assignedAgent?.agentId || item.assignedAgent?.id || undefined;
 
@@ -560,7 +727,7 @@ export function toApiPayload(item = {}) {
     referenceCode: item.referenceCode || item.reference_code || item.cadastral_reference || item.cadastralReference || undefined,
     propertyType: canonicalPropertyType,
     transactionType: item.transactionType || item.transaction_type || 'sale',
-    title: (item.title || 'Untitled Property').trim(),
+    title: (item.developer_name || item.developerName || item.title || formatPropertyAddressHeading(item)).trim(),
     tagline: item.tagline || '',
     description: item.description || item.publicRemarks || null,
     status: {
@@ -605,7 +772,7 @@ export function toApiPayload(item = {}) {
   };
 
   return {
-    title: (item.title || 'Untitled Luxury Property').trim(),
+    title: (item.developer_name || item.developerName || item.title || formatPropertyAddressHeading(item)).trim(),
     tagline: item.tagline || '',
     listingKey: item.cadastralLotId || item.listingKey || item.listing_key || undefined,
     listingId: item.listing_id || item.listingId || undefined,

@@ -12,6 +12,7 @@ import {
   IconUser
 } from '@tabler/icons-react';
 import { resolveDriveImageUrl } from '../../../services/driveService';
+import { formatPropertyAddressHeading, formatMergedStatusPill } from '../../../services/propertyService';
 import useViewingList from '../../../hooks/useViewingList';
 import ViewPropertyButton from '../buttons/ViewPropertyButton';
 
@@ -45,7 +46,7 @@ export default function PropertyCard({
   const isClosed = lowerStatus.includes('closed') || lowerStatus.includes('sold');
 
   // Title mapping (Name -> properties.title)
-  const propertyTitle = property.title || property.name || 'Untitled Property';
+  const propertyTitle = formatPropertyAddressHeading(property, 'Metro Manila, Philippines');
 
   // Transaction classification & Badge: For Sale / For Rent
   const transactionType = property.transaction_type || property.transactionType || property.specs?.transactionType || '';
@@ -56,6 +57,7 @@ export default function PropertyCard({
   );
   const typeBadgeLabel = isRent ? 'For Rent' : 'For Sale';
   const isFeatured = Boolean(property.is_featured || property.isFeatured);
+  const statusPill = formatMergedStatusPill(property);
 
   // Property Type
   const propertyType = property.property_type || property.propertyType || property.specs?.propertyType || property.PropertyType || 'Residential';
@@ -180,56 +182,36 @@ export default function PropertyCard({
             }`}
           />
 
-          {/* Top-Left Pill: • For sale / For rent + Condition State + RESO Status Badges */}
-          <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 flex-wrap max-w-[75%]">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/95 backdrop-blur-xs text-[11px] font-medium text-[#1E293B] shadow-xs">
-              <span className={`w-1.5 h-1.5 rounded-full ${isRent ? 'bg-amber-500' : 'bg-emerald-500'}`} />
-              <span>{typeBadgeLabel}</span>
+          {/* Top-Left Pills: Max 2 pills (Pill 1: Merged Status, Pill 2: Condition) - No circle dots */}
+          <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 flex-wrap max-w-[78%]">
+            <span 
+              data-testid="card-status-badge"
+              className={`inline-flex items-center px-3 py-1 rounded-full text-[11px] font-semibold backdrop-blur-xs shadow-xs ${
+                statusPill.isClosed
+                  ? 'bg-rose-600 text-white border border-rose-700'
+                  : statusPill.isUnderContract
+                    ? 'bg-amber-50/95 text-amber-800 border border-amber-300'
+                    : 'bg-white/95 text-[#1E293B] border border-slate-200/80'
+              }`}
+            >
+              {statusPill.label}
             </span>
 
             {condition && (
               <span 
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/95 backdrop-blur-xs text-[11px] font-semibold text-[#0F766E] shadow-xs border border-teal-100/60"
+                className="inline-flex items-center px-2.5 py-1 rounded-full bg-white/95 backdrop-blur-xs text-[11px] font-semibold text-[#0F766E] shadow-xs border border-teal-100/60"
                 data-testid="card-condition-badge"
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-[#0F766E]" />
                 {condition}
-              </span>
-            )}
-
-            {isUnderContract && (
-              <span 
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full backdrop-blur-md bg-amber-50/95 text-amber-800 border border-amber-300 text-[11px] font-bold shadow-xs uppercase tracking-wide" 
-                data-testid="card-status-badge"
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                Under Contract
-              </span>
-            )}
-
-            {isClosed && (
-              <span 
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full backdrop-blur-md bg-rose-600 text-white border border-rose-700 text-[11px] font-extrabold shadow-sm uppercase tracking-wider" 
-                data-testid="card-status-badge"
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                SOLD / CLOSED
-              </span>
-            )}
-
-            {isFeatured && (
-              <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-[#FF6B6B] text-white text-[11px] font-bold shadow-xs uppercase tracking-wide">
-                Featured
               </span>
             )}
 
             {isSelected && typeof onSelect === 'function' && (
               <span
                 data-testid="card-map-focused-badge"
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#0F766E] text-white text-[11px] font-semibold shadow-xs"
+                className="inline-flex items-center px-2.5 py-1 rounded-full bg-[#0F766E] text-white text-[11px] font-semibold shadow-xs"
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-[#FF6B6B] animate-pulse" />
-                <span>Pinned on Map • Click again for details</span>
+                Pinned on Map • Click again for details
               </span>
             )}
           </div>
@@ -249,30 +231,6 @@ export default function PropertyCard({
               )}
             </button>
           </div>
-
-          {/* Bottom-Left Pill: Location pin & location name */}
-          <div className="absolute bottom-3 left-3 z-10 max-w-[85%]">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/95 backdrop-blur-xs text-xs font-medium text-[#1E293B] shadow-xs truncate">
-              <div className="w-4 h-4 rounded-full bg-rose-50 flex items-center justify-center text-rose-500 shrink-0">
-                <IconMapPin size={11} stroke={2.5} className="text-rose-500" />
-              </div>
-              <span className="truncate">{displayLocation}</span>
-            </div>
-          </div>
-
-          {/* Under Contract Contextual Overlay Banner */}
-          {isUnderContract && (
-            <div className="absolute bottom-0 inset-x-0 bg-amber-500/90 backdrop-blur-xs text-white text-[10px] font-bold py-1 px-3 text-center uppercase tracking-wider z-10 shadow-xs">
-              Under Contract • Backup Inquiries Welcome
-            </div>
-          )}
-
-          {/* Sold / Closed Contextual Overlay Banner */}
-          {isClosed && (
-            <div className="absolute bottom-0 inset-x-0 bg-slate-900/85 backdrop-blur-xs text-white text-[10px] font-bold py-1 px-3 text-center uppercase tracking-widest z-10 shadow-xs">
-              Transaction Closed • Sold Benchmark
-            </div>
-          )}
         </div>
 
         {/* Content Section below photo */}
@@ -291,9 +249,14 @@ export default function PropertyCard({
           </div>
 
           {/* Property Title with Coral Period */}
-          <h3 className="text-xl sm:text-2xl font-bold text-[#0F4C5C] group-hover:text-[#0F766E] tracking-tight line-clamp-2 leading-tight transition-colors">
-            <span>{propertyTitle}</span>
-            <span className="text-[#E07A5F]">.</span>
+          <h3 className="text-xl sm:text-2xl font-bold text-[#0F4C5C] group-hover:text-[#0F766E] tracking-tight line-clamp-2 leading-tight transition-colors flex items-center gap-2">
+            <span className="w-7 h-7 rounded-full bg-rose-50 flex items-center justify-center text-[#E07A5F] shrink-0" data-testid="card-address-pin-icon">
+              <IconMapPin size={16} stroke={2.2} className="text-[#E07A5F]" />
+            </span>
+            <span className="truncate">
+              <span>{propertyTitle}</span>
+              <span className="text-[#E07A5F]">.</span>
+            </span>
           </h3>
 
           {/* Key Specs Row: beds, baths, area */}

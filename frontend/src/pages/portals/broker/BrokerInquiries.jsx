@@ -8,6 +8,8 @@ import DataTable from '../../../components/dashboard/DataTable';
 import EmptyState from '../../../components/dashboard/EmptyState';
 import { Card, CardContent, useToast, Toaster, Spinner } from '../../../components/ui';
 import { TableSkeleton } from '../../../components/dashboard/skeletons';
+import InquirySourceBadge from '../../../components/inquiries/InquirySourceBadge';
+import SlaCountdownPill from '../../../components/inquiries/SlaCountdownPill';
 import { inquiryService } from '../../../services/inquiryService';
 import { agentService } from '../../../services/agentService';
 
@@ -45,7 +47,8 @@ export default function BrokerInquiries() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState('');
-  const [activeTab, setActiveTab] = useState('ALL'); // ALL, ACTIVE, INACTIVE, UNASSIGNED, UNANSWERED, OVERDUE
+  const [activeTab, setActiveTab] = useState('ALL'); // ALL, ACTIVE, INACTIVE, UNASSIGNED, UNANSWERED, OVERDUE, AI_CHATBOT
+  const [selectedId, setSelectedId] = useState(null);
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [agentFilter, setAgentFilter] = useState('ALL');
   const [agents, setAgents] = useState([]);
@@ -84,6 +87,37 @@ export default function BrokerInquiries() {
   const inactiveCount = inquiries.filter((i) => i.business_status === 'inactive').length;
   const unassignedCount = inquiries.filter((i) => i.operational_status === 'unassigned' || !i.agent_id).length;
   const overdueCount = inquiries.filter((i) => i.operational_status === 'overdue').length;
+  const aiChatbotCount = inquiries.filter((i) => i.source === 'ai_chatbot').length;
+
+  const eligibleAgents = agents.filter(
+    (a) => a.verification_status !== 'REJECTED' && a.verification_status !== 'PENDING'
+  );
+
+  const handleQuickAssign = async (inquiryId, agentId) => {
+    if (!agentId) return;
+    const selected = eligibleAgents.find((a) => a.id === agentId);
+    try {
+      await inquiryService.assignAgent(inquiryId, agentId, 'Quick-assigned by Broker');
+      setInquiries((prev) =>
+        prev.map((item) =>
+          item.id === inquiryId
+            ? { ...item, agent_id: agentId, agent_name: selected?.name || selected?.fullName || item.agent_name }
+            : item
+        )
+      );
+      toast({
+        title: 'Consultant Assigned',
+        description: `Assigned to ${selected?.name || selected?.fullName || 'eligible agent'}.`,
+        variant: 'success',
+      });
+    } catch (err) {
+      toast({
+        title: 'Assignment Failed',
+        description: err.message || 'Could not assign consultant.',
+        variant: 'destructive',
+      });
+    }
+  };
 
   const filtered = inquiries.filter((inq) => {
     const clientName = inq.client_name || '';
@@ -107,6 +141,8 @@ export default function BrokerInquiries() {
       matchesTab = inq.operational_status === 'unassigned' || !inq.agent_id;
     } else if (activeTab === 'OVERDUE') {
       matchesTab = inq.operational_status === 'overdue';
+    } else if (activeTab === 'AI_CHATBOT') {
+      matchesTab = inq.source === 'ai_chatbot';
     }
 
     return matchesSearch && matchesStatus && matchesAgent && matchesTab;
@@ -184,6 +220,12 @@ export default function BrokerInquiries() {
               <span className="text-[10px] font-mono text-slate-400 dark:text-slate-500">
                 Ref: {row.reference_code || row.id}
               </span>
+              <div className="pt-1">
+                <InquirySourceBadge
+                  source={row.source}
+                  consentAccepted={row.consentAccepted ?? row.consent_accepted}
+                />
+              </div>
             </div>
           </div>
         );
@@ -245,13 +287,33 @@ export default function BrokerInquiries() {
             >
               {isAssigned ? getInitials(row.agent_name) : '!'}
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 space-y-1">
               <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 font-sans truncate">
                 {row.agent_name || <span className="text-amber-700 dark:text-amber-400 font-bold">Unassigned</span>}
               </p>
-              <span className="text-[10px] text-slate-400 dark:text-slate-500 font-sans block">
-                {isAssigned ? 'Consultant' : 'Awaiting routing'}
-              </span>
+              {eligibleAgents.length > 0 ? (
+                <select
+                  aria-label={`Quick assign consultant for ${row.client_name}`}
+                  value={row.agent_id || ''}
+                  onClick={(e) => e.stopPropagation()}
+                  onChange={(e) => {
+                    e.stopPropagation();
+                    handleQuickAssign(row.id, e.target.value);
+                  }}
+                  className="text-[11px] bg-white dark:bg-slate-900 border border-[#E2E8F0] dark:border-slate-700 rounded px-1.5 py-0.5 text-[#1E293B] dark:text-slate-200 focus:border-[#0F766E] outline-none cursor-pointer"
+                >
+                  <option value="">Assign verified agent...</option>
+                  {eligibleAgents.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.name || a.fullName}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <span className="text-[10px] text-slate-400 dark:text-slate-500 font-sans block">
+                  {isAssigned ? 'Consultant' : 'Awaiting routing'}
+                </span>
+              )}
             </div>
           </div>
         );
@@ -261,18 +323,13 @@ export default function BrokerInquiries() {
       header: "Operational State",
       render: (row) => (
         <div className="flex flex-col gap-1 items-start">
-          <div className="flex items-center gap-1.5">
-            <span
-              className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                row.operational_status === 'overdue'
-                  ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-rose-300 dark:border-rose-800'
-                  : row.operational_status === 'unassigned'
-                  ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
-              }`}
-            >
-              {row.operational_status === 'overdue' ? 'Overdue SLA' : row.operational_status || 'normal'}
-            </span>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <SlaCountdownPill
+              createdAt={row.created_at}
+              operationalStatus={row.operational_status}
+              businessStatus={row.business_status}
+              firstRespondedAt={row.first_responded_at}
+            />
             {row.business_status === 'inactive' && (
               <span className="text-[9px] font-mono uppercase text-slate-400">Inactive</span>
             )}
@@ -311,17 +368,26 @@ export default function BrokerInquiries() {
         title="Inquiries"
         subtitle="Monitor incoming client requests, oversee consultant communication, and enforce response SLAs."
         actions={
-          <button
-            onClick={loadInquiriesAndMetrics}
-            disabled={loading}
-            aria-label="Refresh firm inquiries"
-            className="h-[42px] px-4 bg-white dark:bg-slate-900 hover:bg-gray-50 dark:hover:bg-slate-800 text-[#1E293B] dark:text-slate-100 border border-[#E2E8F0] dark:border-slate-800 rounded-lg text-xs font-bold font-sans uppercase tracking-wider flex items-center gap-2 transition-all shadow-xs cursor-pointer"
-          >
-            <span className={`material-symbols-outlined text-[18px] ${loading ? 'animate-spin' : ''}`}>
-              refresh
-            </span>
-            <span>Refresh</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <Link
+              to="/broker/inquiries/messages"
+              className="h-[42px] px-4 bg-[#0F766E] hover:bg-[#115E59] text-white rounded-lg text-xs font-bold font-sans uppercase tracking-wider inline-flex items-center gap-2 transition-all shadow-xs"
+            >
+              <MessageSquare className="w-4 h-4" />
+              <span>Open Messaging Inbox</span>
+            </Link>
+            <button
+              onClick={loadInquiriesAndMetrics}
+              disabled={loading}
+              aria-label="Refresh firm inquiries"
+              className="h-[42px] px-4 bg-white dark:bg-slate-900 hover:bg-gray-50 dark:hover:bg-slate-800 text-[#1E293B] dark:text-slate-100 border border-[#E2E8F0] dark:border-slate-800 rounded-lg text-xs font-bold font-sans uppercase tracking-wider flex items-center gap-2 transition-all shadow-xs cursor-pointer"
+            >
+              <span className={`material-symbols-outlined text-[18px] ${loading ? 'animate-spin' : ''}`}>
+                refresh
+              </span>
+              <span>Refresh</span>
+            </button>
+          </div>
         }
       />
 
@@ -383,7 +449,7 @@ export default function BrokerInquiries() {
         </div>
       )}
 
-      {/* Queue Tabs (Active/Inactive, Unassigned, Overdue) */}
+      {/* Queue Tabs */}
       <div data-testid="broker-queue-tabs" className="flex items-center gap-2 border-b border-[#E2E8F0] dark:border-slate-800 pb-2 overflow-x-auto">
         {[
           { key: 'ALL', label: `All Inquiries (${totalCount})` },
@@ -391,6 +457,7 @@ export default function BrokerInquiries() {
           { key: 'INACTIVE', label: `Inactive (${inactiveCount})` },
           { key: 'UNASSIGNED', label: `Unassigned (${unassignedCount})` },
           { key: 'OVERDUE', label: `Overdue SLA (${overdueCount})` },
+          { key: 'AI_CHATBOT', label: `AI Chatbot (${aiChatbotCount})` },
         ].map((tab) => (
           <button
             key={tab.key}
@@ -406,7 +473,6 @@ export default function BrokerInquiries() {
         ))}
       </div>
 
-      {/* Filters */}
       <SearchAndFilterBar
         searchValue={search}
         onSearchChange={setSearch}
@@ -449,35 +515,10 @@ export default function BrokerInquiries() {
         />
       ) : (
         <Card data-testid="broker-card" className="bg-white dark:bg-slate-900 rounded-lg border border-[#E2E8F0] dark:border-slate-800 overflow-hidden shadow-xs">
-          {/* Messaging Application Inbox Toolbar */}
-          <div className="px-4 py-3 border-b border-[#E2E8F0] dark:border-slate-800 bg-[#F8FAFC] dark:bg-slate-900/60 flex flex-wrap items-center justify-between gap-3 text-xs">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-teal-50 dark:bg-teal-950/60 text-[#0F766E] dark:text-teal-400 flex items-center justify-center border border-teal-200/60 dark:border-teal-900">
-                <MessageSquare className="w-3.5 h-3.5" />
-              </div>
-              <span className="font-bold text-[#1E293B] dark:text-slate-100 font-sans text-xs uppercase tracking-wider">
-                Inquiry Conversations
-              </span>
-              <span className="px-2 py-0.5 rounded-full bg-teal-100 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300 font-mono text-[10px] font-bold">
-                {filtered.length} {filtered.length === 1 ? 'thread' : 'threads'}
-              </span>
-            </div>
-            <div className="flex items-center gap-3 text-[11px] font-sans text-[#64748B] dark:text-slate-400">
-              <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-rose-500"></span> Overdue SLA
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-[#0F766E] animate-pulse"></span> Unread / New
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-amber-500"></span> Unassigned
-              </span>
-            </div>
-          </div>
           <DataTable
             columns={columns}
             data={filtered}
-            onRowClick={(row) => navigate(`/broker/inquiries/${row.id}`)}
+            onRowClick={(row) => navigate(`/broker/inquiries/messages/${row.id}`)}
           />
         </Card>
       )}

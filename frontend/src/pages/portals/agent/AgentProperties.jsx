@@ -5,7 +5,10 @@ import SearchAndFilterBar from '../../../components/dashboard/SearchAndFilterBar
 import StatusBadge from '../../../components/dashboard/StatusBadge';
 import DataTable from '../../../components/dashboard/DataTable';
 import EmptyState from '../../../components/dashboard/EmptyState';
-import propertyService from '../../../services/propertyService';
+import propertyService, {
+  formatPropertyAddressHeading,
+  formatPropertyDeveloperName,
+} from '../../../services/propertyService';
 import { useAuth } from '../../../context/AuthContext';
 import { Building2, Clock, CheckCircle2, AlertTriangle, XCircle, Check } from 'lucide-react';
 import { Button, buttonVariants, Badge } from '../../../components/ui';
@@ -100,26 +103,29 @@ export default function AgentProperties() {
   const columns = [
     {
       header: "Property",
-      render: (row) => (
-        <div className="flex items-center gap-3">
-          <AgentPropertyThumbnail
-            src={row.mainImage || (Array.isArray(row.images) && row.images.length > 0 ? row.images[0] : null)}
-            title={row.title}
-          />
-          <div>
-            <div className="flex items-center gap-2">
-              <p className="font-semibold text-[#1E293B] text-sm">{row.title}</p>
-              {pendingPropertyIds.has(row.id) && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-                  <Clock className="w-3 h-3 text-amber-600" />
-                  Edit Pending
-                </span>
-              )}
+      render: (row) => {
+        const devName = formatPropertyDeveloperName(row, 'Independent Developer');
+        return (
+          <div className="flex items-center gap-3">
+            <AgentPropertyThumbnail
+              src={row.mainImage || (Array.isArray(row.images) && row.images.length > 0 ? row.images[0] : null)}
+              title={devName}
+            />
+            <div>
+              <div className="flex items-center gap-2">
+                <p className="font-semibold text-[#1E293B] text-sm">{devName}</p>
+                {pendingPropertyIds.has(row.id) && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                    <Clock className="w-3 h-3 text-amber-600" />
+                    Edit Pending
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-[#64748B]">{formatPropertyAddressHeading(row, 'Metro Manila')}</p>
             </div>
-            <p className="text-xs text-[#64748B]">{typeof row.location === 'string' ? row.location : row.location?.address || 'Metro Manila'}</p>
           </div>
-        </div>
-      )
+        );
+      }
     },
     {
       header: "Type",
@@ -235,7 +241,7 @@ export default function AgentProperties() {
       <SearchAndFilterBar
         searchValue={search}
         onSearchChange={setSearch}
-        searchPlaceholder="Search property by title or location..."
+        searchPlaceholder="Search property by developer or address..."
         filters={[
           {
             value: statusFilter,
@@ -355,11 +361,11 @@ export default function AgentProperties() {
                     </span>
                   </div>
                   <h3 className="font-semibold text-base text-[#1E293B] line-clamp-1 group-hover:text-[#0F766E] transition-colors">
-                    {item.title}
+                    {formatPropertyAddressHeading(item, 'Metro Manila')}
                   </h3>
                   <p className="text-xs text-[#64748B] flex items-center gap-1 line-clamp-1">
-                    <span className="material-symbols-outlined text-[15px] text-slate-400">location_on</span>
-                    {typeof item.location === 'string' ? item.location : item.location?.address || 'Metro Manila'}
+                    <span className="material-symbols-outlined text-[15px] text-slate-400">domain</span>
+                    {formatPropertyDeveloperName(item, 'Independent Developer')}
                   </p>
                 </div>
 

@@ -43,6 +43,7 @@ const AgentProperties = lazy(() => import('./pages/portals/agent/AgentProperties
 const AgentPropertyDetail = lazy(() => import('./pages/portals/agent/AgentPropertyDetail'));
 const AgentInquiries = lazy(() => import('./pages/portals/agent/AgentInquiries'));
 const AgentInquiryDetail = lazy(() => import('./pages/portals/agent/AgentInquiryDetail'));
+const InquiryMessagesPage = lazy(() => import('./pages/portals/InquiryMessagesPage'));
 const AgentAppointments = lazy(() => import('./pages/portals/agent/AgentAppointments'));
 const AgentAvailability = lazy(() => import('./pages/portals/agent/AgentAvailability'));
 const AgentSales = lazy(() => import('./pages/portals/agent/AgentSales'));
@@ -143,6 +144,8 @@ function AppRoutes({ isAppLoading }) {
             <Route path="properties" element={<AgentProperties />} />
             <Route path="properties/:id" element={<AgentPropertyDetail />} />
             <Route path="inquiries" element={<AgentInquiries />} />
+            <Route path="inquiries/messages" element={<InquiryMessagesPage role="agent" />} />
+            <Route path="inquiries/messages/:id" element={<InquiryMessagesPage role="agent" />} />
             <Route path="inquiries/:id" element={<AgentInquiryDetail />} />
             <Route path="appointments" element={<AgentAppointments />} />
             <Route path="availability" element={<AgentAvailability />} />
@@ -169,6 +172,8 @@ function AppRoutes({ isAppLoading }) {
             <Route path="properties/:id/edit" element={<BrokerCreateListings />} />
             <Route path="properties/:id" element={<Navigate to="edit" replace />} />
             <Route path="inquiries" element={<BrokerInquiries />} />
+            <Route path="inquiries/messages" element={<InquiryMessagesPage role="broker" />} />
+            <Route path="inquiries/messages/:id" element={<InquiryMessagesPage role="broker" />} />
             <Route path="inquiries/:id" element={<BrokerInquiryDetail />} />
             <Route path="appointments" element={<BrokerAppointments />} />
             <Route path="clients" element={<Navigate to="/broker/inquiries" replace />} />

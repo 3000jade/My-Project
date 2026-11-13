@@ -330,10 +330,12 @@ describe('GooglePropertyMap Multi-Property Pinpoint & MultiUnitDrawer', () => {
     // Click the stacked anchor marker to open MultiUnitDrawer
     fireEvent.click(stackedMarker);
 
-    // MultiUnitDrawer should now be open displaying both tower units
+    // MultiUnitDrawer should now be open displaying both tower units with their formatted title
     expect(screen.getByRole('dialog', { name: /Listings at One Serendra/i })).toBeDefined();
     expect(screen.getByText('One Serendra Unit 10A')).toBeDefined();
     expect(screen.getByText('One Serendra Unit 24C')).toBeDefined();
+    expect(screen.getByText('10A')).toBeDefined();
+    expect(screen.getByText('24C')).toBeDefined();
 
     // Click one of the units inside drawer
     const unit10ACard = screen.getByTestId('unit-card-tower-u1');

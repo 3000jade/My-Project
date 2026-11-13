@@ -31,7 +31,7 @@ import {
 } from '@tabler/icons-react';
 
 import { mockProperties } from '../../mockData/mockProperties';
-import { propertyService } from '../../services/propertyService';
+import { propertyService, formatPropertyAddressHeading } from '../../services/propertyService';
 import { inquiryService } from '../../services/inquiryService';
 import useViewingList from '../../hooks/useViewingList';
 import AuthContext from '../../context/AuthContext';
@@ -178,8 +178,8 @@ export default function PropertyListingView() {
     )
   );
 
-  // 3. Normalized Property Fields & Mapping
-  const propertyTitle = property?.title || property?.name || 'Untitled Property';
+  // 3. Normalized Property Fields & Mapping (Address replaces standalone Title)
+  const propertyTitle = formatPropertyAddressHeading(property, 'Metro Manila, Philippines');
   const publicRemarks = property?.PublicRemarks || property?.public_remarks || property?.publicRemarks || property?.description || '';
   // Clean public remarks by removing HTML tags (e.g. <p>test</p> -> test)
   const cleanPublicRemarks = useMemo(() => {
@@ -543,10 +543,10 @@ export default function PropertyListingView() {
   // 4. Loading & Error States
   if (isLoading && !property) {
     return (
-      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-6 pt-28">
+      <div className="min-h-screen bg-background flex items-center justify-center p-6 pt-28">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-9 h-9 border-3 border-[#0F766E] border-t-transparent rounded-full animate-spin" />
-          <span className="text-xs font-semibold text-[#64748B]">Loading property showcase...</span>
+          <div className="w-9 h-9 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          <span className="text-xs font-semibold text-on-surface-variant">Loading property showcase...</span>
         </div>
       </div>
     );
@@ -554,13 +554,13 @@ export default function PropertyListingView() {
 
   if (loadError && !property) {
     return (
-      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-6 pt-28">
-        <div className="max-w-md w-full text-center bg-white p-8 rounded-xl border border-[#E2E8F0] shadow-sm space-y-4">
-          <div className="w-12 h-12 rounded-full bg-rose-50 text-[#FF6B6B] flex items-center justify-center mx-auto">
+      <div className="min-h-screen bg-background flex items-center justify-center p-6 pt-28">
+        <div className="max-w-md w-full text-center bg-surface p-8 rounded-xl border border-outline shadow-xs space-y-4">
+          <div className="w-12 h-12 rounded-full bg-rose-50 text-accent flex items-center justify-center mx-auto">
             <IconBuilding size={24} />
           </div>
-          <h2 className="text-xl font-bold text-[#1E293B]">Listing Not Found</h2>
-          <p className="text-xs text-[#64748B]">The requested property listing could not be found or has been unpublished.</p>
+          <h2 className="text-xl font-bold text-on-surface">Listing Not Found</h2>
+          <p className="text-xs text-on-surface-variant">The requested property listing could not be found or has been unpublished.</p>
           <Button asChild variant="default" className="w-full">
             <Link to="/properties">
               <IconArrowLeft size={16} />
@@ -573,11 +573,11 @@ export default function PropertyListingView() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#1E293B] antialiased selection:bg-[#0F766E] selection:text-white pt-[80px]">
+    <div className="min-h-screen bg-background text-on-surface antialiased selection:bg-primary selection:text-white pt-20">
       {/* Toast Alert */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-[300] bg-[#1E293B] text-white px-4 py-3 rounded-lg shadow-xl text-xs font-semibold flex items-center gap-2 border border-slate-700 animate-in fade-in slide-in-from-bottom-2">
-          <IconCheck size={16} className="text-[#10B981]" />
+        <div className="fixed bottom-6 right-6 z-[300] bg-on-surface text-white px-4 py-3 rounded-lg shadow-xl text-xs font-semibold flex items-center gap-2 border border-slate-700 animate-in fade-in slide-in-from-bottom-2">
+          <IconCheck size={16} className="text-emerald-500" />
           <span>{toastMessage}</span>
         </div>
       )}
@@ -586,18 +586,18 @@ export default function PropertyListingView() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-1 flex items-center justify-between gap-4">
         <Link
           to="/properties"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#64748B] hover:text-[#0F766E] transition-colors focus:outline-none focus:ring-2 focus:ring-[#0F766E] rounded px-1.5 py-1 shrink-0"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-on-surface-variant hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary rounded px-1.5 py-1 shrink-0"
         >
           <IconArrowLeft size={15} />
           <span className="hidden sm:inline">Back to Properties</span>
           <span className="sm:hidden">Properties</span>
         </Link>
-        <nav className="flex items-center gap-1.5 text-xs text-[#64748B] overflow-x-auto">
-          <Link to="/" className="hover:text-[#0F766E] transition-colors">Home</Link>
+        <nav className="flex items-center gap-1.5 text-xs text-on-surface-variant overflow-x-auto">
+          <Link to="/" className="hover:text-primary transition-colors">Home</Link>
           <span>/</span>
-          <Link to="/properties" className="hover:text-[#0F766E] transition-colors">Properties</Link>
+          <Link to="/properties" className="hover:text-primary transition-colors">Properties</Link>
           <span>/</span>
-          <span className="text-[#1E293B] font-semibold truncate max-w-[200px]">{propertyTitle}</span>
+          <span className="text-on-surface font-semibold truncate max-w-[200px]">{propertyTitle}</span>
         </nav>
       </div>
 
@@ -607,12 +607,12 @@ export default function PropertyListingView() {
         {/* 2. Editorial Header Block (Title, Badges, Clean Address) */}
         <section className="space-y-3">
           {/* Breadcrumb Eyebrow */}
-          <div className="flex items-center gap-2 text-xs text-[#64748B]">
-            <Link to="/" className="hover:text-[#0F766E] transition-colors">Home</Link>
+          <div className="flex items-center gap-2 text-xs text-on-surface-variant">
+            <Link to="/" className="hover:text-primary transition-colors">Home</Link>
             <span>/</span>
-            <Link to="/properties" className="hover:text-[#0F766E] transition-colors">Properties</Link>
+            <Link to="/properties" className="hover:text-primary transition-colors">Properties</Link>
             <span>/</span>
-            <span className="font-semibold text-[#1E293B] truncate max-w-[240px] sm:max-w-md">{propertyTitle}</span>
+            <span className="font-semibold text-on-surface truncate max-w-[240px] sm:max-w-md">{propertyTitle}</span>
           </div>
 
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pt-1">
@@ -645,23 +645,23 @@ export default function PropertyListingView() {
                 </span>
               </div>
 
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#1E293B] tracking-tight">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-on-surface tracking-tight">
                 {propertyTitle}
               </h1>
 
-              <div className="flex items-center gap-1.5 text-xs sm:text-sm text-[#64748B]">
-                <IconMapPin size={16} stroke={2} className="text-[#0F766E] shrink-0" />
+              <div className="flex items-center gap-1.5 text-xs sm:text-sm text-on-surface-variant">
+                <IconMapPin size={16} stroke={2} className="text-primary shrink-0" />
                 <span>{fullAddress}</span>
               </div>
             </div>
           </div>
         </section>
 
-        {/* 3. Dribbble Bento Gallery (Asymmetrical Multi-Image Showcase) */}
-        <section className="relative w-full rounded-xl overflow-hidden bg-slate-900 border border-[#E2E8F0] shadow-sm">
+        {/* 3. Property Photo Showcase Gallery */}
+        <section className="relative w-full rounded-xl overflow-hidden bg-surface-variant border border-outline shadow-xs">
           {photos.length === 0 ? (
-            <div className="w-full h-80 sm:h-96 flex flex-col items-center justify-center bg-slate-100 text-[#64748B]">
-              <IconPhoto size={48} stroke={1.5} className="text-slate-400 mb-2" />
+            <div className="w-full h-80 sm:h-96 flex flex-col items-center justify-center bg-surface-variant text-on-surface-variant">
+              <IconPhoto size={48} stroke={1.5} className="text-on-surface-variant/60 mb-2" />
               <span className="text-xs font-semibold">No property photos uploaded yet</span>
             </div>
           ) : photos.length === 1 ? (
@@ -679,7 +679,7 @@ export default function PropertyListingView() {
               />
             </div>
           ) : (
-            /* Dribbble 3-Image Bento Collage */
+            /* 3-Image Showcase Gallery */
             <div className="grid grid-cols-1 md:grid-cols-12 gap-1.5 aspect-[16/10] sm:aspect-[21/9] max-h-[520px]">
               {/* Primary Main Photo (Spans 8 of 12 cols) */}
               <div 
@@ -693,9 +693,8 @@ export default function PropertyListingView() {
                   src={photos[0]}
                   alt={`${propertyTitle} Main`}
                   referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
+                  className="w-full h-full object-cover group-hover:scale-[1.01] transition-transform duration-500"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
 
               {/* Secondary Stack (Spans 4 of 12 cols, 2 stacked images) */}
@@ -711,9 +710,8 @@ export default function PropertyListingView() {
                     src={photos[1] || photos[0]}
                     alt={`${propertyTitle} View 2`}
                     referrerPolicy="no-referrer"
-                    className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
+                    className="w-full h-full object-cover group-hover:scale-[1.01] transition-transform duration-500"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
 
                 <div 
@@ -727,9 +725,8 @@ export default function PropertyListingView() {
                     src={photos[2] || photos[0]}
                     alt={`${propertyTitle} View 3`}
                     referrerPolicy="no-referrer"
-                    className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
+                    className="w-full h-full object-cover group-hover:scale-[1.01] transition-transform duration-500"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
               </div>
             </div>
@@ -745,78 +742,78 @@ export default function PropertyListingView() {
                   setActivePhotoIndex(0);
                   setIsGalleryOpen(true);
                 }}
-                className="bg-white/95 backdrop-blur-md hover:bg-white text-[#1E293B] shadow-md border-white/40 gap-2 font-bold"
+                className="bg-surface/95 backdrop-blur-md hover:bg-surface text-on-surface shadow-xs border border-outline gap-2 font-semibold"
               >
-                <IconPhoto size={16} className="text-[#0F766E]" />
+                <IconPhoto size={16} className="text-primary" />
                 <span>View All Photos ({photos.length})</span>
               </Button>
             </div>
           )}
         </section>
 
-        {/* 4. Key Specifications Bento Ribbon */}
-        <section className="bg-white rounded-xl p-4 sm:p-5 border border-[#E2E8F0] shadow-xs">
+        {/* 4. Key Specifications Ribbon */}
+        <section className="bg-surface rounded-xl p-4 sm:p-5 border border-outline shadow-xs">
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
             {/* Bedrooms */}
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
-              <div className="w-9 h-9 rounded bg-teal-50 text-[#0F766E] flex items-center justify-center shrink-0 border border-teal-100">
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-surface-variant border border-outline">
+              <div className="w-9 h-9 rounded-lg bg-tertiary-container/40 text-primary flex items-center justify-center shrink-0 border border-outline">
                 <IconBed size={18} stroke={2} />
               </div>
               <div className="min-w-0">
-                <span className="text-[11px] text-[#64748B] block truncate">Bedrooms</span>
-                <span className="text-sm font-bold text-[#1E293B] truncate block" data-testid="reso-bedrooms">
+                <span className="text-xs text-on-surface-variant block truncate">Bedrooms</span>
+                <span className="text-sm font-semibold text-on-surface truncate block" data-testid="reso-bedrooms">
                   {bedrooms != null ? `${bedrooms}` : 'Not specified'}
                 </span>
               </div>
             </div>
 
             {/* Bathrooms */}
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
-              <div className="w-9 h-9 rounded bg-teal-50 text-[#0F766E] flex items-center justify-center shrink-0 border border-teal-100">
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-surface-variant border border-outline">
+              <div className="w-9 h-9 rounded-lg bg-tertiary-container/40 text-primary flex items-center justify-center shrink-0 border border-outline">
                 <IconBath size={18} stroke={2} />
               </div>
               <div className="min-w-0">
-                <span className="text-[11px] text-[#64748B] block truncate">Bathrooms</span>
-                <span className="text-sm font-bold text-[#1E293B] truncate block" data-testid="reso-bathrooms">
+                <span className="text-xs text-on-surface-variant block truncate">Bathrooms</span>
+                <span className="text-sm font-semibold text-on-surface truncate block" data-testid="reso-bathrooms">
                   {bathrooms != null ? `${bathrooms}` : 'Not specified'}
                 </span>
               </div>
             </div>
 
             {/* Floor Area */}
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
-              <div className="w-9 h-9 rounded bg-teal-50 text-[#0F766E] flex items-center justify-center shrink-0 border border-teal-100">
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-surface-variant border border-outline">
+              <div className="w-9 h-9 rounded-lg bg-tertiary-container/40 text-primary flex items-center justify-center shrink-0 border border-outline">
                 <IconDimensions size={18} stroke={2} />
               </div>
               <div className="min-w-0">
-                <span className="text-[11px] text-[#64748B] block truncate">Floor Area</span>
-                <span className="text-sm font-bold text-[#1E293B] truncate block" data-testid="reso-living-area">
+                <span className="text-xs text-on-surface-variant block truncate">Floor Area</span>
+                <span className="text-sm font-semibold text-on-surface truncate block" data-testid="reso-living-area">
                   {livingAreaFormatted || 'Not specified'}
                 </span>
               </div>
             </div>
 
             {/* Lot Area */}
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
-              <div className="w-9 h-9 rounded bg-teal-50 text-[#0F766E] flex items-center justify-center shrink-0 border border-teal-100">
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-surface-variant border border-outline">
+              <div className="w-9 h-9 rounded-lg bg-tertiary-container/40 text-primary flex items-center justify-center shrink-0 border border-outline">
                 <IconHome size={18} stroke={2} />
               </div>
               <div className="min-w-0">
-                <span className="text-[11px] text-[#64748B] block truncate">Lot Size</span>
-                <span className="text-sm font-bold text-[#1E293B] truncate block" data-testid="reso-lot-size">
+                <span className="text-xs text-on-surface-variant block truncate">Lot Size</span>
+                <span className="text-sm font-semibold text-on-surface truncate block" data-testid="reso-lot-size">
                   {lotAreaFormatted || '—'}
                 </span>
               </div>
             </div>
 
             {/* Parking */}
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
-              <div className="w-9 h-9 rounded bg-teal-50 text-[#0F766E] flex items-center justify-center shrink-0 border border-teal-100">
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-surface-variant border border-outline">
+              <div className="w-9 h-9 rounded-lg bg-tertiary-container/40 text-primary flex items-center justify-center shrink-0 border border-outline">
                 <IconCar size={18} stroke={2} />
               </div>
               <div className="min-w-0">
-                <span className="text-[11px] text-[#64748B] block truncate">Parking</span>
-                <span className="text-sm font-bold text-[#1E293B] truncate block">
+                <span className="text-xs text-on-surface-variant block truncate">Parking</span>
+                <span className="text-sm font-semibold text-on-surface truncate block">
                   {parkingTotal != null ? `${parkingTotal} Slots` : 'Not specified'}
                 </span>
               </div>
@@ -824,10 +821,10 @@ export default function PropertyListingView() {
           </div>
         </section>
 
-        {/* 1. In-Page Navigation Bar (Placed beneath Bedrooms & Bathrooms icons) */}
+        {/* 1. In-Page Navigation Bar */}
         <nav 
           aria-label="Property Navigation"
-          className="sticky top-[80px] z-30 bg-white/95 backdrop-blur-md border border-[#E2E8F0] rounded-xl shadow-xs transition-all px-4 sm:px-6"
+          className="sticky top-20 z-30 bg-surface/95 backdrop-blur-md border border-outline rounded-xl shadow-xs transition-all px-4 sm:px-6"
         >
           <div className="h-12 flex items-center justify-between gap-4">
             {/* Section Jump Links */}
@@ -837,8 +834,8 @@ export default function PropertyListingView() {
                 onClick={() => scrollToSection('section-description')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
                   activeSection === 'description'
-                    ? 'bg-teal-50 text-[#0F766E] font-bold'
-                    : 'text-[#64748B] hover:text-[#1E293B] hover:bg-slate-50'
+                    ? 'bg-tertiary-container text-primary font-semibold'
+                    : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-variant'
                 }`}
               >
                 Property Description
@@ -848,8 +845,8 @@ export default function PropertyListingView() {
                 onClick={() => scrollToSection('section-specs')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
                   activeSection === 'specs'
-                    ? 'bg-teal-50 text-[#0F766E] font-bold'
-                    : 'text-[#64748B] hover:text-[#1E293B] hover:bg-slate-50'
+                    ? 'bg-tertiary-container text-primary font-semibold'
+                    : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-variant'
                 }`}
               >
                 Specification
@@ -859,8 +856,8 @@ export default function PropertyListingView() {
                 onClick={() => scrollToSection('section-amenities')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
                   activeSection === 'amenities'
-                    ? 'bg-teal-50 text-[#0F766E] font-bold'
-                    : 'text-[#64748B] hover:text-[#1E293B] hover:bg-slate-50'
+                    ? 'bg-tertiary-container text-primary font-semibold'
+                    : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-variant'
                 }`}
               >
                 Amenities
@@ -870,8 +867,8 @@ export default function PropertyListingView() {
                 onClick={() => scrollToSection('section-map')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
                   activeSection === 'map'
-                    ? 'bg-teal-50 text-[#0F766E] font-bold'
-                    : 'text-[#64748B] hover:text-[#1E293B] hover:bg-slate-50'
+                    ? 'bg-tertiary-container text-primary font-semibold'
+                    : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-variant'
                 }`}
               >
                 Map
@@ -881,8 +878,8 @@ export default function PropertyListingView() {
                 onClick={() => scrollToSection('section-financials')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
                   activeSection === 'financials'
-                    ? 'bg-teal-50 text-[#0F766E] font-bold'
-                    : 'text-[#64748B] hover:text-[#1E293B] hover:bg-slate-50'
+                    ? 'bg-tertiary-container text-primary font-semibold'
+                    : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-variant'
                 }`}
               >
                 Financials
@@ -892,8 +889,8 @@ export default function PropertyListingView() {
                 onClick={() => scrollToSection('section-documents')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
                   activeSection === 'documents'
-                    ? 'bg-teal-50 text-[#0F766E] font-bold'
-                    : 'text-[#64748B] hover:text-[#1E293B] hover:bg-slate-50'
+                    ? 'bg-tertiary-container text-primary font-semibold'
+                    : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-variant'
                 }`}
               >
                 Documents
@@ -907,11 +904,11 @@ export default function PropertyListingView() {
                 size="sm"
                 onClick={handleSaveToggle}
                 aria-label={isSaved ? 'Remove from Viewing List' : 'Add to Viewing List'}
-                className="px-3 gap-1.5 h-8 text-[11px]"
+                className="px-3 gap-1.5 h-8 text-xs border-outline text-on-surface hover:bg-surface-variant"
               >
                 <IconBookmark
                   size={14}
-                  className={isSaved ? 'fill-[#0F766E] text-[#0F766E]' : 'text-[#64748B]'}
+                  className={isSaved ? 'fill-primary text-primary' : 'text-on-surface-variant'}
                 />
                 <span className="hidden sm:inline">{isSaved ? 'Saved' : 'Save'}</span>
               </Button>
@@ -937,9 +934,9 @@ export default function PropertyListingView() {
                   }
                 }}
                 title="Share listing"
-                className="h-8 w-8 px-0"
+                className="h-8 w-8 px-0 border-outline text-on-surface hover:bg-surface-variant"
               >
-                <IconShare size={14} className="text-[#64748B]" />
+                <IconShare size={14} className="text-on-surface-variant" />
               </Button>
             </div>
           </div>
@@ -957,12 +954,12 @@ export default function PropertyListingView() {
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                      <IconFileText size={18} className="text-[#0F766E]" />
+                      <IconFileText size={18} className="text-primary" />
                       <span>Property Description</span>
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div data-testid="reso-public-remarks" className="text-xs sm:text-sm text-[#475569] leading-relaxed whitespace-pre-line">
+                    <div data-testid="reso-public-remarks" className="text-xs sm:text-sm text-on-surface-variant leading-relaxed whitespace-pre-line">
                       {cleanPublicRemarks}
                     </div>
                   </CardContent>
@@ -975,81 +972,81 @@ export default function PropertyListingView() {
               <Card>
                 <CardHeader>
                   <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                    <IconBuilding size={18} className="text-[#0F766E]" />
+                    <IconBuilding size={18} className="text-primary" />
                     <span>Specification</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3 text-xs sm:text-sm">
-                    <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
-                      <span className="text-[#64748B]">Property Type</span>
-                      <span className="font-semibold text-[#1E293B]">{propertyType}</span>
+                    <div className="flex items-center justify-between py-2 border-b border-outline">
+                      <span className="text-on-surface-variant">Property Type</span>
+                      <span className="font-semibold text-on-surface">{propertyType}</span>
                     </div>
-                    <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
-                      <span className="text-[#64748B]">Transaction</span>
-                      <span className="font-semibold text-[#1E293B]">{typeBadgeLabel}</span>
+                    <div className="flex items-center justify-between py-2 border-b border-outline">
+                      <span className="text-on-surface-variant">Transaction</span>
+                      <span className="font-semibold text-on-surface">{typeBadgeLabel}</span>
                     </div>
-                    <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
-                      <span className="text-[#64748B]">Condition / Status</span>
-                      <span className="font-semibold text-[#1E293B]">{propertyCondition || 'Good'}</span>
+                    <div className="flex items-center justify-between py-2 border-b border-outline">
+                      <span className="text-on-surface-variant">Condition / Status</span>
+                      <span className="font-semibold text-on-surface">{propertyCondition || 'Good'}</span>
                     </div>
-                    <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
-                      <span className="text-[#64748B]">Year Built</span>
-                      <span className="font-semibold text-[#1E293B]" data-testid="reso-year-built">
+                    <div className="flex items-center justify-between py-2 border-b border-outline">
+                      <span className="text-on-surface-variant">Year Built</span>
+                      <span className="font-semibold text-on-surface" data-testid="reso-year-built">
                         {yearBuilt || '—'}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
-                      <span className="text-[#64748B]">Total Stories / Floors</span>
-                      <span className="font-semibold text-[#1E293B]">{storiesTotal != null ? storiesTotal : '—'}</span>
+                    <div className="flex items-center justify-between py-2 border-b border-outline">
+                      <span className="text-on-surface-variant">Total Stories / Floors</span>
+                      <span className="font-semibold text-on-surface">{storiesTotal != null ? storiesTotal : '—'}</span>
                     </div>
-                    <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
-                      <span className="text-[#64748B]">Lot Area</span>
-                      <span className="font-semibold text-[#1E293B]">
+                    <div className="flex items-center justify-between py-2 border-b border-outline">
+                      <span className="text-on-surface-variant">Lot Area</span>
+                      <span className="font-semibold text-on-surface">
                         {lotAreaFormatted || '—'}
                       </span>
                     </div>
                     {(property?.unit_number || property?.unitNumber || property?.UnitNumber) && (
-                      <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
-                        <span className="text-[#64748B]">Unit Number</span>
-                        <span className="font-semibold text-[#1E293B]" data-testid="reso-unit-number">
+                      <div className="flex items-center justify-between py-2 border-b border-outline">
+                        <span className="text-on-surface-variant">Unit Number</span>
+                        <span className="font-semibold text-on-surface" data-testid="reso-unit-number">
                           {property?.unit_number || property?.unitNumber || property?.UnitNumber}
                         </span>
                       </div>
                     )}
                     {(property?.floor_level || property?.floorLevel) && (
-                      <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
-                        <span className="text-[#64748B]">Floor Level</span>
-                        <span className="font-semibold text-[#1E293B]">
+                      <div className="flex items-center justify-between py-2 border-b border-outline">
+                        <span className="text-on-surface-variant">Floor Level</span>
+                        <span className="font-semibold text-on-surface">
                           {property.floor_level || property.floorLevel}
                         </span>
                       </div>
                     )}
                     {(property?.furnishing || property?.Furnishing) && (
-                      <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
-                        <span className="text-[#64748B]">Furnishing</span>
-                        <span className="font-semibold text-[#1E293B]">
+                      <div className="flex items-center justify-between py-2 border-b border-outline">
+                        <span className="text-on-surface-variant">Furnishing</span>
+                        <span className="font-semibold text-on-surface">
                           {property.furnishing || property.Furnishing}
                         </span>
                       </div>
                     )}
-                    <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
-                      <span className="text-[#64748B]">Architectural Style</span>
-                      <span className="font-semibold text-[#1E293B]">{architecturalStyle || 'Modern'}</span>
+                    <div className="flex items-center justify-between py-2 border-b border-outline">
+                      <span className="text-on-surface-variant">Architectural Style</span>
+                      <span className="font-semibold text-on-surface">{architecturalStyle || 'Modern'}</span>
                     </div>
-                    <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
-                      <span className="text-[#64748B]">Covered Parking</span>
-                      <span className="font-semibold text-[#1E293B]">{parkingCovered != null ? `${parkingCovered} slots` : '—'}</span>
+                    <div className="flex items-center justify-between py-2 border-b border-outline">
+                      <span className="text-on-surface-variant">Covered Parking</span>
+                      <span className="font-semibold text-on-surface">{parkingCovered != null ? `${parkingCovered} slots` : '—'}</span>
                     </div>
-                    <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
-                      <span className="text-[#64748B]">Open Parking</span>
-                      <span className="font-semibold text-[#1E293B]">{parkingOpen != null ? `${parkingOpen} slots` : '—'}</span>
+                    <div className="flex items-center justify-between py-2 border-b border-outline">
+                      <span className="text-on-surface-variant">Open Parking</span>
+                      <span className="font-semibold text-on-surface">{parkingOpen != null ? `${parkingOpen} slots` : '—'}</span>
                     </div>
                     {/* Only display listing status row if not pending confirmation */}
                     {!isStatusPending && standardStatus && (
-                      <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
-                        <span className="text-[#64748B]">Listing Status</span>
-                        <span className="font-semibold text-[#0F766E]">{standardStatus}</span>
+                      <div className="flex items-center justify-between py-2 border-b border-outline">
+                        <span className="text-on-surface-variant">Listing Status</span>
+                        <span className="font-semibold text-primary">{standardStatus}</span>
                       </div>
                     )}
                   </div>
@@ -1062,20 +1059,20 @@ export default function PropertyListingView() {
               <Card>
                 <CardHeader>
                   <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                    <IconLayersLinked size={18} className="text-[#0F766E]" />
+                    <IconLayersLinked size={18} className="text-primary" />
                     <span>Features & Amenities</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   {/* Shared Amenities */}
                   <div>
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-[#64748B] mb-3">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-3">
                       Shared Community Amenities
                     </h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                       {featureGroups.shared.map((item, idx) => (
-                        <div key={idx} className="flex items-center gap-2.5 p-2 rounded-lg bg-slate-50 border border-slate-100 text-xs text-[#1E293B]">
-                          <div className="w-5 h-5 rounded-full bg-teal-50 text-[#0F766E] flex items-center justify-center shrink-0">
+                        <div key={idx} className="flex items-center gap-2.5 p-2 rounded-lg bg-surface-variant border border-outline text-xs text-on-surface">
+                          <div className="w-5 h-5 rounded-full bg-tertiary-container/50 text-primary flex items-center justify-center shrink-0">
                             <IconCheck size={12} stroke={3} />
                           </div>
                           <span className="font-medium">{item}</span>
@@ -1084,14 +1081,14 @@ export default function PropertyListingView() {
                     </div>
                   </div>
 
-                  <div className="border-t border-[#E2E8F0] pt-4">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-[#64748B] mb-3">
+                  <div className="border-t border-outline pt-4">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-3">
                       Indoor Features
                     </h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                       {featureGroups.indoor.map((item, idx) => (
-                        <div key={idx} className="flex items-center gap-2.5 p-2 rounded-lg bg-slate-50 border border-slate-100 text-xs text-[#1E293B]">
-                          <div className="w-5 h-5 rounded-full bg-teal-50 text-[#0F766E] flex items-center justify-center shrink-0">
+                        <div key={idx} className="flex items-center gap-2.5 p-2 rounded-lg bg-surface-variant border border-outline text-xs text-on-surface">
+                          <div className="w-5 h-5 rounded-full bg-tertiary-container/50 text-primary flex items-center justify-center shrink-0">
                             <IconCheck size={12} stroke={3} />
                           </div>
                           <span className="font-medium">{item}</span>
@@ -1100,14 +1097,14 @@ export default function PropertyListingView() {
                     </div>
                   </div>
 
-                  <div className="border-t border-[#E2E8F0] pt-4">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-[#64748B] mb-3">
+                  <div className="border-t border-outline pt-4">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-3">
                       Outdoor & Eco Features
                     </h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                       {featureGroups.outdoor.map((item, idx) => (
-                        <div key={idx} className="flex items-center gap-2.5 p-2 rounded-lg bg-slate-50 border border-slate-100 text-xs text-[#1E293B]">
-                          <div className="w-5 h-5 rounded-full bg-teal-50 text-[#0F766E] flex items-center justify-center shrink-0">
+                        <div key={idx} className="flex items-center gap-2.5 p-2 rounded-lg bg-surface-variant border border-outline text-xs text-on-surface">
+                          <div className="w-5 h-5 rounded-full bg-tertiary-container/50 text-primary flex items-center justify-center shrink-0">
                             <IconCheck size={12} stroke={3} />
                           </div>
                           <span className="font-medium">{item}</span>
@@ -1126,13 +1123,13 @@ export default function PropertyListingView() {
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
                       <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                        <IconMapPin size={18} className="text-[#0F766E]" />
+                        <IconMapPin size={18} className="text-primary" />
                         <span>Map</span>
                       </CardTitle>
-                      <p className="text-xs text-[#64748B] mt-1">{fullAddress}</p>
+                      <p className="text-xs text-on-surface-variant mt-1">{fullAddress}</p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="font-mono text-[11px] text-[#0F766E] bg-teal-50 border border-teal-200 px-2.5 py-1 rounded">
+                      <span className="font-mono text-xs text-primary bg-tertiary-container/40 border border-outline px-2.5 py-1 rounded">
                         {fullAddress.includes('Address pending')
                           ? 'Approx. District Centroid'
                           : `${propertyCoords.lat.toFixed(4)}°N, ${propertyCoords.lng.toFixed(4)}°E`}
@@ -1150,9 +1147,9 @@ export default function PropertyListingView() {
                         variant="outline"
                         size="sm"
                         onClick={() => setIsStreetViewOpen(true)}
-                        className="gap-1.5"
+                        className="gap-1.5 border-outline text-on-surface hover:bg-surface-variant"
                       >
-                        <IconCompass size={14} className="text-[#0F766E]" />
+                        <IconCompass size={14} className="text-primary" />
                         <span>360° Street View</span>
                       </Button>
                     </div>
@@ -1160,7 +1157,7 @@ export default function PropertyListingView() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {/* Interactive Google Map Canvas */}
-                  <div className="relative isolate z-0 w-full h-[320px] sm:h-[360px] rounded-lg overflow-hidden border border-[#E2E8F0] bg-slate-50" data-lenis-prevent="true">
+                  <div className="relative isolate z-0 w-full h-80 sm:h-96 rounded-lg overflow-hidden border border-outline bg-surface-variant" data-lenis-prevent="true">
                     <GooglePropertyMap
                       properties={property ? [{ ...property, latitude: propertyCoords.lat, longitude: propertyCoords.lng }] : []}
                       selectedPropertyId={property?.id}
@@ -1168,28 +1165,6 @@ export default function PropertyListingView() {
                       showControls={false}
                       onOpenStreetView={() => setIsStreetViewOpen(true)}
                     />
-
-                    {/* Floating Controls Inside Map */}
-                    <div className="absolute top-3 right-3 z-10 flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setIsEnlargedMapOpen(true)}
-                        className="bg-white/95 backdrop-blur-md shadow-md text-[#0F766E] gap-1.5"
-                      >
-                        <IconMaximize size={14} />
-                        <span>Enlarge</span>
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setIsStreetViewOpen(true)}
-                        className="bg-white/95 backdrop-blur-md shadow-md text-[#1E293B] gap-1.5"
-                      >
-                        <IconCompass size={14} className="text-[#0F766E]" />
-                        <span>360° View</span>
-                      </Button>
-                    </div>
                   </div>
 
                   {/* Commute and Travel Duration Analysis Card */}
@@ -1208,56 +1183,56 @@ export default function PropertyListingView() {
               <Card>
                 <CardHeader>
                   <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                    <IconCurrencyDollar size={18} className="text-[#0F766E]" />
+                    <IconCurrencyDollar size={18} className="text-primary" />
                     <span>Financial Breakdown & Terms</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3 text-xs sm:text-sm">
-                    <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
-                      <span className="text-[#64748B]">{isRent ? 'Monthly Rent' : 'Listing Price'}</span>
-                      <span className="font-bold text-[#0F766E]" data-testid="reso-list-price">{formattedPriceDisplay}</span>
+                    <div className="flex items-center justify-between py-2 border-b border-outline">
+                      <span className="text-on-surface-variant">{isRent ? 'Monthly Rent' : 'Listing Price'}</span>
+                      <span className="font-bold text-primary" data-testid="reso-list-price">{formattedPriceDisplay}</span>
                     </div>
-                    <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
-                      <span className="text-[#64748B]">Currency</span>
-                      <span className="font-semibold text-[#1E293B]">{currency}</span>
+                    <div className="flex items-center justify-between py-2 border-b border-outline">
+                      <span className="text-on-surface-variant">Currency</span>
+                      <span className="font-semibold text-on-surface">{currency}</span>
                     </div>
                     {isRent && (
                       <>
-                        <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
-                          <span className="text-[#64748B]">Rental Frequency</span>
-                          <span className="font-semibold text-[#1E293B]">{rentFreq}</span>
+                        <div className="flex items-center justify-between py-2 border-b border-outline">
+                          <span className="text-on-surface-variant">Rental Frequency</span>
+                          <span className="font-semibold text-on-surface">{rentFreq}</span>
                         </div>
-                        <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
-                          <span className="text-[#64748B]">Minimum Lease Term</span>
-                          <span className="font-semibold text-[#1E293B]">{leaseTerm || '12 Months'}</span>
+                        <div className="flex items-center justify-between py-2 border-b border-outline">
+                          <span className="text-on-surface-variant">Minimum Lease Term</span>
+                          <span className="font-semibold text-on-surface">{leaseTerm || '12 Months'}</span>
                         </div>
-                        <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
-                          <span className="text-[#64748B]">Security Deposit</span>
-                          <span className="font-semibold text-[#1E293B]">{securityDeposit ? `₱${Number(securityDeposit).toLocaleString('en-PH')}` : '2 Months'}</span>
+                        <div className="flex items-center justify-between py-2 border-b border-outline">
+                          <span className="text-on-surface-variant">Security Deposit</span>
+                          <span className="font-semibold text-on-surface">{securityDeposit ? `₱${Number(securityDeposit).toLocaleString('en-PH')}` : '2 Months'}</span>
                         </div>
-                        <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
-                          <span className="text-[#64748B]">Advance Rent</span>
-                          <span className="font-semibold text-[#1E293B]">{advanceRent ? `₱${Number(advanceRent).toLocaleString('en-PH')}` : '1 Month'}</span>
+                        <div className="flex items-center justify-between py-2 border-b border-outline">
+                          <span className="text-on-surface-variant">Advance Rent</span>
+                          <span className="font-semibold text-on-surface">{advanceRent ? `₱${Number(advanceRent).toLocaleString('en-PH')}` : '1 Month'}</span>
                         </div>
                       </>
                     )}
-                    <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
-                      <span className="text-[#64748B]">Association / HOA Fee</span>
-                      <span className="font-semibold text-[#1E293B]" data-testid="reso-hoa-fee">
+                    <div className="flex items-center justify-between py-2 border-b border-outline">
+                      <span className="text-on-surface-variant">Association / HOA Fee</span>
+                      <span className="font-semibold text-on-surface" data-testid="reso-hoa-fee">
                         {assocFee != null && !isNaN(assocFee) ? `₱${Number(assocFee).toLocaleString('en-PH')}` : 'Included in dues'}
                       </span>
                     </div>
                     {property?.promo_cash_out && (
-                      <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
-                        <span className="text-[#64748B]">Promo Cash Out</span>
-                        <span className="font-semibold text-[#1E293B]">{property.promo_cash_out}</span>
+                      <div className="flex items-center justify-between py-2 border-b border-outline">
+                        <span className="text-on-surface-variant">Promo Cash Out</span>
+                        <span className="font-semibold text-on-surface">{property.promo_cash_out}</span>
                       </div>
                     )}
                     {property?.monthly_amortization && (
-                      <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
-                        <span className="text-[#64748B]">Estimated Amortization</span>
-                        <span className="font-semibold text-[#1E293B]">{property.monthly_amortization}</span>
+                      <div className="flex items-center justify-between py-2 border-b border-outline">
+                        <span className="text-on-surface-variant">Estimated Amortization</span>
+                        <span className="font-semibold text-on-surface">{property.monthly_amortization}</span>
                       </div>
                     )}
                   </div>
@@ -1270,7 +1245,7 @@ export default function PropertyListingView() {
               <Card>
                 <CardHeader>
                   <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                    <IconFileText size={18} className="text-[#0F766E]" />
+                    <IconFileText size={18} className="text-primary" />
                     <span>Official Media & Documents</span>
                   </CardTitle>
                 </CardHeader>
@@ -1280,15 +1255,15 @@ export default function PropertyListingView() {
                       {mediaList.map((doc, idx) => (
                         <div
                           key={doc.id || idx}
-                          className="flex items-center justify-between p-3.5 rounded-lg border border-[#E2E8F0] hover:bg-slate-50 transition-colors"
+                          className="flex items-center justify-between p-3.5 rounded-lg border border-outline hover:bg-surface-variant transition-colors"
                         >
                           <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded bg-teal-50 text-[#0F766E] flex items-center justify-center font-bold text-xs border border-teal-100">
+                            <div className="w-9 h-9 rounded-lg bg-tertiary-container/40 text-primary flex items-center justify-center font-bold text-xs border border-outline">
                               <IconFileText size={18} />
                             </div>
                             <div>
-                              <div className="text-xs sm:text-sm font-semibold text-[#1E293B]">{doc.title || doc.name || 'Property Brochure'}</div>
-                              <div className="text-[11px] text-[#64748B]">{doc.type || 'PDF'} • {doc.file_size || 'Verified Document'}</div>
+                              <div className="text-xs sm:text-sm font-semibold text-on-surface">{doc.title || doc.name || 'Property Brochure'}</div>
+                              <div className="text-xs text-on-surface-variant">{doc.type || 'PDF'} • {doc.file_size || 'Verified Document'}</div>
                             </div>
                           </div>
                           <Button
@@ -1299,7 +1274,7 @@ export default function PropertyListingView() {
                               setTimeout(() => setToastMessage(null), 3000);
                             }}
                             title="Download document"
-                            className="gap-1.5"
+                            className="gap-1.5 text-on-surface-variant hover:text-on-surface"
                           >
                             <IconDownload size={16} />
                             <span className="hidden sm:inline">Download</span>
@@ -1309,12 +1284,12 @@ export default function PropertyListingView() {
                     </div>
                   ) : (
                     /* Empty Placeholder State */
-                    <div className="flex flex-col items-center justify-center p-8 text-center bg-slate-50/60 rounded-lg border border-dashed border-[#E2E8F0]">
-                      <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-[#64748B] mb-2.5">
+                    <div className="flex flex-col items-center justify-center p-8 text-center bg-surface-variant/60 rounded-lg border border-dashed border-outline">
+                      <div className="w-10 h-10 rounded-full bg-surface flex items-center justify-center text-on-surface-variant mb-2.5 border border-outline">
                         <IconFileText size={20} />
                       </div>
-                      <p className="text-xs font-semibold text-[#1E293B]">No documents uploaded</p>
-                      <p className="text-[11px] text-[#64748B] mt-0.5 max-w-sm">
+                      <p className="text-xs font-semibold text-on-surface">No documents uploaded</p>
+                      <p className="text-xs text-on-surface-variant mt-0.5 max-w-sm">
                         Architectural brochures, floor plans, and elevation documents have not been attached to this listing yet.
                       </p>
                     </div>
@@ -1329,20 +1304,20 @@ export default function PropertyListingView() {
           <aside className="lg:col-span-4 space-y-6 lg:sticky lg:top-36">
             
             {/* Price & Booking Plinth Card */}
-            <Card className="border-t-4 border-t-[#0F766E] shadow-sm">
+            <Card className="border border-outline shadow-xs">
               <CardContent className="p-5 sm:p-6 space-y-5">
                 
                 {/* Price Display */}
                 <div>
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-[#64748B] block">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant block">
                     {isRent ? 'Rental Rate' : 'Price'}
                   </span>
-                  <div className="text-3xl font-extrabold text-[#0F766E] tracking-tight mt-0.5">
+                  <div className="text-3xl font-extrabold text-primary tracking-tight mt-0.5">
                     {formattedPriceDisplay}
-                    {isRent && <span className="text-sm font-normal text-[#64748B]"> / {rentFreq}</span>}
+                    {isRent && <span className="text-sm font-normal text-on-surface-variant"> / {rentFreq}</span>}
                   </div>
                   {property?.monthly_amortization && (
-                    <div className="text-xs text-[#0F766E] font-medium mt-1.5 flex items-center gap-1">
+                    <div className="text-xs text-primary font-medium mt-1.5 flex items-center gap-1">
                       <IconCalculator size={14} />
                       <span>{property.monthly_amortization}</span>
                     </div>
@@ -1368,7 +1343,7 @@ export default function PropertyListingView() {
                     variant="outline"
                     size="lg"
                     onClick={() => setIsContactModalOpen(true)}
-                    className="w-full border-[#0F766E] text-[#0F766E] hover:bg-teal-50 gap-2 font-bold text-xs"
+                    className="w-full border-outline text-on-surface hover:bg-surface-variant gap-2 font-semibold text-xs"
                   >
                     <IconMail size={18} />
                     <span>Contact Listing Agent</span>
@@ -1376,9 +1351,9 @@ export default function PropertyListingView() {
 
                   {/* Quick Connect: Call / Share */}
                   <div className="grid grid-cols-2 gap-2 pt-1">
-                    <Button asChild variant="outline" size="sm" className="w-full gap-1.5">
+                    <Button asChild variant="outline" size="sm" className="w-full gap-1.5 border-outline text-on-surface hover:bg-surface-variant">
                       <a href={`tel:${agent.phone}`}>
-                        <IconPhone size={14} className="text-[#0F766E]" />
+                        <IconPhone size={14} className="text-primary" />
                         <span>Call</span>
                       </a>
                     </Button>
@@ -1403,27 +1378,27 @@ export default function PropertyListingView() {
                           setTimeout(() => setToastMessage(null), 3000);
                         }
                       }}
-                      className="w-full gap-1.5"
+                      className="w-full gap-1.5 border-outline text-on-surface hover:bg-surface-variant"
                     >
-                      <IconShare size={14} className="text-[#0F766E]" />
+                      <IconShare size={14} className="text-on-surface-variant" />
                       <span>Share</span>
                     </Button>
                   </div>
                 </div>
 
                 {/* Agent Profile Plinth */}
-                <div className="pt-4 border-t border-[#E2E8F0] space-y-3">
+                <div className="pt-4 border-t border-outline space-y-3">
                   <div className="flex items-center gap-3">
                     <img
                       src={agent.avatar}
                       alt={agent.name}
                       referrerPolicy="no-referrer"
-                      className="w-12 h-12 rounded-full object-cover border-2 border-[#E2E8F0]"
+                      className="w-12 h-12 rounded-full object-cover border-2 border-outline"
                     />
                     <div className="min-w-0 flex-1">
-                      <div className="text-sm font-bold text-[#1E293B] truncate">{agent.name}</div>
-                      <div className="text-xs text-[#64748B] truncate">{agent.title}</div>
-                      <div className="text-[11px] text-[#0F766E] font-medium truncate" data-testid="reso-list-office-name">
+                      <div className="text-sm font-bold text-on-surface truncate">{agent.name}</div>
+                      <div className="text-xs text-on-surface-variant truncate">{agent.title}</div>
+                      <div className="text-xs text-primary font-medium truncate" data-testid="reso-list-office-name">
                         {agent.brokerage}
                       </div>
                     </div>
@@ -1433,15 +1408,15 @@ export default function PropertyListingView() {
                     variant="ghost"
                     size="sm"
                     onClick={() => setIsAgentModalOpen(true)}
-                    className="w-full bg-[#F8FAFC] hover:bg-teal-50 text-[#0F766E] border border-[#E2E8F0] text-[11px] font-semibold gap-1.5 h-8"
+                    className="w-full bg-surface-variant hover:bg-surface text-primary border border-outline text-xs font-semibold gap-1.5 h-8"
                   >
                     <IconCheck size={13} />
                     <span>View Verified Advisor Credentials</span>
                   </Button>
 
                   {(property?.call_to_action || property?.cta) && (
-                    <p className="text-xs text-[#0F766E] font-medium text-center pt-1 italic">
-                      "{property.call_to_action || property.cta}"
+                    <p className="text-xs text-on-surface-variant text-center pt-1 font-normal">
+                      {property.call_to_action || property.cta}
                     </p>
                   )}
                 </div>
@@ -1526,7 +1501,7 @@ export default function PropertyListingView() {
                 type="button"
                 onClick={() => setActivePhotoIndex(idx)}
                 className={`relative shrink-0 w-16 h-12 rounded overflow-hidden border-2 transition-all cursor-pointer ${
-                  activePhotoIndex === idx ? 'border-[#0F766E] scale-105' : 'border-transparent opacity-60 hover:opacity-100'
+                  activePhotoIndex === idx ? 'border-primary scale-105' : 'border-transparent opacity-60 hover:opacity-100'
                 }`}
               >
                 <img src={src} alt={`Thumbnail ${idx + 1}`} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
@@ -1543,17 +1518,17 @@ export default function PropertyListingView() {
           role="dialog"
           aria-modal="true"
         >
-          <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl border border-[#E2E8F0] space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
+          <div className="bg-surface rounded-xl max-w-md w-full p-6 shadow-xl border border-outline space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-outline">
               <div>
-                <h3 className="text-base font-bold text-[#1E293B]">Contact Listing Agent</h3>
-                <p className="text-xs text-[#64748B]">{agent.name} • {agent.brokerage}</p>
+                <h3 className="text-base font-bold text-on-surface">Contact Listing Agent</h3>
+                <p className="text-xs text-on-surface-variant">{agent.name} • {agent.brokerage}</p>
               </div>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setIsContactModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 h-8 w-8"
+                className="text-on-surface-variant hover:text-on-surface h-8 w-8"
               >
                 <IconX size={18} />
               </Button>
@@ -1561,48 +1536,48 @@ export default function PropertyListingView() {
 
             <form onSubmit={handleInquirySubmit} className="space-y-3 text-xs">
               <div>
-                <label className="font-semibold text-slate-700 block mb-1">Your Full Name *</label>
+                <label className="font-semibold text-on-surface block mb-1">Your Full Name *</label>
                 <input
                   type="text"
                   required
                   value={inquiryName}
                   onChange={(e) => setInquiryName(e.target.value)}
                   placeholder="e.g. John Doe"
-                  className="w-full p-2.5 border border-[#E2E8F0] rounded-lg text-slate-800 outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E]"
+                  className="w-full p-2.5 border border-outline rounded-lg text-on-surface bg-surface placeholder:text-on-surface-variant/60 focus-visible:outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
                 />
               </div>
 
               <div>
-                <label className="font-semibold text-slate-700 block mb-1">Email Address *</label>
+                <label className="font-semibold text-on-surface block mb-1">Email Address *</label>
                 <input
                   type="email"
                   required
                   value={inquiryEmail}
                   onChange={(e) => setInquiryEmail(e.target.value)}
                   placeholder="john@example.com"
-                  className="w-full p-2.5 border border-[#E2E8F0] rounded-lg text-slate-800 outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E]"
+                  className="w-full p-2.5 border border-outline rounded-lg text-on-surface bg-surface placeholder:text-on-surface-variant/60 focus-visible:outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
                 />
               </div>
 
               <div>
-                <label className="font-semibold text-slate-700 block mb-1">Mobile / Phone Number</label>
+                <label className="font-semibold text-on-surface block mb-1">Mobile / Phone Number</label>
                 <input
                   type="tel"
                   value={inquiryPhone}
                   onChange={(e) => setInquiryPhone(e.target.value)}
                   placeholder="+63 917 000 0000"
-                  className="w-full p-2.5 border border-[#E2E8F0] rounded-lg text-slate-800 outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E]"
+                  className="w-full p-2.5 border border-outline rounded-lg text-on-surface bg-surface placeholder:text-on-surface-variant/60 focus-visible:outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
                 />
               </div>
 
               <div>
-                <label className="font-semibold text-slate-700 block mb-1">Message</label>
+                <label className="font-semibold text-on-surface block mb-1">Message</label>
                 <textarea
                   rows={3}
                   value={inquiryMessage}
                   onChange={(e) => setInquiryMessage(e.target.value)}
                   placeholder={`Hello, I am interested in ${propertyTitle}. Please provide additional information.`}
-                  className="w-full p-2.5 border border-[#E2E8F0] rounded-lg text-slate-800 outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E]"
+                  className="w-full p-2.5 border border-outline rounded-lg text-on-surface bg-surface placeholder:text-on-surface-variant/60 focus-visible:outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
                 />
               </div>
 

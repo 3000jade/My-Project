@@ -33,16 +33,19 @@ vi.mock('../../../context/AuthContext', () => ({
 }));
 
 // Mock Property Service
-vi.mock('../../../services/propertyService', () => ({
-  default: {
-    createProperty: vi.fn().mockResolvedValue({ id: 'new-prop-123', listing_key: 'HSR-9999' }),
-    updateProperty: vi.fn().mockResolvedValue({ id: 'new-prop-123' }),
-    getPropertyById: vi.fn().mockResolvedValue(null),
-    uploadImage: vi.fn().mockResolvedValue({ url: 'https://placehold.co/800x600.jpg' })
-  },
-  normalizeProperty: (p) => p,
-  toApiPayload: (d) => d
-}));
+vi.mock('../../../services/propertyService', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    default: {
+      ...actual.default,
+      createProperty: vi.fn().mockResolvedValue({ id: 'new-prop-123', listing_key: 'HSR-9999' }),
+      updateProperty: vi.fn().mockResolvedValue({ id: 'new-prop-123' }),
+      getPropertyById: vi.fn().mockResolvedValue(null),
+      uploadImage: vi.fn().mockResolvedValue({ url: 'https://placehold.co/800x600.jpg' })
+    },
+  };
+});
 
 // Mock Agent Service
 vi.mock('../../../services/agentService', () => ({
@@ -150,7 +153,7 @@ describe('BrokerCreateListings - Form Fields & Step Navigation', () => {
     expect(screen.queryByText(/Modern SaaS registry compliant/i)).not.toBeInTheDocument();
 
     // Step 1: Listing Title input
-    const titleInput = screen.getByPlaceholderText(/e\.g\. Modernist Cantilever Estate at Ayala Alabang/i);
+    const titleInput = screen.getByPlaceholderText(/e\.g\. (Ayala Land Premier|Modernist Cantilever)/i);
     expect(titleInput).toBeInTheDocument();
     fireEvent.change(titleInput, { target: { value: 'Luxury Penthouse at The Proscenium' } });
     expect(titleInput.value).toBe('Luxury Penthouse at The Proscenium');
@@ -173,24 +176,22 @@ describe('BrokerCreateListings - Form Fields & Step Navigation', () => {
     expect(screen.getByText(/Type:/i)).toBeInTheDocument();
     expect(screen.getByText(/Change/i)).toBeInTheDocument();
 
-    // Verify Property Status & Lifecycle group is merged into Section 1 Listing Overview
-    expect(screen.getByTestId('listing-overview-status-group')).toBeInTheDocument();
-    expect(screen.getByText('Property Status & Lifecycle')).toBeInTheDocument();
-    expect(screen.getByTestId('property-inventory-status-select')).toBeInTheDocument();
-    expect(screen.getByTestId('property-standard-status-select')).toBeInTheDocument();
-    // Title status is de-duplicated and lives in Section 3 specifications
-    expect(screen.queryByTestId('property-title-status-select')).not.toBeInTheDocument();
+    // Verify Single Merged Property Status exists in Section 1 Listing Overview
+    expect(screen.getByTestId('property-status-row')).toBeInTheDocument();
+    expect(screen.getByText(/Property Status/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'For Sale' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Reserved' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Sold' })).toBeInTheDocument();
 
-    // Verify changing inventory status updates value and syncs standard status
-    const inventorySelect = screen.getByTestId('property-inventory-status-select');
-    fireEvent.change(inventorySelect, { target: { value: 'RESERVED' } });
-    expect(inventorySelect.value).toBe('RESERVED');
-    expect(screen.getByTestId('property-standard-status-select').value).toBe('Active Under Contract');
+    // Verify selecting Reserved updates selection styling
+    const reservedBtn = screen.getByRole('button', { name: 'Reserved' });
+    fireEvent.click(reservedBtn);
+    expect(reservedBtn).toHaveClass('text-[#0F766E]');
 
-    // Verify setting status to SOLD syncs to Closed and remains published (not unpublished)
-    fireEvent.change(inventorySelect, { target: { value: 'SOLD' } });
-    expect(inventorySelect.value).toBe('SOLD');
-    expect(screen.getByTestId('property-standard-status-select').value).toBe('Closed');
+    // Verify selecting Sold updates selection styling
+    const soldBtn = screen.getByRole('button', { name: 'Sold' });
+    fireEvent.click(soldBtn);
+    expect(soldBtn).toHaveClass('text-[#0F766E]');
   });
 
   it('navigates to Section 2 (Location & Address) and verifies tailored subdivision block/lot fields', () => {

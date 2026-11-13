@@ -21,10 +21,10 @@ const GALLERY_ITEMS = [
     id: '1',
     refCode: 'REF: ARC-AA-01',
     status: 'For Sale',
-    statusColor: 'bg-[#0D4446]/90',
+    statusColor: 'bg-primary/90',
     title: 'Ayala Alabang Sanctuary',
     propertySubType: 'Private Estate',
-    typeColor: 'bg-[#E76F51]',
+    typeColor: 'bg-accent',
     architect: 'Leandro V. Locsin Partners',
     yearBuilt: '2025',
     location: 'Ayala Alabang, Muntinlupa',
@@ -43,10 +43,10 @@ const GALLERY_ITEMS = [
     id: '2',
     refCode: 'REF: ARC-RC-02',
     status: 'For Rent',
-    statusColor: 'bg-[#141717]/90',
+    statusColor: 'bg-on-surface/90',
     title: 'The Proscenium Sky Penthouse',
     propertySubType: 'Sky Residence',
-    typeColor: 'bg-[#E76F51]',
+    typeColor: 'bg-accent',
     architect: 'Carlos Ott Architects',
     yearBuilt: '2024',
     location: 'Rockwell Center, Makati',
@@ -65,10 +65,10 @@ const GALLERY_ITEMS = [
     id: '3',
     refCode: 'REF: ARC-BG-03',
     status: 'Pre-Selling',
-    statusColor: 'bg-[#5C6768]/90',
+    statusColor: 'bg-on-surface-variant/90',
     title: 'Aurelia Residences Horizon',
     propertySubType: 'Luxury High-Rise',
-    typeColor: 'bg-[#E76F51]',
+    typeColor: 'bg-accent',
     architect: 'Skidmore, Owings & Merrill',
     yearBuilt: '2025',
     location: 'Bonifacio Global City, Taguig',
@@ -89,10 +89,10 @@ const GALLERY_ITEMS = [
     id: '4',
     refCode: 'REF: ARC-FP-04',
     status: 'For Sale',
-    statusColor: 'bg-[#0D4446]/90',
+    statusColor: 'bg-primary/90',
     title: 'Forbes Park Brutalist Villa',
     propertySubType: 'Architectural Monolith',
-    typeColor: 'bg-[#E76F51]',
+    typeColor: 'bg-accent',
     architect: 'Studio Veldt Architecture',
     yearBuilt: '2024',
     location: 'Forbes Park, Makati',
@@ -111,10 +111,10 @@ const GALLERY_ITEMS = [
     id: '5',
     refCode: 'REF: ARC-DV-05',
     status: 'Pre-Selling',
-    statusColor: 'bg-[#5C6768]/90',
+    statusColor: 'bg-on-surface-variant/90',
     title: 'Dasmariñas Modern Pavilion',
     propertySubType: 'Contemporary Pavilion',
-    typeColor: 'bg-[#E76F51]',
+    typeColor: 'bg-accent',
     architect: 'Marmol Radziner',
     yearBuilt: '2025',
     location: 'Dasmariñas Village, Makati',
@@ -133,10 +133,10 @@ const GALLERY_ITEMS = [
     id: '6',
     refCode: 'REF: ARC-HS-06',
     status: 'For Rent',
-    statusColor: 'bg-[#141717]/90',
+    statusColor: 'bg-on-surface/90',
     title: 'The Suites at BGC Sky Villa',
     propertySubType: 'Duplex Penthouse',
-    typeColor: 'bg-[#E76F51]',
+    typeColor: 'bg-accent',
     architect: 'Arquitectonica',
     yearBuilt: '2024',
     location: 'High Street South, Taguig',
@@ -155,10 +155,10 @@ const GALLERY_ITEMS = [
     id: '7',
     refCode: 'REF: ARC-TH-07',
     status: 'Pre-Selling',
-    statusColor: 'bg-[#5C6768]/90',
+    statusColor: 'bg-on-surface-variant/90',
     title: 'Horizon Terraces Sanctuary',
     propertySubType: 'Mountain Villa',
-    typeColor: 'bg-[#E76F51]',
+    typeColor: 'bg-accent',
     architect: 'Leandro V. Locsin Partners',
     yearBuilt: '2025',
     location: 'Tagaytay Highlands, Cavite',
@@ -177,10 +177,10 @@ const GALLERY_ITEMS = [
     id: '8',
     refCode: 'REF: ARC-UV-08',
     status: 'For Sale',
-    statusColor: 'bg-[#0D4446]/90',
+    statusColor: 'bg-primary/90',
     title: 'Urdaneta Village Serenity',
     propertySubType: 'Contemporary Manor',
-    typeColor: 'bg-[#E76F51]',
+    typeColor: 'bg-accent',
     architect: 'Marmol Radziner',
     yearBuilt: '2024',
     location: 'Urdaneta Village, Makati',
@@ -199,10 +199,10 @@ const GALLERY_ITEMS = [
     id: '9',
     refCode: 'REF: ARC-BV-09',
     status: 'For Sale',
-    statusColor: 'bg-[#0D4446]/90',
+    statusColor: 'bg-primary/90',
     title: 'Bel-Air Modernist Glasshouse',
     propertySubType: 'Glass Pavilion',
-    typeColor: 'bg-[#E76F51]',
+    typeColor: 'bg-accent',
     architect: 'Budji + Royal Architecture',
     yearBuilt: '2025',
     location: 'Bel-Air Village, Makati',
@@ -324,27 +324,27 @@ export default function ArchitecturalGallerySection() {
   return (
     <section 
       id="gallery-exhibition" 
-      className="w-full bg-[#FFFFFF] pt-8 md:pt-12 pb-16 md:pb-24 border-b border-[#D1D5DB] relative z-20 text-[#141717] transition-colors duration-500"
+      className="w-full bg-surface pt-8 md:pt-12 pb-16 md:pb-24 border-b border-outline relative z-20 text-on-surface transition-colors duration-500"
     >
       <div className="w-full max-w-[1560px] mx-auto px-5 md:px-10 lg:px-16 font-sans">
         
-        {/* Section Masthead: Reference Style (— GALLERY) with Edition Telemetry */}
+        {/* Section Masthead */}
         <div className="mb-8 md:mb-10 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
           <div className="space-y-2">
             <div className="flex items-center gap-3">
-              <span className="w-6 h-[2px] bg-[#0D4446]" />
-              <span className="text-xs font-bold tracking-[0.25em] text-[#0D4446] uppercase font-sans">
+              <span className="w-6 h-[2px] bg-primary" />
+              <span className="text-xs font-bold tracking-[0.25em] text-primary uppercase font-sans">
                 Gallery
               </span>
             </div>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-sans font-extrabold text-[#141717] tracking-tight">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-sans font-extrabold text-on-surface tracking-tight">
               Featured Properties
             </h2>
           </div>
 
           {/* Micro Telemetry Counter on Masthead */}
           <div className="flex items-center gap-3 self-start sm:self-auto">
-            <span className="text-xs font-mono font-semibold uppercase tracking-wider text-[#5C6768]">
+            <span className="text-xs font-mono font-semibold uppercase tracking-wider text-on-surface-variant">
               {visibleRange.first === visibleRange.last 
                 ? String(visibleRange.first).padStart(2, '0')
                 : `${String(visibleRange.first).padStart(2, '0')} - ${String(visibleRange.last).padStart(2, '0')}`} / {String(GALLERY_ITEMS.length).padStart(2, '0')} PROPERTIES
@@ -363,9 +363,9 @@ export default function ArchitecturalGallerySection() {
             type="button"
             onClick={scrollPrev}
             aria-label="Previous properties"
-            className="absolute -left-4 sm:-left-8 lg:-left-12 top-1/2 -translate-y-1/2 z-30 w-11 h-11 sm:w-13 sm:h-13 rounded-full bg-white/95 backdrop-blur-md border border-[#D1D5DB] shadow-[0_8px_24px_rgba(0,0,0,0.08)] text-[#0D4446] hover:bg-[#0D4446] hover:text-white flex items-center justify-center transition-all duration-300 cursor-pointer active:scale-90 group focus:outline-none"
+            className="absolute -left-4 sm:-left-8 lg:-left-12 top-1/2 -translate-y-1/2 z-30 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-surface/95 backdrop-blur-md border border-outline shadow-xs text-primary hover:bg-primary hover:text-white flex items-center justify-center transition-all duration-200 cursor-pointer active:scale-95 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
           >
-            <IconChevronLeft size={24} stroke={2.5} className="group-hover:-translate-x-0.5 transition-transform duration-200" />
+            <IconChevronLeft size={22} stroke={2.5} className="group-hover:-translate-x-0.5 transition-transform duration-200" />
           </button>
 
           {/* Right Navigation Arrow Button */}
@@ -373,15 +373,15 @@ export default function ArchitecturalGallerySection() {
             type="button"
             onClick={scrollNext}
             aria-label="Next properties"
-            className="absolute -right-4 sm:-right-8 lg:-right-12 top-1/2 -translate-y-1/2 z-30 w-11 h-11 sm:w-13 sm:h-13 rounded-full bg-white/95 backdrop-blur-md border border-[#D1D5DB] shadow-[0_8px_24px_rgba(0,0,0,0.08)] text-[#0D4446] hover:bg-[#0D4446] hover:text-white flex items-center justify-center transition-all duration-300 cursor-pointer active:scale-90 group focus:outline-none"
+            className="absolute -right-4 sm:-right-8 lg:-right-12 top-1/2 -translate-y-1/2 z-30 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-surface/95 backdrop-blur-md border border-outline shadow-xs text-primary hover:bg-primary hover:text-white flex items-center justify-center transition-all duration-200 cursor-pointer active:scale-95 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
           >
-            <IconChevronRight size={24} stroke={2.5} className="group-hover:translate-x-0.5 transition-transform duration-200" />
+            <IconChevronRight size={22} stroke={2.5} className="group-hover:translate-x-0.5 transition-transform duration-200" />
           </button>
 
-          {/* True Sliding Carousel Viewport (Continuous Track, No Hidden Cards) */}
+          {/* True Sliding Carousel Viewport */}
           <div className="overflow-hidden py-3 px-1 cursor-grab active:cursor-grabbing" ref={emblaRef}>
             <div className="flex -ml-6 sm:-ml-7 lg:-ml-8 touch-pan-y">
-              {GALLERY_ITEMS.map((item, index) => {
+              {GALLERY_ITEMS.map((item) => {
                 const finance = getFinancingInfo(item);
 
                 return (
@@ -391,31 +391,26 @@ export default function ArchitecturalGallerySection() {
                   >
                     <div
                       onClick={() => navigate(`/properties/${item.id}`)}
-                      className="relative bg-white rounded-[10px] border border-[#D1D5DB] shadow-[0_8px_30px_rgba(0,0,0,0.06)] hover:shadow-[0_20px_40px_rgba(13,68,70,0.12)] hover:border-[#0D4446]/40 hover:-translate-y-1.5 transition-all duration-700 ease-out group cursor-pointer overflow-hidden flex flex-col justify-between h-full scale-100 opacity-100 z-10"
+                      className="relative bg-surface rounded-lg border border-outline shadow-xs hover:shadow-md hover:border-outline-variant hover:-translate-y-1 transition-all duration-300 group cursor-pointer overflow-hidden flex flex-col justify-between h-full z-10"
                       tabIndex={0}
                       role="button"
                       aria-label={`View details for ${item.title}`}
                       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate(`/properties/${item.id}`); }}
                     >
-                      {/* Dynamic Top Accent Border */}
-                      <div 
-                        className="absolute top-0 left-0 right-0 h-[3px] bg-transparent group-hover:bg-[#E76F51] transition-colors duration-500 z-10" 
-                      />
-
                       {/* Upper Image Section with Badges, Reference Code, Title, and Location */}
                       <div>
-                        <div className="relative h-64 sm:h-72 overflow-hidden bg-stone-900">
+                        <div className="relative h-64 sm:h-72 overflow-hidden bg-slate-900">
                           <img
                             src={item.image}
                             alt={item.title}
                             loading="lazy"
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent pointer-events-none" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent pointer-events-none" />
 
                           {/* Top Badges: Single Status Pill */}
                           <div className="absolute top-3 left-3 z-10">
-                            <span className="backdrop-blur-md bg-white/95 text-[#0D4446] text-[10px] sm:text-[11px] font-bold uppercase tracking-wider px-3.5 py-1.5 rounded-full shadow-xs border border-white/40">
+                            <span className="backdrop-blur-md bg-surface/95 text-primary text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full shadow-xs border border-outline">
                               {item.status || (item.priceSuffix ? 'For Rent' : 'For Sale')}
                             </span>
                           </div>
@@ -425,8 +420,8 @@ export default function ArchitecturalGallerySection() {
                             <h3 className="text-lg sm:text-xl font-bold font-display text-white line-clamp-1 leading-snug drop-shadow-sm group-hover:text-white transition-colors">
                               {item.title}
                             </h3>
-                            <p className="flex items-center gap-1 text-xs text-stone-300 font-sans mt-0.5">
-                              <IconMapPin size={14} stroke={2} className="shrink-0 text-stone-400" />
+                            <p className="flex items-center gap-1 text-xs text-slate-300 font-sans mt-0.5">
+                              <IconMapPin size={14} stroke={2} className="shrink-0 text-slate-400" />
                               <span className="truncate">{item.location}</span>
                             </p>
                           </div>
@@ -436,52 +431,52 @@ export default function ArchitecturalGallerySection() {
                         <div className="p-4 sm:p-5 flex flex-col gap-4">
                           {/* Price Heading */}
                           <div>
-                            <span className="text-[11px] sm:text-xs uppercase text-[#E76F51] font-mono font-bold block leading-none mb-1">
+                            <span className="text-xs uppercase text-accent font-mono font-bold block leading-none mb-1">
                               {finance.label}
                             </span>
-                            <div className="text-2xl sm:text-3xl font-extrabold text-[#141717] font-sans tracking-tight leading-tight">
+                            <div className="text-2xl sm:text-3xl font-extrabold text-on-surface font-sans tracking-tight leading-tight">
                               {finance.monthly}
                             </div>
-                            <div className="text-[11px] sm:text-xs font-mono text-[#5C6768] mt-1 tracking-wide">
+                            <div className="text-xs font-mono text-on-surface-variant mt-1 tracking-wide">
                               {finance.tcp}
                             </div>
                           </div>
 
                           {/* 4 Metric Cards with Icons */}
                           <div className="grid grid-cols-4 gap-2 sm:gap-2.5 pb-2 border-b border-transparent text-center">
-                            <div className="py-2 px-1.5 bg-[#F4F5F4] rounded-[6px] flex flex-col items-center justify-center">
-                              <span className="text-[9px] uppercase font-mono text-[#5C6768] flex items-center justify-center gap-0.5">
-                                <IconDimensions size={16} stroke={2} className="text-[#0D4446]" />
+                            <div className="py-2 px-1.5 bg-surface-variant rounded-md border border-outline flex flex-col items-center justify-center">
+                              <span className="text-[10px] uppercase font-mono text-on-surface-variant flex items-center justify-center gap-0.5">
+                                <IconDimensions size={14} stroke={2} className="text-primary" />
                                 Area
                               </span>
-                              <p className="text-[13px] sm:text-[14px] font-bold text-[#0D4446] font-mono mt-1 text-center leading-tight">
+                              <p className="text-xs sm:text-sm font-bold text-on-surface font-mono mt-1 text-center leading-tight">
                                 {item.area}
                               </p>
                             </div>
-                            <div className="py-2 px-1.5 bg-[#F4F5F4] rounded-[6px] flex flex-col items-center justify-center">
-                              <span className="text-[9px] uppercase font-mono text-[#5C6768] flex items-center justify-center gap-0.5">
-                                <IconBed size={16} stroke={2} className="text-[#0D4446]" />
+                            <div className="py-2 px-1.5 bg-surface-variant rounded-md border border-outline flex flex-col items-center justify-center">
+                              <span className="text-[10px] uppercase font-mono text-on-surface-variant flex items-center justify-center gap-0.5">
+                                <IconBed size={14} stroke={2} className="text-primary" />
                                 Beds
                               </span>
-                              <p className="text-[13px] sm:text-[14px] font-bold text-[#0D4446] font-mono mt-1 text-center leading-tight">
+                              <p className="text-xs sm:text-sm font-bold text-on-surface font-mono mt-1 text-center leading-tight">
                                 {item.specs.split(' • ')[0].replace(' Beds', '').replace(' Bed', '')}
                               </p>
                             </div>
-                            <div className="py-2 px-1.5 bg-[#F4F5F4] rounded-[6px] flex flex-col items-center justify-center">
-                              <span className="text-[9px] uppercase font-mono text-[#5C6768] flex items-center justify-center gap-0.5">
-                                <IconBath size={16} stroke={2} className="text-[#0D4446]" />
+                            <div className="py-2 px-1.5 bg-surface-variant rounded-md border border-outline flex flex-col items-center justify-center">
+                              <span className="text-[10px] uppercase font-mono text-on-surface-variant flex items-center justify-center gap-0.5">
+                                <IconBath size={14} stroke={2} className="text-primary" />
                                 Baths
                               </span>
-                              <p className="text-[13px] sm:text-[14px] font-bold text-[#0D4446] font-mono mt-1 text-center leading-tight">
+                              <p className="text-xs sm:text-sm font-bold text-on-surface font-mono mt-1 text-center leading-tight">
                                 {item.specs.split(' • ')[1].replace(' Baths', '').replace(' Bath', '')}
                               </p>
                             </div>
-                            <div className="py-2 px-1.5 bg-[#F4F5F4] rounded-[6px] flex flex-col items-center justify-center">
-                              <span className="text-[9px] uppercase font-mono text-[#5C6768] flex items-center justify-center gap-0.5">
-                                <IconCar size={16} stroke={2} className="text-[#0D4446]" />
+                            <div className="py-2 px-1.5 bg-surface-variant rounded-md border border-outline flex flex-col items-center justify-center">
+                              <span className="text-[10px] uppercase font-mono text-on-surface-variant flex items-center justify-center gap-0.5">
+                                <IconCar size={14} stroke={2} className="text-primary" />
                                 Parking
                               </span>
-                              <p className="text-[13px] sm:text-[14px] font-bold text-[#0D4446] font-mono mt-1 text-center leading-tight">
+                              <p className="text-xs sm:text-sm font-bold text-on-surface font-mono mt-1 text-center leading-tight">
                                 {item.parking.replace(' Cars', '')}
                               </p>
                             </div>
@@ -489,21 +484,20 @@ export default function ArchitecturalGallerySection() {
                         </div>
                       </div>
 
-                      {/* Lower Stage: Agent Redesign + Inspect Action */}
-                      <div className="px-4 sm:px-5 pb-4 sm:pb-5 pt-3.5 flex items-center justify-between border-t border-stone-200/80 mt-1">
-                        {/* Redesigned Agent Profile */}
+                      {/* Lower Stage: Agent Info + Action */}
+                      <div className="px-4 sm:px-5 pb-4 sm:pb-5 pt-3.5 flex items-center justify-between border-t border-outline mt-1">
                         <div className="flex items-center gap-3 group/agent cursor-pointer">
                           <div className="relative">
                             <img 
                               src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=100&h=100" 
                               alt="Listing Agent" 
-                              className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm ring-1 ring-stone-200 transition-transform duration-300 group-hover/agent:scale-105" 
+                              className="w-10 h-10 rounded-full object-cover border-2 border-surface shadow-xs ring-1 ring-outline transition-transform duration-200 group-hover/agent:scale-105" 
                             />
                             {/* Online Status Indicator */}
-                            <div className="absolute bottom-0.5 right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white shadow-sm" />
+                            <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-surface shadow-xs" />
                           </div>
                           <div className="flex flex-col justify-center">
-                            <span className="text-[13px] sm:text-sm font-bold text-[#0D4446] leading-none group-hover/agent:text-[#E76F51] transition-colors duration-300">Elena Silva</span>
+                            <span className="text-xs sm:text-sm font-bold text-on-surface leading-none group-hover/agent:text-primary transition-colors duration-200">Elena Silva</span>
                           </div>
                         </div>
 
@@ -513,10 +507,10 @@ export default function ArchitecturalGallerySection() {
                             e.stopPropagation();
                             navigate(`/properties/${item.id}`);
                           }}
-                          className="btn-shine premium-btn group/btn px-3 py-1.5 bg-[#0D4446] hover:bg-[#082b2d] text-white rounded-[5px] text-[10px] font-bold uppercase tracking-widest transition-all duration-300 cursor-pointer flex items-center justify-center gap-1 shadow-sm"
+                          className="px-3 py-1.5 bg-primary hover:bg-primary-hover text-white rounded-md text-xs font-semibold uppercase tracking-wider transition-all duration-200 cursor-pointer flex items-center justify-center gap-1 shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
                         >
                           <span>View Details</span>
-                          <IconArrowRight size={12} stroke={3} className="shrink-0 group-hover/btn:translate-x-1 transition-transform duration-300" />
+                          <IconArrowRight size={13} stroke={2.5} className="shrink-0 group-hover:translate-x-0.5 transition-transform duration-200" />
                         </button>
                       </div>
                     </div>
@@ -527,7 +521,7 @@ export default function ArchitecturalGallerySection() {
           </div>
         </div>
 
-        {/* PAGINATION DOTS & TELEMETRY INDICATOR (JUST BELOW CAROUSEL) */}
+        {/* PAGINATION DOTS */}
         <div className="mt-8 sm:mt-10 flex flex-col items-center gap-3">
           <div className="flex items-center gap-3">
             {(scrollSnaps.length ? scrollSnaps : [0, 1, 2]).map((_, i) => (
@@ -536,16 +530,16 @@ export default function ArchitecturalGallerySection() {
                 type="button"
                 onClick={() => scrollTo(i)}
                 aria-label={`Go to property group ${i + 1}`}
-                className={`relative h-2.5 rounded-full transition-all duration-500 cursor-pointer focus:outline-none ${
+                className={`relative h-2 rounded-full transition-all duration-300 cursor-pointer focus-visible:outline-none ${
                   selectedIndex === i
-                    ? 'w-10 bg-[#0D4446]'
-                    : 'w-2.5 bg-stone-300 hover:bg-stone-400'
+                    ? 'w-8 bg-primary'
+                    : 'w-2 bg-outline hover:bg-outline-variant'
                 }`}
               >
                 {selectedIndex === i && (
                   <motion.div
                     layoutId="activeFeatureDot"
-                    className="absolute inset-0 bg-[#0D4446] rounded-full"
+                    className="absolute inset-0 bg-primary rounded-full"
                     transition={{ type: 'spring', stiffness: 350, damping: 28 }}
                   />
                 )}

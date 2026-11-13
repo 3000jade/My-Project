@@ -4,7 +4,7 @@ import PageHeader from '../../../components/dashboard/PageHeader';
 import StatusBadge from '../../../components/dashboard/StatusBadge';
 import DashboardModal from '../../../components/dashboard/DashboardModal';
 import AgentAssignmentActionModal from '../../../components/dashboard/AgentAssignmentActionModal';
-import propertyService from '../../../services/propertyService';
+import propertyService, { formatPropertyAddressHeading, formatPropertyDeveloperName } from '../../../services/propertyService';
 import { useAuth } from '../../../context/AuthContext';
 import { 
   Building2, Clock, CheckCircle2, AlertCircle, 
@@ -507,7 +507,7 @@ export default function AgentPropertyDetail() {
           <div className="space-y-4">
             <div>
               <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B] block mb-1">
-                Listing Title <span className="text-[#FF6B6B]">*</span>
+                Developer Name <span className="text-[#FF6B6B]">*</span>
               </label>
               <input
                 required
@@ -664,7 +664,7 @@ export default function AgentPropertyDetail() {
             </div>
           </div>
           <div>
-            <h2 className="text-xl font-bold text-[#1E293B]">{property.title}</h2>
+            <h2 className="text-xl font-bold text-[#1E293B]">{formatPropertyAddressHeading(property, "Metro Manila")}</h2>
             <p className="text-xs text-[#64748B] mt-0.5">{typeof property.location === 'string' ? property.location : property.location?.address || 'Metro Manila'}</p>
           </div>
           <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-line">{property.description || property.public_remarks}</p>

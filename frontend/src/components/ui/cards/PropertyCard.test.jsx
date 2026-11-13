@@ -13,6 +13,7 @@ describe('PropertyCard Component', () => {
     transaction_type: 'For Sale',
     property_type: 'Single Family Residence',
     price: 15000000,
+    address: '200 High Street',
     city: 'Tagaytay',
     province: 'Cavite',
     bedrooms_total: 4,
@@ -30,16 +31,17 @@ describe('PropertyCard Component', () => {
     );
 
     expect(screen.getByText('For Sale')).toBeInTheDocument();
-    expect(screen.getByText('Luxury Villa in Tagaytay')).toBeInTheDocument();
-    expect(screen.getByText('Tagaytay, Cavite')).toBeInTheDocument();
-    expect(screen.queryByTestId('card-status-badge')).not.toBeInTheDocument();
+    expect(screen.getByText('200 High Street, Tagaytay')).toBeInTheDocument();
+    expect(screen.getByTestId('card-address-pin-icon')).toBeInTheDocument();
+    expect(screen.queryByText('Luxury Villa in Tagaytay')).not.toBeInTheDocument();
+    expect(screen.getByTestId('card-status-badge')).toHaveTextContent('For Sale');
     expect(screen.queryByText(/Backup Inquiries Welcome/i)).not.toBeInTheDocument();
 
-    const img = screen.getByAltText('Luxury Villa in Tagaytay');
+    const img = screen.getByAltText('200 High Street, Tagaytay');
     expect(img.className).not.toContain('grayscale');
   });
 
-  it('renders under-contract property with Amber "Under Contract" badge and banner', () => {
+  it('renders under-contract property with Amber "Reserved" badge and no banner', () => {
     const underContractProp = {
       ...baseProperty,
       id: 'prop-under-contract',
@@ -55,14 +57,12 @@ describe('PropertyCard Component', () => {
 
     const badge = screen.getByTestId('card-status-badge');
     expect(badge).toBeInTheDocument();
-    expect(badge).toHaveTextContent(/Under Contract/i);
+    expect(badge).toHaveTextContent('Reserved');
     expect(badge).toHaveClass('text-amber-800', 'bg-amber-50/95');
-
-    const banner = screen.getByText(/Under Contract • Backup Inquiries Welcome/i);
-    expect(banner).toBeInTheDocument();
+    expect(screen.queryByText(/Backup Inquiries Welcome/i)).not.toBeInTheDocument();
   });
 
-  it('renders closed/sold property with translucent card, bold "SOLD / CLOSED" badge, and "View Past Sale" CTA', () => {
+  it('renders closed/sold property with translucent card, bold "Sold" badge, and "View Past Sale" CTA', () => {
     const closedProp = {
       ...baseProperty,
       id: 'prop-closed',
@@ -80,14 +80,14 @@ describe('PropertyCard Component', () => {
     const card = screen.getByTestId('property-card');
     expect(card).toHaveClass('opacity-80');
 
-    // Bold SOLD / CLOSED badge
+    // Bold Sold badge
     const badge = screen.getByTestId('card-status-badge');
     expect(badge).toBeInTheDocument();
-    expect(badge).toHaveTextContent(/SOLD \/ CLOSED/i);
+    expect(badge).toHaveTextContent('Sold');
     expect(badge).toHaveClass('text-white', 'bg-rose-600');
 
-    // Closed / Sold contextual banner
-    expect(screen.getByText(/Transaction Closed • Sold Benchmark/i)).toBeInTheDocument();
+    // No bottom banner
+    expect(screen.queryByText(/Transaction Closed • Sold Benchmark/i)).not.toBeInTheDocument();
 
     // Price label indicates sold benchmark
     expect(screen.getByText('Sold benchmark')).toBeInTheDocument();
@@ -96,7 +96,7 @@ describe('PropertyCard Component', () => {
     expect(screen.getByText(/View Past Sale/i)).toBeInTheDocument();
 
     // Image has subtle desaturation
-    const img = screen.getByAltText('Luxury Villa in Tagaytay');
+    const img = screen.getByAltText('200 High Street, Tagaytay');
     expect(img.className).toContain('grayscale-[20%]');
     expect(img.className).toContain('opacity-90');
   });

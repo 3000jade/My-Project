@@ -4,6 +4,10 @@ import PageHeader from '../../../components/dashboard/PageHeader';
 import ViewPropertyButton from '../../../components/ui/buttons/ViewPropertyButton';
 import StatusBadge from '../../../components/dashboard/StatusBadge';
 import DashboardModal from '../../../components/dashboard/DashboardModal';
+import InquirySourceBadge from '../../../components/inquiries/InquirySourceBadge';
+import SlaCountdownPill from '../../../components/inquiries/SlaCountdownPill';
+import AiQualificationPanel from '../../../components/inquiries/AiQualificationPanel';
+import InternalNotesRail from '../../../components/inquiries/InternalNotesRail';
 import { inquiryService } from '../../../services/inquiryService';
 
 export default function AgentInquiryDetail() {
@@ -68,7 +72,6 @@ export default function AgentInquiryDetail() {
   }, [id]);
 
   const [internalNotes, setInternalNotes] = useState([]);
-  const [newNoteText, setNewNoteText] = useState('');
   const [addingNote, setAddingNote] = useState(false);
 
   useEffect(() => {
@@ -120,12 +123,10 @@ export default function AgentInquiryDetail() {
     }
   };
 
-  const handleAddInternalNote = async (e) => {
-    if (e) e.preventDefault();
-    if (!newNoteText.trim() || !inquiry) return;
+  const handleAddInternalNote = async (noteContent) => {
+    const content = (noteContent || '').trim();
+    if (!content || !inquiry) return;
 
-    const content = newNoteText.trim();
-    setNewNoteText('');
     setAddingNote(true);
 
     try {
@@ -323,7 +324,7 @@ export default function AgentInquiryDetail() {
           { label: inquiry.client_name }
         ]}
         badge={
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span
               className={`px-2.5 py-1 text-xs font-bold uppercase rounded tracking-wider ${
                 isInactive ? 'bg-slate-100 text-slate-700' : 'bg-emerald-100 text-emerald-800'
@@ -332,6 +333,16 @@ export default function AgentInquiryDetail() {
               {isInactive ? 'Inactive Lead' : 'Active Lead'}
             </span>
             <StatusBadge status={inquiry.status} />
+            <InquirySourceBadge
+              source={inquiry.source}
+              consentAccepted={inquiry.consentAccepted ?? inquiry.consent_accepted}
+            />
+            <SlaCountdownPill
+              createdAt={inquiry.created_at}
+              operationalStatus={inquiry.operational_status}
+              businessStatus={inquiry.business_status}
+              firstRespondedAt={inquiry.first_responded_at}
+            />
           </div>
         }
         actions={
@@ -361,168 +372,13 @@ export default function AgentInquiryDetail() {
         {/* Left 2 Cols: 6-Section AI Client Summary Report & Messages */}
         <div className="lg:col-span-2 space-y-6">
           {/* AI Client Summary Report Card (UX-01, AI-01, AI-02) */}
-          <div
-            data-testid="ai-client-summary-card"
-            className="bg-white rounded-lg border border-[#E2E8F0] p-5 shadow-xs space-y-4"
-          >
-            <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3">
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-[#0F766E] text-2xl">psychology</span>
-                <div>
-                  <h3 className="text-sm font-bold text-[#1E293B]">AI Client Summary Report</h3>
-                  <p className="text-[11px] text-[#64748B]">
-                    Structured lead qualification synthesized from conversation history
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                {aiSummary && (
-                  <span
-                    data-testid="ai-summary-status-badge"
-                    className={`px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider ${
-                      aiSummary.generationStatus === 'outdated'
-                        ? 'bg-amber-100 text-amber-800 border border-amber-300'
-                        : aiSummary.generationStatus === 'ready'
-                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                        : 'bg-rose-100 text-rose-800'
-                    }`}
-                  >
-                    {aiSummary.generationStatus}
-                  </span>
-                )}
-                <button
-                  type="button"
-                  onClick={handleGenerateSummary}
-                  disabled={generatingSummary}
-                  className="px-3 py-1 bg-[#0F766E] hover:bg-[#115E59] text-white rounded text-xs font-semibold uppercase tracking-wider transition-colors disabled:opacity-50 cursor-pointer"
-                >
-                  {generatingSummary ? 'Regenerating...' : 'Refresh AI Summary'}
-                </button>
-              </div>
-            </div>
-
-            {aiSummary?.sections ? (
-              <div className="space-y-4 text-xs">
-                {/* Section 1: Client Overview */}
-                <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
-                  <span className="font-bold text-[#0F766E] uppercase tracking-wider text-[10px] block mb-1">
-                    1. Client Overview
-                  </span>
-                  <p className="text-[#1E293B] font-medium leading-relaxed">
-                    {aiSummary.sections.clientOverview?.summary}
-                  </p>
-                </div>
-
-                {/* Section 2: Property Requirements */}
-                <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
-                  <span className="font-bold text-[#0F766E] uppercase tracking-wider text-[10px] block mb-2">
-                    2. Property Requirements & Criteria
-                  </span>
-                  <div className="grid grid-cols-2 gap-2 text-[11px]">
-                    <div>
-                      <span className="text-[#64748B]">Target Property:</span>{' '}
-                      <strong className="text-[#1E293B]">
-                        {aiSummary.sections.propertyRequirements?.targetProperty?.value}
-                      </strong>
-                    </div>
-                    <div>
-                      <span className="text-[#64748B]">Budget:</span>{' '}
-                      <strong className="text-[#1E293B]">
-                        {aiSummary.sections.propertyRequirements?.budget?.value}
-                      </strong>
-                    </div>
-                    <div>
-                      <span className="text-[#64748B]">Bedrooms:</span>{' '}
-                      <span className="text-[#1E293B]">
-                        {aiSummary.sections.propertyRequirements?.bedrooms?.value}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-[#64748B]">Bathrooms:</span>{' '}
-                      <span className="text-[#64748B] italic">
-                        {aiSummary.sections.propertyRequirements?.bathrooms?.value}
-                      </span>
-                    </div>
-                    <div className="col-span-2">
-                      <span className="text-[#64748B]">Features / Must-Haves:</span>{' '}
-                      <span className="text-[#1E293B]">
-                        {aiSummary.sections.propertyRequirements?.mustHaveFeatures?.value}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Section 3 & 4: Timeline & Readiness */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
-                    <span className="font-bold text-[#0F766E] uppercase tracking-wider text-[10px] block mb-1">
-                      3. Timeline & Urgency
-                    </span>
-                    <p className="text-[11px]">
-                      <span className="text-[#64748B]">Timeframe:</span>{' '}
-                      <strong>{aiSummary.sections.timelineAndUrgency?.timeframe?.value}</strong>
-                    </p>
-                    <p className="text-[11px] mt-1">
-                      <span className="text-[#64748B]">Urgency Level:</span>{' '}
-                      <span className="uppercase font-bold text-amber-700">
-                        {aiSummary.sections.timelineAndUrgency?.urgencyLevel}
-                      </span>
-                    </p>
-                  </div>
-                  <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
-                    <span className="font-bold text-[#0F766E] uppercase tracking-wider text-[10px] block mb-1">
-                      4. Readiness & Mode
-                    </span>
-                    <p className="text-[11px]">
-                      <span className="text-[#64748B]">Financing:</span>{' '}
-                      <strong>{aiSummary.sections.qualificationAndReadiness?.financingMode?.value}</strong>
-                    </p>
-                    <p className="text-[11px] mt-1">
-                      <span className="text-[#64748B]">Decision Makers:</span>{' '}
-                      <span>{aiSummary.sections.qualificationAndReadiness?.decisionMakers?.value}</span>
-                    </p>
-                  </div>
-                </div>
-
-                {/* Section 5: Key Questions */}
-                {aiSummary.sections.keyQuestionsAndConcerns?.length > 0 && (
-                  <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
-                    <span className="font-bold text-[#0F766E] uppercase tracking-wider text-[10px] block mb-1">
-                      5. Key Questions & Client Inquiries
-                    </span>
-                    <ul className="list-disc pl-4 space-y-1 text-[11px]">
-                      {aiSummary.sections.keyQuestionsAndConcerns.map((q, idx) => (
-                        <li key={idx} className="text-[#1E293B]">
-                          {q.question}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {/* Section 6: Recommended Next Action */}
-                <div className="p-3 bg-teal-50/60 rounded-lg border border-teal-200 flex items-start justify-between">
-                  <div>
-                    <span className="font-bold text-[#0F766E] uppercase tracking-wider text-[10px] block mb-0.5">
-                      6. Recommended Next Action
-                    </span>
-                    <p className="text-xs font-bold text-[#0F766E]">
-                      {aiSummary.sections.recommendedNextAction?.action}
-                    </p>
-                    <p className="text-[11px] text-[#64748B] mt-0.5">
-                      {aiSummary.sections.recommendedNextAction?.rationale}
-                    </p>
-                  </div>
-                  <span className="px-2 py-0.5 bg-[#0F766E] text-white rounded text-[10px] font-bold uppercase tracking-wider">
-                    {aiSummary.sections.recommendedNextAction?.priority}
-                  </span>
-                </div>
-              </div>
-            ) : (
-              <p className="text-xs text-[#64748B] italic">
-                {inquiry.ai_summary || 'No AI summary generated yet. Click "Refresh AI Summary" to generate report.'}
-              </p>
-            )}
+          <div data-testid="ai-client-summary-card">
+            <AiQualificationPanel
+              aiSummary={aiSummary}
+              fallbackSummaryText={inquiry.ai_summary}
+              onRefresh={handleGenerateSummary}
+              refreshing={generatingSummary}
+            />
           </div>
 
           {/* Follow-up Tasks Panel (TASK-01) */}
@@ -739,50 +595,11 @@ export default function AgentInquiryDetail() {
           </div>
 
           {/* Private Agent Dossier Notes */}
-          <div className="bg-white rounded-lg border border-[#E2E8F0] p-5 shadow-xs space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-[#1E293B] font-sans flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-[16px] text-amber-600">lock</span>
-                Private Internal Notes
-              </h3>
-              <span className="text-[10px] font-mono uppercase bg-amber-50 text-amber-700 px-2 py-0.5 rounded font-bold">
-                Staff Only
-              </span>
-            </div>
-
-            <div className="space-y-2 max-h-40 overflow-y-auto" data-lenis-prevent="true">
-              {internalNotes && internalNotes.length > 0 ? (
-                internalNotes.map((n, i) => (
-                  <div key={n.id || i} className="p-2.5 bg-amber-50/60 rounded border border-amber-200/60 text-xs space-y-1">
-                    <div className="flex justify-between items-center text-[10px] font-mono text-amber-800">
-                      <strong>{n.authorName || n.author_name || 'Agent'}</strong>
-                      <span>{n.timestamp ? n.timestamp.substring(0, 10) : 'Recent'}</span>
-                    </div>
-                    <p className="text-gray-700 font-sans">{n.content}</p>
-                  </div>
-                ))
-              ) : (
-                <p className="text-xs text-gray-400 italic text-center py-2">No internal notes recorded yet.</p>
-              )}
-            </div>
-
-            <form onSubmit={handleAddInternalNote} className="space-y-2 pt-2 border-t border-[#E2E8F0]">
-              <textarea
-                value={newNoteText}
-                onChange={(e) => setNewNoteText(e.target.value)}
-                placeholder="Add confidential client note..."
-                rows={2}
-                className="w-full p-2.5 border border-[#E2E8F0] rounded text-xs font-sans outline-none focus:border-[#0F766E] resize-none"
-              />
-              <button
-                type="submit"
-                disabled={addingNote || !newNoteText.trim()}
-                className="w-full py-1.5 bg-[#1E293B] hover:bg-slate-900 text-white rounded text-xs font-bold uppercase tracking-wider font-sans transition-colors disabled:opacity-50 cursor-pointer"
-              >
-                {addingNote ? 'Saving...' : 'Save Private Note'}
-              </button>
-            </form>
-          </div>
+          <InternalNotesRail
+            notes={internalNotes}
+            onAddNote={handleAddInternalNote}
+            addingNote={addingNote}
+          />
         </div>
       </div>
 

@@ -5,6 +5,11 @@ import SearchAndFilterBar from '../../../components/dashboard/SearchAndFilterBar
 import StatusBadge from '../../../components/dashboard/StatusBadge';
 import DataTable from '../../../components/dashboard/DataTable';
 import EmptyState from '../../../components/dashboard/EmptyState';
+import { MessageSquare } from 'lucide-react';
+import { Card, CardContent } from '../../../components/ui';
+import { TableSkeleton } from '../../../components/dashboard/skeletons';
+import InquirySourceBadge from '../../../components/inquiries/InquirySourceBadge';
+import SlaCountdownPill from '../../../components/inquiries/SlaCountdownPill';
 import { inquiryService } from '../../../services/inquiryService';
 import { useAuth } from '../../../context/AuthContext';
 
@@ -17,6 +22,7 @@ export default function AgentInquiries() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState('');
+  const [activeTab, setActiveTab] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
 
   const loadInquiries = useCallback(async () => {
@@ -37,6 +43,13 @@ export default function AgentInquiries() {
     loadInquiries();
   }, [loadInquiries]);
 
+  const totalCount = inquiries.length;
+  const awaitingCount = inquiries.filter(
+    (inq) => inq.operational_status === 'awaiting_agent' || (inq.status || '').toUpperCase() === 'NEW'
+  ).length;
+  const overdueCount = inquiries.filter((inq) => inq.operational_status === 'overdue').length;
+  const aiChatbotCount = inquiries.filter((inq) => inq.source === 'ai_chatbot').length;
+
   const filtered = inquiries.filter(inq => {
     const clientName = inq.client_name || '';
     const propertyTitle = inq.property_title || '';
@@ -47,16 +60,28 @@ export default function AgentInquiries() {
       message.toLowerCase().includes(search.toLowerCase());
     const matchesStatus =
       statusFilter === 'ALL' || (inq.status || '').toUpperCase() === statusFilter.toUpperCase();
-    return matchesSearch && matchesStatus;
+    let matchesTab = true;
+    if (activeTab === 'AWAITING_AGENT') {
+      matchesTab = inq.operational_status === 'awaiting_agent' || (inq.status || '').toUpperCase() === 'NEW';
+    } else if (activeTab === 'OVERDUE') {
+      matchesTab = inq.operational_status === 'overdue';
+    } else if (activeTab === 'AI_CHATBOT') {
+      matchesTab = inq.source === 'ai_chatbot';
+    }
+    return matchesSearch && matchesStatus && matchesTab;
   });
 
   const columns = [
     {
       header: "Client",
       render: (row) => (
-        <div>
+        <div className="space-y-1">
           <p className="font-bold text-[#1E293B] font-sans">{row.client_name}</p>
           <p className="text-xs text-[#64748B] font-sans">{row.client_email}</p>
+          <InquirySourceBadge
+            source={row.source}
+            consentAccepted={row.consentAccepted ?? row.consent_accepted}
+          />
         </div>
       )
     },
@@ -82,8 +107,18 @@ export default function AgentInquiries() {
       accessor: "created_at"
     },
     {
-      header: "Status",
-      render: (row) => <StatusBadge status={row.status} />
+      header: "Status & SLA",
+      render: (row) => (
+        <div className="flex flex-col items-start gap-1.5">
+          <StatusBadge status={row.status} />
+          <SlaCountdownPill
+            createdAt={row.created_at}
+            operationalStatus={row.operational_status}
+            businessStatus={row.business_status}
+            firstRespondedAt={row.first_responded_at}
+          />
+        </div>
+      )
     },
     {
       header: "Actions",
@@ -99,26 +134,42 @@ export default function AgentInquiries() {
     }
   ];
 
+  const agentTabs = [
+    { key: 'ALL', label: `All (${totalCount})` },
+    { key: 'AWAITING_AGENT', label: `Unanswered (${awaitingCount})` },
+    { key: 'OVERDUE', label: `Overdue SLA (${overdueCount})` },
+    { key: 'AI_CHATBOT', label: `AI Chatbot Leads (${aiChatbotCount})` },
+  ];
+
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Assigned Inquiries"
-        subtitle="Review client messages, AI inquiry summaries, and coordinate appointment viewings."
+        title="Inquiry Dashboard"
+        subtitle="Monitor assigned leads, response SLAs, and jump into live client conversations."
         breadcrumbs={[
           { label: "Dashboard", to: "/agent/dashboard" },
           { label: "Inquiries" }
         ]}
         actions={
-          <button
-            onClick={loadInquiries}
-            disabled={loading}
-            className="h-[46px] px-4 bg-white hover:bg-slate-50 text-[#1E293B] border border-[#E2E8F0] rounded-xl text-xs font-bold font-sans uppercase tracking-wider flex items-center gap-2 transition-all shadow-xs cursor-pointer"
-          >
-            <span className={`material-symbols-outlined text-[18px] ${loading ? 'animate-spin' : ''}`}>
-              refresh
-            </span>
-            <span>Refresh</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <Link
+              to="/agent/inquiries/messages"
+              className="h-[46px] px-4 bg-[#0F766E] hover:bg-[#115E59] text-white rounded-xl text-xs font-bold font-sans uppercase tracking-wider inline-flex items-center gap-2 transition-all shadow-xs"
+            >
+              <MessageSquare className="w-4 h-4" />
+              <span>Open Messaging Inbox</span>
+            </Link>
+            <button
+              onClick={loadInquiries}
+              disabled={loading}
+              className="h-[46px] px-4 bg-white hover:bg-slate-50 text-[#1E293B] border border-[#E2E8F0] rounded-xl text-xs font-bold font-sans uppercase tracking-wider flex items-center gap-2 transition-all shadow-xs cursor-pointer"
+            >
+              <span className={`material-symbols-outlined text-[18px] ${loading ? 'animate-spin' : ''}`}>
+                refresh
+              </span>
+              <span>Refresh</span>
+            </button>
+          </div>
         }
       />
 
@@ -136,6 +187,50 @@ export default function AgentInquiries() {
           </button>
         </div>
       )}
+
+      {/* Agent KPI Strip */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="bg-white border border-[#E2E8F0] shadow-xs">
+          <CardContent className="p-4">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-[#64748B] font-sans">Assigned Total</p>
+            <p className="text-2xl font-bold font-display text-[#1E293B] mt-1">{totalCount}</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-white border border-[#E2E8F0] shadow-xs">
+          <CardContent className="p-4">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-[#0F766E] font-sans">Awaiting Reply</p>
+            <p className="text-2xl font-bold font-display text-[#0F766E] mt-1">{awaitingCount}</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-white border border-[#E2E8F0] shadow-xs">
+          <CardContent className="p-4">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-rose-600 font-sans">Overdue SLA</p>
+            <p className="text-2xl font-bold font-display text-rose-600 mt-1">{overdueCount}</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-white border border-[#E2E8F0] shadow-xs">
+          <CardContent className="p-4">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-[#0F766E] font-sans">AI Chatbot Leads</p>
+            <p className="text-2xl font-bold font-display text-[#1E293B] mt-1">{aiChatbotCount}</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="flex items-center gap-2 border-b border-[#E2E8F0] pb-2 overflow-x-auto">
+        {agentTabs.map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer ${
+              activeTab === tab.key
+                ? 'bg-[#0F766E] text-white shadow-xs'
+                : 'bg-white text-[#64748B] hover:bg-slate-50 border border-[#E2E8F0]'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
       <SearchAndFilterBar
         searchValue={search}
@@ -157,12 +252,7 @@ export default function AgentInquiries() {
       />
 
       {loading ? (
-        <div className="bg-white rounded-2xl border border-[#E2E8F0] p-12 text-center space-y-3">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-[#0F766E] border-t-transparent"></div>
-          <p className="text-xs font-bold uppercase tracking-wider text-slate-400 font-sans">
-            Loading assigned inquiries...
-          </p>
-        </div>
+        <TableSkeleton rows={5} cols={6} />
       ) : filtered.length === 0 ? (
         <EmptyState
           icon="inbox"
@@ -170,7 +260,7 @@ export default function AgentInquiries() {
           description="Try clearing your search or switching to another status filter."
           action={
             <button
-              onClick={() => { setSearch(''); setStatusFilter('ALL'); }}
+              onClick={() => { setSearch(''); setStatusFilter('ALL'); setActiveTab('ALL'); }}
               className="px-4 py-2 bg-[#0F766E] text-white rounded-xl text-xs font-bold uppercase tracking-wider font-sans cursor-pointer hover:bg-[#115E59] transition-colors"
             >
               Show All Inquiries
@@ -181,7 +271,7 @@ export default function AgentInquiries() {
         <DataTable
           columns={columns}
           data={filtered}
-          onRowClick={(row) => navigate(`/agent/inquiries/${row.id}`)}
+          onRowClick={(row) => navigate(`/agent/inquiries/messages/${row.id}`)}
         />
       )}
     </div>

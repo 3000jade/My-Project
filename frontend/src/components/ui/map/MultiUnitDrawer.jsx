@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { X, Building2, ChevronRight, Bed, Bath, Maximize2 } from 'lucide-react';
 import { formatPriceBadge } from './googleMapMarkers';
 import { resolveDriveImageUrl } from '../../../services/driveService';
+import { formatPropertyAddressHeading } from '../../../services/propertyService';
 
 /**
  * Slide-over drawer / bottom-sheet displaying co-located units at an anchor pinpoint.
@@ -83,7 +84,7 @@ export default function MultiUnitDrawer({
         {/* Units Scrollable List */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3 divide-y divide-slate-100" data-lenis-prevent="true">
           {properties.map((property) => {
-            const title = property.title || property.name || 'Residence';
+            const title = property.title || formatPropertyAddressHeading(property, 'Residence');
             const price =
               property.formattedPrice ||
               (typeof property.price === 'number'

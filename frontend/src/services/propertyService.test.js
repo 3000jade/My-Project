@@ -266,8 +266,7 @@ describe('propertyService RESO 2.0 Adapters', () => {
       standardStatus: 'Active Under Contract',
     });
     expect(underContractPayload.standardStatus).toBe('Active Under Contract');
-    expect(underContractPayload.status).toBe('pending');
-    expect(underContractPayload.isPublished).toBe(false);
+    expect(underContractPayload.status).toBe('reserved');
 
     const reservedByStatusPayload = toApiPayload({
       title: 'Reserved Penthouse',
@@ -275,7 +274,7 @@ describe('propertyService RESO 2.0 Adapters', () => {
       status: 'RESERVED',
     });
     expect(reservedByStatusPayload.standardStatus).toBe('Active Under Contract');
-    expect(reservedByStatusPayload.status).toBe('pending');
+    expect(reservedByStatusPayload.status).toBe('reserved');
   });
 
   it('serializes canonical Schema v1.0 payload with assignedAgent and dual-envelope attributes', () => {

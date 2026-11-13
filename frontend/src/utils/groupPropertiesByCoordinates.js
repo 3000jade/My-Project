@@ -1,4 +1,5 @@
 import { getPropertyCoordinates } from './propertyCoordinates';
+import { formatPropertyAddressHeading } from '../services/propertyService';
 
 /**
  * Format a price number into a compact badge string (e.g. ₱5M, ₱850K).
@@ -107,8 +108,13 @@ export function groupPropertiesByCoordinates(properties, clusterThresholdMeters 
     const isMulti = cluster.properties.length > 1;
     const firstProp = cluster.properties[0];
 
-    // Determine representative title
-    let title = firstProp.building_name || firstProp.project_name || firstProp.subdivision_name || firstProp.subdivision || firstProp.title || firstProp.name || 'Residence';
+    // Determine representative title (Building / Project / Subdivision / Address)
+    let title =
+      firstProp.building_name ||
+      firstProp.project_name ||
+      firstProp.subdivision_name ||
+      firstProp.subdivision ||
+      formatPropertyAddressHeading(firstProp, 'Residence');
     
     // Extract price range
     const prices = cluster.properties.map(p => p.price_raw ?? p.price);

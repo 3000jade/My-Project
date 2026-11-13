@@ -20,6 +20,10 @@ import {
 import { inquiryService } from '../../../services/inquiryService';
 import { Spinner, ViewPropertyButton } from '../../../components/ui';
 import { InquiryDetailSkeleton } from '../../../components/dashboard/skeletons';
+import InquirySourceBadge from '../../../components/inquiries/InquirySourceBadge';
+import SlaCountdownPill from '../../../components/inquiries/SlaCountdownPill';
+import AiQualificationPanel from '../../../components/inquiries/AiQualificationPanel';
+import InternalNotesRail from '../../../components/inquiries/InternalNotesRail';
 import { agentService } from '../../../services/agentService';
 
 export default function BrokerInquiryDetail() {
@@ -141,7 +145,7 @@ export default function BrokerInquiryDetail() {
         title={`Inquiry Dossier: ${inquiry.client_name}`}
         subtitle={`Session Ref: ${inquiry.reference_code || inquiry.id} • Created ${inquiry.created_at}`}
         badge={
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span
               className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
                 inquiry.business_status === 'inactive'
@@ -152,6 +156,16 @@ export default function BrokerInquiryDetail() {
               {inquiry.business_status || 'active'}
             </span>
             <StatusBadge status={inquiry.status} />
+            <InquirySourceBadge
+              source={inquiry.source}
+              consentAccepted={inquiry.consentAccepted ?? inquiry.consent_accepted}
+            />
+            <SlaCountdownPill
+              createdAt={inquiry.created_at}
+              operationalStatus={inquiry.operational_status}
+              businessStatus={inquiry.business_status}
+              firstRespondedAt={inquiry.first_responded_at}
+            />
           </div>
         }
         actions={
@@ -205,16 +219,11 @@ export default function BrokerInquiryDetail() {
           {/* Left 2 Cols: AI Insights & Message Thread */}
           <div className="lg:col-span-2 space-y-6">
             {/* AI Assistance Context */}
-            {inquiry.ai_summary && (
-              <Card data-testid="broker-card" className="bg-white dark:bg-slate-900 border border-[#0F766E]/30 dark:border-teal-800/60 p-5 shadow-xs">
-                <div className="flex items-center gap-2 text-[#0F766E] dark:text-teal-400 mb-2 font-display font-bold text-sm">
-                  <span className="material-symbols-outlined text-[20px]">psychology</span>
-                  <span>AI Inbound Inquiry Intelligence Analysis</span>
-                </div>
-                <p className="text-xs font-sans text-slate-700 dark:text-slate-300 leading-relaxed">
-                  {inquiry.ai_summary}
-                </p>
-              </Card>
+            {(inquiry.latest_ai_summary || inquiry.ai_summary) && (
+              <AiQualificationPanel
+                aiSummary={inquiry.latest_ai_summary}
+                fallbackSummaryText={inquiry.ai_summary}
+              />
             )}
 
             {/* Messages Feed */}
@@ -312,6 +321,9 @@ export default function BrokerInquiryDetail() {
                 />
               </div>
             </Card>
+
+            {/* Private Internal Staff Notes */}
+            <InternalNotesRail notes={inquiry.internal_notes || []} />
           </div>
         </div>
       ) : (

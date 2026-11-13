@@ -4,14 +4,71 @@ import { IconMessageCircle2, IconX, IconSend, IconRobot } from '@tabler/icons-re
 
 import { chatService } from '../../services/chatService';
 
+import apiClient from '../../services/apiClient';
+
 export default function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
-    { id: 1, type: 'ai', text: 'How can I help you?' }
+    {
+      id: 1,
+      type: 'ai',
+      text: "I am Human Shelter Realty's AI Property Concierge (not a PRC-licensed broker). How can I help you explore our published properties today?",
+    },
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [showEscalationForm, setShowEscalationForm] = useState(false);
+  const [escalationForm, setEscalationForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    consentAccepted: false,
+  });
+  const [escalationStatus, setEscalationStatus] = useState('idle');
+  const [escalationError, setEscalationError] = useState('');
   const messagesEndRef = useRef(null);
+
+  const handleEscalateSubmit = async (e) => {
+    e.preventDefault();
+    if (!escalationForm.consentAccepted) {
+      setEscalationError('Please accept the Data Privacy Act (RA 10173) notice to continue.');
+      return;
+    }
+    setEscalationStatus('submitting');
+    setEscalationError('');
+    try {
+      const recentContext = messages
+        .slice(-4)
+        .map((m) => `${m.type === 'user' ? 'Visitor' : 'AI'}: ${m.text}`)
+        .join('\n');
+      const res = await apiClient.post('/inquiries', {
+        name: escalationForm.name.trim(),
+        email: escalationForm.email.trim(),
+        phone: escalationForm.phone.trim() || undefined,
+        message: recentContext || 'Visitor requested a licensed agent via AI Concierge.',
+        source: 'ai_chatbot',
+        preferredReplyChannel: 'chat',
+        consentAccepted: true,
+      });
+      const refId = res?.data?.data?.id || res?.data?.id || 'submitted';
+      setEscalationStatus('success');
+      setShowEscalationForm(false);
+      setEscalationForm({ name: '', email: '', phone: '', consentAccepted: false });
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          type: 'ai',
+          text: `Thank you! Your inquiry (${refId}) has been routed to a PRC-licensed agent.`,
+        },
+      ]);
+    } catch (err) {
+      setEscalationStatus('error');
+      setEscalationError(
+        err?.response?.data?.error || 'Could not submit your inquiry. Please check your details.'
+      );
+    }
+  };
 
   const toggleChat = () => setIsOpen(!isOpen);
 
@@ -72,25 +129,26 @@ export default function ChatWidget() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="w-[380px] md:w-[440px] mb-4 bg-white/95 backdrop-blur-xl shadow-[0_20px_40px_-15px_rgba(0,0,0,0.2)] rounded-2xl overflow-hidden border border-[#E5E7EB] flex flex-col pointer-events-auto"
+            className="w-[380px] md:w-[440px] mb-4 bg-white shadow-[0_20px_40px_-15px_rgba(0,0,0,0.2)] rounded-2xl overflow-hidden border border-[#E2E8F0] flex flex-col pointer-events-auto"
             style={{ height: '550px', maxHeight: '75vh' }}
           >
             {/* Header */}
-            <div className="bg-gradient-to-r from-[#174849] to-[#266F71] p-4 flex justify-between items-center text-white shrink-0 shadow-sm relative z-10">
+            <div className="bg-[#0F766E] p-4 flex justify-between items-center text-white shrink-0 shadow-sm relative z-10">
               <div className="flex items-center gap-3">
                 <div className="relative">
                   <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/20 backdrop-blur-sm shadow-inner">
                     <IconRobot size={22} className="text-white drop-shadow-md" />
                   </div>
-                  <div className="absolute bottom-0 right-0 w-3 h-3 bg-[#4ADE80] border-2 border-[#266F71] rounded-full animate-pulse shadow-sm"></div>
+                  <div className="absolute bottom-0 right-0 w-3 h-3 bg-[#4ADE80] border-2 border-[#0F766E] rounded-full animate-pulse shadow-sm"></div>
                 </div>
                 <div>
-                  <h3 className="font-display font-bold text-[15px] leading-tight tracking-wide">Private Concierge</h3>
-                  <p className="text-[10px] font-sans text-white/80 uppercase tracking-widest mt-0.5">Online</p>
+                  <h3 className="font-display font-bold text-[15px] leading-tight tracking-wide">AI Property Concierge</h3>
+                  <p className="text-[10px] font-sans text-white/85 uppercase tracking-widest mt-0.5">Automated Assistant · RA 9646</p>
                 </div>
               </div>
               <button 
                 onClick={toggleChat}
+                aria-label="Close chat"
                 className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors border border-transparent hover:border-white/20"
               >
                 <IconX size={18} />
@@ -143,38 +201,127 @@ export default function ChatWidget() {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Quick Selectors */}
-            <div className="px-4 py-2.5 bg-white border-t border-[#E5E7EB] grid grid-cols-3 gap-1.5 shrink-0 shadow-[0_-4px_10px_rgba(0,0,0,0.02)]">
-              {['Show Penthouses', 'Price of Forbes', 'Contact Agent'].map((suggestion) => (
-                <button 
-                  key={suggestion}
-                  onClick={() => handleSend(null, suggestion)}
-                  className="w-full h-full px-1 py-1.5 rounded-lg border border-[#266F71]/30 text-[#266F71] text-[9.5px] font-sans font-bold uppercase tracking-widest hover:bg-[#266F71] hover:text-white transition-all shadow-sm flex items-center justify-center text-center leading-tight"
-                >
-                  {suggestion}
-                </button>
-              ))}
-            </div>
-
-            {/* Input Area */}
-            <div className="p-4 bg-white border-t border-[#E5E7EB] shrink-0 relative z-10">
-              <form onSubmit={handleSend} className="flex gap-2 relative">
+            {/* Escalation Form or Quick Selectors */}
+            {showEscalationForm ? (
+              <form
+                onSubmit={handleEscalateSubmit}
+                className="px-4 py-3 bg-[#F8FAFC] border-t border-[#E2E8F0] space-y-2 shrink-0"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-[#1E293B]">
+                    Connect to Licensed Agent
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowEscalationForm(false)}
+                    className="text-xs text-[#64748B] hover:text-[#1E293B]"
+                  >
+                    Cancel
+                  </button>
+                </div>
                 <input
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  className="flex-1 bg-[#F1F0EC] border-transparent focus:border-[#266F71] focus:ring-1 focus:ring-[#266F71] rounded-full text-sm font-sans pl-5 pr-12 py-3 outline-none transition-all text-[#1B1C1A] placeholder:text-[#1B1C1A]/40"
-                  placeholder="Type your message..."
                   type="text"
+                  required
+                  placeholder="Full name"
+                  value={escalationForm.name}
+                  onChange={(e) =>
+                    setEscalationForm((f) => ({ ...f, name: e.target.value }))
+                  }
+                  className="w-full px-3 py-1.5 text-xs bg-white border border-[#E2E8F0] rounded-lg text-[#1E293B] focus:border-[#0F766E] outline-none"
                 />
-                <button 
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    type="email"
+                    required
+                    placeholder="Email address"
+                    value={escalationForm.email}
+                    onChange={(e) =>
+                      setEscalationForm((f) => ({ ...f, email: e.target.value }))
+                    }
+                    className="w-full px-3 py-1.5 text-xs bg-white border border-[#E2E8F0] rounded-lg text-[#1E293B] focus:border-[#0F766E] outline-none"
+                  />
+                  <input
+                    type="tel"
+                    placeholder="Phone (optional)"
+                    value={escalationForm.phone}
+                    onChange={(e) =>
+                      setEscalationForm((f) => ({ ...f, phone: e.target.value }))
+                    }
+                    className="w-full px-3 py-1.5 text-xs bg-white border border-[#E2E8F0] rounded-lg text-[#1E293B] focus:border-[#0F766E] outline-none"
+                  />
+                </div>
+                <label className="flex items-start gap-2 text-[11px] text-[#64748B] cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={escalationForm.consentAccepted}
+                    onChange={(e) =>
+                      setEscalationForm((f) => ({
+                        ...f,
+                        consentAccepted: e.target.checked,
+                      }))
+                    }
+                    className="mt-0.5 accent-[#0F766E]"
+                  />
+                  <span>
+                    I consent to Human Shelter Realty processing my contact details under the Data Privacy Act (RA 10173) so a licensed agent can respond.
+                  </span>
+                </label>
+                {escalationError && (
+                  <p className="text-[11px] text-red-600">{escalationError}</p>
+                )}
+                <button
                   type="submit"
-                  disabled={!inputValue.trim()}
-                  className="absolute right-1.5 top-1.5 bottom-1.5 w-9 bg-[#266F71] disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-full flex items-center justify-center hover:bg-[#174849] transition-colors shadow-sm"
+                  disabled={!escalationForm.consentAccepted || escalationStatus === 'submitting'}
+                  className="w-full py-2 rounded-lg bg-[#FF6B6B] text-[#1E293B] font-semibold text-xs disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
                 >
-                  <IconSend size={16} className="ml-0.5" />
+                  {escalationStatus === 'submitting' ? 'Sending...' : 'Request Licensed Agent'}
                 </button>
               </form>
-            </div>
+            ) : (
+              <>
+                {/* Quick Selectors */}
+                <div className="px-4 py-2.5 bg-white border-t border-[#E2E8F0] grid grid-cols-3 gap-1.5 shrink-0">
+                  {['Show Penthouses', 'Price of Forbes', 'Contact Agent'].map((suggestion) => (
+                    <button 
+                      key={suggestion}
+                      onClick={() =>
+                        suggestion === 'Contact Agent'
+                          ? setShowEscalationForm(true)
+                          : handleSend(null, suggestion)
+                      }
+                      className={
+                        suggestion === 'Contact Agent'
+                          ? 'w-full h-full px-1 py-1.5 rounded-lg bg-[#FF6B6B] text-[#1E293B] text-[9.5px] font-sans font-bold uppercase tracking-widest hover:opacity-90 transition-all shadow-sm flex items-center justify-center text-center leading-tight'
+                          : 'w-full h-full px-1 py-1.5 rounded-lg border border-[#0F766E]/30 text-[#0F766E] text-[9.5px] font-sans font-bold uppercase tracking-widest hover:bg-[#0F766E] hover:text-white transition-all shadow-sm flex items-center justify-center text-center leading-tight'
+                      }
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Input Area */}
+                <div className="p-4 bg-white border-t border-[#E2E8F0] shrink-0 relative z-10">
+                  <form onSubmit={handleSend} className="flex gap-2 relative">
+                    <input
+                      value={inputValue}
+                      onChange={(e) => setInputValue(e.target.value)}
+                      className="flex-1 bg-[#F8FAFC] border border-[#E2E8F0] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] rounded-full text-sm font-sans pl-5 pr-12 py-3 outline-none transition-all text-[#1E293B] placeholder:text-[#64748B]"
+                      placeholder="Type your message..."
+                      type="text"
+                    />
+                    <button 
+                      type="submit"
+                      disabled={!inputValue.trim()}
+                      aria-label="Send message"
+                      className="absolute right-1.5 top-1.5 bottom-1.5 w-9 bg-[#0F766E] disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-full flex items-center justify-center hover:bg-[#115E59] transition-colors shadow-sm"
+                    >
+                      <IconSend size={16} className="ml-0.5" />
+                    </button>
+                  </form>
+                </div>
+              </>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
@@ -182,7 +329,8 @@ export default function ChatWidget() {
       <motion.button
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
-        className="pointer-events-auto bg-gradient-to-br from-[#266F71] to-[#174849] text-white w-14 h-14 md:w-16 md:h-16 rounded-full shadow-[0_8px_20px_rgba(38,111,113,0.4)] flex items-center justify-center relative group overflow-hidden border border-white/20"
+        aria-label="Toggle AI Property Concierge"
+        className="pointer-events-auto bg-[#0F766E] hover:bg-[#115E59] text-white w-14 h-14 md:w-16 md:h-16 rounded-full shadow-[0_8px_20px_rgba(15,118,110,0.35)] flex items-center justify-center relative group overflow-hidden border border-white/20"
         onClick={toggleChat}
       >
         <AnimatePresence mode="wait">

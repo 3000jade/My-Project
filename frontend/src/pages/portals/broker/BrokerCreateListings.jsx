@@ -20,7 +20,14 @@ import {
   Input, Label, Textarea, Alert, AlertTitle, AlertDescription,
   useToast, Toaster, ViewPropertyButton
 } from '../../../components/ui';
-import propertyService, { normalizeProperty, toApiPayload } from '../../../services/propertyService';
+import propertyService, {
+  normalizeProperty,
+  toApiPayload,
+  formatPropertyAddressHeading,
+  formatPropertyDeveloperName,
+  formatMergedStatusPill,
+  resolvePropertyLifecycleState,
+} from '../../../services/propertyService';
 import agentService from '../../../services/agentService';
 import { useAuth } from '../../../context/AuthContext';
 import mapsService from '../../../services/mapsService';
@@ -2033,20 +2040,29 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
               <div className="flex flex-col gap-2 md:col-span-2">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <label className="text-sm font-semibold text-[#1E293B]">
-                    Listing Title <span className="text-[#FF6B6B]">*</span>
+                  <label htmlFor="developer-name-input" className="text-sm font-semibold text-[#1E293B]">
+                    Developer Name <span className="text-[#FF6B6B]">*</span>
                   </label>
                   <span className="text-[11px] text-[#64748B]">
-                    {(formData.title || '').length} / 120
+                    {(formData.developer_name || formData.title || '').length} / 120
                   </span>
                 </div>
                 <input
+                  id="developer-name-input"
+                  data-testid="developer-name-input"
                   required
                   type="text"
                   maxLength={120}
-                  placeholder="e.g. Modernist Cantilever Estate at Ayala Alabang"
-                  value={formData.title}
-                  onChange={e => { setIsDirty(true); setFormData({ ...formData, title: e.target.value }); }}
+                  placeholder="e.g. Ayala Land Premier, Rockwell Land, Shang Properties"
+                  value={formData.developer_name ?? formData.title ?? ''}
+                  onChange={e => {
+                    setIsDirty(true);
+                    setFormData({
+                      ...formData,
+                      developer_name: e.target.value,
+                      title: e.target.value,
+                    });
+                  }}
                   className="w-full px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-md text-sm text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none transition-colors shadow-none h-11 md:h-10 [@media(pointer:coarse)]:h-11"
                 />
               </div>
@@ -2071,143 +2087,46 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                 />
               </div>
 
-              {/* Transaction Purpose */}
-              <div className="flex flex-col gap-2 md:col-span-2">
+              {/* Single Merged Property Status (replaces separate Transaction Purpose & bulky status box) */}
+              <div className="flex flex-col gap-2 md:col-span-2" data-testid="property-status-row">
                 <label className="text-sm font-semibold text-[#1E293B] block">
-                  Transaction Purpose <span className="text-[#FF6B6B]">*</span>
+                  Property Status <span className="text-[#FF6B6B]">*</span>
                 </label>
-                <div className="flex bg-[#F8FAFC] rounded-md items-center max-w-xs">
-                  {['For Sale', 'For Rent'].map(type => (
-                    <button
-                      key={type}
-                      type="button"
-                      onClick={() => { setIsDirty(true); setFormData({ ...formData, transaction_type: type }); }}
-                      className={`flex-1 h-11 md:h-10 [@media(pointer:coarse)]:h-11 text-sm font-semibold rounded-md transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0F766E] ${
-                        formData.transaction_type === type
-                          ? 'bg-white text-[#0F766E] shadow-sm font-bold border border-[#0F766E]/20'
-                          : 'text-[#64748B] hover:text-[#1E293B]'
-                      }`}
-                    >
-                      {type}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Merged Property Status & Lifecycle Overview */}
-              <div className="flex min-w-0 flex-col gap-3 md:col-span-2 p-3 bg-slate-50/80 rounded-md border border-slate-200/80" data-testid="listing-overview-status-group">
-                <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-200/60">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="material-symbols-outlined text-[18px] text-[#0F766E]">verified</span>
-                    <span className="text-xs font-bold uppercase tracking-wider text-[#1E293B]">
-                      Property Status & Lifecycle
-                    </span>
-                  </div>
-                  <span className={`inline-flex max-w-full items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${
-                    formData.status === 'AVAILABLE' || formData.standard_status === 'Active'
-                      ? 'bg-teal-50 text-[#0F766E] border-teal-200'
-                      : formData.status === 'RESERVED' || formData.standard_status === 'Active Under Contract'
-                      ? 'bg-amber-50 text-amber-700 border-amber-200'
-                      : formData.status === 'SOLD' || formData.standard_status === 'Closed'
-                      ? 'bg-slate-100 text-slate-700 border-slate-300'
-                      : 'bg-slate-100 text-slate-600 border-slate-200'
-                  }`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${
-                      formData.status === 'AVAILABLE' || formData.standard_status === 'Active'
-                        ? 'bg-[#0F766E]'
-                        : formData.status === 'RESERVED' || formData.standard_status === 'Active Under Contract'
-                        ? 'bg-amber-500'
-                        : 'bg-slate-400'
-                    }`} />
-                    <span>{formData.status || 'AVAILABLE'} • {formData.standard_status || 'Active'}</span>
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3 pt-1">
-                  {/* 1. Transaction / Inventory Status */}
-                  <div className="flex flex-col gap-2">
-                    <label className="text-sm font-semibold text-slate-600 block">
-                      Inventory Status <span className="text-[#FF6B6B]">*</span>
-                    </label>
-                    <select
-                      data-testid="property-inventory-status-select"
-                      value={formData.status || 'AVAILABLE'}
-                      onChange={e => {
-                        const nextStatus = e.target.value;
-                        setIsDirty(true);
-                        let nextStandard = formData.standard_status;
-                        let nextPublished = formData.is_published;
-                        if (nextStatus === 'AVAILABLE') {
-                          nextStandard = 'Active';
-                          nextPublished = true;
-                        } else if (nextStatus === 'RESERVED') {
-                          nextStandard = 'Active Under Contract';
-                          nextPublished = true;
-                        } else if (nextStatus === 'SOLD') {
-                          nextStandard = 'Closed';
-                          nextPublished = true; // Sold properties remain published to showcase closed transactions
-                        } else if (nextStatus === 'INACTIVE') {
-                          nextStandard = 'Draft';
-                          nextPublished = false;
-                        }
-                        setFormData({
-                          ...formData,
-                          status: nextStatus,
-                          standard_status: nextStandard,
-                          is_published: nextPublished
-                        });
-                      }}
-                      className="w-full px-3 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-md text-sm font-semibold text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none cursor-pointer shadow-none transition-colors h-11 md:h-10 [@media(pointer:coarse)]:h-11"
-                    >
-                      <option value="AVAILABLE">AVAILABLE (Active Inventory)</option>
-                      <option value="RESERVED">RESERVED (Under Contract)</option>
-                      <option value="SOLD">SOLD / CLOSED</option>
-                      <option value="INACTIVE">INACTIVE (Deactivated)</option>
-                    </select>
-                  </div>
-
-                  {/* 2. RESO Standard Status / Listing Publication */}
-                  <div className="flex flex-col gap-2">
-                    <label className="text-sm font-semibold text-slate-600 block">
-                      Listing Publication Status
-                    </label>
-                    <select
-                      data-testid="property-standard-status-select"
-                      value={formData.standard_status || 'Active'}
-                      onChange={e => {
-                        const nextStandard = e.target.value;
-                        setIsDirty(true);
-                        let nextStatus = formData.status;
-                        let nextPublished = formData.is_published;
-                        if (nextStandard === 'Active') {
-                          nextStatus = 'AVAILABLE';
-                          nextPublished = true;
-                        } else if (nextStandard === 'Active Under Contract') {
-                          nextStatus = 'RESERVED';
-                          nextPublished = true;
-                        } else if (nextStandard === 'Closed') {
-                          nextStatus = 'SOLD';
-                          nextPublished = true; // Closed properties remain published
-                        } else if (nextStandard === 'Draft') {
-                          nextStatus = 'INACTIVE';
-                          nextPublished = false;
-                        }
-                        setFormData({
-                          ...formData,
-                          standard_status: nextStandard,
-                          status: nextStatus,
-                          is_published: nextPublished
-                        });
-                      }}
-                      className="w-full px-3 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-md text-sm font-semibold text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none cursor-pointer shadow-none transition-colors h-11 md:h-10 [@media(pointer:coarse)]:h-11"
-                    >
-                      <option value="Active">Active (Live on Market)</option>
-                      <option value="Active Under Contract">Active Under Contract</option>
-                      <option value="Draft">Draft (Internal Only)</option>
-                      <option value="Pending Approval">Pending Approval</option>
-                      <option value="Closed">Closed (Completed)</option>
-                    </select>
-                  </div>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { key: 'For Sale', label: 'For Sale' },
+                    { key: 'For Rent', label: 'For Rent' },
+                    { key: 'Reserved', label: 'Reserved' },
+                    { key: 'Sold', label: 'Sold' },
+                    { key: 'Draft', label: 'Draft' }
+                  ].map(option => {
+                    const currentLifecycle = resolvePropertyLifecycleState(formData);
+                    const isSelected = currentLifecycle.lifecycleKey === option.key;
+                    return (
+                      <button
+                        key={option.key}
+                        type="button"
+                        onClick={() => {
+                          setIsDirty(true);
+                          const nextState = resolvePropertyLifecycleState(option.key);
+                          setFormData(prev => ({
+                            ...prev,
+                            transaction_type: nextState.transactionType,
+                            status: nextState.status,
+                            standard_status: nextState.standardStatus,
+                            is_published: nextState.isPublished,
+                          }));
+                        }}
+                        className={`px-5 h-11 md:h-10 text-xs sm:text-sm font-semibold rounded-md transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0F766E] ${
+                          isSelected
+                            ? 'bg-white text-[#0F766E] font-bold border-2 border-[#0F766E] shadow-2xs'
+                            : 'bg-white text-[#1E293B] border border-[#CBD5E1] hover:border-slate-400'
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -2807,34 +2726,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                   )}
                 </div>
 
-                {/* Transactional Status */}
-                <div className="flex min-w-0 flex-col gap-2">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <label className="text-sm font-medium text-[#1E293B]">
-                      Transaction Status
-                    </label>
-                    <span className="text-[10px] text-[#0F766E] font-medium">Synced with Overview</span>
-                  </div>
-                  <select
-                    value={formData.status}
-                    onChange={e => {
-                      const nextStatus = e.target.value;
-                      setIsDirty(true);
-                      let nextStandard = formData.standard_status;
-                      if (nextStatus === 'AVAILABLE') nextStandard = 'Active';
-                      else if (nextStatus === 'RESERVED') nextStandard = 'Active Under Contract';
-                      else if (nextStatus === 'SOLD') nextStandard = 'Closed';
-                      else if (nextStatus === 'INACTIVE') nextStandard = 'Draft';
-                      setFormData({ ...formData, status: nextStatus, standard_status: nextStandard });
-                    }}
-                    className="w-full px-4 bg-white border border-[#CBD5E1] hover:border-slate-400 rounded-md text-sm font-semibold text-[#1E293B] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] outline-none cursor-pointer shadow-none transition-colors h-11 md:h-10 [@media(pointer:coarse)]:h-11"
-                  >
-                    <option value="AVAILABLE">AVAILABLE (Active Inventory)</option>
-                    <option value="RESERVED">RESERVED / UNDER CONTRACT</option>
-                    <option value="SOLD">SOLD / CLOSED</option>
-                    <option value="INACTIVE">INACTIVE (Deactivated)</option>
-                  </select>
-                </div>
+
 
               </div>
             </div>
@@ -4777,7 +4669,7 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                         type="button"
                         variant="coral"
                         disabled={isSubmitting}
-                        onClick={() => executeSubmission('Active')}
+                        onClick={() => executeSubmission(formData.standard_status || 'Active')}
                         className="w-full sm:w-auto h-auto min-h-11 md:min-h-10 [@media(pointer:coarse)]:min-h-11 whitespace-normal py-2 px-7 font-bold"
                       >
                         {isSubmitting ? (
@@ -4835,18 +4727,25 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
             </div>
           )}
 
-          {/* Top-Left Pill: • For sale / For rent + Condition State */}
-          <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 flex-wrap">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/95 backdrop-blur-xs text-[11px] font-medium text-[#1E293B] shadow-xs">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              {formData.transaction_type === 'For Rent' ? 'For rent' : 'For sale'}
+          {/* Top-Left Pills: Max 2 pills (Pill 1: Merged Status, Pill 2: Condition) - No circle dots */}
+          <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 flex-wrap max-w-[78%]">
+            <span 
+              data-testid="card-status-badge"
+              className={`inline-flex items-center px-3 py-1 rounded-full text-[11px] font-semibold backdrop-blur-xs shadow-xs ${
+                formData.standard_status === 'Closed' || formData.status === 'SOLD'
+                  ? 'bg-rose-600 text-white border border-rose-700'
+                  : formData.standard_status === 'Active Under Contract' || formData.status === 'RESERVED'
+                    ? 'bg-amber-50/95 text-amber-800 border border-amber-300'
+                    : 'bg-white/95 text-[#1E293B] border border-slate-200/80'
+              }`}
+            >
+              {resolvePropertyLifecycleState(formData).lifecycleKey}
             </span>
             {(formData.property_condition || formData.development_condition) && (
               <span 
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/95 backdrop-blur-xs text-[11px] font-semibold text-[#0F766E] shadow-xs border border-teal-100/60"
+                className="inline-flex items-center px-2.5 py-1 rounded-full bg-white/95 backdrop-blur-xs text-[11px] font-semibold text-[#0F766E] shadow-xs border border-teal-100/60"
                 data-testid="card-condition-badge"
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-[#0F766E]" />
                 {formData.property_condition || formData.development_condition}
               </span>
             )}
@@ -4861,18 +4760,6 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
             >
               <Heart className="w-4 h-4 text-rose-500 fill-rose-500/20" />
             </button>
-          </div>
-
-          {/* Bottom-Left Pill: Location pin & location name */}
-          <div className="absolute bottom-3 left-3 z-10 max-w-[85%]">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/95 backdrop-blur-xs text-xs font-medium text-[#1E293B] shadow-xs truncate">
-              <div className="w-4 h-4 rounded-full bg-rose-50 flex items-center justify-center text-rose-500 shrink-0">
-                <MapPin className="w-2.5 h-2.5 text-rose-500" />
-              </div>
-              <span className="truncate">
-                {formData.city || formData.location || 'Location name'}
-              </span>
-            </div>
           </div>
         </div>
 
@@ -4891,10 +4778,18 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
             )}
           </div>
 
-          {/* Property Title with Coral Period */}
-          <h3 className="text-xl sm:text-2xl font-bold text-[#0F4C5C] tracking-tight line-clamp-2 leading-tight">
-            {formData.title || 'Property name'}
-            <span className="text-[#E07A5F]">.</span>
+          {/* Property Address Heading with Map Pin Icon & Coral Period */}
+          <h3
+            data-testid="preview-card-address-heading"
+            className="text-xl sm:text-2xl font-bold text-[#0F4C5C] tracking-tight line-clamp-2 leading-tight flex items-center gap-2"
+          >
+            <span className="w-7 h-7 rounded-full bg-rose-50 flex items-center justify-center text-[#E07A5F] shrink-0">
+              <MapPin className="w-4 h-4 text-[#E07A5F]" />
+            </span>
+            <span className="truncate">
+              {formatPropertyAddressHeading({ ...formData, title: '' }, 'Property address')}
+              <span className="text-[#E07A5F]">.</span>
+            </span>
           </h3>
 
           {/* Key Specs Row: beds, baths, area */}
@@ -5089,15 +4984,15 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
                 )}
               </div>
 
-              {/* Title & Pricing Header */}
+              {/* Address & Pricing Header */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#E2E8F0] pb-4">
                 <div>
                   <h2 className="text-xl font-bold text-[#1E293B]">
-                    {formData.title || 'Untitled Property'}
+                    {formatPropertyAddressHeading(formData, 'Property Address')}
                   </h2>
                   <p className="text-xs text-[#64748B] flex items-center gap-1 mt-1">
-                    <span className="material-symbols-outlined text-[16px] text-[#0F766E]">location_on</span>
-                    {formData.address ? `${formData.address}, ${formData.location}` : formData.location || 'Metro Manila, Philippines'}
+                    <span className="material-symbols-outlined text-[16px] text-[#0F766E]">domain</span>
+                    {formatPropertyDeveloperName(formData, 'Independent Developer')}
                   </p>
                 </div>
                 <div className="text-left sm:text-right">

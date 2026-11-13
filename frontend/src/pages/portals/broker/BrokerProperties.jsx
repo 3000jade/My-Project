@@ -20,7 +20,10 @@ import {
   DropdownMenuItem, 
   DropdownMenuSeparator 
 } from '../../../components/ui/dropdown-menu';
-import propertyService, { normalizeProperty } from '../../../services/propertyService';
+import propertyService, {
+  normalizeProperty,
+  formatPropertyDeveloperName,
+} from '../../../services/propertyService';
 import { cn } from '../../../utils/cn';
 import { Badge } from '../../../components/ui/badge';
 import { Button, buttonVariants } from '../../../components/ui/button';
@@ -728,7 +731,7 @@ export default function BrokerProperties() {
       header: "Property",
       className: "min-w-[280px]",
       render: (row) => {
-        const title = row.title || 'Untitled property';
+        const title = formatPropertyDeveloperName(row, 'Independent Developer');
         const rawKey = row.listing_key || row.listingKey;
         const listingCode = row.listing_id || row.listingId || (rawKey ? `ID: ${rawKey}` : (row.id ? `ID: ${row.id}` : 'Not provided'));
         const thumbnailImg = row.mainImage || (Array.isArray(row.images) && row.images.length > 0 ? row.images[0] : null) || row.thumbnail || row.image || (Array.isArray(row.property_images) && row.property_images[0] ? (row.property_images[0].imageUrl || row.property_images[0].image_url) : null);
@@ -737,6 +740,7 @@ export default function BrokerProperties() {
             <PropertyThumbnail image={thumbnailImg} title={title} />
             <div className="min-w-0 flex-1">
               <span
+                data-testid="datatable-developer-name"
                 className="font-semibold text-[#1E293B] block truncate text-xs hover:text-[#0F766E] transition-colors"
                 title={title}
               >

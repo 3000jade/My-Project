@@ -20,9 +20,12 @@ vi.mock('../../../services/propertyService', () => ({
     getProperties: vi.fn(),
     updateProperty: vi.fn(),
     deleteProperty: vi.fn(),
+    createProperty: vi.fn().mockImplementation((data) => Promise.resolve({ ...data, id: 'prop-copy-1', title: data.title, listingKey: 'HSR-10125001-COPY' })),
     getEditRequests: vi.fn().mockResolvedValue([])
   },
-  normalizeProperty: (p) => p
+  normalizeProperty: (p) => p,
+  formatPropertyDeveloperName: (p, fallback = '') => p?.developer_name || p?.developer || p?.title || fallback,
+  formatPropertyAddressHeading: (p, fallback = '') => p?.address || p?.location?.address || fallback,
 }));
 
 const mockData = [
