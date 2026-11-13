@@ -20,7 +20,11 @@ export const createInquirySchema = z.object({
   client_id: z.string().optional(),
   agentId: z.string().optional(),
   agent_id: z.string().optional(),
-});
+  consentAccepted: z.boolean().optional(),
+}).refine(
+  (data) => data.source !== 'ai_chatbot' || data.consentAccepted === true,
+  { message: 'Privacy consent is required for AI chatbot inquiry handoff.', path: ['consentAccepted'] }
+);
 
 export const requestAgentChatSchema = z.object({
   propertyId: z.string().min(1, 'propertyId is required'),

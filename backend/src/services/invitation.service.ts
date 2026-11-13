@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import { supabaseAdmin, isSupabaseConfigured } from '../config/supabase';
 import { config } from '../config';
 import { GmailService } from './gmail.service';
+import { safeEqual } from '../utils/crypto.utils';
 import logger from '../utils/logger';
 
 export interface AgentInvitation {
@@ -289,7 +290,7 @@ export class InvitationService {
 
     const tokenDigest = crypto.createHash('sha256').update(token).digest('hex');
     let inv: AgentInvitation | undefined = localInvitationsState.find(
-      (i) => i.token === token || i.token_digest === tokenDigest
+      (i) => (i.token && safeEqual(i.token, token)) || (i.token_digest && safeEqual(i.token_digest, tokenDigest))
     );
 
     if (isSupabaseConfigured) {

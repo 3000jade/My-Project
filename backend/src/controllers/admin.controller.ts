@@ -7,13 +7,80 @@ import type { ApiResponse } from '../types/api';
 
 export class AdminController {
   /**
+   * GET /api/admin/users/stats
+   * Aggregated user management statistics for executive KPI strip
+   */
+  public static async getUserStats(_req: AuthenticatedRequest, res: Response<ApiResponse>): Promise<void> {
+    try {
+      if (!isSupabaseConfigured) {
+        res.status(200).json({
+          success: true,
+          data: {
+            totalUsers: 4,
+            activeToday: 4,
+            pendingAccreditation: 1,
+            suspendedAccounts: 0,
+          },
+          message: 'Admin user statistics loaded (development mock).',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Total count
+      const { count: totalUsers } = await supabaseAdmin
+        .from('profiles')
+        .select('*', { count: 'exact', head: true });
+
+      // Suspended count
+      const { count: suspendedAccounts } = await supabaseAdmin
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+        .eq('verification_status', 'SUSPENDED');
+
+      // Pending accreditation count (agents with missing prc or pending verification)
+      const { count: pendingAccreditation } = await supabaseAdmin
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+        .eq('role', 'agent')
+        .or('verification_status.eq.PENDING,prc_license_no.is.null');
+
+      const activeToday = Math.max(0, (totalUsers || 0) - (suspendedAccounts || 0));
+
+      res.status(200).json({
+        success: true,
+        data: {
+          totalUsers: totalUsers || 0,
+          activeToday,
+          pendingAccreditation: pendingAccreditation || 0,
+          suspendedAccounts: suspendedAccounts || 0,
+        },
+        message: 'Admin user statistics loaded successfully.',
+        timestamp: new Date().toISOString(),
+      });
+    } catch (err: any) {
+      res.status(500).json({
+        success: false,
+        error: err.message || 'Failed to load user statistics.',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
+  /**
    * GET /api/admin/users
-   * List all user profiles with administrative metadata
+   * List all user profiles with administrative metadata, search, and pagination
    */
   public static async listUsers(req: AuthenticatedRequest, res: Response<ApiResponse>): Promise<void> {
     try {
+      const page = Math.max(1, parseInt(String(req.query.page || '1'), 10) || 1);
+      const limit = Math.min(100, Math.max(1, parseInt(String(req.query.limit || '15'), 10) || 15));
+      const search = String(req.query.search || '').trim().toLowerCase();
+      const roleFilter = String(req.query.role || '').trim();
+      const statusFilter = String(req.query.status || '').trim().toLowerCase();
+
       if (!isSupabaseConfigured) {
-        const mockUsers = [
+        let mockUsers = [
           {
             id: 'usr-admin-1',
             email: 'admin@pt.com',
@@ -57,19 +124,74 @@ export class AdminController {
           },
         ];
 
+        if (search) {
+          mockUsers = mockUsers.filter(
+            (u) =>
+              (u.full_name && u.full_name.toLowerCase().includes(search)) ||
+              (u.email && u.email.toLowerCase().includes(search))
+          );
+        }
+
+        if (roleFilter && roleFilter !== 'all') {
+          mockUsers = mockUsers.filter((u) => u.role === roleFilter);
+        }
+
+        if (statusFilter && statusFilter !== 'all') {
+          mockUsers = mockUsers.filter((u) => {
+            if (statusFilter === 'suspended') return u.status === 'suspended' || u.verification_status === 'SUSPENDED';
+            if (statusFilter === 'active') return (u.status === 'active' || !u.status) && u.verification_status !== 'SUSPENDED';
+            if (statusFilter === 'pending') return u.verification_status === 'PENDING' || !u.prc_license_no;
+            return true;
+          });
+        }
+
+        const total = mockUsers.length;
+        const startIndex = (page - 1) * limit;
+        const pagedUsers = mockUsers.slice(startIndex, startIndex + limit);
+
         res.status(200).json({
           success: true,
-          data: { users: mockUsers, total: mockUsers.length },
+          data: {
+            users: pagedUsers,
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit) || 1,
+          },
           message: 'Admin users loaded (development mock).',
           timestamp: new Date().toISOString(),
         });
         return;
       }
 
-      const { data, error, count } = await supabaseAdmin
+      let query = supabaseAdmin
         .from('profiles')
-        .select('*', { count: 'exact' })
-        .order('created_at', { ascending: false });
+        .select('*', { count: 'exact' });
+
+      if (search) {
+        query = query.or(`full_name.ilike.%${search}%,email.ilike.%${search}%`);
+      }
+
+      if (roleFilter && roleFilter !== 'all') {
+        query = query.eq('role', roleFilter);
+      }
+
+      if (statusFilter && statusFilter !== 'all') {
+        if (statusFilter === 'suspended') {
+          query = query.eq('verification_status', 'SUSPENDED');
+        } else if (statusFilter === 'active') {
+          query = query.neq('verification_status', 'SUSPENDED');
+        } else if (statusFilter === 'pending') {
+          query = query.or('verification_status.eq.PENDING,prc_license_no.is.null');
+        }
+      }
+
+      const from = (page - 1) * limit;
+      const to = from + limit - 1;
+
+      const { data, error, count } = await query
+        .order('created_at', { ascending: false })
+        .range(from, to);
 
       if (error) {
         throw new Error(error.message);
@@ -81,9 +203,17 @@ export class AdminController {
         status: u.verification_status === 'SUSPENDED' ? 'suspended' : 'active',
       }));
 
+      const total = count || 0;
+
       res.status(200).json({
         success: true,
-        data: { users, total: count || 0 },
+        data: {
+          users,
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit) || 1,
+        },
         message: 'Admin users loaded successfully.',
         timestamp: new Date().toISOString(),
       });
@@ -111,6 +241,16 @@ export class AdminController {
         res.status(400).json({
           success: false,
           error: `Invalid role specified. Must be one of: ${validRoles.join(', ')}`,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Self-Lockout Prevention Guard
+      if (req.user && req.user.id === id) {
+        res.status(403).json({
+          success: false,
+          error: 'Self-modification forbidden: Administrators cannot modify their own role to prevent accidental lockout.',
           timestamp: new Date().toISOString(),
         });
         return;
@@ -171,6 +311,26 @@ export class AdminController {
         res.status(400).json({
           success: false,
           error: 'Status must be one of: VERIFIED, SUSPENDED, PENDING.',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Mandatory justification check for account suspension
+      if (status === 'SUSPENDED' && (!reason || typeof reason !== 'string' || reason.trim().length < 5)) {
+        res.status(400).json({
+          success: false,
+          error: 'A valid documented justification (at least 5 characters) is required to suspend an account.',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Self-Lockout Prevention Guard
+      if (req.user && req.user.id === id) {
+        res.status(403).json({
+          success: false,
+          error: 'Self-modification forbidden: Administrators cannot modify their own suspension status.',
           timestamp: new Date().toISOString(),
         });
         return;

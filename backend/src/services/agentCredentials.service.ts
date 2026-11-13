@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import { supabaseAdmin, isSupabaseConfigured } from '../config/supabase';
 import { InvitationService } from './invitation.service';
 import { GoogleDriveService } from './googleDrive.service';
+import { safeEqual } from '../utils/crypto.utils';
 import logger from '../utils/logger';
 
 export type CredentialDocumentKind = 'prc' | 'dhsud' | 'government_id' | 'other';
@@ -274,7 +275,7 @@ export class AgentCredentialsService {
         const validation = await InvitationService.validateToken(actor.token);
         if (validation.valid) {
           const expectedInviteId = `invite-${crypto.createHash('sha256').update(actor.token).digest('hex').substring(0, 16)}`;
-          if (document.invitation_id === expectedInviteId) {
+          if (safeEqual(document.invitation_id, expectedInviteId)) {
             isAuthorizedApplicant = true;
           }
         }

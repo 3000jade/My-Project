@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { InquiryService } from '../services/inquiry.service';
 import { AuditService } from '../services/audit.service';
 import { GmailService } from '../services/gmail.service';
+import { subscribeInquiryStream } from '../utils/inquiryStream';
 import logger from '../utils/logger';
 import type { ApiResponse } from '../types/api';
 
@@ -825,6 +826,21 @@ export class InquiryController {
         timestamp: new Date().toISOString(),
       });
     }
+  }
+
+  /**
+   * GET /api/inquiries/stream
+   * Role-scoped Server-Sent Events stream for staff messaging inbox (Rung 3)
+   */
+  public static stream(req: Request, res: Response): void {
+    const user = (req as any).user;
+    if (!user?.id) {
+      res.status(401).json({ success: false, error: 'Unauthorized' });
+      return;
+    }
+    const role = String(user.user_metadata?.role || user.role || 'agent').toLowerCase();
+    const unsubscribe = subscribeInquiryStream(String(user.id), role, res);
+    req.on('close', unsubscribe);
   }
 }
 

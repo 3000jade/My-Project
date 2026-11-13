@@ -9,6 +9,7 @@ const router = Router();
 router.use(requireAuth);
 router.use(requireRole(['admin']));
 
+router.get('/users/stats', AdminController.getUserStats);
 router.get('/users', AdminController.listUsers);
 router.patch('/users/:id/role', AdminController.updateUserRole);
 router.patch('/users/:id/status', AdminController.updateUserStatus);

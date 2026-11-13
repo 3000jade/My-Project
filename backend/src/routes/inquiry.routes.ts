@@ -31,6 +31,9 @@ router.get('/my-inquiries', requireAuth, InquiryController.getMyInquiries);
 // Broker monitoring dashboard metrics
 router.get('/broker-metrics', requireAuth, requireRole(['broker', 'admin']), InquiryController.getBrokerMetrics);
 
+// Role-scoped SSE stream for live messaging inbox
+router.get('/stream', requireAuth, requireRole(['agent', 'broker', 'admin']), InquiryController.stream);
+
 // Authenticated list for agents & brokers
 router.get('/', requireAuth, validateQuery(queryInquirySchema), InquiryController.list);
 

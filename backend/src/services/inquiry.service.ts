@@ -1,5 +1,6 @@
 import { supabaseAdmin, isSupabaseConfigured } from '../config/supabase';
 import logger from '../utils/logger';
+import { publishInquiryEvent } from '../utils/inquiryStream';
 import { AgentEligibilityService } from './agentEligibility.service';
 import { AuditService } from './audit.service';
 import { NotificationService } from './notification.service';
@@ -1044,6 +1045,13 @@ export class InquiryService {
       }
     }
 
+    publishInquiryEvent('inquiry:assigned', {
+      inquiryId,
+      agentId,
+      agentName: assignedAgentName,
+      operationalStatus: item.operationalStatus,
+    });
+
     return item;
   }
 
@@ -1165,6 +1173,13 @@ export class InquiryService {
         logger.warn('[InquiryService] Supabase addMessage warning:', err.message);
       }
     }
+
+    publishInquiryEvent('inquiry:message', {
+      inquiryId,
+      agentId: item.agentId || item.agent_id || null,
+      operationalStatus: item.operationalStatus,
+      message: newMsg,
+    });
 
     return newMsg;
   }
