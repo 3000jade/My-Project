@@ -1,0 +1,100 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Human Shelter Realty - User Management API",
+    "version": "1.1.0"
+  },
+  "paths": {
+    "/api/admin/users": {
+      "get": {
+        "summary": "List users with pagination, search, and role filtering",
+        "parameters": [
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 15 } },
+          { "name": "search", "in": "query", "schema": { "type": "string" } },
+          { "name": "role", "in": "query", "schema": { "type": "string", "enum": ["client", "agent", "broker", "admin"] } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated user directory",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "users": { "type": "array" },
+                        "total": { "type": "integer" },
+                        "page": { "type": "integer" },
+                        "limit": { "type": "integer" },
+                        "totalPages": { "type": "integer" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/users/{id}/role": {
+      "patch": {
+        "summary": "Update user authority role",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "role": { "type": "string", "enum": ["client", "agent", "broker", "admin"] }
+                },
+                "required": ["role"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Role successfully updated" },
+          "400": { "description": "Invalid role requested" },
+          "403": { "description": "Self-modification forbidden" }
+        }
+      }
+    },
+    "/api/admin/users/{id}/status": {
+      "patch": {
+        "summary": "Update user verification/suspension status",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": { "type": "string", "enum": ["VERIFIED", "SUSPENDED", "PENDING"] },
+                  "reason": { "type": "string" }
+                },
+                "required": ["status"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Status successfully updated" },
+          "400": { "description": "Invalid status requested" },
+          "403": { "description": "Self-modification forbidden" }
+        }
+      }
+    }
+  }
+}

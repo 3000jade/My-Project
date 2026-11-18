@@ -168,6 +168,17 @@ export const proposePropertyEditSchema = z.object({
 });
 export type ProposePropertyEditInput = z.infer<typeof proposePropertyEditSchema>;
 
+export const shareListingEmailSchema = z.object({
+  recipients: z
+    .array(z.string().trim().email('Invalid recipient email address.'))
+    .min(1, 'At least one recipient email is required.')
+    .max(5, 'Maximum of 5 recipients per share.'),
+  idempotency_key: z.string().trim().min(8).max(128),
+  optional_note: z.string().trim().max(500).optional(),
+  website: z.string().max(0, 'Bot submission rejected.').optional(), // Honeypot trap
+});
+export type ShareListingEmailInput = z.infer<typeof shareListingEmailSchema>;
+
 export const approveEditRequestSchema = z.object({
   reviewNotes: z.string().trim().max(2000).optional(),
 });

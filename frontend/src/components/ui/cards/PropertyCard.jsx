@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -9,11 +9,13 @@ import {
   IconArrowRight,
   IconHeart,
   IconHeartFilled,
+  IconShare,
   IconUser
 } from '@tabler/icons-react';
 import { resolveDriveImageUrl } from '../../../services/driveService';
 import useViewingList from '../../../hooks/useViewingList';
 import ViewPropertyButton from '../buttons/ViewPropertyButton';
+import ShareListingModal from '../modals/ShareListingModal';
 
 export default function PropertyCard({ 
   property = {}, 
@@ -27,6 +29,7 @@ export default function PropertyCard({
 }) {
   const navigate = useNavigate();
   const { isInViewingList, toggleViewingList } = useViewingList();
+  const [isShareOpen, setIsShareOpen] = useState(false);
   
   // Animation config
   const cardAnimation = variants || {
@@ -138,6 +141,7 @@ export default function PropertyCard({
   const isHighlighted = isSelected || isHovered;
 
   return (
+    <>
     <motion.article
       variants={cardAnimation}
       onClick={handleCardAction}
@@ -234,8 +238,19 @@ export default function PropertyCard({
             )}
           </div>
 
-          {/* Top-Right Round Button: Heart (Favorite / Save) */}
-          <div className="absolute top-3 right-3 z-10">
+          {/* Top-Right Round Buttons: Share + Heart (Favorite / Save) */}
+          <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsShareOpen(true);
+              }}
+              aria-label="Share property"
+              className="w-8 h-8 rounded-full bg-white/95 backdrop-blur-xs hover:bg-white text-[#64748B] hover:text-[#0F766E] flex items-center justify-center shadow-xs transition-transform hover:scale-110 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#0F766E]"
+            >
+              <IconShare size={15} stroke={2} />
+            </button>
             <button
               type="button"
               onClick={handleSaveToggle}
@@ -387,5 +402,18 @@ export default function PropertyCard({
         </div>
       </div>
     </motion.article>
+    <ShareListingModal
+      open={isShareOpen}
+      onOpenChange={setIsShareOpen}
+      listing={{
+        ...property,
+        id: propertyId,
+        title: propertyTitle,
+        formattedPrice: priceWithFrequency,
+        address: displayLocation,
+        coverImage,
+      }}
+    />
+    </>
   );
 }

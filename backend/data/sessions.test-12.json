@@ -1,0 +1,37 @@
+{
+  "sessions": [
+    {
+      "id": "330b651e-2ed8-4866-976a-a61565b72c65",
+      "tokenHash": "e8bc163c82eee18733288c7d4ac636db3a6deb013ef2d37b68322be20edc45cc",
+      "userId": "u1",
+      "role": "client",
+      "createdAt": 1794567295349,
+      "lastActiveAt": 1794567295349,
+      "idleExpiresAt": 1794570895349,
+      "absoluteExpiresAt": 1794653695349,
+      "lastHeartbeatAt": 1794567295349,
+      "userAgent": "Unknown Device",
+      "ipAddress": "Unavailable",
+      "updatedAt": 1794567295364,
+      "revokedAt": 1794567295364,
+      "revokeReason": "user_logout"
+    },
+    {
+      "id": "79910e35-f735-4337-a138-8af2b727e790",
+      "tokenHash": "ad328846aa18b32a335816374511cac1063c704b8c57999e51da9f908290a7a4",
+      "userId": "u1",
+      "role": "client",
+      "createdAt": 1794567295355,
+      "lastActiveAt": 1794567295372,
+      "idleExpiresAt": 1794570895372,
+      "absoluteExpiresAt": 1794653695355,
+      "lastHeartbeatAt": 1794567295355,
+      "userAgent": "Unknown Device",
+      "ipAddress": "Unavailable",
+      "updatedAt": 1794567295394,
+      "revokedAt": 1794567295394,
+      "revokeReason": "user_logout_all_devices"
+    }
+  ],
+  "disabledAccounts": []
+}

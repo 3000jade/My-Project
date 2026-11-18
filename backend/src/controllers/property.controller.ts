@@ -3,6 +3,8 @@ import { Request, Response } from 'express';
 import { PropertyService } from '../services/property.service';
 import { AgentService } from '../services/agent.service';
 import { GoogleDriveService } from '../services/googleDrive.service';
+import { GmailService } from '../services/gmail.service';
+import { config } from '../config';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
 import logger from '../utils/logger';
 import type { ApiResponse, PaginatedResponse } from '../types/api';
@@ -715,6 +717,87 @@ export class PropertyController {
       res.status(400).json({
         success: false,
         error: err.message || 'Could not reassign property agent.',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
+  /**
+   * POST /api/properties/:id/share-email
+   * Public endpoint (optionalAuth + rate-limited) to dispatch property share emails asynchronously.
+   */
+  public static async shareListingEmail(
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse>
+  ): Promise<void> {
+    try {
+      const id = String(req.params.id);
+      const { recipients, idempotency_key, optional_note } = req.body;
+
+      const property: any = await PropertyService.findPropertyById(id, undefined, req.user?.role, req.user?.id);
+      if (!property) {
+        res.status(404).json({
+          success: false,
+          error: `Property with id '${id}' not found.`,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const clientBase = Array.isArray(config.clientOrigin) ? config.clientOrigin[0] : config.clientOrigin;
+      const origin = req.get('origin') || clientBase || 'http://localhost:5173';
+      const listingUrl = `${origin.replace(/\/+$/, '')}/properties/${encodeURIComponent(id)}?utm_source=email_share&utm_medium=share`;
+
+      const rawPrice = property.price_raw ?? property.price;
+      const formattedPrice =
+        property.formattedPrice ||
+        (typeof rawPrice === 'number' && rawPrice > 0 ? `₱ ${rawPrice.toLocaleString('en-PH')}` : String(rawPrice || 'Price on Request'));
+      const address =
+        [property.address || property.unparsed_address, property.city, property.province || property.state_or_province]
+          .filter(Boolean)
+          .join(', ') || 'Philippines';
+      const beds = property.bedrooms_total ?? property.beds;
+      const baths = property.bathrooms_total_integer ?? property.baths;
+      const area = property.living_area ?? property.sqm ?? property.floor_area;
+      const specs = [
+        beds != null ? `${beds} Beds` : null,
+        baths != null ? `${baths} Baths` : null,
+        area != null ? `${area} sqm` : null,
+      ]
+        .filter(Boolean)
+        .join(' | ');
+      const heroImageUrl =
+        (Array.isArray(property.images) && property.images[0]) ||
+        (Array.isArray(property.property_images) && property.property_images[0]?.image_url) ||
+        property.mainImage ||
+        property.image;
+
+      // Dispatch asynchronously so the HTTP 202 response returns immediately
+      setImmediate(() => {
+        GmailService.sendShareListingEmail(recipients, idempotency_key, {
+          propertyId: id,
+          propertyTitle: property.title || property.listing_title || 'Featured Property',
+          price: formattedPrice,
+          address,
+          specs,
+          heroImageUrl,
+          listingUrl,
+          optionalNote: optional_note,
+        }).catch((err) => {
+          logger.error(`[PropertyController] Async shareListingEmail failed for ${id}:`, err);
+        });
+      });
+
+      res.status(202).json({
+        success: true,
+        data: { accepted: true, recipientCount: recipients.length },
+        message: 'Listing share emails queued for delivery.',
+        timestamp: new Date().toISOString(),
+      });
+    } catch (err: any) {
+      res.status(500).json({
+        success: false,
+        error: err.message || 'Could not queue share email.',
         timestamp: new Date().toISOString(),
       });
     }

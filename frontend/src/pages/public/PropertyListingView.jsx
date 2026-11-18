@@ -40,6 +40,7 @@ import { getPropertyCoordinates, DEFAULT_METRO_MANILA_COORDS, isWithinPhilippine
 import { resolveDriveImageUrl } from '../../services/driveService';
 import InspectionScheduleModal from '../../components/ui/modals/InspectionScheduleModal';
 import PublicAgentProfileModal from '../../components/ui/modals/PublicAgentProfileModal';
+import ShareListingModal from '../../components/ui/modals/ShareListingModal';
 import { GooglePropertyMap, StreetViewModal, CommuteAnalysisCard, EnlargedMapModal } from '../../components/ui';
 
 // shadcn/ui Primitives
@@ -154,6 +155,7 @@ export default function PropertyListingView() {
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [isAgentModalOpen, setIsAgentModalOpen] = useState(false);
+  const [isShareOpen, setIsShareOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
 
   // Inquiry Form inside Contact Modal
@@ -918,24 +920,7 @@ export default function PropertyListingView() {
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => {
-                  if (navigator.share) {
-                    navigator.share({ title: propertyTitle, url: window.location.href }).catch(() => {});
-                  } else if (navigator.clipboard) {
-                    navigator.clipboard.writeText(window.location.href)
-                      .then(() => {
-                        setToastMessage('Link copied to clipboard!');
-                        setTimeout(() => setToastMessage(null), 3000);
-                      })
-                      .catch(() => {
-                        setToastMessage('Link copied to clipboard!');
-                        setTimeout(() => setToastMessage(null), 3000);
-                      });
-                  } else {
-                    setToastMessage('Link copied to clipboard!');
-                    setTimeout(() => setToastMessage(null), 3000);
-                  }
-                }}
+                onClick={() => setIsShareOpen(true)}
                 title="Share listing"
                 className="h-8 w-8 px-0"
               >
@@ -1385,24 +1370,7 @@ export default function PropertyListingView() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => {
-                        if (navigator.share) {
-                          navigator.share({ title: propertyTitle, url: window.location.href }).catch(() => {});
-                        } else if (navigator.clipboard) {
-                          navigator.clipboard.writeText(window.location.href)
-                            .then(() => {
-                              setToastMessage('Link copied to clipboard!');
-                              setTimeout(() => setToastMessage(null), 3000);
-                            })
-                            .catch(() => {
-                              setToastMessage('Link copied to clipboard!');
-                              setTimeout(() => setToastMessage(null), 3000);
-                            });
-                        } else {
-                          setToastMessage('Link copied to clipboard!');
-                          setTimeout(() => setToastMessage(null), 3000);
-                        }
-                      }}
+                      onClick={() => setIsShareOpen(true)}
                       className="w-full gap-1.5"
                     >
                       <IconShare size={14} className="text-[#0F766E]" />
@@ -1681,6 +1649,13 @@ export default function PropertyListingView() {
         isOpen={isEnlargedMapOpen}
         onClose={() => setIsEnlargedMapOpen(false)}
         currentProperty={property ? { ...property, latitude: propertyCoords.lat, longitude: propertyCoords.lng } : null}
+      />
+
+      {/* Share Listing Modal */}
+      <ShareListingModal
+        open={isShareOpen}
+        onOpenChange={setIsShareOpen}
+        listing={property ? { ...property, id, title: propertyTitle, formattedPrice: formattedPriceDisplay, address: fullAddress, coverImage: photos?.[0] } : null}
       />
 
     </div>

@@ -83,7 +83,6 @@ export default function BrokerInquiries() {
   const activeCount = inquiries.filter((i) => i.business_status !== 'inactive').length;
   const inactiveCount = inquiries.filter((i) => i.business_status === 'inactive').length;
   const unassignedCount = inquiries.filter((i) => i.operational_status === 'unassigned' || !i.agent_id).length;
-  const overdueCount = inquiries.filter((i) => i.operational_status === 'overdue').length;
 
   const filtered = inquiries.filter((inq) => {
     const clientName = inq.client_name || '';
@@ -105,8 +104,6 @@ export default function BrokerInquiries() {
       matchesTab = inq.business_status === 'inactive';
     } else if (activeTab === 'UNASSIGNED') {
       matchesTab = inq.operational_status === 'unassigned' || !inq.agent_id;
-    } else if (activeTab === 'OVERDUE') {
-      matchesTab = inq.operational_status === 'overdue';
     }
 
     return matchesSearch && matchesStatus && matchesAgent && matchesTab;
@@ -326,7 +323,7 @@ export default function BrokerInquiries() {
       />
 
       {/* Broker SLA Performance & Queue Metrics Bar (BROKER-01, UX-01) with Card Primitives */}
-      <div data-testid="broker-sla-metrics-bar" className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div data-testid="broker-sla-metrics-bar" className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card data-testid="broker-card" className="bg-white dark:bg-slate-900 border border-[#E2E8F0] dark:border-slate-800 shadow-xs">
           <CardContent className="p-4">
             <p className="text-[11px] font-bold uppercase tracking-wider text-[#64748B] dark:text-slate-400 font-sans">Total Inquiries</p>
@@ -343,15 +340,6 @@ export default function BrokerInquiries() {
             <p className="text-[11px] font-bold uppercase tracking-wider text-[#0F766E] dark:text-teal-400 font-sans">New Inbound</p>
             <p className="text-2xl font-bold font-display text-[#0F766E] dark:text-teal-400 mt-1">{newCount}</p>
             <span className="text-[10px] text-[#0F766E] dark:text-teal-400 font-mono">Unassigned: {metrics?.unassignedCount ?? unassignedCount}</span>
-          </CardContent>
-        </Card>
-        <Card data-testid="broker-card" className="bg-white dark:bg-slate-900 border border-[#E2E8F0] dark:border-slate-800 shadow-xs">
-          <CardContent className="p-4">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400 font-sans">Overdue Escalations</p>
-            <p className="text-2xl font-bold font-display text-rose-600 dark:text-rose-400 mt-1">
-              {metrics?.overdueCount ?? overdueCount}
-            </p>
-            <span className="text-[10px] text-rose-700 dark:text-rose-400 font-mono">Exceeded 30m response SLA</span>
           </CardContent>
         </Card>
         <Card data-testid="broker-card" className="bg-white dark:bg-slate-900 border border-[#E2E8F0] dark:border-slate-800 shadow-xs">
@@ -383,14 +371,13 @@ export default function BrokerInquiries() {
         </div>
       )}
 
-      {/* Queue Tabs (Active/Inactive, Unassigned, Overdue) */}
+      {/* Queue Tabs (Active/Inactive, Unassigned) */}
       <div data-testid="broker-queue-tabs" className="flex items-center gap-2 border-b border-[#E2E8F0] dark:border-slate-800 pb-2 overflow-x-auto">
         {[
           { key: 'ALL', label: `All Inquiries (${totalCount})` },
           { key: 'ACTIVE', label: `Active Pipeline (${activeCount})` },
           { key: 'INACTIVE', label: `Inactive (${inactiveCount})` },
           { key: 'UNASSIGNED', label: `Unassigned (${unassignedCount})` },
-          { key: 'OVERDUE', label: `Overdue SLA (${overdueCount})` },
         ].map((tab) => (
           <button
             key={tab.key}

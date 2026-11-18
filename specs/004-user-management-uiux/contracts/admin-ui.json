@@ -1,0 +1,83 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Human Shelter Realty - User Management UI/UX API",
+    "version": "1.2.0"
+  },
+  "paths": {
+    "/api/admin/users/stats": {
+      "get": {
+        "summary": "Retrieve aggregated executive user metrics",
+        "responses": {
+          "200": {
+            "description": "Executive metrics for KPI strip",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "totalUsers": { "type": "integer" },
+                        "activeToday": { "type": "integer" },
+                        "pendingAccreditation": { "type": "integer" },
+                        "suspendedAccounts": { "type": "integer" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/users": {
+      "get": {
+        "summary": "Query paginated user directory with role and status facets",
+        "parameters": [
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 10 } },
+          { "name": "search", "in": "query", "schema": { "type": "string" } },
+          { "name": "role", "in": "query", "schema": { "type": "string" } },
+          { "name": "status", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated user list with total counts and accreditation metadata"
+          }
+        }
+      }
+    },
+    "/api/admin/users/{id}/status": {
+      "patch": {
+        "summary": "Update user account status with mandatory documented reason",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": { "type": "string", "enum": ["VERIFIED", "SUSPENDED", "PENDING"] },
+                  "reason": { "type": "string", "minLength": 5 }
+                },
+                "required": ["status", "reason"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Status updated with audit log" },
+          "400": { "description": "Missing or insufficient reason" },
+          "403": { "description": "Self-modification forbidden" }
+        }
+      }
+    }
+  }
+}
