@@ -4,14 +4,11 @@ import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import AgentProfile from './AgentProfile';
 
-// Mock profileService
-vi.mock('../../../services/profileService', () => ({
-  profileService: {
-    getProfile: vi.fn().mockResolvedValue({
+vi.mock('../../../services/agentService', () => ({
+  agentService: {
+    getMyProfile: vi.fn().mockResolvedValue({
       id: 'user-agent-1',
       name: 'Elena Rossi',
-      firstName: 'Elena',
-      lastName: 'Rossi',
       email: 'agent@pt.com',
       phone: '+63 917 555 0192',
       role: 'Senior Real Estate Consultant',
@@ -21,23 +18,40 @@ vi.mock('../../../services/profileService', () => ({
       prc_validity: '2027-08-15',
       dhsud_accreditation_no: 'DHSUD-NCR-AA-2023-0182',
       dhsud_validity: '2026-12-31',
-      firm_name: 'Precision Trust Realty Operations Inc.',
+      brokerage_name: 'Human Shelter Realty',
+      team_name: 'Luxury Residential Advisory',
+      location_branch: 'Makati & BGC Prime',
       experience_years: 6,
       verification_status: 'VERIFIED',
     }),
-    updateProfile: vi.fn().mockImplementation((updates) => Promise.resolve({
-      id: 'user-agent-1',
-      name: updates.name || 'Elena Rossi',
-      phone: updates.phone || '+63 917 555 0192',
-      ...updates,
-    })),
+  },
+  computeAgentCompleteness: vi.fn().mockReturnValue({
+    percent: 100,
+    isComplete: true,
+    missingFields: [],
+    checklist: [
+      { key: 'name', label: 'Full Name', completed: true },
+      { key: 'prc_license_no', label: 'PRC License', completed: true },
+    ],
+  }),
+}));
+
+vi.mock('../../../services/profileService', () => ({
+  profileService: {
+    getProfile: vi.fn().mockResolvedValue({}),
+    updateProfile: vi.fn().mockImplementation((updates) =>
+      Promise.resolve({
+        id: 'user-agent-1',
+        name: updates.name || 'Elena Rossi',
+        phone: updates.phone || '+63 917 555 0192',
+        ...updates,
+      })
+    ),
   },
   mockDefaultProfiles: {
     agent: {
       id: 'user-agent-1',
       name: 'Elena Rossi',
-      firstName: 'Elena',
-      lastName: 'Rossi',
       email: 'agent@pt.com',
       phone: '+63 917 555 0192',
       role: 'Senior Real Estate Consultant',
@@ -54,8 +68,8 @@ vi.mock('../../../services/profileService', () => ({
   },
 }));
 
-describe('AgentProfile Portal Component', () => {
-  it('renders agent profile details and PRC/DHSUD regulatory credentials', async () => {
+describe('AgentProfile Studio Component', () => {
+  it('renders the 2-column studio with live preview and safe regulatory badges', async () => {
     render(
       <BrowserRouter>
         <AgentProfile />
@@ -66,11 +80,13 @@ describe('AgentProfile Portal Component', () => {
       expect(screen.getByText('Elena Rossi')).toBeInTheDocument();
     });
 
-    expect(screen.getByText(/PRC-REB-0028491/i)).toBeInTheDocument();
-    expect(screen.getByText(/DHSUD-NCR-AA-2023-0182/i)).toBeInTheDocument();
+    expect(screen.getByTestId('agent-profile-studio')).toBeInTheDocument();
+    expect(screen.getByTestId('live-public-card-preview')).toBeInTheDocument();
+    expect(screen.getByText(/PRC Verified/i)).toBeInTheDocument();
+    expect(screen.getByText(/DHSUD Accredited/i)).toBeInTheDocument();
   });
 
-  it('opens edit profile modal with Edit Profile button', async () => {
+  it('updates live preview on inline edit and flags broker review when PRC license changes', async () => {
     render(
       <BrowserRouter>
         <AgentProfile />
@@ -81,9 +97,14 @@ describe('AgentProfile Portal Component', () => {
       expect(screen.getByText('Elena Rossi')).toBeInTheDocument();
     });
 
-    const editBtn = screen.getByRole('button', { name: /Edit Profile/i });
-    fireEvent.click(editBtn);
+    const nameInput = screen.getByLabelText(/Full Name/i);
+    fireEvent.change(nameInput, { target: { value: 'Elena Rossi-Santos' } });
+    expect(screen.getByText('Elena Rossi-Santos')).toBeInTheDocument();
 
-    expect(screen.getByText(/Update your agent credentials/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('tab', { name: /PRC & DHSUD/i }));
+    const prcInput = screen.getByLabelText(/PRC License Number/i);
+    fireEvent.change(prcInput, { target: { value: 'PRC-REB-9999999' } });
+
+    expect(screen.getByText(/Broker Review Will Be Queued/i)).toBeInTheDocument();
   });
 });

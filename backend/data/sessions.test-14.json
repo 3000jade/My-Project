@@ -1,48 +1,18 @@
 {
   "sessions": [
     {
-      "id": "3ad2a986-2582-49af-9e91-4ebad81b100c",
-      "tokenHash": "e71f16ff3617b0b35116d52793dca2511ce9940b66daaae757e4ef41174b6fbc",
-      "userId": "user-suspend-reactivate",
-      "role": "agent",
-      "createdAt": 1794567289935,
-      "lastActiveAt": 1794567289945,
-      "idleExpiresAt": 1794569089945,
-      "absoluteExpiresAt": 1794610489935,
-      "lastHeartbeatAt": 1794567289935,
-      "userAgent": "Unknown Device",
-      "ipAddress": "Unavailable",
-      "updatedAt": 1794567289975,
-      "revokedAt": 1794567289975,
-      "revokeReason": "account_disabled"
-    },
-    {
-      "id": "d967f8d5-e9b8-473a-890d-535d2a119f01",
-      "tokenHash": "f74fe0e5497c721fcc59c468d4628af1ff76d056478ed8d91def00249cb14787",
-      "userId": "user-suspend-reactivate",
-      "role": "agent",
-      "createdAt": 1794567290020,
-      "lastActiveAt": 1794567290025,
-      "idleExpiresAt": 1794569090025,
-      "absoluteExpiresAt": 1794610490020,
-      "lastHeartbeatAt": 1794567290020,
-      "userAgent": "Unknown Device",
-      "ipAddress": "Unavailable",
-      "updatedAt": 1794567290025
-    },
-    {
-      "id": "a406e30b-336c-4a63-acb5-6276526fd43c",
+      "id": "1d6c0e3e-e8b1-424b-88a4-1298e646ab06",
       "tokenHash": "2cc9923cec4c3d9919f99683a92e496a20995964739e52d01829bf0d4f5c7aef",
       "userId": "dev-google-mock-uid-client",
       "role": "client",
-      "createdAt": 1794567328273,
-      "lastActiveAt": 1794567328273,
-      "idleExpiresAt": 1794570928273,
-      "absoluteExpiresAt": 1794653728273,
-      "lastHeartbeatAt": 1794567328273,
+      "createdAt": 1795086510830,
+      "lastActiveAt": 1795086510830,
+      "idleExpiresAt": 1795090110830,
+      "absoluteExpiresAt": 1795172910830,
+      "lastHeartbeatAt": 1795086510830,
       "userAgent": "Unknown Device",
       "ipAddress": "Unavailable",
-      "updatedAt": 1794567328273
+      "updatedAt": 1795086510830
     }
   ],
   "disabledAccounts": []

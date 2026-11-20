@@ -1,357 +1,325 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Bell, Lock, Shield } from 'lucide-react';
+import { ProfileCardStudio, ChangePasswordDialog } from '@/components/profile';
+import { clientUserService } from '@/services/clientUserService';
+import { mockDefaultProfiles } from '@/services/profileService';
 import {
-  User,
-  Mail,
-  Phone,
-  MapPin,
-  Lock,
-  Shield,
-  Check,
-  AlertCircle,
-  Camera,
-  Bell,
-  KeyRound,
-  DollarSign,
-  Edit3,
-} from 'lucide-react';
-import PageHeader from '../../../components/dashboard/PageHeader';
-import { clientUserService } from '../../../services/clientUserService';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { EditProfileDialog, ChangePasswordDialog } from '@/components/profile';
-import SessionManagementPanel from '../../../components/auth/SessionManagementPanel';
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  Button,
+  Badge,
+  useToast,
+  Toaster,
+} from '@/components/ui';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { FieldGroup, Field, FieldLabel, FieldContent, FieldDescription } from '@/components/ui/field';
+
+const TRACKED_KEYS = [
+  'name',
+  'avatar',
+  'email',
+  'phone',
+  'bio',
+  'preferredLocation',
+  'investmentBudget',
+];
 
 export default function ClientProfile() {
-  const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+  const [profile, setProfile] = useState(mockDefaultProfiles.client);
+  const [draft, setDraft] = useState(mockDefaultProfiles.client);
   const [saving, setSaving] = useState(false);
-  const [feedback, setFeedback] = useState({ type: '', message: '' });
-
-  // Dialog states
-  const [editModalOpen, setEditModalOpen] = useState(false);
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
+  const [focusedSection, setFocusedSection] = useState(null);
 
-  // Notification preferences state
   const [notifications, setNotifications] = useState({
     emailNotifications: true,
     smsNotifications: true,
     priceDropAlerts: true,
   });
 
-  useEffect(() => {
-    let mounted = true;
-    async function loadProfile() {
-      try {
-        const data = await clientUserService.getClientProfile();
-        if (mounted && data) {
-          setProfile(data);
-          setNotifications({
-            emailNotifications: data.emailNotifications ?? true,
-            smsNotifications: data.smsNotifications ?? true,
-            priceDropAlerts: data.priceDropAlerts ?? true,
-          });
-        }
-      } catch (err) {
-        console.warn('[ClientProfile] Load error:', err);
-      } finally {
-        if (mounted) setLoading(false);
+  const loadProfile = useCallback(async () => {
+    try {
+      const data = await clientUserService.getClientProfile();
+      if (data) {
+        const merged = { ...mockDefaultProfiles.client, ...data };
+        setProfile(merged);
+        setDraft(merged);
+        setNotifications({
+          emailNotifications: data.emailNotifications ?? true,
+          smsNotifications: data.smsNotifications ?? true,
+          priceDropAlerts: data.priceDropAlerts ?? true,
+        });
       }
+    } catch (err) {
+      console.warn('[ClientProfile] Load error:', err);
     }
-    loadProfile();
-    return () => {
-      mounted = false;
-    };
   }, []);
 
-  const handleSaveProfile = async (formData) => {
-    setSaving(true);
-    setFeedback({ type: '', message: '' });
-    try {
-      const nameParts = (formData.name || '').trim().split(' ');
-      const firstName = formData.firstName || nameParts[0] || profile.firstName;
-      const lastName = formData.lastName || nameParts.slice(1).join(' ') || profile.lastName;
+  useEffect(() => {
+    loadProfile();
+  }, [loadProfile]);
 
-      const payload = {
-        ...formData,
+  const isDirty = useMemo(
+    () => TRACKED_KEYS.some((k) => String(draft[k] ?? '') !== String(profile[k] ?? '')),
+    [draft, profile]
+  );
+
+  const handleSave = async (nextDraft) => {
+    setSaving(true);
+    try {
+      const parts = String(nextDraft.name || '').trim().split(/\s+/);
+      const firstName = parts[0] || profile.firstName;
+      const lastName = parts.slice(1).join(' ') || profile.lastName;
+
+      const updated = await clientUserService.updateClientProfile({
+        ...nextDraft,
         firstName,
         lastName,
-        name: formData.name || [firstName, lastName].filter(Boolean).join(' '),
-      };
+        name: nextDraft.name,
+      });
 
-      const updated = await clientUserService.updateClientProfile(payload);
-      setProfile(updated);
-      setEditModalOpen(false);
-      setFeedback({ type: 'success', message: 'Profile information updated successfully.' });
+      const nextState = { ...nextDraft, ...updated };
+      setProfile(nextState);
+      setDraft(nextState);
+      toast({
+        title: 'Profile Saved',
+        description: 'Your buyer card and contact preferences are updated.',
+        variant: 'success',
+      });
     } catch (err) {
-      setFeedback({ type: 'error', message: err.message || 'Failed to update profile.' });
+      toast({
+        title: 'Save Failed',
+        description: err.message || 'Failed to update profile.',
+        variant: 'destructive',
+      });
     } finally {
       setSaving(false);
     }
   };
 
-  const handlePasswordChange = async (currentPassword, newPassword) => {
-    await clientUserService.changePassword(currentPassword, newPassword);
-    setFeedback({ type: 'success', message: 'Security passphrase updated successfully.' });
-  };
-
-  const handleToggleNotification = async (key) => {
-    const updated = { ...notifications, [key]: !notifications[key] };
+  const handleToggleNotification = async (key, checked) => {
+    const updated = { ...notifications, [key]: checked };
     setNotifications(updated);
     try {
       await clientUserService.updateClientProfile(updated);
+      toast({
+        title: 'Alert Preference Updated',
+        description: 'Communication settings saved.',
+        variant: 'success',
+      });
     } catch (err) {
       console.warn('Notification preference toggle failed:', err);
     }
   };
 
-  const clientFields = [
-    { name: 'name', label: 'Full Name', type: 'text', placeholder: 'Sophia Isabella Laurel', required: true },
-    { name: 'phone', label: 'Contact Phone', type: 'tel', placeholder: '+63 917 555 8899', required: true },
-    { name: 'preferredLocation', label: 'Preferred Enclaves / Locations', type: 'text', placeholder: 'e.g. Bonifacio Global City, Taguig' },
-    { name: 'investmentBudget', label: 'Target Acquisition Budget', type: 'text', placeholder: 'e.g. ₱50M - ₱120M' },
-    { name: 'bio', label: 'Investor Profile & Acquisition Notes', type: 'textarea', placeholder: 'Private investment notes...', fullWidth: true },
-  ];
+  const handlePasswordChange = async (currentPassword, newPassword) => {
+    await clientUserService.changePassword(currentPassword, newPassword);
+    toast({
+      title: 'Password Updated',
+      description: 'Security passphrase updated successfully.',
+      variant: 'success',
+    });
+  };
 
-  return (
-    <div className="space-y-8 font-sans antialiased text-[#1E293B]">
-      <PageHeader
-        title="My Profile & Settings"
-        subtitle="Review account credentials, update your investment parameters, and manage security preferences."
-        actions={
+  const identityExtraFields = (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <Field>
+        <FieldLabel htmlFor="client-location" className="text-sm font-medium text-on-surface">
+          Preferred Area / Enclave
+        </FieldLabel>
+        <Input
+          id="client-location"
+          type="text"
+          value={draft.preferredLocation || ''}
+          onChange={(e) =>
+            setDraft((prev) => ({ ...prev, preferredLocation: e.target.value }))
+          }
+          onFocus={() => setFocusedSection('preferences')}
+          onBlur={() => setFocusedSection(null)}
+          placeholder="e.g. Bonifacio Global City, Taguig"
+          className="h-11 bg-surface border-outline text-on-surface rounded-lg"
+        />
+      </Field>
+
+      <Field>
+        <FieldLabel htmlFor="client-budget" className="text-sm font-medium text-on-surface">
+          Target Acquisition Budget
+        </FieldLabel>
+        <Input
+          id="client-budget"
+          type="text"
+          value={draft.investmentBudget || ''}
+          onChange={(e) =>
+            setDraft((prev) => ({ ...prev, investmentBudget: e.target.value }))
+          }
+          onFocus={() => setFocusedSection('preferences')}
+          onBlur={() => setFocusedSection(null)}
+          placeholder="e.g. ₱50M - ₱120M"
+          className="h-11 bg-surface border-outline text-on-surface rounded-lg font-mono"
+        />
+      </Field>
+    </div>
+  );
+
+  const extraTabs = useMemo(
+    () => [
+      {
+        id: 'notifications',
+        label: 'Alerts',
+        icon: Bell,
+        content: (
+          <Card className="bg-surface border border-outline rounded-xl shadow-xs">
+            <CardHeader className="pb-4 border-b border-outline">
+              <CardTitle className="text-xl font-semibold text-on-surface flex items-center gap-2">
+                <Bell className="size-5 text-primary" />
+                Communication Settings
+              </CardTitle>
+              <CardDescription className="text-sm text-on-surface-variant">
+                Choose how we notify you about tour schedules, replies, and price drops.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <FieldGroup className="gap-4">
+                <Field orientation="horizontal" className="p-4 rounded-xl bg-background border border-outline justify-between">
+                  <FieldContent>
+                    <FieldLabel htmlFor="notif-email" className="text-sm font-semibold text-on-surface">
+                      Email Notifications
+                    </FieldLabel>
+                    <FieldDescription className="text-xs text-on-surface-variant">
+                      Tour schedules, proposals, and viewing confirmations.
+                    </FieldDescription>
+                  </FieldContent>
+                  <Switch
+                    id="notif-email"
+                    checked={notifications.emailNotifications}
+                    onCheckedChange={(checked) =>
+                      handleToggleNotification('emailNotifications', checked)
+                    }
+                  />
+                </Field>
+
+                <Field orientation="horizontal" className="p-4 rounded-xl bg-background border border-outline justify-between">
+                  <FieldContent>
+                    <FieldLabel htmlFor="notif-sms" className="text-sm font-semibold text-on-surface">
+                      SMS Priority Dispatch
+                    </FieldLabel>
+                    <FieldDescription className="text-xs text-on-surface-variant">
+                      Instant text updates for upcoming property viewings.
+                    </FieldDescription>
+                  </FieldContent>
+                  <Switch
+                    id="notif-sms"
+                    checked={notifications.smsNotifications}
+                    onCheckedChange={(checked) =>
+                      handleToggleNotification('smsNotifications', checked)
+                    }
+                  />
+                </Field>
+
+                <Field orientation="horizontal" className="p-4 rounded-xl bg-background border border-outline justify-between">
+                  <FieldContent>
+                    <FieldLabel htmlFor="notif-price" className="text-sm font-semibold text-on-surface">
+                      Price Drop &amp; Enclave Alerts
+                    </FieldLabel>
+                    <FieldDescription className="text-xs text-on-surface-variant">
+                      Updates when listings in your preferred area change price.
+                    </FieldDescription>
+                  </FieldContent>
+                  <Switch
+                    id="notif-price"
+                    checked={notifications.priceDropAlerts}
+                    onCheckedChange={(checked) =>
+                      handleToggleNotification('priceDropAlerts', checked)
+                    }
+                  />
+                </Field>
+              </FieldGroup>
+            </CardContent>
+          </Card>
+        ),
+      },
+    ],
+    [notifications]
+  );
+
+  const securityExtraContent = (
+    <Card className="bg-surface border border-outline rounded-xl shadow-xs">
+      <CardHeader className="pb-4 border-b border-outline">
+        <CardTitle className="text-xl font-semibold text-on-surface flex items-center gap-2">
+          <Shield className="size-5 text-primary" />
+          Security &amp; Credentials
+        </CardTitle>
+        <CardDescription className="text-sm text-on-surface-variant">
+          Manage your account passphrase and sign-in protection.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="pt-5 flex flex-col gap-4">
+        <div className="p-4 bg-background rounded-xl border border-outline flex items-center justify-between gap-4">
+          <div className="flex flex-col gap-1">
+            <span className="text-sm font-semibold text-on-surface">Authentication Method</span>
+            <p className="text-xs text-on-surface-variant">
+              Email and Password protected with TLS 1.3 encryption.
+            </p>
+          </div>
+          <Badge variant="success" className="text-xs shrink-0">
+            Active
+          </Badge>
+        </div>
+
+        <div className="flex items-center justify-between gap-4 pt-2 border-t border-outline">
+          <span className="text-sm font-semibold text-on-surface">Change Passphrase</span>
           <Button
             type="button"
-            variant="coral"
-            onClick={() => setEditModalOpen(true)}
-            className="h-[44px] px-5 bg-[#FF6B6B] hover:bg-[#EE5A5A] text-[#1E293B] font-bold shadow-xs flex items-center gap-2"
+            variant="outline"
+            onClick={() => setPasswordModalOpen(true)}
+            className="h-11 px-4 border-outline bg-surface text-on-surface normal-case"
           >
-            <Edit3 className="w-4 h-4" />
-            <span>Edit Profile</span>
+            <Lock data-icon="inline-start" className="text-primary" />
+            Update Password
           </Button>
-        }
-      />
-
-      {/* Global Feedback Banner */}
-      <AnimatePresence>
-        {feedback.message && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            className={`p-4 rounded-xl border text-xs font-semibold flex items-center justify-between ${
-              feedback.type === 'error'
-                ? 'bg-red-50 border-red-200 text-[#DC2626]'
-                : 'bg-emerald-50 border-emerald-200 text-emerald-800'
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              {feedback.type === 'error' ? (
-                <AlertCircle className="w-4 h-4 shrink-0 text-[#DC2626]" />
-              ) : (
-                <Check className="w-4 h-4 shrink-0 text-[#10B981]" />
-              )}
-              <span>{feedback.message}</span>
-            </div>
-            <button
-              onClick={() => setFeedback({ type: '', message: '' })}
-              className="text-xs underline cursor-pointer opacity-70 hover:opacity-100"
-            >
-              Dismiss
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Profile Overview Card */}
-      <Card className="bg-white border-[#E2E8F0] rounded-xl shadow-xs p-6 sm:p-8">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-          <div className="relative group">
-            <img
-              src={profile?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'}
-              alt={profile?.name || 'Client Avatar'}
-              className="w-24 h-24 rounded-2xl object-cover border-2 border-white shadow-md ring-1 ring-[#E2E8F0]"
-            />
-            <button
-              type="button"
-              onClick={() => setEditModalOpen(true)}
-              className="absolute inset-0 bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold cursor-pointer"
-              title="Change Profile Details"
-            >
-              <Camera className="w-5 h-5" />
-            </button>
-          </div>
-
-          <div className="flex-1 space-y-1.5">
-            <div className="flex flex-wrap items-center gap-2.5">
-              <h2 className="text-xl sm:text-2xl font-bold text-[#1E293B]">
-                {profile?.name || 'Sophia Isabella Laurel'}
-              </h2>
-              <Badge className="bg-[#0F766E]/10 text-[#0F766E] border-0 text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5">
-                {profile?.role || 'Registered Client'}
-              </Badge>
-            </div>
-            <p className="text-xs sm:text-sm text-[#64748B] max-w-2xl leading-relaxed">
-              {profile?.bio || 'Private investor exploring high-yield prime estates.'}
-            </p>
-            <p className="text-[11px] font-mono text-[#64748B]">
-              Account Member Since: {profile?.memberSince || 'March 2026'}
-            </p>
-          </div>
         </div>
+      </CardContent>
+    </Card>
+  );
 
-        {/* Informational Details Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-6 mt-6 border-t border-[#E2E8F0]">
-          <div className="p-3.5 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0]">
-            <span className="text-[10px] font-semibold uppercase text-[#64748B] block mb-1 flex items-center gap-1.5">
-              <Mail className="w-3.5 h-3.5 text-[#0F766E]" />
-              Email Address
-            </span>
-            <p className="text-xs font-bold text-[#1E293B] truncate">{profile?.email}</p>
-          </div>
-
-          <div className="p-3.5 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0]">
-            <span className="text-[10px] font-semibold uppercase text-[#64748B] block mb-1 flex items-center gap-1.5">
-              <Phone className="w-3.5 h-3.5 text-[#0F766E]" />
-              Contact Number
-            </span>
-            <p className="text-xs font-bold text-[#1E293B] truncate">{profile?.phone}</p>
-          </div>
-
-          <div className="p-3.5 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0]">
-            <span className="text-[10px] font-semibold uppercase text-[#64748B] block mb-1 flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5 text-[#0F766E]" />
-              Preferred Enclave
-            </span>
-            <p className="text-xs font-bold text-[#1E293B] truncate">{profile?.preferredLocation || 'Not specified'}</p>
-          </div>
-
-          <div className="p-3.5 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0]">
-            <span className="text-[10px] font-semibold uppercase text-[#64748B] block mb-1 flex items-center gap-1.5">
-              <DollarSign className="w-3.5 h-3.5 text-[#0F766E]" />
-              Target Budget
-            </span>
-            <p className="text-xs font-bold text-[#1E293B] truncate">{profile?.investmentBudget || 'Not specified'}</p>
-          </div>
-        </div>
-      </Card>
-
-      {/* Two Column Section: Security & Notification Preferences */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Security & Credentials Card */}
-        <Card className="bg-white border-[#E2E8F0] rounded-xl p-6 shadow-xs flex flex-col justify-between">
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-[#0F766E]/10 rounded-xl text-[#0F766E]">
-                <Shield className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-[#1E293B]">Security & Credentials</h3>
-                <p className="text-xs text-[#64748B]">Manage passphrases and multi-factor authentication</p>
-              </div>
-            </div>
-
-            <div className="p-4 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0] space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-[#1E293B]">Authentication Method</span>
-                <Badge className="bg-emerald-50 text-emerald-800 border-emerald-200 text-[10px]">Active</Badge>
-              </div>
-              <p className="text-xs text-[#64748B]">Single-Factor Email/Password with TLS 1.3 encryption.</p>
-            </div>
-          </div>
-
-          <div className="pt-4 mt-4 border-t border-[#E2E8F0] flex items-center justify-between">
-            <span className="text-xs font-bold text-[#1E293B]">Change Passphrase</span>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setPasswordModalOpen(true)}
-              className="border-[#E2E8F0] text-[#1E293B] hover:bg-[#F8FAFC] flex items-center gap-1.5"
-            >
-              <Lock className="w-3.5 h-3.5 text-[#0F766E]" />
-              <span>Update Password</span>
-            </Button>
-          </div>
-        </Card>
-
-        {/* Communication Settings Card */}
-        <Card className="bg-white border-[#E2E8F0] rounded-xl p-6 shadow-xs flex flex-col justify-between">
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-[#0F766E]/10 rounded-xl text-[#0F766E]">
-                <Bell className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-[#1E293B]">Communication Settings</h3>
-                <p className="text-xs text-[#64748B]">Configure real-time alerts and concierge dispatches</p>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
-                <div>
-                  <p className="text-xs font-bold text-[#1E293B]">Email Notifications</p>
-                  <p className="text-[11px] text-[#64748B]">Tour schedules, proposals, and viewing alerts.</p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={notifications.emailNotifications}
-                  onChange={() => handleToggleNotification('emailNotifications')}
-                  className="w-4 h-4 accent-[#0F766E] rounded cursor-pointer"
-                />
-              </div>
-
-              <div className="flex items-center justify-between p-3 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
-                <div>
-                  <p className="text-xs font-bold text-[#1E293B]">SMS Priority Dispatch</p>
-                  <p className="text-[11px] text-[#64748B]">Instant SMS updates for viewing confirmations.</p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={notifications.smsNotifications}
-                  onChange={() => handleToggleNotification('smsNotifications')}
-                  className="w-4 h-4 accent-[#0F766E] rounded cursor-pointer"
-                />
-              </div>
-
-              <div className="flex items-center justify-between p-3 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
-                <div>
-                  <p className="text-xs font-bold text-[#1E293B]">Price Drop & Enclave Alerts</p>
-                  <p className="text-[11px] text-[#64748B]">Notifications when target enclave listings change.</p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={notifications.priceDropAlerts}
-                  onChange={() => handleToggleNotification('priceDropAlerts')}
-                  className="w-4 h-4 accent-[#0F766E] rounded cursor-pointer"
-                />
-              </div>
-            </div>
-          </div>
-        </Card>
-      </div>
-
-      <SessionManagementPanel />
-
-      {/* Reusable Profile Edit Dialog */}
-      <EditProfileDialog
-        open={editModalOpen}
-        onOpenChange={setEditModalOpen}
-        title="Edit Client Profile"
-        description="Update your contact details and luxury real estate acquisition criteria."
-        initialData={profile || {}}
-        fields={clientFields}
-        onSave={handleSaveProfile}
+  return (
+    <>
+      <Toaster />
+      <ProfileCardStudio
+        role="client"
+        title="My Profile & Buyer Card Studio"
+        subtitle="Update your contact details, target locations, and alert settings while previewing your buyer card."
+        breadcrumbs={[
+          { label: 'Dashboard', to: '/client/dashboard' },
+          { label: 'Profile' },
+        ]}
+        profile={profile}
+        draft={draft}
+        onDraftChange={setDraft}
+        onSave={handleSave}
+        onDiscard={() => setDraft(profile)}
+        onRefresh={loadProfile}
+        loading={false}
         saving={saving}
+        isDirty={isDirty}
+        identityExtraFields={identityExtraFields}
+        extraTabs={extraTabs}
+        securityExtraContent={securityExtraContent}
+        focusedSection={focusedSection}
+        onFocusSection={setFocusedSection}
+        testId="client-profile-studio"
       />
 
-      {/* Password Security Dialog */}
       <ChangePasswordDialog
         open={passwordModalOpen}
         onOpenChange={setPasswordModalOpen}
         onSave={handlePasswordChange}
       />
-    </div>
+    </>
   );
 }

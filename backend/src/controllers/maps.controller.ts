@@ -1,12 +1,33 @@
 import { Request, Response } from 'express';
+import { config } from '../config';
+import logger from '../utils/logger';
 import { NominatimService } from '../services/nominatim.service';
 import { GoogleMapsService } from '../services/googleMaps.service';
 import type { ApiResponse } from '../types/api';
 
+async function resolveWithFallback<T>(
+  googleFn: () => Promise<T>,
+  nominatimFn: () => Promise<T>,
+  label: string
+): Promise<{ result: T; provider: 'google' | 'nominatim' }> {
+  if (config.integrations.googleMapsApiKey) {
+    try {
+      const result = await googleFn();
+      const isEmptyList = Array.isArray(result) && result.length === 0;
+      if (result && !isEmptyList) {
+        return { result, provider: 'google' };
+      }
+    } catch (err: any) {
+      logger.warn(`[MapsController] Google ${label} failed (${err.message}); falling back to Nominatim OSM.`);
+    }
+  }
+  return { result: await nominatimFn(), provider: 'nominatim' };
+}
+
 export class MapsController {
   /**
    * GET /api/maps/geocode
-   * Convert address string into exact coordinates via Nominatim OpenStreetMap
+   * Convert address string into coordinates via Google Maps (fallback to Nominatim OSM)
    */
   public static async geocode(req: Request, res: Response<ApiResponse>): Promise<void> {
     try {
@@ -22,18 +43,22 @@ export class MapsController {
         return;
       }
 
-      const result = await NominatimService.geocode(address, { countryCode: country });
+      const { result, provider } = await resolveWithFallback(
+        () => GoogleMapsService.geocodeAddress(address),
+        () => NominatimService.geocode(address, { countryCode: country }),
+        'geocode'
+      );
 
       res.status(200).json({
         success: true,
         data: result,
-        message: 'Address geocoded via Nominatim OSM.',
+        message: provider === 'google' ? 'Address geocoded via Google Maps.' : 'Address geocoded via Nominatim OSM.',
         timestamp: new Date().toISOString(),
       });
     } catch (err: any) {
       res.status(500).json({
         success: false,
-        error: err.message || 'Error geocoding address via Nominatim.',
+        error: err.message || 'Error geocoding address.',
         timestamp: new Date().toISOString(),
       });
     }
@@ -41,7 +66,7 @@ export class MapsController {
 
   /**
    * GET /api/maps/reverse
-   * Reverse geocode coordinates to structured address via Nominatim OpenStreetMap
+   * Reverse geocode coordinates via Google Maps (fallback to Nominatim OSM)
    */
   public static async reverse(req: Request, res: Response<ApiResponse>): Promise<void> {
     try {
@@ -57,12 +82,16 @@ export class MapsController {
         return;
       }
 
-      const result = await NominatimService.reverse(lat, lng);
+      const { result, provider } = await resolveWithFallback(
+        () => GoogleMapsService.reverseGeocode(lat, lng),
+        () => NominatimService.reverse(lat, lng),
+        'reverse'
+      );
 
       res.status(200).json({
         success: true,
         data: result,
-        message: 'Coordinates reverse geocoded via Nominatim OSM.',
+        message: provider === 'google' ? 'Coordinates reverse geocoded via Google Maps.' : 'Coordinates reverse geocoded via Nominatim OSM.',
         timestamp: new Date().toISOString(),
       });
     } catch (err: any) {
@@ -76,7 +105,7 @@ export class MapsController {
 
   /**
    * GET /api/maps/places/autocomplete
-   * Predictive places search proxy with 24-hr caching via Nominatim OpenStreetMap
+   * Predictive places search proxy via Google Places API (fallback to Nominatim OSM)
    */
   public static async autocomplete(req: Request, res: Response<ApiResponse>): Promise<void> {
     try {
@@ -93,18 +122,44 @@ export class MapsController {
         return;
       }
 
-      const predictions = await NominatimService.autocomplete(input, country);
+      const { result: predictions, provider } = await resolveWithFallback(
+        () => GoogleMapsService.placesAutocomplete(input, country),
+        () => NominatimService.autocomplete(input, country),
+        'autocomplete'
+      );
 
       res.status(200).json({
         success: true,
         data: predictions,
-        message: 'Place predictions retrieved from Nominatim OSM.',
+        message: provider === 'google' ? 'Place predictions retrieved from Google Maps.' : 'Place predictions retrieved from Nominatim OSM.',
         timestamp: new Date().toISOString(),
       });
     } catch (err: any) {
       res.status(500).json({
         success: false,
         error: err.message || 'Error fetching place predictions.',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
+  /**
+   * POST /api/maps/nearby-ai
+   * Generate nearby places (highway, transit, school, hospital, mall) & map pins
+   */
+  public static async suggestNearbyPlaces(req: Request, res: Response<ApiResponse>): Promise<void> {
+    try {
+      const result = await GoogleMapsService.suggestNearbyPlaces(req.body || {});
+      res.status(200).json({
+        success: true,
+        data: result,
+        message: 'Nearby places suggested.',
+        timestamp: new Date().toISOString(),
+      });
+    } catch (err: any) {
+      res.status(500).json({
+        success: false,
+        error: err.message || 'Error suggesting nearby places.',
         timestamp: new Date().toISOString(),
       });
     }

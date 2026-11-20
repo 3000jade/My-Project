@@ -83,6 +83,7 @@ export { default as ActionConsole } from './cards/ActionConsole';
 export { default as AgentCard } from './cards/AgentCard';
 export { default as AnalyticsMetricCard } from './cards/AnalyticsMetricCard';
 export { default as GalleryCard } from './cards/GalleryCard';
+export { default as KpiCard } from './cards/KpiCard';
 export { default as NeighborhoodCard } from './cards/NeighborhoodCard';
 export { default as PropertyCard } from './cards/PropertyCard';
 

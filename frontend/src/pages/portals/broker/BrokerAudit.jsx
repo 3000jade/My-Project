@@ -6,10 +6,19 @@ import {
   ShieldAlert, Layers, ChevronRight, X 
 } from 'lucide-react';
 import PageHeader from '../../../components/dashboard/PageHeader';
-import MetricCard from '../../../components/dashboard/MetricCard';
+import KpiCard from '@/components/ui/cards/KpiCard';
 import DataTable from '../../../components/dashboard/DataTable';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter
+} from '@/components/ui/card';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { 
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription 
 } from '@/components/ui/sheet';
@@ -200,171 +209,248 @@ export default function BrokerAudit() {
   ];
 
   return (
-    <div className="space-y-8 font-sans">
+    <div className="flex flex-col gap-6 w-full min-w-0 max-w-full font-sans">
       {/* 1. Page Header with Regulatory & Compliance Export Action */}
       <PageHeader
         title="Audit Trail"
         subtitle="Tamper-resistant chronological evidentiary record of administrative actions, listing mutations, and agent delegations."
         actions={
-          <div className="flex items-center flex-wrap gap-2.5">
+          <div className="flex items-center flex-wrap lg:flex-nowrap gap-2.5 shrink-0">
             <Button
               onClick={fetchEvents}
               disabled={loading}
               variant="outline"
               size="default"
-              className="gap-2 h-10 border-[#E2E8F0] hover:bg-[#F8FAFC]"
+              className="gap-2 h-11 border-[#E2E8F0] hover:bg-[#F8FAFC] normal-case whitespace-nowrap"
               aria-label="Refresh audit log"
             >
-              <RefreshCw className={cn("w-4 h-4 text-slate-600", loading && "animate-spin")} />
+              <RefreshCw className={cn("size-4 text-slate-600", loading && "animate-spin")} />
               <span>Refresh</span>
             </Button>
 
             <Button
               onClick={handleExport}
               loading={exporting}
-              className="gap-2 h-[38px] px-4 rounded-md cursor-pointer"
+              className="gap-2 h-11 px-4 bg-[#0F766E] hover:bg-[#115E59] text-white cursor-pointer normal-case whitespace-nowrap"
               aria-label="Export compliance audit log"
             >
-              {!exporting && <Download className="w-4 h-4 text-white" />}
+              {!exporting && <Download className="size-4 text-white" />}
               <span>{exporting ? 'Generating Bundle...' : 'Export Compliance Log'}</span>
             </Button>
           </div>
         }
       />
 
-      {/* Export Confirmation Alert Toast Banner */}
+      {/* Export Confirmation Alert Banner */}
       {exportNotice && (
-        <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg p-4 flex items-center justify-between text-xs animate-in fade-in duration-200">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-[#10B981] shrink-0" />
-            <span>
-              <strong>Compliance Bundle Generated:</strong> Exported {exportNotice.count} immutable evidentiary records at {exportNotice.timestamp}.
-            </span>
+        <Alert variant="teal" className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <CheckCircle2 className="size-4 shrink-0" />
+            <div>
+              <AlertTitle>Compliance Bundle Generated</AlertTitle>
+              <AlertDescription>
+                Exported {exportNotice.count} immutable evidentiary records at {exportNotice.timestamp}.
+              </AlertDescription>
+            </div>
           </div>
-          <button 
-            onClick={() => setExportNotice(null)} 
-            className="text-emerald-700 hover:text-emerald-900 cursor-pointer"
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => setExportNotice(null)}
             aria-label="Dismiss notice"
           >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
+            <X className="size-4" />
+          </Button>
+        </Alert>
       )}
 
       {/* 2. Top Analytical Metric KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        <MetricCard
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <KpiCard
+          variant="trend"
           title="Total Evidentiary Records"
           value={totalCount}
-          icon="shield"
-          subtitle="100% append-only verified by PostgreSQL RLS"
+          icon={ShieldCheck}
+          footerText="100% append-only verified by PostgreSQL RLS"
         />
-        <MetricCard
+        <KpiCard
+          variant="trend"
           title="Listing Mutations Reviewed"
           value={propertyMutationsCount}
-          icon="edit_note"
-          subtitle="Field-level JSON change diffs stored in audit log"
+          icon={FileText}
+          footerText="Field-level JSON change diffs stored in audit log"
         />
-        <MetricCard
+        <KpiCard
+          variant="action"
           title="Security & Tamper Denials"
           value={denialsCount}
-          icon="security"
-          subtitle="Zero authorized record modification attempts allowed"
+          statusLabel={denialsCount > 0 ? 'Flagged' : 'Secure'}
+          statusVariant={denialsCount > 0 ? 'destructive' : 'success'}
+          footerText="Zero authorized record modification attempts allowed"
+        />
+        <KpiCard
+          variant="progress"
+          title="Filtered View"
+          value={filteredEvents.length}
+          progress={totalCount ? Math.round((filteredEvents.length / totalCount) * 100) : 0}
+          targetLabel="Events matching active criteria"
         />
       </div>
 
-      {/* 3. Multi-Facet High-Density Filter Toolbar */}
-      <div className="bg-white rounded-lg border border-[#E2E8F0] p-4 shadow-2xs space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          {/* Search Box */}
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by actor, property, inquiry, or correlation ID..."
-              className="w-full h-10 pl-9 pr-8 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] text-xs text-[#1E293B] placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#0F766E] focus:border-[#0F766E] transition-colors"
-              aria-label="Filter audit events by keyword"
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 rounded cursor-pointer"
-                aria-label="Clear search"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
+      {/* 3. Asymmetric 8/4 Bento Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <div className="lg:col-span-8 min-w-0 flex flex-col gap-4">
+          <Card className="bg-white dark:bg-slate-900 border-[#E2E8F0] dark:border-slate-800 shadow-xs">
+            <CardContent className="p-4 flex flex-col gap-3">
+              <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3">
+                <div className="relative flex-1 min-w-[240px]">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search by actor, property, inquiry, or correlation ID..."
+                    className="w-full h-11 pl-9 pr-8 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] text-xs text-[#1E293B] placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#0F766E] focus:border-[#0F766E] transition-colors"
+                    aria-label="Filter audit events by keyword"
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 rounded cursor-pointer"
+                      aria-label="Clear search"
+                    >
+                      <X className="size-3.5" />
+                    </button>
+                  )}
+                </div>
 
-          {/* Facet Filters */}
-          <div className="flex items-center flex-wrap gap-2.5">
-            <div className="flex items-center gap-1.5 text-xs text-[#64748B]">
-              <Filter className="w-3.5 h-3.5 text-slate-400" />
-              <span>Category:</span>
-            </div>
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="h-10 px-3 rounded-lg border border-[#E2E8F0] bg-white text-xs text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
-              aria-label="Filter by event category"
-            >
-              <option value="all">All Event Categories</option>
-              <option value="property">Listing Mutations (property.*)</option>
-              <option value="inquiry">Inquiries & Comms (inquiry.*)</option>
-              <option value="agent">Agent Governance (agent.*)</option>
-              <option value="security">Security & Sessions (auth.* / audit.*)</option>
-            </select>
+                <div className="flex items-center flex-wrap gap-2.5">
+                  <div className="flex items-center gap-1.5 text-xs text-[#64748B]">
+                    <Filter className="size-3.5 text-slate-400" />
+                    <span>Category:</span>
+                  </div>
+                  <select
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    className="h-11 px-3 rounded-lg border border-[#E2E8F0] bg-white text-xs text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
+                    aria-label="Filter by event category"
+                  >
+                    <option value="all">All Event Categories</option>
+                    <option value="property">Listing Mutations (property.*)</option>
+                    <option value="inquiry">Inquiries & Comms (inquiry.*)</option>
+                    <option value="agent">Agent Governance (agent.*)</option>
+                    <option value="security">Security & Sessions (auth.* / audit.*)</option>
+                  </select>
 
-            <select
-              value={selectedOutcome}
-              onChange={(e) => setSelectedOutcome(e.target.value)}
-              className="h-10 px-3 rounded-lg border border-[#E2E8F0] bg-white text-xs text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
-              aria-label="Filter by outcome"
-            >
-              <option value="all">All Outcomes</option>
-              <option value="success">Success Only</option>
-              <option value="denied">Denied Only</option>
-            </select>
+                  <select
+                    value={selectedOutcome}
+                    onChange={(e) => setSelectedOutcome(e.target.value)}
+                    className="h-11 px-3 rounded-lg border border-[#E2E8F0] bg-white text-xs text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
+                    aria-label="Filter by outcome"
+                  >
+                    <option value="all">All Outcomes</option>
+                    <option value="success">Success Only</option>
+                    <option value="denied">Denied Only</option>
+                  </select>
 
-            {(searchQuery || selectedCategory !== 'all' || selectedOutcome !== 'all') && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setSearchQuery('');
-                  setSelectedCategory('all');
-                  setSelectedOutcome('all');
-                }}
-                className="text-xs text-slate-500 hover:text-[#1E293B] h-10 px-2.5"
-              >
-                Reset
-              </Button>
-            )}
-          </div>
+                  {(searchQuery || selectedCategory !== 'all' || selectedOutcome !== 'all') && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setSearchQuery('');
+                        setSelectedCategory('all');
+                        setSelectedOutcome('all');
+                      }}
+                      className="text-xs text-slate-500 hover:text-[#1E293B] h-11 px-2.5"
+                    >
+                      Reset
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between text-[11px] text-[#64748B] pt-2 border-t border-[#E2E8F0]">
+                <span>Displaying {filteredEvents.length} of {totalCount} records</span>
+                <span className="font-mono text-[10px]">Strict Immutability Guard: ACTIVE</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          {loading ? (
+            <Spinner centered size="lg" text="Loading audit event trail..." />
+          ) : (
+            <Card data-testid="broker-card" className="bg-white dark:bg-slate-900 border-[#E2E8F0] dark:border-slate-800 shadow-xs overflow-hidden">
+              <CardHeader className="pb-3 border-b border-[#E2E8F0] dark:border-slate-800 flex flex-row items-center justify-between gap-2">
+                <div>
+                  <CardTitle className="text-base font-bold text-[#1E293B] dark:text-slate-100">
+                    Evidentiary Event Ledger
+                  </CardTitle>
+                  <CardDescription className="text-xs text-[#64748B] dark:text-slate-400">
+                    Click Inspect on any row to view before/after state diffs.
+                  </CardDescription>
+                </div>
+                <Badge variant="outline" className="font-mono text-xs">
+                  {filteredEvents.length} events
+                </Badge>
+              </CardHeader>
+              <CardContent className="p-0">
+                <DataTable
+                  columns={columns}
+                  data={filteredEvents}
+                  keyField="id"
+                  pageSize={10}
+                  emptyMessage="No audit events matched your search or facet filters."
+                />
+              </CardContent>
+            </Card>
+          )}
         </div>
 
-        {/* Status Count Helper Bar */}
-        <div className="flex items-center justify-between text-[11px] text-[#64748B] pt-2 border-t border-[#E2E8F0]">
-          <span>Displaying {filteredEvents.length} of {totalCount} records</span>
-          <span className="font-mono text-[10px]">Strict Immutability Guard: ACTIVE</span>
+        <div className="lg:col-span-4 flex flex-col gap-6">
+          <Card className="bg-white dark:bg-slate-900 border-[#E2E8F0] dark:border-slate-800 shadow-xs">
+            <CardHeader className="pb-3 border-b border-[#E2E8F0] dark:border-slate-800">
+              <CardTitle className="text-base font-bold text-[#1E293B] dark:text-slate-100">
+                Category Breakdown
+              </CardTitle>
+              <CardDescription className="text-xs text-[#64748B] dark:text-slate-400">
+                Quick filter by audit domain
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-4 flex flex-col gap-2.5">
+              {[
+                { key: 'property', label: 'Listing Mutations', count: events.filter(e => e.eventType?.startsWith('property.')).length },
+                { key: 'inquiry', label: 'Inquiries & Comms', count: events.filter(e => e.eventType?.startsWith('inquiry.')).length },
+                { key: 'agent', label: 'Agent Governance', count: events.filter(e => e.eventType?.startsWith('agent.')).length },
+                { key: 'security', label: 'Security & Sessions', count: events.filter(e => e.eventType?.startsWith('auth.') || e.eventType?.startsWith('audit.')).length }
+              ].map(cat => (
+                <button
+                  key={cat.key}
+                  type="button"
+                  onClick={() => setSelectedCategory(selectedCategory === cat.key ? 'all' : cat.key)}
+                  className={cn(
+                    "flex items-center justify-between p-3 rounded-lg border transition-colors text-left cursor-pointer",
+                    selectedCategory === cat.key
+                      ? "border-[#0F766E] bg-teal-50/50 dark:bg-teal-950/30"
+                      : "border-[#E2E8F0] dark:border-slate-800 hover:bg-[#F8FAFC] dark:hover:bg-slate-800/60"
+                  )}
+                >
+                  <span className="text-sm font-medium text-[#1E293B] dark:text-slate-200">{cat.label}</span>
+                  <Badge variant="outline" className="font-mono tabular-nums">
+                    {cat.count}
+                  </Badge>
+                </button>
+              ))}
+            </CardContent>
+            <CardFooter className="pt-3 border-t border-[#E2E8F0] dark:border-slate-800 flex items-start gap-2 text-xs text-[#64748B] dark:text-slate-400">
+              <ShieldCheck className="size-4 text-[#0F766E] shrink-0 mt-0.5" />
+              <span>Records are append-only and protected by database row-level security.</span>
+            </CardFooter>
+          </Card>
         </div>
       </div>
-
-      {/* 4. Primary Audit Events Data Table */}
-      {loading ? (
-        <Spinner centered size="lg" text="Loading audit event trail..." />
-      ) : (
-        <DataTable
-          columns={columns}
-          data={filteredEvents}
-          keyField="id"
-          pageSize={10}
-          emptyMessage="No audit events matched your search or facet filters."
-        />
-      )}
 
       {/* 5. Mutation Diff Inspection Side Drawer */}
       <Sheet open={Boolean(activeEvent)} onOpenChange={(open) => !open && setActiveEvent(null)}>

@@ -52,7 +52,6 @@ const AgentProfile = lazy(() => import('./pages/portals/agent/AgentProfile'));
 const BrokerDashboard = lazy(() => import('./pages/portals/broker/BrokerDashboard'));
 const BrokerProperties = lazy(() => import('./pages/portals/broker/BrokerProperties'));
 const BrokerCreateListings = lazy(() => import('./pages/portals/broker/BrokerCreateListings'));
-const BrokerPropertyTypeSelect = lazy(() => import('./pages/portals/broker/BrokerPropertyTypeSelect'));
 const BrokerInquiries = lazy(() => import('./pages/portals/broker/BrokerInquiries'));
 const BrokerInquiryDetail = lazy(() => import('./pages/portals/broker/BrokerInquiryDetail'));
 const BrokerAppointments = lazy(() => import('./pages/portals/broker/BrokerAppointments'));
@@ -162,8 +161,8 @@ function AppRoutes({ isAppLoading }) {
             <Route index element={<Navigate to="/broker/dashboard" replace />} />
             <Route path="dashboard" element={<BrokerDashboard />} />
             <Route path="properties" element={<BrokerProperties />} />
-            <Route path="properties/select-type" element={<BrokerPropertyTypeSelect />} />
-            <Route path="properties/types" element={<BrokerPropertyTypeSelect />} />
+            <Route path="properties/select-type" element={<Navigate to="/broker/properties/create" replace />} />
+            <Route path="properties/types" element={<Navigate to="/broker/properties/create" replace />} />
             <Route path="properties/create" element={<BrokerCreateListings />} />
             <Route path="properties/new" element={<BrokerCreateListings />} />
             <Route path="properties/:id/edit" element={<BrokerCreateListings />} />

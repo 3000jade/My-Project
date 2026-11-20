@@ -6,6 +6,8 @@ import {
 } from 'lucide-react';
 import { agentService } from '../../../services/agentService';
 import { Card, CardContent, useToast, Toaster } from '../../../components/ui';
+import { Button } from '../../../components/ui/button';
+import { Alert, AlertDescription } from '../../../components/ui/alert';
 import { cn } from '../../../utils/cn';
 
 const SECTIONS = [
@@ -159,7 +161,7 @@ export default function BrokerAgentEdit() {
   }
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto" data-testid="broker-agent-edit">
+    <div className="flex flex-col gap-6 w-full min-w-0 max-w-full" data-testid="broker-agent-edit">
       <Toaster />
       {/* Toast Notification */}
       {toastMessage && (
@@ -190,22 +192,21 @@ export default function BrokerAgentEdit() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Link
-              to={`/broker/agents/${id}`}
-              className="h-9 px-3.5 bg-white hover:bg-slate-50 text-[#1E293B] border border-[#E2E8F0] rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-2xs"
-            >
-              <ArrowLeft className="w-3.5 h-3.5 text-[#64748B]" />
-              <span>Cancel</span>
-            </Link>
-            <button
+            <Button asChild variant="outline" className="h-11 px-4 bg-white border-[#E2E8F0] text-[#1E293B] gap-1.5 normal-case">
+              <Link to={`/broker/agents/${id}`}>
+                <ArrowLeft className="size-4 text-[#64748B]" />
+                <span>Cancel</span>
+              </Link>
+            </Button>
+            <Button
               type="button"
               onClick={handleSave}
               disabled={saving}
-              className="h-9 px-4 bg-[#0F766E] hover:bg-[#115E59] text-white rounded-lg text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 transition-colors shadow-2xs cursor-pointer disabled:opacity-50"
+              className="h-11 px-4 bg-[#0F766E] hover:bg-[#115E59] text-white gap-1.5 normal-case"
             >
-              <Save className="w-3.5 h-3.5" />
+              <Save className="size-4" />
               <span>{saving ? 'Saving...' : 'Save Changes'}</span>
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -214,7 +215,8 @@ export default function BrokerAgentEdit() {
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
         
         {/* Left Section Navigation (Responsive: Horizontal scroll on mobile, Vertical list on desktop) */}
-        <div data-testid="broker-card" className="md:col-span-4 bg-white dark:bg-slate-900 rounded-lg border border-[#E2E8F0] dark:border-slate-800 p-2 sm:p-3 shadow-2xs">
+        <Card data-testid="broker-card" className="md:col-span-4 bg-white dark:bg-slate-900 rounded-xl border border-[#E2E8F0] dark:border-slate-800 shadow-xs">
+          <CardContent className="p-2 sm:p-3">
           <div className="flex md:flex-col items-center md:items-stretch gap-1.5 overflow-x-auto md:overflow-x-visible scrollbar-none whitespace-nowrap md:whitespace-normal">
             {SECTIONS.map((sec) => {
               const Icon = sec.icon;
@@ -238,16 +240,17 @@ export default function BrokerAgentEdit() {
               );
             })}
           </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Right Section Content Card (8-Cols on Desktop) */}
-        <div data-testid="broker-card" className="md:col-span-8 bg-white dark:bg-slate-900 rounded-lg border border-[#E2E8F0] dark:border-slate-800 p-6 shadow-2xs space-y-6">
-          
+        <Card data-testid="broker-card" className="md:col-span-8 min-w-0 bg-white dark:bg-slate-900 rounded-xl border border-[#E2E8F0] dark:border-slate-800 shadow-xs">
+          <CardContent className="p-6 flex flex-col gap-6">
           {error && (
-            <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg flex items-center gap-2 text-xs text-rose-700">
-              <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
-              <span>{error}</span>
-            </div>
+            <Alert variant="destructive" className="flex items-center gap-2 text-xs">
+              <AlertCircle className="size-4 shrink-0" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
 
           {/* SECTION 1: Personal Information (Screen 4) */}
@@ -618,7 +621,8 @@ export default function BrokerAgentEdit() {
             </button>
           </div>
 
-        </div>
+          </CardContent>
+        </Card>
 
       </div>
     </div>

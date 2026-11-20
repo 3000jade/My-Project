@@ -1,19 +1,22 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
-  IconArrowLeft,
-  IconMapPin,
-  IconSearch,
-  IconCheck,
-  IconCrosshair,
-  IconPlus,
-  IconMinus,
-  IconCopy,
-  IconCurrentLocation,
-  IconX,
-  IconLayersLinked
-} from '@tabler/icons-react';
+  ArrowLeft,
+  MapPin,
+  Search,
+  Check,
+  Crosshair,
+  Plus,
+  Minus,
+  Copy,
+  LocateFixed,
+  X,
+  Layers
+} from 'lucide-react';
 import { mapsService } from '../../../services/mapsService';
+import { Button } from '../../../components/ui/button';
+import { Badge } from '../../../components/ui/badge';
+import { Input } from '../../../components/ui/input';
 
 // Official Google Maps Layer Options
 const GOOGLE_MAP_LAYERS = [
@@ -221,15 +224,16 @@ export default function BrokerFullViewMap() {
       <header className="shrink-0 h-16 bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] px-4 md:px-6 flex items-center justify-between gap-3 z-30 shadow-xs">
         {/* Left: Back button & Context */}
         <div className="flex items-center gap-3 min-w-0">
-          <button
+          <Button
             type="button"
+            variant="outline"
             onClick={handleCancel}
             title="Return to Listing Studio"
-            className="h-10 px-3 rounded-lg border border-[#CBD5E1] bg-white hover:bg-slate-50 text-[#1E293B] text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+            className="h-10 px-3 border-[#CBD5E1] bg-white text-[#1E293B] gap-1.5 normal-case"
           >
-            <IconArrowLeft size={16} className="text-[#0F766E]" />
+            <ArrowLeft className="size-4 text-[#0F766E]" />
             <span className="hidden sm:inline">Back to Studio</span>
-          </button>
+          </Button>
 
           <div className="h-6 w-px bg-slate-200 hidden sm:block"></div>
 
@@ -244,7 +248,7 @@ export default function BrokerFullViewMap() {
               </span>
             </div>
             <p className="text-xs text-[#64748B] truncate mt-0.5 flex items-center gap-1">
-              <IconMapPin size={13} className="text-[#0F766E] shrink-0" />
+              <MapPin className="size-3.5 text-[#0F766E] shrink-0" />
               <span>{address || 'Position the pin or search an address below'}</span>
               {isReverseGeocoding && (
                 <span className="text-[10px] text-[#0F766E] font-medium animate-pulse ml-1">
@@ -264,20 +268,20 @@ export default function BrokerFullViewMap() {
             <span>LNG: <strong className="text-[#0F766E]">{currentLng.toFixed(6)}</strong></span>
           </div>
 
-          <button
+          <Button
             type="button"
             onClick={handleApplyAndReturn}
             data-testid="apply-coordinates-btn"
-            className="h-10 px-4 rounded-lg bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm hover:shadow cursor-pointer active:scale-95"
+            className="h-10 px-4 bg-[#0F766E] hover:bg-[#115E59] text-white gap-1.5 normal-case"
           >
-            <IconCheck size={16} />
+            <Check className="size-4" />
             <span>Apply Coordinates to Listing</span>
-          </button>
+          </Button>
         </div>
       </header>
 
       {/* Main Map Viewport */}
-      <div className="relative flex-1 w-full h-full min-h-0 bg-slate-100">
+      <div className="relative flex-1 w-full h-full min-h-0 bg-slate-100" style={{ isolation: 'isolate', zIndex: 0 }}>
         {/* Top Floating Search Bar */}
         <div
           ref={searchContainerRef}
@@ -285,7 +289,7 @@ export default function BrokerFullViewMap() {
         >
           <div className="relative flex items-center bg-white/95 backdrop-blur-md rounded-xl border border-slate-200 shadow-md">
             <span className="pl-3.5 text-slate-400">
-              <IconSearch size={18} />
+              <Search className="size-4" />
             </span>
             <input
               type="text"
@@ -303,12 +307,12 @@ export default function BrokerFullViewMap() {
                 }}
                 className="pr-3 text-slate-400 hover:text-slate-600 cursor-pointer"
               >
-                <IconX size={16} />
+                <X className="size-4" />
               </button>
             )}
             {isSearching && (
               <span className="pr-3 text-[#0F766E] animate-spin">
-                <IconCrosshair size={16} />
+                <Crosshair className="size-4" />
               </span>
             )}
           </div>
@@ -322,7 +326,7 @@ export default function BrokerFullViewMap() {
                   onClick={() => handleSelectSuggestion(item)}
                   className="p-3 text-xs text-slate-700 hover:bg-teal-50/70 hover:text-[#0F766E] cursor-pointer flex items-start gap-2.5 transition-colors"
                 >
-                  <IconMapPin size={15} className="text-[#0F766E] shrink-0 mt-0.5" />
+                  <MapPin className="size-4 text-[#0F766E] shrink-0 mt-0.5" />
                   <div className="min-w-0">
                     <p className="font-semibold truncate">{item.mainText || item.description}</p>
                     {item.secondaryText && (
@@ -356,7 +360,7 @@ export default function BrokerFullViewMap() {
           {/* Layer Selector Plinth */}
           <div className="bg-white/95 backdrop-blur-md rounded-xl border border-slate-200 shadow-md p-1.5 flex flex-col gap-1">
             <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 px-2 py-0.5 flex items-center gap-1">
-              <IconLayersLinked size={12} />
+              <Layers className="size-3" />
               <span>Google Layers</span>
             </span>
             {GOOGLE_MAP_LAYERS.map((layer) => (
@@ -384,7 +388,7 @@ export default function BrokerFullViewMap() {
               aria-label="Zoom In"
               className="w-10 h-10 flex items-center justify-center text-slate-700 hover:text-[#0F766E] hover:bg-slate-50 transition-colors cursor-pointer"
             >
-              <IconPlus size={18} />
+              <Plus className="size-4" />
             </button>
             <button
               type="button"
@@ -393,7 +397,7 @@ export default function BrokerFullViewMap() {
               aria-label="Zoom Out"
               className="w-10 h-10 flex items-center justify-center text-slate-700 hover:text-[#0F766E] hover:bg-slate-50 transition-colors cursor-pointer"
             >
-              <IconMinus size={18} />
+              <Minus className="size-4" />
             </button>
             <button
               type="button"
@@ -402,7 +406,7 @@ export default function BrokerFullViewMap() {
               aria-label="Center on Pin"
               className="w-10 h-10 flex items-center justify-center text-slate-700 hover:text-[#0F766E] hover:bg-slate-50 transition-colors cursor-pointer"
             >
-              <IconCrosshair size={18} />
+              <Crosshair className="size-4" />
             </button>
             <button
               type="button"
@@ -411,7 +415,7 @@ export default function BrokerFullViewMap() {
               aria-label="Locate Device Location"
               className="w-10 h-10 flex items-center justify-center text-slate-700 hover:text-[#0F766E] hover:bg-slate-50 transition-colors cursor-pointer"
             >
-              <IconCurrentLocation size={18} />
+              <LocateFixed className="size-4" />
             </button>
           </div>
         </div>
@@ -420,7 +424,7 @@ export default function BrokerFullViewMap() {
         <div className="absolute bottom-4 left-4 z-20 bg-white/95 backdrop-blur-md rounded-xl border border-slate-200 shadow-md p-3 max-w-sm">
           <div className="flex items-center justify-between gap-3 mb-2">
             <span className="text-[11px] font-bold text-slate-700 flex items-center gap-1">
-              <IconMapPin size={14} className="text-[#0F766E]" />
+              <MapPin className="size-3.5 text-[#0F766E]" />
               <span>Pinpoint Coordinates</span>
             </span>
             <button
@@ -428,7 +432,7 @@ export default function BrokerFullViewMap() {
               onClick={handleCopyCoordinates}
               className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 hover:bg-teal-50 text-slate-600 hover:text-[#0F766E] border border-slate-200 transition-colors flex items-center gap-1 cursor-pointer"
             >
-              <IconCopy size={11} />
+              <Copy className="size-3" />
               <span>{copied ? 'Copied!' : 'Copy'}</span>
             </button>
           </div>

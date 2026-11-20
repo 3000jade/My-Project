@@ -13,51 +13,26 @@ test.describe('Property Listings & Agent Assignment Decoupling Flow', () => {
     }
   });
 
-  test('Step 1 of Property Creation Wizard completely excludes sales agent selection and integrates select-type flow', async ({ page }) => {
+  test('Add New Property goes directly to Step 1 of Property Creation Wizard', async ({ page }) => {
     // 1. Start from properties ledger and click "+ Add New Property"
     await page.goto('/broker/properties');
     const addPropertyBtn = page.locator('a:has-text("Add New Property")').first();
     await expect(addPropertyBtn).toBeVisible({ timeout: 10000 });
     await addPropertyBtn.click();
 
-    // 2. Confirm intermediate selection page: /broker/properties/select-type
-    await expect(page).toHaveURL(/.*\/broker\/properties\/select-type/);
-    await expect(page.locator('text=Select Property Type')).toBeVisible();
-    await expect(page.locator('text=What type of property are you listing?')).toBeVisible();
+    // 2. Confirm direct navigation to /broker/properties/create (select-type gateway removed)
+    await expect(page).toHaveURL(/.*\/broker\/properties\/create/);
+    await expect(page.getByRole('heading', { name: /Create Property Listing/i })).toBeVisible({ timeout: 10000 });
 
-    // Verify primary Philippine asset classes and secondary classes exist
-    await expect(page.getByRole('button', { name: /Select House and Lot/i })).toBeVisible();
-    await expect(page.getByRole('button', { name: /Select Condominium/i })).toBeVisible();
-    await expect(page.getByRole('button', { name: /Select Subdivision Lot/i })).toBeVisible();
-    await expect(page.getByRole('button', { name: /Townhouse/i })).toBeVisible();
-    await expect(page.getByRole('button', { name: /Commercial/i })).toBeVisible();
-    await expect(page.getByRole('button', { name: /Apartment/i })).toBeVisible();
-    await expect(page.getByRole('button', { name: /Villa/i })).toBeVisible();
-    await expect(page.getByRole('button', { name: /Warehouse/i })).toBeVisible();
-
-    // 3. Click Condominium card to navigate to creation wizard
-    await page.getByRole('button', { name: /Select Condominium/i }).click();
-
-    // Confirm wizard is on Step 1: Listing Overview with type preselected and clean Add Property title
-    await expect(page).toHaveURL(/.*\/broker\/properties\/(create|new)\?type=condominium/i);
-    await expect(page.getByText(/Listing Overview/i).first()).toBeVisible({ timeout: 10000 });
-    await expect(page.getByText(/Type:\s*Condominium/i).first()).toBeVisible();
-
-    // Assert that the agent selection UI is entirely absent (decoupled)
+    // 3. Confirm agent assignment is NOT in Step 1
     await expect(page.locator('#assigned-agent-select')).not.toBeVisible();
-    await expect(page.locator('text=Select Sales Agent')).not.toBeVisible();
-    await expect(page.locator('button:has-text("Assign Agent")')).not.toBeVisible();
+    await expect(page.locator('text=Assigned Handler')).not.toBeVisible();
 
-    // Confirm redundant Category / Type 8-card grid is absent from Step 1
-    await expect(page.locator('text=Category / Type Classification')).not.toBeVisible();
-
-    // Confirm essential property fields are rendered
-    await expect(page.locator('text=Listing Title')).toBeVisible();
-    await expect(page.locator('text=Transaction Purpose')).toBeVisible();
-
-    // Fill title
-    const titleInput = page.locator('input[placeholder*="Modernist Cantilever Estate"]');
-    await expect(titleInput).toBeVisible();
+    // 4. Confirm essential property fields in Step 1
+    await expect(page.getByText('Basic Details')).toBeVisible();
+    await expect(page.getByText('Listing Title')).toBeVisible();
+    await expect(page.getByText('Transaction Type')).toBeVisible();
+    await expect(page.getByText('Property Type')).toBeVisible();
     await titleInput.fill('Decoupled Prime Residence');
     await expect(titleInput).toHaveValue('Decoupled Prime Residence');
   });

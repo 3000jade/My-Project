@@ -26,6 +26,8 @@ import { useHistoryState } from '../../../hooks/useHistoryState';
 import propertyService, { toApiPayload } from '../../../services/propertyService';
 import subdivisionService from '../../../services/subdivisionService';
 import { useToast } from '../../../components/ui/toast';
+import { Button } from '../../../components/ui/button';
+import { Badge } from '../../../components/ui/badge';
 
 export default function BrokerMultiPropertyMapStudio() {
   const navigate = useNavigate();
@@ -666,28 +668,28 @@ export default function BrokerMultiPropertyMapStudio() {
             </button>
           </div>
 
-          <button
+          <Button
             type="button"
             disabled={isSaving || lots.length === 0}
             onClick={handleBatchSave}
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition-all cursor-pointer ${
+            className={`gap-2 px-4 py-2 rounded-xl text-xs font-bold shadow-sm normal-case ${
               lots.length > 0
-                ? 'bg-[#0F766E] hover:bg-[#0D625C] text-white active:scale-95'
-                : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                ? 'bg-[#0F766E] hover:bg-[#0D625C] text-white'
+                : 'bg-slate-100 text-slate-400'
             }`}
           >
             {isSaving ? (
               <>
-                <RefreshCw className="w-4 h-4 animate-spin" />
+                <RefreshCw className="size-4 animate-spin" />
                 <span>Publishing {lots.length} Lots...</span>
               </>
             ) : (
               <>
-                <Save className="w-4 h-4" />
+                <Save className="size-4" />
                 <span>Publish {lots.length} {lots.length === 1 ? 'Lot' : 'Lots'}</span>
               </>
             )}
-          </button>
+          </Button>
         </div>
       </header>
 
@@ -708,7 +710,7 @@ export default function BrokerMultiPropertyMapStudio() {
           onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
         />
 
-        <div className="flex-1 h-full relative">
+        <div className="flex-1 h-full relative" style={{ isolation: 'isolate', zIndex: 0 }}>
           <MultiPropertyCadastralCanvas
             lots={lots}
             selectedLotId={selectedLotId}

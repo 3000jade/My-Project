@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { 
+import {
   Building2, CheckCircle2, Plus, RotateCw, Edit3, ExternalLink,
   MapPin, Maximize2, Bed, Bath, Copy, MoreVertical, ChevronRight,
   Search, X, SlidersHorizontal, AlertCircle, Home,
@@ -13,12 +13,12 @@ import ReassignAgentModal from '../../../components/dashboard/ReassignAgentModal
 import PropertyFilterToolbar from '../../../components/properties/PropertyFilterToolbar';
 import ArchivePropertyModal from '../../../components/ui/modals/ArchivePropertyModal';
 import DeletePropertyModal from '../../../components/ui/modals/DeletePropertyModal';
-import { 
-  DropdownMenu, 
-  DropdownMenuTrigger, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuSeparator 
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator
 } from '../../../components/ui/dropdown-menu';
 import propertyService, { normalizeProperty } from '../../../services/propertyService';
 import { cn } from '../../../utils/cn';
@@ -34,25 +34,25 @@ function formatPhilippineRelativeTime(dateStr) {
   try {
     const date = new Date(dateStr);
     if (isNaN(date.getTime())) return 'Unavailable';
-    
+
     const manilaFmt = new Intl.DateTimeFormat('en-CA', {
       timeZone: 'Asia/Manila',
       year: 'numeric',
       month: '2-digit',
       day: '2-digit'
     });
-    
+
     const nowParts = manilaFmt.format(new Date());
     const itemParts = manilaFmt.format(date);
-    
+
     const [nowY, nowM, nowD] = nowParts.split('-').map(Number);
     const [itemY, itemM, itemD] = itemParts.split('-').map(Number);
-    
+
     const nowDate = Date.UTC(nowY, nowM - 1, nowD);
     const itemDate = Date.UTC(itemY, itemM - 1, itemD);
-    
+
     const diffDays = Math.round((nowDate - itemDate) / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays === 0) return 'Today';
     if (diffDays === 1) return 'Yesterday';
     if (diffDays < 0) return 'Future date';
@@ -346,8 +346,8 @@ export default function BrokerProperties() {
       const rawList = response?.data && Array.isArray(response.data)
         ? response.data
         : Array.isArray(response)
-        ? response
-        : [];
+          ? response
+          : [];
       setProperties(rawList);
       setError(null);
     } catch (err) {
@@ -368,8 +368,8 @@ export default function BrokerProperties() {
   const fetchProposals = useCallback(async () => {
     try {
       const response = await propertyService.getEditRequests({ status: 'PENDING' });
-      const rawList = Array.isArray(response?.data) 
-        ? response.data 
+      const rawList = Array.isArray(response?.data)
+        ? response.data
         : response?.data?.requests || [];
       setProposals(rawList);
     } catch (err) {
@@ -492,7 +492,7 @@ export default function BrokerProperties() {
       const pKey = (p.listingKey || p.listing_key || '').toLowerCase();
       const pId = String(p.listingId || p.listing_id || p.id || '').toLowerCase();
 
-      const matchesSearch = 
+      const matchesSearch =
         !q ||
         pTitle.includes(q) ||
         pLoc.includes(q) ||
@@ -1170,8 +1170,8 @@ export default function BrokerProperties() {
   ];
 
   return (
-    <div className="space-y-5 min-w-0 max-w-full">
-      
+    <div className="flex flex-col gap-6 w-full min-w-0 max-w-full">
+
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed top-20 right-6 z-50 bg-[#1E293B] text-white px-4 py-2.5 rounded-lg shadow-xl text-xs font-medium border border-slate-700 animate-in fade-in duration-150 flex items-center gap-2">
@@ -1213,7 +1213,7 @@ export default function BrokerProperties() {
             <span className="text-[#1E293B] font-semibold">All Listings</span>
           </div>
 
-          <h1 className="text-xl sm:text-2xl font-bold text-[#1E293B] tracking-tight">
+          <h1 className="text-3xl sm:text-[36px] font-bold font-display text-[#1E293B] tracking-tight leading-tight">
             Property Listings
           </h1>
           <p className="text-xs text-[#64748B] mt-0.5">
@@ -1271,12 +1271,12 @@ export default function BrokerProperties() {
             <RotateCw className={cn("w-3.5 h-3.5 text-slate-500", isRefreshing && "animate-spin")} />
             <span>Refresh</span>
           </button>
-          
+
           <Link
-            to="/broker/properties/select-type"
+            to="/broker/properties/create"
             className={cn(
               buttonVariants({ variant: "default" }),
-              "h-9 sm:h-10 px-3 sm:px-4 flex-1 sm:flex-none justify-center flex items-center gap-1.5 cursor-pointer shadow-xs whitespace-nowrap"
+              "h-9 sm:h-10 px-3 sm:px-4 flex-1 sm:flex-none justify-center flex items-center gap-1.5 cursor-pointer shadow-xs whitespace-nowrap normal-case"
             )}
             aria-label="New Listing / Add New Property"
           >
@@ -1293,6 +1293,69 @@ export default function BrokerProperties() {
             <span>Map Studio</span>
           </Link>
         </div>
+      </div>
+
+      {/* Top 4-Card Executive KPI Strip */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <Card data-testid="broker-card" className="bg-white dark:bg-slate-900 border-[#E2E8F0] dark:border-slate-800 shadow-xs">
+          <CardHeader className="pb-2">
+            <CardDescription className="text-xs font-bold uppercase tracking-wider text-[#64748B] flex items-center justify-between">
+              <span>Total Listings</span>
+              <Building2 className="size-4 text-[#0F766E]" />
+            </CardDescription>
+            <CardTitle className="text-2xl font-bold font-mono tabular-nums text-[#1E293B] dark:text-slate-100">
+              {tabCounts.all}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <p className="text-xs text-[#64748B]">All properties in portfolio</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-white dark:bg-slate-900 border-[#E2E8F0] dark:border-slate-800 shadow-xs">
+          <CardHeader className="pb-2">
+            <CardDescription className="text-xs font-bold uppercase tracking-wider text-[#64748B] flex items-center justify-between">
+              <span>Active Listings</span>
+              <CheckCircle2 className="size-4 text-emerald-600" />
+            </CardDescription>
+            <CardTitle className="text-2xl font-bold font-mono tabular-nums text-[#0F766E]">
+              {tabCounts.active}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <p className="text-xs text-[#64748B]">Live on public marketplace</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-white dark:bg-slate-900 border-[#E2E8F0] dark:border-slate-800 shadow-xs">
+          <CardHeader className="pb-2">
+            <CardDescription className="text-xs font-bold uppercase tracking-wider text-[#64748B] flex items-center justify-between">
+              <span>Needs Approval</span>
+              <AlertCircle className="size-4 text-amber-600" />
+            </CardDescription>
+            <CardTitle className="text-2xl font-bold font-mono tabular-nums text-amber-600">
+              {tabCounts.needsApproval}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <p className="text-xs text-[#64748B]">Awaiting broker sign-off</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-white dark:bg-slate-900 border-[#E2E8F0] dark:border-slate-800 shadow-xs">
+          <CardHeader className="pb-2">
+            <CardDescription className="text-xs font-bold uppercase tracking-wider text-[#64748B] flex items-center justify-between">
+              <span>Edit Proposals</span>
+              <Edit3 className="size-4 text-[#0F766E]" />
+            </CardDescription>
+            <CardTitle className="text-2xl font-bold font-mono tabular-nums text-[#1E293B] dark:text-slate-100">
+              {proposals.length}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <p className="text-xs text-[#64748B]">Pending consultant edits</p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Property Filter & Search Toolbar */}
@@ -1393,7 +1456,7 @@ export default function BrokerProperties() {
             </p>
           </div>
           <Link
-            to="/broker/properties/select-type"
+            to="/broker/properties/create"
             className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#FF6B6B] hover:bg-[#EE5A5A] text-[#1E293B] text-xs font-semibold rounded-lg shadow-2xs transition-colors cursor-pointer"
           >
             <Plus className="w-4 h-4" />
@@ -1432,8 +1495,8 @@ export default function BrokerProperties() {
               {filteredProperties.map((prop) => {
                 const isSelected = selectedMapPropertyId === prop.id;
                 const isHovered = hoveredMapPropertyId === prop.id;
-                const priceDisplay = typeof prop.price === 'number' 
-                  ? `₱${prop.price.toLocaleString()}` 
+                const priceDisplay = typeof prop.price === 'number'
+                  ? `₱${prop.price.toLocaleString()}`
                   : (prop.price || 'Price upon request');
 
                 return (
@@ -1483,7 +1546,7 @@ export default function BrokerProperties() {
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs">
                       <div className="flex items-center gap-3 text-[11px] text-[#64748B]">
                         {prop.bedrooms != null && (
@@ -1531,11 +1594,11 @@ export default function BrokerProperties() {
         ) : viewMode === 'grid' ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" data-testid="grid-view">
             {filteredProperties.map((prop) => {
-              const priceDisplay = typeof prop.price === 'number' 
-                ? `₱${prop.price.toLocaleString()}` 
+              const priceDisplay = typeof prop.price === 'number'
+                ? `₱${prop.price.toLocaleString()}`
                 : (prop.price || 'Price upon request');
               return (
-                <div
+                <Card
                   key={prop.id}
                   onClick={() => navigate(`/broker/properties/${prop.id || prop.listingKey || prop.listingId}/edit`)}
                   className="rounded-xl border border-[#E2E8F0] bg-white overflow-hidden shadow-xs hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between"
@@ -1583,36 +1646,37 @@ export default function BrokerProperties() {
                       <span>•</span>
                       <span>{prop.bathrooms ?? 0} baths</span>
                     </div>
-                    <button
+                    <Button
                       type="button"
+                      size="sm"
                       onClick={(e) => {
                         e.stopPropagation();
                         navigate(`/broker/properties/${prop.id || prop.listingKey || prop.listingId}/edit`);
                       }}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer select-none"
+                      className="rounded-full bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-semibold gap-1.5 normal-case"
                       title="Edit listing in studio"
                     >
-                      <Edit3 className="w-3 h-3" />
+                      <Edit3 className="size-3" />
                       <span>Edit</span>
-                    </button>
+                    </Button>
                   </div>
-                </div>
+                </Card>
               );
             })}
           </div>
         ) : (
-                  <DataTable
-          columns={displayedColumns}
-          data={filteredProperties}
-          keyField="id"
-          pageSize={8}
-          selectable={true}
-          selectedKeys={selectedKeys}
-          onToggleSelect={handleToggleSelect}
-          onToggleSelectAll={handleToggleSelectAll}
-          onRowClick={(row) => navigate(`/broker/properties/${row.id || row.listingKey || row.listingId}/edit`)}
-          emptyMessage="No properties match your filter criteria."
-        />
+          <DataTable
+            columns={displayedColumns}
+            data={filteredProperties}
+            keyField="id"
+            pageSize={8}
+            selectable={true}
+            selectedKeys={selectedKeys}
+            onToggleSelect={handleToggleSelect}
+            onToggleSelectAll={handleToggleSelectAll}
+            onRowClick={(row) => navigate(`/broker/properties/${row.id || row.listingKey || row.listingId}/edit`)}
+            emptyMessage="No properties match your filter criteria."
+          />
         )
       )}
 

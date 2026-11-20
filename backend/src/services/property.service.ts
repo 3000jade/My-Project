@@ -6,11 +6,11 @@ import { NotificationService } from './notification.service';
 import { GmailService } from './gmail.service';
 import { AgentService } from './agent.service';
 import { ProfileService } from './profile.service';
-import type { 
-  StandardStatus, 
-  MediaItem, 
-  RoomItem, 
-  ConfidentialItem 
+import type {
+  StandardStatus,
+  MediaItem,
+  RoomItem,
+  ConfidentialItem
 } from '../../../shared/types/property';
 
 export interface PropertyFilterQuery {
@@ -519,26 +519,26 @@ export class PropertyService {
       architecturalStyle: row.architectural_style || null,
       standardStatus: row.standard_status || (row.status === 'available' ? 'Active' : row.status === 'pending' ? 'Pending' : 'Closed'),
       status: row.status || 'available',
-      assignmentStatus: row.assignment_status 
-        || row.custom_reso_attributes?.assignment_status 
-        || (row.standard_status === 'Pending Confirmation' ? 'PENDING_CONFIRMATION' 
-            : row.standard_status === 'Action Required' ? 'REJECTED' 
+      assignmentStatus: row.assignment_status
+        || row.custom_reso_attributes?.assignment_status
+        || (row.standard_status === 'Pending Confirmation' ? 'PENDING_CONFIRMATION'
+          : row.standard_status === 'Action Required' ? 'REJECTED'
             : 'ACCEPTED'),
-      assignmentDeclinedReason: row.assignment_declined_reason 
-        || row.custom_reso_attributes?.assignment_declined_reason 
+      assignmentDeclinedReason: row.assignment_declined_reason
+        || row.custom_reso_attributes?.assignment_declined_reason
         || null,
-      assignedAt: row.assigned_at 
-        || row.custom_reso_attributes?.assigned_at 
-        || row.created_at 
+      assignedAt: row.assigned_at
+        || row.custom_reso_attributes?.assigned_at
+        || row.created_at
         || new Date().toISOString(),
-      agentConfirmedAt: row.agent_confirmed_at 
-        || row.custom_reso_attributes?.agent_confirmed_at 
+      agentConfirmedAt: row.agent_confirmed_at
+        || row.custom_reso_attributes?.agent_confirmed_at
         || null,
       isPublished: row.is_published !== undefined && row.is_published !== null
         ? row.is_published
         : (row.custom_reso_attributes?.is_published !== undefined
-            ? row.custom_reso_attributes.is_published
-            : (row.standard_status === 'Active')),
+          ? row.custom_reso_attributes.is_published
+          : (row.standard_status === 'Active')),
       createdAt: row.created_at || new Date().toISOString(),
       updatedAt: row.updated_at || new Date().toISOString(),
       createdBy: row.created_by || row.custom_reso_attributes?.created_by || null,
@@ -625,10 +625,10 @@ export class PropertyService {
           dbQuery = dbQuery.lte('price', query.maxPrice);
         }
         if (query.beds) {
-          dbQuery = dbQuery.gte('beds', query.beds);
+          dbQuery = dbQuery.gte('bedrooms_total', query.beds);
         }
         if (query.baths) {
-          dbQuery = dbQuery.gte('baths', query.baths);
+          dbQuery = dbQuery.gte('bathrooms_total_integer', query.baths);
         }
         if (query.search) {
           const cleanSearch = String(query.search).replace(/[,()'"%]/g, ' ').replace(/\s+/g, ' ').trim();
@@ -920,26 +920,26 @@ export class PropertyService {
             architecturalStyle: data.architectural_style,
             standardStatus: data.standard_status || (data.status === 'available' ? 'Active' : data.status === 'pending' ? 'Pending' : 'Closed'),
             status: data.status,
-            assignmentStatus: data.assignment_status 
-              || data.custom_reso_attributes?.assignment_status 
-              || (data.standard_status === 'Pending Confirmation' ? 'PENDING_CONFIRMATION' 
-                  : data.standard_status === 'Action Required' ? 'REJECTED' 
+            assignmentStatus: data.assignment_status
+              || data.custom_reso_attributes?.assignment_status
+              || (data.standard_status === 'Pending Confirmation' ? 'PENDING_CONFIRMATION'
+                : data.standard_status === 'Action Required' ? 'REJECTED'
                   : 'ACCEPTED'),
-            assignmentDeclinedReason: data.assignment_declined_reason 
-              || data.custom_reso_attributes?.assignment_declined_reason 
+            assignmentDeclinedReason: data.assignment_declined_reason
+              || data.custom_reso_attributes?.assignment_declined_reason
               || null,
-            assignedAt: data.assigned_at 
-              || data.custom_reso_attributes?.assigned_at 
-              || data.created_at 
+            assignedAt: data.assigned_at
+              || data.custom_reso_attributes?.assigned_at
+              || data.created_at
               || new Date().toISOString(),
-            agentConfirmedAt: data.agent_confirmed_at 
-              || data.custom_reso_attributes?.agent_confirmed_at 
+            agentConfirmedAt: data.agent_confirmed_at
+              || data.custom_reso_attributes?.agent_confirmed_at
               || null,
             isPublished: data.is_published !== undefined && data.is_published !== null
               ? data.is_published
               : (data.custom_reso_attributes?.is_published !== undefined
-                  ? data.custom_reso_attributes.is_published
-                  : (data.standard_status === 'Active')),
+                ? data.custom_reso_attributes.is_published
+                : (data.standard_status === 'Active')),
             createdAt: data.created_at,
             updatedAt: data.updated_at,
             createdBy: data.created_by || data.custom_reso_attributes?.created_by || data.custom_reso_attributes?.createdBy || null,
@@ -979,6 +979,7 @@ export class PropertyService {
               mediaUrl: m.media_url,
               orderIndex: m.order_index,
               mediaCategory: m.media_category,
+              galleryCategory: m.gallery_category || null,
               shortDescription: m.short_description,
               mimeType: m.mime_type,
             }));
@@ -1121,17 +1122,17 @@ export class PropertyService {
     const hasAgent = Boolean(effectiveAgentId && String(effectiveAgentId).trim() !== '');
 
     const isBrokerOrAdmin = userRole && ['broker', 'admin'].includes(userRole);
-    const initialAssignmentStatus = hasAgent 
-      ? (data.assignmentStatus || 'PENDING_CONFIRMATION') 
+    const initialAssignmentStatus = hasAgent
+      ? (data.assignmentStatus || 'PENDING_CONFIRMATION')
       : (data.assignmentStatus || 'UNASSIGNED');
     const requestedStandardStatus = data.standard_status || data.standardStatus;
-    const initialStatus = initialAssignmentStatus === 'ACCEPTED' 
-      ? (requestedStandardStatus || 'Active') 
+    const initialStatus = initialAssignmentStatus === 'ACCEPTED'
+      ? (requestedStandardStatus || 'Active')
       : (hasAgent ? 'Pending Confirmation' : (requestedStandardStatus || 'Active'));
     const initialIsPublished = requestedStandardStatus === 'Draft'
       ? false
-      : (initialAssignmentStatus === 'ACCEPTED' 
-        ? Boolean(data.isPublished ?? true) 
+      : (initialAssignmentStatus === 'ACCEPTED'
+        ? Boolean(data.isPublished ?? true)
         : (!hasAgent ? Boolean(data.isPublished ?? true) : false));
 
     let coordinates = data.location?.coordinates;
@@ -1321,76 +1322,59 @@ export class PropertyService {
         const resolvedListAgentKey = isValidUuid(newProperty.listAgentKey) ? newProperty.listAgentKey : null;
 
         const insertPayload: any = {
-            listing_key: newProperty.listingKey,
-            listing_id: newProperty.listingId,
-            title: newProperty.title,
-            tagline: newProperty.tagline,
-            price: newProperty.price,
-            formatted_price: newProperty.formattedPrice,
-            association_fee_frequency: newProperty.associationFeeFrequency,
-            address: newProperty.location.address,
-            unparsed_address: newProperty.location.unparsedAddress,
-            subdivision_name: newProperty.location.subdivisionName,
-            building_name: newProperty.location.buildingName || newProperty.location.building_name || null,
-            city: newProperty.location.city,
-            state: newProperty.location.state,
-            state_or_province: newProperty.location.stateOrProvince,
-            postal_code: newProperty.location.postalCode,
-            region: newProperty.location.region,
-            region_psgc_code: newProperty.location.region_psgc_code,
-            province_psgc_code: newProperty.location.province_psgc_code,
-            city_psgc_code: newProperty.location.city_psgc_code,
-            barangay: newProperty.location.barangay,
-            barangay_psgc_code: newProperty.location.barangay_psgc_code,
-            latitude: newProperty.location.coordinates?.lat,
-            longitude: newProperty.location.coordinates?.lng,
-            beds: newProperty.specs.beds,
-            baths: newProperty.specs.baths,
-            bedrooms_total: newProperty.specs.bedroomsTotal,
-            bathrooms_total_integer: newProperty.specs.bathroomsTotalInteger,
-            bathrooms_full: newProperty.specs.bathroomsFull,
-            bathrooms_half: newProperty.specs.bathroomsHalf,
-            stories_total: newProperty.specs.storiesTotal,
-            sqft: newProperty.specs.sqft,
-            living_area: newProperty.specs.livingArea,
-            living_area_units: newProperty.specs.livingAreaUnits,
-            lot_size_area: newProperty.specs.lotSizeArea,
-            lot_size_units: newProperty.specs.lotSizeUnits,
-            property_type: newProperty.specs.propertyType || 'Residential',
-            property_sub_type: newProperty.specs.propertySubType,
-            year_built: newProperty.specs.yearBuilt,
-            parking_total: newProperty.specs.parkingTotal,
-            parking_covered: newProperty.specs.parkingCovered || 0,
-            parking_open: newProperty.specs.parkingOpen || 0,
-            architectural_style: newProperty.architecturalStyle,
-            public_remarks: newProperty.publicRemarks,
-            custom_reso_attributes: {
-              ...(newProperty.customResoAttributes || {}),
-              created_by: userId,
-              createdBy: userId,
-              assignment_status: newProperty.assignmentStatus,
-              assignment_declined_reason: newProperty.assignmentDeclinedReason,
-              assigned_at: newProperty.assignedAt,
-              agent_confirmed_at: newProperty.agentConfirmedAt,
-              is_published: newProperty.isPublished,
-            },
-            standard_status: newProperty.standardStatus,
-            status: ['available', 'pending', 'sold'].includes(String(newProperty.status).toLowerCase()) ? String(newProperty.status).toLowerCase() : 'pending',
+          listing_key: newProperty.listingKey,
+          listing_id: newProperty.listingId,
+          title: newProperty.title,
+          price: newProperty.price,
+          address: newProperty.location.address,
+          subdivision_name: newProperty.location.subdivisionName,
+          building_name: newProperty.location.buildingName || newProperty.location.building_name || null,
+          city: newProperty.location.city,
+          state_or_province: newProperty.location.stateOrProvince,
+          postal_code: newProperty.location.postalCode,
+          region: newProperty.location.region,
+          region_psgc_code: newProperty.location.region_psgc_code,
+          province_psgc_code: newProperty.location.province_psgc_code,
+          city_psgc_code: newProperty.location.city_psgc_code,
+          barangay: newProperty.location.barangay,
+          barangay_psgc_code: newProperty.location.barangay_psgc_code,
+          latitude: newProperty.location.coordinates?.lat,
+          longitude: newProperty.location.coordinates?.lng,
+          bedrooms_total: newProperty.specs.bedroomsTotal,
+          bathrooms_total_integer: newProperty.specs.bathroomsTotalInteger,
+          stories_total: newProperty.specs.storiesTotal,
+          living_area: newProperty.specs.livingArea,
+          lot_size_area: newProperty.specs.lotSizeArea,
+          property_type: newProperty.specs.propertyType || 'Residential',
+          property_sub_type: newProperty.specs.propertySubType,
+          year_built: newProperty.specs.yearBuilt,
+          parking_total: newProperty.specs.parkingTotal,
+          public_remarks: newProperty.publicRemarks,
+          custom_reso_attributes: {
+            ...(newProperty.customResoAttributes || {}),
+            created_by: userId,
+            createdBy: userId,
             assignment_status: newProperty.assignmentStatus,
             assignment_declined_reason: newProperty.assignmentDeclinedReason,
             assigned_at: newProperty.assignedAt,
             agent_confirmed_at: newProperty.agentConfirmedAt,
             is_published: newProperty.isPublished,
-            is_featured: newProperty.isFeatured ?? false,
-            transaction_type: newProperty.specs.transactionType || 'For Sale',
-            property_condition: newProperty.specs.propertyCondition,
-            created_by: resolvedCreatedBy,
-            list_agent_key: resolvedListAgentKey,
-            ...(newProperty.subdivisionProjectId && isValidUuid(newProperty.subdivisionProjectId) ? { subdivision_project_id: newProperty.subdivisionProjectId } : {}),
-            ...(newProperty.subdivisionLotId && isValidUuid(newProperty.subdivisionLotId) ? { subdivision_lot_id: newProperty.subdivisionLotId } : {}),
-            ...(Array.isArray(newProperty.images) && newProperty.images.length > 0 ? { images: newProperty.images } : {}),
-            ...(newProperty.mainImage ? { main_image: newProperty.mainImage } : {}),
-          };
+          },
+          standard_status: newProperty.standardStatus,
+          status: ['available', 'pending', 'sold'].includes(String(newProperty.status).toLowerCase()) ? String(newProperty.status).toLowerCase() : 'pending',
+          assignment_status: newProperty.assignmentStatus,
+          assignment_declined_reason: newProperty.assignmentDeclinedReason,
+          assigned_at: newProperty.assignedAt,
+          agent_confirmed_at: newProperty.agentConfirmedAt,
+          is_published: newProperty.isPublished,
+          is_featured: newProperty.isFeatured ?? false,
+          transaction_type: newProperty.specs.transactionType || 'For Sale',
+          property_condition: newProperty.specs.propertyCondition,
+          created_by: resolvedCreatedBy,
+          list_agent_key: resolvedListAgentKey,
+          ...(Array.isArray(newProperty.images) && newProperty.images.length > 0 ? { images: newProperty.images } : {}),
+          ...(newProperty.mainImage ? { main_image: newProperty.mainImage } : {}),
+        };
 
         let { data: inserted, error } = await supabaseAdmin
           .from('properties')
@@ -1537,13 +1521,14 @@ export class PropertyService {
           // Save property_media (FloorPlan, Video, VirtualTour, Document) if provided
           if (Array.isArray(data.media || (data as any).property_media)) {
             const rawMedia = ((data.media || (data as any).property_media) as any[]).filter(
-              (m: any) => (m.mediaCategory || m.media_category) !== 'Photo'
+              (m: any) => (m.mediaCategory || m.media_category) !== 'Photo' || Boolean(m.galleryCategory || m.gallery_category)
             );
             if (rawMedia.length > 0) {
               const mediaRows = rawMedia.map((m: any, idx: number) => ({
                 property_id: inserted.id,
                 media_url: m.mediaUrl || m.media_url,
                 media_category: m.mediaCategory || m.media_category || 'Document',
+                gallery_category: m.galleryCategory || m.gallery_category || null,
                 order_index: m.orderIndex ?? m.order_index ?? (idx + 1),
                 short_description: m.shortDescription || m.short_description || null,
                 mime_type: m.mimeType || m.mime_type || 'application/octet-stream',
@@ -1652,13 +1637,13 @@ export class PropertyService {
 
     if (reqLoc) {
       const hasProp = (k: string) => Object.prototype.hasOwnProperty.call(reqLoc, k);
-      
+
       const newAddress = hasProp('address') ? (reqLoc.address || '') : existingLoc.address;
       const newUnparsed = hasProp('unparsedAddress') ? reqLoc.unparsedAddress : (hasProp('unparsed_address') ? reqLoc.unparsed_address : existingLoc.unparsedAddress);
       const newSubdivision = hasProp('subdivisionName') ? reqLoc.subdivisionName : (hasProp('subdivision_name') ? reqLoc.subdivision_name : existingLoc.subdivisionName);
       const newBuilding = hasProp('buildingName') ? reqLoc.buildingName : (hasProp('building_name') ? reqLoc.building_name : (existingLoc.buildingName || existingLoc.building_name));
       const newCity = hasProp('city') ? (reqLoc.city || '') : existingLoc.city;
-      
+
       const hasProv = hasProp('stateOrProvince') || hasProp('state_or_province');
       const provVal = hasProp('stateOrProvince') ? reqLoc.stateOrProvince : reqLoc.state_or_province;
       const newStateOrProv = hasProv ? provVal : existingLoc.stateOrProvince;
@@ -1672,7 +1657,7 @@ export class PropertyService {
       const newCityPsgc = hasProp('cityPsgcCode') ? reqLoc.cityPsgcCode : (hasProp('city_psgc_code') ? reqLoc.city_psgc_code : existingLoc.city_psgc_code);
       const newBarangay = hasProp('barangay') ? reqLoc.barangay : existingLoc.barangay;
       const newBarangayPsgc = hasProp('barangayPsgcCode') ? reqLoc.barangayPsgcCode : (hasProp('barangay_psgc_code') ? reqLoc.barangay_psgc_code : existingLoc.barangay_psgc_code);
-      
+
       let newCoords = existingLoc.coordinates;
       if (hasProp('coordinates')) {
         newCoords = reqLoc.coordinates ? { lat: Number(reqLoc.coordinates.lat), lng: Number(reqLoc.coordinates.lng) } : undefined;
@@ -1715,8 +1700,8 @@ export class PropertyService {
       isPublished: data.isPublished !== undefined
         ? Boolean(data.isPublished)
         : (data.is_published !== undefined
-            ? Boolean(data.is_published)
-            : derived.isPublished),
+          ? Boolean(data.is_published)
+          : derived.isPublished),
       updatedAt: new Date().toISOString(),
     };
 
@@ -1726,17 +1711,14 @@ export class PropertyService {
           .from('properties')
           .update({
             title: updated.title,
-            tagline: updated.tagline,
             price: updated.price,
             standard_status: updated.standardStatus,
             status: updated.status,
             is_published: updated.isPublished,
             address: updated.location.address,
-            unparsed_address: updated.location.unparsedAddress,
             subdivision_name: updated.location.subdivisionName,
             building_name: updated.location.buildingName || updated.location.building_name || null,
             city: updated.location.city,
-            state: updated.location.state,
             state_or_province: updated.location.stateOrProvince,
             postal_code: updated.location.postalCode,
             region: updated.location.region,
@@ -1747,29 +1729,17 @@ export class PropertyService {
             barangay_psgc_code: updated.location.barangay_psgc_code,
             latitude: (updated.location.coordinates?.lat !== undefined && updated.location.coordinates?.lat !== null) ? Number(updated.location.coordinates.lat) : null,
             longitude: (updated.location.coordinates?.lng !== undefined && updated.location.coordinates?.lng !== null) ? Number(updated.location.coordinates.lng) : null,
-            beds: updated.specs.beds,
-            baths: updated.specs.baths,
             bedrooms_total: updated.specs.bedroomsTotal,
             bathrooms_total_integer: updated.specs.bathroomsTotalInteger,
-            bathrooms_full: updated.specs.bathroomsFull,
-            bathrooms_half: updated.specs.bathroomsHalf,
             stories_total: updated.specs.storiesTotal,
             parking_total: updated.specs.parkingTotal,
-            parking_covered: updated.specs.parkingCovered,
-            parking_open: updated.specs.parkingOpen,
             property_type: updated.specs.propertyType || 'Residential',
             property_sub_type: updated.specs.propertySubType,
             year_built: updated.specs.yearBuilt,
-            architectural_style: updated.architecturalStyle,
             property_condition: updated.specs.propertyCondition,
-            sqft: updated.specs.sqft,
             living_area: updated.specs.livingArea,
-            living_area_units: updated.specs.livingAreaUnits,
             lot_size_area: updated.specs.lotSizeArea,
-            lot_size_units: updated.specs.lotSizeUnits,
             is_featured: data.is_featured !== undefined ? Boolean(data.is_featured) : (data.isFeatured !== undefined ? Boolean(data.isFeatured) : updated.isFeatured),
-            ...(data.subdivision_project_id !== undefined ? { subdivision_project_id: isValidUuid(data.subdivision_project_id) ? data.subdivision_project_id : null } : (data.subdivisionProjectId !== undefined ? { subdivision_project_id: isValidUuid(data.subdivisionProjectId) ? data.subdivisionProjectId : null } : {})),
-            ...(data.subdivision_lot_id !== undefined ? { subdivision_lot_id: isValidUuid(data.subdivision_lot_id) ? data.subdivision_lot_id : null } : (data.subdivisionLotId !== undefined ? { subdivision_lot_id: isValidUuid(data.subdivisionLotId) ? data.subdivisionLotId : null } : {})),
             ...(Array.isArray(data.images) ? { images: data.images } : {}),
             ...(data.main_image || data.mainImage ? { main_image: data.main_image || data.mainImage } : {}),
             updated_at: updated.updatedAt,
@@ -1828,6 +1798,7 @@ export class PropertyService {
               property_id: id,
               media_url: m.mediaUrl || m.media_url,
               media_category: m.mediaCategory || m.media_category || 'Document',
+              gallery_category: m.galleryCategory || m.gallery_category || null,
               order_index: m.orderIndex ?? m.order_index ?? (idx + 1),
               short_description: m.shortDescription || m.short_description || null,
               mime_type: m.mimeType || m.mime_type || 'application/octet-stream',
@@ -1920,10 +1891,15 @@ export class PropertyService {
       throw new Error(`Forbidden: Agent is not eligible to propose edits (${eligibility.reason}).`);
     }
 
-    // Verify property assignment (defense-in-depth)
+    // Verify property assignment & broker edit permission (defense-in-depth)
     const assignedAgentId = existingProperty.listAgentKey || existingProperty.createdBy || existingProperty.agentId;
     if (assignedAgentId && assignedAgentId !== agentId) {
       throw new Error('Forbidden: You can only propose changes to properties assigned to you.');
+    }
+
+    const agentPerms = (existingProperty as any).customResoAttributes?.agentPermissions;
+    if (agentPerms && agentPerms.canEditListing === false) {
+      throw new Error('Forbidden: The broker has disabled listing edits for this property.');
     }
 
     // Strip forbidden system-managed keys
@@ -2009,6 +1985,23 @@ export class PropertyService {
     }
 
     localEditRequestsState.unshift(newRequest);
+
+    // Notify owning broker when notifyBrokerOnChange is enabled (default true)
+    if (agentPerms?.notifyBrokerOnChange !== false && existingProperty.createdBy) {
+      try {
+        await NotificationService.createNotification({
+          title: `Listing Edit Submitted: ${existingProperty.title}`,
+          message: `An assigned agent proposed changes to "${existingProperty.title}". Please review the update.`,
+          type: 'property',
+          role: 'broker',
+          user_id: existingProperty.createdBy,
+          related_record: propertyId,
+        });
+      } catch (notifErr: any) {
+        logger.warn(`[PropertyService] Broker edit notification failed: ${notifErr.message}`);
+      }
+    }
+
     return newRequest;
   }
 
@@ -2319,7 +2312,7 @@ export class PropertyService {
       }
     }
 
-    
+
     // Notify broker that agent accepted and listing is now published
     try {
       const agentId = (prop as any).agentId || (prop as any).listAgentKey;
@@ -2438,7 +2431,7 @@ export class PropertyService {
       }
     }
 
-    
+
     // Notify broker that agent declined assignment
     try {
       const agentId = (prop as any).agentId || (prop as any).listAgentKey;
@@ -2557,7 +2550,7 @@ export class PropertyService {
       }
     }
 
-    
+
     // Notify new agent via in-app notification & email
     try {
       const agent = await AgentService.getAgentById(newAgentId);

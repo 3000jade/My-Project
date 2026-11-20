@@ -93,7 +93,7 @@ All padding, margins, and layout gaps use multiples of `8px` (with `4px` half-st
 | Surface / Container | Width / Height | Tailwind Classes |
 | :--- | :--- | :--- |
 | **Public Marketing Container** | Max `1440px` | `max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8` |
-| **Portal Workspace Container** | Fluid up to `1440px` | `w-full max-w-[1440px] mx-auto p-4 md:p-6 lg:p-8` |
+| **Portal Workspace Container** | Full width (`w-full min-w-0`) | `w-full min-w-0 max-w-full p-4 md:p-6 lg:p-8` |
 | **Portal Left Sidebar** | `256px` (`16rem`) expanded | `w-64 shrink-0 border-r border-outline bg-surface` |
 | **Portal Top Header** | `64px` (`4rem`) height | `h-16 sticky top-0 z-30 bg-surface border-b border-outline` |
 
@@ -158,3 +158,50 @@ All map canvases (Google Maps, Leaflet, subdivision vector editors) must remain 
 5. **Mandatory Reduced-Motion Fallbacks:** Every continuous or layout animation (GSAP, Framer Motion, CSS keyframes, smooth scroll) must respect `prefers-reduced-motion: reduce` (using `motion-safe:` / `motion-reduce:transition-none` or checking `window.matchMedia('(prefers-reduced-motion: reduce)')`).
 6. **No Competing Primary CTAs:** Each view or modal footer may display at most **one** solid Primary (`bg-primary`) action button; secondary actions must use outline/ghost variants (`border-outline bg-surface text-on-surface hover:bg-surface-variant`).
 7. **No Unisolated Map Containers:** Never mount a Leaflet or Google Maps canvas without container stacking isolation (`isolation: isolate; z-index: 0`).
+
+---
+
+## 7. Portal Bento Layout (Broker, Agent & Admin) & `shadcn/ui` Standard
+
+Every **Broker, Agent, and Admin** portal dashboard page (`frontend/src/pages/portals/broker/*.jsx`, `frontend/src/pages/portals/agent/*.jsx`, `frontend/src/pages/portals/admin/*.jsx`) follows a **Bento Grid** layout built exclusively with `shadcn/ui` primitives (`Card`, `Tabs`, `Table`, `Badge`, `Button`, `Alert`, `Separator`, `Skeleton`) and `lucide-react` icons:
+
+### 7.1 Bento Grid Anatomy & Space Utilization
+- **Full-Width Root Stack:** `flex flex-col gap-6 font-sans w-full min-w-0 max-w-full` (never `space-y-*` and no fixed `max-w-*` caps on portal pages, so content expands into all available space when the desktop sidebar in `DashboardSidebar` is collapsed).
+- **Top Metric Strip (Optional per page):** `grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4` — equal-height summary `Card` tiles (`flex flex-col justify-between`) with `CardHeader`, `CardContent`, and `CardFooter`.
+- **Asymmetric Main Bento Grid:** `grid grid-cols-1 lg:grid-cols-12 gap-6 items-start`:
+  - **Primary Tile (`lg:col-span-8 min-w-0`):** Main workspace table, tabbed ledger (`Tabs`), or interactive form/editor inside a `Card` (`min-w-0` prevents wide tables from overflowing the grid).
+  - **Secondary Rail (`lg:col-span-4 min-w-0`):** `flex flex-col gap-6` containing stacked summary, quick-action, status, or activity `Card`s.
+- **Full-Width Map / Studio Exception:** Map studios (`BrokerFullViewMap`, `SubdivisionMapEditor`, `BrokerMultiPropertyMapStudio`) use a split Bento (`lg:col-span-8` isolated map tile + `lg:col-span-4` side ledger/inspector `Card`) so the map stays `isolation: isolate; z-index: 0`.
+
+### 7.2 `shadcn/ui` Composition Rules for Bento Tiles
+- **Canvas & Surfaces:** Always place dashboards, forms, and Bento grids on a **soft neutral `#F8FAFC` page canvas** with **crisp white (`#FFFFFF`) elevated cards** (`bg-white border border-[#E2E8F0] rounded-xl shadow-xs`).
+- **Cards:** Use full `CardHeader` (`CardTitle`, `CardDescription`), `CardContent`, and `CardFooter` rather than raw `div` boxes.
+- **Spacing & Sizing:** Use `gap-4` / `gap-6` for grid and stack spacing; use `size-*` (e.g., `size-9`, `size-4`) instead of matching `w-* h-*`.
+- **Icons:** Use `lucide-react` icons consistently across all Broker, Agent, and Admin Bento tiles.
+- **Callouts & Empty States:** Use `<Alert>` (`@/components/ui/alert`) for banners/warnings and `EmptyState` inside `CardContent` when lists are empty.
+
+---
+
+## 8. High-UX Standards for All Components & Pages
+
+Every component and page across Public, Client, Agent, Broker, and Admin views must deliver high usability and polish:
+1. **Clear Visual Hierarchy:** Every page starts with one clear `36px` title (`PageHeader` or matching heading), a short plain-English subtitle, and one primary action button (`#0F766E` or `#FF6B6B` coral) so the next step is obvious at a glance.
+2. **Complete State Coverage (No Dead Ends) & Shimmer Skeleton Cards:** Always design and render all four UI states — **Loading** (**Shimmer Skeleton Cards**: crisp white `#FFFFFF` `Card` containers with animated left-to-right shimmer `Skeleton` bars mirroring the exact final layout, respecting `prefers-reduced-motion`), **Empty** (`EmptyState` with a helpful next action), **Error** (`<Alert variant="destructive">` with a `Retry` button), and **Success** (toast or inline confirmation).
+3. **Zero Layout Shift & Responsive Safety:** Use fixed-height skeletons, `min-w-0` on flex/grid containers, and `overflow-x-auto` inside table wrappers so content never jumps or overflows horizontally on mobile (`375px`) or desktop (`1440px+`).
+4. **Effortless Interaction & Framer Motion Feedback:** All interactive controls meet the `44px` (`h-11` / `min-h-[44px]`) touch target, show clear hover/focus-visible rings (`#0F766E`), disable with a spinner during async submissions to prevent double clicks, preserve user input on validation errors, and use smooth `framer-motion` spring transitions (`AnimatePresence`, `layoutId`, `layout`, wrapped in `<MotionConfig reducedMotion="user">`) for step changes, accordions, and active pills.
+5. **Plain-English Microcopy:** Use clear, human-readable labels, helpful placeholders, and specific error messages that tell the user how to fix the problem.
+6. **Accessible by Default:** Use semantic HTML, paired `<Label>` elements, `aria-label` on icon-only buttons, keyboard navigation for dialogs/tabs/menus, and WCAG AA contrast (`≥ 4.5:1`).
+7. **Engineered to Eliminate Cognitive Overload:**
+   - **Progressive Disclosure:** Show essential fields first and tuck optional/advanced settings (e.g., detailed financing breakdowns) behind clean expandable panels so screens stay calm and scannable.
+   - **Chunking & Clean Breathing Room:** Group related inputs into focused cards (around 3–6 items per group) separated by `gap-6` spacing instead of long walls of inputs.
+   - **One Single Common Label per Field:** Never use confusing slash-separated labels (`Price / Rent`); always show one clear, everyday label driven by context.
+   - **Smart Defaults & Context Filtering:** Hide irrelevant fields automatically (e.g., hide Bedroom/Kitchen fields for a Vacant Lot), pre-fill repeating broker/agent credentials, and auto-calculate derived numbers (such as Price per sqm) to cut manual thinking and typing.
+
+### 8.1 Section-by-Section High-UX Micro-Interactions (`shadcn/ui` + Framer Motion)
+- **Dropdowns (`Select` / `FormSelect`):** Every dropdown uses `shadcn/ui` `Select` (`SelectGroup` + `SelectItem`) with `h-11` (`44px`) trigger height, leading `lucide-react` scan icons, single-line `truncate` labels, smooth open/close popovers, and keyboard navigation (`ArrowDown`, `Enter`, `Escape`).
+- **Text Limiters & Live Counters:** Constrained inputs and textareas use `InputGroup` + `InputGroupAddon` to show a calm live character count (`current / max`) that turns Coral (`#FF6B6B`) when `>= 90%` of the database limit.
+- **Step 1 (Details & Price):** `ToggleGroup` / animated `layoutId` spring pills for Transaction Type (`For Sale`, `For Rent`, `Foreclosure`); live `Price per sqm` badge update as the user types; smooth `AnimatePresence` accordion for optional Payment Breakdown; and Partnered Bank cards with a clean logo placeholder + inline upload when no logo is uploaded yet.
+- **Step 2 (Location):** Cascading `Region` -> `Province` -> `City` -> `Barangay` `shadcn` dropdowns with gentle mismatch notices when a parent changes, `isolation: isolate; z-index: 0` interactive map pin feedback, and a 2-option `Map Pin Privacy` toggle (`Exact Location` vs `Approximate Area (250m)`).
+- **Step 3 (Specs & Features):** Quick-tap `ToggleGroup` / chips for Bedrooms, Bathrooms, Parking, and Furnishing, paired with `AnimatePresence` collapse of indoor room cards when a Vacant Lot is chosen, and leading `lucide-react` icons on Nearby Places inputs.
+- **Step 4 (Media & Story):** Pre-selected area/room gallery cards driven by Property Category/Type, live `N / 5` photo limit counters (`3–5` recommended per area), per-photo `Description` counter, and a 1-per-area Video + Video Thumbnail uploader enforcing the `50 MB` standard size limit.
+- **Step 5 (Credentials & Publish):** One-click **Use My Profile** auto-fill with instant visual feedback, interactive **Ready to Publish Checklist** rows that jump directly to any incomplete step, and a single solid primary CTA footer (`DESIGN.md` Section 6.6).

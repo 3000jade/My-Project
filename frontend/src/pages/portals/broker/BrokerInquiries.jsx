@@ -1,12 +1,27 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { MessageSquare, Building2, Clock, Sparkles, ChevronRight, Search } from 'lucide-react';
+import { MessageSquare, Building2, Clock, Sparkles, ChevronRight, Search, RefreshCw, AlertCircle, UserCheck } from 'lucide-react';
 import PageHeader from '../../../components/dashboard/PageHeader';
 import SearchAndFilterBar from '../../../components/dashboard/SearchAndFilterBar';
 import StatusBadge from '../../../components/dashboard/StatusBadge';
 import DataTable from '../../../components/dashboard/DataTable';
 import EmptyState from '../../../components/dashboard/EmptyState';
-import { Card, CardContent, useToast, Toaster, Spinner } from '../../../components/ui';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+  KpiCard,
+  useToast,
+  Toaster,
+  Spinner
+} from '../../../components/ui';
+import { Button } from '../../../components/ui/button';
+import { Badge } from '../../../components/ui/badge';
+import { Alert, AlertTitle, AlertDescription } from '../../../components/ui/alert';
+import { Tabs, TabsList, TabsTrigger } from '../../../components/ui/tabs';
 import { TableSkeleton } from '../../../components/dashboard/skeletons';
 import { inquiryService } from '../../../services/inquiryService';
 import { agentService } from '../../../services/agentService';
@@ -302,172 +317,213 @@ export default function BrokerInquiries() {
   ];
 
   return (
-    <div className="space-y-6 max-w-[1440px] mx-auto font-sans" data-testid="broker-inquiries-portal">
+    <div className="flex flex-col gap-6 w-full min-w-0 max-w-full font-sans" data-testid="broker-inquiries-portal">
       <Toaster />
       <PageHeader
         title="Inquiries"
         subtitle="Monitor incoming client requests, oversee consultant communication, and enforce response SLAs."
         actions={
-          <button
+          <Button
+            type="button"
+            variant="outline"
             onClick={loadInquiriesAndMetrics}
             disabled={loading}
             aria-label="Refresh firm inquiries"
-            className="h-[42px] px-4 bg-white dark:bg-slate-900 hover:bg-gray-50 dark:hover:bg-slate-800 text-[#1E293B] dark:text-slate-100 border border-[#E2E8F0] dark:border-slate-800 rounded-lg text-xs font-bold font-sans uppercase tracking-wider flex items-center gap-2 transition-all shadow-xs cursor-pointer"
+            className="h-11 px-4 gap-2 border-[#E2E8F0] dark:border-slate-800"
           >
-            <span className={`material-symbols-outlined text-[18px] ${loading ? 'animate-spin' : ''}`}>
-              refresh
-            </span>
+            <RefreshCw className={`size-4 ${loading ? 'animate-spin' : ''}`} />
             <span>Refresh</span>
-          </button>
+          </Button>
         }
       />
 
-      {/* Broker SLA Performance & Queue Metrics Bar (BROKER-01, UX-01) with Card Primitives */}
+      {/* Broker SLA Performance & Queue Metrics Bar */}
       <div data-testid="broker-sla-metrics-bar" className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card data-testid="broker-card" className="bg-white dark:bg-slate-900 border border-[#E2E8F0] dark:border-slate-800 shadow-xs">
-          <CardContent className="p-4">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-[#64748B] dark:text-slate-400 font-sans">Total Inquiries</p>
-            <p className="text-2xl font-bold font-display text-[#1E293B] dark:text-slate-100 mt-1">
-              {metrics?.totalInquiries ?? totalCount}
-            </p>
-            <span className="text-[10px] text-[#64748B] dark:text-slate-400 font-mono">
-              {metrics?.activeCount ?? activeCount} active / {metrics?.inactiveCount ?? inactiveCount} inactive
-            </span>
-          </CardContent>
-        </Card>
-        <Card data-testid="broker-card" className="bg-white dark:bg-slate-900 border border-[#E2E8F0] dark:border-slate-800 shadow-xs">
-          <CardContent className="p-4">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-[#0F766E] dark:text-teal-400 font-sans">New Inbound</p>
-            <p className="text-2xl font-bold font-display text-[#0F766E] dark:text-teal-400 mt-1">{newCount}</p>
-            <span className="text-[10px] text-[#0F766E] dark:text-teal-400 font-mono">Unassigned: {metrics?.unassignedCount ?? unassignedCount}</span>
-          </CardContent>
-        </Card>
-        <Card data-testid="broker-card" className="bg-white dark:bg-slate-900 border border-[#E2E8F0] dark:border-slate-800 shadow-xs">
-          <CardContent className="p-4">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 font-sans">Avg First Response</p>
-            <p className="text-2xl font-bold font-display text-emerald-600 dark:text-emerald-400 mt-1">
-              {metrics ? `${Math.round(metrics.averageFirstResponseSeconds / 60)}m` : '7m'}
-            </p>
-            <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-mono">
-              {metrics?.conversionRatePercent ?? 33}% conversion rate
-            </span>
-          </CardContent>
-        </Card>
+        <KpiCard
+          data-testid="broker-card"
+          size="md"
+          title="Total Inquiries"
+          value={metrics?.totalInquiries ?? totalCount}
+          icon={MessageSquare}
+        />
+
+        <KpiCard
+          data-testid="broker-card"
+          size="md"
+          title="New Inbound"
+          value={newCount}
+          statusLabel={(metrics?.unassignedCount ?? unassignedCount) > 0 ? `${metrics?.unassignedCount ?? unassignedCount} Unassigned` : 'All Assigned'}
+          statusVariant={(metrics?.unassignedCount ?? unassignedCount) > 0 ? 'coral' : 'success'}
+        />
+
+        <KpiCard
+          data-testid="broker-card"
+          size="md"
+          title="Avg First Response"
+          value={metrics ? `${Math.round(metrics.averageFirstResponseSeconds / 60)}m` : '7m'}
+          trend={`${metrics?.conversionRatePercent ?? 33}% conv`}
+          trendDirection="up"
+        />
       </div>
 
       {/* Error Alert */}
       {error && (
-        <div role="alert" className="p-4 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-900 rounded-lg flex items-center justify-between text-rose-700 dark:text-rose-300 font-sans text-xs">
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-rose-600 dark:text-rose-400 text-base">error</span>
-            <span>Failed to load firm inquiries: {error}</span>
+        <Alert variant="destructive" className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="size-4 shrink-0" />
+            <div>
+              <AlertTitle>Inquiry Sync Error</AlertTitle>
+              <AlertDescription>Failed to load firm inquiries: {error}</AlertDescription>
+            </div>
           </div>
-          <button
-            onClick={loadInquiriesAndMetrics}
-            className="px-3 py-1 bg-rose-600 text-white text-xs font-bold rounded uppercase tracking-wider hover:bg-rose-700 transition-colors cursor-pointer"
-          >
+          <Button type="button" size="sm" variant="destructive" onClick={loadInquiriesAndMetrics}>
             Retry
-          </button>
-        </div>
+          </Button>
+        </Alert>
       )}
 
-      {/* Queue Tabs (Active/Inactive, Unassigned) */}
-      <div data-testid="broker-queue-tabs" className="flex items-center gap-2 border-b border-[#E2E8F0] dark:border-slate-800 pb-2 overflow-x-auto">
-        {[
-          { key: 'ALL', label: `All Inquiries (${totalCount})` },
-          { key: 'ACTIVE', label: `Active Pipeline (${activeCount})` },
-          { key: 'INACTIVE', label: `Inactive (${inactiveCount})` },
-          { key: 'UNASSIGNED', label: `Unassigned (${unassignedCount})` },
-        ].map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer ${
-              activeTab === tab.key
-                ? 'bg-[#0F766E] text-white shadow-xs'
-                : 'bg-white dark:bg-slate-900 text-[#64748B] dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 border border-[#E2E8F0] dark:border-slate-800'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      {/* Asymmetric 8/4 Bento Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <div className="lg:col-span-8 min-w-0 flex flex-col gap-4">
+          <Tabs value={activeTab} onValueChange={setActiveTab} data-testid="broker-queue-tabs" className="w-full">
+            <TabsList className="bg-white dark:bg-slate-900 border border-[#E2E8F0] dark:border-slate-800 p-1 h-auto flex-wrap">
+              <TabsTrigger value="ALL" className="text-xs font-semibold px-3 py-2">
+                All Inquiries ({totalCount})
+              </TabsTrigger>
+              <TabsTrigger value="ACTIVE" className="text-xs font-semibold px-3 py-2">
+                Active Pipeline ({activeCount})
+              </TabsTrigger>
+              <TabsTrigger value="INACTIVE" className="text-xs font-semibold px-3 py-2">
+                Inactive ({inactiveCount})
+              </TabsTrigger>
+              <TabsTrigger value="UNASSIGNED" className="text-xs font-semibold px-3 py-2">
+                Unassigned ({unassignedCount})
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
 
-      {/* Filters */}
-      <SearchAndFilterBar
-        searchValue={search}
-        onSearchChange={setSearch}
-        searchPlaceholder="Search client name, property, or inquiry snippet..."
-        filters={[
-          {
-            value: statusFilter,
-            onChange: setStatusFilter,
-            options: [
-              { label: "All Statuses", value: "ALL" },
-              { label: "New", value: "NEW" },
-              { label: "Assigned", value: "ASSIGNED" },
-              { label: "Resolved", value: "RESOLVED" },
-              { label: "Reopened", value: "REOPENED" },
-            ]
-          },
-          {
-            value: agentFilter,
-            onChange: setAgentFilter,
-            options: agentOptions
-          }
-        ]}
-      />
-
-      {loading ? (
-        <TableSkeleton rows={5} />
-      ) : filtered.length === 0 ? (
-        <EmptyState
-          icon="inbox"
-          title="No inquiries match your filters"
-          description="Try selecting a different tab or clearing keyword filters."
-          action={
-            <button
-              onClick={() => { setSearch(''); setStatusFilter('ALL'); setAgentFilter('ALL'); setActiveTab('ALL'); }}
-              className="px-4 py-2 bg-[#0F766E] text-white rounded-lg text-xs font-bold uppercase tracking-wider font-sans cursor-pointer"
-            >
-              Reset Filters
-            </button>
-          }
-        />
-      ) : (
-        <Card data-testid="broker-card" className="bg-white dark:bg-slate-900 rounded-lg border border-[#E2E8F0] dark:border-slate-800 overflow-hidden shadow-xs">
-          {/* Messaging Application Inbox Toolbar */}
-          <div className="px-4 py-3 border-b border-[#E2E8F0] dark:border-slate-800 bg-[#F8FAFC] dark:bg-slate-900/60 flex flex-wrap items-center justify-between gap-3 text-xs">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-teal-50 dark:bg-teal-950/60 text-[#0F766E] dark:text-teal-400 flex items-center justify-center border border-teal-200/60 dark:border-teal-900">
-                <MessageSquare className="w-3.5 h-3.5" />
-              </div>
-              <span className="font-bold text-[#1E293B] dark:text-slate-100 font-sans text-xs uppercase tracking-wider">
-                Inquiry Conversations
-              </span>
-              <span className="px-2 py-0.5 rounded-full bg-teal-100 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300 font-mono text-[10px] font-bold">
-                {filtered.length} {filtered.length === 1 ? 'thread' : 'threads'}
-              </span>
-            </div>
-            <div className="flex items-center gap-3 text-[11px] font-sans text-[#64748B] dark:text-slate-400">
-              <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-rose-500"></span> Overdue SLA
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-[#0F766E] animate-pulse"></span> Unread / New
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-amber-500"></span> Unassigned
-              </span>
-            </div>
-          </div>
-          <DataTable
-            columns={columns}
-            data={filtered}
-            onRowClick={(row) => navigate(`/broker/inquiries/${row.id}`)}
+          <SearchAndFilterBar
+            searchValue={search}
+            onSearchChange={setSearch}
+            searchPlaceholder="Search client name, property, or inquiry snippet..."
+            filters={[
+              {
+                value: statusFilter,
+                onChange: setStatusFilter,
+                options: [
+                  { label: "All Statuses", value: "ALL" },
+                  { label: "New", value: "NEW" },
+                  { label: "Assigned", value: "ASSIGNED" },
+                  { label: "Resolved", value: "RESOLVED" },
+                  { label: "Reopened", value: "REOPENED" },
+                ]
+              },
+              {
+                value: agentFilter,
+                onChange: setAgentFilter,
+                options: agentOptions
+              }
+            ]}
           />
-        </Card>
-      )}
+
+          {loading ? (
+            <TableSkeleton rows={5} />
+          ) : filtered.length === 0 ? (
+            <EmptyState
+              icon="inbox"
+              title="No inquiries match your filters"
+              description="Try selecting a different tab or clearing keyword filters."
+              action={
+                <Button
+                  type="button"
+                  onClick={() => { setSearch(''); setStatusFilter('ALL'); setAgentFilter('ALL'); setActiveTab('ALL'); }}
+                  className="bg-[#0F766E] hover:bg-[#115E59] text-white"
+                >
+                  Reset Filters
+                </Button>
+              }
+            />
+          ) : (
+            <Card data-testid="broker-card" className="bg-white dark:bg-slate-900 rounded-xl border border-[#E2E8F0] dark:border-slate-800 overflow-hidden shadow-xs">
+              <CardHeader className="px-4 py-3 border-b border-[#E2E8F0] dark:border-slate-800 bg-[#F8FAFC] dark:bg-slate-900/60 flex flex-row flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <div className="size-7 rounded-lg bg-teal-50 dark:bg-teal-950/60 text-[#0F766E] dark:text-teal-400 flex items-center justify-center border border-teal-200/60 dark:border-teal-900">
+                    <MessageSquare className="size-3.5" />
+                  </div>
+                  <CardTitle className="font-bold text-[#1E293B] dark:text-slate-100 font-sans text-xs uppercase tracking-wider">
+                    Inquiry Conversations
+                  </CardTitle>
+                  <Badge variant="outline" className="font-mono text-[10px] font-bold">
+                    {filtered.length} {filtered.length === 1 ? 'thread' : 'threads'}
+                  </Badge>
+                </div>
+                <div className="flex items-center gap-3 text-[11px] font-sans text-[#64748B] dark:text-slate-400">
+                  <span className="flex items-center gap-1.5">
+                    <span className="size-2 rounded-full bg-rose-500"></span> Overdue SLA
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="size-2 rounded-full bg-[#0F766E] animate-pulse"></span> Unread / New
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="size-2 rounded-full bg-amber-500"></span> Unassigned
+                  </span>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                <DataTable
+                  columns={columns}
+                  data={filtered}
+                  onRowClick={(row) => navigate(`/broker/inquiries/${row.id}`)}
+                />
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        <div className="lg:col-span-4 flex flex-col gap-6">
+          <Card className="bg-white dark:bg-slate-900 border-[#E2E8F0] dark:border-slate-800 shadow-xs">
+            <CardHeader className="pb-3 border-b border-[#E2E8F0] dark:border-slate-800">
+              <CardTitle className="text-base font-bold text-[#1E293B] dark:text-slate-100">
+                Pipeline Triage
+              </CardTitle>
+              <CardDescription className="text-xs text-[#64748B] dark:text-slate-400">
+                Jump directly to queues needing attention
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-4 flex flex-col gap-3">
+              <button
+                type="button"
+                onClick={() => setActiveTab('UNASSIGNED')}
+                className="flex items-center justify-between p-3 rounded-lg border border-[#E2E8F0] dark:border-slate-800 hover:bg-[#F8FAFC] dark:hover:bg-slate-800/60 transition-colors text-left cursor-pointer"
+              >
+                <span className="flex items-center gap-2 text-sm font-medium text-[#1E293B] dark:text-slate-200">
+                  <UserCheck className="size-4 text-amber-600" />
+                  Unassigned Leads
+                </span>
+                <Badge variant="outline" className="font-mono tabular-nums">
+                  {unassignedCount}
+                </Badge>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('ACTIVE')}
+                className="flex items-center justify-between p-3 rounded-lg border border-[#E2E8F0] dark:border-slate-800 hover:bg-[#F8FAFC] dark:hover:bg-slate-800/60 transition-colors text-left cursor-pointer"
+              >
+                <span className="flex items-center gap-2 text-sm font-medium text-[#1E293B] dark:text-slate-200">
+                  <MessageSquare className="size-4 text-[#0F766E]" />
+                  Active Conversations
+                </span>
+                <Badge variant="outline" className="font-mono tabular-nums">
+                  {activeCount}
+                </Badge>
+              </button>
+            </CardContent>
+            <CardFooter className="pt-3 border-t border-[#E2E8F0] dark:border-slate-800 text-xs text-[#64748B] dark:text-slate-400">
+              Click any thread row to inspect the full conversation and reassign consultants.
+            </CardFooter>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }

@@ -5,7 +5,6 @@ import { BrowserRouter } from 'react-router-dom';
 import BrokerProfile from './BrokerProfile';
 import { DashboardThemeProvider } from '../../../context/DashboardThemeContext';
 
-// Mock profileService
 vi.mock('../../../services/profileService', () => {
   const service = {
     getProfile: vi.fn().mockResolvedValue({
@@ -15,6 +14,7 @@ vi.mock('../../../services/profileService', () => {
       phone: '+63 918 555 0244',
       role: 'Principal Broker & Managing Director',
       rawRole: 'broker',
+      bio: 'Principal Broker & Managing Director overseeing firm listings.',
       prc_license_no: 'PRC-REB-0019582',
       prc_validity: '2028-03-20',
       dhsud_accreditation_no: 'DHSUD-NCR-AA-2022-0941',
@@ -24,14 +24,16 @@ vi.mock('../../../services/profileService', () => {
       ui_preferences: { font_size: 'standard' },
       verification_status: 'VERIFIED',
     }),
-    updateProfile: vi.fn().mockImplementation((updates) => Promise.resolve({
-      id: 'user-broker-1',
-      name: updates.name || 'Alexander Sterling',
-      email: updates.email || 'broker@pt.com',
-      phone: updates.phone || '+63 918 555 0244',
-      firm_name: updates.firm_name || 'Precision Trust Realty Operations Inc.',
-      ...updates,
-    })),
+    updateProfile: vi.fn().mockImplementation((updates) =>
+      Promise.resolve({
+        id: 'user-broker-1',
+        name: updates.name || 'Alexander Sterling',
+        email: updates.email || 'broker@pt.com',
+        phone: updates.phone || '+63 918 555 0244',
+        firm_name: updates.firm_name || 'Precision Trust Realty Operations Inc.',
+        ...updates,
+      })
+    ),
   };
 
   return {
@@ -58,7 +60,6 @@ vi.mock('../../../services/profileService', () => {
   };
 });
 
-// Mock useAuth
 vi.mock('../../../context/AuthContext', () => ({
   useAuth: () => ({
     logout: vi.fn().mockResolvedValue(true),
@@ -66,8 +67,8 @@ vi.mock('../../../context/AuthContext', () => ({
   }),
 }));
 
-describe('BrokerProfile Portal Component', () => {
-  it('renders broker principal credentials and firm registration', async () => {
+describe('BrokerProfile Studio Component', () => {
+  it('renders broker executive card preview and updates firm name inline', async () => {
     render(
       <BrowserRouter>
         <BrokerProfile />
@@ -78,25 +79,12 @@ describe('BrokerProfile Portal Component', () => {
       expect(screen.getByText('Alexander Sterling')).toBeInTheDocument();
     });
 
-    expect(screen.getByText(/PRC-REB-0019582/i)).toBeInTheDocument();
-    expect(screen.getByText(/DHSUD-NCR-AA-2022-0941/i)).toBeInTheDocument();
-  });
+    expect(screen.getByTestId('broker-profile-studio')).toBeInTheDocument();
+    expect(screen.getByTestId('live-public-card-preview')).toBeInTheDocument();
 
-  it('opens edit modal and updates broker profile details', async () => {
-    render(
-      <BrowserRouter>
-        <BrokerProfile />
-      </BrowserRouter>
-    );
-
-    await waitFor(() => {
-      expect(screen.getByText('Alexander Sterling')).toBeInTheDocument();
-    });
-
-    const editBtn = screen.getByRole('button', { name: /Edit Profile/i });
-    fireEvent.click(editBtn);
-
-    expect(screen.getByText(/Update executive contact and administrative information/i)).toBeInTheDocument();
+    const firmInput = screen.getByLabelText(/Operating Entity \/ Firm Name/i);
+    fireEvent.change(firmInput, { target: { value: 'Sterling Prime Realty' } });
+    expect(screen.getByText('Sterling Prime Realty')).toBeInTheDocument();
   });
 
   it('renders Appearance & Typography Density card with 3 options and updates density on selection', async () => {
@@ -117,10 +105,8 @@ describe('BrokerProfile Portal Component', () => {
     expect(screen.getByTestId('density-option-standard')).toBeInTheDocument();
     expect(screen.getByTestId('density-option-comfortable')).toBeInTheDocument();
 
-    // Default is standard
     expect(screen.getByTestId('density-option-standard')).toHaveAttribute('aria-pressed', 'true');
 
-    // Click Compact
     const compactBtn = screen.getByTestId('density-option-compact');
     await act(async () => {
       fireEvent.click(compactBtn);
@@ -128,7 +114,6 @@ describe('BrokerProfile Portal Component', () => {
     expect(compactBtn).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByText(/data-dashboard-density="compact"/i)).toBeInTheDocument();
 
-    // Click Comfortable
     const comfortableBtn = screen.getByTestId('density-option-comfortable');
     await act(async () => {
       fireEvent.click(comfortableBtn);

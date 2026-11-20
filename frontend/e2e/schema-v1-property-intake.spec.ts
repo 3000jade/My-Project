@@ -31,32 +31,10 @@ test.describe('Schema v1.0 Property Intake Studio & Real-World Specifications', 
     }
   });
 
-  test('verifies property type selection gateway renders 4 category cards and navigates via dropdown', async ({ page }) => {
+  test('redirects legacy property type gateway URLs directly to create listing studio', async ({ page }) => {
     await page.goto(`${BASE_URL}/broker/properties/types`, { waitUntil: 'domcontentloaded' });
-    await page.waitForLoadState('networkidle');
-
-    // Verify page header
-    await expect(page.getByRole('heading', { name: /Select Property Type/i })).toBeVisible({ timeout: 10000 });
-    await expect(page.getByText(/What type of property are you listing\?/i)).toBeVisible();
-
-    // Verify 4 category cards
-    await expect(page.getByTestId('category-card-homes')).toBeVisible();
-    await expect(page.getByTestId('category-card-land')).toBeVisible();
-    await expect(page.getByTestId('category-card-commercial')).toBeVisible();
-    await expect(page.getByTestId('category-card-industrial')).toBeVisible();
-
-    // Open Lots & Land dropdown
-    const landTrigger = page.getByTestId('category-dropdown-trigger-land');
-    await expect(landTrigger).toBeVisible();
-    await landTrigger.click();
-
-    // Verify and click Subdivision Lot inside dropdown
-    const lotOption = page.getByTestId('property-type-option-residentialLot');
-    await expect(lotOption).toBeVisible();
-    await lotOption.click();
-
-    await page.waitForURL(url => (url.pathname.includes('/broker/properties/new') || url.pathname.includes('/broker/properties/create')) && url.search.includes('type=residentialLot'), { timeout: 10000 });
-    expect(page.url()).toContain('type=residentialLot');
+    await page.waitForURL(url => url.pathname.includes('/broker/properties/create'), { timeout: 10000 });
+    await expect(page.getByRole('heading', { name: /Create Property Listing/i })).toBeVisible({ timeout: 10000 });
   });
 
   test('completes full-stack residentialLot intake flow with canonical Schema v1.0 specifications', async ({ page }) => {

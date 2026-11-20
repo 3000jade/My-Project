@@ -73,7 +73,7 @@ export const createPropertySchema = z.object({
       propertyType: z.string().optional(),
       propertyTypeId: z.number().int().positive().optional(),
       property_type_id: z.number().int().positive().optional(),
-      transactionType: z.enum(['For Sale', 'For Rent']).optional(),
+      transactionType: z.enum(['For Sale', 'For Rent', 'For Rent / Lease', 'Foreclosure']).optional(),
       propertyCondition: z.string().optional(),
       propertySubType: z.string().optional(),
       yearBuilt: z.number().int().optional(),
@@ -91,6 +91,7 @@ export const createPropertySchema = z.object({
     mediaUrl: z.string().url(),
     orderIndex: z.number().int().nonnegative().optional(),
     mediaCategory: z.enum(['Photo', 'FloorPlan', 'Video', 'VirtualTour', 'Document']).optional(),
+    galleryCategory: z.string().trim().min(1).max(32).optional(),
     shortDescription: z.string().optional(),
   })).optional(),
   rooms: z.array(z.object({

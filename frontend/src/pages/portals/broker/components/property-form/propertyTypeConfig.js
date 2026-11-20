@@ -3,13 +3,13 @@ import {
   Building,
   Building2,
   Layers,
-  Palmtree,
   MapPin,
   Trees,
-  Waves,
   Briefcase,
-  Store,
   Warehouse,
+  Hotel,
+  KeyRound,
+  Landmark,
 } from 'lucide-react';
 
 export const ASSET_FAMILIES = {
@@ -20,17 +20,35 @@ export const ASSET_FAMILIES = {
   INDUSTRIAL: 'industrial',
 };
 
+export const CONDO_UNIT_CUTS = [
+  { value: 'studio', label: 'Studio' },
+  { value: '1br', label: '1-Bedroom (1BR)' },
+  { value: '2bedroom', label: '2-Bedroom (2BR)' },
+  { value: '3br', label: '3-Bedroom (3BR)' },
+  { value: 'penthouse', label: 'Penthouse' },
+  { value: 'loft', label: 'Loft-type' },
+];
+
 export const PROPERTY_CATEGORIES = [
   {
-    id: 'homes',
-    title: 'Homes & Living',
-    description: 'Single-family homes, townhouses, condominiums, and residential suites',
+    id: 'houseAndLot',
+    title: 'House & Lot (Horizontal Residential)',
+    description: 'Detached, attached, townhouse, duplex/triplex, bungalow, and rowhouse homes',
     icon: Home,
     types: [
       {
-        id: 'houseAndLot',
-        name: 'House and Lot',
-        description: 'Standalone house with private yard and land ownership',
+        id: 'singleDetached',
+        name: 'Single-Detached',
+        description: 'Standalone house on a lot with open yard space on all four sides.',
+        icon: Home,
+        family: ASSET_FAMILIES.DWELLING,
+        dbTypeId: 2,
+        isPrimary: true,
+      },
+      {
+        id: 'singleAttached',
+        name: 'Single-Attached',
+        description: 'Built on one boundary of the lot, leaving yard space on the front, back, and one side.',
         icon: Home,
         family: ASSET_FAMILIES.DWELLING,
         dbTypeId: 2,
@@ -39,133 +57,125 @@ export const PROPERTY_CATEGORIES = [
       {
         id: 'townhouse',
         name: 'Townhouse',
-        description: 'Multi-level urban residence sharing side party walls',
+        description: 'Multi-story unit sharing one or two side walls with neighbors in a row or gated compound.',
         icon: Building,
         family: ASSET_FAMILIES.DWELLING,
         dbTypeId: 3,
-        isPrimary: false,
-      },
-      {
-        id: 'condominium',
-        name: 'Condominium',
-        description: 'Private strata unit in a mid-rise or high-rise building',
-        icon: Building2,
-        family: ASSET_FAMILIES.STRATA,
-        dbTypeId: 1,
         isPrimary: true,
       },
       {
-        id: 'apartment',
-        name: 'Apartment Building',
-        description: 'Multi-door residential complex rented out to tenants',
+        id: 'duplexTriplex',
+        name: 'Duplex / Triplex',
+        description: 'One building structure divided into two or three separate residential units with separate entrances.',
         icon: Layers,
         family: ASSET_FAMILIES.DWELLING,
         dbTypeId: 2,
         isPrimary: false,
       },
       {
-        id: 'villa',
-        name: 'Villa / Vacation Home',
-        description: 'Luxury private compound or resort-style home',
-        icon: Palmtree,
+        id: 'bungalow',
+        name: 'Bungalow',
+        description: 'Single-story detached house with all rooms on the ground level.',
+        icon: Home,
         family: ASSET_FAMILIES.DWELLING,
-        dbTypeId: 4,
+        dbTypeId: 2,
+        isPrimary: false,
+      },
+      {
+        id: 'rowhouse',
+        name: 'Rowhouse',
+        description: 'Uniform, single- or two-story attached units commonly found in economic or socialized housing.',
+        icon: Building,
+        family: ASSET_FAMILIES.DWELLING,
+        dbTypeId: 2,
         isPrimary: false,
       },
     ],
   },
   {
-    id: 'land',
-    title: 'Lots & Land',
-    description: 'Subdivision lots, agricultural farmland, and prime acreage',
+    id: 'condominiums',
+    title: 'Condominiums (Vertical Residential)',
+    description: 'Condo units by cut, condotels, and serviced apartments',
+    icon: Building2,
+    types: [
+      {
+        id: 'condoUnit',
+        name: 'Condo Unit (by cut)',
+        description: 'Studio, 1-Bedroom (1BR), 2-Bedroom (2BR), 3-Bedroom (3BR), Penthouse, and Loft-type units.',
+        icon: Building2,
+        family: ASSET_FAMILIES.STRATA,
+        dbTypeId: 1,
+        isPrimary: true,
+      },
+      {
+        id: 'condotel',
+        name: 'Condotel',
+        description: 'Condominium units operated like a hotel, often located in leisure or tourist destinations (e.g., Tagaytay, Boracay, Batangas).',
+        icon: Hotel,
+        family: ASSET_FAMILIES.STRATA,
+        dbTypeId: 1,
+        isPrimary: false,
+      },
+      {
+        id: 'servicedApartment',
+        name: 'Serviced Apartment',
+        description: 'Furnished units with hotel-style housekeeping and amenities for short- to medium-term stays.',
+        icon: KeyRound,
+        family: ASSET_FAMILIES.STRATA,
+        dbTypeId: 1,
+        isPrimary: false,
+      },
+    ],
+  },
+  {
+    id: 'landLots',
+    title: 'Land / Lots',
+    description: 'Residential, commercial, industrial, agricultural/farm, and memorial lots',
     icon: MapPin,
     types: [
       {
         id: 'residentialLot',
-        name: 'Subdivision Lot',
-        description: 'Titled master-planned lot inside a gated community',
+        name: 'Residential Lot',
+        description: 'Vacant titled lot inside a subdivision or residential zone.',
         icon: MapPin,
         family: ASSET_FAMILIES.LAND,
         dbTypeId: 2,
         isPrimary: true,
       },
       {
+        id: 'commercialLot',
+        name: 'Commercial Lot',
+        description: 'Land along major roads or business districts zoned for retail, offices, or buildings.',
+        icon: Briefcase,
+        family: ASSET_FAMILIES.LAND,
+        dbTypeId: 5,
+        isPrimary: false,
+      },
+      {
+        id: 'industrialLot',
+        name: 'Industrial Lot',
+        description: 'Large parcels zoned for warehouses, logistics, or manufacturing.',
+        icon: Warehouse,
+        family: ASSET_FAMILIES.LAND,
+        dbTypeId: 5,
+        isPrimary: false,
+      },
+      {
         id: 'agriculturalLot',
-        name: 'Farm / Agricultural Land',
-        description: 'Farmland, fruit orchard, or rural acreage for planting',
+        name: 'Agricultural / Farm Lot',
+        description: 'Raw land, orchards, fishponds, or leisure farms.',
         icon: Trees,
         family: ASSET_FAMILIES.LAND,
         dbTypeId: 2,
         isPrimary: false,
       },
       {
-        id: 'commercialLot',
-        name: 'Commercial Lot',
-        description: 'Prime road-frontage land for business development',
-        icon: MapPin,
-        family: ASSET_FAMILIES.LAND,
-        dbTypeId: 5,
-        isPrimary: false,
-      },
-      {
-        id: 'beachfrontLot',
-        name: 'Beachfront Property',
-        description: 'Coastal or lakeside leisure parcel with water access',
-        icon: Waves,
+        id: 'memorialLot',
+        name: 'Memorial Lot',
+        description: 'Cemetery plots or columbarium niches.',
+        icon: Landmark,
         family: ASSET_FAMILIES.LAND,
         dbTypeId: 2,
-        isPrimary: false,
-      },
-    ],
-  },
-  {
-    id: 'commercial',
-    title: 'Commercial & Office',
-    description: 'Corporate workspaces, retail storefronts, and commercial buildings',
-    icon: Briefcase,
-    types: [
-      {
-        id: 'officeSpace',
-        name: 'Office Space',
-        description: 'Turnkey or bare office floor in a corporate/IT tower',
-        icon: Briefcase,
-        family: ASSET_FAMILIES.COMMERCIAL,
-        dbTypeId: 5,
-        isPrimary: false,
-      },
-      {
-        id: 'retailStore',
-        name: 'Storefront / Retail Space',
-        description: 'Ground-floor commercial space for shop, clinic, or dining',
-        icon: Store,
-        family: ASSET_FAMILIES.COMMERCIAL,
-        dbTypeId: 5,
-        isPrimary: false,
-      },
-      {
-        id: 'commercialBuilding',
-        name: 'Commercial Building',
-        description: 'Whole multi-level building for offices or retail tenants',
-        icon: Building2,
-        family: ASSET_FAMILIES.COMMERCIAL,
-        dbTypeId: 5,
-        isPrimary: false,
-      },
-    ],
-  },
-  {
-    id: 'industrial',
-    title: 'Industrial & Storage',
-    description: 'Warehouses, logistics distribution centers, and manufacturing hubs',
-    icon: Warehouse,
-    types: [
-      {
-        id: 'warehouse',
-        name: 'Warehouse / Logistics Hub',
-        description: 'High-bay storage facility with truck loading bays',
-        icon: Warehouse,
-        family: ASSET_FAMILIES.INDUSTRIAL,
-        dbTypeId: 5,
         isPrimary: false,
       },
     ],
@@ -193,14 +203,15 @@ export function getAssetFamily(typeId) {
 
   // Fallback string matching for backward compatibility
   const normalized = String(typeId || '').toLowerCase();
-  if (normalized.includes('lot') || normalized.includes('land')) return ASSET_FAMILIES.LAND;
-  if (normalized.includes('condo') || normalized.includes('strata')) return ASSET_FAMILIES.STRATA;
-  if (normalized.includes('office') || normalized.includes('retail') || normalized.includes('commercial')) {
+  if (normalized.includes('house') || normalized.includes('townhouse') || normalized.includes('duplex') || normalized.includes('bungalow') || normalized.includes('villa')) return ASSET_FAMILIES.DWELLING;
+  if (normalized.includes('condo') || normalized.includes('strata') || normalized.includes('apartment') || normalized.includes('studio') || normalized.includes('penthouse')) return ASSET_FAMILIES.STRATA;
+  if (normalized.includes('office') || normalized.includes('retail') || normalized.includes('commercial') || normalized.includes('shophouse') || normalized.includes('building')) {
     return ASSET_FAMILIES.COMMERCIAL;
   }
-  if (normalized.includes('warehouse') || normalized.includes('industrial')) {
+  if (normalized.includes('warehouse') || normalized.includes('factory') || normalized.includes('industrial')) {
     return ASSET_FAMILIES.INDUSTRIAL;
   }
+  if (normalized.includes('lot') || normalized.includes('land')) return ASSET_FAMILIES.LAND;
   return ASSET_FAMILIES.DWELLING;
 }
 

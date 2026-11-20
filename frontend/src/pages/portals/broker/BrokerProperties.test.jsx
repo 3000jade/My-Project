@@ -97,7 +97,7 @@ describe('BrokerProperties Page (Mockup & Modern SaaS Layout)', () => {
 
     const newListingBtn = screen.getByRole('link', { name: /new listing/i });
     expect(newListingBtn).toBeInTheDocument();
-    expect(newListingBtn).toHaveAttribute('href', '/broker/properties/select-type');
+    expect(newListingBtn).toHaveAttribute('href', '/broker/properties/create');
   });
 
   it('renders status dropdown with counts matching mockup', async () => {

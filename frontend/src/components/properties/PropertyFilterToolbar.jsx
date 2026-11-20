@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { IconCurrencyPeso } from '@tabler/icons-react';
 import { cn } from '../../utils/cn';
-import { COMMON_PROPERTY_TYPES } from '../../pages/portals/broker/BrokerPropertyTypeSelect';
+import { COMMON_PROPERTY_TYPES } from '../../pages/portals/broker/components/property-form/propertyTypeConfig';
 
 export default function PropertyFilterToolbar({
   search = '',

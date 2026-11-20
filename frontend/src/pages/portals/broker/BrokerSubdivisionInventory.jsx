@@ -35,6 +35,7 @@ import {
   CardContent,
   CardFooter,
 } from '../../../components/ui/card';
+import KpiCard from '@/components/ui/cards/KpiCard';
 import { Button } from '../../../components/ui/button';
 import { Badge } from '../../../components/ui/badge';
 import { Input } from '../../../components/ui/input';
@@ -412,11 +413,12 @@ export default function BrokerSubdivisionInventory() {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6 select-none">
+    <div className="w-full min-w-0 max-w-full flex flex-col gap-6 select-none">
       <Toaster position="top-right" richColors />
 
       {/* Zone 1: Executive Subproject Header & Navigation */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-[#E2E8F0] shadow-xs">
+      <Card className="bg-white rounded-xl border border-[#E2E8F0] shadow-xs">
+        <CardContent className="p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <Link
@@ -494,79 +496,51 @@ export default function BrokerSubdivisionInventory() {
             <span>Add Property / Lot</span>
           </Button>
         </div>
-      </div>
+        </CardContent>
+      </Card>
 
-      {/* Zone 2: Telemetry Metrics Row (shadcn Cards) */}
+      {/* Zone 2: Telemetry Metrics Row (KpiCards) */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-        {/* Total Inventory */}
-        <Card className="p-4 bg-white border border-[#E2E8F0] rounded-xl shadow-2xs">
-          <CardHeader className="p-0 pb-1 flex flex-row items-center justify-between">
-            <span className="text-xs text-[#64748B] font-medium">Total Inventory</span>
-            <Layers className="w-4 h-4 text-slate-400" />
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="text-2xl font-bold text-[#1E293B]">{telemetry.totalLots} Lots</div>
-            <p className="text-[11px] text-[#64748B] mt-0.5">Master plan parcels</p>
-          </CardContent>
-        </Card>
+        <KpiCard
+          variant="trend"
+          title="Total Inventory"
+          value={`${telemetry.totalLots} Lots`}
+          icon={Layers}
+          footerText="Master plan parcels"
+        />
 
-        {/* Available Lots */}
-        <Card className="p-4 bg-white border border-emerald-100 rounded-xl shadow-2xs">
-          <CardHeader className="p-0 pb-1 flex flex-row items-center justify-between">
-            <span className="text-xs text-emerald-800 font-medium">Available for Sale</span>
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="text-2xl font-bold text-emerald-700">{telemetry.availableLots}</div>
-            <p className="text-[11px] text-emerald-600/90 mt-0.5">
-              {telemetry.availablePercent}% of total units
-            </p>
-          </CardContent>
-        </Card>
+        <KpiCard
+          variant="progress"
+          title="Available for Sale"
+          value={telemetry.availableLots}
+          progress={Number(telemetry.availablePercent) || 0}
+          targetLabel={`${telemetry.availablePercent}% of total units`}
+        />
 
-        {/* Reserved Lots */}
-        <Card className="p-4 bg-white border border-amber-100 rounded-xl shadow-2xs">
-          <CardHeader className="p-0 pb-1 flex flex-row items-center justify-between">
-            <span className="text-xs text-amber-800 font-medium">Reserved / Contract</span>
-            <Clock className="w-4 h-4 text-amber-600" />
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="text-2xl font-bold text-amber-700">{telemetry.reservedLots}</div>
-            <p className="text-[11px] text-amber-600/90 mt-0.5">
-              {telemetry.reservedPercent}% under negotiation
-            </p>
-          </CardContent>
-        </Card>
+        <KpiCard
+          variant="progress"
+          title="Reserved / Contract"
+          value={telemetry.reservedLots}
+          progress={Number(telemetry.reservedPercent) || 0}
+          targetLabel={`${telemetry.reservedPercent}% under negotiation`}
+        />
 
-        {/* Sold Lots */}
-        <Card className="p-4 bg-white border border-slate-200 rounded-xl shadow-2xs">
-          <CardHeader className="p-0 pb-1 flex flex-row items-center justify-between">
-            <span className="text-xs text-[#64748B] font-medium">Sold & Turned Over</span>
-            <Ban className="w-4 h-4 text-slate-400" />
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="text-2xl font-bold text-[#1E293B]">{telemetry.soldLots}</div>
-            <p className="text-[11px] text-[#64748B] mt-0.5">
-              {telemetry.soldPercent}% completed deals
-            </p>
-          </CardContent>
-        </Card>
+        <KpiCard
+          variant="progress"
+          title="Sold & Turned Over"
+          value={telemetry.soldLots}
+          progress={Number(telemetry.soldPercent) || 0}
+          targetLabel={`${telemetry.soldPercent}% completed deals`}
+        />
 
-        {/* Total Subdivision Valuation */}
-        <Card className="p-4 bg-gradient-to-br from-teal-50/60 to-white border border-teal-200 rounded-xl shadow-2xs col-span-2 md:col-span-4 lg:col-span-1">
-          <CardHeader className="p-0 pb-1 flex flex-row items-center justify-between">
-            <span className="text-xs text-[#0F766E] font-medium">Total Valuation</span>
-            <DollarSign className="w-4 h-4 text-[#0F766E]" />
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="text-lg sm:text-xl font-bold text-[#0F766E]">
-              ₱{(telemetry.totalValuation / 1000000).toFixed(1)}M
-            </div>
-            <p className="text-[11px] text-teal-700/80 mt-0.5">
-              ₱{(telemetry.availableValuation / 1000000).toFixed(1)}M available
-            </p>
-          </CardContent>
-        </Card>
+        <KpiCard
+          className="col-span-2 md:col-span-4 lg:col-span-1"
+          variant="trend"
+          title="Total Valuation"
+          value={`₱${(telemetry.totalValuation / 1000000).toFixed(1)}M`}
+          icon={DollarSign}
+          footerText={`₱${(telemetry.availableValuation / 1000000).toFixed(1)}M available`}
+        />
       </div>
 
       {/* Zone 3: Filter & Search Command Bar */}
@@ -729,7 +703,7 @@ export default function BrokerSubdivisionInventory() {
       {isLoading ? (
         <Spinner centered size="lg" text="Loading subdivision property inventory..." />
       ) : filteredLots.length === 0 ? (
-        <Card className="p-12 text-center bg-white border border-[#E2E8F0] rounded-2xl space-y-3">
+        <Card className="p-12 text-center bg-white border border-[#E2E8F0] rounded-xl space-y-3">
           <Layers className="w-10 h-10 text-slate-300 mx-auto" />
           <h3 className="font-bold text-sm text-[#1E293B]">No Property Lots Match Filters</h3>
           <p className="text-xs text-[#64748B] max-w-md mx-auto">
@@ -1000,7 +974,7 @@ export default function BrokerSubdivisionInventory() {
 
       {/* Zone 5: Add / Edit Property Lot Modal (shadcn Dialog) */}
       <Dialog open={showLotModal} onOpenChange={setShowLotModal}>
-        <DialogContent className="max-w-lg bg-white p-6 rounded-2xl shadow-xl">
+        <DialogContent className="max-w-lg bg-white p-6 rounded-xl shadow-xl">
           <DialogHeader>
             <DialogTitle className="text-base font-bold text-[#1E293B]">
               {editingLot ? 'Edit Subdivision Lot' : 'Add New Property Lot'}
