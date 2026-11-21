@@ -7,50 +7,45 @@ import dataManagementService from '@/services/dataManagementService';
 
 vi.mock('@/services/dataManagementService', () => ({
   default: {
-    getDataHealth: vi.fn(),
-    previewImport: vi.fn(),
-    commitImport: vi.fn(),
-    exportRecords: vi.fn(),
+    getBackupSummary: vi.fn(),
     exportSnapshot: vi.fn(),
   },
 }));
 
-describe('AdminDataManagementPage', () => {
+describe('AdminDataManagementPage (Admin Backup Only)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    dataManagementService.getDataHealth.mockResolvedValue([
-      { resource: 'properties', total: 2, active: 1, archived: 1 },
+    global.URL.createObjectURL = vi.fn(() => 'blob:mock');
+    global.URL.revokeObjectURL = vi.fn();
+
+    dataManagementService.getBackupSummary.mockResolvedValue([
+      { table: 'properties', count: 2 },
+      { table: 'inquiries', count: 1 },
+      { table: 'sales', count: 1 },
     ]);
+    dataManagementService.exportSnapshot.mockResolvedValue({
+      generatedAt: '2026-11-22T00:00:00.000Z',
+      tables: { properties: [], inquiries: [], sales: [] },
+    });
   });
 
-  it('previews import rows before saving and commits on confirmation', async () => {
-    dataManagementService.previewImport.mockResolvedValue({
-      validCount: 1,
-      invalidCount: 0,
-      validRows: [{ title: 'Sample Residence', price: 12000000 }],
-      invalidRows: [],
-    });
-    dataManagementService.commitImport.mockResolvedValue({ insertedCount: 1, skippedCount: 0 });
-
+  it('shows backup summary and downloads snapshot after confirmation', async () => {
     render(
       <MemoryRouter>
         <AdminDataManagementPage />
       </MemoryRouter>
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /Preview Import/i }));
-
     await waitFor(() => {
-      expect(screen.getByText(/1 Valid/i)).toBeInTheDocument();
+      expect(screen.getByText('properties')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /Confirm & Save 1 Record/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Download Backup Snapshot/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Confirm Download/i }));
 
     await waitFor(() => {
-      expect(dataManagementService.commitImport).toHaveBeenCalledWith('properties', [
-        { title: 'Sample Residence', price: 12000000 },
-      ]);
-      expect(screen.getByText(/Saved 1 record/i)).toBeInTheDocument();
+      expect(dataManagementService.exportSnapshot).toHaveBeenCalledTimes(1);
+      expect(screen.getByText(/Backup snapshot downloaded/i)).toBeInTheDocument();
     });
   });
 });

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
-import { 
-  LayoutDashboard, Building2, MessageSquare, Calendar, 
+import {
+  LayoutDashboard, Building2, MessageSquare, Calendar,
   FileText, X, Bookmark, Compass, User,
   Settings, Shield, PanelLeftClose, PanelLeftOpen, Database
 } from 'lucide-react';
@@ -101,8 +101,8 @@ export default function DashboardSidebar({
           "h-16 flex items-center justify-between px-4 border-b border-teal-900/60 shrink-0",
           collapsed && "md:justify-center md:px-0"
         )}>
-          <Link 
-            to={role === 'broker' ? '/broker/dashboard' : '/'} 
+          <Link
+            to={role === 'broker' ? '/broker/dashboard' : '/'}
             className={cn("flex items-center gap-3 min-w-0 group", collapsed && "md:hidden")}
           >
             {/* Modern Geometric Emblem */}
@@ -159,8 +159,8 @@ export default function DashboardSidebar({
                   const isActive = isProperties
                     ? location.pathname.includes('/properties')
                     : isAgents
-                    ? location.pathname.startsWith('/broker/agents') || location.pathname.startsWith('/broker/appointments')
-                    : location.pathname === link.to;
+                      ? location.pathname.startsWith('/broker/agents') || location.pathname.startsWith('/broker/appointments')
+                      : location.pathname === link.to;
 
                   return (
                     <NavLink
@@ -177,7 +177,7 @@ export default function DashboardSidebar({
                       )}
                     >
                       <Icon className={cn(
-                        "w-4 h-4 shrink-0 transition-colors", 
+                        "w-4 h-4 shrink-0 transition-colors",
                         isActive ? "text-white" : "text-teal-200/70 group-hover:text-white"
                       )} />
                       <span className={cn("truncate", collapsed && "md:hidden")}>{link.label}</span>
@@ -210,7 +210,7 @@ export default function DashboardSidebar({
                     )}
                   >
                     <Icon className={cn(
-                      "w-4 h-4 shrink-0 transition-colors", 
+                      "w-4 h-4 shrink-0 transition-colors",
                       isActive ? "text-white" : "text-teal-200/70 group-hover:text-white"
                     )} />
                     <span className={cn("truncate", collapsed && "md:hidden")}>{link.label}</span>
@@ -237,7 +237,7 @@ export default function DashboardSidebar({
             aria-label="Settings"
           >
             <Settings className={cn(
-              "w-4 h-4 shrink-0 transition-colors", 
+              "w-4 h-4 shrink-0 transition-colors",
               isSettingsActive ? "text-white" : "text-teal-200/70 group-hover:text-white"
             )} />
             <span className={cn("truncate", collapsed && "md:hidden")}>Settings</span>

@@ -168,9 +168,9 @@
     "semantic_hash": ""
   },
   "backend/data/sessions.json": {
-    "mtime": 1795274483.2007532,
-    "seen": 1795274497.4685984,
-    "ast_hash": "436fd62d52d40f9f7cc7a6d953fcaec5",
+    "mtime": 1795283423.8082256,
+    "seen": 1795283431.0779562,
+    "ast_hash": "02ae4d30afd83b2b6df2d70db026cb8a",
     "semantic_hash": ""
   },
   "backend/package.json": {
@@ -1206,9 +1206,9 @@
     "semantic_hash": ""
   },
   "frontend/src/components/dashboard/DashboardSidebar.jsx": {
-    "mtime": 1795274201.0057628,
-    "seen": 1795274296.895947,
-    "ast_hash": "e8c4fedcb9234ba95fc1e49666218cd3",
+    "mtime": 1795275826.5648322,
+    "seen": 1795277337.70834,
+    "ast_hash": "daf82e24a21f7e0ae9e2b1463cfa67ab",
     "semantic_hash": ""
   },
   "frontend/src/components/dashboard/DashboardSidebar.test.jsx": {
@@ -6246,9 +6246,9 @@
     "semantic_hash": ""
   },
   "docs/system-modules/README.md": {
-    "mtime": 1795274161.5663164,
-    "seen": 1795274297.6720033,
-    "ast_hash": "20e6ea5cb01297d59b8d37c1dbef1fb8",
+    "mtime": 1795277697.5390627,
+    "seen": 1795282461.3603053,
+    "ast_hash": "f64a22f6d25e784acec973b944c5ee85",
     "semantic_hash": ""
   },
   "frontend/README.md": {
@@ -8418,45 +8418,45 @@
     "semantic_hash": ""
   },
   "backend/src/controllers/dataManagement.controller.ts": {
-    "mtime": 1795274164.6422918,
-    "seen": 1795274296.7544594,
-    "ast_hash": "430f9cb796a722ac6a41c110ca7993f3",
+    "mtime": 1795282695.7583382,
+    "seen": 1795283194.8925714,
+    "ast_hash": "effa2adffcfb7ab1285af3e528f1d977",
     "semantic_hash": ""
   },
   "backend/src/routes/dataManagement.routes.ts": {
-    "mtime": 1795274166.1205068,
-    "seen": 1795274296.7777178,
-    "ast_hash": "466e49a4cedce2ee726a8fd337d32cd3",
+    "mtime": 1795277697.3917027,
+    "seen": 1795282460.696443,
+    "ast_hash": "9cd9d306db5f05fdfd0fe1b3ac3cf75f",
     "semantic_hash": ""
   },
   "backend/src/services/dataManagement.service.ts": {
-    "mtime": 1795274348.2361367,
-    "seen": 1795274442.5602016,
-    "ast_hash": "31c6f62b596c323619065faaa86dc063",
+    "mtime": 1795281949.0038655,
+    "seen": 1795282460.7306275,
+    "ast_hash": "c8ed68933045c2082a654946ff7a81dc",
     "semantic_hash": ""
   },
   "frontend/src/pages/portals/super-admin/AdminDataManagementPage.jsx": {
-    "mtime": 1795274195.9848106,
-    "seen": 1795274297.1333895,
-    "ast_hash": "2e0245621eaa2a19bbaa680052307bfc",
+    "mtime": 1795283396.3866744,
+    "seen": 1795283431.433859,
+    "ast_hash": "083f07332f5032bc65de2844d6e0c567",
     "semantic_hash": ""
   },
   "frontend/src/pages/portals/super-admin/AdminDataManagementPage.test.jsx": {
-    "mtime": 1795274202.2854524,
-    "seen": 1795274297.1333895,
-    "ast_hash": "985b7fee2371c29888f65444a5c5d856",
+    "mtime": 1795281949.5811622,
+    "seen": 1795282460.9413223,
+    "ast_hash": "1d976b072a9b98761525856771aebf4b",
     "semantic_hash": ""
   },
   "frontend/src/services/dataManagementService.js": {
-    "mtime": 1795274194.6131494,
-    "seen": 1795274297.1525896,
-    "ast_hash": "6db8a8e85044c50f921caf3d435a9124",
+    "mtime": 1795283396.617148,
+    "seen": 1795283431.454608,
+    "ast_hash": "3faf462ba4f211e6eb02d0e8e2635d19",
     "semantic_hash": ""
   },
   "docs/system-modules/09-data-management.md": {
-    "mtime": 1795274160.2070355,
-    "seen": 1795274297.6720033,
-    "ast_hash": "71c7191d92241cd94b64063ec81f64be",
+    "mtime": 1795277697.5023968,
+    "seen": 1795282461.3603053,
+    "ast_hash": "1abf0999c9f499bb052ede498476f3f0",
     "semantic_hash": ""
   },
   "backend/package-lock.json": {
