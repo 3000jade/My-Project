@@ -11,14 +11,11 @@ describe('PropertyFilterToolbar Component', () => {
     onStatusTabChange: vi.fn(),
     statusCounts: {
       all: 25,
-      active: 15,
-      needsApproval: 3,
-      proposals: 2,
-      pendingConfirmation: 1,
-      actionRequired: 1,
-      reserved: 2,
-      sold: 1,
-      draft: 0
+      draft: 2,
+      pendingApproval: 3,
+      published: 15,
+      unpublished: 3,
+      closed: 2,
     },
     selectedType: 'ALL',
     onTypeChange: vi.fn(),
@@ -38,13 +35,12 @@ describe('PropertyFilterToolbar Component', () => {
     vi.clearAllMocks();
   });
 
-  it('renders omni-search input and status dropdown with count', () => {
+  it('renders omni-search input and single unified Filters button without column filter', () => {
     render(<PropertyFilterToolbar {...defaultProps} />);
 
     expect(screen.getByPlaceholderText(/search properties/i)).toBeInTheDocument();
-    expect(screen.getByTestId('status-filter-dropdown-btn')).toBeInTheDocument();
-    expect(screen.getByText(/All Listings/i)).toBeInTheDocument();
-    expect(screen.getByText('25')).toBeInTheDocument();
+    expect(screen.getByTestId('unified-filter-btn')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /customize columns/i })).not.toBeInTheDocument();
   });
 
   it('calls onSearchChange when typing in search input and clears on X button click', () => {
@@ -64,21 +60,25 @@ describe('PropertyFilterToolbar Component', () => {
     expect(onSearchChange).toHaveBeenCalledWith('');
   });
 
-  it('calls onStatusTabChange when selecting a status option from dropdown', () => {
+  it('opens unified Filters popover and calls onStatusTabChange when selecting a status option', () => {
     const onStatusTabChange = vi.fn();
     render(<PropertyFilterToolbar {...defaultProps} onStatusTabChange={onStatusTabChange} />);
 
-    const dropdownBtn = screen.getByTestId('status-filter-dropdown-btn');
-    fireEvent.click(dropdownBtn);
+    fireEvent.click(screen.getByTestId('unified-filter-btn'));
 
-    const activeOption = screen.getByTestId('status-option-ACTIVE');
-    expect(activeOption).toBeInTheDocument();
-    fireEvent.click(activeOption);
+    expect(screen.getByTestId('status-option-DRAFT')).toBeInTheDocument();
+    expect(screen.getByTestId('status-option-PENDING_APPROVAL')).toBeInTheDocument();
+    expect(screen.getByTestId('status-option-PUBLISHED')).toBeInTheDocument();
+    expect(screen.getByTestId('status-option-UNPUBLISHED')).toBeInTheDocument();
+    expect(screen.getByTestId('status-option-CLOSED')).toBeInTheDocument();
 
-    expect(onStatusTabChange).toHaveBeenCalledWith('ACTIVE');
+    const publishedOption = screen.getByTestId('status-option-PUBLISHED');
+    fireEvent.click(publishedOption);
+
+    expect(onStatusTabChange).toHaveBeenCalledWith('PUBLISHED');
   });
 
-  it('renders active filter chips when filters are applied (selectedType, search, location), allows removing individual chips via dismiss button, and calls onResetFilters when clicking Clear All', () => {
+  it('renders active filter chips and badge count on unified Filters button, allows removing chips, and resets all', () => {
     const onSearchChange = vi.fn();
     const onTypeChange = vi.fn();
     const onLocationChange = vi.fn();
@@ -99,29 +99,26 @@ describe('PropertyFilterToolbar Component', () => {
       />
     );
 
+    expect(screen.getByTestId('unified-filter-btn')).toHaveTextContent('2');
     expect(screen.getByText(/showing 8 of 25 listings/i)).toBeInTheDocument();
     expect(screen.getByText(/search: "penthouse"/i)).toBeInTheDocument();
     expect(screen.getByText('Type: Condominium')).toBeInTheDocument();
     expect(screen.getByText('Location: Makati')).toBeInTheDocument();
 
-    const removeTypeChipBtn = screen.getByLabelText(/remove type filter/i);
-    fireEvent.click(removeTypeChipBtn);
+    fireEvent.click(screen.getByLabelText(/remove type filter/i));
     expect(onTypeChange).toHaveBeenCalledWith('ALL');
 
-    const removeSearchChipBtn = screen.getByLabelText(/remove search filter/i);
-    fireEvent.click(removeSearchChipBtn);
+    fireEvent.click(screen.getByLabelText(/remove search filter/i));
     expect(onSearchChange).toHaveBeenCalledWith('');
 
-    const removeLocationChipBtn = screen.getByLabelText(/remove location filter/i);
-    fireEvent.click(removeLocationChipBtn);
+    fireEvent.click(screen.getByLabelText(/remove location filter/i));
     expect(onLocationChange).toHaveBeenCalledWith('ALL');
 
-    const clearAllBtn = screen.getByRole('button', { name: /clear all/i });
-    fireEvent.click(clearAllBtn);
+    fireEvent.click(screen.getByRole('button', { name: /clear all/i }));
     expect(onResetFilters).toHaveBeenCalled();
   });
 
-  it('supports price range changes', () => {
+  it('supports price range changes and displays inline error when min > max', () => {
     const onPriceRangeChange = vi.fn();
     const { rerender } = render(
       <PropertyFilterToolbar
@@ -131,71 +128,24 @@ describe('PropertyFilterToolbar Component', () => {
       />
     );
 
-    // Open price range selector
-    const priceButton = screen.getByRole('button', { name: /price/i });
-    expect(priceButton).toBeInTheDocument();
-    fireEvent.click(priceButton);
+    fireEvent.click(screen.getByTestId('unified-filter-btn'));
 
     const minInput = screen.getByPlaceholderText(/min/i);
     fireEvent.change(minInput, { target: { value: '5000000' } });
     expect(onPriceRangeChange).toHaveBeenCalled();
 
-    // Rerender with active price filter
     rerender(
       <PropertyFilterToolbar
         {...defaultProps}
-        priceRange={{ min: '5000000', max: '20000000' }}
+        priceRange={{ min: '50000000', max: '10000000' }}
         onPriceRangeChange={onPriceRangeChange}
       />
     );
 
+    expect(screen.getByText(/minimum price cannot be higher than maximum price/i)).toBeInTheDocument();
     expect(screen.getByText(/price:/i)).toBeInTheDocument();
 
-    const removePriceChipBtn = screen.getByLabelText(/remove price filter/i);
-    fireEvent.click(removePriceChipBtn);
+    fireEvent.click(screen.getByLabelText(/remove price filter/i));
     expect(onPriceRangeChange).toHaveBeenCalledWith({ min: '', max: '' });
-  });
-
-  it('renders columns popover, displays available columns, and allows toggling column visibility', () => {
-    const onVisibleColumnsChange = vi.fn();
-    const availableColumns = [
-      { id: 'property', label: 'Property', isLocked: true },
-      { id: 'price', label: 'Price' },
-      { id: 'specs', label: 'Specs' },
-    ];
-    const visibleColumns = ['property', 'price', 'specs'];
-
-    render(
-      <PropertyFilterToolbar
-        {...defaultProps}
-        availableColumns={availableColumns}
-        visibleColumns={visibleColumns}
-        onVisibleColumnsChange={onVisibleColumnsChange}
-      />
-    );
-
-    const columnsBtn = screen.getByRole('button', { name: /customize columns/i });
-    expect(columnsBtn).toBeInTheDocument();
-    fireEvent.click(columnsBtn);
-
-    expect(screen.getByText('Table Columns')).toBeInTheDocument();
-    expect(screen.getByLabelText(/^property$/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/^price$/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/^specs$/i)).toBeInTheDocument();
-
-    // Property is locked -> its checkbox should be disabled
-    const propertyCheckbox = screen.getAllByRole('checkbox')[0];
-    expect(propertyCheckbox).toBeDisabled();
-
-    // Price checkbox is enabled -> toggle it
-    const priceCheckbox = screen.getAllByRole('checkbox')[1];
-    expect(priceCheckbox).not.toBeDisabled();
-    fireEvent.click(priceCheckbox);
-    expect(onVisibleColumnsChange).toHaveBeenCalledWith(['property', 'specs']);
-
-    // Click "Show All" button
-    const showAllBtn = screen.getByText('Show All');
-    fireEvent.click(showAllBtn);
-    expect(onVisibleColumnsChange).toHaveBeenCalledWith(['property', 'price', 'specs']);
   });
 });

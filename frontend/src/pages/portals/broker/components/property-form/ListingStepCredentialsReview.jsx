@@ -1,12 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   ShieldCheck,
   UserCheck,
   CheckCircle2,
   AlertCircle,
-  Sparkles,
-  Layers,
-  FileCheck2,
+  Trash2,
   User,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,22 +14,9 @@ import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Field, FieldLabel } from '@/components/ui/field';
 import FormSelect from './FormSelect';
+import DescriptionEditorModal, { stripHtml } from './DescriptionEditorModal';
 
-const PROJECT_CLASSIFICATIONS = [
-  'Open Market',
-  'Economic Housing',
-  'Socialized Housing',
-  'Mid-Cost',
-  'High-End Luxury',
-];
-
-const TITLE_STATUSES = [
-  'Clean Title',
-  'Mortgaged',
-  'Under Extrajudicial Settlement',
-  'Tax Declaration',
-  'For Transfer',
-];
+const DEV_DESCRIPTION_MAX = 2000;
 
 const BROKER_SELF_VALUE = '__BROKER_SELF__';
 
@@ -48,6 +33,8 @@ export default function ListingStepCredentialsReview({
   onJumpToStep,
 }) {
   const credentials = formData.credentials || {};
+  const [devDescEditorOpen, setDevDescEditorOpen] = useState(false);
+
   const agentPermissions = formData.agentPermissions || {
     canEditListing: true,
     notifyBrokerOnChange: true,
@@ -86,8 +73,22 @@ export default function ListingStepCredentialsReview({
       credentials: {
         ...(prev.credentials || {}),
         assignedAgent: user?.full_name || user?.name || formData.agent_name || '',
-        prcLicenseNo: user?.prc_license || user?.prcLicense || credentials.prcLicenseNo || '',
-        contactNumber: user?.phone || user?.contact_number || credentials.contactNumber || '',
+        brokerDhsudLicenseNo:
+          user?.dhsud_accreditation_no ||
+          user?.dhsud_license_no ||
+          user?.dhsudLicenseNo ||
+          user?.dhsud_license ||
+          prev.credentials?.brokerDhsudLicenseNo ||
+          '',
+        prcLicenseNo:
+          user?.prc_license_no ||
+          user?.prc_license ||
+          user?.prcLicenseNo ||
+          user?.prcLicense ||
+          prev.credentials?.prcLicenseNo ||
+          '',
+        contactNumber: user?.phone || user?.contact_number || prev.credentials?.contactNumber || '',
+        contactEmail: user?.email || prev.credentials?.contactEmail || '',
       },
     }));
   };
@@ -120,8 +121,15 @@ export default function ListingStepCredentialsReview({
       credentials: {
         ...(prev.credentials || {}),
         assignedAgent: found?.full_name || found?.name || prev.credentials?.assignedAgent || '',
-        prcLicenseNo: found?.prc_license || found?.prcLicense || prev.credentials?.prcLicenseNo || '',
+        prcLicenseNo:
+          found?.prc_license_no ||
+          found?.prc_license ||
+          found?.prcLicenseNo ||
+          found?.prcLicense ||
+          prev.credentials?.prcLicenseNo ||
+          '',
         contactNumber: found?.phone || prev.credentials?.contactNumber || '',
+        contactEmail: found?.email || prev.credentials?.contactEmail || '',
       },
     }));
   };
@@ -223,22 +231,48 @@ export default function ListingStepCredentialsReview({
             />
           </Field>
 
-          <Field>
-            <FieldLabel htmlFor="brokerage-name" className="text-sm font-semibold text-[#1E293B]">
-              Brokerage
-            </FieldLabel>
-            <Input
-              id="brokerage-name"
-              type="text"
-              maxLength={80}
-              placeholder="e.g. Human Shelter Realty"
-              value={credentials.brokerage || ''}
-              onChange={(e) => updateCredentials({ brokerage: e.target.value })}
-              className="h-11 bg-white border-[#E2E8F0] rounded-lg text-sm"
-            />
+          <Field className="md:col-span-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <FieldLabel className="text-sm font-semibold text-on-surface">
+                Developer Description
+              </FieldLabel>
+              {stripHtml(credentials.developerDescription || '') && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  aria-label="Remove developer description"
+                  onClick={() => updateCredentials({ developerDescription: '' })}
+                  className="min-h-11 px-3 border-outline bg-surface text-on-surface-variant hover:text-[#FF6B6B] font-semibold rounded-lg cursor-pointer"
+                >
+                  <Trash2 data-icon="inline-start" className="text-[#FF6B6B]" />
+                  Remove
+                </Button>
+              )}
+            </div>
+            <div
+              onClick={() => setDevDescEditorOpen(true)}
+              role="button"
+              aria-label="Edit developer description"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setDevDescEditorOpen(true);
+                }
+              }}
+              className="min-h-20 p-3.5 rounded-lg border border-outline bg-surface hover:border-outline-variant transition-colors cursor-pointer flex flex-col justify-between gap-2"
+            >
+              <p className="text-sm leading-relaxed whitespace-pre-line line-clamp-3 text-on-surface-variant">
+                {stripHtml(credentials.developerDescription || '') ||
+                  'Share developer track record, completed projects, and warranty highlights...'}
+              </p>
+              <span className="text-xs tabular-nums text-on-surface-variant self-end">
+                {stripHtml(credentials.developerDescription || '').length} / {DEV_DESCRIPTION_MAX}
+              </span>
+            </div>
           </Field>
 
-          <Field>
+          <Field className="md:col-span-2">
             <FieldLabel htmlFor="dhsud-license" className="text-sm font-semibold text-[#1E293B]">
               DHSUD License No.
             </FieldLabel>
@@ -250,36 +284,6 @@ export default function ListingStepCredentialsReview({
               value={credentials.dhsudLicenseNo || ''}
               onChange={(e) => updateCredentials({ dhsudLicenseNo: e.target.value })}
               className="h-11 bg-white border-[#E2E8F0] rounded-lg text-sm"
-            />
-          </Field>
-
-          <Field>
-            <FieldLabel htmlFor="project-classification" className="text-sm font-semibold text-[#1E293B]">
-              Project Classification
-            </FieldLabel>
-            <FormSelect
-              id="project-classification"
-              value={credentials.projectClassification || ''}
-              icon={Layers}
-              options={PROJECT_CLASSIFICATIONS}
-              placeholder="Select classification"
-              allowClear
-              onValueChange={(val) => updateCredentials({ projectClassification: val })}
-            />
-          </Field>
-
-          <Field className="md:col-span-2">
-            <FieldLabel htmlFor="title-status" className="text-sm font-semibold text-[#1E293B]">
-              Title Status
-            </FieldLabel>
-            <FormSelect
-              id="title-status"
-              value={credentials.titleStatus || ''}
-              icon={FileCheck2}
-              options={TITLE_STATUSES}
-              placeholder="Select title status (e.g. Clean Title)"
-              allowClear
-              onValueChange={(val) => updateCredentials({ titleStatus: val })}
             />
           </Field>
         </CardContent>
@@ -302,16 +306,6 @@ export default function ListingStepCredentialsReview({
                 </CardDescription>
               </div>
             </div>
-
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleUseMyProfile}
-              className="min-h-11 px-3 border-[#E2E8F0] text-[#0F766E] font-semibold rounded-lg cursor-pointer"
-            >
-              <Sparkles data-icon="inline-start" />
-              Use My Profile
-            </Button>
           </div>
         </CardHeader>
         <Separator className="bg-[#E2E8F0]" />
@@ -320,7 +314,7 @@ export default function ListingStepCredentialsReview({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Field className="md:col-span-2">
               <FieldLabel htmlFor="assigned-agent-select" className="text-sm font-semibold text-[#1E293B]">
-                Assigned Handler
+                Assign an Agent
               </FieldLabel>
               <FormSelect
                 id="assigned-agent-select"
@@ -411,7 +405,24 @@ export default function ListingStepCredentialsReview({
               />
             </Field>
 
-            <Field className="md:col-span-2">
+            {selectedHandlerValue === BROKER_SELF_VALUE && (
+              <Field>
+                <FieldLabel htmlFor="broker-dhsud-license" className="text-sm font-semibold text-[#1E293B]">
+                  Broker DHSUD License No.
+                </FieldLabel>
+                <Input
+                  id="broker-dhsud-license"
+                  type="text"
+                  maxLength={48}
+                  placeholder="e.g. DHSUD-NCR-B-001234"
+                  value={credentials.brokerDhsudLicenseNo || ''}
+                  onChange={(e) => updateCredentials({ brokerDhsudLicenseNo: e.target.value })}
+                  className="h-11 bg-white border-[#E2E8F0] rounded-lg text-sm"
+                />
+              </Field>
+            )}
+
+            <Field>
               <FieldLabel htmlFor="contact-number" className="text-sm font-semibold text-[#1E293B]">
                 Contact Number
               </FieldLabel>
@@ -422,6 +433,66 @@ export default function ListingStepCredentialsReview({
                 placeholder="e.g. +63 917 123 4567"
                 value={credentials.contactNumber || ''}
                 onChange={(e) => updateCredentials({ contactNumber: e.target.value })}
+                className="h-11 bg-white border-[#E2E8F0] rounded-lg text-sm"
+              />
+            </Field>
+
+            <Field>
+              <FieldLabel htmlFor="contact-email" className="text-sm font-semibold text-[#1E293B]">
+                Contact Email
+              </FieldLabel>
+              <Input
+                id="contact-email"
+                type="email"
+                maxLength={120}
+                placeholder="e.g. inquiries@humanshelter.ph"
+                value={credentials.contactEmail || ''}
+                onChange={(e) => updateCredentials({ contactEmail: e.target.value })}
+                className="h-11 bg-white border-[#E2E8F0] rounded-lg text-sm"
+              />
+            </Field>
+
+            <Field>
+              <FieldLabel htmlFor="contact-messenger" className="text-sm font-semibold text-[#1E293B]">
+                Messenger Link
+              </FieldLabel>
+              <Input
+                id="contact-messenger"
+                type="url"
+                maxLength={200}
+                placeholder="e.g. https://m.me/yourpage"
+                value={credentials.messengerUrl || ''}
+                onChange={(e) => updateCredentials({ messengerUrl: e.target.value })}
+                className="h-11 bg-white border-[#E2E8F0] rounded-lg text-sm"
+              />
+            </Field>
+
+            <Field>
+              <FieldLabel htmlFor="contact-facebook" className="text-sm font-semibold text-[#1E293B]">
+                Facebook Link
+              </FieldLabel>
+              <Input
+                id="contact-facebook"
+                type="url"
+                maxLength={200}
+                placeholder="e.g. https://facebook.com/yourpage"
+                value={credentials.facebookUrl || ''}
+                onChange={(e) => updateCredentials({ facebookUrl: e.target.value })}
+                className="h-11 bg-white border-[#E2E8F0] rounded-lg text-sm"
+              />
+            </Field>
+
+            <Field className="md:col-span-2">
+              <FieldLabel htmlFor="contact-whatsapp" className="text-sm font-semibold text-[#1E293B]">
+                WhatsApp
+              </FieldLabel>
+              <Input
+                id="contact-whatsapp"
+                type="text"
+                maxLength={200}
+                placeholder="e.g. +63 917 123 4567 or https://wa.me/639171234567"
+                value={credentials.whatsapp || ''}
+                onChange={(e) => updateCredentials({ whatsapp: e.target.value })}
                 className="h-11 bg-white border-[#E2E8F0] rounded-lg text-sm"
               />
             </Field>
@@ -464,6 +535,20 @@ export default function ListingStepCredentialsReview({
           ))}
         </CardContent>
       </Card>
+
+      <DescriptionEditorModal
+        open={devDescEditorOpen}
+        onOpenChange={setDevDescEditorOpen}
+        title="Developer Description"
+        subtitle="Share the developer's background, track record, and project credentials."
+        initialValue={credentials.developerDescription || ''}
+        maxLength={DEV_DESCRIPTION_MAX}
+        placeholder="Describe the developer's track record and notable projects..."
+        onSave={(html) => {
+          updateCredentials({ developerDescription: html });
+          setDevDescEditorOpen(false);
+        }}
+      />
     </div>
   );
 }

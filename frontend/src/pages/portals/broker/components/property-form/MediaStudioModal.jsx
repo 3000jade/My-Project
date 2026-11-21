@@ -85,11 +85,14 @@ export default function MediaStudioModal({
   const [photoSizeErrors, setPhotoSizeErrors] = useState({});
   const [videoSizeErrors, setVideoSizeErrors] = useState({});
   const [editingDescTarget, setEditingDescTarget] = useState(null);
+  const [selectedPhotoIds, setSelectedPhotoIds] = useState([]);
+  const [confirmBulkDeleteOpen, setConfirmBulkDeleteOpen] = useState(false);
 
   // Keep activeCategory synced when opened from a specific category chip
   React.useEffect(() => {
     if (open) {
       setActiveCategory(initialCategory || 'ALL');
+      setSelectedPhotoIds([]);
     }
   }, [open, initialCategory]);
 
@@ -155,6 +158,20 @@ export default function MediaStudioModal({
     activeCategory === 'ALL'
       ? galleryPhotos
       : galleryPhotos.filter((p) => p.galleryCategory === activeCategory);
+  const activePhotoIdSet = new Set(activePhotos.map((p) => p.id));
+  const visibleSelectedIds = selectedPhotoIds.filter((id) => activePhotoIdSet.has(id));
+
+  const togglePhotoSelected = (photoId) => {
+    setSelectedPhotoIds((prev) =>
+      prev.includes(photoId) ? prev.filter((id) => id !== photoId) : [...prev, photoId]
+    );
+  };
+
+  const handleConfirmBulkDelete = () => {
+    visibleSelectedIds.forEach((id) => onRemovePhotoItem?.(id));
+    setSelectedPhotoIds([]);
+    setConfirmBulkDeleteOpen(false);
+  };
 
   const renderPhotoCard = (item, showCategoryBadge = false) => {
     const src = item.imageUrl || item.mediaUrl;
@@ -219,9 +236,27 @@ export default function MediaStudioModal({
 
           <button
             type="button"
+            onClick={() => togglePhotoSelected(item.id)}
+            aria-label={visibleSelectedIds.includes(item.id) ? 'Deselect photo' : 'Select photo'}
+            aria-pressed={visibleSelectedIds.includes(item.id)}
+            className={`absolute bottom-2.5 left-2.5 size-11 md:size-8 [@media(pointer:coarse)]:size-11 rounded-lg border shadow-xs flex items-center justify-center cursor-pointer transition-colors ${
+              visibleSelectedIds.includes(item.id)
+                ? 'bg-[#0F766E] border-[#0F766E] text-white'
+                : 'bg-white/95 border-[#E2E8F0] text-[#475569] hover:border-[#0F766E]'
+            }`}
+          >
+            {visibleSelectedIds.includes(item.id) ? (
+              <Check className="size-4" />
+            ) : (
+              <span className="size-4 rounded border border-[#CBD5E1] bg-white" />
+            )}
+          </button>
+
+          <button
+            type="button"
             onClick={() => onRemovePhotoItem?.(item.id)}
             aria-label="Remove photo"
-            className="absolute top-2.5 right-2.5 size-9 rounded-lg bg-white/95 hover:bg-white text-[#1E293B] shadow-xs flex items-center justify-center cursor-pointer"
+            className="absolute top-2.5 right-2.5 size-11 md:size-9 [@media(pointer:coarse)]:size-11 rounded-lg bg-white/95 hover:bg-white text-[#1E293B] shadow-xs flex items-center justify-center cursor-pointer"
           >
             <Trash2 className="size-4 text-[#FF6B6B]" />
           </button>
@@ -235,7 +270,7 @@ export default function MediaStudioModal({
             >
               Description
             </FieldLabel>
-            <InputGroup className="h-10 bg-white border-[#E2E8F0] rounded-lg">
+            <InputGroup className="h-11 bg-white border-[#E2E8F0] rounded-lg">
               <InputGroupInput
                 id={`studio-photo-desc-${item.id}`}
                 type="text"
@@ -338,7 +373,7 @@ export default function MediaStudioModal({
                   setShowAddInput((prev) => !prev);
                   setAddError('');
                 }}
-                className="size-8 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] hover:border-[#0F766E] text-[#0F766E] flex items-center justify-center transition-colors cursor-pointer"
+                className="size-11 md:size-8 [@media(pointer:coarse)]:size-11 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] hover:border-[#0F766E] text-[#0F766E] flex items-center justify-center transition-colors cursor-pointer"
               >
                 <Plus className="size-4" />
               </button>
@@ -448,7 +483,7 @@ export default function MediaStudioModal({
                           if (activeCategory === cat.key) setActiveCategory('ALL');
                           onRemoveCustomCategory?.(cat.key);
                         }}
-                        className="ml-1 size-8 rounded-md text-[#94A3B8] hover:text-[#FF6B6B] flex items-center justify-center shrink-0 cursor-pointer"
+                        className="ml-1 size-11 md:size-8 [@media(pointer:coarse)]:size-11 rounded-md text-[#94A3B8] hover:text-[#FF6B6B] flex items-center justify-center shrink-0 cursor-pointer"
                       >
                         <X className="size-3.5" />
                       </button>
@@ -460,7 +495,41 @@ export default function MediaStudioModal({
           </aside>
 
           {/* Right Bento Grid Workspace */}
-          <main className="lg:col-span-9 bg-[#F8FAFC] p-5 overflow-y-auto min-h-0">
+          <main className="lg:col-span-9 bg-[#F8FAFC] p-4 md:p-5 overflow-y-auto min-h-0">
+            {visibleSelectedIds.length > 0 && (
+              <div className="mb-4 p-3 rounded-xl bg-white border border-[#E2E8F0] shadow-xs flex flex-wrap items-center justify-between gap-2">
+                <span className="text-xs font-semibold text-[#1E293B]">
+                  {visibleSelectedIds.length} selected
+                </span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setSelectedPhotoIds(activePhotos.map((p) => p.id))}
+                    className="min-h-11 md:min-h-9 px-3 text-xs font-semibold rounded-lg border-[#E2E8F0]"
+                  >
+                    Select All
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setSelectedPhotoIds([])}
+                    className="min-h-11 md:min-h-9 px-3 text-xs font-semibold rounded-lg border-[#E2E8F0]"
+                  >
+                    Clear
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    onClick={() => setConfirmBulkDeleteOpen(true)}
+                    className="min-h-11 md:min-h-9 px-3 text-xs font-semibold rounded-lg"
+                  >
+                    <Trash2 className="size-3.5 mr-1.5" />
+                    Delete Selected
+                  </Button>
+                </div>
+              </div>
+            )}
             <AnimatePresence mode="wait">
               {activeCategory === 'ALL' ? (
                 <motion.div
@@ -812,6 +881,37 @@ export default function MediaStudioModal({
         setEditingDescTarget(null);
       }}
     />
+
+    <Dialog open={confirmBulkDeleteOpen} onOpenChange={setConfirmBulkDeleteOpen}>
+      <DialogContent className="max-w-md bg-white border-[#E2E8F0] rounded-xl">
+        <DialogHeader>
+          <DialogTitle className="text-lg font-bold text-[#1E293B]">
+            Delete {visibleSelectedIds.length} selected {visibleSelectedIds.length === 1 ? 'photo' : 'photos'}?
+          </DialogTitle>
+          <DialogDescription className="text-sm text-[#64748B]">
+            This will remove the selected {visibleSelectedIds.length === 1 ? 'photo' : 'photos'} from this listing gallery.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter className="gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setConfirmBulkDeleteOpen(false)}
+            className="min-h-11 px-4 border-[#E2E8F0] rounded-lg"
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={handleConfirmBulkDelete}
+            className="min-h-11 px-4 rounded-lg"
+          >
+            Confirm Delete
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
     </>
   );
 }

@@ -1,18 +1,18 @@
 {
   "sessions": [
     {
-      "id": "1d6c0e3e-e8b1-424b-88a4-1298e646ab06",
+      "id": "c1cacd62-c2d0-4b79-8d56-c261b4b159f8",
       "tokenHash": "2cc9923cec4c3d9919f99683a92e496a20995964739e52d01829bf0d4f5c7aef",
       "userId": "dev-google-mock-uid-client",
       "role": "client",
-      "createdAt": 1795086510830,
-      "lastActiveAt": 1795086510830,
-      "idleExpiresAt": 1795090110830,
-      "absoluteExpiresAt": 1795172910830,
-      "lastHeartbeatAt": 1795086510830,
+      "createdAt": 1795200050681,
+      "lastActiveAt": 1795200050681,
+      "idleExpiresAt": 1795203650681,
+      "absoluteExpiresAt": 1795286450681,
+      "lastHeartbeatAt": 1795200050681,
       "userAgent": "Unknown Device",
       "ipAddress": "Unavailable",
-      "updatedAt": 1795086510830
+      "updatedAt": 1795200050681
     }
   ],
   "disabledAccounts": []

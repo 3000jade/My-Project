@@ -95,4 +95,45 @@ describe('ProfileCardStudio', () => {
       expect(screen.queryByText(/Public-safe view: license expiry dates stay private/i)).not.toBeInTheDocument();
     });
   });
+
+  it('renders master-detail layout with top identity banner, expiry status, audit date, and preview dialog', async () => {
+    render(
+      <BrowserRouter>
+        <ProfileCardStudio
+          layout="master-detail"
+          role="broker"
+          title="Broker Master-Detail"
+          subtitle="Testing master-detail layout"
+          profile={{
+            ...baseProfile,
+            firm_name: 'Precision Trust Realty',
+            prc_validity: '2028-03-20',
+            dhsud_validity: '2025-01-01',
+            updated_at: '2026-11-20T08:00:00.000Z',
+          }}
+          draft={{
+            ...baseProfile,
+            firm_name: 'Precision Trust Realty',
+            prc_validity: '2028-03-20',
+            dhsud_validity: '2025-01-01',
+            updated_at: '2026-11-20T08:00:00.000Z',
+          }}
+          onDraftChange={vi.fn()}
+          isDirty={false}
+        />
+      </BrowserRouter>
+    );
+
+    const banner = screen.getByTestId('identity-summary-banner');
+    expect(banner).toHaveTextContent('Precision Trust Realty');
+    expect(banner).toHaveTextContent('Valid');
+    expect(banner).toHaveTextContent('Expired');
+    expect(banner).toHaveTextContent(/Last updated:/i);
+    expect(screen.queryByTestId('live-public-card-preview')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Preview Public Card/i }));
+    await waitFor(() => {
+      expect(screen.getByTestId('live-public-card-preview')).toBeInTheDocument();
+    });
+  });
 });

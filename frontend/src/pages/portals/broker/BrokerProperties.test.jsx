@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import BrokerProperties from './BrokerProperties';
 import propertyService from '../../../services/propertyService';
@@ -18,6 +18,7 @@ vi.mock('react-router-dom', async () => {
 vi.mock('../../../services/propertyService', () => ({
   default: {
     getProperties: vi.fn(),
+    createProperty: vi.fn((p) => Promise.resolve({ ...p, id: 'prop-dup' })),
     updateProperty: vi.fn(),
     deleteProperty: vi.fn(),
     getEditRequests: vi.fn().mockResolvedValue([])
@@ -76,6 +77,8 @@ const mockData = [
 describe('BrokerProperties Page (Mockup & Modern SaaS Layout)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
+    window.history.replaceState(null, '', '/');
     propertyService.getProperties.mockResolvedValue({ data: mockData });
   });
 
@@ -100,20 +103,20 @@ describe('BrokerProperties Page (Mockup & Modern SaaS Layout)', () => {
     expect(newListingBtn).toHaveAttribute('href', '/broker/properties/create');
   });
 
-  it('renders status dropdown with counts matching mockup', async () => {
+  it('renders unified Filters button with status options and counts', async () => {
     renderComponent();
 
-    const statusBtn = await screen.findByTestId('status-filter-dropdown-btn');
-    expect(statusBtn).toBeInTheDocument();
-    expect(statusBtn).toHaveTextContent(/Status:\s*All Listings/i);
+    const filterBtn = await screen.findByTestId('unified-filter-btn');
+    expect(filterBtn).toBeInTheDocument();
 
-    // Open status dropdown
-    fireEvent.click(statusBtn);
+    // Open unified Filters popover
+    fireEvent.click(filterBtn);
 
-    expect(screen.getByTestId('status-option-NEEDS_APPROVAL')).toBeInTheDocument();
-    expect(screen.getByTestId('status-option-ACTIVE')).toBeInTheDocument();
-    expect(screen.getByTestId('status-option-RESERVED')).toBeInTheDocument();
-    expect(screen.getByTestId('status-option-SOLD')).toBeInTheDocument();
+    expect(screen.getByTestId('status-option-DRAFT')).toBeInTheDocument();
+    expect(screen.getByTestId('status-option-PENDING_APPROVAL')).toBeInTheDocument();
+    expect(screen.getByTestId('status-option-PUBLISHED')).toBeInTheDocument();
+    expect(screen.getByTestId('status-option-UNPUBLISHED')).toBeInTheDocument();
+    expect(screen.getByTestId('status-option-CLOSED')).toBeInTheDocument();
   });
 
   it('renders table columns with specifications and bold price', async () => {
@@ -127,19 +130,19 @@ describe('BrokerProperties Page (Mockup & Modern SaaS Layout)', () => {
     expect(screen.getByText('₱158,000,000')).toBeInTheDocument();
   });
 
-  it('filters listings by clicking on status option from dropdown', async () => {
+  it('filters listings by clicking on status option from unified Filters popover', async () => {
     renderComponent();
 
     expect(await screen.findByText('Aurelia Modernist Penthouse at BGC')).toBeInTheDocument();
     expect(screen.getByText('Dasmarinas Village Sanctuary')).toBeInTheDocument();
 
-    // Open status dropdown
-    const statusBtn = await screen.findByTestId('status-filter-dropdown-btn');
-    fireEvent.click(statusBtn);
+    // Open unified Filters popover
+    const filterBtn = await screen.findByTestId('unified-filter-btn');
+    fireEvent.click(filterBtn);
 
-    // Click 'Needs Approval' option
-    const needsApprovalOption = screen.getByTestId('status-option-NEEDS_APPROVAL');
-    fireEvent.click(needsApprovalOption);
+    // Click 'Pending Approval' option
+    const pendingApprovalOption = screen.getByTestId('status-option-PENDING_APPROVAL');
+    fireEvent.click(pendingApprovalOption);
 
     // Only 'Dasmarinas Village Sanctuary' (Pending Approval) should remain
     expect(screen.getByText('Dasmarinas Village Sanctuary')).toBeInTheDocument();
@@ -266,27 +269,101 @@ describe('BrokerProperties Page (Mockup & Modern SaaS Layout)', () => {
     });
   });
 
-  it('allows customizing visible columns and toggling columns off from the table', async () => {
+  it('does not render column filter button and clamps pagination to page 1 when filtering from page 2', async () => {
+    const manyRows = Array.from({ length: 10 }, (_, idx) => ({
+      ...mockData[0],
+      id: `prop-page-${idx + 1}`,
+      listingKey: `HSR-2026-0${idx + 1}`,
+      title: idx === 9 ? 'Unique Makati Courtyard Penthouse' : `BGC Residence ${idx + 1}`,
+    }));
+    propertyService.getProperties.mockResolvedValueOnce({ data: manyRows });
+    renderComponent();
+
+    expect(await screen.findByText('BGC Residence 1')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /customize columns/i })).not.toBeInTheDocument();
+
+    // Navigate to Page 2
+    fireEvent.click(screen.getByRole('button', { name: 'Page 2' }));
+    expect(screen.getByText('Unique Makati Courtyard Penthouse')).toBeInTheDocument();
+
+    // Search for an item that shrinks results to 1 page -> should clamp back to Page 1 cleanly
+    const searchInput = screen.getByPlaceholderText(/search properties/i);
+    fireEvent.change(searchInput, { target: { value: 'BGC Residence 1' } });
+
+    expect(await screen.findByText('BGC Residence 1')).toBeInTheDocument();
+  });
+
+  it('supports sorting by clicking the Price column header', async () => {
     renderComponent();
 
     expect(await screen.findByText('Aurelia Modernist Penthouse at BGC')).toBeInTheDocument();
 
-    // Verify initial table headers include Specs and Price
-    expect(screen.getByRole('columnheader', { name: /specs/i })).toBeInTheDocument();
-    expect(screen.getByRole('columnheader', { name: /price/i })).toBeInTheDocument();
+    const priceHeaderBtn = screen.getByRole('button', { name: /^price$/i });
+    fireEvent.click(priceHeaderBtn);
 
-    // Open Columns dropdown
-    const columnsBtn = screen.getByRole('button', { name: /customize columns/i });
-    fireEvent.click(columnsBtn);
+    const rows = screen.getAllByRole('row');
+    // Row 1 (after header) should be highest price (Dasmarinas 295M)
+    expect(rows[1]).toHaveTextContent('Dasmarinas Village Sanctuary');
 
-    // Uncheck Price column
-    const priceCheckbox = screen.getByLabelText(/^price$/i);
-    expect(priceCheckbox).toBeChecked();
-    fireEvent.click(priceCheckbox);
+    fireEvent.click(priceHeaderBtn);
+    const rowsAsc = screen.getAllByRole('row');
+    // Row 1 after second click should be lowest price (Bespoke Rockwell 125M)
+    expect(rowsAsc[1]).toHaveTextContent('Bespoke Rockwell Sky Penthouse');
+  });
 
-    // The Price column header should now be removed from table
-    expect(screen.queryByRole('columnheader', { name: /price/i })).not.toBeInTheDocument();
-    // Specs should still be present
-    expect(screen.getByRole('columnheader', { name: /specs/i })).toBeInTheDocument();
+  it('displays Assigned Agent or Unassigned, dismisses New/Edited on click, opens edit modal, and never renders Removed', async () => {
+    const now = Date.now();
+    const createdIso = new Date(now - 2 * 60 * 60 * 1000).toISOString();
+    const editedIso = new Date(now - 5 * 60 * 1000).toISOString();
+
+    propertyService.getProperties.mockResolvedValueOnce({
+      data: [
+        {
+          ...mockData[0],
+          id: 'prop-new-1',
+          title: 'Fresh Unassigned Listing',
+          created_at: createdIso,
+          updated_at: createdIso,
+        },
+        {
+          ...mockData[1],
+          id: 'prop-edited-1',
+          title: 'Edited Assigned Listing',
+          agentName: 'Maria Santos',
+          created_at: createdIso,
+          updated_at: editedIso,
+          lastEdit: {
+            editedAt: editedIso,
+            editedByName: 'Principal Broker',
+            editedByRole: 'broker',
+            changes: [{ field: 'Price', from: '120000000', to: '125000000' }],
+          },
+        },
+      ],
+    });
+
+    renderComponent();
+
+    expect(await screen.findByText('Fresh Unassigned Listing')).toBeInTheDocument();
+    expect(screen.getByText('Unassigned')).toBeInTheDocument();
+    expect(screen.getByText('Maria Santos')).toBeInTheDocument();
+    expect(screen.queryByText('Removed')).not.toBeInTheDocument();
+
+    // Clicking New dismisses it immediately
+    const newBtn = screen.getByRole('button', { name: 'New' });
+    fireEvent.click(newBtn);
+    expect(screen.queryByRole('button', { name: 'New' })).not.toBeInTheDocument();
+
+    // Clicking Edited dismisses it immediately AND opens the Edit Details modal
+    const editedBtn = screen.getByRole('button', { name: 'Edited' });
+    fireEvent.click(editedBtn);
+    expect(screen.queryByRole('button', { name: 'Edited' })).not.toBeInTheDocument();
+
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByText('Listing Edit Details')).toBeInTheDocument();
+    expect(within(dialog).getByText(/Principal Broker/i)).toBeInTheDocument();
+    expect(within(dialog).getByText('Price')).toBeInTheDocument();
+    expect(within(dialog).getByText(/120000000/)).toBeInTheDocument();
+    expect(within(dialog).getByText(/125000000/)).toBeInTheDocument();
   });
 });

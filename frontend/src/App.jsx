@@ -67,7 +67,6 @@ const BrokerProfile = lazy(() => import('./pages/portals/broker/BrokerProfile'))
 const BrokerSubdivisionInventory = lazy(() => import('./pages/portals/broker/BrokerSubdivisionInventory'));
 const SubdivisionMapEditor = lazy(() => import('./pages/portals/broker/SubdivisionMapEditor'));
 const BrokerFullViewMap = lazy(() => import('./pages/portals/broker/BrokerFullViewMap'));
-const BrokerMultiPropertyMapStudio = lazy(() => import('./pages/portals/broker/BrokerMultiPropertyMapStudio'));
 
 // Client Portal Pages
 const ClientDashboard = lazy(() => import('./pages/portals/client/ClientDashboard'));
@@ -206,15 +205,6 @@ function AppRoutes({ isAppLoading }) {
             element={
               <ProtectedRoute allowedRoles={['broker', 'admin']}>
                 <BrokerFullViewMap />
-              </ProtectedRoute>
-            }
-          />
-          {/* Fullscreen Multi-Property Cadastral Map Studio */}
-          <Route
-            path="/broker/properties/studio"
-            element={
-              <ProtectedRoute allowedRoles={['broker', 'admin']}>
-                <BrokerMultiPropertyMapStudio />
               </ProtectedRoute>
             }
           />

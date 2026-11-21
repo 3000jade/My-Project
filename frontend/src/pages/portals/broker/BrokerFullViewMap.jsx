@@ -368,11 +368,10 @@ export default function BrokerFullViewMap() {
                 key={layer.id}
                 type="button"
                 onClick={() => setMapType(layer.id)}
-                className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold text-left transition-all cursor-pointer ${
-                  mapType === layer.id
-                    ? 'bg-[#0F766E] text-white shadow-xs'
-                    : 'text-slate-600 hover:bg-slate-100'
-                }`}
+                className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold text-left transition-all cursor-pointer ${mapType === layer.id
+                  ? 'bg-[#0F766E] text-white shadow-xs'
+                  : 'text-slate-600 hover:bg-slate-100'
+                  }`}
               >
                 {layer.label}
               </button>

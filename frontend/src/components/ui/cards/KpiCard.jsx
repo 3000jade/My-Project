@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from '../card';
+import { Progress } from '../progress';
 import { Skeleton } from '../skeleton';
 
 const TREND_BADGE_VARIANT = {
@@ -159,9 +160,12 @@ function BreakdownBody({ segments = [] }) {
 }
 
 /**
- * Reusable KPI Card supporting 5 approved dashboard styles and 3 size densities:
- * - size: "default" | "md" (standard minimal) | "sm" (compact)
- * - variant: "trend" | "sparkline" | "progress" | "breakdown" | "action"
+ * Reusable KPI Card supporting 5 approved dashboard styles:
+ * - "trend": Classic metric + trend pill + optional icon
+ * - "sparkline": Metric + inline SVG trend sparkline
+ * - "progress": Metric + goal progress bar
+ * - "breakdown": Metric + segmented status mix bar & legend
+ * - "action": Metric + status pill + clickable footer action
  */
 export default function KpiCard({
   size = 'default',
@@ -183,32 +187,24 @@ export default function KpiCard({
   actionLabel,
   onAction,
   actionSlot,
+  active = false,
   loading = false,
   className,
   ...rest
 }) {
   if (loading) {
     return (
-      <Card
-        className={cn(
-          'flex flex-col justify-between rounded-xl',
-          size === 'default' && 'h-full min-h-[160px]',
-          className
-        )}
-        {...rest}
-      >
+      <Card className={cn('flex h-full min-h-[160px] flex-col justify-between rounded-xl', className)} {...rest}>
         <CardHeader className="pb-2">
           <Skeleton className="h-4 w-28" />
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           <Skeleton className="h-8 w-24" />
-          {size === 'default' && <Skeleton className="h-3 w-full" />}
+          <Skeleton className="h-3 w-full" />
         </CardContent>
-        {size === 'default' && (
-          <CardFooter className="border-t border-[#E2E8F0] pt-3 pb-4">
-            <Skeleton className="h-3 w-32" />
-          </CardFooter>
-        )}
+        <CardFooter className="border-t border-[#E2E8F0] pt-3 pb-4">
+          <Skeleton className="h-3 w-32" />
+        </CardFooter>
       </Card>
     );
   }
@@ -231,50 +227,66 @@ export default function KpiCard({
   }
 
   if (size === 'md') {
+    const pct = typeof progress === 'number' ? Math.max(0, Math.min(100, progress)) : null;
+
     return (
       <Card
         className={cn(
-          'flex flex-row items-center justify-between gap-4 rounded-xl p-5',
+          'relative overflow-hidden flex flex-row items-center justify-between gap-3 sm:gap-4 rounded-xl px-4 py-3 sm:p-5',
+          rest.onClick && 'cursor-pointer hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0F766E]/20',
+          active && 'border-[#0F766E] ring-2 ring-[#0F766E]/20',
           className
         )}
         {...rest}
       >
-        <div className="flex flex-col gap-1 min-w-0">
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 truncate">
+        <div className="flex sm:flex-col items-center sm:items-start gap-2 sm:gap-1 min-w-0">
+          <span className="text-xs font-medium sm:font-semibold sm:uppercase sm:tracking-wider text-slate-500 truncate">
             {title}
           </span>
-          <span className="text-2xl font-bold font-mono tracking-tight text-[#1E293B] tabular-nums">
+          <span className="hidden sm:inline text-2xl font-bold font-mono tracking-tight text-[#1E293B] tabular-nums">
             {value}
           </span>
         </div>
 
-        <div className="flex items-center shrink-0">
+        <div className="flex items-center gap-2.5 shrink-0">
+          <span className="sm:hidden text-lg font-bold font-mono tracking-tight text-[#1E293B] tabular-nums">
+            {value}
+          </span>
+          {sparklineData && (
+            <div className="hidden sm:block">
+              <SparklineGraphic data={sparklineData} />
+            </div>
+          )}
           {statusLabel ? (
             <Badge variant={statusVariant}>{statusLabel}</Badge>
           ) : trend ? (
             <TrendBadge trend={trend} trendDirection={trendDirection} />
-          ) : Icon ? (
-            <div className="flex size-9 items-center justify-center rounded-lg bg-teal-50 text-[#0F766E]">
+          ) : Icon && !sparklineData ? (
+            <div className="hidden sm:flex size-9 items-center justify-center rounded-lg bg-teal-50 text-[#0F766E]">
               <Icon className="size-4" />
             </div>
           ) : null}
         </div>
+
+        {pct !== null && (
+          <Progress value={pct} className="absolute bottom-0 inset-x-0" />
+        )}
       </Card>
     );
   }
 
   return (
-    <Card className={cn('flex h-full min-h-[160px] flex-col justify-between rounded-xl', className)} {...rest}>
-      <CardHeader className="flex flex-row items-start justify-between gap-3 pb-2">
-        <div className="flex flex-col gap-1 min-w-0">
-          <CardTitle className="text-xs font-medium uppercase tracking-wider text-slate-500">
+    <Card className={cn('flex h-full flex-col gap-4 rounded-xl py-0', className)} {...rest}>
+      <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 px-4 pt-4 pb-0 sm:px-4 sm:pt-4 sm:pb-0">
+        <div className="flex flex-col gap-0.5 min-w-0">
+          <CardTitle className="text-xs font-bold uppercase tracking-wider text-slate-500 truncate">
             {title}
           </CardTitle>
           {description && <CardDescription>{description}</CardDescription>}
         </div>
 
         {variant === 'trend' && Icon && (
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-teal-50 text-[#0F766E]">
+          <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-teal-50 text-[#0F766E]">
             <Icon className="size-4" />
           </div>
         )}
@@ -294,14 +306,17 @@ export default function KpiCard({
         )}
       </CardHeader>
 
-      <CardContent className="flex flex-col gap-3">
-        <div className="flex items-end justify-between gap-4">
-          <div className="flex flex-wrap items-baseline gap-2.5">
-            <span className="text-2xl sm:text-3xl font-bold tracking-tight text-[#1E293B] tabular-nums">
+      <CardContent className="flex flex-col gap-1 px-4 pb-4 pt-0 sm:px-4 sm:pb-4 sm:pt-0">
+        <div className="flex items-end justify-between gap-3">
+          <div className="flex flex-wrap items-baseline gap-2">
+            <span className="text-3xl leading-none font-bold tracking-tight text-[#1E293B] tabular-nums">
               {value}
             </span>
             {variant === 'trend' && (
-              <TrendBadge trend={trend} trendDirection={trendDirection} />
+              <>
+                <TrendBadge trend={trend} trendDirection={trendDirection} />
+                {statusLabel && <Badge variant={statusVariant}>{statusLabel}</Badge>}
+              </>
             )}
             {variant === 'action' && helperText && (
               <span className="text-xs font-medium text-amber-700">{helperText}</span>
@@ -323,7 +338,7 @@ export default function KpiCard({
       </CardContent>
 
       {(footerText || actionSlot || (variant === 'action' && actionLabel)) && (
-        <CardFooter className="flex items-center justify-between gap-2 border-t border-[#E2E8F0] pt-3 pb-4 text-xs text-slate-500">
+        <CardFooter className="mt-auto flex items-center justify-between gap-2 border-t border-[#E2E8F0] px-4 py-4 sm:px-4 sm:py-4 text-xs text-slate-500">
           <span className="truncate">{footerText}</span>
           {actionSlot}
           {!actionSlot && variant === 'action' && actionLabel && (

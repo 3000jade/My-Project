@@ -12,8 +12,8 @@ import {
   Award,
 } from 'lucide-react';
 import { ProfileCardStudio } from '@/components/profile';
+import { Button } from '@/components/ui/button';
 import {
-  Button,
   Card,
   CardHeader,
   CardTitle,
@@ -114,7 +114,11 @@ export default function BrokerProfile() {
         },
         { role: 'broker' }
       );
-      const nextState = { ...nextDraft, ...updated };
+      const nextState = {
+        ...nextDraft,
+        ...updated,
+        updated_at: updated?.updated_at || new Date().toISOString(),
+      };
       setProfile(nextState);
       setDraft(nextState);
       toast({
@@ -440,9 +444,10 @@ export default function BrokerProfile() {
     <div data-testid="broker-profile-portal" className="w-full min-w-0">
       <Toaster />
       <ProfileCardStudio
+        layout="master-detail"
         role="broker"
-        title="Broker Executive Profile & Card Studio"
-        subtitle="Manage your principal credentials, public brokerage card, and portal display density."
+        title="Broker Executive Profile & Settings"
+        subtitle="Manage your principal credentials, firm licenses, display density, and session security."
         breadcrumbs={[
           { label: 'Dashboard', to: '/broker/dashboard' },
           { label: 'Profile' },

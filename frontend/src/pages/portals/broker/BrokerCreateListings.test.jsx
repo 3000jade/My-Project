@@ -3,16 +3,17 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import BrokerCreateListings from './BrokerCreateListings';
+import MediaStudioModal from './components/property-form/MediaStudioModal';
 
 if (typeof window !== 'undefined' && !window.ResizeObserver) {
   window.ResizeObserver = class ResizeObserver {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
+    observe() { }
+    unobserve() { }
+    disconnect() { }
   };
 }
 if (typeof Element !== 'undefined' && !Element.prototype.scrollIntoView) {
-  Element.prototype.scrollIntoView = () => {};
+  Element.prototype.scrollIntoView = () => { };
 }
 
 const mockNavigate = vi.fn();
@@ -207,6 +208,12 @@ describe('BrokerCreateListings - 5-Step Flow, Auto Ref Code, Multi-Bank & Sticky
     const titleInput = screen.getByLabelText(/Listing Title/i);
     fireEvent.change(titleInput, { target: { value: 'Skyline Residence BGC' } });
     expect(screen.getByRole('heading', { name: /Skyline Residence BGC/i })).toBeInTheDocument();
+
+    expect(screen.queryByRole('button', { name: /Open Text Editor/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Foreclosure/i })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit property description' }));
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
   });
 
   it('navigates across steps with zero (Optional) tags and shows Publish Listing in Step 5', () => {
@@ -228,5 +235,85 @@ describe('BrokerCreateListings - 5-Step Flow, Auto Ref Code, Multi-Bank & Sticky
     expect(screen.getByText('Step 5 of 5')).toBeInTheDocument();
     expect(screen.queryByText(/\(Optional\)/i)).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Publish Listing' })).toBeInTheDocument();
+  });
+
+  it('supports editing/removing description, hides Load Sample, and gates Reset behind confirmation', async () => {
+    renderComponent();
+
+    expect(screen.queryByRole('button', { name: /Load Sample/i })).not.toBeInTheDocument();
+
+    const titleInput = screen.getByLabelText(/Listing Title/i);
+    fireEvent.change(titleInput, { target: { value: 'Modern 4-Bedroom Pool Villa in Ayala Alabang' } });
+    expect(titleInput.value).toBe('Modern 4-Bedroom Pool Villa in Ayala Alabang');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit property description' }));
+    fireEvent.change(screen.getByTestId('mock-quill'), { target: { value: 'Sunlit corner villa' } });
+    fireEvent.click(screen.getByRole('button', { name: /Save Description/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Remove property description' })).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Remove property description' }));
+    expect(screen.queryByRole('button', { name: 'Remove property description' })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Reset/i }));
+    expect(screen.getByText('Clear all entered listing details?')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm Reset' }));
+    await waitFor(() => {
+      expect(screen.getByLabelText(/Listing Title/i).value).toBe('');
+    });
+  });
+
+  it('uses None furnishing without Interior & Building Details in Step 3, and updated contact/media fields in Step 5', async () => {
+    renderComponent();
+
+    fireEvent.click(screen.getByText('Specs & Features'));
+    await waitFor(() => {
+      expect(screen.getAllByText('None').length).toBeGreaterThanOrEqual(2);
+    });
+    expect(screen.queryByText('Unfurnished')).not.toBeInTheDocument();
+    expect(screen.queryByText('Interior & Building Details')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('Review & Publish'));
+    await waitFor(() => {
+      expect(screen.getByText('Assign an Agent')).toBeInTheDocument();
+    });
+    expect(screen.queryByLabelText(/Brokerage/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Use My Profile/i })).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/Contact Email/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Messenger Link/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Facebook Link/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/WhatsApp/i)).toBeInTheDocument();
+  });
+
+  it('gates MediaStudioModal bulk photo deletion behind a confirmation dialog', () => {
+    const onRemovePhotoItem = vi.fn();
+    render(
+      <MediaStudioModal
+        open
+        onOpenChange={() => { }}
+        categories={[{ key: 'Living', label: 'Living' }]}
+        mediaPhotos={[
+          { id: 'p1', galleryCategory: 'Living', imageUrl: '/a.jpg', description: '' },
+          { id: 'p2', galleryCategory: 'Living', imageUrl: '/b.jpg', description: '' },
+        ]}
+        onRemovePhotoItem={onRemovePhotoItem}
+      />
+    );
+
+    const selectButtons = screen.getAllByRole('button', { name: 'Select photo' });
+    fireEvent.click(selectButtons[0]);
+    fireEvent.click(selectButtons[1]);
+
+    expect(screen.getByText('2 selected')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Delete Selected/i }));
+    expect(screen.getByText('Delete 2 selected photos?')).toBeInTheDocument();
+    expect(onRemovePhotoItem).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm Delete' }));
+    expect(onRemovePhotoItem).toHaveBeenCalledTimes(2);
+    expect(onRemovePhotoItem).toHaveBeenCalledWith('p1');
+    expect(onRemovePhotoItem).toHaveBeenCalledWith('p2');
   });
 });

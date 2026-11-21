@@ -103,7 +103,7 @@ export function normalizeProperty(rawItem = {}) {
         ? Boolean(rawItem.isPublished)
         : (normalizedStatus !== 'SOLD' && normalizedStatus !== 'INACTIVE'));
 
-  const explicitAgentName = rawItem.agent_name || rawItem.agentName || rawItem.agent?.name || '';
+  const explicitAgentName = rawItem.agent_name || rawItem.agentName || rawItem.agent?.name || rawItem.custom_reso_attributes?.credentials?.assignedAgent || rawItem.customResoAttributes?.credentials?.assignedAgent || '';
   const agentId = rawItem.agent_id || rawItem.agentId || null;
   const isCorporateDesk = !explicitAgentName && !agentId && !rawItem.list_agent_key && !rawItem.listAgentKey;
   const agentName = explicitAgentName || (isCorporateDesk ? 'Human Shelter Realty Desk' : '');
@@ -167,6 +167,26 @@ export function normalizeProperty(rawItem = {}) {
     agent_id: agentId,
     agent_name: agentName,
     agentName: agentName,
+    broker_name:
+      rawItem.broker_name ||
+      rawItem.brokerName ||
+      rawItem.customResoAttributes?.credentials?.brokerName ||
+      rawItem.customAttributes?.credentials?.brokerName ||
+      rawItem.custom_reso_attributes?.credentials?.brokerName ||
+      rawItem.customResoAttributes?.credentials?.brokerage ||
+      rawItem.customAttributes?.credentials?.brokerage ||
+      rawItem.custom_reso_attributes?.credentials?.brokerage ||
+      '',
+    brokerName:
+      rawItem.broker_name ||
+      rawItem.brokerName ||
+      rawItem.customResoAttributes?.credentials?.brokerName ||
+      rawItem.customAttributes?.credentials?.brokerName ||
+      rawItem.custom_reso_attributes?.credentials?.brokerName ||
+      rawItem.customResoAttributes?.credentials?.brokerage ||
+      rawItem.customAttributes?.credentials?.brokerage ||
+      rawItem.custom_reso_attributes?.credentials?.brokerage ||
+      '',
     agent_phone: agentPhone,
     agentPhone: agentPhone,
     agent_email: agentEmail,
@@ -189,6 +209,9 @@ export function normalizeProperty(rawItem = {}) {
     listAgentKey: rawItem.list_agent_key || rawItem.listAgentKey || null,
     created_at: rawItem.created_at || rawItem.createdAt || null,
     createdAt: rawItem.createdAt || rawItem.created_at || null,
+    updated_at: rawItem.updated_at || rawItem.updatedAt || null,
+    updatedAt: rawItem.updatedAt || rawItem.updated_at || null,
+    lastEdit: rawItem.lastEdit || rawItem.custom_reso_attributes?.lastEdit || rawItem.customResoAttributes?.lastEdit || null,
     beds: bedroomsTotal,
     baths: bathroomsTotal,
     sqft: rawItem.sqft || rawItem.specs?.sqft || null,
@@ -602,7 +625,6 @@ export function toApiPayload(item = {}) {
 
   return {
     title: (item.title || 'Untitled Luxury Property').trim(),
-    tagline: item.tagline || '',
     listingKey: item.cadastralLotId || item.listingKey || item.listing_key || undefined,
     listingId: (item.listing_id || item.listingId || '').trim() || undefined,
     price: numericPrice,
@@ -611,7 +633,6 @@ export function toApiPayload(item = {}) {
     listPriceCurrency: item.listPriceCurrency || item.list_price_currency || 'PHP',
     originalListPrice: numericOriginalPrice,
     associationFee: numericAssocFee,
-    associationFeeFrequency: item.associationFeeFrequency || item.association_fee_frequency || 'Monthly',
     taxAnnualAmount: numericTax,
     isFeatured: item.is_featured !== undefined ? Boolean(item.is_featured) : (item.isFeatured !== undefined ? Boolean(item.isFeatured) : false),
     is_featured: item.is_featured !== undefined ? Boolean(item.is_featured) : (item.isFeatured !== undefined ? Boolean(item.isFeatured) : false),
@@ -623,15 +644,12 @@ export function toApiPayload(item = {}) {
     publicRemarks: item.publicRemarks || item.description || '',
     location: {
       address: (item.address || item.location || '').trim(),
-      unparsedAddress: item.unparsedAddress || item.unparsed_address || undefined,
-      subdivisionName: (item.subdivisionName || item.subdivision_name || item.subdivision || '').trim() || undefined,
       buildingName: (item.buildingName || item.building_name || '').trim() || undefined,
       building_name: (item.buildingName || item.building_name || '').trim() || undefined,
       towerName: item.tower_name || item.towerName || undefined,
       city: (item.city || item.location || '').trim(),
       state: (item.state || item.province || item.state_or_province || item.stateOrProvince || '').trim() || undefined,
       stateOrProvince: (item.stateOrProvince || item.state_or_province || item.province || item.state || '').trim() || undefined,
-      postalCode: (item.postalCode || item.postal_code || '').trim() || undefined,
       region: item.region || undefined,
       regionPsgcCode: item.region_psgc_code || item.regionPsgcCode || undefined,
       region_psgc_code: item.region_psgc_code || item.regionPsgcCode || undefined,
@@ -645,14 +663,11 @@ export function toApiPayload(item = {}) {
       coordinates: resolvedCoordinates,
     },
     specs: {
-      beds: bedroomsTotal ?? 1,
-      baths: bathroomsTotalInteger ?? 1,
-      bedroomsTotal: bedroomsTotal ?? 1,
-      bathroomsTotalInteger: bathroomsTotalInteger ?? 1,
-      bathroomsFull: bathroomsFull,
-      bathroomsHalf: bathroomsHalf,
-      storiesTotal: storiesTotal,
-      sqft: computedSqft || 100,
+      beds: bedroomsTotal ?? 0,
+      baths: bathroomsTotalInteger ?? 0,
+      bedroomsTotal: bedroomsTotal ?? 0,
+      bathroomsTotalInteger: bathroomsTotalInteger ?? 0,
+      sqft: computedSqft ?? 0,
       livingArea: livingArea,
       livingAreaUnits: livingAreaUnits,
       lotSizeArea: lotSizeArea,
@@ -665,12 +680,8 @@ export function toApiPayload(item = {}) {
       lotFrontage: item.lot_frontage || item.lotFrontage || undefined,
       floorLevel: item.floor_level || item.floorLevel || undefined,
       transactionType: item.transactionType || item.transaction_type || 'For Sale',
-      yearBuilt: yearBuilt,
       parkingTotal: parkingTotal,
-      parkingCovered: parkingCovered,
-      parkingOpen: parkingOpen,
     },
-    architecturalStyle: item.architectural_style || item.architecturalStyle || undefined,
     rooms: formattedRooms && formattedRooms.length > 0 ? formattedRooms : undefined,
     features: Array.isArray(item.features) ? item.features : (Array.isArray(item.amenities) ? item.amenities : []),
     interiorFeatures: Array.isArray(item.interiorFeatures) ? item.interiorFeatures : (Array.isArray(item.interior_features) ? item.interior_features : []),

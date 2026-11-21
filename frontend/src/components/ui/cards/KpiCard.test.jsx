@@ -105,7 +105,7 @@ describe('KpiCard', () => {
     render(
       <>
         <KpiCard size="sm" title="Compact Metric" value="42" statusLabel="New" />
-        <KpiCard size="md" title="Standard Metric" value="₱18.4M" trend="+12%" />
+        <KpiCard size="md" title="Standard Metric" value="₱18.4M" trend="+12%" progress={75} active />
       </>
     );
 
@@ -113,7 +113,17 @@ describe('KpiCard', () => {
     expect(screen.getByText('42')).toBeInTheDocument();
     expect(screen.getByText('New')).toBeInTheDocument();
     expect(screen.getByText('Standard Metric')).toBeInTheDocument();
-    expect(screen.getByText('₱18.4M')).toBeInTheDocument();
+    expect(screen.getAllByText('₱18.4M').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('+12%')).toBeInTheDocument();
+    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '75');
+  });
+
+  it('colors the icon box based on statusVariant without a left accent border', () => {
+    const { container } = render(
+      <KpiCard icon={DollarSign} title="Urgent Queue" value="4" statusLabel="4 New" statusVariant="coral" />
+    );
+    expect(container.firstChild).not.toHaveClass('border-l-4');
+    expect(container.querySelector('.text-\\[\\#DC2626\\]')).toBeTruthy();
+    expect(screen.getByText('4 New')).toBeInTheDocument();
   });
 });

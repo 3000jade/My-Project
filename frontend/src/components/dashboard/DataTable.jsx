@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, Inbox } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ChevronLeft, ChevronRight, Inbox, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
 
@@ -27,16 +27,51 @@ export default function DataTable({
   stickyFirstColumn = false,
   totalRecords,
   page,
-  onPageChange
+  onPageChange,
+  sortBy,
+  onSortChange
 }) {
   const [internalPage, setInternalPage] = useState(1);
   const isServerPaginated = typeof totalRecords === 'number';
-  const currentPage = isServerPaginated && typeof page === 'number' ? page : internalPage;
+  const rawPage = isServerPaginated && typeof page === 'number' ? page : internalPage;
 
   const totalCount = isServerPaginated ? totalRecords : data.length;
   const totalPages = Math.ceil(totalCount / pageSize) || 1;
+  const currentPage = Math.min(Math.max(1, rawPage), totalPages);
   const startIndex = (currentPage - 1) * pageSize;
   const currentData = isServerPaginated ? data : data.slice(startIndex, startIndex + pageSize);
+
+  // Keep internalPage clamped when filtering shrinks totalPages
+  useEffect(() => {
+    if (!isServerPaginated && internalPage > totalPages) {
+      setInternalPage(1);
+    }
+  }, [isServerPaginated, internalPage, totalPages]);
+
+  const handleSortClick = (col) => {
+    if (!col?.sortKey || !onSortChange) return;
+    if (col.sortKey === 'price') {
+      onSortChange(sortBy === 'price_desc' ? 'price_asc' : 'price_desc');
+    } else if (col.sortKey === 'title') {
+      onSortChange(sortBy === 'title_asc' ? 'title_desc' : 'title_asc');
+    } else if (col.sortKey === 'date') {
+      onSortChange(sortBy === 'newest' ? 'oldest' : 'newest');
+    }
+  };
+
+  const getSortIcon = (sortKey) => {
+    if (sortKey === 'price') {
+      if (sortBy === 'price_desc') return <ArrowDown className="size-3.5 text-[#0F766E]" />;
+      if (sortBy === 'price_asc') return <ArrowUp className="size-3.5 text-[#0F766E]" />;
+    } else if (sortKey === 'title') {
+      if (sortBy === 'title_asc') return <ArrowUp className="size-3.5 text-[#0F766E]" />;
+      if (sortBy === 'title_desc') return <ArrowDown className="size-3.5 text-[#0F766E]" />;
+    } else if (sortKey === 'date') {
+      if (sortBy === 'newest') return <ArrowDown className="size-3.5 text-[#0F766E]" />;
+      if (sortBy === 'oldest') return <ArrowUp className="size-3.5 text-[#0F766E]" />;
+    }
+    return <ArrowUpDown className="size-3.5 text-slate-400" />;
+  };
 
   const handlePageChange = (newPage) => {
     if (newPage < 1 || newPage > totalPages) return;
@@ -96,7 +131,18 @@ export default function DataTable({
                     col.className
                   )}
                 >
-                  {col.header}
+                  {col.sortKey && onSortChange ? (
+                    <button
+                      type="button"
+                      onClick={() => handleSortClick(col)}
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1E293B] hover:text-[#0F766E] rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0F766E]/20 cursor-pointer"
+                    >
+                      <span>{col.header}</span>
+                      {getSortIcon(col.sortKey)}
+                    </button>
+                  ) : (
+                    col.header
+                  )}
                 </TableHead>
               ))}
             </TableRow>
@@ -173,9 +219,9 @@ export default function DataTable({
         </Table>
       </div>
 
-      {/* Numbered Pagination Controls Matching Mockup */}
-      <div className="px-4 py-3.5 border-t border-[#E2E8F0] bg-white flex items-center justify-between text-xs text-[#64748B]">
-        <div>
+      {/* Numbered Pagination Controls */}
+      <div className="px-4 py-3 border-t border-[#E2E8F0] bg-white flex flex-wrap items-center justify-between gap-2 text-xs text-[#64748B]">
+        <div className="tabular-nums">
           Showing <span className="font-semibold text-[#1E293B]">{totalCount > 0 ? startIndex + 1 : 0}</span> to{" "}
           <span className="font-semibold text-[#1E293B]">
             {Math.min(startIndex + (isServerPaginated ? data.length : pageSize), totalCount)}
@@ -185,26 +231,28 @@ export default function DataTable({
         {totalPages > 1 && (
           <div className="flex items-center gap-1">
             <button
+              type="button"
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1}
-              className="w-7 h-7 rounded-md border border-[#E2E8F0] bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center text-slate-500 cursor-pointer shadow-2xs"
+              className="min-h-11 min-w-11 sm:min-h-9 sm:min-w-9 size-9 rounded-lg border border-[#E2E8F0] bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center text-slate-600 cursor-pointer focus-visible:outline-none focus-visible:border-[#0F766E] focus-visible:ring-2 focus-visible:ring-[#0F766E]/20"
               title="Previous page"
               aria-label="Previous page"
             >
-              <ChevronLeft className="w-3.5 h-3.5" />
+              <ChevronLeft className="size-4" />
             </button>
-            
+
             {getPageNumbers().map((num, i) =>
               num === '...' ? (
-                <span key={`dots-${i}`} className="w-7 h-7 flex items-center justify-center text-slate-400">
+                <span key={`dots-${i}`} className="size-9 flex items-center justify-center text-slate-400">
                   ...
                 </span>
               ) : (
                 <button
+                  type="button"
                   key={`page-${num}`}
                   onClick={() => handlePageChange(num)}
                   className={cn(
-                    "w-7 h-7 rounded-md text-xs font-medium flex items-center justify-center transition-colors cursor-pointer",
+                    "min-h-11 min-w-11 sm:min-h-9 sm:min-w-9 size-9 rounded-lg text-xs font-medium tabular-nums flex items-center justify-center transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0F766E]/20",
                     currentPage === num
                       ? "bg-[#0F766E] text-white font-semibold shadow-xs"
                       : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
@@ -217,13 +265,14 @@ export default function DataTable({
             )}
 
             <button
+              type="button"
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
-              className="w-7 h-7 rounded-md border border-[#E2E8F0] bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center text-slate-500 cursor-pointer shadow-2xs"
+              className="min-h-11 min-w-11 sm:min-h-9 sm:min-w-9 size-9 rounded-lg border border-[#E2E8F0] bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center text-slate-600 cursor-pointer focus-visible:outline-none focus-visible:border-[#0F766E] focus-visible:ring-2 focus-visible:ring-[#0F766E]/20"
               title="Next page"
               aria-label="Next page"
             >
-              <ChevronRight className="w-3.5 h-3.5" />
+              <ChevronRight className="size-4" />
             </button>
           </div>
         )}

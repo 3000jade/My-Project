@@ -23,6 +23,7 @@ vi.mock('../../../services/profileService', () => {
       experience_years: 12,
       ui_preferences: { font_size: 'standard' },
       verification_status: 'VERIFIED',
+      updated_at: '2026-11-20T08:00:00.000Z',
     }),
     updateProfile: vi.fn().mockImplementation((updates) =>
       Promise.resolve({
@@ -31,6 +32,7 @@ vi.mock('../../../services/profileService', () => {
         email: updates.email || 'broker@pt.com',
         phone: updates.phone || '+63 918 555 0244',
         firm_name: updates.firm_name || 'Precision Trust Realty Operations Inc.',
+        updated_at: '2026-11-20T09:00:00.000Z',
         ...updates,
       })
     ),
@@ -55,6 +57,7 @@ vi.mock('../../../services/profileService', () => {
         experience_years: 12,
         ui_preferences: { font_size: 'standard' },
         verification_status: 'VERIFIED',
+        updated_at: '2026-11-20T08:00:00.000Z',
       },
     },
   };
@@ -67,8 +70,8 @@ vi.mock('../../../context/AuthContext', () => ({
   }),
 }));
 
-describe('BrokerProfile Studio Component', () => {
-  it('renders broker executive card preview and updates firm name inline', async () => {
+describe('BrokerProfile Master-Detail Component', () => {
+  it('renders identity banner with PRC/DHSUD expiry, audit date, and opens public card preview', async () => {
     render(
       <BrowserRouter>
         <BrokerProfile />
@@ -79,12 +82,21 @@ describe('BrokerProfile Studio Component', () => {
       expect(screen.getByText('Alexander Sterling')).toBeInTheDocument();
     });
 
-    expect(screen.getByTestId('broker-profile-studio')).toBeInTheDocument();
-    expect(screen.getByTestId('live-public-card-preview')).toBeInTheDocument();
+    const banner = screen.getByTestId('identity-summary-banner');
+    expect(banner).toHaveTextContent(/PRC-REB-0019582/i);
+    expect(banner).toHaveTextContent(/2028-03-20/i);
+    expect(banner).toHaveTextContent(/DHSUD-NCR-AA-2022-0941/i);
+    expect(banner).toHaveTextContent(/2027-04-30/i);
+    expect(banner).toHaveTextContent(/Last updated:/i);
 
     const firmInput = screen.getByLabelText(/Operating Entity \/ Firm Name/i);
     fireEvent.change(firmInput, { target: { value: 'Sterling Prime Realty' } });
-    expect(screen.getByText('Sterling Prime Realty')).toBeInTheDocument();
+    expect(banner).toHaveTextContent('Sterling Prime Realty');
+
+    fireEvent.click(screen.getByRole('button', { name: /Preview Public Card/i }));
+    await waitFor(() => {
+      expect(screen.getByTestId('live-public-card-preview')).toBeInTheDocument();
+    });
   });
 
   it('renders Appearance & Typography Density card with 3 options and updates density on selection', async () => {

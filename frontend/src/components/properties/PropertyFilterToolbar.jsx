@@ -4,11 +4,61 @@ import {
   X,
   SlidersHorizontal,
   ChevronDown,
-  Columns3,
+  RotateCcw,
 } from 'lucide-react';
-import { IconCurrencyPeso } from '@tabler/icons-react';
-import { cn } from '../../utils/cn';
+import { cn } from '@/utils/cn';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import { Kbd } from '@/components/ui/kbd';
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from '@/components/ui/input-group';
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from '@/components/ui/popover';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+} from '@/components/ui/select';
 import { COMMON_PROPERTY_TYPES } from '../../pages/portals/broker/components/property-form/propertyTypeConfig';
+
+const PRICE_PRESETS = [
+  { label: '< ₱10M', min: '', max: '10000000' },
+  { label: '₱10M - ₱25M', min: '10000000', max: '25000000' },
+  { label: '₱25M - ₱50M', min: '25000000', max: '50000000' },
+  { label: '> ₱50M', min: '50000000', max: '' },
+];
+
+const SORT_ITEMS = [
+  { label: 'Sort: Newest First', value: 'newest' },
+  { label: 'Sort: Oldest First', value: 'oldest' },
+  { label: 'Price: High to Low', value: 'price_desc' },
+  { label: 'Price: Low to High', value: 'price_asc' },
+  { label: 'Title: A to Z', value: 'title_asc' },
+  { label: 'Title: Z to A', value: 'title_desc' },
+];
+
+function formatCompactPeso(val) {
+  const num = Number(val);
+  if (isNaN(num)) return val;
+  if (num >= 1000000) {
+    const m = num / 1000000;
+    return `₱${Number.isInteger(m) ? m : m.toFixed(1)}M`;
+  }
+  return `₱${num.toLocaleString()}`;
+}
 
 export default function PropertyFilterToolbar({
   search = '',
@@ -29,58 +79,24 @@ export default function PropertyFilterToolbar({
   onResetFilters,
   totalCount = 0,
   filteredCount = 0,
-  availableColumns = [],
-  visibleColumns = [],
-  onVisibleColumnsChange,
-  onResetColumns,
-  currentTier = null,
 }) {
-  const [isPriceOpen, setIsPriceOpen] = useState(false);
-  const pricePopoverRef = useRef(null);
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const searchInputRef = useRef(null);
 
-  const [isColumnsOpen, setIsColumnsOpen] = useState(false);
-  const columnsPopoverRef = useRef(null);
-
-  const [isStatusOpen, setIsStatusOpen] = useState(false);
-  const statusPopoverRef = useRef(null);
-
-  // Close popovers on outside click
+  // Focus search input when pressing "/" outside form controls
   useEffect(() => {
-    function handleClickOutside(e) {
-      if (pricePopoverRef.current && !pricePopoverRef.current.contains(e.target)) {
-        setIsPriceOpen(false);
+    function handleKeyDown(e) {
+      if (e.key !== '/') return;
+      const tag = document.activeElement?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || document.activeElement?.isContentEditable) {
+        return;
       }
-      if (columnsPopoverRef.current && !columnsPopoverRef.current.contains(e.target)) {
-        setIsColumnsOpen(false);
-      }
-      if (statusPopoverRef.current && !statusPopoverRef.current.contains(e.target)) {
-        setIsStatusOpen(false);
-      }
+      e.preventDefault();
+      searchInputRef.current?.focus();
     }
-    if (isPriceOpen || isColumnsOpen || isStatusOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isPriceOpen, isColumnsOpen, isStatusOpen]);
-
-  const handleToggleColumn = (colId) => {
-    if (!onVisibleColumnsChange) return;
-    if (visibleColumns.includes(colId)) {
-      onVisibleColumnsChange(visibleColumns.filter((c) => c !== colId));
-    } else {
-      onVisibleColumnsChange([...visibleColumns, colId]);
-    }
-  };
-
-  const handleResetColumns = () => {
-    if (onResetColumns) {
-      onResetColumns();
-    } else if (onVisibleColumnsChange && availableColumns.length > 0) {
-      onVisibleColumnsChange(availableColumns.map((c) => c.id));
-    }
-  };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const resolvedTypeOptions =
     propertyTypeOptions && propertyTypeOptions.length > 0
@@ -96,550 +112,491 @@ export default function PropertyFilterToolbar({
           'Warehouse',
         ]);
 
-  const statusTabs = [
-    { id: 'ALL', label: 'All Listings', count: statusCounts?.all ?? 0 },
-    {
-      id: 'PROPOSALS',
-      label: 'Agent Proposals',
-      count: statusCounts?.proposals ?? 0,
-      badge: (statusCounts?.proposals ?? 0) > 0,
-    },
-    {
-      id: 'PENDING_CONFIRMATION',
-      label: 'Pending Confirmation',
-      count: statusCounts?.pendingConfirmation ?? 0,
-      badge: (statusCounts?.pendingConfirmation ?? 0) > 0,
-    },
-    {
-      id: 'ACTION_REQUIRED',
-      label: 'Action Required',
-      count: statusCounts?.actionRequired ?? 0,
-      badge: (statusCounts?.actionRequired ?? 0) > 0,
-      isAlert: true,
-    },
-    {
-      id: 'NEEDS_APPROVAL',
-      label: 'Needs Approval',
-      count: statusCounts?.needsApproval ?? 0,
-      badge: true,
-    },
-    { id: 'ACTIVE', label: 'Active', count: statusCounts?.active ?? 0 },
-    {
-      id: 'RESERVED',
-      label: 'Reserved',
-      count: statusCounts?.reserved ?? 0,
-      ariaLabel: 'Reserved / Under Contract',
-    },
-    {
-      id: 'SOLD',
-      label: 'Sold',
-      count: statusCounts?.sold ?? 0,
-      ariaLabel: 'Sold / Closed',
-    },
-    { id: 'DRAFT', label: 'Draft', count: statusCounts?.draft ?? 0 },
-    { id: 'INACTIVE', label: 'Archived', count: statusCounts?.inactive ?? 0 },
+  const typeItems = [
+    { label: 'All Types', value: 'ALL' },
+    ...resolvedTypeOptions.map((opt) => ({ label: opt, value: opt })),
   ];
 
-  const formatPrice = (val) => {
-    const num = Number(val);
-    return isNaN(num) ? val : `₱${num.toLocaleString()}`;
-  };
+  const locationItems = [
+    { label: 'All Locations', value: 'ALL' },
+    ...(locationOptions || []).map((loc) => ({ label: loc, value: loc })),
+  ];
+
+  const statusTabs = [
+    { id: 'ALL', label: 'All Listings', count: statusCounts?.all ?? 0 },
+    { id: 'DRAFT', label: 'Draft', count: statusCounts?.draft ?? 0 },
+    {
+      id: 'PENDING_APPROVAL',
+      label: 'Pending Approval',
+      count: statusCounts?.pendingApproval ?? 0,
+      badge: (statusCounts?.pendingApproval ?? 0) > 0,
+    },
+    { id: 'PUBLISHED', label: 'Published', count: statusCounts?.published ?? 0 },
+    { id: 'UNPUBLISHED', label: 'Unpublished', count: statusCounts?.unpublished ?? 0 },
+    { id: 'CLOSED', label: 'Closed', count: statusCounts?.closed ?? 0 },
+  ];
+
+  const minVal = priceRange?.min !== '' && priceRange?.min != null ? Number(priceRange.min) : null;
+  const maxVal = priceRange?.max !== '' && priceRange?.max != null ? Number(priceRange.max) : null;
+  const isPriceInvalid = minVal !== null && maxVal !== null && !isNaN(minVal) && !isNaN(maxVal) && minVal > maxVal;
 
   const hasPriceFilter = Boolean(priceRange?.min || priceRange?.max);
   let priceLabel = '';
   if (priceRange?.min && priceRange?.max) {
-    priceLabel = `${formatPrice(priceRange.min)} - ${formatPrice(priceRange.max)}`;
+    priceLabel = `${formatCompactPeso(priceRange.min)} - ${formatCompactPeso(priceRange.max)}`;
   } else if (priceRange?.min) {
-    priceLabel = `≥ ${formatPrice(priceRange.min)}`;
+    priceLabel = `≥ ${formatCompactPeso(priceRange.min)}`;
   } else if (priceRange?.max) {
-    priceLabel = `≤ ${formatPrice(priceRange.max)}`;
+    priceLabel = `≤ ${formatCompactPeso(priceRange.max)}`;
   }
 
   const currentTab = statusTabs.find((t) => t.id === statusTab) || statusTabs[0];
 
-  const hasActiveFilters = Boolean(
-    (search && search.trim() !== '') ||
-      (statusTab && statusTab !== 'ALL') ||
-      (selectedType && selectedType !== 'ALL') ||
-      (selectedLocation && selectedLocation !== 'ALL') ||
-      hasPriceFilter
-  );
+  const unifiedFilterCount =
+    (statusTab && statusTab !== 'ALL' ? 1 : 0) +
+    (selectedType && selectedType !== 'ALL' ? 1 : 0) +
+    (selectedLocation && selectedLocation !== 'ALL' ? 1 : 0) +
+    (hasPriceFilter ? 1 : 0);
+
+  const hasActiveFilters = Boolean((search && search.trim() !== '') || unifiedFilterCount > 0);
+
+  const handleResetPopoverFilters = () => {
+    onStatusTabChange?.('ALL');
+    onTypeChange?.('ALL');
+    onLocationChange?.('ALL');
+    onPriceRangeChange?.({ min: '', max: '' });
+  };
 
   return (
-    <div className="space-y-3 font-sans min-w-0 max-w-full">
-      {/* Clean Unified Multi-Criteria Toolbar */}
-      <div className="bg-white rounded-xl border border-[#E2E8F0] p-2.5 shadow-2xs flex flex-wrap items-center gap-2 min-w-0 max-w-full">
+    <div className="flex flex-col gap-4 font-sans min-w-0 max-w-full">
+      {/* Unified Search + Single Filter Button Toolbar */}
+      <div className="bg-white rounded-xl border border-[#E2E8F0] p-3 shadow-xs flex flex-wrap items-center gap-2 min-w-0 max-w-full">
         {/* Omni Search Input */}
-        <div className="relative flex-1 min-w-[200px] w-full sm:w-auto">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <input
+        <InputGroup className="flex-1 min-w-[220px] h-10 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] hover:bg-slate-50 focus-within:bg-white focus-within:border-[#0F766E] focus-within:ring-2 focus-within:ring-[#0F766E]/20">
+          <InputGroupAddon align="inline-start">
+            <Search className="text-[#64748B]" />
+          </InputGroupAddon>
+          <InputGroupInput
+            ref={searchInputRef}
             type="text"
             value={search || ''}
             onChange={(e) => onSearchChange?.(e.target.value)}
-            placeholder="Search properties by title, location, or listing code..."
-            className="w-full h-9 pl-9 pr-8 bg-[#F8FAFC] hover:bg-slate-50 focus:bg-white border border-[#E2E8F0] rounded-lg text-xs text-[#1E293B] placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#0F766E] focus:border-[#0F766E] transition-all"
+            placeholder="Search properties by title, location, agent, or listing code..."
+            className="h-10 text-sm text-[#1E293B] placeholder:text-[#64748B]"
           />
-          {search && (
-            <button
-              type="button"
-              aria-label="Clear search"
-              onClick={() => onSearchChange?.('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          )}
-        </div>
-
-        {/* Status Facet Dropdown Popover */}
-        <div className="relative shrink-0" ref={statusPopoverRef}>
-          <button
-            type="button"
-            data-testid="status-filter-dropdown-btn"
-            onClick={() => setIsStatusOpen((prev) => !prev)}
-            aria-label={`Status: ${currentTab.label}`}
-            aria-expanded={isStatusOpen}
-            className={cn(
-              "h-9 px-3 rounded-lg text-xs font-medium flex items-center gap-1.5 cursor-pointer shrink-0 transition-colors",
-              statusTab && statusTab !== 'ALL'
-                ? "bg-teal-50/70 border border-[#0F766E] text-[#0F766E] font-semibold"
-                : "bg-[#F8FAFC] hover:bg-slate-100/70 border border-[#E2E8F0] text-[#1E293B]"
+          <InputGroupAddon align="inline-end">
+            {search ? (
+              <InputGroupButton
+                size="icon-sm"
+                aria-label="Clear search"
+                onClick={() => onSearchChange?.('')}
+                className="text-[#64748B] hover:text-[#1E293B]"
+              >
+                <X />
+              </InputGroupButton>
+            ) : (
+              <Kbd className="hidden sm:inline-flex border border-[#E2E8F0] bg-white text-[#64748B]">/</Kbd>
             )}
-          >
-            <span>Status: {currentTab.label}</span>
-            <span
-              className={cn(
-                "px-1.5 py-0.2 rounded-full text-[10px] font-mono transition-colors ml-0.5",
-                statusTab && statusTab !== 'ALL'
-                  ? "bg-teal-100 text-[#0F766E] font-bold"
-                  : currentTab.isAlert && currentTab.count > 0
-                  ? "bg-rose-100 text-rose-800 font-bold"
-                  : currentTab.badge && currentTab.count > 0
-                  ? "bg-amber-100 text-amber-800 font-bold"
-                  : "bg-slate-200/70 text-slate-600"
-              )}
-            >
-              {currentTab.count}
-            </span>
-            <ChevronDown
-              className={cn(
-                "w-3.5 h-3.5 text-slate-400 ml-0.5 transition-transform duration-150",
-                isStatusOpen && "rotate-180"
-              )}
-            />
-          </button>
+          </InputGroupAddon>
+        </InputGroup>
 
-          {isStatusOpen && (
-            <div
-              data-testid="status-dropdown-menu"
-              className="absolute left-0 top-full mt-1.5 w-60 bg-white border border-[#E2E8F0] rounded-xl shadow-xl p-2 z-40 space-y-1 animate-in fade-in-50 zoom-in-95"
-            >
-              <div className="flex items-center justify-between px-2.5 py-1.5 border-b border-slate-100 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                <span>Listing Status</span>
-                <span className="font-mono text-[10px] text-slate-400 font-normal">
-                  {statusTabs.length} Options
-                </span>
-              </div>
-              <div className="max-h-72 overflow-y-auto custom-scrollbar py-1 space-y-0.5">
-                {statusTabs.map((tab) => {
-                  const isSelected = statusTab === tab.id;
-                  return (
-                    <button
-                      key={tab.id}
-                      type="button"
-                      data-testid={`status-option-${tab.id}`}
-                      aria-label={tab.ariaLabel || `${tab.label} (${tab.count})`}
-                      onClick={() => {
-                        onStatusTabChange?.(tab.id);
-                        setIsStatusOpen(false);
-                      }}
-                      className={cn(
-                        "w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer text-left",
-                        isSelected
-                          ? "bg-teal-50/80 text-[#0F766E] font-semibold"
-                          : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
-                      )}
-                    >
-                      <div className="flex items-center gap-2 truncate pr-2">
-                        {isSelected ? (
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#0F766E] shrink-0" />
-                        ) : (
-                          <span className="w-1.5 h-1.5 rounded-full bg-transparent shrink-0" />
-                        )}
-                        <span className="truncate">{tab.label}</span>
-                      </div>
-                      <span
-                        className={cn(
-                          "px-1.5 py-0.5 rounded-full text-[10px] font-mono shrink-0",
-                          isSelected
-                            ? "bg-teal-100 text-[#0F766E] font-bold"
-                            : tab.isAlert && tab.count > 0
-                            ? "bg-rose-100 text-rose-800 font-bold"
-                            : tab.badge && tab.count > 0
-                            ? "bg-amber-100 text-amber-800 font-bold"
-                            : "bg-slate-100 text-slate-500"
-                        )}
-                      >
-                        {tab.count}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Property Type Facet */}
-        <div className="relative shrink-0">
-          <select
-            value={selectedType || 'ALL'}
-            onChange={(e) => onTypeChange?.(e.target.value)}
-            className={cn(
-              "h-9 pl-3 pr-8 rounded-lg text-xs font-medium cursor-pointer transition-colors appearance-none focus:outline-none focus:ring-1 focus:ring-[#0F766E]",
-              selectedType && selectedType !== 'ALL'
-                ? "bg-teal-50/70 border border-[#0F766E] text-[#0F766E] font-semibold"
-                : "bg-[#F8FAFC] hover:bg-slate-100/70 border border-[#E2E8F0] text-[#1E293B]"
-            )}
-            aria-label="Property type"
-          >
-            <option value="ALL">Type: All</option>
-            {resolvedTypeOptions.map((opt) => (
-              <option key={opt} value={opt}>
-                {opt}
-              </option>
-            ))}
-          </select>
-          <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-        </div>
-
-        {/* Location Facet */}
-        <div className="relative shrink-0">
-          <select
-            value={selectedLocation || 'ALL'}
-            onChange={(e) => onLocationChange?.(e.target.value)}
-            className={cn(
-              "h-9 pl-3 pr-8 rounded-lg text-xs font-medium cursor-pointer transition-colors appearance-none focus:outline-none focus:ring-1 focus:ring-[#0F766E]",
-              selectedLocation && selectedLocation !== 'ALL'
-                ? "bg-teal-50/70 border border-[#0F766E] text-[#0F766E] font-semibold"
-                : "bg-[#F8FAFC] hover:bg-slate-100/70 border border-[#E2E8F0] text-[#1E293B]"
-            )}
-            aria-label="Location"
-          >
-            <option value="ALL">Location: All</option>
-            {locationOptions?.map((loc) => (
-              <option key={loc} value={loc}>
-                {loc}
-              </option>
-            ))}
-          </select>
-          <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-        </div>
-
-        {/* Price Range Filter */}
-        <div className="relative shrink-0" ref={pricePopoverRef}>
-          <button
-            type="button"
-            onClick={() => setIsPriceOpen(!isPriceOpen)}
-            aria-label="Price range filter"
-            className={cn(
-              'h-9 px-3 rounded-lg text-xs font-medium flex items-center gap-1.5 cursor-pointer shrink-0 transition-colors',
-              hasPriceFilter
-                ? 'border border-[#0F766E] text-[#0F766E] bg-teal-50/70 font-semibold'
-                : 'border border-[#E2E8F0] bg-[#F8FAFC] hover:bg-slate-100/70 text-[#1E293B]'
-            )}
-          >
-            <IconCurrencyPeso size={14} stroke={2} className={hasPriceFilter ? 'text-[#0F766E]' : 'text-slate-400'} />
-            <span>{hasPriceFilter ? priceLabel : 'Price'}</span>
-            <ChevronDown className="w-3 h-3 text-slate-400 ml-0.5" />
-          </button>
-
-          {isPriceOpen && (
-            <div className="absolute top-full right-0 mt-1.5 w-72 bg-white rounded-xl border border-[#E2E8F0] shadow-xl p-3.5 z-30 space-y-3 font-sans animate-in fade-in-80">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-[#1E293B]">
-                  Price Range (PHP)
-                </span>
-                {hasPriceFilter && (
-                  <button
-                    type="button"
-                    onClick={() => onPriceRangeChange?.({ min: '', max: '' })}
-                    className="text-[11px] text-[#0F766E] hover:text-[#115E59] font-medium cursor-pointer"
-                  >
-                    Reset
-                  </button>
-                )}
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
-                    Min Price
-                  </label>
-                  <input
-                    type="number"
-                    placeholder="Min"
-                    value={priceRange?.min ?? ''}
-                    onChange={(e) =>
-                      onPriceRangeChange?.({
-                        ...priceRange,
-                        min: e.target.value,
-                      })
-                    }
-                    className="w-full h-8 px-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-md text-xs text-[#1E293B] placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
-                    Max Price
-                  </label>
-                  <input
-                    type="number"
-                    placeholder="Max"
-                    value={priceRange?.max ?? ''}
-                    onChange={(e) =>
-                      onPriceRangeChange?.({
-                        ...priceRange,
-                        max: e.target.value,
-                      })
-                    }
-                    className="w-full h-8 px-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-md text-xs text-[#1E293B] placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
-                  />
-                </div>
-              </div>
-              <div>
-                <span className="block text-[10px] uppercase font-bold text-slate-400 mb-1.5">
-                  Quick Presets
-                </span>
-                <div className="grid grid-cols-2 gap-1.5">
-                  {[
-                    { label: '< ₱10M', min: '', max: '10000000' },
-                    { label: '₱10M - ₱25M', min: '10000000', max: '25000000' },
-                    { label: '₱25M - ₱50M', min: '25000000', max: '50000000' },
-                    { label: '> ₱50M', min: '50000000', max: '' },
-                  ].map((preset) => (
-                    <button
-                      key={preset.label}
-                      type="button"
-                      onClick={() =>
-                        onPriceRangeChange?.({
-                          min: preset.min,
-                          max: preset.max,
-                        })
-                      }
-                      className="text-[11px] py-1 px-2 rounded-lg bg-slate-50 hover:bg-teal-50 hover:text-[#0F766E] border border-slate-200/80 text-slate-600 font-medium transition-colors text-center cursor-pointer"
-                    >
-                      {preset.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Sort By Selector */}
-        <div className="relative shrink-0">
-          <select
-            value={sortBy || 'newest'}
-            onChange={(e) => onSortByChange?.(e.target.value)}
-            className="h-9 pl-3 pr-8 bg-[#F8FAFC] hover:bg-slate-100/70 border border-[#E2E8F0] rounded-lg text-xs font-medium text-[#1E293B] appearance-none focus:outline-none focus:ring-1 focus:ring-[#0F766E] cursor-pointer transition-colors"
-            aria-label="Sort by"
-          >
-            <option value="newest">Sort: Newest First</option>
-            <option value="price_desc">Price (High to Low)</option>
-            <option value="price_asc">Price (Low to High)</option>
-            <option value="title_asc">Title: A to Z</option>
-          </select>
-          <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-        </div>
-
-        {/* Column Visibility Selector */}
-        {availableColumns && availableColumns.length > 0 && (
-          <div className="relative shrink-0" ref={columnsPopoverRef}>
-            <button
-              type="button"
-              onClick={() => setIsColumnsOpen((prev) => !prev)}
-              className={cn(
-                "h-9 px-3 bg-[#F8FAFC] hover:bg-slate-100/70 border rounded-lg text-xs font-medium text-[#1E293B] flex items-center gap-1.5 transition-colors cursor-pointer",
-                isColumnsOpen ? "border-[#0F766E] ring-1 ring-[#0F766E]" : "border-[#E2E8F0]"
-              )}
-              aria-label="Customize columns"
-              title="Customize visible table columns"
-              aria-expanded={isColumnsOpen}
-            >
-              <Columns3 className="w-3.5 h-3.5 text-slate-500" />
-              <span>Columns</span>
-              {availableColumns.length > 0 && (
-                <span className="text-[10px] font-semibold text-slate-500 bg-slate-200/60 px-1.5 py-0.5 rounded-full">
-                  {visibleColumns.length}/{availableColumns.length}
-                </span>
-              )}
-              <ChevronDown
+        {/* Single Unified Filters Popover */}
+        <Popover open={isFiltersOpen} onOpenChange={setIsFiltersOpen}>
+          <PopoverTrigger
+            render={
+              <Button
+                type="button"
+                variant="outline"
+                data-testid="unified-filter-btn"
+                aria-label={unifiedFilterCount > 0 ? `Filters (${unifiedFilterCount} active)` : 'Filters'}
+                aria-expanded={isFiltersOpen}
                 className={cn(
-                  "w-3.5 h-3.5 text-slate-400 transition-transform duration-150",
-                  isColumnsOpen && "rotate-180"
+                  "h-10 px-3 rounded-lg normal-case tracking-normal text-sm font-medium gap-2 shrink-0",
+                  unifiedFilterCount > 0
+                    ? "bg-[#CCFBF1]/60 border-[#0F766E] text-[#0F766E] font-semibold hover:bg-[#CCFBF1]"
+                    : "bg-[#F8FAFC] border-[#E2E8F0] text-[#1E293B] hover:bg-slate-100"
                 )}
-              />
-            </button>
+              >
+                <SlidersHorizontal data-icon="inline-start" />
+                <span>Filters</span>
+                {unifiedFilterCount > 0 && (
+                  <Badge
+                    variant="coral"
+                    className="bg-[#FF6B6B] text-[#1E293B] border-none px-1.5 py-0 min-w-5 h-5 justify-center tabular-nums"
+                  >
+                    {unifiedFilterCount}
+                  </Badge>
+                )}
+                <ChevronDown
+                  className={cn(
+                    "text-[#64748B] transition-transform duration-150",
+                    isFiltersOpen && "rotate-180"
+                  )}
+                />
+              </Button>
+            }
+          />
 
-            {isColumnsOpen && (
-              <div className="absolute right-0 top-full mt-1.5 w-56 bg-white border border-[#E2E8F0] rounded-xl shadow-lg p-2.5 z-40 animate-in fade-in-50 zoom-in-95">
-                <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100 px-1">
-                  <span className="text-xs font-semibold text-[#1E293B]">Table Columns</span>
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={handleResetColumns}
-                      className="text-[11px] font-medium text-[#0F766E] hover:text-[#115E59] cursor-pointer"
-                      title="Reset to device default columns"
-                    >
-                      Reset Default
-                    </button>
-                    <span className="text-slate-300">•</span>
-                    <button
-                      type="button"
-                      onClick={() => onVisibleColumnsChange && onVisibleColumnsChange(availableColumns.map((c) => c.id))}
-                      className="text-[11px] font-medium text-slate-500 hover:text-slate-800 cursor-pointer"
-                      title="Show all columns"
-                    >
-                      Show All
-                    </button>
-                  </div>
+          <PopoverContent
+            align="start"
+            sideOffset={8}
+            className="w-[calc(100vw-2rem)] sm:w-[420px] p-0 rounded-xl border border-[#E2E8F0] bg-white shadow-xl gap-0"
+          >
+            {/* Panel Header */}
+            <div className="px-4 py-3 border-b border-[#E2E8F0] bg-[#F8FAFC] rounded-t-xl flex items-center justify-between gap-2">
+              <div className="flex flex-col">
+                <span className="text-sm font-semibold text-[#1E293B]">Filter Listings</span>
+                <span className="text-xs text-[#64748B]">Narrow by status, type, location, or budget</span>
+              </div>
+              {unifiedFilterCount > 0 && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleResetPopoverFilters}
+                  className="text-xs font-semibold text-[#0F766E] hover:text-[#115E59] normal-case tracking-normal"
+                >
+                  Reset
+                </Button>
+              )}
+            </div>
+
+            {/* Panel Body */}
+            <div className="p-4 flex flex-col gap-4 max-h-[65vh] overflow-y-auto custom-scrollbar">
+              {/* 1. Listing Status */}
+              <div className="flex flex-col gap-2" data-testid="status-dropdown-menu">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-[#64748B]">
+                    Listing Status
+                  </span>
+                  <span className="text-xs text-[#64748B] tabular-nums">
+                    {statusTabs.length} options
+                  </span>
                 </div>
-                <div className="space-y-1 max-h-60 overflow-y-auto custom-scrollbar">
-                  {availableColumns.map((col) => {
-                    const isChecked = visibleColumns.includes(col.id);
-                    const isLocked = Boolean(col.isLocked);
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                  {statusTabs.map((tab) => {
+                    const isSelected = statusTab === tab.id;
                     return (
-                      <label
-                        key={col.id}
+                      <button
+                        key={tab.id}
+                        type="button"
+                        data-testid={`status-option-${tab.id}`}
+                        aria-label={tab.ariaLabel || `${tab.label} (${tab.count})`}
+                        onClick={() => onStatusTabChange?.(tab.id)}
                         className={cn(
-                          "flex items-center justify-between px-2 py-1.5 rounded-lg text-xs text-[#1E293B] transition-colors select-none",
-                          isLocked ? "cursor-not-allowed text-slate-400 bg-slate-50/50" : "hover:bg-slate-50 cursor-pointer"
+                          "min-h-10 px-3 py-2 rounded-lg border text-xs font-medium flex items-center justify-between gap-2 transition-colors cursor-pointer text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0F766E]/20 focus-visible:border-[#0F766E]",
+                          isSelected
+                            ? "bg-[#CCFBF1]/60 border-[#0F766E] text-[#0F766E] font-semibold"
+                            : "bg-white border-[#E2E8F0] text-[#1E293B] hover:bg-[#F8FAFC]"
                         )}
                       >
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="checkbox"
-                            aria-label={col.label}
-                            checked={isChecked}
-                            disabled={isLocked}
-                            onChange={() => !isLocked && handleToggleColumn(col.id)}
-                            className="w-3.5 h-3.5 rounded border-slate-300 text-[#0F766E] focus:ring-[#0F766E] accent-[#0F766E] cursor-pointer disabled:cursor-not-allowed"
-                          />
-                          <span className={cn(isLocked ? "font-normal" : "font-medium")}>
-                            {col.label}
-                          </span>
-                        </div>
-                        {isLocked && (
-                          <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">
-                            Locked
-                          </span>
-                        )}
-                      </label>
+                        <span className="truncate">{tab.label}</span>
+                        <span
+                          className={cn(
+                            "px-1.5 py-0.5 rounded-full text-[11px] tabular-nums shrink-0",
+                            isSelected
+                              ? "bg-[#0F766E] text-white font-semibold"
+                              : tab.isAlert && tab.count > 0
+                              ? "bg-red-50 text-red-600 font-semibold"
+                              : tab.badge && tab.count > 0
+                              ? "bg-amber-50 text-amber-700 font-semibold"
+                              : "bg-[#F1F5F9] text-[#64748B]"
+                          )}
+                        >
+                          {tab.count}
+                        </span>
+                      </button>
                     );
                   })}
                 </div>
               </div>
-            )}
-          </div>
-        )}
 
-        {/* Dynamic Reset Action: only renders when filters are active */}
-        {hasActiveFilters && (
-          <button
-            type="button"
-            onClick={onResetFilters}
-            className="h-9 px-3 bg-white hover:bg-rose-50 border border-slate-200 hover:border-rose-200 rounded-lg text-xs font-semibold text-rose-600 hover:text-rose-700 flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 animate-in fade-in-50"
-            title="Reset all filters"
+              <Separator className="bg-[#E2E8F0]" />
+
+              {/* 2. Property Type & Location */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <Label className="text-xs font-semibold uppercase tracking-wider text-[#64748B]">
+                    Property Type
+                  </Label>
+                  <Select
+                    items={typeItems}
+                    value={selectedType || 'ALL'}
+                    onValueChange={(val) => onTypeChange?.(val || 'ALL')}
+                  >
+                    <SelectTrigger
+                      aria-label="Property type"
+                      className="w-full h-10 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] text-sm font-medium text-[#1E293B] focus-visible:border-[#0F766E] focus-visible:ring-2 focus-visible:ring-[#0F766E]/20"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent alignItemWithTrigger={false} className="rounded-xl border border-[#E2E8F0] bg-white shadow-lg">
+                      <SelectGroup>
+                        {typeItems.map((item) => (
+                          <SelectItem key={item.value} value={item.value} className="rounded-lg text-sm">
+                            {item.label}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <Label className="text-xs font-semibold uppercase tracking-wider text-[#64748B]">
+                    Location
+                  </Label>
+                  <Select
+                    items={locationItems}
+                    value={selectedLocation || 'ALL'}
+                    onValueChange={(val) => onLocationChange?.(val || 'ALL')}
+                  >
+                    <SelectTrigger
+                      aria-label="Location"
+                      className="w-full h-10 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] text-sm font-medium text-[#1E293B] focus-visible:border-[#0F766E] focus-visible:ring-2 focus-visible:ring-[#0F766E]/20"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent alignItemWithTrigger={false} className="rounded-xl border border-[#E2E8F0] bg-white shadow-lg">
+                      <SelectGroup>
+                        {locationItems.map((item) => (
+                          <SelectItem key={item.value} value={item.value} className="rounded-lg text-sm">
+                            {item.label}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <Separator className="bg-[#E2E8F0]" />
+
+              {/* 3. Price Range (PHP) */}
+              <div className="flex flex-col gap-2">
+                <span className="text-xs font-semibold uppercase tracking-wider text-[#64748B]">
+                  Price Range (PHP)
+                </span>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="flex flex-col gap-1">
+                    <Label htmlFor="filter-min-price" className="text-xs text-[#64748B]">
+                      Min Price
+                    </Label>
+                    <Input
+                      id="filter-min-price"
+                      type="number"
+                      placeholder="Min"
+                      aria-invalid={isPriceInvalid}
+                      value={priceRange?.min ?? ''}
+                      onChange={(e) =>
+                        onPriceRangeChange?.({
+                          ...priceRange,
+                          min: e.target.value,
+                        })
+                      }
+                      className={cn(
+                        "h-10 rounded-lg bg-[#F8FAFC] text-sm tabular-nums",
+                        isPriceInvalid && "border-red-600 focus-visible:border-red-600 focus-visible:ring-red-600/20"
+                      )}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <Label htmlFor="filter-max-price" className="text-xs text-[#64748B]">
+                      Max Price
+                    </Label>
+                    <Input
+                      id="filter-max-price"
+                      type="number"
+                      placeholder="Max"
+                      aria-invalid={isPriceInvalid}
+                      value={priceRange?.max ?? ''}
+                      onChange={(e) =>
+                        onPriceRangeChange?.({
+                          ...priceRange,
+                          max: e.target.value,
+                        })
+                      }
+                      className={cn(
+                        "h-10 rounded-lg bg-[#F8FAFC] text-sm tabular-nums",
+                        isPriceInvalid && "border-red-600 focus-visible:border-red-600 focus-visible:ring-red-600/20"
+                      )}
+                    />
+                  </div>
+                </div>
+                {isPriceInvalid && (
+                  <p className="text-xs font-medium text-red-600" role="alert">
+                    Minimum price cannot be higher than maximum price.
+                  </p>
+                )}
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  {PRICE_PRESETS.map((preset) => {
+                    const isPresetActive =
+                      String(priceRange?.min || '') === preset.min &&
+                      String(priceRange?.max || '') === preset.max;
+                    return (
+                      <Button
+                        key={preset.label}
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          onPriceRangeChange?.({
+                            min: preset.min,
+                            max: preset.max,
+                          })
+                        }
+                        className={cn(
+                          "h-9 rounded-lg normal-case tracking-normal text-xs font-medium",
+                          isPresetActive
+                            ? "bg-[#CCFBF1]/60 border-[#0F766E] text-[#0F766E] font-semibold"
+                            : "bg-[#F8FAFC] border-[#E2E8F0] text-[#1E293B] hover:bg-[#CCFBF1]/40 hover:text-[#0F766E]"
+                        )}
+                      >
+                        {preset.label}
+                      </Button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Panel Footer (Single Primary CTA) */}
+            <div className="px-4 py-3 border-t border-[#E2E8F0] bg-[#F8FAFC] rounded-b-xl flex items-center justify-between gap-3">
+              <span className="text-xs font-medium text-[#64748B] tabular-nums">
+                {filteredCount} matching {filteredCount === 1 ? 'listing' : 'listings'}
+              </span>
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => setIsFiltersOpen(false)}
+                className="h-9 px-4 rounded-lg normal-case tracking-normal text-xs font-semibold"
+              >
+                Done
+              </Button>
+            </div>
+          </PopoverContent>
+        </Popover>
+
+        {/* Sort By Selector */}
+        <Select
+          items={SORT_ITEMS}
+          value={sortBy || 'newest'}
+          onValueChange={(val) => onSortByChange?.(val || 'newest')}
+        >
+          <SelectTrigger
+            aria-label="Sort by"
+            className="h-10 px-3 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] hover:bg-slate-100 text-sm font-medium text-[#1E293B] focus-visible:border-[#0F766E] focus-visible:ring-2 focus-visible:ring-[#0F766E]/20 shrink-0"
           >
-            <SlidersHorizontal className="w-3.5 h-3.5" />
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent align="end" alignItemWithTrigger={false} className="rounded-xl border border-[#E2E8F0] bg-white shadow-lg">
+            <SelectGroup>
+              {SORT_ITEMS.map((item) => (
+                <SelectItem key={item.value} value={item.value} className="rounded-lg text-sm">
+                  {item.label}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+
+        {/* Dynamic Reset Action */}
+        {hasActiveFilters && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onResetFilters}
+            title="Reset all filters"
+            className="h-10 px-3 rounded-lg border-red-200 bg-white hover:bg-red-50 text-red-600 hover:text-red-700 normal-case tracking-normal text-xs font-semibold shrink-0"
+          >
+            <RotateCcw data-icon="inline-start" />
             <span className="hidden sm:inline">Reset</span>
-          </button>
+          </Button>
         )}
       </div>
 
       {/* Active Filter Chips Strip */}
       {hasActiveFilters && (
-        <div className="flex flex-wrap items-center gap-2 pt-1 text-xs text-[#64748B]">
-          <span className="font-medium text-[#1E293B]">
+        <div className="flex flex-wrap items-center gap-2 text-xs text-[#64748B]">
+          <span className="font-medium text-[#1E293B] tabular-nums">
             Showing {filteredCount} of {totalCount} listings
           </span>
-          <div className="h-3 w-px bg-slate-200 mx-1 hidden sm:block" />
-          <div className="flex flex-wrap items-center gap-1.5">
+          <Separator orientation="vertical" className="h-3.5 hidden sm:block bg-[#E2E8F0]" />
+          <div className="flex flex-wrap items-center gap-2">
             {statusTab && statusTab !== 'ALL' && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-teal-50 border border-teal-200 text-xs text-[#0F766E] font-medium">
+              <Badge variant="default" className="gap-1.5 px-3 py-1 normal-case tracking-normal font-medium bg-[#CCFBF1] text-[#115E59] border-[#0F766E]/20">
                 <span>Status: {currentTab?.label || statusTab}</span>
                 <button
                   type="button"
                   aria-label="Remove status filter"
                   onClick={() => onStatusTabChange?.('ALL')}
-                  className="text-teal-400 hover:text-teal-700 cursor-pointer"
+                  className="hover:text-red-600 cursor-pointer"
                 >
-                  <X className="w-3 h-3" />
+                  <X className="size-3" />
                 </button>
-              </span>
+              </Badge>
             )}
             {search && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200 text-xs text-slate-700 font-medium">
-                <span>Search: "{search}"</span>
+              <Badge variant="secondary" className="gap-1.5 px-3 py-1 normal-case tracking-normal font-medium">
+                <span>Search: &quot;{search}&quot;</span>
                 <button
                   type="button"
                   aria-label="Remove search filter"
                   onClick={() => onSearchChange?.('')}
-                  className="text-slate-400 hover:text-slate-700 cursor-pointer"
+                  className="text-[#64748B] hover:text-[#1E293B] cursor-pointer"
                 >
-                  <X className="w-3 h-3" />
+                  <X className="size-3" />
                 </button>
-              </span>
+              </Badge>
             )}
             {selectedType && selectedType !== 'ALL' && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200 text-xs text-slate-700 font-medium">
+              <Badge variant="secondary" className="gap-1.5 px-3 py-1 normal-case tracking-normal font-medium">
                 <span>Type: {selectedType}</span>
                 <button
                   type="button"
                   aria-label="Remove type filter"
                   onClick={() => onTypeChange?.('ALL')}
-                  className="text-slate-400 hover:text-slate-700 cursor-pointer"
+                  className="text-[#64748B] hover:text-[#1E293B] cursor-pointer"
                 >
-                  <X className="w-3 h-3" />
+                  <X className="size-3" />
                 </button>
-              </span>
+              </Badge>
             )}
             {selectedLocation && selectedLocation !== 'ALL' && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200 text-xs text-slate-700 font-medium">
+              <Badge variant="secondary" className="gap-1.5 px-3 py-1 normal-case tracking-normal font-medium">
                 <span>Location: {selectedLocation}</span>
                 <button
                   type="button"
                   aria-label="Remove location filter"
                   onClick={() => onLocationChange?.('ALL')}
-                  className="text-slate-400 hover:text-slate-700 cursor-pointer"
+                  className="text-[#64748B] hover:text-[#1E293B] cursor-pointer"
                 >
-                  <X className="w-3 h-3" />
+                  <X className="size-3" />
                 </button>
-              </span>
+              </Badge>
             )}
             {hasPriceFilter && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200 text-xs text-slate-700 font-medium">
+              <Badge variant="secondary" className="gap-1.5 px-3 py-1 normal-case tracking-normal font-medium tabular-nums">
                 <span>Price: {priceLabel}</span>
                 <button
                   type="button"
                   aria-label="Remove price filter"
                   onClick={() => onPriceRangeChange?.({ min: '', max: '' })}
-                  className="text-slate-400 hover:text-slate-700 cursor-pointer"
+                  className="text-[#64748B] hover:text-[#1E293B] cursor-pointer"
                 >
-                  <X className="w-3 h-3" />
+                  <X className="size-3" />
                 </button>
-              </span>
+              </Badge>
             )}
-            <button
+            <Button
               type="button"
-              role="button"
+              variant="ghost"
+              size="sm"
               onClick={onResetFilters}
-              className="text-xs font-semibold text-[#0F766E] hover:text-[#115E59] ml-1 cursor-pointer transition-colors"
+              className="h-7 px-2 text-xs font-semibold text-[#0F766E] hover:text-[#115E59] normal-case tracking-normal"
             >
               Clear all
-            </button>
+            </Button>
           </div>
         </div>
       )}

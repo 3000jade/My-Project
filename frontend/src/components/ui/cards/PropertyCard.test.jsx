@@ -170,10 +170,63 @@ describe('PropertyCard Component', () => {
     const conditionBadge = screen.getByTestId('card-condition-badge');
     expect(conditionBadge).toBeInTheDocument();
     expect(conditionBadge).toHaveTextContent('Brand New');
+    expect(screen.getAllByText('Brand New')).toHaveLength(1);
 
     const agentPlaceholder = screen.getByTestId('card-agent-placeholder');
     expect(agentPlaceholder).toBeInTheDocument();
     expect(agentPlaceholder).toHaveTextContent('John Dela Cruz');
+    expect(screen.queryByText(/Listing Agent • Assigned Desk/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Corporate Desk/i)).not.toBeInTheDocument();
+
+    const inquireBtn = screen.getByRole('button', { name: 'Inquire Now' });
+    expect(inquireBtn).toBeInTheDocument();
+    expect(inquireBtn.className).toContain('h-6');
+    expect(inquireBtn.className).toContain('text-[10px]');
+    expect(inquireBtn.querySelector('svg')).toBeTruthy();
+
+    expect(screen.getByText(/Assigned by/i)).toBeInTheDocument();
+    const brokerBtn = screen.getByRole('button', { name: 'Human Shelter Realty' });
+    fireEvent.click(brokerBtn);
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByText('Managing Broker')).toBeInTheDocument();
+  });
+
+  it('uses custom broker_name in sub-heading when provided', () => {
+    const brokerAssignedProp = {
+      ...baseProperty,
+      agent_name: 'Julian Vance',
+      broker_name: 'Maria Reyes',
+    };
+
+    render(
+      <MemoryRouter>
+        <PropertyCard property={brokerAssignedProp} />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText('Julian Vance')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Maria Reyes' })).toBeInTheDocument();
+  });
+
+  it('shows Selling Price label, "-" when price is empty, parking space spec, and address under title', () => {
+    const emptyPriceProp = {
+      ...baseProperty,
+      price: 0,
+      parking_total: 2,
+    };
+
+    render(
+      <MemoryRouter>
+        <PropertyCard property={emptyPriceProp} />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText('Selling Price')).toBeInTheDocument();
+    expect(screen.getByText('-')).toBeInTheDocument();
+    expect(screen.queryByText('Price on Request')).not.toBeInTheDocument();
+    expect(screen.getByText(/parking space/i)).toBeInTheDocument();
+    expect(screen.getByText('2')).toBeInTheDocument();
+    expect(screen.getByText('Tagaytay, Cavite')).toBeInTheDocument();
   });
 
   it('calls onSelect on first click when not selected, and navigates on second click when selected', () => {
@@ -199,5 +252,36 @@ describe('PropertyCard Component', () => {
 
     expect(screen.getByTestId('card-map-focused-badge')).toHaveTextContent(/Pinned on Map/i);
     expect(screen.getByText('Open details')).toBeInTheDocument();
+  });
+
+  it('renders property description below title when present', () => {
+    render(
+      <MemoryRouter>
+        <PropertyCard property={{ ...baseProperty, description: 'Sunlit corner villa near Town Center' }} />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText('Sunlit corner villa near Town Center')).toBeInTheDocument();
+  });
+
+  it('hides spec details when their value is 0', () => {
+    render(
+      <MemoryRouter>
+        <PropertyCard
+          property={{
+            ...baseProperty,
+            bedrooms_total: 0,
+            bathrooms_total_integer: 0,
+            parking_total: 0,
+            living_area: 0,
+          }}
+        />
+      </MemoryRouter>
+    );
+
+    expect(screen.queryByText(/Beds/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Baths/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/parking space/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/0 sqm/i)).not.toBeInTheDocument();
   });
 });

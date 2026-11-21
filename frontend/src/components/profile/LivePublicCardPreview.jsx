@@ -313,8 +313,8 @@ export default function LivePublicCardPreview({
                             <p className="text-xs font-semibold text-on-surface">
                               {role === 'broker' ? 'PRC Principal' : 'PRC Verified'}
                             </p>
-                            <p className="text-xs text-on-surface-variant truncate">
-                              {hasPrc ? 'Active License' : 'Broker Supervised'}
+                            <p className="text-xs text-on-surface-variant font-mono truncate">
+                              {hasPrc ? profile.prc_license_no : 'Broker Supervised'}
                             </p>
                           </div>
                         </div>
@@ -327,8 +327,8 @@ export default function LivePublicCardPreview({
                             <p className="text-xs font-semibold text-on-surface">
                               DHSUD Accredited
                             </p>
-                            <p className="text-xs text-on-surface-variant truncate">
-                              {hasDhsud ? 'Active Standing' : 'Firm Covered'}
+                            <p className="text-xs text-on-surface-variant font-mono truncate">
+                              {hasDhsud ? profile.dhsud_accreditation_no : 'Firm Covered'}
                             </p>
                           </div>
                         </div>

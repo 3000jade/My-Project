@@ -11,7 +11,13 @@ import {
 /**
  * Sticky lg:col-span-4 live-syncing listing preview card backed by the official PropertyCard.
  */
-export default function ListingPreviewCard({ formData, coverPhotoUrl, currentStep, totalSteps }) {
+export default function ListingPreviewCard({
+  formData,
+  user,
+  coverPhotoUrl,
+  currentStep,
+  totalSteps,
+}) {
   const numericPrice = Number(String(formData.price || '').replace(/[^0-9.]/g, '')) || 0;
   const resolvedType =
     getPropertyTypeConfig(formData.property_type)?.name || formData.property_type || 'House & Lot';
@@ -24,6 +30,7 @@ export default function ListingPreviewCard({ formData, coverPhotoUrl, currentSte
   const previewProperty = {
     id: 'listing-preview',
     title: formData.title?.trim() || 'Untitled Listing',
+    description: formData.description?.trim() || '',
     price: numericPrice,
     price_raw: numericPrice,
     transaction_type: formData.transaction_type || 'For Sale',
@@ -34,6 +41,7 @@ export default function ListingPreviewCard({ formData, coverPhotoUrl, currentSte
     state_or_province: formData.province || formData.state_or_province || '',
     bedrooms_total: hideRooms ? null : formData.bedrooms_total ?? null,
     bathrooms_total_integer: hideRooms ? null : formData.bathrooms_total_integer ?? null,
+    parking_total: hideRooms ? null : formData.parking_total ?? null,
     living_area: formData.living_area || formData.lot_size_area || null,
     lot_size_area: formData.lot_size_area || null,
     living_area_units: 'sqm',
@@ -41,6 +49,13 @@ export default function ListingPreviewCard({ formData, coverPhotoUrl, currentSte
     mainImage: coverPhotoUrl || '',
     images: coverPhotoUrl ? [coverPhotoUrl] : [],
     agent_name: formData.credentials?.assignedAgent || '',
+    broker_name:
+      user?.full_name ||
+      user?.name ||
+      formData.credentials?.brokerName ||
+      formData.credentials?.brokerage ||
+      'Human Shelter Realty',
+    credentials: formData.credentials || {},
     is_featured: Boolean(formData.is_featured),
   };
 

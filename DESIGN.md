@@ -54,9 +54,9 @@ All tokens map directly to `@theme` variables in [`frontend/src/index.css`](./fr
 
 | Token | Font Family | Tailwind Utility | Application |
 | :--- | :--- | :--- | :--- |
-| `--font-sans` | `'Inter'`, `'Figtree Variable'`, `-apple-system`, `sans-serif` | `font-sans` | Default UI, body copy, inputs, tables, buttons |
-| `--font-display` | `'Inter'`, `-apple-system`, `sans-serif` | `font-display` | Page titles, hero headings, metric counters |
-| `--font-mono` | `'JetBrains Mono'`, `monospace` | `font-mono` | Prices, cadastral coordinates, lot IDs, timestamps |
+| `--font-sans` | `'Figtree Variable'`, `'Inter'`, `-apple-system`, `sans-serif` | `font-sans` | Default UI, body copy, inputs, prices, cards, tables, buttons |
+| `--font-display` | `'Figtree Variable'`, `'Inter'`, `-apple-system`, `sans-serif` | `font-display` | Page titles, hero headings, metric counters |
+| `--font-mono` | `'Figtree Variable'`, `'Inter'`, `-apple-system`, `sans-serif` | `tabular-nums` | Deprecated alias mapped to `Figtree Variable`; use `tabular-nums` only for numeric data table cells |
 
 ### 3.2 Responsive Type Scale (1.250 Major Third)
 
@@ -68,7 +68,7 @@ All tokens map directly to `@theme` variables in [`frontend/src/index.css`](./fr
 | **Subhead H3** | `1.0rem` (`16px`) | `1.5rem` (`24px`) | `600` (SemiBold) | `-0.01em` | `text-base font-semibold` | Form section titles, group headers |
 | **Body Default** | `0.875rem` (`14px`) | `1.25rem` (`20px`) | `400` / `500` | `0em` | `text-sm font-normal` | Primary interface copy, table cells, form inputs |
 | **Caption / Label** | `0.75rem` (`12px`) | `1.0rem` (`16px`) | `500` / `600` | `+0.05em` | `text-xs font-medium uppercase tracking-wider` | Table column headers, status badges, eyebrow kickers |
-| **Mono Data** | `0.75rem` (`12px`) | `1.0rem` (`16px`) | `500` (Medium) | `0em` | `font-mono text-xs font-medium tabular-nums` | Lot areas (`sqm`), PHP currency figures, coordinates |
+| **Data Table Numbers** | `0.875rem` (`14px`) / `0.75rem` (`12px`) | `1.25rem` (`20px`) / `1.0rem` (`16px`) | `500` (Medium) | `0em` | `font-sans tabular-nums` | Numeric columns in data tables only (table prices, lot/floor areas, counts) |
 
 ---
 
@@ -87,6 +87,8 @@ All padding, margins, and layout gaps use multiples of `8px` (with `4px` half-st
 | **4x** | `32px` | `2.0rem` | `8` (`gap-8`, `p-8`) | Desktop outer container padding, major section separation |
 | **5x** | `40px` | `2.5rem` | `10` (`py-10`, `gap-10`) | Portal sub-module vertical rhythm |
 | **6x** | `48px` | `3.0rem` | `12` (`py-12`, `gap-12`) | Public page section spacing |
+
+- **Compact Card & KPI Spacing:** Compact KPI/summary cards use `gap-1` (`4px`) between header and value, `px-4 pt-2 pb-0` header, `px-4 pb-2 pt-0` body, `px-4 py-2` footer, `size-8` (`32px`) icon box, and `gap-4` (`16px`) grid gutters—never off-grid values (`gap-0.5`, `gap-3`, `pt-2.5`, `py-1.5`).
 
 ### 4.2 Standard Container Widths & Shell Geometry
 
@@ -180,6 +182,16 @@ Every **Broker, Agent, and Admin** portal dashboard page (`frontend/src/pages/po
 - **Icons:** Use `lucide-react` icons consistently across all Broker, Agent, and Admin Bento tiles.
 - **Callouts & Empty States:** Use `<Alert>` (`@/components/ui/alert`) for banners/warnings and `EmptyState` inside `CardContent` when lists are empty.
 
+### 7.3 KPI Card Standard (`KpiCard` — No-Pill & Status-Colored Icon Design)
+All portal KPI strips use [`KpiCard`](frontend/src/components/ui/cards/KpiCard.jsx) following these rules:
+- **No Pill Badges on KPI Cards:** Replace bubbly rounded `Badge` pills with **Status Dot + Plain Text** (`size-2 rounded-full` + colored label, e.g. `● 26 Pending Review`) and **Trend Arrow + Colored Text** (`TrendingUp` / `TrendingDown` + `tabular-nums` text, e.g. `↗ +12.4%`).
+- **Status-Colored Icon Box (`statusVariant`):** Tint the `size-8 rounded-lg` icon container to reflect the metric's status:
+  - `primary` / `default` (`bg-teal-50 text-[#0F766E]`): Headline / neutral metric
+  - `success` (`bg-emerald-50 text-emerald-700`): Healthy / target met
+  - `warning` (`bg-amber-50 text-amber-700`): Pending review / verification
+  - `coral` (`bg-[#FF6B6B]/15 text-[#DC2626]`) / `destructive` (`bg-red-50 text-red-600`): Urgent or new inbound items needing attention
+- **Compact Spacing & Teal Progress:** Use compact card padding (`px-4 pt-4` header, `px-4 pb-4` content, `px-4 py-2` footer) and `shadcn/ui` `Progress` bars (`h-2` track, `bg-[#0F766E]` fill). For responsive strips, `size="md"` renders with equal inner padding (`px-4 py-3`) and morphs cleanly on mobile (`< 640px`).
+
 ---
 
 ## 8. High-UX Standards for All Components & Pages
@@ -205,3 +217,13 @@ Every component and page across Public, Client, Agent, Broker, and Admin views m
 - **Step 3 (Specs & Features):** Quick-tap `ToggleGroup` / chips for Bedrooms, Bathrooms, Parking, and Furnishing, paired with `AnimatePresence` collapse of indoor room cards when a Vacant Lot is chosen, and leading `lucide-react` icons on Nearby Places inputs.
 - **Step 4 (Media & Story):** Pre-selected area/room gallery cards driven by Property Category/Type, live `N / 5` photo limit counters (`3–5` recommended per area), per-photo `Description` counter, and a 1-per-area Video + Video Thumbnail uploader enforcing the `50 MB` standard size limit.
 - **Step 5 (Credentials & Publish):** One-click **Use My Profile** auto-fill with instant visual feedback, interactive **Ready to Publish Checklist** rows that jump directly to any incomplete step, and a single solid primary CTA footer (`DESIGN.md` Section 6.6).
+
+---
+
+## 9. Mobile-First Editing, Touch Ergonomics, Bulk Safety & Sample State
+
+1. **Adaptive Layout & Spacing (Mobile-First):** Author base styles for `< 768px` (`p-4`, `gap-4`, `grid-cols-1`, `min-w-0`) and scale up at `md:` / `lg:` (`Section 4`). On mobile viewports, secondary inspector rails and tool docks collapse into a bottom `Drawer` (`shadcn/ui`) so the primary canvas or form remains unobstructed.
+2. **Touch-First Editing Architecture:** Every interactive editing control must meet `44px × 44px` (`min-h-11 min-w-11` on mobile / `@media (pointer: coarse)`). Direct-manipulation canvases and drag surfaces apply `touch-none` so browser scrolling or pinch-zoom does not conflict with drawing or dragging.
+3. **Ergonomics:** Place primary mobile editor actions (Save, Undo/Redo, Done) in a thumb-zone sticky footer (`sticky bottom-0`) with at most one solid Primary CTA (`Section 6.6`). Never rely solely on hover tooltips or desktop keyboard shortcuts—expose visible labels or `aria-label`s and on-screen Undo/Redo buttons.
+4. **Bulk Tools & Safety Guardrails:** Multi-select workflows (`selectedIds`) expose a contextual bulk bar (`N selected`, `Select All`, `Clear`). Any destructive or overwriting bulk action (Bulk Delete, Bulk Archive, Bulk Status Change) must open a confirmation `Dialog` showing the exact affected count before applying, paired with an Undo toast for reversible local edits.
+5. **Sample Data & Interactive State:** Empty editors and complex workspaces may offer a one-tap **Load Sample** preset (plus a **Reset** confirmation) backed by static local fixtures—never mutating live records—so interactive workflows can be previewed and tested immediately.

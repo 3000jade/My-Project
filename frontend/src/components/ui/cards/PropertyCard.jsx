@@ -1,21 +1,51 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { stripHtml } from '@/pages/portals/broker/components/property-form/DescriptionEditorModal';
 import { 
   IconMapPin, 
   IconBed, 
   IconBath, 
   IconDimensions,
-  IconArrowRight,
   IconHeart,
   IconHeartFilled,
   IconShare,
   IconUser
 } from '@tabler/icons-react';
+import {
+  Tag,
+  KeyRound,
+  Landmark,
+  CheckCircle2,
+  Clock,
+  Hammer,
+  Repeat,
+  BadgeCheck,
+  Car,
+  Mail,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { resolveDriveImageUrl } from '../../../services/driveService';
 import useViewingList from '../../../hooks/useViewingList';
 import ViewPropertyButton from '../buttons/ViewPropertyButton';
 import ShareListingModal from '../modals/ShareListingModal';
+import PublicAgentProfileModal from '../modals/PublicAgentProfileModal';
+
+function getTransactionIcon(transactionType = '', isRent = false) {
+  const normalized = String(transactionType).toLowerCase();
+  if (normalized.includes('foreclos')) return Landmark;
+  if (isRent || normalized.includes('rent')) return KeyRound;
+  return Tag;
+}
+
+function getConditionIcon(condition = '') {
+  const normalized = String(condition).toLowerCase();
+  if (normalized.includes('pre-sell') || normalized.includes('presell')) return Clock;
+  if (normalized.includes('construct')) return Hammer;
+  if (normalized.includes('resale')) return Repeat;
+  if (normalized.includes('sold') || normalized.includes('closed')) return BadgeCheck;
+  return CheckCircle2;
+}
 
 export default function PropertyCard({ 
   property = {}, 
@@ -24,12 +54,14 @@ export default function PropertyCard({
   isSelected = false,
   isHovered = false,
   onSelect,
+  onBrokerClick,
   onMouseEnter,
   onMouseLeave
 }) {
   const navigate = useNavigate();
   const { isInViewingList, toggleViewingList } = useViewingList();
   const [isShareOpen, setIsShareOpen] = useState(false);
+  const [isBrokerModalOpen, setIsBrokerModalOpen] = useState(false);
   
   // Animation config
   const cardAnimation = variants || {
@@ -75,7 +107,7 @@ export default function PropertyCard({
   } else if (typeof property.price === 'string' && property.price.trim()) {
     formattedPriceDisplay = property.price;
   } else {
-    formattedPriceDisplay = 'Price on Request';
+    formattedPriceDisplay = '-';
   }
 
   const priceWithFrequency = isRent && !formattedPriceDisplay.includes('/') && !formattedPriceDisplay.toLowerCase().includes('mo')
@@ -83,13 +115,22 @@ export default function PropertyCard({
     : formattedPriceDisplay;
 
   // Location mapping (City / Municipality, Province)
+  const propertyDescription = stripHtml(
+    property.description ||
+    property.publicRemarks ||
+    property.public_remarks ||
+    ''
+  );
   const city = property.city || property.location_raw?.city || property.location?.city || '';
   const province = property.state_or_province || property.province || property.location_raw?.stateOrProvince || property.location?.state || property.location?.stateOrProvince || '';
   const displayLocation = [city, province].filter(Boolean).join(', ') || (typeof property.location === 'string' ? property.location : 'Metro Manila, Philippines');
 
-  // Specs: Bedrooms, Bathrooms, Floor Area with unit
+  // Specs: Bedrooms, Bathrooms, Parking, Floor Area with unit
   const beds = property.bedrooms_total ?? property.bedroomsTotal ?? property.beds ?? property.specs?.beds ?? property.specs?.bedroomsTotal ?? null;
   const baths = property.bathrooms_total_integer ?? property.bathroomsTotalInteger ?? property.baths ?? property.specs?.baths ?? property.specs?.bathroomsTotalInteger ?? null;
+  const parking = property.parking_total ?? property.parkingTotal ?? property.parking ?? property.specs?.parkingTotal ?? null;
+  const TransactionIcon = getTransactionIcon(transactionType, isRent);
+  const ConditionIcon = getConditionIcon(property.property_condition || property.propertyCondition || property.condition || property.specs?.propertyCondition || property.specs?.condition || '');
   
   const floorAreaValue = property.living_area ?? property.livingArea ?? property.specs?.livingArea ?? property.sqm ?? property.floor_area ?? property.sqft ?? property.area ?? null;
   const floorAreaUnits = property.living_area_units || property.livingAreaUnits || property.specs?.livingAreaUnits || (property.sqm ? 'sqm' : (property.sqft ? 'sqft' : 'sqm'));
@@ -184,19 +225,19 @@ export default function PropertyCard({
             }`}
           />
 
-          {/* Top-Left Pill: • For sale / For rent + Condition State + RESO Status Badges */}
+          {/* Top-Left Pill: For sale / For rent + Condition State + RESO Status Badges */}
           <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 flex-wrap max-w-[75%]">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/95 backdrop-blur-xs text-[11px] font-medium text-[#1E293B] shadow-xs">
-              <span className={`w-1.5 h-1.5 rounded-full ${isRent ? 'bg-amber-500' : 'bg-emerald-500'}`} />
+              <TransactionIcon className={`size-3.5 shrink-0 ${isRent ? 'text-amber-600' : 'text-[#0F766E]'}`} aria-hidden="true" />
               <span>{typeBadgeLabel}</span>
             </span>
 
             {condition && (
               <span 
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/95 backdrop-blur-xs text-[11px] font-semibold text-[#0F766E] shadow-xs border border-teal-100/60"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/95 backdrop-blur-xs text-[11px] font-semibold text-[#0F766E] shadow-xs border border-teal-100/60"
                 data-testid="card-condition-badge"
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-[#0F766E]" />
+                <ConditionIcon className="size-3.5 shrink-0 text-[#0F766E]" aria-hidden="true" />
                 {condition}
               </span>
             )}
@@ -265,16 +306,6 @@ export default function PropertyCard({
             </button>
           </div>
 
-          {/* Bottom-Left Pill: Location pin & location name */}
-          <div className="absolute bottom-3 left-3 z-10 max-w-[85%]">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/95 backdrop-blur-xs text-xs font-medium text-[#1E293B] shadow-xs truncate">
-              <div className="w-4 h-4 rounded-full bg-rose-50 flex items-center justify-center text-rose-500 shrink-0">
-                <IconMapPin size={11} stroke={2.5} className="text-rose-500" />
-              </div>
-              <span className="truncate">{displayLocation}</span>
-            </div>
-          </div>
-
           {/* Under Contract Contextual Overlay Banner */}
           {isUnderContract && (
             <div className="absolute bottom-0 inset-x-0 bg-amber-500/90 backdrop-blur-xs text-white text-[10px] font-bold py-1 px-3 text-center uppercase tracking-wider z-10 shadow-xs">
@@ -293,85 +324,156 @@ export default function PropertyCard({
         {/* Content Section below photo */}
         <div className="space-y-3 px-1">
           {/* Coral dash + Uppercase Property Type */}
-          <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-slate-400">
-            <div className="flex items-center gap-1.5 min-w-0">
-              <span className="w-4 h-0.5 bg-[#E07A5F] rounded-full" />
-              <span className="truncate">{propertyType}</span>
-            </div>
-            {condition && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-teal-50 text-[#0F766E] font-semibold text-[10px] tracking-normal border border-teal-200/60 capitalize shrink-0 max-w-[50%] truncate">
-                {condition}
-              </span>
+          <div className="flex items-center gap-1.5 min-w-0 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+            <span className="w-4 h-0.5 bg-[#E07A5F] rounded-full shrink-0" />
+            <span className="truncate">{propertyType}</span>
+          </div>
+
+          {/* Property Title + Description + Address Subheader */}
+          <div className="flex flex-col gap-1.5">
+            <h3 className="text-xl sm:text-2xl font-bold text-[#0F4C5C] group-hover:text-[#0F766E] tracking-tight line-clamp-2 leading-tight transition-colors">
+              <span>{propertyTitle}</span>
+              <span className="text-[#E07A5F]">.</span>
+            </h3>
+            {propertyDescription && (
+              <p className="text-xs font-medium text-on-surface-variant line-clamp-1">
+                {propertyDescription}
+              </p>
+            )}
+            <p className="flex items-center gap-1.5 text-xs font-medium text-[#64748B]">
+              <IconMapPin size={14} stroke={2} className="text-[#0F766E] shrink-0" aria-hidden="true" />
+              <span className="truncate">{displayLocation}</span>
+            </p>
+          </div>
+
+          {/* Key Specs Row: beds, baths, parking space, area */}
+          <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 text-xs text-slate-500 font-medium pt-0.5">
+            {Number(beds) !== 0 && (
+              <div className="flex items-center gap-1.5">
+                <IconBed size={16} stroke={1.8} className="text-slate-400 shrink-0" />
+                <span>
+                  <span className="font-medium text-slate-700">{beds != null ? beds : '—'}</span>{' '}
+                  <span className="lowercase">Beds</span>
+                </span>
+              </div>
+            )}
+            {Number(baths) !== 0 && (
+              <div className="flex items-center gap-1.5">
+                <IconBath size={16} stroke={1.8} className="text-slate-400 shrink-0" />
+                <span>
+                  <span className="font-medium text-slate-700">{baths != null ? baths : '—'}</span>{' '}
+                  <span className="lowercase">Baths</span>
+                </span>
+              </div>
+            )}
+            {Number(parking) !== 0 && (
+              <div className="flex items-center gap-1.5">
+                <Car className="size-4 text-slate-400 shrink-0" aria-hidden="true" />
+                <span>
+                  <span className="font-medium text-slate-700">{parking != null ? parking : '—'}</span>{' '}
+                  <span className="lowercase">parking space</span>
+                </span>
+              </div>
+            )}
+            {!/^0(?:\.0+)?\b/.test(String(floorAreaFormatted || '').trim()) && (
+              <div className="flex items-center gap-1.5">
+                <IconDimensions size={16} stroke={1.8} className="text-slate-400 shrink-0" />
+                <span>
+                  {floorAreaFormatted ? (
+                    <span className="font-medium text-slate-700 truncate max-w-[130px] inline-block align-bottom">
+                      {floorAreaFormatted}
+                    </span>
+                  ) : (
+                    <span>— m²</span>
+                  )}
+                </span>
+              </div>
             )}
           </div>
 
-          {/* Property Title with Coral Period */}
-          <h3 className="text-xl sm:text-2xl font-bold text-[#0F4C5C] group-hover:text-[#0F766E] tracking-tight line-clamp-2 leading-tight transition-colors">
-            <span>{propertyTitle}</span>
-            <span className="text-[#E07A5F]">.</span>
-          </h3>
+          {/* Listing Agent Row */}
+          <div className="pt-2 pb-0.5 border-t border-slate-100 flex items-center justify-between gap-2" data-testid="card-agent-placeholder">
+            {(() => {
+              const credentials =
+                property.credentials ||
+                property.customAttributes?.credentials ||
+                property.customResoAttributes?.credentials ||
+                property.custom_reso_attributes?.credentials ||
+                {};
+              const brokerName =
+                property.broker_name ||
+                property.brokerName ||
+                credentials.brokerName ||
+                credentials.brokerage ||
+                'Human Shelter Realty';
+              const brokerageName = credentials.brokerage || 'Human Shelter Realty';
+              const brokerProfile = {
+                id: property.createdBy || property.created_by || 'broker-1',
+                name: brokerName,
+                brokerage_name: brokerageName,
+                team_name: 'Managing Broker',
+                email: property.broker_email || credentials.brokerEmail || 'inquiries@humanshelterrealty.com',
+                phone: property.broker_phone || credentials.contactNumber || '+63 2 8888 0000',
+              };
 
-          {/* Key Specs Row: beds, baths, area */}
-          <div className="flex items-center gap-3 sm:gap-4.5 text-xs text-slate-500 font-medium pt-0.5">
-            <div className="flex items-center gap-1.5">
-              <IconBed size={16} stroke={1.8} className="text-slate-400 shrink-0" />
-              <span>
-                <span className="font-medium text-slate-700">{beds != null ? beds : '—'}</span>{' '}
-                <span className="lowercase">Beds</span>
-              </span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <IconBath size={16} stroke={1.8} className="text-slate-400 shrink-0" />
-              <span>
-                <span className="font-medium text-slate-700">{baths != null ? baths : '—'}</span>{' '}
-                <span className="lowercase">Baths</span>
-              </span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <IconDimensions size={16} stroke={1.8} className="text-slate-400 shrink-0" />
-              <span>
-                {floorAreaFormatted ? (
-                  <span className="font-medium text-slate-700 truncate max-w-[130px] inline-block align-bottom">
-                    {floorAreaFormatted}
-                  </span>
-                ) : (
-                  <span>— m²</span>
-                )}
-              </span>
-            </div>
-          </div>
-
-          {/* Assigned Agent Placeholder */}
-          <div className="pt-2 pb-0.5 border-t border-slate-100 flex items-center justify-between" data-testid="card-agent-placeholder">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-7 h-7 rounded-full bg-teal-50 border border-teal-200/70 flex items-center justify-center text-[#0F766E] shrink-0 shadow-2xs">
-                <IconUser size={14} stroke={2} className="text-[#0F766E]" />
-              </div>
-              <div className="min-w-0">
-                <span className="block text-xs font-semibold text-[#1E293B] truncate leading-tight">
-                  {agentName}
-                </span>
-                <span className="block text-[10px] text-slate-400 truncate leading-tight">
-                  Listing Agent • Assigned Desk
-                </span>
-              </div>
-            </div>
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200/60 shrink-0">
-              Corporate Desk
-            </span>
+              return (
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-full bg-teal-50 border border-teal-200/70 flex items-center justify-center text-[#0F766E] shrink-0 shadow-2xs">
+                    <IconUser size={18} stroke={2} className="text-[#0F766E]" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="block text-sm font-semibold text-[#1E293B] truncate leading-snug">
+                      {agentName}
+                    </span>
+                    <span className="block text-[11px] text-slate-500 truncate leading-tight">
+                      Assigned by{' '}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (typeof onBrokerClick === 'function') {
+                            onBrokerClick(brokerProfile);
+                            return;
+                          }
+                          setIsBrokerModalOpen(true);
+                        }}
+                        className="font-semibold text-[#0F766E] hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#0F766E] rounded-xs cursor-pointer"
+                      >
+                        {brokerName}
+                      </button>
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
+            <Button
+              type="button"
+              variant="coral"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (propertyId && propertyId !== 'listing-preview') {
+                  navigate(`/properties/${propertyId}`, { state: { property, openInquiry: true } });
+                }
+              }}
+              className="h-6 px-2.5 gap-1 rounded-full bg-[#FF6B6B] hover:bg-[#EE5A5A] text-white text-[10px] font-semibold normal-case tracking-normal shrink-0 transition-colors cursor-pointer"
+            >
+              <Mail className="size-3 shrink-0" aria-hidden="true" />
+              <span>Inquire Now</span>
+            </Button>
           </div>
 
           {/* Subtle Horizontal Divider */}
           <div className="border-t border-slate-100 pt-3" />
 
-          {/* Footer: Price & View Property Pill Button */}
+          {/* Footer: Selling Price & View Property Pill Button */}
           <div className="flex items-end justify-between gap-2 pt-0.5">
             <div>
               <span className="block text-[11px] text-slate-400 font-medium">
-                {isClosed ? 'Sold benchmark' : isUnderContract ? 'Contract pending' : 'Price'}
+                {isClosed ? 'Sold benchmark' : isUnderContract ? 'Contract pending' : 'Selling Price'}
               </span>
               <p className={`text-xl sm:text-2xl font-bold tracking-tight ${
-                isClosed ? 'text-slate-700 font-mono' : 'text-[#0F4C5C]'
+                isClosed ? 'text-slate-700' : 'text-[#0F4C5C]'
               }`}>
                 {priceWithFrequency}
               </p>
@@ -413,6 +515,42 @@ export default function PropertyCard({
         address: displayLocation,
         coverImage,
       }}
+    />
+    <PublicAgentProfileModal
+      isOpen={isBrokerModalOpen}
+      onClose={() => setIsBrokerModalOpen(false)}
+      agent={{
+        id: property.createdBy || property.created_by || 'broker-1',
+        name:
+          property.broker_name ||
+          property.brokerName ||
+          property.credentials?.brokerName ||
+          property.customAttributes?.credentials?.brokerName ||
+          property.customResoAttributes?.credentials?.brokerName ||
+          property.custom_reso_attributes?.credentials?.brokerName ||
+          property.credentials?.brokerage ||
+          'Human Shelter Realty',
+        brokerage_name:
+          property.credentials?.brokerage ||
+          property.customAttributes?.credentials?.brokerage ||
+          property.customResoAttributes?.credentials?.brokerage ||
+          property.custom_reso_attributes?.credentials?.brokerage ||
+          'Human Shelter Realty',
+        team_name: 'Managing Broker',
+        email:
+          property.broker_email ||
+          property.credentials?.brokerEmail ||
+          'inquiries@humanshelterrealty.com',
+        phone:
+          property.broker_phone ||
+          property.credentials?.contactNumber ||
+          '+63 2 8888 0000',
+      }}
+      onSendInquiry={
+        propertyId && propertyId !== 'listing-preview'
+          ? () => navigate(`/properties/${propertyId}`, { state: { property, openInquiry: true } })
+          : undefined
+      }
     />
     </>
   );

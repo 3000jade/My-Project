@@ -46,12 +46,12 @@ export default {
                 "container-max-width": "1440px"
             },
             fontFamily: {
-                "sans": ["Inter", "Manrope", "sans-serif"],
-                "display": ["Inter", "Manrope", "sans-serif"],
-                "headline-sm": ["Inter", "Manrope", "sans-serif"],
-                "body-md": ["Inter", "Manrope", "sans-serif"],
-                "label-lg": ["Inter", "sans-serif"],
-                "mono": ["JetBrains Mono", "monospace"],
+                "sans": ["Figtree Variable", "Inter", "sans-serif"],
+                "display": ["Figtree Variable", "Inter", "sans-serif"],
+                "headline-sm": ["Figtree Variable", "Inter", "sans-serif"],
+                "body-md": ["Figtree Variable", "Inter", "sans-serif"],
+                "label-lg": ["Figtree Variable", "Inter", "sans-serif"],
+                "mono": ["Figtree Variable", "Inter", "sans-serif"],
             }
         }
     }

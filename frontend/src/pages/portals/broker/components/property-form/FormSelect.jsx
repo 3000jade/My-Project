@@ -78,7 +78,7 @@ export default function FormSelect({
       <SelectTrigger
         id={id}
         className={cn(
-          'w-full h-11 bg-white border-[#E2E8F0] rounded-lg px-3 text-sm font-medium text-[#1E293B] focus-visible:border-[#0F766E] focus-visible:ring-[#0F766E]/20 disabled:bg-[#F8FAFC] disabled:text-[#94A3B8]',
+          'w-full h-11 data-[size=default]:h-11 bg-white border-[#E2E8F0] rounded-lg px-3 text-sm font-medium text-[#1E293B] focus-visible:border-[#0F766E] focus-visible:ring-[#0F766E]/20 disabled:bg-[#F8FAFC] disabled:text-[#94A3B8]',
           className
         )}
       >

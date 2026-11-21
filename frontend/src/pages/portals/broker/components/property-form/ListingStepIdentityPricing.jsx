@@ -37,13 +37,14 @@ import {
 import { COMMON_PROPERTY_TYPES } from './propertyTypeConfig';
 import FormSelect from './FormSelect';
 import PartneredBankMultiSelect from './PartneredBankMultiSelect';
+import DescriptionEditorModal, { stripHtml } from './DescriptionEditorModal';
 
 const TITLE_MAX = 120;
+const DESCRIPTION_MAX = 3000;
 
 const TRANSACTION_TYPES = [
   { value: 'For Sale', label: 'For Sale', icon: Tag },
   { value: 'For Rent', label: 'For Rent', icon: KeyRound },
-  { value: 'Foreclosure', label: 'Foreclosure', icon: Landmark },
 ];
 
 const PROPERTY_CATEGORIES = [
@@ -118,10 +119,11 @@ export default function ListingStepIdentityPricing({
   const [showBreakdown, setShowBreakdown] = useState(
     Boolean(
       formData.paymentBreakdown?.reservationFee ||
-        formData.paymentBreakdown?.downpayment ||
-        formData.association_fee
+      formData.paymentBreakdown?.downpayment ||
+      formData.association_fee
     )
   );
+  const [descEditorOpen, setDescEditorOpen] = useState(false);
 
   const updateField = (patch) => {
     setIsDirty?.(true);
@@ -148,8 +150,8 @@ export default function ListingStepIdentityPricing({
       : [];
     const commonNames = Array.isArray(COMMON_PROPERTY_TYPES)
       ? COMMON_PROPERTY_TYPES.map((pt) =>
-          typeof pt === 'string' ? pt : pt.label || pt.value
-        ).filter(Boolean)
+        typeof pt === 'string' ? pt : pt.label || pt.value
+      ).filter(Boolean)
       : [];
 
     const merged = Array.from(new Set([...categoryDefaults, ...apiNames, ...commonNames]));
@@ -226,6 +228,7 @@ export default function ListingStepIdentityPricing({
 
   const titleValue = formData.title || '';
   const titleNearLimit = titleValue.length >= Math.floor(TITLE_MAX * 0.9);
+  const descriptionPlain = stripHtml(formData.description || '');
   const activeCategoryMeta = PROPERTY_CATEGORIES.find((c) => c.value === selectedCategory);
   const activeStatusMeta = PROPERTY_STATUSES.find(
     (s) => s.value === (formData.propertyStatus || 'Ready for Occupancy')
@@ -312,12 +315,59 @@ export default function ListingStepIdentityPricing({
               </Field>
             </div>
 
-            {/* Transaction Type (For Sale, For Rent, Foreclosure) */}
+            {/* Property Description (Rich Text Editor Tool) */}
+            <Field>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <FieldLabel className="text-sm font-semibold text-on-surface">
+                  Property Description
+                </FieldLabel>
+                {descriptionPlain && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    aria-label="Remove property description"
+                    onClick={() => updateField({ description: '' })}
+                    className="min-h-11 px-3 border-outline bg-surface text-on-surface-variant hover:text-[#FF6B6B] font-semibold rounded-lg cursor-pointer"
+                  >
+                    <Trash2 data-icon="inline-start" className="text-[#FF6B6B]" />
+                    Remove
+                  </Button>
+                )}
+              </div>
+              <div
+                onClick={() => setDescEditorOpen(true)}
+                role="button"
+                aria-label="Edit property description"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setDescEditorOpen(true);
+                  }
+                }}
+                className="min-h-20 p-3.5 rounded-lg border border-outline bg-surface hover:border-outline-variant transition-colors cursor-pointer flex flex-col justify-between gap-2"
+              >
+                <p
+                  className={cn(
+                    'text-sm leading-relaxed whitespace-pre-line line-clamp-3',
+                    descriptionPlain ? 'text-on-surface' : 'text-on-surface-variant'
+                  )}
+                >
+                  {descriptionPlain ||
+                    'Describe the home, layout highlights, and neighborhood perks using headings, bold text, and bullet points...'}
+                </p>
+                <span className="text-xs tabular-nums text-on-surface-variant self-end">
+                  {descriptionPlain.length} / {DESCRIPTION_MAX}
+                </span>
+              </div>
+            </Field>
+
+            {/* Transaction Type (For Sale, For Rent) */}
             <Field>
               <FieldLabel className="text-sm font-semibold text-[#1E293B]">
                 Transaction Type <Req />
               </FieldLabel>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 p-1.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-1.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl">
                 {TRANSACTION_TYPES.map((type) => {
                   const Icon = type.icon;
                   const isActive = formData.transaction_type === type.value;
@@ -729,6 +779,20 @@ export default function ListingStepIdentityPricing({
           </FieldGroup>
         </CardContent>
       </Card>
+
+      <DescriptionEditorModal
+        open={descEditorOpen}
+        onOpenChange={setDescEditorOpen}
+        title="Property Description"
+        subtitle="Use headings, bold text, and bullet points to highlight the property's story and key perks."
+        initialValue={formData.description || ''}
+        maxLength={DESCRIPTION_MAX}
+        placeholder="Describe the property, layout highlights, and neighborhood perks..."
+        onSave={(html) => {
+          updateField({ description: html });
+          setDescEditorOpen(false);
+        }}
+      />
     </div>
   );
 }

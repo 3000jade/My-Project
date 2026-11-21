@@ -199,7 +199,7 @@ export default function LocationPinMap({
     <div
       ref={containerRef}
       data-testid="location-pin-map"
-      className={className}
+      className={`${className}${interactive ? ' touch-none' : ''}`}
       style={{ isolation: 'isolate', zIndex: 0 }}
     />
   );

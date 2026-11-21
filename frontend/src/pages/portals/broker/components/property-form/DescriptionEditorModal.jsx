@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import { cn } from 'cn';
@@ -14,12 +14,15 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { PenLine, Check, RotateCcw } from 'lucide-react';
 
-function stripHtml(html = '') {
+export function stripHtml(html = '') {
   return String(html)
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<\/p>/gi, '\n')
     .replace(/<[^>]+>/g, '')
     .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
     .trim();
 }
 
@@ -59,6 +62,7 @@ export default function DescriptionEditorModal({
   onSave,
 }) {
   const [draftHtml, setDraftHtml] = useState(initialValue || '');
+  const quillRef = useRef(null);
 
   useEffect(() => {
     if (open) {
@@ -71,14 +75,20 @@ export default function DescriptionEditorModal({
   const isNearLimit = plainLength >= Math.floor(maxLength * 0.9);
 
   const handleChange = (content, _delta, _source, editor) => {
-    const textLen = editor.getText().replace(/\n$/, '').length;
+    const textLen = editor?.getText
+      ? editor.getText().replace(/\n$/, '').length
+      : stripHtml(content).length;
     if (textLen <= maxLength) {
       setDraftHtml(content);
-    } else {
-      // Allow edits that shorten text even if pasted over limit
-      if (textLen < plainLength) {
-        setDraftHtml(content);
-      }
+      return;
+    }
+
+    const quill = quillRef.current?.getEditor?.();
+    if (quill) {
+      quill.deleteText(maxLength, textLen - maxLength, 'silent');
+      setDraftHtml(quill.root.innerHTML);
+    } else if (textLen < plainLength) {
+      setDraftHtml(content);
     }
   };
 
@@ -114,8 +124,8 @@ export default function DescriptionEditorModal({
                 isOverLimit
                   ? 'bg-[#FFF5F5] text-[#FF6B6B] border-[#FF6B6B]/40'
                   : isNearLimit
-                  ? 'bg-[#FFF5F5] text-[#FF6B6B] border-[#FF6B6B]/30'
-                  : 'bg-[#F0FDFA] text-[#0F766E] border-[#0F766E]/20'
+                    ? 'bg-[#FFF5F5] text-[#FF6B6B] border-[#FF6B6B]/30'
+                    : 'bg-[#F0FDFA] text-[#0F766E] border-[#0F766E]/20'
               )}
             >
               {plainLength} / {maxLength}
@@ -127,6 +137,7 @@ export default function DescriptionEditorModal({
         <div className="p-6 bg-[#F8FAFC] flex flex-col gap-3">
           <div className="rounded-xl border border-[#E2E8F0] bg-white overflow-hidden [&_.ql-toolbar]:border-0 [&_.ql-toolbar]:border-b [&_.ql-toolbar]:border-[#E2E8F0] [&_.ql-toolbar]:bg-[#F8FAFC] [&_.ql-container]:border-0 [&_.ql-editor]:min-h-60 [&_.ql-editor]:max-h-96 [&_.ql-editor]:text-sm [&_.ql-editor]:text-[#1E293B] [&_.ql-editor]:leading-relaxed">
             <ReactQuill
+              ref={quillRef}
               theme="snow"
               value={draftHtml}
               onChange={handleChange}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Building2, CheckCircle2, Plus, RotateCw, Edit3, ExternalLink,
   MapPin, Maximize2, Bed, Bath, Copy, MoreVertical, ChevronRight,
@@ -21,10 +21,12 @@ import {
   DropdownMenuSeparator
 } from '../../../components/ui/dropdown-menu';
 import propertyService, { normalizeProperty } from '../../../services/propertyService';
+import agentService from '../../../services/agentService';
 import { cn } from '../../../utils/cn';
 import { Badge } from '../../../components/ui/badge';
 import { Button, buttonVariants } from '../../../components/ui/button';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, useToast, Toaster } from '../../../components/ui';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, Alert, AlertTitle, AlertDescription, useToast, Toaster } from '../../../components/ui';
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '../../../components/ui/empty';
 import { Spinner } from '../../../components/ui';
 import { TableSkeleton, CardGridSkeleton } from '../../../components/dashboard/skeletons';
 import useResponsiveColumns from '../../../hooks/useResponsiveColumns';
@@ -109,22 +111,84 @@ function PropertyThumbnail({ image, title }) {
   );
 }
 
+const SEEN_ACTIVITY_STORAGE_KEY = 'hsr_seen_property_activity';
+const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+
+function getBrokerDisplayStatus(p) {
+  const std = String(p.standard_status || p.standardStatus || '').toUpperCase();
+  const s = String(p.status || '').toUpperCase();
+  if (std === 'DRAFT') return 'DRAFT';
+  if (std === 'PENDING APPROVAL' || std === 'PENDING_APPROVAL') return 'PENDING_APPROVAL';
+  if (std === 'CLOSED' || s === 'SOLD') return 'CLOSED';
+  if (s === 'INACTIVE' || std === 'INACTIVE' || std === 'HOLD' || p.is_published === false || p.isPublished === false) {
+    return 'UNPUBLISHED';
+  }
+  return 'PUBLISHED';
+}
+
+function formatPhilippineDateTime(dateStr) {
+  if (!dateStr) return 'Unavailable';
+  try {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return 'Unavailable';
+    return new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Manila',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    }).format(date) + ' PST';
+  } catch {
+    return 'Unavailable';
+  }
+}
+
+function getDateActivityBadge(row, seenMap = {}) {
+  const propId = row.id || row.listingKey;
+  const createdRaw = row.created_at || row.createdAt;
+  const updatedRaw = row.updated_at || row.updatedAt;
+  const lastEdit = row.lastEdit || row.custom_reso_attributes?.lastEdit || row.customResoAttributes?.lastEdit;
+  const latestIso = lastEdit?.editedAt || updatedRaw || createdRaw;
+  if (!latestIso) return null;
+
+  const latestMs = new Date(latestIso).getTime();
+  if (isNaN(latestMs)) return null;
+
+  const seenIso = propId ? seenMap[propId] : null;
+  if (seenIso) {
+    const seenMs = new Date(seenIso).getTime();
+    if (!isNaN(seenMs) && latestMs <= seenMs) {
+      return null;
+    }
+  }
+
+  const createdMs = createdRaw ? new Date(createdRaw).getTime() : NaN;
+  const updatedMs = updatedRaw ? new Date(updatedRaw).getTime() : NaN;
+  if (lastEdit || (!isNaN(createdMs) && !isNaN(updatedMs) && updatedMs - createdMs > 60_000)) {
+    return 'EDITED';
+  }
+  if (!isNaN(createdMs) && Date.now() - createdMs <= SEVEN_DAYS_MS) {
+    return 'NEW';
+  }
+  return null;
+}
+
 const AVAILABLE_COLUMNS = [
   { id: 'property', label: 'Property', isLocked: true, tiers: ['mobile', 'tablet', 'desktop'] },
   { id: 'location', label: 'Location', tiers: ['tablet', 'desktop'] },
   { id: 'property_type', label: 'Property Type', tiers: ['tablet', 'desktop'] },
   { id: 'specs', label: 'Specs', tiers: ['desktop'] },
   { id: 'price', label: 'Price', tiers: ['mobile', 'tablet', 'desktop'] },
+  { id: 'assigned_agent', label: 'Assigned Agent', tiers: ['tablet', 'desktop'] },
   { id: 'status', label: 'Status', tiers: ['mobile', 'tablet', 'desktop'] },
   { id: 'date_added', label: 'Date Added', tiers: ['desktop'] },
   { id: 'actions', label: 'Actions', isLocked: true, tiers: ['mobile', 'tablet', 'desktop'] },
 ];
 
-const DEFAULT_VISIBLE_COLUMNS = AVAILABLE_COLUMNS.map((c) => c.id);
-const STORAGE_KEY_COLUMNS = 'hsr_broker_properties_columns';
-
 export default function BrokerProperties() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
   const [properties, setProperties] = useState([]);
   const [proposals, setProposals] = useState([]);
@@ -133,29 +197,55 @@ export default function BrokerProperties() {
   const [error, setError] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isProcessingProposal, setIsProcessingProposal] = useState(false);
+  const [agentsById, setAgentsById] = useState({});
+  const [editDetailsTarget, setEditDetailsTarget] = useState(null);
+  const [seenActivity, setSeenActivity] = useState(() => {
+    try {
+      const raw = localStorage.getItem(SEEN_ACTIVITY_STORAGE_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch {
+      return {};
+    }
+  });
 
-  // Filters & State
-  const [activeTab, setActiveTab] = useState('ALL');
-  const [search, setSearch] = useState('');
+  // Filters & State (hydrated from URL so edits/refreshes preserve broker view)
+  const [activeTab, setActiveTab] = useState(() => searchParams.get('status') || 'ALL');
+  const [search, setSearch] = useState(() => searchParams.get('q') || '');
   const [statusFilter, setStatusFilter] = useState('ALL');
-  const [typeFilter, setTypeFilter] = useState('ALL');
-  const [locationFilter, setLocationFilter] = useState('ALL');
-  const [priceRange, setPriceRange] = useState({ min: '', max: '' });
-  const [sortBy, setSortBy] = useState('newest');
+  const [typeFilter, setTypeFilter] = useState(() => searchParams.get('type') || 'ALL');
+  const [locationFilter, setLocationFilter] = useState(() => searchParams.get('location') || 'ALL');
+  const [priceRange, setPriceRange] = useState(() => ({
+    min: searchParams.get('minPrice') || '',
+    max: searchParams.get('maxPrice') || '',
+  }));
+  const [sortBy, setSortBy] = useState(() => searchParams.get('sort') || 'newest');
 
   // Device Viewport-Adaptive Column Visibility State
   const {
     visibleColumns: visibleColumnKeys,
-    setVisibleColumns: handleVisibleColumnsChange,
-    resetToDeviceDefault: handleResetVisibleColumns,
-    currentTier: currentDeviceTier
   } = useResponsiveColumns({
     availableColumns: AVAILABLE_COLUMNS,
-    storageKey: STORAGE_KEY_COLUMNS,
   });
 
   const [selectedKeys, setSelectedKeys] = useState(new Set());
-  const [viewMode, setViewMode] = useState('table'); // 'table' | 'grid' | 'map'
+  const [viewMode, setViewMode] = useState(() => searchParams.get('view') || 'table'); // 'table' | 'grid' | 'map'
+
+  // Sync active filters, sort, and view mode to URL query params
+  useEffect(() => {
+    const next = new URLSearchParams();
+    if (search.trim()) next.set('q', search.trim());
+    if (activeTab && activeTab !== 'ALL') next.set('status', activeTab);
+    if (typeFilter && typeFilter !== 'ALL') next.set('type', typeFilter);
+    if (locationFilter && locationFilter !== 'ALL') next.set('location', locationFilter);
+    if (priceRange.min) next.set('minPrice', String(priceRange.min));
+    if (priceRange.max) next.set('maxPrice', String(priceRange.max));
+    if (sortBy && sortBy !== 'newest') next.set('sort', sortBy);
+    if (viewMode && viewMode !== 'table') next.set('view', viewMode);
+
+    if (next.toString() !== searchParams.toString()) {
+      setSearchParams(next, { replace: true });
+    }
+  }, [search, activeTab, typeFilter, locationFilter, priceRange.min, priceRange.max, sortBy, viewMode, searchParams, setSearchParams]);
   const [selectedMapPropertyId, setSelectedMapPropertyId] = useState(null);
   const [hoveredMapPropertyId, setHoveredMapPropertyId] = useState(null);
   const [reassignProp, setReassignProp] = useState(null);
@@ -402,60 +492,76 @@ export default function BrokerProperties() {
   useEffect(() => {
     fetchProperties();
     fetchProposals();
+    agentService.getAgents?.()
+      .then((list) => {
+        if (!Array.isArray(list)) return;
+        const map = {};
+        list.forEach((a) => {
+          if (a?.id) map[String(a.id)] = a;
+        });
+        setAgentsById(map);
+      })
+      .catch(() => {});
   }, [fetchProperties, fetchProposals]);
 
-  // Tab counts calculated exclusively from actual dataset
+  const dismissActivityBadge = useCallback((row) => {
+    const propId = row.id || row.listingKey;
+    if (!propId) return;
+    const lastEdit = row.lastEdit || row.custom_reso_attributes?.lastEdit || row.customResoAttributes?.lastEdit;
+    const latestIso = lastEdit?.editedAt || row.updated_at || row.updatedAt || row.created_at || row.createdAt || new Date().toISOString();
+    setSeenActivity((prev) => {
+      const next = { ...prev, [propId]: latestIso };
+      try {
+        localStorage.setItem(SEEN_ACTIVITY_STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        // Ignore storage errors
+      }
+      return next;
+    });
+  }, []);
+
+  const resolveAssignedAgentName = useCallback((row) => {
+    const key = row.list_agent_key || row.listAgentKey || row.agent_id || row.agentId;
+    if (key && agentsById[String(key)]) {
+      return agentsById[String(key)].full_name || agentsById[String(key)].name || '';
+    }
+    const candidate =
+      row.custom_reso_attributes?.credentials?.assignedAgent ||
+      row.customResoAttributes?.credentials?.assignedAgent ||
+      row.agentName ||
+      row.agent_name ||
+      row.agent?.name ||
+      '';
+    if (!key && (row.isCorporateDesk || row.is_corporate_desk || candidate === 'Human Shelter Realty Desk')) {
+      return '';
+    }
+    return candidate;
+  }, [agentsById]);
+
+  // Tab counts calculated exclusively from actual dataset (5 simplified statuses)
   const tabCounts = useMemo(() => {
-    let needsApproval = 0;
-    let pendingConfirmation = 0;
-    let actionRequired = 0;
-    let active = 0;
-    let reserved = 0;
-    let sold = 0;
     let draft = 0;
-    let inactive = 0;
+    let pendingApproval = 0;
+    let published = 0;
+    let unpublished = 0;
+    let closed = 0;
 
-    properties.forEach(p => {
-      const std = String(p.standard_status || p.standardStatus || '').toUpperCase();
-      const s = String(p.status || '').toUpperCase();
-      const asg = String(p.assignment_status || p.assignmentStatus || '').toUpperCase();
-
-      if (asg === 'PENDING_CONFIRMATION' || std === 'PENDING CONFIRMATION') {
-        pendingConfirmation++;
-      }
-      if (asg === 'REJECTED' || std === 'ACTION REQUIRED') {
-        actionRequired++;
-      }
-      if (std === 'PENDING APPROVAL') {
-        needsApproval++;
-      }
-      if (std === 'ACTIVE' || s === 'AVAILABLE') {
-        active++;
-      }
-      if (std === 'ACTIVE UNDER CONTRACT' || s === 'RESERVED' || s === 'PENDING' || s === 'UNDER CONTRACT') {
-        reserved++;
-      }
-      if (std === 'CLOSED' || s === 'SOLD') {
-        sold++;
-      }
-      if (std === 'DRAFT') {
-        draft++;
-      }
-      if (s === 'INACTIVE' || std === 'HOLD' || std === 'INACTIVE') {
-        inactive++;
-      }
+    properties.forEach((p) => {
+      const bucket = getBrokerDisplayStatus(p);
+      if (bucket === 'DRAFT') draft++;
+      else if (bucket === 'PENDING_APPROVAL') pendingApproval++;
+      else if (bucket === 'PUBLISHED') published++;
+      else if (bucket === 'UNPUBLISHED') unpublished++;
+      else if (bucket === 'CLOSED') closed++;
     });
 
     return {
       all: properties.length,
-      pendingConfirmation,
-      actionRequired,
-      needsApproval,
-      active,
-      reserved,
-      sold,
       draft,
-      inactive,
+      pendingApproval,
+      published,
+      unpublished,
+      closed,
     };
   }, [properties]);
 
@@ -489,6 +595,8 @@ export default function BrokerProperties() {
       const pLoc = (p.location || '').toLowerCase();
       const pAddr = (p.address || '').toLowerCase();
       const pCity = (p.city || '').toLowerCase();
+      const pSubdiv = (p.subdivisionName || p.subdivision_name || '').toLowerCase();
+      const pAgent = resolveAssignedAgentName(p).toLowerCase();
       const pKey = (p.listingKey || p.listing_key || '').toLowerCase();
       const pId = String(p.listingId || p.listing_id || p.id || '').toLowerCase();
 
@@ -498,56 +606,23 @@ export default function BrokerProperties() {
         pLoc.includes(q) ||
         pAddr.includes(q) ||
         pCity.includes(q) ||
+        pSubdiv.includes(q) ||
+        pAgent.includes(q) ||
         pKey.includes(q) ||
         pId.includes(q);
 
-      const pStatus = String(p.status || '').toUpperCase();
-      const pStdStatus = String(p.standard_status || p.standardStatus || '').toUpperCase();
+      const displayStatus = getBrokerDisplayStatus(p);
 
-      // Horizontal Sub-Tab filter
+      // Horizontal Sub-Tab filter (5 simplified statuses)
       let matchesTab = true;
-      const isPendingConfirm = (p.assignment_status || p.assignmentStatus) === 'PENDING_CONFIRMATION' || pStdStatus === 'PENDING CONFIRMATION';
-      const isActionReq = (p.assignment_status || p.assignmentStatus) === 'REJECTED' || pStdStatus === 'ACTION REQUIRED';
-
-      if (activeTab === 'PENDING_CONFIRMATION') {
-        matchesTab = isPendingConfirm;
-      } else if (activeTab === 'ACTION_REQUIRED') {
-        matchesTab = isActionReq;
-      } else if (activeTab === 'NEEDS_APPROVAL') {
-        matchesTab = pStdStatus === 'PENDING APPROVAL';
-      } else if (activeTab === 'ACTIVE') {
-        matchesTab = pStdStatus === 'ACTIVE' || pStatus === 'AVAILABLE';
-      } else if (activeTab === 'RESERVED' || activeTab === 'CONTRACT') {
-        matchesTab = pStdStatus === 'ACTIVE UNDER CONTRACT' || pStatus === 'RESERVED' || pStatus === 'PENDING' || pStatus === 'UNDER CONTRACT';
-      } else if (activeTab === 'SOLD' || activeTab === 'CLOSED') {
-        matchesTab = pStdStatus === 'CLOSED' || pStatus === 'SOLD';
-      } else if (activeTab === 'DRAFT') {
-        matchesTab = pStdStatus === 'DRAFT';
-      } else if (activeTab === 'INACTIVE' || activeTab === 'ARCHIVED') {
-        matchesTab = pStatus === 'INACTIVE' || pStdStatus === 'HOLD' || pStdStatus === 'INACTIVE';
+      if (activeTab && activeTab !== 'ALL') {
+        matchesTab = displayStatus === activeTab.toUpperCase();
       }
 
       // Dropdown Status Filter
       let matchesStatus = true;
       if (statusFilter !== 'ALL') {
-        const sf = statusFilter.toUpperCase();
-        if (sf === 'PENDING_CONFIRMATION') {
-          matchesStatus = isPendingConfirm;
-        } else if (sf === 'ACTION_REQUIRED') {
-          matchesStatus = isActionReq;
-        } else if (sf === 'ACTIVE') {
-          matchesStatus = pStdStatus === 'ACTIVE' || pStatus === 'AVAILABLE';
-        } else if (sf === 'NEEDS_APPROVAL') {
-          matchesStatus = pStdStatus === 'PENDING APPROVAL';
-        } else if (sf === 'RESERVED') {
-          matchesStatus = pStdStatus === 'ACTIVE UNDER CONTRACT' || pStatus === 'RESERVED' || pStatus === 'PENDING' || pStatus === 'UNDER CONTRACT';
-        } else if (sf === 'SOLD') {
-          matchesStatus = pStdStatus === 'CLOSED' || pStatus === 'SOLD';
-        } else if (sf === 'DRAFT') {
-          matchesStatus = pStdStatus === 'DRAFT' || pStatus === 'INACTIVE';
-        } else {
-          matchesStatus = pStatus === sf || pStdStatus === sf;
-        }
+        matchesStatus = displayStatus === statusFilter.toUpperCase();
       }
 
       // Dropdown Property Type Filter
@@ -562,13 +637,18 @@ export default function BrokerProperties() {
         matchesLocation = (p.city || p.location || '').toLowerCase().includes(locationFilter.toLowerCase());
       }
 
-      // Price Range Filter
+      // Price Range Filter (skip inverted bounds while inline warning is shown)
       let matchesPrice = true;
-      if (priceRange.min !== '') {
-        matchesPrice = matchesPrice && (p.price_raw || p.price || 0) >= Number(priceRange.min);
-      }
-      if (priceRange.max !== '') {
-        matchesPrice = matchesPrice && (p.price_raw || p.price || 0) <= Number(priceRange.max);
+      const minNum = priceRange.min !== '' ? Number(priceRange.min) : null;
+      const maxNum = priceRange.max !== '' ? Number(priceRange.max) : null;
+      const priceValid = !(minNum !== null && maxNum !== null && minNum > maxNum);
+      if (priceValid) {
+        if (minNum !== null && !isNaN(minNum)) {
+          matchesPrice = matchesPrice && (p.price_raw || p.price || 0) >= minNum;
+        }
+        if (maxNum !== null && !isNaN(maxNum)) {
+          matchesPrice = matchesPrice && (p.price_raw || p.price || 0) <= maxNum;
+        }
       }
 
       return matchesSearch && matchesTab && matchesStatus && matchesType && matchesLocation && matchesPrice;
@@ -583,6 +663,10 @@ export default function BrokerProperties() {
       result.sort((a, b) => (a.price_raw || a.price || 0) - (b.price_raw || b.price || 0));
     } else if (sortBy === 'title_asc') {
       result.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+    } else if (sortBy === 'oldest') {
+      result.sort((a, b) => new Date(a.created_at || a.createdAt || 0) - new Date(b.created_at || b.createdAt || 0));
+    } else if (sortBy === 'title_desc') {
+      result.sort((a, b) => (b.title || '').localeCompare(a.title || ''));
     }
 
     return result;
@@ -726,6 +810,7 @@ export default function BrokerProperties() {
     {
       id: 'property',
       header: "Property",
+      sortKey: 'title',
       className: "min-w-[280px]",
       render: (row) => {
         const title = row.title || 'Untitled property';
@@ -857,6 +942,7 @@ export default function BrokerProperties() {
     {
       id: 'price',
       header: "Price",
+      sortKey: 'price',
       className: "min-w-[130px] text-xs",
       render: (row) => {
         const rawPrice = row.price_raw ?? (typeof row.price === 'number' ? row.price : null);
@@ -883,105 +969,87 @@ export default function BrokerProperties() {
       }
     },
     {
+      id: 'assigned_agent',
+      header: "Assigned Agent",
+      className: "min-w-[155px]",
+      render: (row) => {
+        const agentName = resolveAssignedAgentName(row);
+        const asg = String(row.assignment_status || row.assignmentStatus || '').toUpperCase();
+        const initials = agentName
+          ? agentName
+              .split(/\s+/)
+              .filter(Boolean)
+              .slice(0, 2)
+              .map((w) => w[0].toUpperCase())
+              .join('')
+          : '';
+        return (
+          <div className="flex items-center gap-2 min-w-0">
+            {agentName ? (
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="size-6 rounded-full bg-[#F0FDFA] border border-[#0F766E]/20 text-[#0F766E] text-[10px] font-bold flex items-center justify-center shrink-0">
+                  {initials || 'AG'}
+                </span>
+                <div className="min-w-0">
+                  <span className="text-xs font-medium text-[#1E293B] truncate block max-w-[110px]" title={agentName}>
+                    {agentName}
+                  </span>
+                  {asg === 'PENDING_CONFIRMATION' && (
+                    <span className="text-[10px] text-amber-700 block leading-tight">Awaiting</span>
+                  )}
+                  {asg === 'REJECTED' && (
+                    <span className="text-[10px] text-rose-600 block leading-tight">Declined</span>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                Unassigned
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setReassignProp(row);
+                setIsReassignModalOpen(true);
+              }}
+              className="text-[10px] font-semibold text-[#0F766E] hover:text-[#115E59] bg-teal-50 hover:bg-teal-100 border border-teal-200 px-2 py-0.5 rounded-md cursor-pointer transition-colors shrink-0"
+              title={agentName ? 'Reassign agent' : 'Assign agent'}
+            >
+              {agentName ? 'Reassign' : 'Assign'}
+            </button>
+          </div>
+        );
+      }
+    },
+    {
       id: 'status',
       header: "Status",
-      className: "min-w-[125px]",
+      className: "min-w-[130px]",
       render: (row) => {
-        const std = String(row.standard_status || row.standardStatus || row.status || '').toUpperCase();
-        const isPendingConfirm = (row.assignment_status || row.assignmentStatus) === 'PENDING_CONFIRMATION' || std === 'PENDING CONFIRMATION';
-        const isActionReq = (row.assignment_status || row.assignmentStatus) === 'REJECTED' || std === 'ACTION REQUIRED';
-        const isPendingApproval = std === 'PENDING APPROVAL';
-        const isActive = std === 'ACTIVE' || std === 'AVAILABLE';
-        const isUnderContract = std === 'ACTIVE UNDER CONTRACT' || std === 'UNDER CONTRACT';
-        const isReserved = std === 'RESERVED';
-        const isPending = std === 'PENDING';
-        const isClosed = std === 'CLOSED' || std === 'SOLD';
-        const isDraft = std === 'DRAFT' || std === 'INACTIVE';
-        const isKnown = isActive || isPendingApproval || isUnderContract || isReserved || isPending || isClosed || isDraft || isPendingConfirm || isActionReq;
+        const displayStatus = getBrokerDisplayStatus(row);
+        const badgeStyles = {
+          DRAFT: { label: 'Draft', pill: 'bg-slate-50 text-slate-600 border-slate-200', dot: 'bg-slate-400' },
+          PENDING_APPROVAL: { label: 'Pending Approval', pill: 'bg-amber-50 text-amber-800 border-amber-200', dot: 'bg-amber-500 animate-pulse' },
+          PUBLISHED: { label: 'Published', pill: 'bg-teal-50 text-teal-700 border-teal-200', dot: 'bg-teal-600' },
+          UNPUBLISHED: { label: 'Unpublished', pill: 'bg-slate-100 text-slate-600 border-slate-200', dot: 'bg-slate-400' },
+          CLOSED: { label: 'Closed', pill: 'bg-slate-100 text-slate-700 border-slate-300', dot: 'bg-slate-500' },
+        };
+        const cfg = badgeStyles[displayStatus] || badgeStyles.PUBLISHED;
 
         return (
           <div className="flex items-center gap-2">
-            {isPendingConfirm && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 text-amber-800 border border-amber-200">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                Pending Confirmation
-              </span>
-            )}
-            {isActionReq && (
-              <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-rose-50 text-rose-800 border border-rose-200">
-                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                  Action Required
-                </span>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setReassignProp(row);
-                    setIsReassignModalOpen(true);
-                  }}
-                  className="text-[10px] font-semibold text-[#0F766E] hover:text-[#115E59] bg-teal-50 hover:bg-teal-100 border border-teal-200 px-2 py-0.5 rounded-md cursor-pointer transition-colors shadow-2xs"
-                  title="Reassign to another agent"
-                >
-                  Reassign
-                </button>
-              </div>
-            )}
-            {!isPendingConfirm && !isActionReq && isActive && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-teal-50 text-teal-700 border border-teal-200">
-                <span className="w-1.5 h-1.5 rounded-full bg-teal-600" />
-                Active
-              </span>
-            )}
-            {isPendingApproval && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 text-amber-800 border border-amber-200">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                Needs Approval
-              </span>
-            )}
-            {isUnderContract && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 text-amber-700 border border-amber-200/60">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                Under Contract
-              </span>
-            )}
-            {isReserved && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 text-amber-700 border border-amber-200/60">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                Reserved
-              </span>
-            )}
-            {isPending && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 text-amber-700 border border-amber-200/60">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                Pending
-              </span>
-            )}
-            {isClosed && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-300">
-                <span className="w-1.5 h-1.5 rounded-full bg-slate-500" />
-                Closed / Sold
-              </span>
-            )}
-            {isDraft && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-50 text-slate-600 border border-slate-200">
-                <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-                Draft
-              </span>
-            )}
-            {!isKnown && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200" aria-label="Unknown status">
-                <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-                Unknown
-              </span>
-            )}
-
-            {isPendingApproval && (
+            <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium border ${cfg.pill}`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+              {cfg.label}
+            </span>
+            {displayStatus === 'PENDING_APPROVAL' && (
               <button
                 type="button"
                 onClick={(e) => handleInlineApprove(e, row)}
                 className="text-[10px] font-medium text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded-md cursor-pointer transition-colors"
-                title="Approve and activate"
+                title="Approve and publish"
               >
                 Approve
               </button>
@@ -993,16 +1061,48 @@ export default function BrokerProperties() {
     {
       id: 'date_added',
       header: "Date Added",
-      className: "min-w-[130px]",
+      sortKey: 'date',
+      className: "min-w-[140px]",
       render: (row) => {
         const rawDate = row.created_at || row.createdAt;
         const calDate = formatPhilippineCalendarDate(rawDate);
         const relDate = formatPhilippineRelativeTime(rawDate);
+        const activityBadge = getDateActivityBadge(row, seenActivity);
+
         return (
-          <div>
-            <p className="text-xs text-[#1E293B] font-medium leading-snug" title={`Philippine Standard Time: ${calDate}`}>
-              {calDate}
-            </p>
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-1.5">
+              <p className="text-xs text-[#1E293B] font-medium leading-snug" title={`Philippine Standard Time: ${calDate}`}>
+                {calDate}
+              </p>
+              {activityBadge === 'NEW' && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    dismissActivityBadge(row);
+                  }}
+                  className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-[#F0FDFA] text-[#0F766E] border border-[#0F766E]/25 hover:bg-[#CCFBF1] transition-colors cursor-pointer"
+                  title="Dismiss New badge"
+                >
+                  New
+                </button>
+              )}
+              {activityBadge === 'EDITED' && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    dismissActivityBadge(row);
+                    setEditDetailsTarget(row);
+                  }}
+                  className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors cursor-pointer"
+                  title="View edit details"
+                >
+                  Edited
+                </button>
+              )}
+            </div>
             <p className="text-[11px] text-[#64748B] leading-tight" title={relDate}>
               {relDate}
             </p>
@@ -1283,79 +1383,7 @@ export default function BrokerProperties() {
             <Plus className="w-4 h-4 stroke-[2.5]" />
             <span className="font-medium">Add New Property</span>
           </Link>
-
-          <Link
-            to="/broker/properties/studio"
-            className="h-9 sm:h-10 px-3 sm:px-4 flex items-center gap-1.5 rounded-lg border border-[#0F766E]/40 bg-teal-50/70 hover:bg-teal-100 text-[#0F766E] text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
-            title="Open Cadastral Multi-Lot Map Studio"
-          >
-            <MapIcon className="w-4 h-4 stroke-[2.2]" />
-            <span>Map Studio</span>
-          </Link>
         </div>
-      </div>
-
-      {/* Top 4-Card Executive KPI Strip */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <Card data-testid="broker-card" className="bg-white dark:bg-slate-900 border-[#E2E8F0] dark:border-slate-800 shadow-xs">
-          <CardHeader className="pb-2">
-            <CardDescription className="text-xs font-bold uppercase tracking-wider text-[#64748B] flex items-center justify-between">
-              <span>Total Listings</span>
-              <Building2 className="size-4 text-[#0F766E]" />
-            </CardDescription>
-            <CardTitle className="text-2xl font-bold font-mono tabular-nums text-[#1E293B] dark:text-slate-100">
-              {tabCounts.all}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <p className="text-xs text-[#64748B]">All properties in portfolio</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white dark:bg-slate-900 border-[#E2E8F0] dark:border-slate-800 shadow-xs">
-          <CardHeader className="pb-2">
-            <CardDescription className="text-xs font-bold uppercase tracking-wider text-[#64748B] flex items-center justify-between">
-              <span>Active Listings</span>
-              <CheckCircle2 className="size-4 text-emerald-600" />
-            </CardDescription>
-            <CardTitle className="text-2xl font-bold font-mono tabular-nums text-[#0F766E]">
-              {tabCounts.active}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <p className="text-xs text-[#64748B]">Live on public marketplace</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white dark:bg-slate-900 border-[#E2E8F0] dark:border-slate-800 shadow-xs">
-          <CardHeader className="pb-2">
-            <CardDescription className="text-xs font-bold uppercase tracking-wider text-[#64748B] flex items-center justify-between">
-              <span>Needs Approval</span>
-              <AlertCircle className="size-4 text-amber-600" />
-            </CardDescription>
-            <CardTitle className="text-2xl font-bold font-mono tabular-nums text-amber-600">
-              {tabCounts.needsApproval}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <p className="text-xs text-[#64748B]">Awaiting broker sign-off</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white dark:bg-slate-900 border-[#E2E8F0] dark:border-slate-800 shadow-xs">
-          <CardHeader className="pb-2">
-            <CardDescription className="text-xs font-bold uppercase tracking-wider text-[#64748B] flex items-center justify-between">
-              <span>Edit Proposals</span>
-              <Edit3 className="size-4 text-[#0F766E]" />
-            </CardDescription>
-            <CardTitle className="text-2xl font-bold font-mono tabular-nums text-[#1E293B] dark:text-slate-100">
-              {proposals.length}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <p className="text-xs text-[#64748B]">Pending consultant edits</p>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Property Filter & Search Toolbar */}
@@ -1366,15 +1394,11 @@ export default function BrokerProperties() {
         onStatusTabChange={setActiveTab}
         statusCounts={{
           all: tabCounts.all,
-          active: tabCounts.active,
-          needsApproval: tabCounts.needsApproval,
-          proposals: proposals.length,
-          pendingConfirmation: tabCounts.pendingConfirmation,
-          actionRequired: tabCounts.actionRequired,
-          reserved: tabCounts.reserved,
-          sold: tabCounts.sold,
           draft: tabCounts.draft,
-          inactive: tabCounts.inactive
+          pendingApproval: tabCounts.pendingApproval,
+          published: tabCounts.published,
+          unpublished: tabCounts.unpublished,
+          closed: tabCounts.closed,
         }}
         selectedType={typeFilter}
         onTypeChange={setTypeFilter}
@@ -1389,11 +1413,6 @@ export default function BrokerProperties() {
         onResetFilters={handleClearFilters}
         totalCount={properties.length}
         filteredCount={filteredProperties.length}
-        availableColumns={AVAILABLE_COLUMNS}
-        visibleColumns={visibleColumnKeys}
-        onVisibleColumnsChange={handleVisibleColumnsChange}
-        onResetColumns={handleResetVisibleColumns}
-        currentTier={currentDeviceTier}
       />
 
       {/* Main Data Table or Neutral Empty / Loading States */}
@@ -1425,64 +1444,93 @@ export default function BrokerProperties() {
           <TableSkeleton rows={6} />
         )
       ) : error && properties.length === 0 ? (
-        <div className="bg-white rounded-lg border border-red-200 bg-red-50/20 p-12 text-center space-y-4 shadow-xs">
-          <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto text-red-600">
-            <AlertCircle className="w-6 h-6" />
+        <Alert variant="destructive" className="rounded-xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <AlertCircle className="size-5" />
+          <div className="flex-1">
+            <AlertTitle className="text-sm font-semibold">Failed to load property listings</AlertTitle>
+            <AlertDescription className="text-xs mt-1">{error}</AlertDescription>
           </div>
-          <div>
-            <h3 className="text-sm font-bold text-[#1E293B]">Failed to load property listings</h3>
-            <p className="text-xs text-[#64748B] mt-1 max-w-sm mx-auto">
-              {error}
-            </p>
-          </div>
-          <button
+          <Button
             type="button"
             onClick={() => fetchProperties()}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-semibold rounded-lg shadow-2xs transition-colors cursor-pointer"
+            className="h-10 px-4 rounded-lg normal-case tracking-normal text-xs font-semibold shrink-0"
           >
-            <RotateCw className="w-4 h-4" />
+            <RotateCw data-icon="inline-start" />
             <span>Retry Connection</span>
-          </button>
-        </div>
+          </Button>
+        </Alert>
       ) : properties.length === 0 ? (
-        <div className="bg-white rounded-lg border border-[#E2E8F0] p-12 text-center space-y-4 shadow-xs">
-          <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto text-slate-400">
-            <Building2 className="w-6 h-6" />
-          </div>
-          <div>
-            <h3 className="text-sm font-bold text-[#1E293B]">No property listings yet</h3>
-            <p className="text-xs text-[#64748B] mt-1 max-w-sm mx-auto">
-              No property records currently exist in the database. Add your first listing to populate the directory.
-            </p>
-          </div>
-          <Link
-            to="/broker/properties/create"
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#FF6B6B] hover:bg-[#EE5A5A] text-[#1E293B] text-xs font-semibold rounded-lg shadow-2xs transition-colors cursor-pointer"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Create First Listing</span>
-          </Link>
-        </div>
+        <Empty className="bg-white border border-dashed border-[#CBD5E1] rounded-xl p-10 shadow-xs">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <Building2 />
+            </EmptyMedia>
+            <EmptyTitle>No property listings yet</EmptyTitle>
+            <EmptyDescription>Add your first property listing to begin managing your firm&apos;s inventory.</EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button asChild variant="coral" className="h-10 px-4 rounded-lg normal-case tracking-normal text-xs font-semibold">
+              <Link to="/broker/properties/create">
+                <Plus data-icon="inline-start" />
+                <span>Add New Listing</span>
+              </Link>
+            </Button>
+          </EmptyContent>
+        </Empty>
       ) : filteredProperties.length === 0 ? (
-        <div className="bg-white rounded-lg border border-[#E2E8F0] p-12 text-center space-y-4 shadow-xs">
-          <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto text-slate-400">
-            <Search className="w-6 h-6" />
-          </div>
-          <div>
-            <h3 className="text-sm font-bold text-[#1E293B]">No properties match your filter criteria</h3>
-            <p className="text-xs text-[#64748B] mt-1 max-w-sm mx-auto">
-              Try adjusting or clearing your search term and filters to see available listings.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={handleClearFilters}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-[#1E293B] text-xs font-semibold rounded-lg transition-colors cursor-pointer"
-          >
-            <SlidersHorizontal className="w-4 h-4" />
-            <span>Reset All Filters</span>
-          </button>
-        </div>
+        <Empty className="bg-white border border-dashed border-[#CBD5E1] rounded-xl p-10 shadow-xs">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <Search />
+            </EmptyMedia>
+            <EmptyTitle>No properties match your filter criteria</EmptyTitle>
+            <EmptyDescription>
+              Try removing a strict filter below or reset all filters to see available listings.
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              {search.trim() !== '' && (
+                <Button type="button" variant="outline" size="sm" onClick={() => setSearch('')} className="normal-case tracking-normal">
+                  Clear search &quot;{search.trim()}&quot;
+                  <X data-icon="inline-end" />
+                </Button>
+              )}
+              {activeTab !== 'ALL' && (
+                <Button type="button" variant="outline" size="sm" onClick={() => setActiveTab('ALL')} className="normal-case tracking-normal">
+                  Clear status filter
+                  <X data-icon="inline-end" />
+                </Button>
+              )}
+              {typeFilter !== 'ALL' && (
+                <Button type="button" variant="outline" size="sm" onClick={() => setTypeFilter('ALL')} className="normal-case tracking-normal">
+                  Clear type: {typeFilter}
+                  <X data-icon="inline-end" />
+                </Button>
+              )}
+              {locationFilter !== 'ALL' && (
+                <Button type="button" variant="outline" size="sm" onClick={() => setLocationFilter('ALL')} className="normal-case tracking-normal">
+                  Clear location: {locationFilter}
+                  <X data-icon="inline-end" />
+                </Button>
+              )}
+              {(priceRange.min || priceRange.max) && (
+                <Button type="button" variant="outline" size="sm" onClick={() => setPriceRange({ min: '', max: '' })} className="normal-case tracking-normal">
+                  Clear price range
+                  <X data-icon="inline-end" />
+                </Button>
+              )}
+              <Button
+                type="button"
+                onClick={handleClearFilters}
+                className="h-10 px-4 rounded-lg normal-case tracking-normal text-xs font-semibold"
+              >
+                <SlidersHorizontal data-icon="inline-start" />
+                <span>Reset All Filters</span>
+              </Button>
+            </div>
+          </EmptyContent>
+        </Empty>
       ) : (
         viewMode === 'map' ? (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start" data-lenis-prevent="true" data-testid="cadastral-split-view">
@@ -1674,6 +1722,8 @@ export default function BrokerProperties() {
             selectedKeys={selectedKeys}
             onToggleSelect={handleToggleSelect}
             onToggleSelectAll={handleToggleSelectAll}
+            sortBy={sortBy}
+            onSortChange={setSortBy}
             onRowClick={(row) => navigate(`/broker/properties/${row.id || row.listingKey || row.listingId}/edit`)}
             emptyMessage="No properties match your filter criteria."
           />
@@ -1801,6 +1851,82 @@ export default function BrokerProperties() {
           showToast('Listing successfully reassigned. Waiting for new agent confirmation.');
         }}
       />
+      {/* Edit Details Dialog */}
+      <Dialog open={Boolean(editDetailsTarget)} onOpenChange={(open) => !open && setEditDetailsTarget(null)}>
+        <DialogContent className="max-w-lg bg-white border-[#E2E8F0] rounded-xl">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-[#1E293B]">
+              Listing Edit Details
+            </DialogTitle>
+            <DialogDescription className="text-xs text-[#64748B]">
+              {editDetailsTarget?.title || 'Property listing'}
+            </DialogDescription>
+          </DialogHeader>
+          {(() => {
+            const le =
+              editDetailsTarget?.lastEdit ||
+              editDetailsTarget?.custom_reso_attributes?.lastEdit ||
+              editDetailsTarget?.customResoAttributes?.lastEdit ||
+              {};
+            const editedAt = le.editedAt || editDetailsTarget?.updated_at || editDetailsTarget?.updatedAt;
+            const editorLabel = le.editedByName
+              ? `${le.editedByName}${le.editedByRole ? ` (${le.editedByRole})` : ''}`
+              : 'Broker / System';
+            const changes = Array.isArray(le.changes) ? le.changes : [];
+            return (
+              <div className="flex flex-col gap-4 text-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
+                  <div>
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-[#64748B] block">
+                      Changed By
+                    </span>
+                    <span className="text-xs font-semibold text-[#1E293B]">{editorLabel}</span>
+                  </div>
+                  <div>
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-[#64748B] block">
+                      Date &amp; Time
+                    </span>
+                    <span className="text-xs font-semibold text-[#1E293B]">
+                      {formatPhilippineDateTime(editedAt)}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <span className="text-xs font-semibold text-[#1E293B]">Changes Made</span>
+                  {changes.length > 0 ? (
+                    <div className="divide-y divide-[#E2E8F0] rounded-lg border border-[#E2E8F0] overflow-hidden">
+                      {changes.map((c, idx) => (
+                        <div key={`${c.field}-${idx}`} className="px-3 py-2 text-xs flex flex-col gap-0.5 bg-white">
+                          <span className="font-semibold text-[#1E293B]">{c.field}</span>
+                          <span className="text-[#64748B]">
+                            {String(c.from ?? '—')} → <span className="text-[#0F766E] font-medium">{String(c.to ?? '—')}</span>
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-[#64748B] p-3 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
+                      Updated listing details
+                    </p>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setEditDetailsTarget(null)}
+              className="min-h-10 rounded-lg border-[#E2E8F0]"
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Toaster />
     </div>
   );

@@ -163,6 +163,7 @@ export default function BrokerDashboard() {
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
             <KpiCard
               variant="trend"
+              statusVariant="primary"
               title="Closed Sales"
               value={`₱${(totalSalesValue / 1000000).toFixed(1)}M`}
               icon={Banknote}
@@ -181,14 +182,14 @@ export default function BrokerDashboard() {
             />
 
             <KpiCard
-              variant="breakdown"
+              variant="trend"
+              statusVariant="success"
               title="Property Listings"
-              value={totalProperties}
-              segments={[
-                { label: 'Active', value: availableProperties, color: 'emerald' },
-                { label: 'Reserved', value: reservedProperties, color: 'amber' },
-                { label: 'Sold', value: soldProperties, color: 'slate' },
-              ]}
+              value={availableProperties}
+              icon={Building2}
+              trend={`${totalProperties ? Math.round((availableProperties / totalProperties) * 100) : 0}% active`}
+              trendDirection="up"
+              footerText={`${reservedProperties} reserved · ${soldProperties} sold`}
               actionSlot={
                 <Link
                   to="/broker/properties"
@@ -201,12 +202,13 @@ export default function BrokerDashboard() {
             />
 
             <KpiCard
-              variant="action"
+              variant="trend"
               title="Leads & Inquiries"
               value={totalInquiries}
+              icon={Mail}
               statusLabel={newInquiries > 0 ? `${newInquiries} New` : undefined}
               statusVariant="coral"
-              helperText={`${unresolvedInquiries} open · ${upcomingAppointments} upcoming tours`}
+              footerText={`${unresolvedInquiries} open · ${upcomingAppointments} upcoming tours`}
               actionSlot={
                 <Link
                   to="/broker/inquiries"
@@ -219,10 +221,11 @@ export default function BrokerDashboard() {
             />
 
             <KpiCard
-              variant="action"
+              variant="trend"
               title="Sales Team"
               value={totalAgents}
-              statusLabel={pendingAgentVerification > 0 ? `${pendingAgentVerification} Pending Review` : undefined}
+              icon={Users}
+              statusLabel={pendingAgentVerification > 0 ? `${pendingAgentVerification} Pending` : undefined}
               statusVariant="warning"
               footerText="Registered property consultants"
               actionSlot={

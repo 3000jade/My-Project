@@ -6,6 +6,7 @@ import { NotificationService } from './notification.service';
 import { GmailService } from './gmail.service';
 import { AgentService } from './agent.service';
 import { ProfileService } from './profile.service';
+import { AuditService } from './audit.service';
 import type {
   StandardStatus,
   MediaItem,
@@ -516,6 +517,7 @@ export class PropertyService {
       images: propertyImages,
       publicRemarks: row.public_remarks || null,
       customAttributes: row.custom_reso_attributes || {},
+      customResoAttributes: row.custom_reso_attributes || {},
       architecturalStyle: row.architectural_style || null,
       standardStatus: row.standard_status || (row.status === 'available' ? 'Active' : row.status === 'pending' ? 'Pending' : 'Closed'),
       status: row.status || 'available',
@@ -543,8 +545,8 @@ export class PropertyService {
       updatedAt: row.updated_at || new Date().toISOString(),
       createdBy: row.created_by || row.custom_reso_attributes?.created_by || null,
       listAgentKey: row.list_agent_key || null,
-      agentName: 'Elena Rossi',
-      agentId: row.list_agent_key || row.created_by || 'agent-1',
+      agentName: row.agent_name || row.custom_reso_attributes?.credentials?.assignedAgent || undefined,
+      agentId: row.list_agent_key || null,
       subdivisionProjectId: row.subdivision_project_id || null,
       subdivisionLotId: row.subdivision_lot_id || null,
       subdivision_project_id: row.subdivision_project_id || null,
@@ -709,8 +711,31 @@ export class PropertyService {
             }
           }
 
+          const agentIds = Array.from(
+            new Set(data.map((r: any) => r.list_agent_key).filter((id: any) => isValidUuid(id)))
+          );
+          const agentNameMap: Record<string, string> = {};
+          if (agentIds.length > 0) {
+            try {
+              const { data: agentProfiles } = await supabaseAdmin
+                .from('profiles')
+                .select('id, full_name')
+                .in('id', agentIds);
+              for (const prof of agentProfiles || []) {
+                if (prof?.id && prof?.full_name) {
+                  agentNameMap[prof.id] = prof.full_name;
+                }
+              }
+            } catch (agentLookupErr: any) {
+              logger.warn('[PropertyService] Failed to batch fetch agent profiles:', agentLookupErr.message);
+            }
+          }
+
           const mapped: PropertyItem[] = data.map((row: any) => {
             const item = PropertyService.mapDatabaseRow(row, imageMap);
+            if (row.list_agent_key && agentNameMap[row.list_agent_key]) {
+              item.agentName = agentNameMap[row.list_agent_key];
+            }
             return this.redactConfidential(item, userRole, userId);
           });
 
@@ -944,8 +969,8 @@ export class PropertyService {
             updatedAt: data.updated_at,
             createdBy: data.created_by || data.custom_reso_attributes?.created_by || data.custom_reso_attributes?.createdBy || null,
             listAgentKey: data.list_agent_key,
-            agentName: 'Elena Rossi',
-            agentId: data.list_agent_key || data.created_by || 'agent-1',
+            agentName: data.agent_name || data.custom_reso_attributes?.credentials?.assignedAgent || undefined,
+            agentId: data.list_agent_key || null,
           };
 
           // Fetch property_images (Photos) using supabaseAdmin to ensure visibility across all user roles
@@ -1209,22 +1234,22 @@ export class PropertyService {
         coordinates: (coordinates && coordinates.lat !== undefined && coordinates.lng !== undefined) ? coordinates : undefined,
       },
       specs: {
-        beds: Number(data.specs?.beds) || 1,
-        baths: Number(data.specs?.baths) || 1,
-        bedroomsTotal: Number(data.specs?.bedroomsTotal ?? data.specs?.beds) || 1,
-        bathroomsTotalInteger: Number(data.specs?.bathroomsTotalInteger ?? data.specs?.baths) || 1,
-        bathroomsFull: Number(data.specs?.bathroomsFull) || 1,
+        beds: (data.specs?.beds !== undefined && data.specs?.beds !== null) ? Number(data.specs.beds) : ((data.specs?.bedroomsTotal !== undefined && data.specs?.bedroomsTotal !== null) ? Number(data.specs.bedroomsTotal) : 0),
+        baths: (data.specs?.baths !== undefined && data.specs?.baths !== null) ? Number(data.specs.baths) : ((data.specs?.bathroomsTotalInteger !== undefined && data.specs?.bathroomsTotalInteger !== null) ? Number(data.specs.bathroomsTotalInteger) : 0),
+        bedroomsTotal: (data.specs?.bedroomsTotal ?? data.specs?.beds) !== undefined && (data.specs?.bedroomsTotal ?? data.specs?.beds) !== null ? Number(data.specs?.bedroomsTotal ?? data.specs?.beds) : 0,
+        bathroomsTotalInteger: (data.specs?.bathroomsTotalInteger ?? data.specs?.baths) !== undefined && (data.specs?.bathroomsTotalInteger ?? data.specs?.baths) !== null ? Number(data.specs?.bathroomsTotalInteger ?? data.specs?.baths) : 0,
+        bathroomsFull: Number(data.specs?.bathroomsFull) || 0,
         bathroomsHalf: Number(data.specs?.bathroomsHalf) || 0,
-        storiesTotal: Number(data.specs?.storiesTotal) || 1,
-        sqft: Number(data.specs?.sqft) || 100,
-        livingArea: Number(data.specs?.livingArea ?? data.specs?.sqft) || 100,
+        storiesTotal: Number(data.specs?.storiesTotal) || 0,
+        sqft: (data.specs?.sqft !== undefined && data.specs?.sqft !== null) ? Number(data.specs.sqft) : 0,
+        livingArea: (data.specs?.livingArea ?? data.specs?.sqft) !== undefined && (data.specs?.livingArea ?? data.specs?.sqft) !== null ? Number(data.specs?.livingArea ?? data.specs?.sqft) : undefined,
         livingAreaUnits: data.specs?.livingAreaUnits || 'Square Meters',
         lotSizeArea: data.specs?.lotSizeArea ? Number(data.specs.lotSizeArea) : undefined,
         lotSizeUnits: data.specs?.lotSizeUnits || 'Square Meters',
         propertyType: data.specs?.propertyType || data.propertyType || 'Residential',
         propertyTypeId: Number(data.propertyTypeId || data.property_type_id || data.specs?.propertyTypeId || data.specs?.property_type_id || 1),
         propertySubType: data.specs?.propertySubType || 'Single Family Residence',
-        yearBuilt: data.specs?.yearBuilt || new Date().getFullYear(),
+        yearBuilt: data.specs?.yearBuilt || undefined,
         parkingTotal: Number(data.specs?.parkingTotal) || 0,
         parkingCovered: Number(data.specs?.parkingCovered) || 0,
         parkingOpen: Number(data.specs?.parkingOpen) || 0,
@@ -1327,11 +1352,9 @@ export class PropertyService {
           title: newProperty.title,
           price: newProperty.price,
           address: newProperty.location.address,
-          subdivision_name: newProperty.location.subdivisionName,
           building_name: newProperty.location.buildingName || newProperty.location.building_name || null,
           city: newProperty.location.city,
           state_or_province: newProperty.location.stateOrProvince,
-          postal_code: newProperty.location.postalCode,
           region: newProperty.location.region,
           region_psgc_code: newProperty.location.region_psgc_code,
           province_psgc_code: newProperty.location.province_psgc_code,
@@ -1340,14 +1363,15 @@ export class PropertyService {
           barangay_psgc_code: newProperty.location.barangay_psgc_code,
           latitude: newProperty.location.coordinates?.lat,
           longitude: newProperty.location.coordinates?.lng,
+          beds: newProperty.specs.beds ?? 0,
+          baths: newProperty.specs.baths ?? 0,
+          sqft: newProperty.specs.sqft ?? 0,
           bedrooms_total: newProperty.specs.bedroomsTotal,
           bathrooms_total_integer: newProperty.specs.bathroomsTotalInteger,
-          stories_total: newProperty.specs.storiesTotal,
           living_area: newProperty.specs.livingArea,
           lot_size_area: newProperty.specs.lotSizeArea,
           property_type: newProperty.specs.propertyType || 'Residential',
           property_sub_type: newProperty.specs.propertySubType,
-          year_built: newProperty.specs.yearBuilt,
           parking_total: newProperty.specs.parkingTotal,
           public_remarks: newProperty.publicRemarks,
           custom_reso_attributes: {
@@ -1362,18 +1386,11 @@ export class PropertyService {
           },
           standard_status: newProperty.standardStatus,
           status: ['available', 'pending', 'sold'].includes(String(newProperty.status).toLowerCase()) ? String(newProperty.status).toLowerCase() : 'pending',
-          assignment_status: newProperty.assignmentStatus,
-          assignment_declined_reason: newProperty.assignmentDeclinedReason,
-          assigned_at: newProperty.assignedAt,
-          agent_confirmed_at: newProperty.agentConfirmedAt,
-          is_published: newProperty.isPublished,
           is_featured: newProperty.isFeatured ?? false,
           transaction_type: newProperty.specs.transactionType || 'For Sale',
           property_condition: newProperty.specs.propertyCondition,
           created_by: resolvedCreatedBy,
           list_agent_key: resolvedListAgentKey,
-          ...(Array.isArray(newProperty.images) && newProperty.images.length > 0 ? { images: newProperty.images } : {}),
-          ...(newProperty.mainImage ? { main_image: newProperty.mainImage } : {}),
         };
 
         let { data: inserted, error } = await supabaseAdmin
@@ -1382,34 +1399,14 @@ export class PropertyService {
           .select()
           .single();
 
-        if (error && (error.code === 'PGRST204' || error.code === '42703' || error.code === '23503' || String(error.message).includes('column') || String(error.message).includes('assignment_status') || String(error.message).includes('fkey'))) {
-          logger.warn('[PropertyService] Retrying properties insert with sanitized payload:', error.message);
-          const safePayload = { ...insertPayload };
-          if (error.code === '23503' || String(error.message).includes('created_by') || String(error.message).includes('fkey')) {
-            safePayload.created_by = null;
-          }
-          delete safePayload.assignment_status;
-          delete safePayload.assignment_declined_reason;
-          delete safePayload.assigned_at;
-          delete safePayload.agent_confirmed_at;
-          delete safePayload.is_published;
-          delete safePayload.images;
-          delete safePayload.main_image;
-          let retry = await supabaseAdmin
+        if (error && (error.code === '23503' || String(error.message).includes('created_by') || String(error.message).includes('fkey'))) {
+          logger.warn('[PropertyService] Retrying properties insert with created_by cleared:', error.message);
+          const safePayload = { ...insertPayload, created_by: null };
+          const retry = await supabaseAdmin
             .from('properties')
             .insert(safePayload)
             .select()
             .single();
-
-          // If foreign key constraint failed on retry, clear created_by and retry once more
-          if (retry.error && (retry.error.code === '23503' || String(retry.error.message).includes('fkey') || String(retry.error.message).includes('created_by'))) {
-            safePayload.created_by = null;
-            retry = await supabaseAdmin
-              .from('properties')
-              .insert(safePayload)
-              .select()
-              .single();
-          }
 
           inserted = retry.data;
           error = retry.error;
@@ -1688,6 +1685,56 @@ export class PropertyService {
       ? deriveLegacyStatus(data.standardStatus || data.standard_status, data.status)
       : deriveLegacyStatus(existing.standardStatus, existing.status);
 
+    const nowIso = new Date().toISOString();
+
+    const diffFields: Array<{ field: string; label: string; before: any; after: any }> = [
+      { field: 'title', label: 'Title', before: existing.title, after: data.title !== undefined ? data.title : existing.title },
+      { field: 'price', label: 'Price', before: existing.price, after: data.price !== undefined ? Number(data.price) : existing.price },
+      { field: 'standardStatus', label: 'Status', before: existing.standardStatus, after: derived.standardStatus },
+      { field: 'address', label: 'Address', before: existing.location?.address, after: mergedLocation.address },
+      { field: 'city', label: 'City', before: existing.location?.city, after: mergedLocation.city },
+      { field: 'bedrooms', label: 'Bedrooms', before: existing.specs?.bedroomsTotal ?? existing.specs?.beds, after: data.specs?.bedroomsTotal ?? data.specs?.beds ?? existing.specs?.bedroomsTotal ?? existing.specs?.beds },
+      { field: 'bathrooms', label: 'Bathrooms', before: existing.specs?.bathroomsTotalInteger ?? existing.specs?.baths, after: data.specs?.bathroomsTotalInteger ?? data.specs?.baths ?? existing.specs?.bathroomsTotalInteger ?? existing.specs?.baths },
+      { field: 'livingArea', label: 'Floor Area', before: existing.specs?.livingArea, after: data.specs?.livingArea ?? existing.specs?.livingArea },
+      { field: 'lotSizeArea', label: 'Lot Area', before: existing.specs?.lotSizeArea, after: data.specs?.lotSizeArea ?? existing.specs?.lotSizeArea },
+      { field: 'propertyType', label: 'Property Type', before: existing.specs?.propertyType, after: data.specs?.propertyType ?? existing.specs?.propertyType },
+      { field: 'assignedAgent', label: 'Assigned Agent', before: existing.listAgentKey || existing.agentName || 'Unassigned', after: (data.listAgentKey ?? data.list_agent_key ?? existing.listAgentKey) || 'Unassigned' },
+    ];
+    const recordedChanges = diffFields
+      .filter((d) => String(d.before ?? '') !== String(d.after ?? ''))
+      .map(({ label, before, after }) => ({
+        field: label,
+        from: before ?? '—',
+        to: after ?? '—',
+      }));
+
+    let editorName = userRole === 'admin' ? 'Admin' : 'Broker';
+    if (userId) {
+      try {
+        const editorProfile = await ProfileService.getProfile(userId, (userRole as any) || 'broker');
+        const resolvedName = (editorProfile as any)?.full_name || (editorProfile as any)?.name;
+        if (resolvedName) {
+          editorName = resolvedName;
+        }
+      } catch {
+        // Fallback to role label
+      }
+    }
+
+    const lastEditRecord = {
+      editedAt: nowIso,
+      editedById: userId || null,
+      editedByName: editorName,
+      editedByRole: userRole || 'broker',
+      changes: recordedChanges,
+    };
+
+    const mergedCustomAttrs = {
+      ...(existing.customResoAttributes || {}),
+      ...(data.customResoAttributes || data.custom_reso_attributes || {}),
+      lastEdit: lastEditRecord,
+    };
+
     const updated: PropertyItem = {
       ...existing,
       ...data,
@@ -1697,12 +1744,13 @@ export class PropertyService {
       location: mergedLocation,
       standardStatus: derived.standardStatus,
       status: derived.status,
+      customResoAttributes: mergedCustomAttrs,
       isPublished: data.isPublished !== undefined
         ? Boolean(data.isPublished)
         : (data.is_published !== undefined
           ? Boolean(data.is_published)
           : derived.isPublished),
-      updatedAt: new Date().toISOString(),
+      updatedAt: nowIso,
     };
 
     if (isSupabaseConfigured) {
@@ -1715,12 +1763,11 @@ export class PropertyService {
             standard_status: updated.standardStatus,
             status: updated.status,
             is_published: updated.isPublished,
+            custom_reso_attributes: mergedCustomAttrs,
             address: updated.location.address,
-            subdivision_name: updated.location.subdivisionName,
             building_name: updated.location.buildingName || updated.location.building_name || null,
             city: updated.location.city,
             state_or_province: updated.location.stateOrProvince,
-            postal_code: updated.location.postalCode,
             region: updated.location.region,
             region_psgc_code: updated.location.region_psgc_code,
             province_psgc_code: updated.location.province_psgc_code,
@@ -1731,11 +1778,9 @@ export class PropertyService {
             longitude: (updated.location.coordinates?.lng !== undefined && updated.location.coordinates?.lng !== null) ? Number(updated.location.coordinates.lng) : null,
             bedrooms_total: updated.specs.bedroomsTotal,
             bathrooms_total_integer: updated.specs.bathroomsTotalInteger,
-            stories_total: updated.specs.storiesTotal,
             parking_total: updated.specs.parkingTotal,
             property_type: updated.specs.propertyType || 'Residential',
             property_sub_type: updated.specs.propertySubType,
-            year_built: updated.specs.yearBuilt,
             property_condition: updated.specs.propertyCondition,
             living_area: updated.specs.livingArea,
             lot_size_area: updated.specs.lotSizeArea,
@@ -2129,6 +2174,49 @@ export class PropertyService {
       if (error) {
         throw new Error(error.message);
       }
+
+      try {
+        const targetPropertyId = (data as any)?.property_id;
+        if (targetPropertyId) {
+          const brokerProf = await ProfileService.getProfile(brokerId, 'broker').catch(() => null);
+          const { data: propRow } = await supabaseAdmin
+            .from('properties')
+            .select('custom_reso_attributes')
+            .eq('id', targetPropertyId)
+            .single();
+          const nowIso = new Date().toISOString();
+          const lastEditRecord = {
+            editedAt: nowIso,
+            editedById: brokerId,
+            editedByName: (brokerProf as any)?.full_name || (brokerProf as any)?.name || 'Broker',
+            editedByRole: 'broker',
+            changes: [{ field: 'Edit Proposal', from: 'Pending Approval', to: 'Approved & Applied' }],
+          };
+          await supabaseAdmin
+            .from('properties')
+            .update({
+              updated_at: nowIso,
+              custom_reso_attributes: {
+                ...(propRow?.custom_reso_attributes || {}),
+                lastEdit: lastEditRecord,
+              },
+            })
+            .eq('id', targetPropertyId);
+        }
+        await AuditService.recordEvent({
+          eventType: 'property.updated',
+          actorId: brokerId,
+          actorType: 'human',
+          actorRole: 'broker',
+          targetType: 'property',
+          targetId: (data as any)?.property_id || requestId,
+          outcome: 'success',
+          reason: reviewNotes || 'Approved edit proposal',
+        });
+      } catch (auditErr: any) {
+        logger.warn('[PropertyService] approveEditRequest audit note:', auditErr.message);
+      }
+
       return data;
     }
 

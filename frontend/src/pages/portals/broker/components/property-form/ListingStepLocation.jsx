@@ -1,5 +1,5 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from 'cn';
 import {
   MapPin,
@@ -9,6 +9,14 @@ import {
   Map,
   Building,
   Navigation,
+  Compass,
+  Sparkles,
+  Loader2,
+  Route,
+  TrainFront,
+  GraduationCap,
+  Cross,
+  ShoppingBag,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -23,9 +31,9 @@ import {
   InputGroupInput,
   InputGroupText,
 } from '@/components/ui/input-group';
-import SubdivisionLocationFields from './SubdivisionLocationFields';
 import CondoLocationFields from './CondoLocationFields';
 import FormSelect from './FormSelect';
+import LocationPinMap from './LocationPinMap';
 import { isStrataFamily } from './propertyTypeConfig';
 
 const ADDRESS_MAX = 160;
@@ -56,13 +64,42 @@ export default function ListingStepLocation({
   isGeocoding,
   addressSuggestions = [],
   onSelectAddressSuggestion,
+  onSuggestNearbyPlaces,
   renderMap,
 }) {
+  const [showNearbyMap, setShowNearbyMap] = useState(false);
+  const [isSuggestingNearby, setIsSuggestingNearby] = useState(false);
   const isCondoType = isStrataFamily(formData.property_type);
   const updateField = (patch) => {
     setIsDirty?.(true);
     setFormData((prev) => ({ ...prev, ...patch }));
   };
+
+  const updateNearby = (patch) => {
+    setIsDirty?.(true);
+    setFormData((prev) => ({
+      ...prev,
+      nearbyPlaces: {
+        ...(prev.nearbyPlaces || {}),
+        ...patch,
+      },
+    }));
+  };
+
+  const handleAiFillNearby = async () => {
+    if (!onSuggestNearbyPlaces) return;
+    setIsSuggestingNearby(true);
+    try {
+      await onSuggestNearbyPlaces();
+    } finally {
+      setIsSuggestingNearby(false);
+    }
+  };
+
+  const nearbyMapCenter = [
+    Number(formData.latitude) || 14.5547,
+    Number(formData.longitude) || 121.0244,
+  ];
 
   // Map legacy stored value cleanly to plain-English label
   const rawPrivacy = formData.mapPinPrivacy || 'Exact Location';
@@ -102,6 +139,37 @@ export default function ListingStepLocation({
                 <AlertDescription>{locationNotice.message}</AlertDescription>
               </Alert>
             )}
+
+            {/* Street Address with Text Limiter */}
+            <Field>
+              <FieldLabel htmlFor="street-address" className="text-sm font-semibold text-[#1E293B]">
+                Street Address <Req />
+              </FieldLabel>
+              <InputGroup className="h-11 bg-white border-[#E2E8F0] rounded-lg">
+                <InputGroupAddon align="inline-start">
+                  <MapPin className="text-[#64748B]" />
+                </InputGroupAddon>
+                <InputGroupInput
+                  id="street-address"
+                  type="text"
+                  maxLength={ADDRESS_MAX}
+                  placeholder="e.g. 24 Acacia Avenue"
+                  value={addressValue}
+                  onChange={(e) => updateField({ address: e.target.value })}
+                  className="text-sm text-[#1E293B]"
+                />
+                <InputGroupAddon align="inline-end">
+                  <InputGroupText
+                    className={cn(
+                      'text-xs tabular-nums',
+                      addressNearLimit ? 'text-[#FF6B6B] font-semibold' : 'text-[#64748B]'
+                    )}
+                  >
+                    {addressValue.length} / {ADDRESS_MAX}
+                  </InputGroupText>
+                </InputGroupAddon>
+              </InputGroup>
+            </Field>
 
             {/* Cascading Region / Province / City / Barangay */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -183,46 +251,9 @@ export default function ListingStepLocation({
               </Field>
             </div>
 
-            {/* Street Address with Text Limiter */}
-            <Field>
-              <FieldLabel htmlFor="street-address" className="text-sm font-semibold text-[#1E293B]">
-                Street Address <Req />
-              </FieldLabel>
-              <InputGroup className="h-11 bg-white border-[#E2E8F0] rounded-lg">
-                <InputGroupAddon align="inline-start">
-                  <MapPin className="text-[#64748B]" />
-                </InputGroupAddon>
-                <InputGroupInput
-                  id="street-address"
-                  type="text"
-                  maxLength={ADDRESS_MAX}
-                  placeholder="e.g. 24 Acacia Avenue"
-                  value={addressValue}
-                  onChange={(e) => updateField({ address: e.target.value })}
-                  className="text-sm text-[#1E293B]"
-                />
-                <InputGroupAddon align="inline-end">
-                  <InputGroupText
-                    className={cn(
-                      'text-xs tabular-nums',
-                      addressNearLimit ? 'text-[#FF6B6B] font-semibold' : 'text-[#64748B]'
-                    )}
-                  >
-                    {addressValue.length} / {ADDRESS_MAX}
-                  </InputGroupText>
-                </InputGroupAddon>
-              </InputGroup>
-            </Field>
-
-            {/* Type-Aware Subdivision or Building Name */}
-            {isCondoType ? (
+            {/* Building Name (Condo / Strata) */}
+            {isCondoType && (
               <CondoLocationFields
-                formData={formData}
-                setFormData={setFormData}
-                setIsDirty={setIsDirty}
-              />
-            ) : (
-              <SubdivisionLocationFields
                 formData={formData}
                 setFormData={setFormData}
                 setIsDirty={setIsDirty}
@@ -384,6 +415,186 @@ export default function ListingStepLocation({
               </div>
             </Field>
           </FieldGroup>
+        </CardContent>
+      </Card>
+
+      {/* Card 3: Nearby Places with AI Auto-Fill + Optional Map View */}
+      <Card className="bg-white border-[#E2E8F0] rounded-xl shadow-xs">
+        <CardHeader className="pb-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className="size-9 rounded-lg bg-[#F0FDFA] text-[#0F766E] flex items-center justify-center">
+                <Compass className="size-4" />
+              </div>
+              <div>
+                <CardTitle className="text-lg font-semibold text-[#1E293B]">
+                  Nearby Places
+                </CardTitle>
+                <CardDescription className="text-sm text-[#64748B]">
+                  Help buyers picture daily travel times around the area.
+                </CardDescription>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isSuggestingNearby}
+                onClick={handleAiFillNearby}
+                className="min-h-11 px-3 border-[#E2E8F0] hover:border-[#0F766E] text-[#0F766E] font-semibold rounded-lg cursor-pointer"
+              >
+                {isSuggestingNearby ? (
+                  <Loader2 className="animate-spin" data-icon="inline-start" />
+                ) : (
+                  <Sparkles data-icon="inline-start" />
+                )}
+                {isSuggestingNearby ? 'Finding Places...' : 'AI Auto-Fill'}
+              </Button>
+
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowNearbyMap((prev) => !prev)}
+                className="min-h-11 px-3 border-[#E2E8F0] text-[#1E293B] font-semibold rounded-lg cursor-pointer"
+              >
+                <MapPin data-icon="inline-start" />
+                {showNearbyMap ? 'Hide Map' : 'Show Map'}
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <Separator className="bg-[#E2E8F0]" />
+
+        <CardContent className="pt-5 flex flex-col gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Field>
+              <FieldLabel htmlFor="nearest-highway" className="text-sm font-semibold text-[#1E293B]">
+                Nearest Highway
+              </FieldLabel>
+              <InputGroup className="h-11 bg-white border-[#E2E8F0] rounded-lg">
+                <InputGroupAddon align="inline-start">
+                  <Route className="text-[#64748B]" />
+                </InputGroupAddon>
+                <InputGroupInput
+                  id="nearest-highway"
+                  type="text"
+                  maxLength={80}
+                  placeholder="e.g. SLEX Alabang Exit (5 mins)"
+                  value={formData.nearbyPlaces?.highway || ''}
+                  onChange={(e) => updateNearby({ highway: e.target.value })}
+                  className="text-sm"
+                />
+              </InputGroup>
+            </Field>
+
+            <Field>
+              <FieldLabel htmlFor="nearest-transit" className="text-sm font-semibold text-[#1E293B]">
+                Nearest Transit
+              </FieldLabel>
+              <InputGroup className="h-11 bg-white border-[#E2E8F0] rounded-lg">
+                <InputGroupAddon align="inline-start">
+                  <TrainFront className="text-[#64748B]" />
+                </InputGroupAddon>
+                <InputGroupInput
+                  id="nearest-transit"
+                  type="text"
+                  maxLength={80}
+                  placeholder="e.g. MRT Ayala Station (10 mins)"
+                  value={formData.nearbyPlaces?.transit || ''}
+                  onChange={(e) => updateNearby({ transit: e.target.value })}
+                  className="text-sm"
+                />
+              </InputGroup>
+            </Field>
+
+            <Field>
+              <FieldLabel htmlFor="nearest-school" className="text-sm font-semibold text-[#1E293B]">
+                Nearest School
+              </FieldLabel>
+              <InputGroup className="h-11 bg-white border-[#E2E8F0] rounded-lg">
+                <InputGroupAddon align="inline-start">
+                  <GraduationCap className="text-[#64748B]" />
+                </InputGroupAddon>
+                <InputGroupInput
+                  id="nearest-school"
+                  type="text"
+                  maxLength={80}
+                  placeholder="e.g. De La Salle Zobel (4 mins)"
+                  value={formData.nearbyPlaces?.school || ''}
+                  onChange={(e) => updateNearby({ school: e.target.value })}
+                  className="text-sm"
+                />
+              </InputGroup>
+            </Field>
+
+            <Field>
+              <FieldLabel htmlFor="nearest-hospital" className="text-sm font-semibold text-[#1E293B]">
+                Nearest Hospital
+              </FieldLabel>
+              <InputGroup className="h-11 bg-white border-[#E2E8F0] rounded-lg">
+                <InputGroupAddon align="inline-start">
+                  <Cross className="text-[#64748B]" />
+                </InputGroupAddon>
+                <InputGroupInput
+                  id="nearest-hospital"
+                  type="text"
+                  maxLength={80}
+                  placeholder="e.g. Asian Hospital (6 mins)"
+                  value={formData.nearbyPlaces?.hospital || ''}
+                  onChange={(e) => updateNearby({ hospital: e.target.value })}
+                  className="text-sm"
+                />
+              </InputGroup>
+            </Field>
+
+            <Field className="md:col-span-2">
+              <FieldLabel htmlFor="nearest-mall" className="text-sm font-semibold text-[#1E293B]">
+                Nearest Mall
+              </FieldLabel>
+              <InputGroup className="h-11 bg-white border-[#E2E8F0] rounded-lg">
+                <InputGroupAddon align="inline-start">
+                  <ShoppingBag className="text-[#64748B]" />
+                </InputGroupAddon>
+                <InputGroupInput
+                  id="nearest-mall"
+                  type="text"
+                  maxLength={80}
+                  placeholder="e.g. Alabang Town Center (5 mins)"
+                  value={formData.nearbyPlaces?.mall || ''}
+                  onChange={(e) => updateNearby({ mall: e.target.value })}
+                  className="text-sm"
+                />
+              </InputGroup>
+            </Field>
+          </div>
+
+          <AnimatePresence initial={false}>
+            {showNearbyMap && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.22 }}
+                className="overflow-hidden flex flex-col gap-2"
+              >
+                <div className="rounded-xl overflow-hidden border border-[#E2E8F0] isolate z-0 relative">
+                  <LocationPinMap
+                    position={nearbyMapCenter}
+                    zoom={14}
+                    interactive={false}
+                    extraPins={formData.nearbyPlacesPins || []}
+                    className="h-64 w-full"
+                  />
+                </div>
+                <p className="text-xs text-[#64748B]">
+                  {formData.nearbyPlacesPins?.length > 0
+                    ? `Showing ${formData.nearbyPlacesPins.length} suggested nearby landmarks around the property pin.`
+                    : 'Click "AI Auto-Fill" above to plot nearby landmarks around your property location.'}
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </CardContent>
       </Card>
     </div>

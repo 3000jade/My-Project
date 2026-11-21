@@ -14,8 +14,25 @@ import {
   Save,
   Send,
   CheckCircle2,
+  Eye,
+  RotateCcw,
 } from 'lucide-react';
 import DashboardModal from '../../../components/dashboard/DashboardModal';
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerFooter,
+} from '../../../components/ui';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '../../../components/ui/dialog';
 import { Button } from '../../../components/ui/button';
 import { Card, CardContent } from '../../../components/ui/card';
 import { Alert, AlertTitle, AlertDescription } from '../../../components/ui/alert';
@@ -82,14 +99,8 @@ const INITIAL_FORM_DATA = {
   barangay: '',
   barangay_psgc_code: '',
   address: '',
-  postal_code: '',
-  subdivision: '',
-  subdivision_name: '',
   building_name: '',
   tower_name: '',
-  phase: '',
-  block: '',
-  lot: '',
   floor_level: '',
   unit_number: '',
   latitude: '',
@@ -101,13 +112,7 @@ const INITIAL_FORM_DATA = {
   bedrooms_total: '3',
   bathrooms_total_integer: '2',
   parking_total: '1',
-  furnishing: 'Unfurnished',
-  stories_total: '2',
-  year_built: '',
-  turnoverCondition: '',
-  flooringType: '',
-  kitchenType: '',
-  extraSpaces: [],
+  furnishing: 'None',
   securityFeatures: [],
   amenities: [],
   utilities: [],
@@ -120,7 +125,6 @@ const INITIAL_FORM_DATA = {
   },
   nearbyPlacesPins: [],
   // Media
-  videoTourUrl: '',
   description: '',
   // Credentials & Agent Permissions
   list_agent_key: null,
@@ -131,13 +135,17 @@ const INITIAL_FORM_DATA = {
   },
   credentials: {
     developer: '',
+    developerDescription: '',
     brokerage: 'Human Shelter Realty',
     dhsudLicenseNo: '',
-    projectClassification: '',
-    titleStatus: '',
     assignedAgent: '',
     prcLicenseNo: '',
+    brokerDhsudLicenseNo: '',
     contactNumber: '',
+    contactEmail: '',
+    messengerUrl: '',
+    facebookUrl: '',
+    whatsapp: '',
   },
   status: 'AVAILABLE',
   standard_status: 'Active',
@@ -164,6 +172,8 @@ export default function BrokerCreateListings() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [createdPropertyId, setCreatedPropertyId] = useState(null);
   const [savedStatusType, setSavedStatusType] = useState('Active');
+  const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false);
+  const [confirmResetOpen, setConfirmResetOpen] = useState(false);
 
   const [formData, setFormData] = useState(INITIAL_FORM_DATA);
   const [propertyTypes, setPropertyTypes] = useState([]);
@@ -249,6 +259,7 @@ export default function BrokerCreateListings() {
           ...prev,
           listing_id: p.listing_id || p.listingId || '',
           title: p.title || '',
+          description: p.description || p.publicRemarks || '',
           transaction_type: p.transaction_type || p.specs?.transactionType || 'For Sale',
           propertyCategory: custom.propertyCategory || 'Residential',
           property_type: p.property_type || p.type || 'House & Lot',
@@ -277,9 +288,6 @@ export default function BrokerCreateListings() {
           barangay: p.location?.barangay || p.barangay || '',
           barangay_psgc_code: p.location?.barangay_psgc_code || p.barangay_psgc_code || '',
           address: p.location?.address || p.address || '',
-          postal_code: p.location?.postalCode || p.postal_code || '',
-          subdivision: p.location?.subdivisionName || p.subdivision_name || '',
-          subdivision_name: p.location?.subdivisionName || p.subdivision_name || '',
           building_name: p.location?.buildingName || p.building_name || '',
           tower_name: custom.towerName || p.tower_name || '',
           floor_level: custom.floorLevel || p.floor_level || '',
@@ -292,19 +300,12 @@ export default function BrokerCreateListings() {
           bedrooms_total: String(p.specs?.bedroomsTotal ?? p.bedrooms_total ?? '3'),
           bathrooms_total_integer: String(p.specs?.bathroomsTotalInteger ?? p.bathrooms_total_integer ?? '2'),
           parking_total: String(p.specs?.parkingTotal ?? p.parking_total ?? '1'),
-          furnishing: custom.furnishing || p.furnishing || 'Unfurnished',
-          stories_total: String(p.specs?.storiesTotal ?? p.stories_total ?? '2'),
-          year_built: String(p.specs?.yearBuilt ?? p.year_built ?? ''),
-          turnoverCondition: custom.turnoverCondition || '',
-          flooringType: custom.flooringType || '',
-          kitchenType: custom.kitchenType || '',
-          extraSpaces: Array.isArray(custom.extraSpaces) ? custom.extraSpaces : [],
+          furnishing: custom.furnishing || p.furnishing || 'None',
           securityFeatures: Array.isArray(custom.securityFeatures) ? custom.securityFeatures : [],
           amenities: Array.isArray(p.features) ? p.features : p.amenities || [],
           utilities: Array.isArray(custom.utilities) ? custom.utilities : [],
           nearbyPlaces: custom.nearbyPlaces || prev.nearbyPlaces,
           nearbyPlacesPins: Array.isArray(custom.nearbyPlacesPins) ? custom.nearbyPlacesPins : [],
-          videoTourUrl: custom.videoTourUrl || '',
           description: p.publicRemarks || p.description || '',
           list_agent_key: p.list_agent_key || p.listAgentKey || null,
           handlerMode: custom.handlerMode || null,
@@ -1028,6 +1029,14 @@ export default function BrokerCreateListings() {
 
       const payload = toApiPayload({
         ...formData,
+        credentials: {
+          ...(formData.credentials || {}),
+          brokerName:
+            formData.credentials?.brokerName ||
+            user?.full_name ||
+            user?.name ||
+            '',
+        },
         categoryVideos,
         standardStatus: targetStandardStatus,
         status: isDraft ? 'INACTIVE' : formData.status || 'AVAILABLE',
@@ -1088,18 +1097,40 @@ export default function BrokerCreateListings() {
               </h1>
             </div>
 
-            <Button
-              type="button"
-              variant="outline"
-              disabled={isSubmitting}
-              onClick={() => executeSubmission('Draft')}
-              className="min-h-11 px-4 border-[#E2E8F0] bg-white text-[#1E293B] font-semibold rounded-lg cursor-pointer"
-            >
-              <Save className="size-4 mr-2 text-[#0F766E]" />
-              {isSubmitting && activeActionLabel === 'Saving Draft...'
-                ? 'Saving Draft...'
-                : 'Save Draft'}
-            </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setMobilePreviewOpen(true)}
+                className="lg:hidden min-h-11 px-3.5 border-[#E2E8F0] bg-white text-[#1E293B] font-semibold rounded-lg cursor-pointer"
+              >
+                <Eye className="size-4 mr-1.5 text-[#0F766E]" />
+                Preview
+              </Button>
+              {!isEditing && isDirty && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setConfirmResetOpen(true)}
+                  className="min-h-11 px-3.5 border-[#E2E8F0] bg-white text-[#1E293B] font-semibold rounded-lg cursor-pointer"
+                >
+                  <RotateCcw className="size-4 mr-1.5 text-[#FF6B6B]" />
+                  Reset
+                </Button>
+              )}
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isSubmitting}
+                onClick={() => executeSubmission('Draft')}
+                className="min-h-11 px-4 border-[#E2E8F0] bg-white text-[#1E293B] font-semibold rounded-lg cursor-pointer"
+              >
+                <Save className="size-4 mr-2 text-[#0F766E]" />
+                {isSubmitting && activeActionLabel === 'Saving Draft...'
+                  ? 'Saving Draft...'
+                  : 'Save Draft'}
+              </Button>
+            </div>
           </div>
 
           {/* 5-Step Progress Bar */}
@@ -1236,6 +1267,7 @@ export default function BrokerCreateListings() {
                       isGeocoding={isGeocoding}
                       addressSuggestions={addressSuggestions}
                       onSelectAddressSuggestion={handleSelectAddressSuggestion}
+                      onSuggestNearbyPlaces={handleSuggestNearbyPlaces}
                       renderMap={() => (
                         <LocationPinMap
                           position={mapPosition}
@@ -1255,7 +1287,6 @@ export default function BrokerCreateListings() {
                       formData={formData}
                       setFormData={setFormData}
                       setIsDirty={setIsDirty}
-                      onSuggestNearbyPlaces={handleSuggestNearbyPlaces}
                     />
                   )}
 
@@ -1294,7 +1325,7 @@ export default function BrokerCreateListings() {
               </AnimatePresence>
 
               {/* Step Footer Navigation (Single Solid Primary CTA) */}
-              <Card className="bg-white border-[#E2E8F0] rounded-xl shadow-xs">
+              <Card className="sticky bottom-2 z-20 lg:static bg-white border-[#E2E8F0] rounded-xl shadow-md lg:shadow-xs">
                 <CardContent className="p-4 flex flex-wrap items-center justify-between gap-3">
                   <div>
                     {currentStep > 1 && (
@@ -1350,6 +1381,7 @@ export default function BrokerCreateListings() {
             <aside className="lg:col-span-4 lg:sticky lg:top-20 lg:self-start">
               <ListingPreviewCard
                 formData={formData}
+                user={user}
                 coverPhotoUrl={coverPhotoUrl}
                 currentStep={currentStep}
                 totalSteps={STEPS.length}
@@ -1403,6 +1435,75 @@ export default function BrokerCreateListings() {
             </div>
           </div>
         </DashboardModal>
+
+        {/* Mobile Preview Drawer */}
+        <Drawer open={mobilePreviewOpen} onOpenChange={setMobilePreviewOpen} direction="bottom">
+          <DrawerContent className="max-h-[85vh] bg-[#F8FAFC] border-t border-[#E2E8F0]">
+            <DrawerHeader>
+              <DrawerTitle className="text-base font-bold text-[#1E293B]">
+                Live Buyer Preview
+              </DrawerTitle>
+            </DrawerHeader>
+            <div className="px-4 pb-2 overflow-y-auto">
+              <ListingPreviewCard
+                formData={formData}
+                user={user}
+                coverPhotoUrl={coverPhotoUrl}
+                currentStep={currentStep}
+                totalSteps={STEPS.length}
+              />
+            </div>
+            <DrawerFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setMobilePreviewOpen(false)}
+                className="min-h-11 w-full border-[#E2E8F0] bg-white font-semibold rounded-lg"
+              >
+                Close Preview
+              </Button>
+            </DrawerFooter>
+          </DrawerContent>
+        </Drawer>
+
+        {/* Reset Confirmation Dialog */}
+        <Dialog open={confirmResetOpen} onOpenChange={setConfirmResetOpen}>
+          <DialogContent className="max-w-md bg-white border-[#E2E8F0] rounded-xl">
+            <DialogHeader>
+              <DialogTitle className="text-lg font-bold text-[#1E293B]">
+                Clear all entered listing details?
+              </DialogTitle>
+              <DialogDescription className="text-sm text-[#64748B]">
+                This will reset the form fields back to blank defaults.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setConfirmResetOpen(false)}
+                className="min-h-11 px-4 border-[#E2E8F0] rounded-lg"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={() => {
+                  setFormData(INITIAL_FORM_DATA);
+                  setMediaPhotos([]);
+                  setCategoryVideos({});
+                  setIsDirty(false);
+                  setCurrentStep(1);
+                  setConfirmResetOpen(false);
+                }}
+                className="min-h-11 px-4 rounded-lg"
+              >
+                Confirm Reset
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </MotionConfig>
   );

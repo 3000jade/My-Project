@@ -244,7 +244,7 @@ export default function ListingStepMedia({
                 type="button"
                 onClick={() => onRemovePhotoItem?.(coverPhoto.id)}
                 aria-label="Remove cover photo"
-                className="absolute top-3 right-3 size-9 rounded-lg bg-white/95 hover:bg-white text-[#1E293B] shadow-xs flex items-center justify-center cursor-pointer"
+                className="absolute top-3 right-3 size-11 md:size-9 [@media(pointer:coarse)]:size-11 rounded-lg bg-white/95 hover:bg-white text-[#1E293B] shadow-xs flex items-center justify-center cursor-pointer"
               >
                 <Trash2 className="size-4 text-[#FF6B6B]" />
               </button>
@@ -293,7 +293,7 @@ export default function ListingStepMedia({
                   key={cat.key}
                   type="button"
                   onClick={() => openGalleryAt(cat.key)}
-                  className="min-h-10 px-3 py-1.5 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] hover:border-[#0F766E] text-xs font-semibold text-[#1E293B] inline-flex items-center gap-2 transition-colors cursor-pointer"
+                  className="min-h-11 px-3 py-1.5 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] hover:border-[#0F766E] text-xs font-semibold text-[#1E293B] inline-flex items-center gap-2 transition-colors cursor-pointer"
                 >
                   <span>{cat.label}</span>
                   <span className="text-[#0F766E] tabular-nums">
@@ -306,7 +306,7 @@ export default function ListingStepMedia({
             <button
               type="button"
               onClick={() => openGalleryAt('ALL')}
-              className="min-h-10 px-3 py-1.5 rounded-lg border border-dashed border-[#CBD5E1] hover:border-[#0F766E] bg-white text-xs font-semibold text-[#0F766E] inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="min-h-11 px-3 py-1.5 rounded-lg border border-dashed border-[#CBD5E1] hover:border-[#0F766E] bg-white text-xs font-semibold text-[#0F766E] inline-flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               <Plus className="size-3.5" />
               <span>Add Category</span>
@@ -423,7 +423,7 @@ export default function ListingStepMedia({
                   type="button"
                   onClick={() => onRemovePhotoItem?.(item.id)}
                   aria-label="Remove floor plan"
-                  className="absolute top-2.5 right-2.5 size-9 rounded-lg bg-white/95 hover:bg-white text-[#1E293B] shadow-xs flex items-center justify-center cursor-pointer"
+                  className="absolute top-2.5 right-2.5 size-11 md:size-9 [@media(pointer:coarse)]:size-11 rounded-lg bg-white/95 hover:bg-white text-[#1E293B] shadow-xs flex items-center justify-center cursor-pointer"
                 >
                   <Trash2 className="size-4 text-[#FF6B6B]" />
                 </button>

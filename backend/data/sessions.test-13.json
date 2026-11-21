@@ -1,0 +1,47 @@
+{
+  "sessions": [
+    {
+      "id": "0ffc1cee-074a-4a85-b95a-3dcd5ce86266",
+      "tokenHash": "de3e85006c693d3d73b3d59a4bb1461a09ef17b0a332e9182ced9888195c6c10",
+      "userId": "e59ef10a-2963-4de4-a330-fbce2e0f284a",
+      "role": "agent",
+      "createdAt": 1795200034078,
+      "lastActiveAt": 1795200034078,
+      "idleExpiresAt": 1795201834078,
+      "absoluteExpiresAt": 1795243234078,
+      "lastHeartbeatAt": 1795200034078,
+      "userAgent": "Unknown Device",
+      "ipAddress": "Unavailable",
+      "updatedAt": 1795200034078
+    },
+    {
+      "id": "38a4f701-aa36-4984-8505-7a7335955f42",
+      "tokenHash": "bcaf28aaa23ea71ebd9265af51edcbed2321b51cd167cf4317affc2547598858",
+      "userId": "787d7182-e5d8-4571-861e-05c614bf18ca",
+      "role": "broker",
+      "createdAt": 1795200034645,
+      "lastActiveAt": 1795200034645,
+      "idleExpiresAt": 1795201834645,
+      "absoluteExpiresAt": 1795243234645,
+      "lastHeartbeatAt": 1795200034645,
+      "userAgent": "Unknown Device",
+      "ipAddress": "Unavailable",
+      "updatedAt": 1795200034645
+    },
+    {
+      "id": "b0f15b7f-cb2f-4db9-ac93-9f9af1eae92a",
+      "tokenHash": "104b2db93e4f40a187b63c20341bc6ba3a9eee10b6306fb74ae69e0318a01b49",
+      "userId": "c3fc76fb-efb2-4ced-adf8-c74e8c2602cb",
+      "role": "admin",
+      "createdAt": 1795200035179,
+      "lastActiveAt": 1795200035179,
+      "idleExpiresAt": 1795201835179,
+      "absoluteExpiresAt": 1795243235179,
+      "lastHeartbeatAt": 1795200035179,
+      "userAgent": "Unknown Device",
+      "ipAddress": "Unavailable",
+      "updatedAt": 1795200035179
+    }
+  ],
+  "disabledAccounts": []
+}
