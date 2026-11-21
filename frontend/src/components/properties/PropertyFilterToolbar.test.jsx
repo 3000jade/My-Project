@@ -68,8 +68,11 @@ describe('PropertyFilterToolbar Component', () => {
 
     expect(screen.getByTestId('status-option-DRAFT')).toBeInTheDocument();
     expect(screen.getByTestId('status-option-PENDING_APPROVAL')).toBeInTheDocument();
+    expect(screen.getByTestId('status-option-AWAITING_AGENT')).toBeInTheDocument();
+    expect(screen.getByTestId('status-option-AGENT_DECLINED')).toBeInTheDocument();
     expect(screen.getByTestId('status-option-PUBLISHED')).toBeInTheDocument();
-    expect(screen.getByTestId('status-option-UNPUBLISHED')).toBeInTheDocument();
+    expect(screen.getByTestId('status-option-RESERVED')).toBeInTheDocument();
+    expect(screen.getByTestId('status-option-UNPUBLISHED')).toHaveTextContent(/Off Market/i);
     expect(screen.getByTestId('status-option-CLOSED')).toBeInTheDocument();
 
     const publishedOption = screen.getByTestId('status-option-PUBLISHED');

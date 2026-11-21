@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { 
-  ArrowLeft, Save, CheckCircle2, AlertCircle, ChevronRight,
+  ArrowLeft, Save, AlertCircle, ChevronRight,
   User, Mail, Phone, Award, Shield, FileText, Upload, Trash2
 } from 'lucide-react';
 import { agentService } from '../../../services/agentService';
@@ -25,7 +25,6 @@ export default function BrokerAgentEdit() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  const [toastMessage, setToastMessage] = useState('');
 
   const { toast } = useToast();
   const [teams, setTeams] = useState([]);
@@ -54,9 +53,7 @@ export default function BrokerAgentEdit() {
   });
 
   const showToast = (msg) => {
-    setToastMessage(msg);
     toast({ title: 'Agent Profile', description: msg, variant: 'success' });
-    setTimeout(() => setToastMessage(''), 3500);
   };
 
   useEffect(() => {
@@ -162,14 +159,7 @@ export default function BrokerAgentEdit() {
 
   return (
     <div className="flex flex-col gap-6 w-full min-w-0 max-w-full" data-testid="broker-agent-edit">
-      <Toaster />
-      {/* Toast Notification */}
-      {toastMessage && (
-        <div className="fixed top-5 right-5 z-50 bg-[#1E293B] text-white text-xs font-medium px-4 py-2.5 rounded-lg shadow-lg flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-          <span>{toastMessage}</span>
-        </div>
-      )}
+      <Toaster position="top-right" />
 
       {/* Breadcrumbs */}
       <div>

@@ -15,6 +15,8 @@ import {
   BuyerProtectionPromiseSection,
   AwardsShowcase,
 } from '../../components/ui';
+import { CmsPublicBanner, CmsPublicCollectionsAndFaqs } from '../../components/cms/CmsPublicSections';
+import { LiveEditProvider, LiveEditFloatingBar } from '../../components/cms/LiveCmsEditor';
 
 export default function Home() {
   const containerRef = useRef(null);
@@ -87,7 +89,9 @@ export default function Home() {
   };
 
   return (
+    <LiveEditProvider>
     <div ref={containerRef} className="w-full bg-[#FBFBF9] text-[#141717] font-sans relative selection:bg-[#E76F51] selection:text-white transition-colors duration-500">
+      <CmsPublicBanner />
 
       {/* 1. HERO SECTION: BRAND SHOWCASE WITH FULL-WIDTH HOUSE & HYPER-DEPTH 2.5x PARALLAX */}
       <ListingHeroGallery
@@ -152,13 +156,18 @@ export default function Home() {
         </motion.div>
       </div>
 
-      {/* 10. PRIVATE AUDIT: LEAD CAPTURE & CONVERSION */}
+      {/* 10. CMS FEATURED COLLECTIONS & FAQS (Shown only when published) */}
+      <CmsPublicCollectionsAndFaqs />
+
+      {/* 11. PRIVATE AUDIT: LEAD CAPTURE & CONVERSION */}
       <div id="private-audit" ref={leadCaptureRef} className="w-full">
         <motion.div {...sectionRevealProps}>
           <LeadCaptureSection />
         </motion.div>
       </div>
 
+      <LiveEditFloatingBar />
     </div>
+    </LiveEditProvider>
   );
 }

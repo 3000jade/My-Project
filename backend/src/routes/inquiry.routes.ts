@@ -41,7 +41,7 @@ router.get('/:id/reconnect', requireAuth, InquiryController.reconnect);
 router.get('/:id/timeline', requireAuth, InquiryController.getTimeline);
 
 // Authenticated detail lookup
-router.get('/:id', optionalAuth, InquiryController.getById);
+router.get('/:id', requireAuth, InquiryController.getById);
 
 // Update inquiry status / closure / details
 router.put(

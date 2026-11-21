@@ -20,6 +20,8 @@ import mapsRoutes from './maps.routes';
 import agentCredentialsRoutes from './agentCredentials.routes';
 import auditRoutes from './audit.routes';
 import subdivisionRoutes from './subdivision.routes';
+import cmsRoutes from './cms.routes';
+import dataManagementRoutes from './dataManagement.routes';
 
 const router = Router();
 
@@ -29,6 +31,8 @@ router.use('/auth', authRoutes);
 router.use('/admin', adminRoutes);
 router.use('/properties', propertyRoutes);
 router.use('/subdivisions', subdivisionRoutes);
+router.use('/cms', cmsRoutes);
+router.use('/data-management', dataManagementRoutes);
 router.use('/valuations', valuationRoutes);
 router.use('/inquiries', inquiryRoutes);
 router.use('/audit-events', auditRoutes);

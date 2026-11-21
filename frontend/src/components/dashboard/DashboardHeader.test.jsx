@@ -135,4 +135,20 @@ describe('DashboardHeader User Display Name & Fallbacks', () => {
     expect(searchInput).toBeInTheDocument();
     expect(screen.getByText('⌘K')).toBeInTheDocument();
   });
+
+  it('displays Administrator instead of Principal Broker when role is admin', () => {
+    useAuth.mockReturnValue({
+      user: { id: 'admin-1', email: 'admin@pt.com', role: 'admin', fullName: 'Admin' },
+      logout: mockLogout,
+    });
+
+    render(
+      <MemoryRouter>
+        <DashboardHeader role="admin" />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText('Administrator')).toBeInTheDocument();
+    expect(screen.queryByText('Principal Broker')).not.toBeInTheDocument();
+  });
 });

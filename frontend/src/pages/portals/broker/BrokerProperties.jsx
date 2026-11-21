@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Building2, CheckCircle2, Plus, RotateCw, Edit3, ExternalLink,
   MapPin, Maximize2, Bed, Bath, Copy, MoreVertical, ChevronRight,
   Search, X, SlidersHorizontal, AlertCircle, Home,
-  List, LayoutGrid, Map as MapIcon, Archive, Trash2, RotateCcw, UserCheck
+  List, LayoutGrid, Map as MapIcon, Archive, Trash2, RotateCcw, UserCheck, History
 } from 'lucide-react';
 import { GooglePropertyMap } from '../../../components/ui/map';
 import DataTable from '../../../components/dashboard/DataTable';
@@ -22,6 +22,8 @@ import {
 } from '../../../components/ui/dropdown-menu';
 import propertyService, { normalizeProperty } from '../../../services/propertyService';
 import agentService from '../../../services/agentService';
+import auditService from '../../../services/auditService';
+import { useAuth } from '../../../context/AuthContext';
 import { cn } from '../../../utils/cn';
 import { Badge } from '../../../components/ui/badge';
 import { Button, buttonVariants } from '../../../components/ui/button';
@@ -112,16 +114,49 @@ function PropertyThumbnail({ image, title }) {
 }
 
 const SEEN_ACTIVITY_STORAGE_KEY = 'hsr_seen_property_activity';
-const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+const ACTIVITY_TTL_MS = 3 * 24 * 60 * 60 * 1000;
+
+const BROKER_STATUS_STYLES = {
+  DRAFT: { label: 'Draft', pill: 'bg-blue-50 text-blue-700 border-blue-200', dot: 'bg-blue-500' },
+  PENDING_APPROVAL: { label: 'Pending Approval', pill: 'bg-amber-50 text-amber-700 border-amber-200', dot: 'bg-amber-500 animate-pulse' },
+  AWAITING_AGENT: { label: 'Awaiting Agent', pill: 'bg-amber-50 text-amber-700 border-amber-200', dot: 'bg-amber-500' },
+  NEEDS_AGENT: { label: 'Needs Agent', pill: 'bg-slate-100 text-slate-700 border-slate-300', dot: 'bg-slate-400' },
+  AGENT_DECLINED: { label: 'Agent Declined', pill: 'bg-red-50 text-red-700 border-red-200', dot: 'bg-red-500' },
+  PUBLISHED: { label: 'Published', pill: 'bg-emerald-50 text-emerald-700 border-emerald-200', dot: 'bg-emerald-500' },
+  RESERVED: { label: 'Reserved', pill: 'bg-indigo-50 text-indigo-700 border-indigo-200', dot: 'bg-indigo-500' },
+  UNPUBLISHED: { label: 'Off Market', pill: 'bg-orange-50 text-orange-700 border-orange-200', dot: 'bg-orange-500' },
+  CLOSED: { label: 'Closed', pill: 'bg-slate-100 text-slate-700 border-slate-300', dot: 'bg-slate-500' },
+};
+
+function hasAssignedAgent(p) {
+  const key = p.list_agent_key || p.listAgentKey || p.agent_id || p.agentId;
+  if (key && String(key).trim() !== '') return true;
+  if (p.isCorporateDesk || p.is_corporate_desk) return false;
+  const candidate =
+    p.custom_reso_attributes?.credentials?.assignedAgent ||
+    p.customResoAttributes?.credentials?.assignedAgent ||
+    p.agentName ||
+    p.agent_name ||
+    p.agent?.name ||
+    '';
+  return Boolean(candidate && candidate !== 'Human Shelter Realty Desk');
+}
 
 function getBrokerDisplayStatus(p) {
   const std = String(p.standard_status || p.standardStatus || '').toUpperCase();
   const s = String(p.status || '').toUpperCase();
   if (std === 'DRAFT') return 'DRAFT';
   if (std === 'PENDING APPROVAL' || std === 'PENDING_APPROVAL') return 'PENDING_APPROVAL';
+  if (std === 'PENDING CONFIRMATION' || std === 'PENDING_CONFIRMATION') {
+    return hasAssignedAgent(p) ? 'AWAITING_AGENT' : 'NEEDS_AGENT';
+  }
+  if (std === 'ACTION REQUIRED' || std === 'ACTION_REQUIRED') return 'AGENT_DECLINED';
   if (std === 'CLOSED' || s === 'SOLD') return 'CLOSED';
-  if (s === 'INACTIVE' || std === 'INACTIVE' || std === 'HOLD' || p.is_published === false || p.isPublished === false) {
+  if (s === 'INACTIVE' || std === 'INACTIVE' || std === 'HOLD' || std === 'CANCELED' || std === 'CANCELLED' || std === 'EXPIRED' || p.is_published === false || p.isPublished === false) {
     return 'UNPUBLISHED';
+  }
+  if (std === 'ACTIVE UNDER CONTRACT' || std === 'RESERVED' || std === 'PENDING' || s === 'RESERVED') {
+    return 'RESERVED';
   }
   return 'PUBLISHED';
 }
@@ -144,7 +179,7 @@ function formatPhilippineDateTime(dateStr) {
   }
 }
 
-function getDateActivityBadge(row, seenMap = {}) {
+function getDateActivityBadge(row, seenMap = {}, currentUserId = null) {
   const propId = row.id || row.listingKey;
   const createdRaw = row.created_at || row.createdAt;
   const updatedRaw = row.updated_at || row.updatedAt;
@@ -153,7 +188,7 @@ function getDateActivityBadge(row, seenMap = {}) {
   if (!latestIso) return null;
 
   const latestMs = new Date(latestIso).getTime();
-  if (isNaN(latestMs)) return null;
+  if (isNaN(latestMs) || Date.now() - latestMs > ACTIVITY_TTL_MS) return null;
 
   const seenIso = propId ? seenMap[propId] : null;
   if (seenIso) {
@@ -166,9 +201,16 @@ function getDateActivityBadge(row, seenMap = {}) {
   const createdMs = createdRaw ? new Date(createdRaw).getTime() : NaN;
   const updatedMs = updatedRaw ? new Date(updatedRaw).getTime() : NaN;
   if (lastEdit || (!isNaN(createdMs) && !isNaN(updatedMs) && updatedMs - createdMs > 60_000)) {
+    if (currentUserId && String(lastEdit?.editedById || '') === String(currentUserId)) {
+      return null;
+    }
     return 'EDITED';
   }
-  if (!isNaN(createdMs) && Date.now() - createdMs <= SEVEN_DAYS_MS) {
+  if (!isNaN(createdMs) && Date.now() - createdMs <= ACTIVITY_TTL_MS) {
+    const creatorId = row.created_by || row.createdBy || row.custom_reso_attributes?.created_by;
+    if (currentUserId && creatorId && String(creatorId) === String(currentUserId)) {
+      return null;
+    }
     return 'NEW';
   }
   return null;
@@ -188,6 +230,7 @@ const AVAILABLE_COLUMNS = [
 
 export default function BrokerProperties() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
   const [properties, setProperties] = useState([]);
@@ -199,6 +242,11 @@ export default function BrokerProperties() {
   const [isProcessingProposal, setIsProcessingProposal] = useState(false);
   const [agentsById, setAgentsById] = useState({});
   const [editDetailsTarget, setEditDetailsTarget] = useState(null);
+  const [auditTarget, setAuditTarget] = useState(null);
+  const [auditActivityState, setAuditActivityState] = useState(null);
+  const [auditEvents, setAuditEvents] = useState([]);
+  const [auditLoading, setAuditLoading] = useState(false);
+  const latestAuditReqRef = useRef(0);
   const [seenActivity, setSeenActivity] = useState(() => {
     try {
       const raw = localStorage.getItem(SEEN_ACTIVITY_STORAGE_KEY);
@@ -250,18 +298,16 @@ export default function BrokerProperties() {
   const [hoveredMapPropertyId, setHoveredMapPropertyId] = useState(null);
   const [reassignProp, setReassignProp] = useState(null);
   const [isReassignModalOpen, setIsReassignModalOpen] = useState(false);
-  const [toastMessage, setToastMessage] = useState(null);
 
-  const showToast = (msg) => {
-    setToastMessage(msg);
+  const showToast = (msg, variant) => {
+    const resolvedVariant = variant || (/^(failed|partial failure)/i.test(String(msg)) ? 'destructive' : 'success');
     if (typeof toast === 'function') {
       toast({
-        title: 'Listing Update',
+        title: resolvedVariant === 'destructive' ? 'Listing Error' : 'Listing Update',
         description: msg,
-        variant: 'default',
+        variant: resolvedVariant,
       });
     }
-    setTimeout(() => setToastMessage(null), 3500);
   };
 
   // Archive & Delete Modal States
@@ -311,21 +357,40 @@ export default function BrokerProperties() {
     }
   };
 
+  const syncUpdatedPropertyRow = (row, res, fallbackStd) => {
+    const targetId = row.id || row.listingKey;
+    const updatedProp = res?.property || res?.data || res;
+    const nextStd = updatedProp?.standard_status ?? updatedProp?.standardStatus ?? fallbackStd ?? row.standard_status;
+    const nextPub = updatedProp?.is_published ?? updatedProp?.isPublished;
+    if (updatedProp && (updatedProp.standardStatus !== undefined || updatedProp.standard_status !== undefined || nextPub !== undefined || fallbackStd)) {
+      const normalized = normalizeProperty({
+        ...row,
+        ...(typeof updatedProp === 'object' ? updatedProp : {}),
+        ...(fallbackStd && nextPub === undefined ? { status: 'available' } : {}),
+        ...(nextPub === false ? { status: 'pending' } : {}),
+        standard_status: nextStd,
+        standardStatus: nextStd,
+        ...(nextPub !== undefined ? { is_published: Boolean(nextPub), isPublished: Boolean(nextPub) } : {}),
+      });
+      setProperties(prev => prev.map(p => ((p.id || p.listingKey) === targetId ? normalized : p)));
+    }
+    return nextPub === false;
+  };
+
   const handleReactivateClick = async (row) => {
     const targetId = row.id || row.listingKey;
     try {
-      await propertyService.updateProperty(targetId, {
+      const res = await propertyService.updateProperty(targetId, {
         status: 'available',
         standard_status: 'Active',
         standardStatus: 'Active',
       });
-      setProperties(prev => prev.map(p => {
-        if (p.id === targetId || p.listingKey === targetId) {
-          return { ...p, status: 'available', standard_status: 'Active', standardStatus: 'Active' };
-        }
-        return p;
-      }));
-      showToast(`Listing "${row.title}" reactivated and restored to Active status.`);
+      const heldForConfirmation = syncUpdatedPropertyRow(row, res, 'Active');
+      showToast(
+        heldForConfirmation
+          ? `Listing "${row.title}" updated — waiting for agent confirmation.`
+          : `Listing "${row.title}" reactivated and restored to Active status.`
+      );
     } catch (err) {
       showToast(err.message || 'Failed to reactivate listing.');
     }
@@ -501,7 +566,7 @@ export default function BrokerProperties() {
         });
         setAgentsById(map);
       })
-      .catch(() => {});
+      .catch(() => { });
   }, [fetchProperties, fetchProposals]);
 
   const dismissActivityBadge = useCallback((row) => {
@@ -519,6 +584,33 @@ export default function BrokerProperties() {
       return next;
     });
   }, []);
+
+  const handleOpenAuditModal = useCallback(async (row, activityState = null) => {
+    const resolvedState = activityState ?? getDateActivityBadge(row, seenActivity, user?.id);
+    if (resolvedState) dismissActivityBadge(row);
+    const reqId = ++latestAuditReqRef.current;
+    setAuditTarget(row);
+    setAuditActivityState(resolvedState);
+    setAuditEvents([]);
+    setAuditLoading(true);
+    try {
+      const events = await auditService.listAuditEvents({
+        targetType: 'property',
+        targetId: row.id || row.listingKey,
+      });
+      if (reqId === latestAuditReqRef.current) {
+        setAuditEvents(Array.isArray(events) ? events : []);
+      }
+    } catch {
+      if (reqId === latestAuditReqRef.current) {
+        setAuditEvents([]);
+      }
+    } finally {
+      if (reqId === latestAuditReqRef.current) {
+        setAuditLoading(false);
+      }
+    }
+  }, [dismissActivityBadge, seenActivity, user?.id]);
 
   const resolveAssignedAgentName = useCallback((row) => {
     const key = row.list_agent_key || row.listAgentKey || row.agent_id || row.agentId;
@@ -538,11 +630,14 @@ export default function BrokerProperties() {
     return candidate;
   }, [agentsById]);
 
-  // Tab counts calculated exclusively from actual dataset (5 simplified statuses)
+  // Tab counts calculated exclusively from actual dataset
   const tabCounts = useMemo(() => {
     let draft = 0;
     let pendingApproval = 0;
+    let awaitingAgent = 0;
+    let agentDeclined = 0;
     let published = 0;
+    let reserved = 0;
     let unpublished = 0;
     let closed = 0;
 
@@ -550,7 +645,10 @@ export default function BrokerProperties() {
       const bucket = getBrokerDisplayStatus(p);
       if (bucket === 'DRAFT') draft++;
       else if (bucket === 'PENDING_APPROVAL') pendingApproval++;
+      else if (bucket === 'AWAITING_AGENT') awaitingAgent++;
+      else if (bucket === 'AGENT_DECLINED') agentDeclined++;
       else if (bucket === 'PUBLISHED') published++;
+      else if (bucket === 'RESERVED') reserved++;
       else if (bucket === 'UNPUBLISHED') unpublished++;
       else if (bucket === 'CLOSED') closed++;
     });
@@ -559,7 +657,10 @@ export default function BrokerProperties() {
       all: properties.length,
       draft,
       pendingApproval,
+      awaitingAgent,
+      agentDeclined,
       published,
+      reserved,
       unpublished,
       closed,
     };
@@ -698,6 +799,7 @@ export default function BrokerProperties() {
   // Approve listing inline
   const handleInlineApprove = async (e, row) => {
     e.stopPropagation();
+    dismissActivityBadge(row);
     const targetId = row.id || row.listingKey;
     const previousProperties = properties;
     setProperties(prev => prev.map(p => {
@@ -712,11 +814,16 @@ export default function BrokerProperties() {
       return p;
     }));
     try {
-      await propertyService.updateProperty(targetId, {
+      const res = await propertyService.updateProperty(targetId, {
         standardStatus: 'Active',
         status: 'AVAILABLE'
       });
-      showToast(`Approved & published "${row.title}"`);
+      const heldForConfirmation = syncUpdatedPropertyRow(row, res);
+      showToast(
+        heldForConfirmation
+          ? `Approved "${row.title}" — waiting for agent confirmation.`
+          : `Approved & published "${row.title}"`
+      );
     } catch (err) {
       console.error('API update failed, reverting:', err);
       setProperties(previousProperties);
@@ -733,7 +840,7 @@ export default function BrokerProperties() {
         price: Number(row.price_raw || row.price) || 0,
         property_type: row.property_type || row.propertyType || 'Residential',
         standard_status: 'Draft',
-        status: 'INACTIVE',
+        status: 'PENDING',
         city: row.city || row.location || 'Metro Manila',
         address: row.address || '',
         beds: Number(row.bedrooms ?? row.beds) || 0,
@@ -977,16 +1084,25 @@ export default function BrokerProperties() {
         const asg = String(row.assignment_status || row.assignmentStatus || '').toUpperCase();
         const initials = agentName
           ? agentName
-              .split(/\s+/)
-              .filter(Boolean)
-              .slice(0, 2)
-              .map((w) => w[0].toUpperCase())
-              .join('')
+            .split(/\s+/)
+            .filter(Boolean)
+            .slice(0, 2)
+            .map((w) => w[0].toUpperCase())
+            .join('')
           : '';
+        const goToAgentAssignment = (e) => {
+          e.stopPropagation();
+          navigate(`/broker/properties/${row.id || row.listingKey}/edit?step=5`);
+        };
         return (
-          <div className="flex items-center gap-2 min-w-0">
+          <button
+            type="button"
+            onClick={goToAgentAssignment}
+            className="flex items-center gap-2 min-w-0 text-left rounded-lg px-1.5 py-1 -mx-1.5 hover:bg-[#F0FDFA] transition-colors cursor-pointer"
+            title="Open agent assignment in Step 5"
+          >
             {agentName ? (
-              <div className="flex items-center gap-2 min-w-0">
+              <>
                 <span className="size-6 rounded-full bg-[#F0FDFA] border border-[#0F766E]/20 text-[#0F766E] text-[10px] font-bold flex items-center justify-center shrink-0">
                   {initials || 'AG'}
                 </span>
@@ -995,31 +1111,25 @@ export default function BrokerProperties() {
                     {agentName}
                   </span>
                   {asg === 'PENDING_CONFIRMATION' && (
-                    <span className="text-[10px] text-amber-700 block leading-tight">Awaiting</span>
+                    <span className="inline-flex items-center gap-1 mt-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-200 leading-none">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                      Awaiting
+                    </span>
                   )}
                   {asg === 'REJECTED' && (
-                    <span className="text-[10px] text-rose-600 block leading-tight">Declined</span>
+                    <span className="inline-flex items-center gap-1 mt-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-red-50 text-red-700 border border-red-200 leading-none">
+                      <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                      Declined
+                    </span>
                   )}
                 </div>
-              </div>
+              </>
             ) : (
               <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
-                Unassigned
+                No agent assigned
               </span>
             )}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setReassignProp(row);
-                setIsReassignModalOpen(true);
-              }}
-              className="text-[10px] font-semibold text-[#0F766E] hover:text-[#115E59] bg-teal-50 hover:bg-teal-100 border border-teal-200 px-2 py-0.5 rounded-md cursor-pointer transition-colors shrink-0"
-              title={agentName ? 'Reassign agent' : 'Assign agent'}
-            >
-              {agentName ? 'Reassign' : 'Assign'}
-            </button>
-          </div>
+          </button>
         );
       }
     },
@@ -1029,14 +1139,7 @@ export default function BrokerProperties() {
       className: "min-w-[130px]",
       render: (row) => {
         const displayStatus = getBrokerDisplayStatus(row);
-        const badgeStyles = {
-          DRAFT: { label: 'Draft', pill: 'bg-slate-50 text-slate-600 border-slate-200', dot: 'bg-slate-400' },
-          PENDING_APPROVAL: { label: 'Pending Approval', pill: 'bg-amber-50 text-amber-800 border-amber-200', dot: 'bg-amber-500 animate-pulse' },
-          PUBLISHED: { label: 'Published', pill: 'bg-teal-50 text-teal-700 border-teal-200', dot: 'bg-teal-600' },
-          UNPUBLISHED: { label: 'Unpublished', pill: 'bg-slate-100 text-slate-600 border-slate-200', dot: 'bg-slate-400' },
-          CLOSED: { label: 'Closed', pill: 'bg-slate-100 text-slate-700 border-slate-300', dot: 'bg-slate-500' },
-        };
-        const cfg = badgeStyles[displayStatus] || badgeStyles.PUBLISHED;
+        const cfg = BROKER_STATUS_STYLES[displayStatus] || BROKER_STATUS_STYLES.PUBLISHED;
 
         return (
           <div className="flex items-center gap-2">
@@ -1067,46 +1170,56 @@ export default function BrokerProperties() {
         const rawDate = row.created_at || row.createdAt;
         const calDate = formatPhilippineCalendarDate(rawDate);
         const relDate = formatPhilippineRelativeTime(rawDate);
-        const activityBadge = getDateActivityBadge(row, seenActivity);
+        const activityBadge = getDateActivityBadge(row, seenActivity, user?.id);
 
+        const isHighlighted = activityBadge === 'NEW' || activityBadge === 'EDITED';
         return (
-          <div className="flex flex-col gap-1">
+          <button
+            type="button"
+            data-testid={`date-added-btn-${row.id || row.listingKey}`}
+            data-highlighted={isHighlighted ? activityBadge.toLowerCase() : 'false'}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleOpenAuditModal(row, activityBadge);
+            }}
+            className={cn(
+              'text-left rounded-lg px-2 py-1 -mx-2 transition-colors cursor-pointer flex flex-col gap-0.5 border',
+              activityBadge === 'NEW'
+                ? 'bg-[#F0FDFA] border-[#0F766E]/30 hover:bg-[#CCFBF1]/60'
+                : activityBadge === 'EDITED'
+                  ? 'bg-amber-50 border-amber-200 hover:bg-amber-100/70'
+                  : 'border-transparent hover:bg-slate-50'
+            )}
+            title="Click to view audit trail and listing preview"
+          >
             <div className="flex items-center gap-1.5">
-              <p className="text-xs text-[#1E293B] font-medium leading-snug" title={`Philippine Standard Time: ${calDate}`}>
+              <span
+                className={cn(
+                  'text-xs font-medium leading-snug',
+                  activityBadge === 'NEW'
+                    ? 'text-[#0F766E] font-semibold'
+                    : activityBadge === 'EDITED'
+                      ? 'text-amber-900 font-semibold'
+                      : 'text-[#1E293B]'
+                )}
+              >
                 {calDate}
-              </p>
+              </span>
               {activityBadge === 'NEW' && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    dismissActivityBadge(row);
-                  }}
-                  className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-[#F0FDFA] text-[#0F766E] border border-[#0F766E]/25 hover:bg-[#CCFBF1] transition-colors cursor-pointer"
-                  title="Dismiss New badge"
-                >
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-white text-[#0F766E] border border-[#0F766E]/25">
                   New
-                </button>
+                </span>
               )}
               {activityBadge === 'EDITED' && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    dismissActivityBadge(row);
-                    setEditDetailsTarget(row);
-                  }}
-                  className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors cursor-pointer"
-                  title="View edit details"
-                >
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-white text-amber-800 border border-amber-300">
                   Edited
-                </button>
+                </span>
               )}
             </div>
-            <p className="text-[11px] text-[#64748B] leading-tight" title={relDate}>
+            <span className="text-[11px] text-[#64748B] leading-tight">
               {relDate}
-            </p>
-          </div>
+            </span>
+          </button>
         );
       }
     },
@@ -1115,7 +1228,13 @@ export default function BrokerProperties() {
       header: "Actions",
       className: "w-14 text-center",
       render: (row) => {
-        const isArchived = String(row.status || '').toUpperCase() === 'INACTIVE' || String(row.standard_status || row.standardStatus || '').toUpperCase() === 'CLOSED' || String(row.standard_status || row.standardStatus || '').toUpperCase() === 'HOLD' || String(row.standard_status || row.standardStatus || '').toUpperCase() === 'INACTIVE';
+        const displayStatus = getBrokerDisplayStatus(row);
+        const isArchived = displayStatus !== 'DRAFT' && (
+          String(row.status || '').toUpperCase() === 'INACTIVE' ||
+          displayStatus === 'CLOSED' ||
+          String(row.standard_status || row.standardStatus || '').toUpperCase() === 'HOLD' ||
+          String(row.standard_status || row.standardStatus || '').toUpperCase() === 'INACTIVE'
+        );
         return (
           <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
             <DropdownMenu>
@@ -1131,7 +1250,10 @@ export default function BrokerProperties() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48 p-1 rounded-xl border border-[#E2E8F0] bg-white shadow-lg text-xs z-30 font-sans">
                 <DropdownMenuItem
-                  onClick={() => navigate(`/broker/properties/${row.id || row.listingKey}/edit`)}
+                  onClick={() => {
+                    dismissActivityBadge(row);
+                    navigate(`/broker/properties/${row.id || row.listingKey}/edit`);
+                  }}
                   className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-[#1E293B] hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"
                 >
                   <Edit3 className="w-3.5 h-3.5 text-[#0F766E]" />
@@ -1153,6 +1275,13 @@ export default function BrokerProperties() {
                 >
                   <Copy className="w-3.5 h-3.5 text-[#64748B]" />
                   <span>Duplicate Property</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => handleOpenAuditModal(row)}
+                  className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-[#1E293B] hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"
+                >
+                  <History className="w-3.5 h-3.5 text-[#0F766E]" />
+                  <span>Audit Trail</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className="my-1 bg-[#E2E8F0]" />
                 {isArchived ? (
@@ -1272,14 +1401,6 @@ export default function BrokerProperties() {
   return (
     <div className="flex flex-col gap-6 w-full min-w-0 max-w-full">
 
-      {/* Toast Notification */}
-      {toastMessage && (
-        <div className="fixed top-20 right-6 z-50 bg-[#1E293B] text-white px-4 py-2.5 rounded-lg shadow-xl text-xs font-medium border border-slate-700 animate-in fade-in duration-150 flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-emerald-400" />
-          <span>{toastMessage}</span>
-        </div>
-      )}
-
       {/* Truthful Connection Notice / Error State (No Mock Data Fallback) */}
       {error && properties.length > 0 && (
         <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-center justify-between text-amber-800 text-xs font-sans">
@@ -1396,7 +1517,10 @@ export default function BrokerProperties() {
           all: tabCounts.all,
           draft: tabCounts.draft,
           pendingApproval: tabCounts.pendingApproval,
+          awaitingAgent: tabCounts.awaitingAgent,
+          agentDeclined: tabCounts.agentDeclined,
           published: tabCounts.published,
+          reserved: tabCounts.reserved,
           unpublished: tabCounts.unpublished,
           closed: tabCounts.closed,
         }}
@@ -1724,7 +1848,10 @@ export default function BrokerProperties() {
             onToggleSelectAll={handleToggleSelectAll}
             sortBy={sortBy}
             onSortChange={setSortBy}
-            onRowClick={(row) => navigate(`/broker/properties/${row.id || row.listingKey || row.listingId}/edit`)}
+            onRowClick={(row) => {
+              dismissActivityBadge(row);
+              navigate(`/broker/properties/${row.id || row.listingKey || row.listingId}/edit`);
+            }}
             emptyMessage="No properties match your filter criteria."
           />
         )
@@ -1927,7 +2054,170 @@ export default function BrokerProperties() {
         </DialogContent>
       </Dialog>
 
-      <Toaster />
+      {/* Property Audit Trail Modal */}
+      <Dialog
+        open={Boolean(auditTarget)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setAuditTarget(null);
+            setAuditActivityState(null);
+            setAuditEvents([]);
+          }
+        }}
+      >
+        <DialogContent className="max-w-xl bg-white border-[#E2E8F0] rounded-xl">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-[#1E293B] flex items-center gap-2">
+              <History className="w-4 h-4 text-[#0F766E]" />
+              Property Audit Trail
+            </DialogTitle>
+            <DialogDescription className="text-xs text-[#64748B]">
+              ID: {auditTarget?.listingKey || auditTarget?.listing_key || auditTarget?.id}
+            </DialogDescription>
+          </DialogHeader>
+
+          {auditTarget && (() => {
+            const previewStatus = getBrokerDisplayStatus(auditTarget);
+            const statusMeta = BROKER_STATUS_STYLES[previewStatus] || BROKER_STATUS_STYLES.PUBLISHED;
+            const rawPrice = auditTarget.price_raw ?? auditTarget.price;
+            const previewPrice = rawPrice != null && !isNaN(Number(rawPrice)) && Number(rawPrice) > 0
+              ? `₱${Number(rawPrice).toLocaleString()}`
+              : 'Price not provided';
+            const previewLoc = [auditTarget.address, auditTarget.city].filter(Boolean).join(', ') || 'Location not set';
+            return (
+              <div className="p-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] flex items-center gap-3">
+                <PropertyThumbnail
+                  image={auditTarget.mainImage || auditTarget.image || (Array.isArray(auditTarget.images) ? auditTarget.images[0] : '') || (Array.isArray(auditTarget.property_images) && auditTarget.property_images[0] ? (auditTarget.property_images[0].imageUrl || auditTarget.property_images[0].image_url) : '')}
+                  title={auditTarget.title || 'Property'}
+                />
+                <div className="min-w-0 flex-1 flex flex-col gap-0.5">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-sm font-bold text-[#1E293B] truncate">
+                      {auditTarget.title || 'Untitled Property'}
+                    </span>
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${statusMeta.pill}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${statusMeta.dot}`} />
+                      {statusMeta.label}
+                    </span>
+                    {auditActivityState === 'NEW' && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#F0FDFA] text-[#0F766E] border border-[#0F766E]/25">
+                        New
+                      </span>
+                    )}
+                    {auditActivityState === 'EDITED' && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                        Edited
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-xs text-[#64748B] truncate">{previewLoc}</span>
+                  <span className="text-xs font-bold font-mono text-[#0F766E]">{previewPrice}</span>
+                </div>
+              </div>
+            );
+          })()}
+
+          <div className="max-h-[55vh] overflow-y-auto flex flex-col gap-3 pr-1">
+            {auditLoading ? (
+              <div className="py-8 flex items-center justify-center gap-2 text-xs text-[#64748B]">
+                <Spinner className="w-4 h-4" />
+                <span>Loading audit history...</span>
+              </div>
+            ) : (() => {
+              const lastEdit =
+                auditTarget?.lastEdit ||
+                auditTarget?.custom_reso_attributes?.lastEdit ||
+                auditTarget?.customResoAttributes?.lastEdit;
+              const createdRaw = auditTarget?.created_at || auditTarget?.createdAt;
+
+              if (auditEvents.length === 0 && !lastEdit && !createdRaw) {
+                return (
+                  <p className="text-xs text-[#64748B] p-4 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] text-center">
+                    No audit activity recorded for this listing yet.
+                  </p>
+                );
+              }
+
+              const renderAuditChanges = (changes) =>
+                Array.isArray(changes) && changes.length > 0 ? (
+                  <div className="mt-1 divide-y divide-[#E2E8F0] rounded-md border border-[#E2E8F0] bg-white overflow-hidden">
+                    {changes.map((c, idx) => (
+                      <div key={`${c.field}-${idx}`} className="px-2.5 py-1.5 flex items-center justify-between gap-2">
+                        <span className="font-semibold text-[#1E293B]">{c.field}</span>
+                        <span className="text-[#64748B]">
+                          {String(c.from ?? '—')} → <span className="text-[#0F766E] font-medium">{String(c.to ?? '—')}</span>
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : null;
+
+              return (
+                <>
+                  {auditEvents.map((ev) => (
+                    <div key={ev.id} className="p-3 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] flex flex-col gap-1.5 text-xs">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-semibold text-[#1E293B] capitalize">
+                          {String(ev.eventType || 'event').replace(/[._]/g, ' ')}
+                        </span>
+                        <span className="text-[11px] text-[#64748B]">
+                          {formatPhilippineDateTime(ev.createdAt)}
+                        </span>
+                      </div>
+                      <p className="text-[#475569]">
+                        By <span className="font-semibold text-[#1E293B]">{ev.actorName || 'Broker / System'}</span>
+                        {ev.actorRole ? ` (${ev.actorRole})` : ''}
+                        {ev.outcome ? ` • ${ev.outcome}` : ''}
+                      </p>
+                      {ev.reason && <p className="text-[#64748B]">{ev.reason}</p>}
+                      {renderAuditChanges(ev.newValues?.changes)}
+                    </div>
+                  ))}
+
+                  {auditEvents.length === 0 && lastEdit && (
+                    <div className="p-3 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] flex flex-col gap-1.5 text-xs">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-semibold text-[#1E293B]">Latest Listing Edit</span>
+                        <span className="text-[11px] text-[#64748B]">
+                          {formatPhilippineDateTime(lastEdit.editedAt || auditTarget?.updated_at || auditTarget?.updatedAt)}
+                        </span>
+                      </div>
+                      <p className="text-[#475569]">
+                        By <span className="font-semibold text-[#1E293B]">{lastEdit.editedByName || 'Broker / System'}</span>
+                        {lastEdit.editedByRole ? ` (${lastEdit.editedByRole})` : ''}
+                      </p>
+                      {renderAuditChanges(lastEdit.changes)}
+                    </div>
+                  )}
+
+                  {createdRaw && (
+                    <div className="p-3 rounded-lg border border-[#E2E8F0] bg-white flex items-center justify-between gap-2 text-xs">
+                      <span className="font-semibold text-[#1E293B]">Listing Created</span>
+                      <span className="text-[#64748B]">{formatPhilippineDateTime(createdRaw)}</span>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setAuditTarget(null);
+                setAuditEvents([]);
+              }}
+              className="min-h-10 rounded-lg border-[#E2E8F0]"
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Toaster position="top-right" />
     </div>
   );
 }

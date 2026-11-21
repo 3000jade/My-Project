@@ -254,7 +254,7 @@ export default function ListingStepSpecsFeatures({
                       <ToggleGroup
                         value={
                           formData.bathrooms_total_integer !== undefined &&
-                          formData.bathrooms_total_integer !== ''
+                            formData.bathrooms_total_integer !== ''
                             ? [String(formData.bathrooms_total_integer)]
                             : ['0']
                         }

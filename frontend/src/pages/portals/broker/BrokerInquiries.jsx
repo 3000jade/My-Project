@@ -1,88 +1,48 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { MessageSquare, Building2, Clock, Sparkles, ChevronRight, Search, RefreshCw, AlertCircle, UserCheck } from 'lucide-react';
-import PageHeader from '../../../components/dashboard/PageHeader';
-import SearchAndFilterBar from '../../../components/dashboard/SearchAndFilterBar';
+import { useNavigate } from 'react-router-dom';
+import { MessageSquare, Building2, Clock } from 'lucide-react';
 import StatusBadge from '../../../components/dashboard/StatusBadge';
-import DataTable from '../../../components/dashboard/DataTable';
-import EmptyState from '../../../components/dashboard/EmptyState';
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-  CardFooter,
-  KpiCard,
-  useToast,
-  Toaster,
-  Spinner
-} from '../../../components/ui';
-import { Button } from '../../../components/ui/button';
-import { Badge } from '../../../components/ui/badge';
-import { Alert, AlertTitle, AlertDescription } from '../../../components/ui/alert';
-import { Tabs, TabsList, TabsTrigger } from '../../../components/ui/tabs';
-import { TableSkeleton } from '../../../components/dashboard/skeletons';
+import InquiryOverviewShell from '../../../components/inquiries/InquiryOverviewShell';
+import { sortInquiriesByDate } from '../../../components/inquiries/InquiryFilterToolbar';
+import InquiryConversationPanel from '../../../components/inquiries/InquiryConversationPanel';
+import { useToast } from '../../../components/ui';
 import { inquiryService } from '../../../services/inquiryService';
 import { agentService } from '../../../services/agentService';
-
-const AVATAR_BG_COLORS = [
-  'bg-teal-700 text-teal-100',
-  'bg-indigo-700 text-indigo-100',
-  'bg-sky-700 text-sky-100',
-  'bg-emerald-700 text-emerald-100',
-  'bg-amber-700 text-amber-100',
-  'bg-rose-700 text-rose-100',
-  'bg-violet-700 text-violet-100',
-];
-
-function getInitials(name) {
-  if (!name) return '??';
-  const parts = name.trim().split(/\s+/);
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
-
-function getAvatarColor(name = '') {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const idx = Math.abs(hash) % AVATAR_BG_COLORS.length;
-  return AVATAR_BG_COLORS[idx];
-}
 
 export default function BrokerInquiries() {
   const navigate = useNavigate();
   const { toast } = useToast();
+
   const [inquiries, setInquiries] = useState([]);
   const [metrics, setMetrics] = useState(null);
+  const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
   const [search, setSearch] = useState('');
-  const [activeTab, setActiveTab] = useState('ALL'); // ALL, ACTIVE, INACTIVE, UNASSIGNED, UNANSWERED, OVERDUE
+  const [activeTab, setActiveTab] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [agentFilter, setAgentFilter] = useState('ALL');
-  const [agents, setAgents] = useState([]);
+  const [sortBy, setSortBy] = useState('newest');
 
   const loadInquiriesAndMetrics = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const [data, agentList] = await Promise.all([
+      const [data, agentList, met] = await Promise.all([
         inquiryService.getInquiries(),
         agentService.getAgents().catch(() => []),
+        typeof inquiryService.getBrokerMetrics === 'function'
+          ? inquiryService.getBrokerMetrics().catch(() => null)
+          : Promise.resolve(null),
       ]);
       setInquiries(Array.isArray(data) ? data : []);
       setAgents(Array.isArray(agentList) ? agentList : []);
-      if (typeof inquiryService.getBrokerMetrics === 'function') {
-        const met = await inquiryService.getBrokerMetrics().catch(() => null);
-        if (met) setMetrics(met);
-      }
+      if (met) setMetrics(met);
     } catch (err) {
       const msg = err.message || 'Failed to load firm inquiries.';
       setError(msg);
-      toast({ title: 'Error', description: msg, variant: 'destructive' });
+      toast({ title: 'Inquiry Sync Error', description: msg, variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -92,12 +52,19 @@ export default function BrokerInquiries() {
     loadInquiriesAndMetrics();
   }, [loadInquiriesAndMetrics]);
 
-  // Compute live KPI stats
   const totalCount = inquiries.length;
-  const newCount = inquiries.filter(i => (i.status || '').toUpperCase() === 'NEW').length;
+  const newCount = inquiries.filter((i) => (i.status || '').toUpperCase() === 'NEW').length;
   const activeCount = inquiries.filter((i) => i.business_status !== 'inactive').length;
   const inactiveCount = inquiries.filter((i) => i.business_status === 'inactive').length;
   const unassignedCount = inquiries.filter((i) => i.operational_status === 'unassigned' || !i.agent_id).length;
+  const overdueCount = inquiries.filter((i) => i.operational_status === 'overdue').length;
+
+  const avgResponseMinutes =
+    metrics?.avgFirstHumanResponseMinutes != null
+      ? Math.round(metrics.avgFirstHumanResponseMinutes)
+      : metrics?.averageFirstResponseSeconds != null
+      ? Math.round(metrics.averageFirstResponseSeconds / 60)
+      : 0;
 
   const filtered = inquiries.filter((inq) => {
     const clientName = inq.client_name || '';
@@ -113,417 +80,174 @@ export default function BrokerInquiries() {
     const matchesAgent = agentFilter === 'ALL' || inq.agent_id === agentFilter;
 
     let matchesTab = true;
-    if (activeTab === 'ACTIVE') {
-      matchesTab = inq.business_status !== 'inactive';
-    } else if (activeTab === 'INACTIVE') {
-      matchesTab = inq.business_status === 'inactive';
-    } else if (activeTab === 'UNASSIGNED') {
-      matchesTab = inq.operational_status === 'unassigned' || !inq.agent_id;
-    }
+    if (activeTab === 'ACTIVE') matchesTab = inq.business_status !== 'inactive';
+    else if (activeTab === 'INACTIVE') matchesTab = inq.business_status === 'inactive';
+    else if (activeTab === 'UNASSIGNED') matchesTab = inq.operational_status === 'unassigned' || !inq.agent_id;
+    else if (activeTab === 'OVERDUE') matchesTab = inq.operational_status === 'overdue';
 
     return matchesSearch && matchesStatus && matchesAgent && matchesTab;
   });
 
-  const agentOptions = [
-    { label: "All Agents", value: "ALL" },
-    ...agents.map(a => ({ label: a.name || a.fullName, value: a.id }))
-  ];
+  const sorted = sortInquiriesByDate(filtered, sortBy);
 
   const columns = [
     {
-      header: "Client & Inbound Date",
-      render: (row) => {
-        const initials = getInitials(row.client_name);
-        const avatarBg = getAvatarColor(row.client_name);
-        const isOverdue = row.operational_status === 'overdue';
-        const isNew = (row.status || '').toUpperCase() === 'NEW';
-        const isUnassigned = row.operational_status === 'unassigned' || !row.agent_id;
-
-        return (
-          <div className="flex items-center gap-3">
-            <div
-              className={`w-1 self-stretch rounded-full shrink-0 ${
-                isOverdue
-                  ? 'bg-rose-500'
-                  : isNew
-                  ? 'bg-[#0F766E]'
-                  : isUnassigned
-                  ? 'bg-amber-400'
-                  : 'bg-transparent'
-              }`}
-            />
-            <div className="relative shrink-0">
-              <div
-                className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs shadow-2xs ${avatarBg}`}
-              >
-                {initials}
-              </div>
-              <span
-                className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ring-2 ring-white dark:ring-slate-900 ${
-                  isOverdue
-                    ? 'bg-rose-500'
-                    : isNew
-                    ? 'bg-[#0F766E] animate-pulse'
-                    : isUnassigned
-                    ? 'bg-amber-500'
-                    : 'bg-emerald-500'
-                }`}
-                title={
-                  isOverdue
-                    ? 'Overdue SLA'
-                    : isNew
-                    ? 'New Inbound'
-                    : isUnassigned
-                    ? 'Unassigned'
-                    : 'Active'
-                }
-              />
-            </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <p className="font-bold text-[#1E293B] dark:text-slate-100 font-sans text-xs truncate">
-                  {row.client_name}
-                </p>
-                {isNew && (
-                  <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase bg-teal-50 dark:bg-teal-950/60 text-[#0F766E] dark:text-teal-400 border border-teal-200/60 dark:border-teal-800">
-                    New
-                  </span>
-                )}
-              </div>
-              <p className="text-[11px] text-[#64748B] dark:text-slate-400 font-sans truncate">
-                {row.client_email || row.client_phone || row.created_at}
-              </p>
-              <span className="text-[10px] font-mono text-slate-400 dark:text-slate-500">
-                Ref: {row.reference_code || row.id}
-              </span>
-            </div>
-          </div>
-        );
-      },
-    },
-    {
-      header: "Latest Message",
+      header: 'Client & Inbound Date',
       render: (row) => (
-        <div className="max-w-xs sm:max-w-sm space-y-1">
-          <div className="flex items-start gap-1.5">
-            <MessageSquare className="w-3.5 h-3.5 text-[#0F766E] dark:text-teal-400 shrink-0 mt-0.5" />
-            <p className="text-xs text-slate-700 dark:text-slate-200 font-sans line-clamp-2 italic font-normal leading-relaxed">
-              {row.last_message ? (
-                `“${row.last_message}”`
-              ) : (
-                <span className="text-slate-400 dark:text-slate-500 not-italic">No message excerpt</span>
-              )}
-            </p>
-          </div>
-          {row.ai_summary && (
-            <div className="flex items-center gap-1 text-[10px] text-teal-800 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/50 px-2 py-0.5 rounded border border-teal-200/50 dark:border-teal-900 w-fit">
-              <Sparkles className="w-2.5 h-2.5 shrink-0 text-teal-600 dark:text-teal-400" />
-              <span className="truncate max-w-[240px] font-sans font-medium">{row.ai_summary}</span>
-            </div>
-          )}
+        <div className="min-w-0">
+          <p className="font-semibold text-on-surface text-sm truncate">{row.client_name}</p>
+          <p className="text-xs text-on-surface-variant truncate">{row.client_email || row.client_phone}</p>
+          <span className="text-[11px] text-on-surface-variant tabular-nums">
+            Ref: {row.reference_code || row.id}
+          </span>
         </div>
       ),
     },
     {
-      header: "Property Interested",
+      header: 'Property Interested',
       render: (row) => (
-        <div className="space-y-1">
-          <div className="flex items-center gap-1.5">
-            <Building2 className="w-3.5 h-3.5 text-[#0F766E] dark:text-teal-400 shrink-0" />
-            <p className="font-semibold text-[#0F766E] dark:text-teal-400 font-sans text-xs truncate max-w-[180px]">
-              {row.property_title || 'General Inquiry'}
-            </p>
-          </div>
-          {row.property_price && (
-            <p className="text-[11px] font-mono text-[#64748B] dark:text-slate-400 pl-5">
-              {row.property_price}
-            </p>
-          )}
+        <div className="min-w-0">
+          <p className="font-semibold text-primary text-sm truncate max-w-[200px] inline-flex items-center gap-1.5">
+            <Building2 className="size-3.5 shrink-0" />
+            <span className="truncate">{row.property_title || 'General Inquiry'}</span>
+          </p>
+          <p className="text-xs text-on-surface-variant tabular-nums">{row.property_price}</p>
         </div>
       ),
     },
     {
-      header: "Assigned Consultant",
-      render: (row) => {
-        const isAssigned = Boolean(row.agent_name);
-        return (
-          <div className="flex items-center gap-2">
-            <div
-              className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${
-                isAssigned
-                  ? 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200'
-                  : 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300'
-              }`}
-            >
-              {isAssigned ? getInitials(row.agent_name) : '!'}
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 font-sans truncate">
-                {row.agent_name || <span className="text-amber-700 dark:text-amber-400 font-bold">Unassigned</span>}
-              </p>
-              <span className="text-[10px] text-slate-400 dark:text-slate-500 font-sans block">
-                {isAssigned ? 'Consultant' : 'Awaiting routing'}
-              </span>
-            </div>
-          </div>
-        );
-      },
-    },
-    {
-      header: "Operational State",
+      header: 'Latest Message',
       render: (row) => (
-        <div className="flex flex-col gap-1 items-start">
-          <div className="flex items-center gap-1.5">
-            <span
-              className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                row.operational_status === 'overdue'
-                  ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-rose-300 dark:border-rose-800'
-                  : row.operational_status === 'unassigned'
-                  ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
-              }`}
-            >
-              {row.operational_status === 'overdue' ? 'Overdue SLA' : row.operational_status || 'normal'}
-            </span>
-            {row.business_status === 'inactive' && (
-              <span className="text-[9px] font-mono uppercase text-slate-400">Inactive</span>
-            )}
-          </div>
-          <div className="flex items-center gap-1 text-[10px] text-[#64748B] dark:text-slate-400 font-mono">
-            <Clock className="w-3 h-3 text-slate-400" />
-            <span>{row.created_at || 'Recent'}</span>
-          </div>
-        </div>
+        <p className="text-xs text-on-surface-variant line-clamp-2 max-w-xs">
+          {row.last_message ? `“${row.last_message}”` : 'No messages yet'}
+        </p>
       ),
     },
     {
-      header: "Status",
+      header: 'Assigned Consultant',
+      render: (row) => (
+        <span className={`text-xs font-medium ${row.agent_name ? 'text-on-surface' : 'text-amber-700 font-semibold'}`}>
+          {row.agent_name || 'Unassigned'}
+        </span>
+      ),
+    },
+    {
+      header: 'Received',
+      render: (row) => (
+        <span className="inline-flex items-center gap-1 text-xs text-on-surface-variant tabular-nums">
+          <Clock className="size-3.5 shrink-0" />
+          <span>{row.created_at || 'Recent'}</span>
+        </span>
+      ),
+    },
+    {
+      header: 'Status',
       render: (row) => <StatusBadge status={row.status} />,
-    },
-    {
-      header: "Actions",
-      className: "text-right",
-      render: (row) => (
-        <Link
-          to={`/broker/inquiries/${row.id}`}
-          aria-label={`View inquiry from ${row.client_name}`}
-          title="View Inquiry"
-          className="w-8 h-8 rounded-lg bg-[#0F766E] hover:bg-[#115E59] active:bg-[#134E4A] text-white transition-all inline-flex items-center justify-center shadow-2xs hover:shadow-xs shrink-0"
-        >
-          <Search className="w-4 h-4" />
-        </Link>
-      ),
     },
   ];
 
   return (
-    <div className="flex flex-col gap-6 w-full min-w-0 max-w-full font-sans" data-testid="broker-inquiries-portal">
-      <Toaster />
-      <PageHeader
-        title="Inquiries"
-        subtitle="Monitor incoming client requests, oversee consultant communication, and enforce response SLAs."
-        actions={
-          <Button
-            type="button"
-            variant="outline"
-            onClick={loadInquiriesAndMetrics}
-            disabled={loading}
-            aria-label="Refresh firm inquiries"
-            className="h-11 px-4 gap-2 border-[#E2E8F0] dark:border-slate-800"
-          >
-            <RefreshCw className={`size-4 ${loading ? 'animate-spin' : ''}`} />
-            <span>Refresh</span>
-          </Button>
-        }
-      />
-
-      {/* Broker SLA Performance & Queue Metrics Bar */}
-      <div data-testid="broker-sla-metrics-bar" className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <KpiCard
-          data-testid="broker-card"
-          size="md"
-          title="Total Inquiries"
-          value={metrics?.totalInquiries ?? totalCount}
-          icon={MessageSquare}
+    <InquiryOverviewShell
+      testId="broker-inquiries-portal"
+      title="Inquiries"
+      subtitle="Monitor incoming client requests, oversee consultant communication, and enforce response SLAs."
+      onRefresh={loadInquiriesAndMetrics}
+      loading={loading}
+      error={error ? `Failed to load firm inquiries: ${error}` : null}
+      kpiTestId="broker-sla-metrics-bar"
+      kpis={[
+        {
+          'data-testid': 'broker-card',
+          title: 'Total Inquiries',
+          value: metrics?.totalInquiries ?? totalCount,
+          icon: MessageSquare,
+        },
+        {
+          'data-testid': 'broker-card',
+          title: 'New Inbound',
+          value: newCount,
+          statusLabel:
+            (metrics?.unassignedCount ?? unassignedCount) > 0
+              ? `${metrics?.unassignedCount ?? unassignedCount} Unassigned`
+              : 'All Assigned',
+          statusVariant: (metrics?.unassignedCount ?? unassignedCount) > 0 ? 'coral' : 'success',
+        },
+        {
+          'data-testid': 'broker-card',
+          title: 'Avg First Response',
+          value: `${avgResponseMinutes}m`,
+          trend:
+            metrics?.conversionRatePercent != null
+              ? `${metrics.conversionRatePercent}% conv`
+              : `${metrics?.overdueCount ?? overdueCount} overdue`,
+          trendDirection:
+            metrics?.conversionRatePercent != null
+              ? 'up'
+              : (metrics?.overdueCount ?? overdueCount) > 0
+              ? 'down'
+              : 'up',
+        },
+      ]}
+      tabsTestId="broker-queue-tabs"
+      queueTabs={[
+        { value: 'ALL', label: `All (${totalCount})` },
+        { value: 'ACTIVE', label: `Active (${activeCount})` },
+        { value: 'UNASSIGNED', label: `Unassigned (${unassignedCount})` },
+        { value: 'OVERDUE', label: `Overdue SLA (${overdueCount})` },
+        { value: 'INACTIVE', label: `Inactive (${inactiveCount})` },
+      ]}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      searchValue={search}
+      onSearchChange={setSearch}
+      searchPlaceholder="Search client name, property, or inquiry snippet..."
+      filters={[
+        {
+          label: 'Status',
+          value: statusFilter,
+          onChange: setStatusFilter,
+          placeholder: 'All Statuses',
+          options: [
+            { label: 'All Statuses', value: 'ALL' },
+            { label: 'New', value: 'NEW' },
+            { label: 'Assigned', value: 'ASSIGNED' },
+            { label: 'Resolved', value: 'RESOLVED' },
+            { label: 'Reopened', value: 'REOPENED' },
+          ],
+        },
+        {
+          label: 'Consultant',
+          value: agentFilter,
+          onChange: setAgentFilter,
+          placeholder: 'All Agents',
+          options: [
+            { label: 'All Agents', value: 'ALL' },
+            ...agents.map((a) => ({ label: a.name || a.fullName, value: a.id })),
+          ],
+        },
+      ]}
+      sortBy={sortBy}
+      onSortChange={setSortBy}
+      onResetFilters={() => {
+        setSearch('');
+        setStatusFilter('ALL');
+        setAgentFilter('ALL');
+        setActiveTab('ALL');
+        setSortBy('newest');
+      }}
+      items={sorted}
+      columns={columns}
+      basePath="/broker/inquiries"
+      onOpenItem={(row) => navigate(`/broker/inquiries/${row.id}`)}
+      renderQuickView={(inq) => (
+        <InquiryConversationPanel
+          inquiry={inq}
+          viewerRole="broker"
+          propertyLinkTo={`/broker/properties/${inq.property_id}/edit`}
+          propertyLinkLabel="Edit property"
+          readOnlyNotice="Open the full inquiry page to reassign consultant, view AI summary, or inspect audit logs."
         />
-
-        <KpiCard
-          data-testid="broker-card"
-          size="md"
-          title="New Inbound"
-          value={newCount}
-          statusLabel={(metrics?.unassignedCount ?? unassignedCount) > 0 ? `${metrics?.unassignedCount ?? unassignedCount} Unassigned` : 'All Assigned'}
-          statusVariant={(metrics?.unassignedCount ?? unassignedCount) > 0 ? 'coral' : 'success'}
-        />
-
-        <KpiCard
-          data-testid="broker-card"
-          size="md"
-          title="Avg First Response"
-          value={metrics ? `${Math.round(metrics.averageFirstResponseSeconds / 60)}m` : '7m'}
-          trend={`${metrics?.conversionRatePercent ?? 33}% conv`}
-          trendDirection="up"
-        />
-      </div>
-
-      {/* Error Alert */}
-      {error && (
-        <Alert variant="destructive" className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <AlertCircle className="size-4 shrink-0" />
-            <div>
-              <AlertTitle>Inquiry Sync Error</AlertTitle>
-              <AlertDescription>Failed to load firm inquiries: {error}</AlertDescription>
-            </div>
-          </div>
-          <Button type="button" size="sm" variant="destructive" onClick={loadInquiriesAndMetrics}>
-            Retry
-          </Button>
-        </Alert>
       )}
-
-      {/* Asymmetric 8/4 Bento Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        <div className="lg:col-span-8 min-w-0 flex flex-col gap-4">
-          <Tabs value={activeTab} onValueChange={setActiveTab} data-testid="broker-queue-tabs" className="w-full">
-            <TabsList className="bg-white dark:bg-slate-900 border border-[#E2E8F0] dark:border-slate-800 p-1 h-auto flex-wrap">
-              <TabsTrigger value="ALL" className="text-xs font-semibold px-3 py-2">
-                All Inquiries ({totalCount})
-              </TabsTrigger>
-              <TabsTrigger value="ACTIVE" className="text-xs font-semibold px-3 py-2">
-                Active Pipeline ({activeCount})
-              </TabsTrigger>
-              <TabsTrigger value="INACTIVE" className="text-xs font-semibold px-3 py-2">
-                Inactive ({inactiveCount})
-              </TabsTrigger>
-              <TabsTrigger value="UNASSIGNED" className="text-xs font-semibold px-3 py-2">
-                Unassigned ({unassignedCount})
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-
-          <SearchAndFilterBar
-            searchValue={search}
-            onSearchChange={setSearch}
-            searchPlaceholder="Search client name, property, or inquiry snippet..."
-            filters={[
-              {
-                value: statusFilter,
-                onChange: setStatusFilter,
-                options: [
-                  { label: "All Statuses", value: "ALL" },
-                  { label: "New", value: "NEW" },
-                  { label: "Assigned", value: "ASSIGNED" },
-                  { label: "Resolved", value: "RESOLVED" },
-                  { label: "Reopened", value: "REOPENED" },
-                ]
-              },
-              {
-                value: agentFilter,
-                onChange: setAgentFilter,
-                options: agentOptions
-              }
-            ]}
-          />
-
-          {loading ? (
-            <TableSkeleton rows={5} />
-          ) : filtered.length === 0 ? (
-            <EmptyState
-              icon="inbox"
-              title="No inquiries match your filters"
-              description="Try selecting a different tab or clearing keyword filters."
-              action={
-                <Button
-                  type="button"
-                  onClick={() => { setSearch(''); setStatusFilter('ALL'); setAgentFilter('ALL'); setActiveTab('ALL'); }}
-                  className="bg-[#0F766E] hover:bg-[#115E59] text-white"
-                >
-                  Reset Filters
-                </Button>
-              }
-            />
-          ) : (
-            <Card data-testid="broker-card" className="bg-white dark:bg-slate-900 rounded-xl border border-[#E2E8F0] dark:border-slate-800 overflow-hidden shadow-xs">
-              <CardHeader className="px-4 py-3 border-b border-[#E2E8F0] dark:border-slate-800 bg-[#F8FAFC] dark:bg-slate-900/60 flex flex-row flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <div className="size-7 rounded-lg bg-teal-50 dark:bg-teal-950/60 text-[#0F766E] dark:text-teal-400 flex items-center justify-center border border-teal-200/60 dark:border-teal-900">
-                    <MessageSquare className="size-3.5" />
-                  </div>
-                  <CardTitle className="font-bold text-[#1E293B] dark:text-slate-100 font-sans text-xs uppercase tracking-wider">
-                    Inquiry Conversations
-                  </CardTitle>
-                  <Badge variant="outline" className="font-mono text-[10px] font-bold">
-                    {filtered.length} {filtered.length === 1 ? 'thread' : 'threads'}
-                  </Badge>
-                </div>
-                <div className="flex items-center gap-3 text-[11px] font-sans text-[#64748B] dark:text-slate-400">
-                  <span className="flex items-center gap-1.5">
-                    <span className="size-2 rounded-full bg-rose-500"></span> Overdue SLA
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <span className="size-2 rounded-full bg-[#0F766E] animate-pulse"></span> Unread / New
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <span className="size-2 rounded-full bg-amber-500"></span> Unassigned
-                  </span>
-                </div>
-              </CardHeader>
-              <CardContent className="p-0">
-                <DataTable
-                  columns={columns}
-                  data={filtered}
-                  onRowClick={(row) => navigate(`/broker/inquiries/${row.id}`)}
-                />
-              </CardContent>
-            </Card>
-          )}
-        </div>
-
-        <div className="lg:col-span-4 flex flex-col gap-6">
-          <Card className="bg-white dark:bg-slate-900 border-[#E2E8F0] dark:border-slate-800 shadow-xs">
-            <CardHeader className="pb-3 border-b border-[#E2E8F0] dark:border-slate-800">
-              <CardTitle className="text-base font-bold text-[#1E293B] dark:text-slate-100">
-                Pipeline Triage
-              </CardTitle>
-              <CardDescription className="text-xs text-[#64748B] dark:text-slate-400">
-                Jump directly to queues needing attention
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pt-4 flex flex-col gap-3">
-              <button
-                type="button"
-                onClick={() => setActiveTab('UNASSIGNED')}
-                className="flex items-center justify-between p-3 rounded-lg border border-[#E2E8F0] dark:border-slate-800 hover:bg-[#F8FAFC] dark:hover:bg-slate-800/60 transition-colors text-left cursor-pointer"
-              >
-                <span className="flex items-center gap-2 text-sm font-medium text-[#1E293B] dark:text-slate-200">
-                  <UserCheck className="size-4 text-amber-600" />
-                  Unassigned Leads
-                </span>
-                <Badge variant="outline" className="font-mono tabular-nums">
-                  {unassignedCount}
-                </Badge>
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('ACTIVE')}
-                className="flex items-center justify-between p-3 rounded-lg border border-[#E2E8F0] dark:border-slate-800 hover:bg-[#F8FAFC] dark:hover:bg-slate-800/60 transition-colors text-left cursor-pointer"
-              >
-                <span className="flex items-center gap-2 text-sm font-medium text-[#1E293B] dark:text-slate-200">
-                  <MessageSquare className="size-4 text-[#0F766E]" />
-                  Active Conversations
-                </span>
-                <Badge variant="outline" className="font-mono tabular-nums">
-                  {activeCount}
-                </Badge>
-              </button>
-            </CardContent>
-            <CardFooter className="pt-3 border-t border-[#E2E8F0] dark:border-slate-800 text-xs text-[#64748B] dark:text-slate-400">
-              Click any thread row to inspect the full conversation and reassign consultants.
-            </CardFooter>
-          </Card>
-        </div>
-      </div>
-    </div>
+    />
   );
 }

@@ -4,6 +4,7 @@ import { render, screen, fireEvent, waitFor, within } from '@testing-library/rea
 import { BrowserRouter } from 'react-router-dom';
 import BrokerProperties from './BrokerProperties';
 import propertyService from '../../../services/propertyService';
+import auditService from '../../../services/auditService';
 
 const mockNavigate = vi.fn();
 vi.mock('react-router-dom', async () => {
@@ -24,6 +25,18 @@ vi.mock('../../../services/propertyService', () => ({
     getEditRequests: vi.fn().mockResolvedValue([])
   },
   normalizeProperty: (p) => p
+}));
+
+vi.mock('../../../services/auditService', () => ({
+  default: {
+    listAuditEvents: vi.fn().mockResolvedValue([]),
+  },
+}));
+
+vi.mock('../../../context/AuthContext', () => ({
+  useAuth: () => ({
+    user: { id: 'broker-current', role: 'broker', full_name: 'Principal Broker' },
+  }),
 }));
 
 const mockData = [
@@ -311,7 +324,7 @@ describe('BrokerProperties Page (Mockup & Modern SaaS Layout)', () => {
     expect(rowsAsc[1]).toHaveTextContent('Bespoke Rockwell Sky Penthouse');
   });
 
-  it('displays Assigned Agent or Unassigned, dismisses New/Edited on click, opens edit modal, and never renders Removed', async () => {
+  it('displays Assigned Agent status or No agent assigned without Assign/Reassign buttons, dismisses New/Edited on click, and never renders Removed', async () => {
     const now = Date.now();
     const createdIso = new Date(now - 2 * 60 * 60 * 1000).toISOString();
     const editedIso = new Date(now - 5 * 60 * 1000).toISOString();
@@ -330,6 +343,7 @@ describe('BrokerProperties Page (Mockup & Modern SaaS Layout)', () => {
           id: 'prop-edited-1',
           title: 'Edited Assigned Listing',
           agentName: 'Maria Santos',
+          assignment_status: 'PENDING_CONFIRMATION',
           created_at: createdIso,
           updated_at: editedIso,
           lastEdit: {
@@ -345,25 +359,219 @@ describe('BrokerProperties Page (Mockup & Modern SaaS Layout)', () => {
     renderComponent();
 
     expect(await screen.findByText('Fresh Unassigned Listing')).toBeInTheDocument();
-    expect(screen.getByText('Unassigned')).toBeInTheDocument();
+    expect(screen.getByText('No agent assigned')).toBeInTheDocument();
     expect(screen.getByText('Maria Santos')).toBeInTheDocument();
+    expect(screen.getByText('Awaiting').className).toContain('bg-amber-50');
+    expect(screen.getAllByText('Published')[0].className).toContain('bg-emerald-50');
+    expect(screen.getAllByText('Draft')[0].className).toContain('bg-blue-50');
+    expect(screen.queryByRole('button', { name: /^(Assign|Reassign)$/i })).not.toBeInTheDocument();
+    expect(screen.queryByText('Unassigned')).not.toBeInTheDocument();
     expect(screen.queryByText('Removed')).not.toBeInTheDocument();
 
-    // Clicking New dismisses it immediately
-    const newBtn = screen.getByRole('button', { name: 'New' });
-    fireEvent.click(newBtn);
-    expect(screen.queryByRole('button', { name: 'New' })).not.toBeInTheDocument();
+    // Highlighted Date Added buttons for New and Edited
+    const newDateBtn = screen.getByTestId('date-added-btn-prop-new-1');
+    expect(newDateBtn).toHaveAttribute('data-highlighted', 'new');
+    expect(within(newDateBtn).getByText('New')).toBeInTheDocument();
 
-    // Clicking Edited dismisses it immediately AND opens the Edit Details modal
-    const editedBtn = screen.getByRole('button', { name: 'Edited' });
-    fireEvent.click(editedBtn);
-    expect(screen.queryByRole('button', { name: 'Edited' })).not.toBeInTheDocument();
+    const editedDateBtn = screen.getByTestId('date-added-btn-prop-edited-1');
+    expect(editedDateBtn).toHaveAttribute('data-highlighted', 'edited');
+    expect(within(editedDateBtn).getByText('Edited')).toBeInTheDocument();
+
+    // Clicking the highlighted New date clears the highlight immediately and opens the Audit Trail modal with Listing Preview
+    fireEvent.click(newDateBtn);
+    expect(newDateBtn).toHaveAttribute('data-highlighted', 'false');
+    expect(within(newDateBtn).queryByText('New')).not.toBeInTheDocument();
+
+    const newDialog = await screen.findByRole('dialog');
+    expect(within(newDialog).getByText('Property Audit Trail')).toBeInTheDocument();
+    expect(within(newDialog).getByText('Fresh Unassigned Listing')).toBeInTheDocument();
+    expect(within(newDialog).getByText('New')).toBeInTheDocument();
+    fireEvent.click(within(newDialog).getAllByRole('button', { name: 'Close' })[0]);
+
+    // Clicking the highlighted Edited date clears the highlight immediately AND opens Audit Trail with Listing Preview + Edit Details
+    fireEvent.click(editedDateBtn);
+    expect(editedDateBtn).toHaveAttribute('data-highlighted', 'false');
+    expect(within(editedDateBtn).queryByText('Edited')).not.toBeInTheDocument();
 
     const dialog = await screen.findByRole('dialog');
-    expect(within(dialog).getByText('Listing Edit Details')).toBeInTheDocument();
+    expect(within(dialog).getByText('Property Audit Trail')).toBeInTheDocument();
+    expect(within(dialog).getByText('Edited Assigned Listing')).toBeInTheDocument();
+    expect(within(dialog).getByText('Edited')).toBeInTheDocument();
     expect(within(dialog).getByText(/Principal Broker/i)).toBeInTheDocument();
     expect(within(dialog).getByText('Price')).toBeInTheDocument();
     expect(within(dialog).getByText(/120000000/)).toBeInTheDocument();
     expect(within(dialog).getByText(/125000000/)).toBeInTheDocument();
+    fireEvent.click(within(dialog).getAllByRole('button', { name: 'Close' })[0]);
+
+    // Clicking on the Assigned Agent redirects to Step 5 of the Add/Edit Property Listing page
+    fireEvent.click(screen.getByText('Maria Santos'));
+    expect(mockNavigate).toHaveBeenCalledWith('/broker/properties/prop-edited-1/edit?step=5');
+  });
+
+  it('opens the Property Audit Trail modal for a specific property from the Actions menu', async () => {
+    auditService.listAuditEvents.mockResolvedValueOnce([
+      {
+        id: 'aud-1',
+        eventType: 'property.updated',
+        actorName: 'Principal Broker',
+        actorRole: 'broker',
+        outcome: 'success',
+        createdAt: new Date().toISOString(),
+        newValues: {
+          changes: [{ field: 'Price', from: '150000000', to: '158000000' }],
+        },
+      },
+    ]);
+
+    renderComponent();
+    expect(await screen.findByText('Aurelia Modernist Penthouse at BGC')).toBeInTheDocument();
+
+    const moreButtons = screen.getAllByRole('button', { name: /more options/i });
+    fireEvent.pointerDown(moreButtons[0]);
+    fireEvent.click(moreButtons[0]);
+
+    const auditMenuItem = await screen.findByText('Audit Trail');
+    fireEvent.click(auditMenuItem);
+
+    expect(auditService.listAuditEvents).toHaveBeenCalledWith({
+      targetType: 'property',
+      targetId: 'prop-1',
+    });
+
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByText('Property Audit Trail')).toBeInTheDocument();
+    expect(within(dialog).getByText(/Aurelia Modernist Penthouse at BGC/)).toBeInTheDocument();
+    expect(within(dialog).getByText(/Principal Broker/)).toBeInTheDocument();
+    expect(within(dialog).getByText('Price')).toBeInTheDocument();
+  });
+
+  it('inline Approve syncs with server response when held for agent confirmation', async () => {
+    propertyService.updateProperty.mockResolvedValueOnce({
+      id: 'prop-3',
+      listAgentKey: 'agent-1',
+      agentName: 'Elena Rossi',
+      standardStatus: 'Pending Confirmation',
+      isPublished: false,
+    });
+    renderComponent();
+
+    expect(await screen.findByText('Dasmarinas Village Sanctuary')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Approve' }));
+
+    expect((await screen.findAllByText(/waiting for agent confirmation/i)).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Awaiting Agent')[0].className).toContain('bg-amber-50');
+  });
+
+  it('keeps Draft distinct from Off Market (Hold), renders Agent Declined and Reserved colors, and hides Reactivate for Drafts', async () => {
+    propertyService.getProperties.mockResolvedValueOnce({
+      data: [
+        mockData[1], // Draft
+        {
+          ...mockData[0],
+          id: 'prop-hold-1',
+          title: 'Paused Hold Penthouse',
+          standard_status: 'Hold',
+          status: 'INACTIVE',
+          is_published: false,
+        },
+        {
+          ...mockData[0],
+          id: 'prop-declined-1',
+          title: 'Declined Estate',
+          standard_status: 'Action Required',
+          status: 'PENDING',
+          is_published: false,
+        },
+        {
+          ...mockData[0],
+          id: 'prop-reserved-1',
+          title: 'Reserved Condo',
+          standard_status: 'Active Under Contract',
+          status: 'RESERVED',
+          is_published: true,
+        },
+      ],
+    });
+    renderComponent();
+
+    expect(await screen.findByText('Bespoke Rockwell Sky Penthouse')).toBeInTheDocument();
+    expect(screen.getAllByText('Draft')[0].className).toContain('bg-blue-50');
+    expect(screen.getAllByText('Off Market')[0].className).toContain('bg-orange-50');
+    expect(screen.getAllByText('Agent Declined')[0].className).toContain('bg-red-50');
+    expect(screen.getAllByText('Reserved')[0].className).toContain('bg-indigo-50');
+
+    const moreButtons = screen.getAllByRole('button', { name: /more options/i });
+    fireEvent.pointerDown(moreButtons[0]);
+    fireEvent.click(moreButtons[0]);
+    expect(await screen.findByRole('menuitem', { name: /archive listing/i })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: /reactivate listing/i })).not.toBeInTheDocument();
+  });
+
+  it('expires old Edited badges (>3 days), skips self-authored highlights, and clears New/Edited when opening row or Audit Trail', async () => {
+    const now = Date.now();
+    const fourDaysAgo = new Date(now - 4 * 24 * 60 * 60 * 1000).toISOString();
+    const twoHoursAgo = new Date(now - 2 * 60 * 60 * 1000).toISOString();
+
+    propertyService.getProperties.mockResolvedValueOnce({
+      data: [
+        {
+          ...mockData[0],
+          id: 'prop-old-edit',
+          title: 'Stale Edited Condo',
+          created_at: fourDaysAgo,
+          updated_at: fourDaysAgo,
+          lastEdit: { editedAt: fourDaysAgo, editedByName: 'Other User', editedById: 'other-1', changes: [] },
+        },
+        {
+          ...mockData[0],
+          id: 'prop-self-new',
+          title: 'Self Created Condo',
+          created_by: 'broker-current',
+          created_at: twoHoursAgo,
+          updated_at: twoHoursAgo,
+        },
+        {
+          ...mockData[0],
+          id: 'prop-other-new',
+          title: 'Agent Submitted Condo',
+          created_by: 'agent-1',
+          created_at: twoHoursAgo,
+          updated_at: twoHoursAgo,
+        },
+      ],
+    });
+    renderComponent();
+
+    expect(await screen.findByText('Stale Edited Condo')).toBeInTheDocument();
+    expect(screen.getByTestId('date-added-btn-prop-old-edit')).toHaveAttribute('data-highlighted', 'false');
+    expect(screen.getByTestId('date-added-btn-prop-self-new')).toHaveAttribute('data-highlighted', 'false');
+    expect(screen.getByTestId('date-added-btn-prop-other-new')).toHaveAttribute('data-highlighted', 'new');
+
+    // Clicking the row to open/edit clears the New highlight automatically
+    fireEvent.click(screen.getByText('Agent Submitted Condo'));
+    expect(screen.getByTestId('date-added-btn-prop-other-new')).toHaveAttribute('data-highlighted', 'false');
+  });
+
+  it('shows Needs Agent instead of Awaiting Agent when standard_status is Pending Confirmation without an assigned agent', async () => {
+    propertyService.getProperties.mockResolvedValueOnce({
+      data: [
+        {
+          id: 'prop-unassigned-pending',
+          title: 'Unassigned Pending Listing',
+          standard_status: 'Pending Confirmation',
+          status: 'pending',
+          list_agent_key: null,
+          price: 15000000,
+          property_type: 'Condominium',
+        },
+      ],
+    });
+
+    renderComponent();
+
+    expect(await screen.findByText('Unassigned Pending Listing')).toBeInTheDocument();
+    expect(screen.getByText('No agent assigned')).toBeInTheDocument();
+    expect(screen.getByText('Needs Agent')).toBeInTheDocument();
+    expect(screen.queryByText('Awaiting Agent')).not.toBeInTheDocument();
   });
 });

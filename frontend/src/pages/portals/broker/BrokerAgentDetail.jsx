@@ -11,7 +11,7 @@ import { Search } from 'lucide-react';
 import DashboardModal from '../../../components/dashboard/DashboardModal';
 import AgentScheduleCalendar from '../../../components/dashboard/AgentScheduleCalendar';
 import { agentService } from '../../../services/agentService';
-import { Spinner, Card, CardContent, KpiCard } from '../../../components/ui';
+import { Spinner, Card, CardContent, KpiCard, useToast, Toaster } from '../../../components/ui';
 import { Button } from '../../../components/ui/button';
 import { Badge } from '../../../components/ui/badge';
 import { Alert, AlertTitle, AlertDescription } from '../../../components/ui/alert';
@@ -81,11 +81,14 @@ export default function BrokerAgentDetail() {
   const [departureReason, setDepartureReason] = useState('Voluntary resignation / brokerage transfer');
   const [auditEvents, setAuditEvents] = useState([]);
   const [updating, setUpdating] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
+  const { toast } = useToast();
 
-  const showToast = (msg) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(''), 3500);
+  const showToast = (msg, variant = 'success') => {
+    toast({
+      title: variant === 'destructive' ? 'Action Failed' : 'Agent Profile',
+      description: msg,
+      variant,
+    });
   };
 
   useEffect(() => {
@@ -196,7 +199,7 @@ export default function BrokerAgentDetail() {
       const list = Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : []);
       setAssignedProps(list);
     } catch (err) {
-      showToast(`Failed to assign property: ${err.message || 'Unknown error'}`);
+      showToast(`Failed to assign property: ${err.message || 'Unknown error'}`, 'destructive');
     } finally {
       setIsAssigning(false);
     }
@@ -438,14 +441,6 @@ export default function BrokerAgentDetail() {
 
   return (
     <div className="flex flex-col gap-6 w-full min-w-0 max-w-full">
-      {/* Toast Notification */}
-      {toastMessage && (
-        <div className="fixed top-5 right-5 z-50 bg-[#1E293B] text-white text-xs font-medium px-4 py-2.5 rounded-lg shadow-lg flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-          <span>{toastMessage}</span>
-        </div>
-      )}
-
       {/* Breadcrumbs */}
       <div>
         <div className="flex items-center gap-1.5 text-xs text-[#64748B] mb-2 font-medium">
@@ -1866,6 +1861,7 @@ export default function BrokerAgentDetail() {
           })()}
         </div>
       </DashboardModal>
+      <Toaster position="top-right" />
     </div>
   );
 }

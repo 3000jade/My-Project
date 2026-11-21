@@ -141,7 +141,7 @@ export class InquiryController {
       let agentId = req.query.agentId as string | undefined;
 
       const user = (req as any).user;
-      if (user && user.role === 'agent' && !agentId) {
+      if (user && user.role === 'agent') {
         agentId = user.id;
       }
 

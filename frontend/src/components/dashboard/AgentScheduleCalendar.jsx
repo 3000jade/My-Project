@@ -30,6 +30,7 @@ import {
   generateAppointmentIcs,
 } from '../../services/appointmentService';
 import { agentService } from '../../services/agentService';
+import { useToast } from '../ui';
 
 import { cn } from '../../utils/cn';
 
@@ -302,11 +303,14 @@ export default function AgentScheduleCalendar({
     reason: 'Out of Office / Blocked Period',
   });
 
-  const [toastMessage, setToastMessage] = useState('');
+  const { toast } = useToast();
 
-  const showToast = (msg) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(''), 3500);
+  const showToast = (msg, variant = 'success') => {
+    toast({
+      title: variant === 'destructive' ? 'Calendar Error' : 'Schedule Update',
+      description: msg,
+      variant,
+    });
   };
 
   const loadData = useCallback(async () => {
@@ -426,7 +430,7 @@ export default function AgentScheduleCalendar({
       }
       showToast(`Appointment status updated to ${newStatus}`);
     } catch (err) {
-      showToast(err.message || 'Could not update appointment status');
+      showToast(err.message || 'Could not update appointment status', 'destructive');
     } finally {
       setSubmitting(false);
     }
@@ -466,7 +470,7 @@ export default function AgentScheduleCalendar({
       setRescheduleModalOpen(false);
       showToast('Appointment rescheduled & reminder timers updated.');
     } catch (err) {
-      showToast(err.message || 'Failed to reschedule appointment.');
+      showToast(err.message || 'Failed to reschedule appointment.', 'destructive');
     } finally {
       setSubmitting(false);
     }
@@ -525,7 +529,7 @@ export default function AgentScheduleCalendar({
       setReassignModalOpen(false);
       showToast('Appointment reassigned successfully.');
     } catch (err) {
-      showToast(err.message || 'Failed to reassign appointment.');
+      showToast(err.message || 'Failed to reassign appointment.', 'destructive');
     } finally {
       setSubmitting(false);
     }
@@ -643,13 +647,6 @@ export default function AgentScheduleCalendar({
 
   return (
     <div data-testid="agent-schedule-calendar" className="space-y-5">
-      {toastMessage && (
-        <div className="fixed top-5 right-5 z-50 bg-[#1E293B] text-white text-xs font-medium px-4 py-2.5 rounded-lg shadow-lg flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-          <span>{toastMessage}</span>
-        </div>
-      )}
-
       {/* Optional Header Banner */}
       {title && (
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">

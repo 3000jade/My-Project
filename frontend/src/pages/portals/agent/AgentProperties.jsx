@@ -7,9 +7,19 @@ import DataTable from '../../../components/dashboard/DataTable';
 import EmptyState from '../../../components/dashboard/EmptyState';
 import propertyService from '../../../services/propertyService';
 import { useAuth } from '../../../context/AuthContext';
-import { Building2, Clock, CheckCircle2, AlertTriangle, XCircle, Check } from 'lucide-react';
+import { Building2, Clock, CheckCircle2, AlertTriangle, XCircle, Check, Inbox, UserCheck } from 'lucide-react';
 import { Button, buttonVariants, Badge } from '../../../components/ui';
 import AgentAssignmentActionModal from '../../../components/dashboard/AgentAssignmentActionModal';
+
+function isPendingConfirmation(item) {
+  return (item?.assignment_status || item?.assignmentStatus) === 'PENDING_CONFIRMATION'
+    || item?.standard_status === 'Pending Confirmation'
+    || item?.standardStatus === 'Pending Confirmation';
+}
+
+function getAssignedByName(item) {
+  return item?.assigned_by_name || item?.assignedByName || '';
+}
 
 function AgentPropertyThumbnail({ src, title }) {
   const [hasError, setHasError] = useState(false);
@@ -81,12 +91,13 @@ export default function AgentProperties() {
   }, [user?.id]);
 
   // Filtering
+  const pendingAssignments = properties.filter(isPendingConfirmation);
   const filtered = properties.filter(item => {
     const title = (item.title || item.name || '').toLowerCase();
     const loc = (typeof item.location === 'string' ? item.location : item.location?.address || '').toLowerCase();
     const q = search.toLowerCase();
     const matchesSearch = title.includes(q) || loc.includes(q);
-    const isPendingConfirm = (item.assignment_status || item.assignmentStatus) === 'PENDING_CONFIRMATION' || item.standard_status === 'Pending Confirmation';
+    const isPendingConfirm = isPendingConfirmation(item);
     const matchesStatus = statusFilter === 'ALL'
       ? true
       : statusFilter === 'PENDING_CONFIRMATION'
@@ -117,6 +128,12 @@ export default function AgentProperties() {
               )}
             </div>
             <p className="text-xs text-[#64748B]">{typeof row.location === 'string' ? row.location : row.location?.address || 'Metro Manila'}</p>
+            {getAssignedByName(row) && (
+              <p className="text-[11px] text-[#0F766E] font-medium flex items-center gap-1 mt-0.5">
+                <UserCheck className="w-3 h-3 shrink-0" />
+                <span>Assigned by {getAssignedByName(row)}</span>
+              </p>
+            )}
           </div>
         </div>
       )
@@ -230,6 +247,85 @@ export default function AgentProperties() {
           </Link>
         }
       />
+
+      {/* New Assigned Properties Inbox */}
+      {pendingAssignments.length > 0 && (
+        <section
+          aria-label="New Assigned Properties Inbox"
+          className="rounded-lg border border-amber-200 bg-amber-50/70 p-4 space-y-3 shadow-xs"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-amber-500 text-white">
+                <Inbox className="w-4 h-4" />
+              </span>
+              <div>
+                <h2 className="text-sm font-semibold text-[#1E293B]">
+                  New Assignments ({pendingAssignments.length})
+                </h2>
+                <p className="text-xs text-[#64748B]">
+                  Review and accept or decline newly assigned property listings.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setStatusFilter(statusFilter === 'PENDING_CONFIRMATION' ? 'ALL' : 'PENDING_CONFIRMATION')}
+              className="px-3 py-1.5 rounded-lg border border-amber-300 bg-white hover:bg-amber-100/60 text-xs font-semibold text-amber-800 transition-colors cursor-pointer"
+            >
+              {statusFilter === 'PENDING_CONFIRMATION' ? 'Show All Listings' : 'Filter to Pending'}
+            </button>
+          </div>
+          <div className="divide-y divide-amber-200/80 rounded-md border border-amber-200/80 bg-white">
+            {pendingAssignments.map((item) => {
+              const assigner = getAssignedByName(item) || 'Brokerage Desk';
+              return (
+                <div key={item.id} className="flex flex-wrap items-center justify-between gap-3 p-3">
+                  <div className="min-w-0">
+                    <Link
+                      to={`/agent/properties/${item.id}`}
+                      className="text-sm font-semibold text-[#1E293B] hover:text-[#0F766E] transition-colors block truncate"
+                    >
+                      {item.title}
+                    </Link>
+                    <p className="text-xs text-[#64748B] flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
+                      <span>{typeof item.location === 'string' ? item.location : item.location?.address || 'Metro Manila'}</span>
+                      <span>•</span>
+                      <span className="font-medium text-[#0F766E]">Assigned by {assigner}</span>
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setModalProp(item);
+                        setModalMode('accept');
+                        setIsModalOpen(true);
+                      }}
+                      className="px-2.5 py-1.5 rounded-lg bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-semibold transition-colors flex items-center gap-1 cursor-pointer"
+                    >
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Accept</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setModalProp(item);
+                        setModalMode('decline');
+                        setIsModalOpen(true);
+                      }}
+                      className="px-2.5 py-1.5 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-semibold transition-colors flex items-center gap-1 cursor-pointer"
+                    >
+                      <XCircle className="w-3.5 h-3.5" />
+                      <span>Decline</span>
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {/* Filter and View Mode Toolbar */}
       <SearchAndFilterBar
@@ -361,6 +457,12 @@ export default function AgentProperties() {
                     <span className="material-symbols-outlined text-[15px] text-slate-400">location_on</span>
                     {typeof item.location === 'string' ? item.location : item.location?.address || 'Metro Manila'}
                   </p>
+                  {getAssignedByName(item) && (
+                    <p className="text-[11px] text-[#0F766E] font-medium flex items-center gap-1">
+                      <UserCheck className="w-3.5 h-3.5 shrink-0" />
+                      <span>Assigned by {getAssignedByName(item)}</span>
+                    </p>
+                  )}
                 </div>
 
                 <div className="pt-3 border-t border-[#E2E8F0] flex items-center justify-between text-xs font-mono text-[#64748B]">

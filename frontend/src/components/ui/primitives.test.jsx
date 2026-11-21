@@ -7,6 +7,7 @@ import { Label } from './label';
 import { Checkbox } from './checkbox';
 import { Alert, AlertTitle, AlertDescription } from './alert';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './tabs';
+import { Toast, Toaster, toast } from './toast';
 
 describe('Atomic shadcn/ui Primitives (design.md tokens)', () => {
   it('renders Input with proper accessible role and default styling', () => {
@@ -62,5 +63,26 @@ describe('Atomic shadcn/ui Primitives (design.md tokens)', () => {
     );
     expect(screen.getByRole('tab', { name: /Step 1/i })).toBeInTheDocument();
     expect(screen.getByText(/Content 1/i)).toBeInTheDocument();
+  });
+
+  it('renders Toast and Toaster with DESIGN.md semantic tokens and position support', () => {
+    render(
+      <div>
+        <Toast variant="success" title="Saved" description="Profile updated." />
+        <Toast variant="destructive" title="Error" description="Action failed." />
+      </div>
+    );
+    const toasts = screen.getAllByTestId('broker-toast');
+    expect(toasts[0].className).toContain('bg-emerald-50');
+    expect(toasts[0].className).toContain('text-emerald-700');
+    expect(toasts[1].className).toContain('bg-red-50');
+    expect(toasts[1].className).toContain('text-red-600');
+
+    toast({ title: 'Top Right Notice', description: 'Positioned cleanly.', variant: 'primary' });
+    render(<Toaster position="top-right" />);
+    const toaster = screen.getByTestId('broker-toaster');
+    expect(toaster.className).toContain('top-0');
+    expect(toaster.className).toContain('right-0');
+    expect(screen.getByText('Top Right Notice')).toBeInTheDocument();
   });
 });

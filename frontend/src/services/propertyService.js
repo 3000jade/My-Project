@@ -29,6 +29,7 @@ export function resolveCanonicalStandardStatus(standardStatus, status) {
     if (lower === 'pending confirmation') return 'Pending Confirmation';
     if (lower === 'action required') return 'Action Required';
     if (lower === 'draft') return 'Draft';
+    if (lower === 'hold' || lower === 'inactive') return 'Hold';
     if (lower === 'canceled' || lower === 'cancelled') return 'Canceled';
     if (lower === 'expired') return 'Expired';
     return standardStatus.trim();
@@ -40,7 +41,8 @@ export function resolveCanonicalStandardStatus(standardStatus, status) {
     if (lower === 'sold' || lower === 'closed') return 'Closed';
     if (lower === 'reserved' || lower === 'under contract' || lower === 'active under contract') return 'Active Under Contract';
     if (lower === 'pending') return 'Pending';
-    if (lower === 'draft' || lower === 'inactive') return 'Draft';
+    if (lower === 'hold' || lower === 'inactive') return 'Hold';
+    if (lower === 'draft') return 'Draft';
   }
 
   return 'Active';
@@ -54,8 +56,8 @@ export function normalizeProperty(rawItem = {}) {
   const mediaPhotos = Array.isArray(rawItem.media)
     ? rawItem.media.filter(m => (m.mediaCategory === 'Photo' || m.media_category === 'Photo') && (m.mediaUrl || m.media_url)).map(m => m.mediaUrl || m.media_url)
     : (Array.isArray(rawItem.property_media)
-        ? rawItem.property_media.filter(m => (m.media_category === 'Photo' || m.mediaCategory === 'Photo') && (m.media_url || m.mediaUrl)).map(m => m.media_url || m.mediaUrl)
-        : []);
+      ? rawItem.property_media.filter(m => (m.media_category === 'Photo' || m.mediaCategory === 'Photo') && (m.media_url || m.mediaUrl)).map(m => m.media_url || m.mediaUrl)
+      : []);
 
   const propertyImagesPhotos = Array.isArray(rawItem.property_images)
     ? rawItem.property_images.map(img => img.imageUrl || img.image_url).filter(Boolean)
@@ -100,8 +102,8 @@ export function normalizeProperty(rawItem = {}) {
   const isPublished = rawItem.is_published !== undefined
     ? Boolean(rawItem.is_published)
     : (rawItem.isPublished !== undefined
-        ? Boolean(rawItem.isPublished)
-        : (normalizedStatus !== 'SOLD' && normalizedStatus !== 'INACTIVE'));
+      ? Boolean(rawItem.isPublished)
+      : (normalizedStatus !== 'SOLD' && normalizedStatus !== 'INACTIVE'));
 
   const explicitAgentName = rawItem.agent_name || rawItem.agentName || rawItem.agent?.name || rawItem.custom_reso_attributes?.credentials?.assignedAgent || rawItem.customResoAttributes?.credentials?.assignedAgent || '';
   const agentId = rawItem.agent_id || rawItem.agentId || null;
@@ -375,13 +377,13 @@ export function toApiPayload(item = {}) {
     roomLength: parseNonnegativeNumber(room.room_length ?? room.roomLength),
     roomWidth: parseNonnegativeNumber(room.room_width ?? room.roomWidth),
     roomDimensionsUnits: (room.room_dimensions_units || room.roomDimensionsUnits || 'Meters') === 'Feet' ? 'Feet' : 'Meters',
-    roomFeatures: Array.isArray(room.room_features) 
-      ? room.room_features 
-      : (Array.isArray(room.roomFeatures) 
-          ? room.roomFeatures 
-          : (typeof (room.room_features || room.roomFeatures) === 'string' 
-              ? (room.room_features || room.roomFeatures).split(',').map(s => s.trim()).filter(Boolean) 
-              : []))
+    roomFeatures: Array.isArray(room.room_features)
+      ? room.room_features
+      : (Array.isArray(room.roomFeatures)
+        ? room.roomFeatures
+        : (typeof (room.room_features || room.roomFeatures) === 'string'
+          ? (room.room_features || room.roomFeatures).split(',').map(s => s.trim()).filter(Boolean)
+          : []))
   })) : undefined;
 
   // Resolve and synchronize standardStatus, status, and isPublished
@@ -396,6 +398,8 @@ export function toApiPayload(item = {}) {
       resolvedStandardStatus = 'Active Under Contract';
     } else if (rawStatus === 'SOLD' || rawStatus === 'CLOSED') {
       resolvedStandardStatus = 'Closed';
+    } else if (rawStatus === 'INACTIVE' || rawStatus === 'HOLD') {
+      resolvedStandardStatus = 'Hold';
     } else {
       resolvedStandardStatus = 'Draft';
     }
@@ -415,8 +419,8 @@ export function toApiPayload(item = {}) {
   const resolvedIsPublished = item.is_published !== undefined
     ? Boolean(item.is_published)
     : (item.isPublished !== undefined
-        ? Boolean(item.isPublished)
-        : (resolvedStandardStatus === 'Active'));
+      ? Boolean(item.isPublished)
+      : (resolvedStandardStatus === 'Active'));
 
   const resolvedListAgentKey = item.listAgentKey || item.list_agent_key || item.agentId || item.agent_id || item.assignedAgent?.agentId || item.assignedAgent?.id || undefined;
 
@@ -561,8 +565,8 @@ export function toApiPayload(item = {}) {
   const rawPhotos = Array.isArray(item.images)
     ? item.images
     : (Array.isArray(item.property_images)
-        ? item.property_images.map(p => p.imageUrl || p.image_url)
-        : (item.image ? [item.image] : []));
+      ? item.property_images.map(p => p.imageUrl || p.image_url)
+      : (item.image ? [item.image] : []));
 
   const canonicalPhotos = rawPhotos.filter(Boolean).map((img, idx) => ({
     id: `photo-${String(idx + 1).padStart(3, '0')}`,
@@ -690,13 +694,13 @@ export function toApiPayload(item = {}) {
     propertyImages: Array.isArray(item.property_images) ? item.property_images : (Array.isArray(item.propertyImages) ? item.propertyImages : undefined),
     media: Array.isArray(item.media)
       ? item.media.map((m, idx) => ({
-          ...m,
-          mediaUrl: m.mediaUrl || m.media_url,
-          mediaCategory: m.mediaCategory || m.media_category || 'Photo',
-          galleryCategory: m.galleryCategory || m.gallery_category || undefined,
-          shortDescription: m.shortDescription || m.short_description || undefined,
-          orderIndex: m.orderIndex ?? m.order_index ?? idx,
-        }))
+        ...m,
+        mediaUrl: m.mediaUrl || m.media_url,
+        mediaCategory: m.mediaCategory || m.media_category || 'Photo',
+        galleryCategory: m.galleryCategory || m.gallery_category || undefined,
+        shortDescription: m.shortDescription || m.short_description || undefined,
+        orderIndex: m.orderIndex ?? m.order_index ?? idx,
+      }))
       : undefined,
     confidential: {
       buyerAgencyCompensation: item.buyerAgencyCompensation || item.buyerBrokerCommission || item.commissionSplit || item.confidential?.buyerAgencyCompensation || '',

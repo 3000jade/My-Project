@@ -1,0 +1,35 @@
+{
+  "sessions": [
+    {
+      "id": "9e7480e6-1cd5-4232-bd9f-24d8ebe3f9a0",
+      "tokenHash": "e71f16ff3617b0b35116d52793dca2511ce9940b66daaae757e4ef41174b6fbc",
+      "userId": "user-suspend-reactivate",
+      "role": "agent",
+      "createdAt": 1795270239251,
+      "lastActiveAt": 1795270239257,
+      "idleExpiresAt": 1795272039257,
+      "absoluteExpiresAt": 1795313439251,
+      "lastHeartbeatAt": 1795270239251,
+      "userAgent": "Unknown Device",
+      "ipAddress": "Unavailable",
+      "updatedAt": 1795270239266,
+      "revokedAt": 1795270239266,
+      "revokeReason": "account_disabled"
+    },
+    {
+      "id": "6f511461-cb2e-47c4-9532-63c2843714d4",
+      "tokenHash": "f74fe0e5497c721fcc59c468d4628af1ff76d056478ed8d91def00249cb14787",
+      "userId": "user-suspend-reactivate",
+      "role": "agent",
+      "createdAt": 1795270239297,
+      "lastActiveAt": 1795270239304,
+      "idleExpiresAt": 1795272039304,
+      "absoluteExpiresAt": 1795313439297,
+      "lastHeartbeatAt": 1795270239297,
+      "userAgent": "Unknown Device",
+      "ipAddress": "Unavailable",
+      "updatedAt": 1795270239304
+    }
+  ],
+  "disabledAccounts": []
+}

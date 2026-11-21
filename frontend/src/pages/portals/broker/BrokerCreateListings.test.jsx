@@ -1,9 +1,10 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import BrokerCreateListings from './BrokerCreateListings';
 import MediaStudioModal from './components/property-form/MediaStudioModal';
+import propertyService from '../../../services/propertyService';
 
 if (typeof window !== 'undefined' && !window.ResizeObserver) {
   window.ResizeObserver = class ResizeObserver {
@@ -315,5 +316,97 @@ describe('BrokerCreateListings - 5-Step Flow, Auto Ref Code, Multi-Bank & Sticky
     expect(onRemovePhotoItem).toHaveBeenCalledTimes(2);
     expect(onRemovePhotoItem).toHaveBeenCalledWith('p1');
     expect(onRemovePhotoItem).toHaveBeenCalledWith('p2');
+  });
+
+  it('shows warning modal on incomplete publish and allows saving as draft without publishing', async () => {
+    propertyService.createProperty.mockClear();
+    propertyService.createProperty.mockResolvedValue({ id: 'prop-draft-1' });
+    renderComponent();
+
+    fireEvent.change(screen.getByLabelText(/Listing Title/i), {
+      target: { value: 'Incomplete Draft Condo' },
+    });
+    fireEvent.change(screen.getByLabelText(/Selling Price/i), {
+      target: { value: '18500000' },
+    });
+
+    fireEvent.click(screen.getByText('Review & Publish'));
+    fireEvent.click(screen.getByRole('button', { name: 'Publish Listing' }));
+
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog).toHaveTextContent('Cannot Publish Listing');
+    expect(dialog).toHaveTextContent('Field');
+    expect(dialog).toHaveTextContent('Current Value');
+    expect(dialog).toHaveTextContent('Action');
+    expect(dialog).toHaveTextContent('City');
+    expect(dialog).toHaveTextContent('Not selected');
+    expect(dialog).toHaveTextContent('Street Address');
+    expect(dialog).toHaveTextContent('Empty');
+    expect(dialog).toHaveTextContent('Cover Photo');
+    expect(dialog).toHaveTextContent('0 photos');
+    expect(dialog).toHaveTextContent('Assigned Agent');
+    expect(dialog).toHaveTextContent('No agent assigned');
+    expect(propertyService.createProperty).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: /Save as Draft/i }));
+    await waitFor(() => {
+      expect(propertyService.createProperty).toHaveBeenCalledTimes(1);
+    });
+    expect(propertyService.createProperty).toHaveBeenCalledWith(
+      expect.objectContaining({
+        standardStatus: 'Draft',
+        is_published: false,
+      })
+    );
+  });
+
+  it('does not publish when no agent is assigned and shows Assigned Agent in the warning modal', async () => {
+    propertyService.createProperty.mockClear();
+    renderComponent();
+
+    fireEvent.change(screen.getByLabelText(/Listing Title/i), {
+      target: { value: 'Pending Confirmation Villa' },
+    });
+    fireEvent.change(screen.getByLabelText(/Selling Price/i), {
+      target: { value: '22000000' },
+    });
+
+    fireEvent.click(screen.getByText('Review & Publish'));
+    fireEvent.click(screen.getByRole('button', { name: 'Publish Listing' }));
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog).toHaveTextContent('Assigned Agent');
+    expect(propertyService.createProperty).not.toHaveBeenCalled();
+  });
+
+  it('shows Saved — Pending Agent Confirmation instead of Listing Published when broker publishes as self-handled or pending agent', async () => {
+    propertyService.createProperty.mockClear();
+    propertyService.createProperty.mockResolvedValue({ id: 'prop-pending-confirm' });
+    // Draft save returns Draft Saved modal, and verify no false Listing Published on Draft save
+    renderComponent();
+
+    fireEvent.change(screen.getByLabelText(/Listing Title/i), {
+      target: { value: 'Audit Verified Listing' },
+    });
+    fireEvent.change(screen.getByLabelText(/Selling Price/i), {
+      target: { value: '19500000' },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Save Draft/i }));
+    await waitFor(() => {
+      expect(propertyService.createProperty).toHaveBeenCalledTimes(1);
+    });
+    expect(await screen.findByText('Draft Saved')).toBeInTheDocument();
+    expect(screen.queryByText('Listing Published')).not.toBeInTheDocument();
+  });
+
+  it('disables Save as Draft in the warning modal when Listing Title or Price is missing', async () => {
+    renderComponent();
+
+    fireEvent.click(screen.getByText('Review & Publish'));
+    fireEvent.click(screen.getByRole('button', { name: 'Publish Listing' }));
+
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog).toHaveTextContent('Add Listing Title and Price first to save as a draft.');
+    expect(within(dialog).getByRole('button', { name: /Save as Draft/i })).toBeDisabled();
   });
 });

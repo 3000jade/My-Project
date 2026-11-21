@@ -20,6 +20,7 @@ const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'mock-client-i
 const PropertiesPage = lazy(() => import('./pages/public/PropertiesPage'));
 const PropertyListingView = lazy(() => import('./pages/public/PropertyListingView'));
 const AboutPage = lazy(() => import('./pages/public/AboutPage'));
+const GuidesPage = lazy(() => import('./pages/public/GuidesPage'));
 const ContactPage = lazy(() => import('./pages/public/ContactPage'));
 const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
 const RegisterPage = lazy(() => import('./pages/auth/RegisterPage'));
@@ -73,9 +74,12 @@ const ClientDashboard = lazy(() => import('./pages/portals/client/ClientDashboar
 const ClientProfile = lazy(() => import('./pages/portals/client/ClientProfile'));
 const ClientSavedProperties = lazy(() => import('./pages/portals/client/ClientSavedProperties'));
 const ClientInquiries = lazy(() => import('./pages/portals/client/ClientInquiries'));
+const ClientInquiryDetail = lazy(() => import('./pages/portals/client/ClientInquiryDetail'));
 
 // Super Admin Portal Pages
 const AdminUsersPage = lazy(() => import('./pages/portals/super-admin/AdminUsersPage'));
+const AdminCmsPage = lazy(() => import('./pages/portals/super-admin/AdminCmsPage'));
+const AdminDataManagementPage = lazy(() => import('./pages/portals/super-admin/AdminDataManagementPage'));
 
 // Session Inactivity Watcher
 import SessionWatcher from './components/auth/SessionWatcher';
@@ -221,6 +225,7 @@ function AppRoutes({ isAppLoading }) {
             <Route path="dashboard" element={<ClientDashboard />} />
             <Route path="saved-properties" element={<ClientSavedProperties />} />
             <Route path="inquiries" element={<ClientInquiries />} />
+            <Route path="inquiries/:id" element={<ClientInquiryDetail />} />
             <Route path="profile" element={<ClientProfile />} />
           </Route>
 
@@ -229,12 +234,14 @@ function AppRoutes({ isAppLoading }) {
             path="/admin"
             element={
               <ProtectedRoute allowedRoles={['admin']}>
-                <DashboardLayout role="broker" title="Admin Portal" />
+                <DashboardLayout role="admin" title="Admin Portal" />
               </ProtectedRoute>
             }
           >
             <Route index element={<Navigate to="/admin/users" replace />} />
             <Route path="users" element={<AdminUsersPage />} />
+            <Route path="cms" element={<AdminCmsPage />} />
+            <Route path="data-management" element={<AdminDataManagementPage />} />
           </Route>
         </Routes>
       </Suspense>
@@ -268,6 +275,8 @@ function AppRoutes({ isAppLoading }) {
             <Route path="/listing/:id" element={<PropertyListingView />} />
             <Route path="/subdivisions/:id/map" element={<PublicSubdivisionMap />} />
             <Route path="/about" element={<AboutPage />} />
+            <Route path="/guides" element={<GuidesPage />} />
+            <Route path="/guides/:slug" element={<GuidesPage />} />
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />

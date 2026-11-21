@@ -116,6 +116,15 @@ export class AdminController {
         return;
       }
 
+      if (req.user?.id && id === req.user.id) {
+        res.status(400).json({
+          success: false,
+          error: 'Administrators cannot change their own role.',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
       if (isSupabaseConfigured) {
         const { error } = await supabaseAdmin
           .from('profiles')
@@ -171,6 +180,15 @@ export class AdminController {
         res.status(400).json({
           success: false,
           error: 'Status must be one of: VERIFIED, SUSPENDED, PENDING.',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      if (req.user?.id && id === req.user.id && status === 'SUSPENDED') {
+        res.status(400).json({
+          success: false,
+          error: 'Administrators cannot suspend their own account.',
           timestamp: new Date().toISOString(),
         });
         return;

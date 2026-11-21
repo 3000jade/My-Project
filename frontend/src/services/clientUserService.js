@@ -184,14 +184,21 @@ export const clientUserService = {
    * Get client submitted inquiries
    */
   async getClientInquiries() {
+    let hasAuthToken = false;
+    try {
+      hasAuthToken = Boolean(localStorage.getItem('cp_auth_token'));
+    } catch {
+      hasAuthToken = false;
+    }
+
     try {
       const { inquiryService } = await import('./inquiryService');
       const liveList = await inquiryService.getMyInquiries();
-      if (Array.isArray(liveList) && liveList.length > 0) {
+      if (Array.isArray(liveList) && (liveList.length > 0 || hasAuthToken)) {
         return liveList;
       }
     } catch {
-      // fallback
+      // fallback for unauthenticated/offline mock mode
     }
 
     const stored = safeGetStorage(CLIENT_STORAGE_KEYS.INQUIRIES, null);
@@ -231,16 +238,15 @@ export const clientUserService = {
     try {
       const { inquiryService } = await import('./inquiryService');
       if (inquiryService?.addMessage) {
-        const reply = await inquiryService.addMessage(inquiryId, {
-          senderRole: 'client',
-          message: messageText,
-        });
+        const requestId = `req-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+        const reply = await inquiryService.addMessage(inquiryId, messageText, requestId);
         if (reply) {
           const inquiries = await this.getClientInquiries();
           const target = inquiries.find((i) => String(i.id) === String(inquiryId));
           if (target) {
             target.messages = [...(target.messages || []), reply];
             target.last_message = messageText;
+            safeSetStorage(CLIENT_STORAGE_KEYS.INQUIRIES, inquiries);
             return target;
           }
         }

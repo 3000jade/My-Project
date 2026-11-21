@@ -1,9 +1,46 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Timeline, Text } from '@mantine/core';
 import { leadershipTeam, journeyMilestones, accolades } from '../../mockData/mockAbout';
+import cmsService from '../../services/cmsService';
+import { LiveEditProvider, LiveEditFloatingBar, LiveEditableText } from '../../components/cms/LiveCmsEditor';
 
 export default function AboutPage() {
+  const [cmsAbout, setCmsAbout] = useState(null);
+
+  const saveAboutField = async (field, nextValue) => {
+    const fallbackTitle = cmsAbout?.title || 'Crafting the Future of Philippine Luxury.';
+    const fallbackSummary =
+      cmsAbout?.summary ||
+      'EstateElite stands as the premier architectural and real estate consultancy in the Philippines. We are dedicated curators of exceptional living spaces, blending heritage with modern innovation.';
+    if (cmsAbout?.id) {
+      const updated = await cmsService.updateContent(cmsAbout.id, { [field]: nextValue });
+      setCmsAbout(updated);
+    } else {
+      const created = await cmsService.createContent({
+        content_type: 'page',
+        slug: 'about-us',
+        title: field === 'title' ? nextValue : fallbackTitle,
+        summary: field === 'summary' ? nextValue : fallbackSummary,
+        body: field === 'body' ? nextValue : null,
+        status: 'PUBLISHED',
+      });
+      setCmsAbout(created);
+    }
+  };
+
+  useEffect(() => {
+    let mounted = true;
+    cmsService
+      .getPublicContentBySlug('page', 'about-us')
+      .then((item) => {
+        if (mounted && item) setCmsAbout(item);
+      })
+      .catch(() => {});
+    return () => {
+      mounted = false;
+    };
+  }, []);
   const revealVariants = {
     hidden: { opacity: 0, y: 50 },
     visible: {
@@ -14,7 +51,8 @@ export default function AboutPage() {
   };
 
   return (
-    <div className="bg-surface text-on-surface font-body-md min-h-screen">
+    <LiveEditProvider>
+      <div className="bg-surface text-on-surface font-body-md min-h-screen">
       <main className="">
         {/* Sophisticated Hero Section */}
         <section className="relative min-h-screen flex items-start pt-32 lg:pt-40 pb-20 max-w-[1560px] mx-auto px-5 md:px-10 lg:px-16 overflow-hidden">
@@ -31,12 +69,35 @@ export default function AboutPage() {
                 <span className="font-sans text-[#E07A5F] font-bold text-[12px] tracking-[0.3em] uppercase">Established 1989</span>
               </div>
               <h1 className="font-display text-5xl lg:text-7xl text-primary mb-8 leading-[1.1] font-extrabold tracking-tight">
-                Crafting the Future of <span className="text-[#E07A5F]">Philippine</span> Luxury.
+                <LiveEditableText
+                  value={cmsAbout?.title || 'Crafting the Future of Philippine Luxury.'}
+                  onSave={(val) => saveAboutField('title', val)}
+                >
+                  {cmsAbout?.title || (
+                    <>
+                      Crafting the Future of <span className="text-[#E07A5F]">Philippine</span> Luxury.
+                    </>
+                  )}
+                </LiveEditableText>
               </h1>
               <p className="font-display text-on-surface-variant max-w-xl mb-12 leading-relaxed text-xl opacity-90">
-                EstateElite stands as the premier architectural and real estate consultancy in the Philippines.
-                We are dedicated curators of exceptional living spaces, blending heritage with modern innovation.
+                <LiveEditableText
+                  value={
+                    cmsAbout?.summary ||
+                    'EstateElite stands as the premier architectural and real estate consultancy in the Philippines. We are dedicated curators of exceptional living spaces, blending heritage with modern innovation.'
+                  }
+                  onSave={(val) => saveAboutField('summary', val)}
+                />
               </p>
+              {(cmsAbout?.body || cmsAbout?.id) && (
+                <p className="text-base text-on-surface-variant max-w-xl mb-8 leading-relaxed whitespace-pre-line">
+                  <LiveEditableText
+                    value={cmsAbout?.body || ''}
+                    placeholder="Add extra company story text..."
+                    onSave={(val) => saveAboutField('body', val)}
+                  />
+                </p>
+              )}
               <div className="flex flex-wrap gap-6">
                 <button className="font-sans bg-primary text-white px-10 py-4 rounded-xl font-bold hover:bg-primary/90 hover:shadow-xl transition-all text-[12px] tracking-widest uppercase">
                   Our Heritage
@@ -308,6 +369,8 @@ export default function AboutPage() {
           </motion.div>
         </section>
       </main>
+      <LiveEditFloatingBar />
     </div>
+    </LiveEditProvider>
   );
 }

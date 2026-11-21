@@ -3,7 +3,7 @@ import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import {
   Users, ShieldCheck, Clock, Send, UserPlus, RotateCw, Download,
   Search, SlidersHorizontal, ChevronRight, ChevronDown, MoreVertical,
-  Check, CheckCircle2, AlertCircle, ArrowUpRight, ArrowDownRight,
+  Check, AlertCircle, ArrowUpRight, ArrowDownRight,
   ExternalLink, Mail, Phone, Eye, FileText, Copy, Calendar,
   BarChart2, X, BadgeCheck, ClipboardList, MailPlus
 } from 'lucide-react';
@@ -104,13 +104,16 @@ export default function BrokerAgents() {
   const [newTeamBranch, setNewTeamBranch] = useState('Manila Head Office');
   const [creatingTeam, setCreatingTeam] = useState(false);
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
+  const { toast } = useToast();
 
   const displayInvitations = invitations || [];
 
-  const showToast = (msg) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(''), 3500);
+  const showToast = (msg, variant = 'success') => {
+    toast({
+      title: variant === 'destructive' ? 'Action Failed' : variant === 'primary' ? 'Invitation Details' : 'Agent Directory',
+      description: msg,
+      variant,
+    });
   };
 
   // Close context menu on outside click
@@ -179,7 +182,7 @@ export default function BrokerAgents() {
       await loadAgents();
       showToast(`Created team "${newTeamName.trim()}"`);
     } catch (err) {
-      showToast(err?.message || 'Failed to create team');
+      showToast(err?.message || 'Failed to create team', 'destructive');
     } finally {
       setCreatingTeam(false);
     }
@@ -192,7 +195,7 @@ export default function BrokerAgents() {
   };
 
   const handleResend = async (agent) => {
-    showToast(`Resending onboarding invitation to ${agent.email}...`);
+    showToast(`Resending onboarding invitation to ${agent.email}...`, 'default');
     try {
       const inv = invitations.find(i => i.email === agent.email) || agent;
       if (inv && inv.id) {
@@ -200,10 +203,10 @@ export default function BrokerAgents() {
         await loadInvitations();
         showToast(`Fresh 72-hour invitation email sent to ${agent.email}`);
       } else {
-        showToast(`Could not find active invitation for ${agent.email}`);
+        showToast(`Could not find active invitation for ${agent.email}`, 'destructive');
       }
     } catch (err) {
-      showToast(err.message || `Failed to resend invite to ${agent.email}`);
+      showToast(err.message || `Failed to resend invite to ${agent.email}`, 'destructive');
     }
   };
 
@@ -392,7 +395,7 @@ export default function BrokerAgents() {
           )}
           <button
             type="button"
-            onClick={() => showToast(`Viewing invitation token metadata for ${row.email}`)}
+            onClick={() => showToast(`Viewing invitation token metadata for ${row.email}`, 'primary')}
             className="px-3 py-1 bg-white hover:bg-slate-50 text-[#1E293B] border border-[#E2E8F0] text-xs font-semibold rounded-lg transition-colors cursor-pointer shadow-2xs"
           >
             View
@@ -659,14 +662,6 @@ export default function BrokerAgents() {
 
   return (
     <div className="flex flex-col gap-6 w-full min-w-0 max-w-full">
-      {/* Toast Notification */}
-      {toastMessage && (
-        <div className="fixed top-5 right-5 z-50 bg-[#1E293B] text-white text-xs font-medium px-4 py-2.5 rounded-lg shadow-lg flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-          <span>{toastMessage}</span>
-        </div>
-      )}
-
       {/* Breadcrumbs */}
       <div>
         <div className="flex items-center gap-1.5 text-xs text-[#64748B] mb-2 font-medium">
@@ -1318,6 +1313,7 @@ export default function BrokerAgents() {
         onClose={() => setInviteModalOpen(false)}
         onSuccess={handleInviteSuccess}
       />
+      <Toaster position="top-right" />
     </div>
   );
 }

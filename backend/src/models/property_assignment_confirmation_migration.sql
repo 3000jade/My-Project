@@ -8,11 +8,14 @@ ALTER TABLE public.properties
   ADD COLUMN IF NOT EXISTS assignment_status VARCHAR(30) DEFAULT 'PENDING_CONFIRMATION',
   ADD COLUMN IF NOT EXISTS assignment_declined_reason TEXT NULL,
   ADD COLUMN IF NOT EXISTS assigned_at TIMESTAMPTZ DEFAULT NOW(),
-  ADD COLUMN IF NOT EXISTS agent_confirmed_at TIMESTAMPTZ NULL;
+  ADD COLUMN IF NOT EXISTS agent_confirmed_at TIMESTAMPTZ NULL,
+  ADD COLUMN IF NOT EXISTS assigned_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL;
 
--- 2. Create index on assignment_status for rapid dashboard and public query filtering
+-- 2. Create indexes on assignment_status and assigned_by for rapid dashboard and public query filtering
 CREATE INDEX IF NOT EXISTS idx_properties_assignment_status 
   ON public.properties(assignment_status);
+CREATE INDEX IF NOT EXISTS idx_properties_assigned_by 
+  ON public.properties(assigned_by);
 
 -- 3. Add constraint to enforce valid assignment statuses
 ALTER TABLE public.properties
@@ -20,7 +23,7 @@ ALTER TABLE public.properties
 
 ALTER TABLE public.properties
   ADD CONSTRAINT chk_property_assignment_status 
-  CHECK (assignment_status IN ('PENDING_CONFIRMATION', 'ACCEPTED', 'REJECTED'));
+  CHECK (assignment_status IN ('UNASSIGNED', 'PENDING_CONFIRMATION', 'ACCEPTED', 'REJECTED'));
 
 -- 4. Retrofit existing active properties to ACCEPTED so existing data remains visible
 UPDATE public.properties 

@@ -22,8 +22,8 @@ router.get('/:id/plans/active', optionalAuth, SubdivisionController.getActivePla
 // ==========================================
 // AI-Assisted Boundary & OCR Services
 // ==========================================
-router.post('/ai/detect-boundary', SubdivisionController.detectAiBoundary);
-router.post('/ai/recognize-labels', SubdivisionController.recognizeAiLabels);
+router.post('/ai/detect-boundary', requireAuth, requireRole(['broker', 'admin']), SubdivisionController.detectAiBoundary);
+router.post('/ai/recognize-labels', requireAuth, requireRole(['broker', 'admin']), SubdivisionController.recognizeAiLabels);
 router.post(
   '/:id/ai/auto-layout',
   requireAuth,

@@ -73,8 +73,6 @@ export default function LoginPage() {
         ? 'agent'
         : targetEmail?.toLowerCase().includes('broker')
         ? 'broker'
-        : targetEmail?.toLowerCase().includes('admin')
-        ? 'admin'
         : 'client');
 
     if (validReturn && validReturn !== '/' && validReturn !== '/login') {
@@ -90,9 +88,11 @@ export default function LoginPage() {
       }
     }
 
-    if (userRole === 'agent') {
+    if (userRole === 'admin') {
+      navigate('/admin/cms');
+    } else if (userRole === 'agent') {
       navigate('/agent/dashboard');
-    } else if (userRole === 'broker' || userRole === 'admin') {
+    } else if (userRole === 'broker') {
       navigate('/broker/dashboard');
     } else {
       navigate('/client/dashboard');

@@ -69,4 +69,19 @@ describe('clientUserService (Mock Client Management Service)', () => {
     expect(updated.messages.length).toBe(initialMsgCount + 1);
     expect(updated.messages[updated.messages.length - 1].content).toBe('Following up on available inspection slots.');
   });
+
+  it('passes string content (not an object) to inquiryService.addMessage', async () => {
+    const { inquiryService } = await import('./inquiryService');
+    const spy = vi.spyOn(inquiryService, 'addMessage').mockResolvedValueOnce({
+      id: 'msg-api-1',
+      sender: 'client',
+      content: 'Hello agent',
+      timestamp: 'Just now',
+    });
+
+    const inquiries = await clientUserService.getClientInquiries();
+    await clientUserService.addInquiryMessage(inquiries[0].id, 'Hello agent');
+    expect(spy).toHaveBeenCalledWith(inquiries[0].id, 'Hello agent', expect.any(String));
+    spy.mockRestore();
+  });
 });

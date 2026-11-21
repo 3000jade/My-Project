@@ -25,7 +25,7 @@ export default function Header() {
   const { user, isAuthenticated, logout } = useAuth();
 
   const isPropertiesPage = location.pathname === '/properties';
-  const isSolidTheme = scrolled || location.pathname.startsWith('/properties') || location.pathname.startsWith('/listing') || location.pathname === '/login' || location.pathname === '/about' || location.pathname === '/contact';
+  const isSolidTheme = scrolled || location.pathname.startsWith('/properties') || location.pathname.startsWith('/listing') || location.pathname.startsWith('/guides') || location.pathname === '/login' || location.pathname === '/about' || location.pathname === '/contact';
 
   const isHeaderHidden = isPropertiesPage && deepScrolled && !forceShowHeader;
 
@@ -91,7 +91,8 @@ export default function Header() {
   const getDashboardPath = () => {
     if (!user) return '/';
     const role = (user.role || '').toLowerCase();
-    if (role === 'broker' || role === 'admin') return '/broker/dashboard';
+    if (role === 'admin') return '/admin/cms';
+    if (role === 'broker') return '/broker/dashboard';
     if (role === 'agent') return '/agent/dashboard';
     if (role === 'client') return '/client/dashboard';
     return '/client/dashboard';
@@ -140,6 +141,9 @@ export default function Header() {
             </Link>
             <Link className={`text-[11px] uppercase tracking-widest font-sans nav-link transition-all duration-500 ${getLinkColor('/properties')}`} to="/properties">
               Properties
+            </Link>
+            <Link className={`text-[11px] uppercase tracking-widest font-sans nav-link transition-all duration-500 ${getLinkColor('/guides')}`} to="/guides">
+              Guides
             </Link>
             <Link className={`text-[11px] uppercase tracking-widest font-sans nav-link transition-all duration-500 ${getLinkColor('/contact')}`} to="/contact">
               Contact

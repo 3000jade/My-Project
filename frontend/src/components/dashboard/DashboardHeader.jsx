@@ -142,7 +142,7 @@ export default function DashboardHeader({
     : (role === 'client' ? 'CL' : role === 'agent' ? 'AG' : role === 'broker' ? 'PB' : 'AD');
 
   const profilePath = role === 'client' ? '/client/profile' : role === 'agent' ? '/agent/profile' : '/broker/profile';
-  const dashboardPath = role === 'client' ? '/client/dashboard' : role === 'agent' ? '/agent/dashboard' : '/broker/dashboard';
+  const dashboardPath = role === 'admin' ? '/admin/cms' : role === 'client' ? '/client/dashboard' : role === 'agent' ? '/agent/dashboard' : '/broker/dashboard';
 
   return (
     <header className="h-16 bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 select-none gap-4">

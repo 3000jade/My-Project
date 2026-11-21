@@ -131,8 +131,11 @@ export default function PropertyFilterToolbar({
       count: statusCounts?.pendingApproval ?? 0,
       badge: (statusCounts?.pendingApproval ?? 0) > 0,
     },
+    { id: 'AWAITING_AGENT', label: 'Awaiting Agent', count: statusCounts?.awaitingAgent ?? 0 },
+    { id: 'AGENT_DECLINED', label: 'Agent Declined', count: statusCounts?.agentDeclined ?? 0 },
     { id: 'PUBLISHED', label: 'Published', count: statusCounts?.published ?? 0 },
-    { id: 'UNPUBLISHED', label: 'Unpublished', count: statusCounts?.unpublished ?? 0 },
+    { id: 'RESERVED', label: 'Reserved', count: statusCounts?.reserved ?? 0 },
+    { id: 'UNPUBLISHED', label: 'Off Market', count: statusCounts?.unpublished ?? 0 },
     { id: 'CLOSED', label: 'Closed', count: statusCounts?.closed ?? 0 },
   ];
 

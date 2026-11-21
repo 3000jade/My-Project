@@ -242,11 +242,7 @@ export class InquiryService {
     requesterEmail?: string
   ): void {
     if (!requesterRole || requesterRole === 'public') {
-      // Public/guest callers without matching identity cannot read private chats when requesterId is provided
-      if (requesterId === 'unauthorized-guest') {
-        throw new Error('Access denied: Guests cannot retrieve private inquiry history.');
-      }
-      return;
+      throw new Error('Access denied: Authentication is required to view inquiry details.');
     }
 
     if (requesterRole === 'broker' || requesterRole === 'admin') {
@@ -675,6 +671,24 @@ export class InquiryService {
     return item;
   }
 
+  private static async resolveAgentNamesMap(agentIds: string[]): Promise<Map<string, string>> {
+    const map = new Map<string, string>();
+    const unique = Array.from(new Set(agentIds.filter(Boolean)));
+    if (!isSupabaseConfigured || unique.length === 0) return map;
+    try {
+      const { data } = await supabaseAdmin
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', unique);
+      for (const row of data || []) {
+        if (row?.id && row?.full_name) map.set(row.id, row.full_name);
+      }
+    } catch {
+      // Fallback safely when profiles query is unavailable
+    }
+    return map;
+  }
+
   /**
    * Fetch all inquiries with optional filtering
    */
@@ -696,11 +710,20 @@ export class InquiryService {
         }
 
         const { data, error } = await query;
-        if (data && !error && data.length > 0) {
+        if (error) {
+          logger.warn('[InquiryService] Supabase listInquiries failed, using local fallback:', error.message);
+        } else if (data && data.length > 0) {
+          const agentNames = await this.resolveAgentNamesMap(
+            data.map((r: any) => r.assigned_agent_id).filter(Boolean)
+          );
           const dbItems: InquiryItem[] = data.map((row: any) => {
             const localMatch = localInquiriesState.find(
               (l) => l.id === row.id || (l.name === row.name && l.email === row.email)
             );
+            const resolvedAgentId = row.assigned_agent_id || localMatch?.agentId;
+            const resolvedAgentName = resolvedAgentId
+              ? (agentNames.get(resolvedAgentId) || localMatch?.agentName || 'Assigned Consultant')
+              : undefined;
             return {
               id: row.id,
               referenceCode: row.reference_code || localMatch?.referenceCode || `INQ-${String(row.id).slice(0, 6).toUpperCase()}`,
@@ -713,7 +736,7 @@ export class InquiryService {
               phone: row.phone,
               contactVerified: row.contact_verified ?? localMatch?.contactVerified ?? false,
               businessStatus: row.business_status || localMatch?.businessStatus || (row.status === 'closed' ? 'inactive' : 'active'),
-              operationalStatus: row.operational_status || localMatch?.operationalStatus || 'awaiting_agent',
+              operationalStatus: row.operational_status || localMatch?.operationalStatus || (resolvedAgentId ? 'awaiting_agent' : 'unassigned'),
               message: row.message,
               preferredDate: row.preferred_date,
               preferred_date: row.preferred_date,
@@ -723,8 +746,8 @@ export class InquiryService {
               closedAt: row.closed_at || localMatch?.closedAt,
               clientId: row.client_id || localMatch?.clientId,
               client_id: row.client_id || localMatch?.client_id,
-              agentId: row.assigned_agent_id || localMatch?.agentId || 'a0000000-0000-0000-0000-000000000002',
-              agentName: localMatch?.agentName || 'Elena Rossi',
+              agentId: resolvedAgentId,
+              agentName: resolvedAgentName,
               aiSummary: localMatch?.aiSummary || 'Client inquiry registered for advisory consultation.',
               latestAiSummary: InquirySummaryService.getLatestSummary(row.id),
               aiSummaryHistory: InquirySummaryService.listSummariesForInquiry(row.id),
@@ -842,19 +865,99 @@ export class InquiryService {
           .single();
 
         if (data && !error) {
+          const resolvedAgentId = data.assigned_agent_id || undefined;
+          const [agentNames, msgsRes, notesRes, tasksRes] = await Promise.all([
+            resolvedAgentId ? this.resolveAgentNamesMap([resolvedAgentId]) : Promise.resolve(new Map()),
+            supabaseAdmin
+              .from('inquiry_messages')
+              .select('*')
+              .eq('inquiry_id', id)
+              .order('created_at', { ascending: true }),
+            supabaseAdmin
+              .from('inquiry_internal_notes')
+              .select('*')
+              .eq('inquiry_id', id)
+              .order('created_at', { ascending: false }),
+            supabaseAdmin
+              .from('inquiry_follow_up_tasks')
+              .select('*')
+              .eq('inquiry_id', id)
+              .order('created_at', { ascending: true }),
+          ]);
+
+          const resolvedAgentName = resolvedAgentId
+            ? (agentNames.get(resolvedAgentId) || 'Assigned Consultant')
+            : undefined;
+
+          const dbMessages: InquiryMessage[] =
+            Array.isArray(msgsRes?.data) && msgsRes.data.length > 0
+              ? msgsRes.data.map((m: any) => ({
+                  id: m.id,
+                  inquiryId: m.inquiry_id,
+                  sessionId: m.session_id,
+                  requestId: m.request_id,
+                  sender: m.sender_role || 'client',
+                  senderId: m.sender_id,
+                  sender_name: m.sender_name || 'Participant',
+                  senderName: m.sender_name || 'Participant',
+                  timestamp: m.created_at,
+                  content: m.content,
+                  is_read: Boolean(m.is_read),
+                  delivery_status: m.delivery_status || (m.is_read ? 'read' : 'saved'),
+                  read_at: m.read_at,
+                  read_by: m.read_by,
+                }))
+              : [
+                  {
+                    id: `msg-${data.id}`,
+                    sender: 'client',
+                    sender_name: data.name,
+                    timestamp: data.created_at,
+                    content: data.message,
+                    delivery_status: 'saved',
+                  },
+                ];
+
+          const dbNotes: InquiryInternalNote[] = Array.isArray(notesRes?.data)
+            ? notesRes.data.map((n: any) => ({
+                id: n.id,
+                inquiryId: n.inquiry_id,
+                authorId: n.author_id,
+                authorName: n.author_name,
+                authorRole: n.author_role,
+                content: n.content,
+                timestamp: n.created_at,
+              }))
+            : [];
+
+          const dbTasks: InquiryFollowUpTask[] = Array.isArray(tasksRes?.data)
+            ? tasksRes.data.map((t: any) => ({
+                id: t.id,
+                inquiryId: t.inquiry_id,
+                assignedTo: t.assigned_to,
+                createdBy: t.created_by,
+                title: t.title,
+                notes: t.notes,
+                dueAt: t.due_at,
+                status: t.status,
+                completedAt: t.completed_at,
+                createdAt: t.created_at,
+              }))
+            : [];
+
           item = {
             id: data.id,
             referenceCode: data.reference_code || `INQ-${String(data.id).slice(0, 6).toUpperCase()}`,
             propertyId: data.property_id,
             property_id: data.property_id,
-            propertyTitle: 'Estate Portfolio Asset',
-            propertyPrice: 'Price upon request',
+            propertyTitle: data.listing_snapshot?.propertyTitle || 'Estate Portfolio Asset',
+            propertyPrice: data.listing_snapshot?.propertyPrice || 'Price upon request',
             name: data.name,
             email: data.email,
             phone: data.phone,
             contactVerified: Boolean(data.contact_verified),
             businessStatus: data.business_status || (data.status === 'closed' ? 'inactive' : 'active'),
-            operationalStatus: data.operational_status || 'awaiting_agent',
+            operationalStatus: data.operational_status || (resolvedAgentId ? 'awaiting_agent' : 'unassigned'),
             message: data.message,
             preferredDate: data.preferred_date,
             type: data.type,
@@ -862,21 +965,12 @@ export class InquiryService {
             closureReason: data.closure_reason,
             closedAt: data.closed_at,
             clientId: data.client_id,
-            agentId: data.assigned_agent_id || 'a0000000-0000-0000-0000-000000000002',
-            agentName: 'Elena Rossi',
-            messages: [
-              {
-                id: `msg-${data.id}`,
-                sender: 'client',
-                sender_name: data.name,
-                timestamp: data.created_at,
-                content: data.message,
-                delivery_status: 'saved',
-              },
-            ],
-            internalNotes: [],
+            agentId: resolvedAgentId,
+            agentName: resolvedAgentName,
+            messages: dbMessages,
+            internalNotes: dbNotes,
             assignmentHistory: [],
-            followUpTasks: [],
+            followUpTasks: dbTasks,
             chatSessions: [],
             createdAt: data.created_at,
           };
@@ -889,7 +983,7 @@ export class InquiryService {
 
     if (!item) return null;
 
-    if (requesterId) {
+    if (requesterRole !== undefined || requesterId !== undefined) {
       this.assertInquiryAccess(item, requesterRole, requesterId, requesterEmail);
     }
 
@@ -931,7 +1025,7 @@ export class InquiryService {
       throw new Error(`Cannot assign inquiry: Agent is not eligible to receive leads (${eligibility.reason}).`);
     }
 
-    let assignedAgentName = agentId === 'a0000000-0000-0000-0000-000000000002' ? 'Carmela Santos' : 'Elena Rossi';
+    let assignedAgentName = 'Assigned Consultant';
     if (isSupabaseConfigured) {
       try {
         const { data: profile } = await supabaseAdmin
@@ -1019,7 +1113,7 @@ export class InquiryService {
 
     if (isSupabaseConfigured) {
       try {
-        await supabaseAdmin
+        const { error: assignUpdateError } = await supabaseAdmin
           .from('inquiries')
           .update({
             assigned_agent_id: agentId,
@@ -1027,17 +1121,19 @@ export class InquiryService {
             updated_at: new Date().toISOString(),
           })
           .eq('id', inquiryId);
+        if (assignUpdateError) {
+          logger.warn('[InquiryService] Supabase assignment update error:', assignUpdateError.message);
+        }
 
-        try {
-          await supabaseAdmin.from('inquiry_assignment_audit').insert({
-            inquiry_id: inquiryId,
-            assigned_by: actorId,
-            assigned_to: agentId,
-            previous_agent_id: previousAgentId,
-            notes,
-          });
-        } catch {
-          // Table may not be migrated yet
+        const { error: auditInsertError } = await supabaseAdmin.from('inquiry_assignment_audit').insert({
+          inquiry_id: inquiryId,
+          assigned_by: actorId,
+          assigned_to: agentId,
+          previous_agent_id: previousAgentId,
+          notes,
+        });
+        if (auditInsertError) {
+          logger.warn('[InquiryService] Supabase assignment audit insert error:', auditInsertError.message);
         }
       } catch (err: any) {
         logger.warn('[InquiryService] Supabase assignment update warning:', err.message);
@@ -1197,6 +1293,28 @@ export class InquiryService {
         msg.read_at = readAt;
         msg.read_by = reader.userId;
         updatedCount++;
+      }
+    }
+
+    if (isSupabaseConfigured && updatedCount > 0) {
+      try {
+        const query = supabaseAdmin
+          .from('inquiry_messages')
+          .update({
+            is_read: true,
+            delivery_status: 'read',
+            read_at: readAt,
+            read_by: reader.userId,
+          })
+          .eq('inquiry_id', inquiryId)
+          .eq('is_read', false);
+        if (reader.role === 'client') {
+          await query.neq('sender_role', 'client');
+        } else {
+          await query.eq('sender_role', 'client');
+        }
+      } catch (err: any) {
+        logger.warn('[InquiryService] Supabase markMessagesRead warning:', err.message);
       }
     }
 
@@ -1424,6 +1542,27 @@ export class InquiryService {
       channels: ['system'],
     });
 
+    if (isSupabaseConfigured) {
+      try {
+        await supabaseAdmin
+          .from('inquiries')
+          .update({
+            business_status: item.businessStatus,
+            operational_status: item.operationalStatus,
+            status: item.status,
+            inactive_outcome: item.inactiveOutcome || null,
+            inactive_reason: item.inactiveReason || null,
+            reactivation_reason: item.reactivationReason || null,
+            closure_reason: item.closureReason || null,
+            closed_at: item.closedAt || null,
+            updated_at: nowIso,
+          })
+          .eq('id', inquiryId);
+      } catch (err: any) {
+        logger.warn('[InquiryService] Supabase changeBusinessStatus warning:', err.message);
+      }
+    }
+
     return item;
   }
 
@@ -1526,6 +1665,27 @@ export class InquiryService {
       channels: ['system'],
     });
 
+    if (isSupabaseConfigured) {
+      try {
+        const { data: inserted } = await supabaseAdmin
+          .from('inquiry_follow_up_tasks')
+          .insert({
+            inquiry_id: inquiryId,
+            assigned_to: task.assignedTo,
+            created_by: task.createdBy || null,
+            title: task.title,
+            notes: task.notes || null,
+            due_at: task.dueAt,
+            status: task.status,
+          })
+          .select('id')
+          .single();
+        if (inserted?.id) task.id = inserted.id;
+      } catch (err: any) {
+        logger.warn('[InquiryService] Supabase createFollowUpTask warning:', err.message);
+      }
+    }
+
     return task;
   }
 
@@ -1579,6 +1739,22 @@ export class InquiryService {
       previousValues: { status: prevStatus },
       newValues: { status: task.status, completedAt: task.completedAt || null },
     });
+
+    if (isSupabaseConfigured) {
+      try {
+        await supabaseAdmin
+          .from('inquiry_follow_up_tasks')
+          .update({
+            status: task.status,
+            notes: task.notes ?? null,
+            completed_at: task.completedAt || null,
+          })
+          .eq('id', taskId)
+          .eq('inquiry_id', inquiryId);
+      } catch (err: any) {
+        logger.warn('[InquiryService] Supabase updateFollowUpTask warning:', err.message);
+      }
+    }
 
     return task;
   }

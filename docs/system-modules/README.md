@@ -20,6 +20,7 @@ The CP_kerby platform is composed of decoupled functional modules spanning front
 | **`maps-geocoding`** | OpenStreetMap Nominatim predictive search, address geocoding, and map viewports. | `backend/src/services/nominatim.service.ts`<br>`frontend/src/services/mapsService.js` | — |
 | **`portals-dashboards`** | Multi-role management portals: Broker executive ledger, Agent console, and Client portal. | `frontend/src/pages/portals/broker/`<br>`frontend/src/pages/portals/agent/`<br>`frontend/src/pages/portals/client/` | — |
 | **`visualizer-3d`** | Interactive Three.js architectural canvas, camera flight paths, and lighting rigs. | `frontend/src/components/3d/` | — |
+| **`data-management`** | Shared data governance rules, dry-run import previews, role-scoped exports, archive/restore, and JSON snapshots. | `backend/src/services/dataManagement.service.ts`<br>`frontend/src/pages/portals/super-admin/AdminDataManagementPage.jsx` | [`09-data-management.md`](file:///c:/Users/Win11x64/Desktop/My%20code%20space/CP_kerby/docs/system-modules/09-data-management.md) |
 
 ---
 

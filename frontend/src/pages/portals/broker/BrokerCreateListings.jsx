@@ -11,6 +11,7 @@ import {
   Image as ImageIcon,
   ShieldCheck,
   AlertCircle,
+  AlertTriangle,
   Save,
   Send,
   CheckCircle2,
@@ -162,8 +163,11 @@ export default function BrokerCreateListings() {
 
   const queryParams = new URLSearchParams(location.search);
   const typeParam = queryParams.get('type');
+  const stepParam = Number(queryParams.get('step'));
 
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(
+    stepParam >= 1 && stepParam <= 5 ? stepParam : 1
+  );
   const [isLoading, setIsLoading] = useState(isEditing);
   const [isDirty, setIsDirty] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -174,6 +178,7 @@ export default function BrokerCreateListings() {
   const [savedStatusType, setSavedStatusType] = useState('Active');
   const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false);
   const [confirmResetOpen, setConfirmResetOpen] = useState(false);
+  const [missingFieldsModal, setMissingFieldsModal] = useState(null);
 
   const [formData, setFormData] = useState(INITIAL_FORM_DATA);
   const [propertyTypes, setPropertyTypes] = useState([]);
@@ -219,7 +224,7 @@ export default function BrokerCreateListings() {
         const list = Array.isArray(res) ? res : res?.data || [];
         setPropertyTypes(list);
       })
-      .catch(() => {});
+      .catch(() => { });
 
     agentService
       .getAgents?.()
@@ -227,7 +232,7 @@ export default function BrokerCreateListings() {
         const list = Array.isArray(res) ? res : res?.data || [];
         setAgents(list);
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   // Pre-fill type from URL param when creating
@@ -308,6 +313,8 @@ export default function BrokerCreateListings() {
           nearbyPlacesPins: Array.isArray(custom.nearbyPlacesPins) ? custom.nearbyPlacesPins : [],
           description: p.publicRemarks || p.description || '',
           list_agent_key: p.list_agent_key || p.listAgentKey || null,
+          loaded_agent_key: p.list_agent_key || p.listAgentKey || null,
+          assignment_status: p.assignment_status || p.assignmentStatus || custom.assignment_status || '',
           handlerMode: custom.handlerMode || null,
           agentPermissions: custom.agentPermissions || prev.agentPermissions,
           credentials: custom.credentials || prev.credentials,
@@ -331,8 +338,8 @@ export default function BrokerCreateListings() {
                 ((m.mediaCategory || m.media_category) === 'FloorPlan'
                   ? 'FloorPlan'
                   : idx === 0
-                  ? 'Cover'
-                  : 'Living'),
+                    ? 'Cover'
+                    : 'Living'),
               shortDescription: m.shortDescription || m.short_description || '',
               displayOrder: m.orderIndex ?? m.order_index ?? idx + 1,
               mimeType: m.mimeType || m.mime_type || 'image/jpeg',
@@ -922,21 +929,27 @@ export default function BrokerCreateListings() {
   const validateForSubmit = (isDraft) => {
     const errors = [];
     if (!formData.title?.trim()) {
-      errors.push({ field: 'Listing Title', step: 1, message: 'Add a listing title in Step 1.' });
+      errors.push({ field: 'Listing Title', value: 'Empty', step: 1, message: 'Add a listing title in Step 1.' });
     }
     const numericPrice = Number(String(formData.price || '').replace(/[^0-9.]/g, '')) || 0;
     if (!numericPrice) {
-      errors.push({ field: 'Price', step: 1, message: 'Enter a selling price or monthly rent in Step 1.' });
+      errors.push({ field: 'Price', value: 'Not set', step: 1, message: 'Enter a selling price or monthly rent in Step 1.' });
     }
     if (!isDraft) {
       if (!(formData.city || formData.location)) {
-        errors.push({ field: 'City', step: 2, message: 'Select a city in Step 2.' });
+        errors.push({ field: 'City', value: 'Not selected', step: 2, message: 'Select a city in Step 2.' });
       }
       if (!formData.address?.trim()) {
-        errors.push({ field: 'Street Address', step: 2, message: 'Enter a street address in Step 2.' });
+        errors.push({ field: 'Street Address', value: 'Empty', step: 2, message: 'Enter a street address in Step 2.' });
       }
       if (mediaPhotos.length === 0) {
-        errors.push({ field: 'Cover Photo', step: 4, message: 'Upload at least 1 photo in Step 4.' });
+        errors.push({ field: 'Cover Photo', value: '0 photos', step: 4, message: 'Upload at least 1 photo in Step 4.' });
+      }
+      const hasAssignedAgent = Boolean(
+        formData.list_agent_key || formData.assignedAgent?.trim() || formData.credentials?.assignedAgent?.trim()
+      );
+      if (!hasAssignedAgent) {
+        errors.push({ field: 'Assigned Agent', value: 'No agent assigned', step: 5, message: 'Assign an agent in Step 5 before publishing.' });
       }
     }
     return errors;
@@ -947,8 +960,12 @@ export default function BrokerCreateListings() {
     const isDraft = targetStandardStatus === 'Draft';
     const errors = validateForSubmit(isDraft);
     if (errors.length > 0) {
+      if (!isDraft) {
+        setMissingFieldsModal({ errors });
+        return;
+      }
       setSubmissionError({
-        title: isDraft ? 'Missing Draft Basics' : 'Almost Ready — Check Required Fields',
+        title: 'Missing Draft Basics',
         message: 'Please fill in the highlighted items below:',
         errors,
       });
@@ -977,10 +994,10 @@ export default function BrokerCreateListings() {
       isDraft
         ? 'Saving Draft...'
         : targetStandardStatus === 'Pending Approval'
-        ? 'Submitting...'
-        : isEditing
-        ? 'Saving Changes...'
-        : 'Publishing...'
+          ? 'Submitting...'
+          : isEditing
+            ? 'Saving Changes...'
+            : 'Publishing...'
     );
     setIsSubmitting(true);
 
@@ -1027,8 +1044,23 @@ export default function BrokerCreateListings() {
         ...formattedVideos,
       ];
 
+      const isSelfHandledBroker =
+        user?.role !== 'agent' &&
+        Boolean(user?.id) &&
+        String(formData.list_agent_key || '') === String(user.id);
+      const isConfirmedForPublish =
+        isSelfHandledBroker ||
+        (isEditing &&
+          String(formData.assignment_status || '').toUpperCase() === 'ACCEPTED' &&
+          String(formData.list_agent_key || '') === String(formData.loaded_agent_key || ''));
+      const effectiveStandardStatus = isDraft
+        ? 'Draft'
+        : (isConfirmedForPublish ? targetStandardStatus : 'Pending Confirmation');
+      const effectiveIsPublished = !isDraft && isConfirmedForPublish;
+
       const payload = toApiPayload({
         ...formData,
+        ...(isSelfHandledBroker ? { assignmentStatus: 'ACCEPTED', assignment_status: 'ACCEPTED' } : {}),
         credentials: {
           ...(formData.credentials || {}),
           brokerName:
@@ -1038,9 +1070,9 @@ export default function BrokerCreateListings() {
             '',
         },
         categoryVideos,
-        standardStatus: targetStandardStatus,
-        status: isDraft ? 'INACTIVE' : formData.status || 'AVAILABLE',
-        is_published: !isDraft,
+        standardStatus: effectiveStandardStatus,
+        status: isDraft || !effectiveIsPublished ? 'PENDING' : formData.status || 'AVAILABLE',
+        is_published: effectiveIsPublished,
         property_images: formattedPropertyImages,
         images: formattedPropertyImages.map((img) => img.imageUrl),
         media: formattedMedia,
@@ -1060,7 +1092,7 @@ export default function BrokerCreateListings() {
 
       setIsDirty(false);
       setCreatedPropertyId(propertyId);
-      setSavedStatusType(targetStandardStatus);
+      setSavedStatusType(effectiveStandardStatus);
       setShowSuccessModal(true);
     } catch (err) {
       setSubmissionError({
@@ -1145,9 +1177,8 @@ export default function BrokerCreateListings() {
                     key={step.id}
                     type="button"
                     onClick={() => setCurrentStep(step.id)}
-                    className={`relative min-h-11 px-3 py-2.5 rounded-lg flex items-center gap-2.5 text-left transition-colors cursor-pointer ${
-                      isActive ? 'text-white' : 'text-[#475569] hover:bg-[#F8FAFC]'
-                    }`}
+                    className={`relative min-h-11 px-3 py-2.5 rounded-lg flex items-center gap-2.5 text-left transition-colors cursor-pointer ${isActive ? 'text-white' : 'text-[#475569] hover:bg-[#F8FAFC]'
+                      }`}
                   >
                     {isActive && (
                       <motion.span
@@ -1157,13 +1188,12 @@ export default function BrokerCreateListings() {
                       />
                     )}
                     <span
-                      className={`relative z-10 size-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
-                        isActive
-                          ? 'bg-white/20 text-white'
-                          : isCompleted
+                      className={`relative z-10 size-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${isActive
+                        ? 'bg-white/20 text-white'
+                        : isCompleted
                           ? 'bg-[#F0FDFA] text-[#0F766E]'
                           : 'bg-[#F8FAFC] text-[#64748B]'
-                      }`}
+                        }`}
                     >
                       {isCompleted && !isActive ? (
                         <Check className="size-3.5" />
@@ -1173,9 +1203,8 @@ export default function BrokerCreateListings() {
                     </span>
                     <div className="relative z-10 min-w-0">
                       <p
-                        className={`text-[11px] font-medium ${
-                          isActive ? 'text-white/80' : 'text-[#64748B]'
-                        }`}
+                        className={`text-[11px] font-medium ${isActive ? 'text-white/80' : 'text-[#64748B]'
+                          }`}
                       >
                         Step {step.id}
                       </p>
@@ -1366,10 +1395,10 @@ export default function BrokerCreateListings() {
                         {isSubmitting
                           ? activeActionLabel
                           : user?.role === 'agent'
-                          ? 'Submit for Review'
-                          : isEditing
-                          ? 'Save Changes'
-                          : 'Publish Listing'}
+                            ? 'Submit for Review'
+                            : isEditing
+                              ? 'Save Changes'
+                              : 'Publish Listing'}
                       </Button>
                     )}
                   </div>
@@ -1400,9 +1429,11 @@ export default function BrokerCreateListings() {
           title={
             savedStatusType === 'Draft'
               ? 'Draft Saved'
-              : savedStatusType === 'Pending Approval'
-              ? 'Submitted for Review'
-              : 'Listing Published'
+              : savedStatusType === 'Pending Confirmation'
+                ? 'Saved — Pending Agent Confirmation'
+                : savedStatusType === 'Pending Approval'
+                  ? 'Submitted for Review'
+                  : 'Listing Published'
           }
         >
           <div className="flex flex-col items-center text-center gap-4 py-2">
@@ -1412,7 +1443,9 @@ export default function BrokerCreateListings() {
             <p className="text-sm text-[#475569]">
               {savedStatusType === 'Draft'
                 ? 'Your listing draft has been saved. You can finish and publish it anytime.'
-                : 'Your property listing is saved and ready.'}
+                : savedStatusType === 'Pending Confirmation'
+                  ? 'Saved, but not published yet. The assigned agent must confirm before this listing goes live.'
+                  : 'Your property listing is saved and ready.'}
             </p>
             <div className="flex flex-wrap justify-center gap-3 pt-2">
               {createdPropertyId && (
@@ -1502,6 +1535,106 @@ export default function BrokerCreateListings() {
                 Confirm Reset
               </Button>
             </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Missing Required Fields Warning Modal (Save as Draft Only) */}
+        <Dialog open={Boolean(missingFieldsModal)} onOpenChange={(open) => !open && setMissingFieldsModal(null)}>
+          <DialogContent className="max-w-lg bg-white border-[#E2E8F0] rounded-xl">
+            <DialogHeader>
+              <DialogTitle className="text-lg font-bold text-[#1E293B] flex items-center gap-2.5 pr-6">
+                <span className="size-8 rounded-lg bg-amber-50 border border-amber-200 flex items-center justify-center shrink-0">
+                  <AlertTriangle className="size-4 text-amber-600" aria-hidden="true" />
+                </span>
+                Cannot Publish Listing
+              </DialogTitle>
+              <DialogDescription className="text-sm text-[#64748B]">
+                Some required details are still missing. Complete them below to publish, or save your progress as a draft.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="border border-[#E2E8F0] rounded-xl overflow-hidden max-h-64 overflow-y-auto">
+              <table className="w-full text-left border-collapse">
+                <thead className="bg-[#F8FAFC] border-b border-[#E2E8F0]">
+                  <tr>
+                    <th className="py-2.5 px-3.5 text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">
+                      Field
+                    </th>
+                    <th className="py-2.5 px-3.5 text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">
+                      Current Value
+                    </th>
+                    <th className="py-2.5 px-3.5 text-[11px] font-semibold uppercase tracking-wider text-[#64748B] text-right">
+                      Action
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#E2E8F0] bg-white">
+                  {(missingFieldsModal?.errors || []).map((err, idx) => (
+                    <tr key={`${err.field}-${idx}`} className="hover:bg-[#F8FAFC]/70 transition-colors">
+                      <td className="py-2.5 px-3.5 align-middle">
+                        <span className="text-xs font-semibold text-[#1E293B] block">{err.field}</span>
+                      </td>
+                      <td className="py-2.5 px-3.5 align-middle">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 text-amber-800 border border-amber-200">
+                          {err.value || 'Missing'}
+                        </span>
+                      </td>
+                      <td className="py-2.5 px-3.5 align-middle text-right">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setMissingFieldsModal(null);
+                            setCurrentStep(err.step);
+                          }}
+                          className="h-7 px-2.5 text-xs font-medium border-[#E2E8F0] bg-white hover:bg-[#F0FDFA] hover:text-[#0F766E] hover:border-[#0F766E]/30 rounded-md cursor-pointer"
+                        >
+                          Step {err.step}
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {(() => {
+              const missingDraftBasics = (missingFieldsModal?.errors || []).some(
+                (e) => e.field === 'Listing Title' || e.field === 'Price'
+              );
+              return (
+                <>
+                  {missingDraftBasics && (
+                    <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                      Add Listing Title and Price first to save as a draft.
+                    </p>
+                  )}
+                  <DialogFooter className="gap-2 pt-1">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setMissingFieldsModal(null)}
+                      className="min-h-11 px-4 border-[#E2E8F0] rounded-lg cursor-pointer"
+                    >
+                      Go Back & Fix
+                    </Button>
+                    <Button
+                      type="button"
+                      disabled={isSubmitting || missingDraftBasics}
+                      onClick={() => {
+                        setMissingFieldsModal(null);
+                        executeSubmission('Draft');
+                      }}
+                      className="min-h-11 px-4 bg-[#0F766E] hover:bg-[#115E59] text-white font-semibold rounded-lg cursor-pointer disabled:opacity-50"
+                    >
+                      <Save className="size-4 mr-2" />
+                      Save as Draft
+                    </Button>
+                  </DialogFooter>
+                </>
+              );
+            })()}
           </DialogContent>
         </Dialog>
       </div>

@@ -1,0 +1,19 @@
+{
+  "sessions": [
+    {
+      "id": "f1a15ce0-ade2-403e-ab6c-b967b978ff5d",
+      "tokenHash": "2cc9923cec4c3d9919f99683a92e496a20995964739e52d01829bf0d4f5c7aef",
+      "userId": "dev-google-mock-uid-client",
+      "role": "client",
+      "createdAt": 1795270249990,
+      "lastActiveAt": 1795270249990,
+      "idleExpiresAt": 1795273849990,
+      "absoluteExpiresAt": 1795356649990,
+      "lastHeartbeatAt": 1795270249990,
+      "userAgent": "Unknown Device",
+      "ipAddress": "Unavailable",
+      "updatedAt": 1795270249990
+    }
+  ],
+  "disabledAccounts": []
+}

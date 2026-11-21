@@ -124,6 +124,10 @@ export interface PropertyItem {
   createdAt: string;
   updatedAt: string;
   createdBy?: string;
+  assignedBy?: string | null;
+  assigned_by?: string | null;
+  assignedByName?: string;
+  assigned_by_name?: string;
   listAgentKey?: string;
   agentName?: string;
   agentId?: string;
@@ -189,6 +193,9 @@ export function deriveLegacyStatus(
     if (s === 'draft') {
       return { status: 'pending', standardStatus: 'Draft', isPublished: false };
     }
+    if (s === 'hold' || s === 'inactive') {
+      return { status: 'pending', standardStatus: 'Hold', isPublished: false };
+    }
     if (s === 'canceled' || s === 'cancelled') {
       return { status: 'pending', standardStatus: 'Canceled', isPublished: false };
     }
@@ -208,7 +215,10 @@ export function deriveLegacyStatus(
     if (inc === 'reserved') {
       return { status: 'pending', standardStatus: 'Active Under Contract', isPublished: true };
     }
-    // default / 'pending' / 'inactive' / 'draft'
+    if (inc === 'inactive' || inc === 'hold') {
+      return { status: 'pending', standardStatus: 'Hold', isPublished: false };
+    }
+    // default / 'pending' / 'draft'
     return { status: 'pending', standardStatus: 'Draft', isPublished: false };
   }
 
@@ -544,6 +554,8 @@ export class PropertyService {
       createdAt: row.created_at || new Date().toISOString(),
       updatedAt: row.updated_at || new Date().toISOString(),
       createdBy: row.created_by || row.custom_reso_attributes?.created_by || null,
+      assignedBy: row.assigned_by || row.custom_reso_attributes?.assigned_by || row.created_by || null,
+      assigned_by: row.assigned_by || row.custom_reso_attributes?.assigned_by || row.created_by || null,
       listAgentKey: row.list_agent_key || null,
       agentName: row.agent_name || row.custom_reso_attributes?.credentials?.assignedAgent || undefined,
       agentId: row.list_agent_key || null,
@@ -711,19 +723,23 @@ export class PropertyService {
             }
           }
 
-          const agentIds = Array.from(
-            new Set(data.map((r: any) => r.list_agent_key).filter((id: any) => isValidUuid(id)))
+          const profileIds = Array.from(
+            new Set(
+              data
+                .flatMap((r: any) => [r.list_agent_key, r.assigned_by, r.created_by])
+                .filter((id: any) => isValidUuid(id))
+            )
           );
-          const agentNameMap: Record<string, string> = {};
-          if (agentIds.length > 0) {
+          const profileNameMap: Record<string, string> = {};
+          if (profileIds.length > 0) {
             try {
-              const { data: agentProfiles } = await supabaseAdmin
+              const { data: profilesData } = await supabaseAdmin
                 .from('profiles')
                 .select('id, full_name')
-                .in('id', agentIds);
-              for (const prof of agentProfiles || []) {
+                .in('id', profileIds);
+              for (const prof of profilesData || []) {
                 if (prof?.id && prof?.full_name) {
-                  agentNameMap[prof.id] = prof.full_name;
+                  profileNameMap[prof.id] = prof.full_name;
                 }
               }
             } catch (agentLookupErr: any) {
@@ -733,8 +749,13 @@ export class PropertyService {
 
           const mapped: PropertyItem[] = data.map((row: any) => {
             const item = PropertyService.mapDatabaseRow(row, imageMap);
-            if (row.list_agent_key && agentNameMap[row.list_agent_key]) {
-              item.agentName = agentNameMap[row.list_agent_key];
+            if (row.list_agent_key && profileNameMap[row.list_agent_key]) {
+              item.agentName = profileNameMap[row.list_agent_key];
+            }
+            const assignerId = row.assigned_by || row.custom_reso_attributes?.assigned_by || row.created_by;
+            if (assignerId && profileNameMap[assignerId]) {
+              item.assignedByName = profileNameMap[assignerId];
+              item.assigned_by_name = profileNameMap[assignerId];
             }
             return this.redactConfidential(item, userRole, userId);
           });
@@ -968,6 +989,8 @@ export class PropertyService {
             createdAt: data.created_at,
             updatedAt: data.updated_at,
             createdBy: data.created_by || data.custom_reso_attributes?.created_by || data.custom_reso_attributes?.createdBy || null,
+            assignedBy: data.assigned_by || data.custom_reso_attributes?.assigned_by || data.created_by || null,
+            assigned_by: data.assigned_by || data.custom_reso_attributes?.assigned_by || data.created_by || null,
             listAgentKey: data.list_agent_key,
             agentName: data.agent_name || data.custom_reso_attributes?.credentials?.assignedAgent || undefined,
             agentId: data.list_agent_key || null,
@@ -1151,14 +1174,16 @@ export class PropertyService {
       ? (data.assignmentStatus || 'PENDING_CONFIRMATION')
       : (data.assignmentStatus || 'UNASSIGNED');
     const requestedStandardStatus = data.standard_status || data.standardStatus;
-    const initialStatus = initialAssignmentStatus === 'ACCEPTED'
-      ? (requestedStandardStatus || 'Active')
-      : (hasAgent ? 'Pending Confirmation' : (requestedStandardStatus || 'Active'));
+    const initialStatus = requestedStandardStatus === 'Draft'
+      ? 'Draft'
+      : (hasAgent && initialAssignmentStatus === 'ACCEPTED'
+        ? (requestedStandardStatus || 'Active')
+        : (hasAgent ? 'Pending Confirmation' : 'Draft'));
     const initialIsPublished = requestedStandardStatus === 'Draft'
       ? false
-      : (initialAssignmentStatus === 'ACCEPTED'
+      : (hasAgent && initialAssignmentStatus === 'ACCEPTED'
         ? Boolean(data.isPublished ?? true)
-        : (!hasAgent ? Boolean(data.isPublished ?? true) : false));
+        : false);
 
     let coordinates = data.location?.coordinates;
     let resolvedPostal = data.location?.postalCode || data.location?.postal_code || null;
@@ -1323,6 +1348,7 @@ export class PropertyService {
         exteriorFeatures: data.exteriorFeatures || [],
         created_by: userId,
         createdBy: userId,
+        created_by_role: userRole || 'broker',
       },
       architecturalStyle: data.architecturalStyle || 'Modern Architectural',
       standardStatus: initialStatus,
@@ -1335,6 +1361,8 @@ export class PropertyService {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       createdBy: userId,
+      assignedBy: hasAgent ? (userId || null) : null,
+      assigned_by: hasAgent ? (userId || null) : null,
       listAgentKey: hasAgent ? effectiveAgentId : null,
       agentId: hasAgent ? effectiveAgentId : null,
       subdivisionProjectId: data.subdivision_project_id || data.subdivisionProjectId || data.location?.subdivisionProjectId || null,
@@ -1378,6 +1406,7 @@ export class PropertyService {
             ...(newProperty.customResoAttributes || {}),
             created_by: userId,
             createdBy: userId,
+            created_by_role: userRole || 'broker',
             assignment_status: newProperty.assignmentStatus,
             assignment_declined_reason: newProperty.assignmentDeclinedReason,
             assigned_at: newProperty.assignedAt,
@@ -1390,6 +1419,9 @@ export class PropertyService {
           transaction_type: newProperty.specs.transactionType || 'For Sale',
           property_condition: newProperty.specs.propertyCondition,
           created_by: resolvedCreatedBy,
+          assigned_by: hasAgent ? resolvedCreatedBy : null,
+          assigned_at: newProperty.assignedAt || null,
+          assignment_status: newProperty.assignmentStatus,
           list_agent_key: resolvedListAgentKey,
         };
 
@@ -1596,6 +1628,41 @@ export class PropertyService {
   }
 
   /**
+   * Enforce creator isolation while allowing supervising brokers to manage agent-created listings.
+   */
+  private static async assertCanModifyProperty(
+    existing: PropertyItem,
+    userId: string | undefined,
+    userRole: string | undefined,
+    verb: 'modify' | 'delete'
+  ): Promise<void> {
+    if (userRole === 'admin' || !userId) return;
+    const existingOwner = existing.createdBy || (existing as any).customResoAttributes?.created_by;
+    if (!existingOwner || existingOwner === userId) return;
+
+    if (userRole === 'broker') {
+      let ownerRole = String((existing as any).customResoAttributes?.created_by_role || '').toLowerCase();
+      if (!ownerRole && isSupabaseConfigured && isValidUuid(existingOwner)) {
+        try {
+          const { data: ownerProfile } = await supabaseAdmin
+            .from('profiles')
+            .select('role')
+            .eq('id', existingOwner)
+            .maybeSingle();
+          ownerRole = String(ownerProfile?.role || '').toLowerCase();
+        } catch {
+          // Ignore lookup failure and preserve cross-broker isolation
+        }
+      }
+      // Allow supervising brokers to manage admin, agent, or legacy/untyped listings;
+      // only block cross-broker edits when the creator is a different broker account.
+      if (ownerRole !== 'broker') return;
+    }
+
+    throw new Error(`Forbidden: You do not have permission to ${verb} this property listing.`);
+  }
+
+  /**
    * Update an existing property listing with broker approval validation
    */
   public static async updateProperty(
@@ -1611,11 +1678,7 @@ export class PropertyService {
     const existing = await this.findPropertyById(id);
     if (!existing) return null;
 
-    // Tenant / Owner isolation: only creator broker or admin can modify
-    const existingOwner = existing.createdBy || (existing as any).customResoAttributes?.created_by;
-    if (userRole !== 'admin' && userId && existingOwner && existingOwner !== userId) {
-      throw new Error('Forbidden: You do not have permission to modify this property listing.');
-    }
+    await this.assertCanModifyProperty(existing, userId, userRole, 'modify');
 
     // Broker Approval Enforcement:
     // If transitioning standard_status to 'Active' from another status, require role 'broker' or 'admin'
@@ -1735,6 +1798,31 @@ export class PropertyService {
       lastEdit: lastEditRecord,
     };
 
+    const nextAgentKey = data.listAgentKey !== undefined
+      ? data.listAgentKey
+      : (data.list_agent_key !== undefined ? data.list_agent_key : existing.listAgentKey);
+    const agentChanged = String(nextAgentKey || '') !== String(existing.listAgentKey || '');
+    const effectiveAssignmentStatus = !nextAgentKey
+      ? 'UNASSIGNED'
+      : (agentChanged
+        ? 'PENDING_CONFIRMATION'
+        : (data.assignmentStatus || data.assignment_status || existing.assignmentStatus || 'PENDING_CONFIRMATION'));
+    const isAgentConfirmed = Boolean(nextAgentKey) && effectiveAssignmentStatus === 'ACCEPTED';
+    const requestedPublished = data.isPublished !== undefined
+      ? Boolean(data.isPublished)
+      : (data.is_published !== undefined
+        ? Boolean(data.is_published)
+        : derived.isPublished);
+    const effectiveIsPublished = derived.standardStatus === 'Draft'
+      ? false
+      : (isAgentConfirmed ? requestedPublished : false);
+    const effectiveStandardStatus = derived.standardStatus === 'Draft'
+      ? 'Draft'
+      : (!isAgentConfirmed && derived.standardStatus === 'Active'
+        ? (nextAgentKey ? 'Pending Confirmation' : 'Draft')
+        : derived.standardStatus);
+    const effectiveStatus = effectiveStandardStatus === 'Draft' || !effectiveIsPublished ? 'pending' : derived.status;
+
     const updated: PropertyItem = {
       ...existing,
       ...data,
@@ -1742,14 +1830,17 @@ export class PropertyService {
       architecturalStyle: data.architecturalStyle ?? existing.architecturalStyle,
       rooms: data.rooms ?? existing.rooms,
       location: mergedLocation,
-      standardStatus: derived.standardStatus,
-      status: derived.status,
-      customResoAttributes: mergedCustomAttrs,
-      isPublished: data.isPublished !== undefined
-        ? Boolean(data.isPublished)
-        : (data.is_published !== undefined
-          ? Boolean(data.is_published)
-          : derived.isPublished),
+      listAgentKey: nextAgentKey || null,
+      agentId: nextAgentKey || null,
+      assignmentStatus: effectiveAssignmentStatus as any,
+      standardStatus: effectiveStandardStatus,
+      status: effectiveStatus,
+      customResoAttributes: {
+        ...mergedCustomAttrs,
+        assignment_status: effectiveAssignmentStatus,
+        is_published: effectiveIsPublished,
+      },
+      isPublished: effectiveIsPublished,
       updatedAt: nowIso,
     };
 
@@ -1763,7 +1854,8 @@ export class PropertyService {
             standard_status: updated.standardStatus,
             status: updated.status,
             is_published: updated.isPublished,
-            custom_reso_attributes: mergedCustomAttrs,
+            list_agent_key: isValidUuid(nextAgentKey) ? nextAgentKey : null,
+            custom_reso_attributes: updated.customResoAttributes,
             address: updated.location.address,
             building_name: updated.location.buildingName || updated.location.building_name || null,
             city: updated.location.city,
@@ -1899,11 +1991,7 @@ export class PropertyService {
     const exists = await this.findPropertyById(id);
     if (!exists) return false;
 
-    // Tenant / Owner isolation: only creator broker or admin can delete
-    const existingOwner = exists.createdBy || (exists as any).customResoAttributes?.created_by;
-    if (userRole !== 'admin' && userId && existingOwner && existingOwner !== userId) {
-      throw new Error('Forbidden: You do not have permission to delete this property listing.');
-    }
+    await this.assertCanModifyProperty(exists, userId, userRole, 'delete');
 
     if (isSupabaseConfigured) {
       const { error } = await supabaseAdmin.from('properties').delete().eq('id', id);
@@ -2596,8 +2684,10 @@ export class PropertyService {
     }
 
     const now = new Date().toISOString();
+    const resolvedAssigner = isValidUuid(requestingUserId) ? requestingUserId : null;
     const updatedFields = {
       list_agent_key: newAgentId,
+      assigned_by: resolvedAssigner,
       assignment_status: 'PENDING_CONFIRMATION' as const,
       standard_status: 'Pending Confirmation' as const,
       is_published: false,
@@ -2676,6 +2766,8 @@ export class PropertyService {
         ...localPropertiesState[propIdx],
         listAgentKey: newAgentId,
         agentId: newAgentId,
+        assignedBy: requestingUserId || localPropertiesState[propIdx].assignedBy || null,
+        assigned_by: requestingUserId || localPropertiesState[propIdx].assigned_by || null,
         assignmentStatus: 'PENDING_CONFIRMATION',
         standardStatus: 'Pending Confirmation',
         isPublished: false,
@@ -2692,6 +2784,8 @@ export class PropertyService {
       ...prop,
       listAgentKey: newAgentId,
       agentId: newAgentId,
+      assignedBy: requestingUserId || prop.assignedBy || null,
+      assigned_by: requestingUserId || prop.assigned_by || null,
       assignmentStatus: 'PENDING_CONFIRMATION',
       standardStatus: 'Pending Confirmation',
       isPublished: false,

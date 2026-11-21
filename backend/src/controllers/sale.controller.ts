@@ -9,9 +9,9 @@ export class SaleController {
    */
   public static async list(req: AuthenticatedRequest, res: Response<ApiResponse>): Promise<void> {
     try {
-      const user = req.user;
-      const role = (req.query.role as string) || (user?.role as string) || 'broker';
-      const userId = user?.id || (req.query.agentId as string) || undefined;
+      const user = req.user as any;
+      const role = user?.role || 'agent';
+      const userId = user?.id;
 
       const sales = await SaleService.listSales(req.query as any, role, userId);
 
@@ -35,8 +35,8 @@ export class SaleController {
    */
   public static async getPipelineMetrics(req: AuthenticatedRequest, res: Response<ApiResponse>): Promise<void> {
     try {
-      const user = req.user;
-      const agentId = user?.id || (req.query.agentId as string) || 'agent-1';
+      const user = req.user as any;
+      const agentId = user?.role === 'agent' ? user.id : ((req.query.agentId as string) || user?.id);
       const metrics = await SaleService.getAgentSalesPipelineMetrics(agentId);
 
       res.status(200).json({

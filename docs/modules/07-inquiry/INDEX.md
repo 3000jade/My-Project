@@ -1,8 +1,8 @@
 ---
 module: 07-inquiry
 title: Inquiry Module
-last_updated: 2026-10-27
-total_documents: 3
+last_updated: 2026-11-21
+total_documents: 4
 ---
 
 # Inquiry Module — Master Index
@@ -22,6 +22,7 @@ All updates and technical reports for this module are ordered chronologically by
 | `2026-10-06` | [2026-10-06-inquiry-management-verification-report.md](./2026-10-06-inquiry-management-verification-report.md) | Inquiry Management Verification Report |
 | `2026-10-06` | [2026-10-06-inquiry-module-spec.md](./2026-10-06-inquiry-module-spec.md) | Inquiry Module Spec |
 | `2026-10-06` | [2026-10-06-property-listing-inquiry-module.md](./2026-10-06-property-listing-inquiry-module.md) | Property Listing Inquiry Module |
+| `2026-11-21` | [2026-11-21-broker-agent-inquiry-polish-wiring.md](./2026-11-21-broker-agent-inquiry-polish-wiring.md) | Broker & Agent Inquiry Polish and Wiring Fixes |
 
 ---
 

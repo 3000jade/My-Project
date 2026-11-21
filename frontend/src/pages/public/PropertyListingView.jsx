@@ -5,7 +5,6 @@ import {
   Bookmark,
   MapPin,
   Maximize2,
-  CheckCircle2,
   Share2,
   Compass,
   ChevronLeft,
@@ -48,6 +47,8 @@ import {
   PropertyHeroDetailsCard,
   PropertyMediaShowcaseSection,
   PropertyAgentCard,
+  Toaster,
+  useToast,
 } from '../../components/ui';
 
 import { Button } from '@/components/ui/button';
@@ -127,7 +128,7 @@ export default function PropertyListingView() {
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [isAgentModalOpen, setIsAgentModalOpen] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
-  const [toastMessage, setToastMessage] = useState(null);
+  const { toast } = useToast();
 
   const [inquiryName, setInquiryName] = useState('');
   const [inquiryEmail, setInquiryEmail] = useState('');
@@ -767,8 +768,11 @@ export default function PropertyListingView() {
   // Handlers
   const handleSaveToggle = () => {
     toggleViewingList(property);
-    setToastMessage(isSaved ? 'Removed from saved properties' : 'Saved to your properties');
-    setTimeout(() => setToastMessage(null), 3000);
+    toast({
+      title: 'Saved Properties',
+      description: isSaved ? 'Removed from saved properties' : 'Saved to your properties',
+      variant: 'success',
+    });
   };
 
   const handleOpenGallery = (index = 0) => {
@@ -810,16 +814,22 @@ export default function PropertyListingView() {
         clientId: user?.id,
       });
       setIsContactModalOpen(false);
-      setToastMessage('Inquiry sent! The listing contact will reach out soon.');
+      toast({
+        title: 'Inquiry Sent',
+        description: 'Inquiry sent! The listing contact will reach out soon.',
+        variant: 'success',
+      });
       setInquiryName('');
       setInquiryEmail('');
       setInquiryPhone('');
       setInquiryMessage('');
-      setTimeout(() => setToastMessage(null), 4000);
     } catch {
-      setToastMessage('Inquiry saved. The listing contact will reach out.');
+      toast({
+        title: 'Inquiry Saved',
+        description: 'Inquiry saved. The listing contact will reach out.',
+        variant: 'success',
+      });
       setIsContactModalOpen(false);
-      setTimeout(() => setToastMessage(null), 4000);
     } finally {
       setIsInquirySubmitting(false);
     }
@@ -908,13 +918,6 @@ export default function PropertyListingView() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-[#1E293B] antialiased selection:bg-[#0F766E] selection:text-white pt-24 pb-12">
-      {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#1E293B] text-white px-4 py-3 rounded-lg shadow-xl text-xs font-semibold flex items-center gap-2 border border-[#334155]">
-          <CheckCircle2 className="size-4 text-[#10B981]" />
-          <span>{toastMessage}</span>
-        </div>
-      )}
-
       <main className="flex flex-col gap-6">
         {/* 1. DYNAMIC-WIDTH HERO SECTION (Images Only) */}
         <section
@@ -1614,8 +1617,11 @@ export default function PropertyListingView() {
         onClose={() => setIsScheduleModalOpen(false)}
         property={property}
         onScheduleSuccess={() => {
-          setToastMessage('Viewing appointment scheduled successfully!');
-          setTimeout(() => setToastMessage(null), 4000);
+          toast({
+            title: 'Viewing Scheduled',
+            description: 'Viewing appointment scheduled successfully!',
+            variant: 'success',
+          });
         }}
       />
 
@@ -1676,6 +1682,7 @@ export default function PropertyListingView() {
             : null
         }
       />
+      <Toaster position="bottom-right" />
     </div>
   );
 }

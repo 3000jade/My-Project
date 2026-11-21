@@ -3,7 +3,7 @@ import { NavLink, Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, Building2, MessageSquare, Calendar, 
   FileText, X, Bookmark, Compass, User,
-  Settings, Shield, PanelLeftClose, PanelLeftOpen
+  Settings, Shield, PanelLeftClose, PanelLeftOpen, Database
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
@@ -14,6 +14,24 @@ export default function DashboardSidebar({
 }) {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
+
+  const adminSections = [
+    {
+      title: 'Administration',
+      items: [
+        { to: '/admin/users', label: 'Users & Roles', icon: Shield },
+        { to: '/admin/cms', label: 'Website CMS', icon: FileText },
+        { to: '/admin/data-management', label: 'Data Management', icon: Database },
+      ],
+    },
+    {
+      title: 'Operations',
+      items: [
+        { to: '/broker/dashboard', label: 'Broker Dashboard', icon: LayoutDashboard },
+        { to: '/broker/properties', label: 'Properties', icon: Building2 },
+      ],
+    },
+  ];
 
   // Broker navigation sections for semantic visual hierarchy (Settings moved to sidebar bottom footer)
   const brokerSections = [
@@ -55,7 +73,7 @@ export default function DashboardSidebar({
     { to: '/properties', label: 'Explore Listings', icon: Compass },
   ];
 
-  const settingsPath = role === 'broker' ? '/broker/profile' : role === 'agent' ? '/agent/profile' : '/client/profile';
+  const settingsPath = role === 'broker' || role === 'admin' ? '/broker/profile' : role === 'agent' ? '/agent/profile' : '/client/profile';
   const isSettingsActive = location.pathname === settingsPath;
 
   return (
@@ -96,7 +114,7 @@ export default function DashboardSidebar({
                 HUMAN SHELTER REALTY
               </span>
               <span className="font-sans text-[9px] text-teal-300/80 block uppercase tracking-widest truncate font-medium">
-                {role === 'broker' ? 'BROKER PORTAL' : role === 'agent' ? 'AGENT WORKSPACE' : 'CLIENT PORTAL'}
+                {role === 'admin' ? 'SUPER ADMIN' : role === 'broker' ? 'BROKER PORTAL' : role === 'agent' ? 'AGENT WORKSPACE' : 'CLIENT PORTAL'}
               </span>
             </div>
           </Link>
@@ -126,8 +144,8 @@ export default function DashboardSidebar({
 
         {/* Navigation Section */}
         <div className="flex-1 py-4 px-3 space-y-4 overflow-y-auto custom-scrollbar" data-lenis-prevent="true">
-          {role === 'broker' ? (
-            brokerSections.map((section) => (
+          {role === 'broker' || role === 'admin' ? (
+            (role === 'admin' ? adminSections : brokerSections).map((section) => (
               <div key={section.title} className="space-y-1">
                 <div className={cn("px-3 py-1", collapsed && "md:hidden")}>
                   <span className="text-[10px] font-semibold text-teal-300/60 uppercase tracking-wider block">

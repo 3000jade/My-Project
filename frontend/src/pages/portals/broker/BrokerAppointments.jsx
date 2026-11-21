@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, ArrowRight } from 'lucide-react';
 import AgentScheduleCalendar from '../../../components/dashboard/AgentScheduleCalendar';
-import { Card, CardContent } from '../../../components/ui';
+import { Card, CardContent, Toaster } from '../../../components/ui';
 import { Alert, AlertDescription } from '../../../components/ui/alert';
 
 export default function BrokerAppointments() {
@@ -33,6 +33,7 @@ export default function BrokerAppointments() {
           />
         </CardContent>
       </Card>
+      <Toaster position="top-right" />
     </div>
   );
 }

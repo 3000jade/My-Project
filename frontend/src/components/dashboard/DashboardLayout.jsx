@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom';
 import DashboardSidebar from './DashboardSidebar';
 import DashboardHeader from './DashboardHeader';
 import { DashboardThemeProvider, useDashboardDensity } from '../../context/DashboardThemeContext';
+import { useAuth } from '../../context/AuthContext';
 import { DashboardPageSkeleton } from './skeletons';
 
 function DashboardLayoutContent({ role, title }) {
@@ -41,9 +42,12 @@ function DashboardLayoutContent({ role, title }) {
 }
 
 export default function DashboardLayout({ role = 'broker', title = 'Property Listings' }) {
+  const { user } = useAuth();
+  const effectiveRole = user?.role === 'admin' ? 'admin' : role;
+
   return (
-    <DashboardThemeProvider role={role}>
-      <DashboardLayoutContent role={role} title={title} />
+    <DashboardThemeProvider role={effectiveRole}>
+      <DashboardLayoutContent role={effectiveRole} title={title} />
     </DashboardThemeProvider>
   );
 }

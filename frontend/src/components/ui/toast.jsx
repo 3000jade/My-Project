@@ -120,15 +120,15 @@ export function toast({ ...props }) {
 }
 
 export const toastVariants = cva(
-  "pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-xl border p-4 pr-8 shadow-lg transition-all data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full sm:data-[state=open]:slide-in-from-bottom-full font-sans",
+  "pointer-events-auto relative flex w-full items-center justify-between gap-4 overflow-hidden rounded-xl border p-4 pr-8 shadow-md transition-all motion-reduce:transition-none motion-reduce:animate-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full sm:data-[state=open]:slide-in-from-bottom-full font-sans",
   {
     variants: {
       variant: {
-        default: "border-[#E2E8F0] bg-white text-[#1E293B] dark:bg-slate-900 dark:border-slate-800 dark:text-slate-100",
-        primary: "border-[#0F766E]/20 bg-teal-50 text-[#0F766E] dark:bg-teal-950/60 dark:border-teal-800 dark:text-teal-200",
-        coral: "border-[#FF6B6B]/20 bg-rose-50 text-[#1E293B] dark:bg-rose-950/60 dark:border-rose-800 dark:text-rose-100",
-        success: "border-emerald-200 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:border-emerald-800 dark:text-emerald-200",
-        destructive: "border-red-200 bg-red-50 text-red-800 dark:bg-red-950/60 dark:border-red-800 dark:text-red-200",
+        default: "border-[#E2E8F0] bg-white text-[#1E293B]",
+        primary: "border-[#0F766E]/20 bg-teal-50 text-[#0F766E]",
+        coral: "border-[#FF6B6B]/20 bg-rose-50 text-[#1E293B]",
+        success: "border-emerald-200 bg-emerald-50 text-emerald-700",
+        destructive: "border-red-200 bg-red-50 text-red-600",
       },
     },
     defaultVariants: {
@@ -153,7 +153,7 @@ export function Toast({ className, variant, title, description, action, onClose,
       {...props}
     >
       <div className="flex items-start gap-3 flex-1">
-        {Icon && <Icon className="w-5 h-5 shrink-0 mt-0.5" />}
+        {Icon && <Icon className="size-5 shrink-0 mt-0.5" />}
         <div className="grid gap-1">
           {title && <div className="text-sm font-bold tracking-tight">{title}</div>}
           {description && <div className="text-xs opacity-90">{description}</div>}
@@ -162,16 +162,21 @@ export function Toast({ className, variant, title, description, action, onClose,
       {action}
       <button
         onClick={onClose}
-        className="absolute right-2 top-2 rounded-md p-1 opacity-70 hover:opacity-100 transition-opacity focus:outline-none focus:ring-2 focus:ring-[#0F766E] cursor-pointer"
+        className="absolute right-2 top-2 rounded-md p-1 opacity-70 hover:opacity-100 transition-opacity focus-visible:outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 cursor-pointer"
         aria-label="Close notification"
       >
-        <X className="h-4 w-4" />
+        <X className="size-4" />
       </button>
     </div>
   );
 }
 
-export function Toaster() {
+const TOASTER_POSITIONS = {
+  "top-right": "fixed top-0 right-0 z-50 flex max-h-screen w-full flex-col p-4 md:max-w-[420px] gap-2 pointer-events-none",
+  "bottom-right": "fixed bottom-0 right-0 z-50 flex max-h-screen w-full flex-col-reverse p-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px] gap-2 pointer-events-none",
+};
+
+export function Toaster({ position = "bottom-right" } = {}) {
   const { toasts, dismiss } = useToast();
 
   if (!toasts.length) return null;
@@ -179,7 +184,7 @@ export function Toaster() {
   return (
     <div
       data-testid="broker-toaster"
-      className="fixed bottom-0 right-0 z-50 flex max-h-screen w-full flex-col-reverse p-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px] gap-2 pointer-events-none"
+      className={TOASTER_POSITIONS[position] || TOASTER_POSITIONS["bottom-right"]}
     >
       {toasts.map(({ id, title, description, variant, action, open }) => (
         <Toast

@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, ArrowRight } from 'lucide-react';
 import AgentScheduleCalendar from '../../../components/dashboard/AgentScheduleCalendar';
+import { Toaster } from '../../../components/ui';
 import { useAuth } from '../../../context/AuthContext';
 
 export default function AgentAppointments() {
@@ -34,6 +35,7 @@ export default function AgentAppointments() {
         title="Viewing Appointments"
         subtitle="Manage client property tours, virtual walk-throughs, and transaction signing dates."
       />
+      <Toaster position="top-right" />
     </div>
   );
 }
