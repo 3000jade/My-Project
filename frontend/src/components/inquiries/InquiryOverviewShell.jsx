@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { RefreshCw, AlertCircle, Inbox, Eye, ArrowRight } from 'lucide-react';
+import { RefreshCw, AlertCircle, Inbox, Eye, ArrowRight, Columns3, Table2 } from 'lucide-react';
 import PageHeader from '../dashboard/PageHeader';
 import DataTable from '../dashboard/DataTable';
 import StatusBadge from '../dashboard/StatusBadge';
 import InquiryFilterToolbar from './InquiryFilterToolbar';
+import InquiryInboxSplitView from './InquiryInboxSplitView';
 import {
   Card,
   CardHeader,
@@ -15,9 +16,6 @@ import {
   Alert,
   AlertTitle,
   AlertDescription,
-  Tabs,
-  TabsList,
-  TabsTrigger,
   Dialog,
   DialogContent,
   DialogHeader,
@@ -63,8 +61,40 @@ export default function InquiryOverviewShell({
   basePath = '/inquiries',
   onOpenItem,
   renderQuickView,
+  viewerRole = 'agent',
+  onSendReply,
+  sendingReply = false,
+  defaultViewMode = 'table',
 }) {
   const [quickViewItem, setQuickViewItem] = useState(null);
+  const [viewMode, setViewMode] = useState(defaultViewMode);
+
+  const mergedFilters = [
+    ...(queueTabs.length > 0 && onTabChange
+      ? [
+          {
+            label: 'Queue',
+            value: activeTab ?? queueTabs[0]?.value ?? 'ALL',
+            onChange: onTabChange,
+            placeholder: queueTabs[0]?.label || 'All',
+            options: queueTabs.map((t) => ({ label: t.label, value: t.value })),
+          },
+        ]
+      : []),
+    ...filters,
+  ];
+
+  const filterToolbarEl = (
+    <InquiryFilterToolbar
+      searchValue={searchValue}
+      onSearchChange={onSearchChange}
+      searchPlaceholder={searchPlaceholder}
+      filters={mergedFilters}
+      sortBy={sortBy}
+      onSortChange={onSortChange}
+      onResetFilters={onResetFilters}
+    />
+  );
 
   const tableColumns = [
     ...columns,
@@ -107,24 +137,49 @@ export default function InquiryOverviewShell({
         title={title}
         subtitle={subtitle}
         breadcrumbs={breadcrumbs}
+        className="mb-0"
         actions={
-          onRefresh && (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onRefresh}
-              disabled={loading}
-              aria-label="Refresh inquiries"
-              className="h-11 px-4"
-            >
-              <RefreshCw data-icon="inline-start" className={loading ? 'animate-spin' : ''} />
-              <span>Refresh</span>
-            </Button>
-          )
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="inline-flex items-center rounded-lg border border-outline bg-surface p-1">
+              <Button
+                type="button"
+                variant={viewMode === 'split' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('split')}
+                className="min-h-9 px-3 gap-1.5"
+              >
+                <Columns3 className="size-4" />
+                <span>Split Inbox</span>
+              </Button>
+              <Button
+                type="button"
+                variant={viewMode === 'table' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('table')}
+                className="min-h-9 px-3 gap-1.5"
+              >
+                <Table2 className="size-4" />
+                <span>Table</span>
+              </Button>
+            </div>
+            {onRefresh && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onRefresh}
+                disabled={loading}
+                aria-label="Refresh inquiries"
+                className="h-11 px-4"
+              >
+                <RefreshCw data-icon="inline-start" className={loading ? 'animate-spin' : ''} />
+                <span>Refresh</span>
+              </Button>
+            )}
+          </div>
         }
       />
 
-      {kpis.length > 0 && (
+      {viewMode === 'table' && kpis.length > 0 && (
         <div data-testid={kpiTestId} className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {kpis.map((kpi, idx) => (
             <KpiCard key={idx} size="md" {...kpi} />
@@ -156,39 +211,20 @@ export default function InquiryOverviewShell({
       )}
 
       <div className="flex flex-col gap-4">
-        {queueTabs.length > 0 && (
-          <Tabs
-            value={activeTab}
-            onValueChange={onTabChange}
-            data-testid={tabsTestId}
-            className="w-full"
-          >
-            <TabsList className="bg-surface border border-outline p-1 h-auto flex-wrap">
-              {queueTabs.map((tab) => (
-                <TabsTrigger
-                  key={tab.value}
-                  value={tab.value}
-                  className="min-h-10 text-xs font-semibold px-3 py-2"
-                >
-                  {tab.label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
-        )}
-
-        <InquiryFilterToolbar
-          searchValue={searchValue}
-          onSearchChange={onSearchChange}
-          searchPlaceholder={searchPlaceholder}
-          filters={filters}
-          sortBy={sortBy}
-          onSortChange={onSortChange}
-          onResetFilters={onResetFilters}
-        />
+        {viewMode === 'table' && filterToolbarEl}
 
         {loading ? (
           <TableSkeleton rows={5} />
+        ) : viewMode === 'split' ? (
+          <InquiryInboxSplitView
+            items={items}
+            viewerRole={viewerRole}
+            basePath={basePath}
+            onSendReply={onSendReply}
+            sendingReply={sendingReply}
+            onResetFilters={onResetFilters}
+            filterToolbar={filterToolbarEl}
+          />
         ) : items.length === 0 ? (
           <Card className="bg-surface border border-outline shadow-xs">
             <CardContent className="p-0">

@@ -1,36 +1,18 @@
 {
   "sessions": [
     {
-      "id": "1879e682-9a66-4837-bc5b-04d133bf8839",
-      "tokenHash": "e8bc163c82eee18733288c7d4ac636db3a6deb013ef2d37b68322be20edc45cc",
-      "userId": "u1",
+      "id": "65aa83a8-362c-4c5c-8e41-33ca2e16bbee",
+      "tokenHash": "2cc9923cec4c3d9919f99683a92e496a20995964739e52d01829bf0d4f5c7aef",
+      "userId": "dev-google-mock-uid-client",
       "role": "client",
-      "createdAt": 1795200040869,
-      "lastActiveAt": 1795200040869,
-      "idleExpiresAt": 1795203640869,
-      "absoluteExpiresAt": 1795286440869,
-      "lastHeartbeatAt": 1795200040869,
+      "createdAt": 1795320124647,
+      "lastActiveAt": 1795320124647,
+      "idleExpiresAt": 1795323724647,
+      "absoluteExpiresAt": 1795406524647,
+      "lastHeartbeatAt": 1795320124647,
       "userAgent": "Unknown Device",
       "ipAddress": "Unavailable",
-      "updatedAt": 1795200040880,
-      "revokedAt": 1795200040880,
-      "revokeReason": "user_logout"
-    },
-    {
-      "id": "0c63df51-4abf-4c20-b348-bcac2d76e3fc",
-      "tokenHash": "ad328846aa18b32a335816374511cac1063c704b8c57999e51da9f908290a7a4",
-      "userId": "u1",
-      "role": "client",
-      "createdAt": 1795200040873,
-      "lastActiveAt": 1795200040888,
-      "idleExpiresAt": 1795203640888,
-      "absoluteExpiresAt": 1795286440873,
-      "lastHeartbeatAt": 1795200040873,
-      "userAgent": "Unknown Device",
-      "ipAddress": "Unavailable",
-      "updatedAt": 1795200040897,
-      "revokedAt": 1795200040897,
-      "revokeReason": "user_logout_all_devices"
+      "updatedAt": 1795320124647
     }
   ],
   "disabledAccounts": []

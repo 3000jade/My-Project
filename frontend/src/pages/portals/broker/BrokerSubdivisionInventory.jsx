@@ -418,25 +418,9 @@ export default function BrokerSubdivisionInventory() {
 
       {/* Zone 1: Executive Subproject Header & Navigation */}
       <Card className="bg-white rounded-xl border border-[#E2E8F0] shadow-xs">
-        <CardContent className="p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <CardContent className="p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <Link
-              to="/broker/properties"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#64748B] hover:text-[#1E293B] transition-colors"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Properties</span>
-            </Link>
-            <span className="text-[#CBD5E1]">/</span>
-            <span className="text-xs font-semibold text-[#0F766E] truncate max-w-[200px]">
-              {project?.name || 'Aura Residences'}
-            </span>
-            <span className="text-[#CBD5E1]">/</span>
-            <span className="text-xs font-semibold text-[#1E293B]">Property Inventory</span>
-          </div>
-
-          <div className="flex items-center gap-3 pt-1">
+          <div className="flex items-center gap-3">
             <h1 className="text-xl sm:text-2xl font-bold text-[#1E293B] tracking-tight">
               {project?.name || 'Aura Residences'} — Lot & Property Inventory
             </h1>

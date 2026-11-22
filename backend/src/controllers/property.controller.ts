@@ -20,12 +20,18 @@ export class PropertyController {
     try {
       const {
         city,
+        district,
         propertyType,
         transactionType,
         minPrice,
         maxPrice,
         beds,
         baths,
+        north,
+        south,
+        east,
+        west,
+        sortBy,
         status,
         standardStatus,
         agentId,
@@ -42,21 +48,30 @@ export class PropertyController {
         $orderby,
       } = req.query;
 
-      const userRole = (req as AuthenticatedRequest).user?.role;
+      const isPublicView = req.query.publicView === 'true';
+      const userRole = isPublicView ? 'client' : (req as AuthenticatedRequest).user?.role;
       const authenticatedUserId = (req as AuthenticatedRequest).user?.id;
-      const effectiveAgentId = (agentId || list_agent_key || listAgentKey || (userRole === 'agent' ? authenticatedUserId : undefined)) as string | undefined;
+      const effectiveAgentId = isPublicView
+        ? (agentId || list_agent_key || listAgentKey) as string | undefined
+        : (agentId || list_agent_key || listAgentKey || (userRole === 'agent' ? authenticatedUserId : undefined)) as string | undefined;
 
       const result = await PropertyService.findProperties(
         {
           city: city as string,
+          district: district as string,
           propertyType: propertyType as string,
           transactionType: transactionType as string,
           minPrice: minPrice ? Number(minPrice) : undefined,
           maxPrice: maxPrice ? Number(maxPrice) : undefined,
-          beds: beds ? Number(beds) : undefined,
+          beds: beds !== undefined ? (beds as string) : undefined,
           baths: baths ? Number(baths) : undefined,
+          north: north !== undefined ? Number(north) : undefined,
+          south: south !== undefined ? Number(south) : undefined,
+          east: east !== undefined ? Number(east) : undefined,
+          west: west !== undefined ? Number(west) : undefined,
+          sortBy: sortBy as any,
           status: status as string,
-          standardStatus: standardStatus as string,
+          standardStatus: isPublicView ? 'Active' : (standardStatus as string),
           agentId: effectiveAgentId,
           list_agent_key: effectiveAgentId,
           listAgentKey: effectiveAgentId,
@@ -115,12 +130,14 @@ export class PropertyController {
     try {
       const id = String(req.params.id);
       const expand = (req.query.$expand as string) || (req.query.expand as string);
-      const userRole = (req as AuthenticatedRequest).user?.role;
+      const isPublicView = req.query.publicView === 'true';
+      const userRole = isPublicView ? 'client' : (req as AuthenticatedRequest).user?.role;
       const userId = (req as AuthenticatedRequest).user?.id;
 
       const property = await PropertyService.findPropertyById(id, expand, userRole, userId);
 
-      if (!property) {
+      const propStatus = property ? (property.standardStatus ?? (property as any).standard_status) : null;
+      if (!property || (isPublicView && propStatus !== 'Active')) {
         res.status(404).json({
           success: false,
           error: `Property with id '${id}' not found.`,
@@ -745,7 +762,7 @@ export class PropertyController {
       }
 
       const clientBase = Array.isArray(config.clientOrigin) ? config.clientOrigin[0] : config.clientOrigin;
-      const origin = req.get('origin') || clientBase || 'http://localhost:5173';
+      const origin = clientBase || 'http://localhost:5173';
       const listingUrl = `${origin.replace(/\/+$/, '')}/properties/${encodeURIComponent(id)}?utm_source=email_share&utm_medium=share`;
 
       const rawPrice = property.price_raw ?? property.price;

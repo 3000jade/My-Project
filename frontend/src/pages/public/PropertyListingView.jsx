@@ -152,7 +152,7 @@ export default function PropertyListingView() {
       try {
         if (!localMatch) setIsLoading(true);
         setLoadError(null);
-        const remoteData = await propertyService.getPropertyById(id);
+        const remoteData = await propertyService.getPropertyById(id, { publicView: 'true' });
         if (remoteData) {
           setProperty(remoteData);
         } else if (!localMatch) {

@@ -31,6 +31,7 @@ export default function PropertiesPage() {
 
   const [properties, setProperties] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const hasLoadedOnceRef = useRef(false);
 
   // Dynamic header visibility listener
   useEffect(() => {
@@ -41,34 +42,85 @@ export default function PropertiesPage() {
     return () => window.removeEventListener('header-visibility', handleHeaderVisibility);
   }, []);
 
-  useEffect(() => {
-    async function fetchProperties() {
-      try {
-        setIsLoading(true);
-        const res = await propertyService.getProperties({ limit: 100 });
-        if (res && res.data) {
-          setProperties(res.data);
-        }
-      } catch (error) {
-        console.error('Failed to fetch properties:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    fetchProperties();
-  }, []);
-
   // Hook-driven unified filter engine
   const {
     filteredProperties,
     facets,
     filters,
+    debouncedFilters,
     activeFilterCount,
     tightestFilter,
     setFilter,
     clearFilters,
     clearSpecificFilter
   } = usePropertyFilterEngine(properties);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchProperties() {
+      try {
+        if (!hasLoadedOnceRef.current) {
+          setIsLoading(true);
+        }
+        const sortParam =
+          sortBy === 'Price: High to Low'
+            ? 'price_desc'
+            : sortBy === 'Price: Low to High'
+              ? 'price_asc'
+              : debouncedFilters.keyword?.trim()
+                ? 'relevance'
+                : 'newest';
+
+        const params = {
+          limit: 100,
+          publicView: 'true',
+          standardStatus: 'Active',
+          sortBy: sortParam,
+        };
+        if (debouncedFilters.keyword?.trim()) params.search = debouncedFilters.keyword.trim();
+        if (debouncedFilters.transactionType && debouncedFilters.transactionType !== 'All') {
+          params.transactionType = debouncedFilters.transactionType;
+        }
+        if (debouncedFilters.propertyType && debouncedFilters.propertyType !== 'All') {
+          params.propertyType = debouncedFilters.propertyType;
+        }
+        if (debouncedFilters.district && debouncedFilters.district !== 'All' && debouncedFilters.district !== 'All Metro Manila') {
+          params.district = debouncedFilters.district;
+        }
+        if (debouncedFilters.minPrice) params.minPrice = debouncedFilters.minPrice;
+        if (debouncedFilters.maxPrice) params.maxPrice = debouncedFilters.maxPrice;
+        if (debouncedFilters.beds && debouncedFilters.beds !== 'Any') params.beds = debouncedFilters.beds;
+        if (debouncedFilters.baths && debouncedFilters.baths !== 'Any') {
+          const parsedBaths = Number(String(debouncedFilters.baths).replace(/[^0-9]/g, ''));
+          if (parsedBaths > 0) params.baths = parsedBaths;
+        }
+        if (debouncedFilters.mapBounds) {
+          params.north = debouncedFilters.mapBounds.north;
+          params.south = debouncedFilters.mapBounds.south;
+          params.east = debouncedFilters.mapBounds.east;
+          params.west = debouncedFilters.mapBounds.west;
+        }
+
+        const res = await propertyService.getProperties(params);
+        if (!cancelled && res && res.data) {
+          setProperties(res.data);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.error('Failed to fetch properties:', error);
+        }
+      } finally {
+        if (!cancelled) {
+          hasLoadedOnceRef.current = true;
+          setIsLoading(false);
+        }
+      }
+    }
+    fetchProperties();
+    return () => {
+      cancelled = true;
+    };
+  }, [debouncedFilters, sortBy]);
 
   // Sync URL search params into the filter engine
   useEffect(() => {

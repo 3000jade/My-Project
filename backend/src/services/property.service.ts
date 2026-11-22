@@ -16,14 +16,20 @@ import type {
 
 export interface PropertyFilterQuery {
   city?: string;
+  district?: string;
   propertyType?: string;
   propertyTypeId?: number;
   property_type_id?: number;
   transactionType?: string;
   minPrice?: number;
   maxPrice?: number;
-  beds?: number;
+  beds?: number | string;
   baths?: number;
+  north?: number;
+  south?: number;
+  east?: number;
+  west?: number;
+  sortBy?: 'newest' | 'price_asc' | 'price_desc' | 'relevance';
   status?: string;
   standardStatus?: string;
   agentId?: string;
@@ -585,78 +591,125 @@ export class PropertyService {
 
     if (isSupabaseConfigured) {
       try {
-        let dbQuery = supabaseAdmin.from('properties').select('*', { count: 'exact' });
+        const effectiveAgent = query.agentId || query.list_agent_key || query.listAgentKey;
+        const isPublicDiscovery =
+          (!userRole || userRole === 'client' || query.role === 'client') &&
+          !effectiveAgent &&
+          !query.unassigned &&
+          !query.assignmentStatus &&
+          !query.status;
 
-        // Apply standard filter parameters
-        if (query.city) {
-          dbQuery = dbQuery.ilike('city', `%${query.city}%`);
-        }
-        if (query.propertyType) {
-          dbQuery = dbQuery.ilike('property_type', `%${query.propertyType}%`);
-        } else if (query.propertyTypeId || query.property_type_id) {
-          const typeMap: Record<number, string> = {
-            1: 'Residential',
-            2: 'Single Family Residence',
-            3: 'Townhouse',
-            4: 'Villa / Estate',
-            5: 'Commercial',
-          };
-          const targetType = typeMap[Number(query.propertyTypeId || query.property_type_id)];
-          if (targetType) {
-            dbQuery = dbQuery.ilike('property_type', `%${targetType}%`);
+        let data: any[] | null = null;
+        let count: number | null = null;
+        let error: any = null;
+
+        if (isPublicDiscovery) {
+          const from = (page - 1) * limit;
+          const sortOrder = query.sortBy || (query.search ? 'relevance' : 'newest');
+          const { data: rpcData, error: rpcError } = await supabaseAdmin.rpc('search_public_properties_v2', {
+            p_search: query.search || null,
+            p_transaction_type: query.transactionType || null,
+            p_property_type: query.propertyType || null,
+            p_district: query.district || query.city || null,
+            p_min_price: query.minPrice ?? null,
+            p_max_price: query.maxPrice ?? null,
+            p_beds: query.beds !== undefined && query.beds !== '' ? String(query.beds) : null,
+            p_baths: query.baths ?? null,
+            p_north: query.north ?? null,
+            p_south: query.south ?? null,
+            p_east: query.east ?? null,
+            p_west: query.west ?? null,
+            p_sort_by: sortOrder,
+            p_limit: limit,
+            p_offset: from,
+          });
+          if (!rpcError && Array.isArray(rpcData)) {
+            data = rpcData.map((r: any) => r.row_data).filter(Boolean);
+            count = rpcData.length > 0 && rpcData[0].total_count != null ? Number(rpcData[0].total_count) : data.length;
+          } else if (rpcError) {
+            logger.warn('[PropertyService] search_public_properties RPC failed, falling back:', rpcError.message);
           }
         }
-        if (query.status) {
-          dbQuery = dbQuery.eq('status', query.status);
-        }
-        if (query.standardStatus) {
-          dbQuery = dbQuery.eq('standard_status', query.standardStatus);
-        }
-        if (!userRole || userRole === 'client' || query.role === 'client') {
-          dbQuery = dbQuery.eq('standard_status', 'Active');
-        } else if (query.assignmentStatus) {
-          if (query.assignmentStatus === 'PENDING_CONFIRMATION') {
-            dbQuery = dbQuery.eq('standard_status', 'Pending Confirmation');
-          } else if (query.assignmentStatus === 'REJECTED') {
-            dbQuery = dbQuery.eq('standard_status', 'Action Required');
-          } else if (query.assignmentStatus === 'ACCEPTED') {
+
+        if (data === null) {
+          let dbQuery = supabaseAdmin.from('properties').select('*', { count: 'exact' });
+
+          // Apply standard filter parameters
+          if (query.city) {
+            dbQuery = dbQuery.ilike('city', `%${query.city}%`);
+          }
+          if (query.transactionType && query.transactionType !== 'All') {
+            dbQuery = dbQuery.ilike('transaction_type', `%${query.transactionType}%`);
+          }
+          if (query.propertyType) {
+            dbQuery = dbQuery.ilike('property_type', `%${query.propertyType}%`);
+          } else if (query.propertyTypeId || query.property_type_id) {
+            const typeMap: Record<number, string> = {
+              1: 'Residential',
+              2: 'Single Family Residence',
+              3: 'Townhouse',
+              4: 'Villa / Estate',
+              5: 'Commercial',
+            };
+            const targetType = typeMap[Number(query.propertyTypeId || query.property_type_id)];
+            if (targetType) {
+              dbQuery = dbQuery.ilike('property_type', `%${targetType}%`);
+            }
+          }
+          if (query.status) {
+            dbQuery = dbQuery.eq('status', query.status);
+          }
+          if (query.standardStatus) {
+            dbQuery = dbQuery.eq('standard_status', query.standardStatus);
+          }
+          if (!userRole || userRole === 'client' || query.role === 'client') {
             dbQuery = dbQuery.eq('standard_status', 'Active');
-          } else if (query.assignmentStatus === 'UNASSIGNED') {
+          } else if (query.assignmentStatus) {
+            if (query.assignmentStatus === 'PENDING_CONFIRMATION') {
+              dbQuery = dbQuery.eq('standard_status', 'Pending Confirmation');
+            } else if (query.assignmentStatus === 'REJECTED') {
+              dbQuery = dbQuery.eq('standard_status', 'Action Required');
+            } else if (query.assignmentStatus === 'ACCEPTED') {
+              dbQuery = dbQuery.eq('standard_status', 'Active');
+            } else if (query.assignmentStatus === 'UNASSIGNED') {
+              dbQuery = dbQuery.is('list_agent_key', null);
+            }
+          }
+          if (query.unassigned) {
             dbQuery = dbQuery.is('list_agent_key', null);
           }
-        }
-        if (query.unassigned) {
-          dbQuery = dbQuery.is('list_agent_key', null);
-        }
-        const effectiveAgent = query.agentId || query.list_agent_key || query.listAgentKey;
-        if (effectiveAgent) {
-          dbQuery = dbQuery.or(`list_agent_key.eq.${effectiveAgent},created_by.eq.${effectiveAgent}`);
-        }
-        if (query.minPrice) {
-          dbQuery = dbQuery.gte('price', query.minPrice);
-        }
-        if (query.maxPrice) {
-          dbQuery = dbQuery.lte('price', query.maxPrice);
-        }
-        if (query.beds) {
-          dbQuery = dbQuery.gte('bedrooms_total', query.beds);
-        }
-        if (query.baths) {
-          dbQuery = dbQuery.gte('bathrooms_total_integer', query.baths);
-        }
-        if (query.search) {
-          const cleanSearch = String(query.search).replace(/[,()'"%]/g, ' ').replace(/\s+/g, ' ').trim();
-          if (cleanSearch) {
-            dbQuery = dbQuery.or(`title.ilike.%${cleanSearch}%,address.ilike.%${cleanSearch}%,city.ilike.%${cleanSearch}%`);
+          if (effectiveAgent) {
+            dbQuery = dbQuery.or(`list_agent_key.eq.${effectiveAgent},created_by.eq.${effectiveAgent}`);
           }
+          if (query.minPrice) {
+            dbQuery = dbQuery.gte('price', query.minPrice);
+          }
+          if (query.maxPrice) {
+            dbQuery = dbQuery.lte('price', query.maxPrice);
+          }
+          if (query.beds && Number.isFinite(Number(query.beds))) {
+            dbQuery = dbQuery.gte('bedrooms_total', Number(query.beds));
+          }
+          if (query.baths) {
+            dbQuery = dbQuery.gte('bathrooms_total_integer', query.baths);
+          }
+          if (query.search) {
+            const cleanSearch = String(query.search).replace(/[,()'"%]/g, ' ').replace(/\s+/g, ' ').trim();
+            if (cleanSearch) {
+              dbQuery = dbQuery.or(`title.ilike.%${cleanSearch}%,address.ilike.%${cleanSearch}%,city.ilike.%${cleanSearch}%`);
+            }
+          }
+
+          const from = (page - 1) * limit;
+          const to = from + limit - 1;
+          dbQuery = dbQuery.range(from, to);
+          dbQuery = dbQuery.order('created_at', { ascending: false });
+
+          const fallbackRes = await dbQuery;
+          data = fallbackRes.data;
+          count = fallbackRes.count;
+          error = fallbackRes.error;
         }
-
-        const from = (page - 1) * limit;
-        const to = from + limit - 1;
-        dbQuery = dbQuery.range(from, to);
-        dbQuery = dbQuery.order('created_at', { ascending: false });
-
-        const { data, count, error } = await dbQuery;
 
         if (error) {
           logger.warn('[PropertyService] Supabase query failed, using local fixtures:', error.message);
@@ -812,7 +865,18 @@ export class PropertyService {
         p.location.city.toLowerCase().includes(query.city!.toLowerCase())
       );
     }
-    if (query.propertyType) {
+    if (query.district && query.district !== 'All' && query.district !== 'All Metro Manila') {
+      const parts = query.district.split('/').map((s) => s.trim().toLowerCase()).filter(Boolean);
+      filtered = filtered.filter((p) => {
+        const hay = `${p.location.city} ${p.location.address} ${p.location.subdivisionName || ''} ${p.location.barangay || ''}`.toLowerCase();
+        return parts.some((part) => hay.includes(part));
+      });
+    }
+    if (query.transactionType && query.transactionType !== 'All') {
+      const fTrans = query.transactionType.toLowerCase();
+      filtered = filtered.filter((p) => (p.specs?.transactionType || 'For Sale').toLowerCase().includes(fTrans));
+    }
+    if (query.propertyType && query.propertyType !== 'All' && query.propertyType !== 'All Types') {
       filtered = filtered.filter((p) =>
         p.specs.propertyType.toLowerCase().includes(query.propertyType!.toLowerCase())
       );
@@ -839,8 +903,14 @@ export class PropertyService {
     if (query.maxPrice) {
       filtered = filtered.filter((p) => p.price <= Number(query.maxPrice));
     }
-    if (query.beds) {
-      filtered = filtered.filter((p) => ((p.specs?.bedroomsTotal ?? p.specs?.beds ?? 0) >= Number(query.beds)));
+    if (query.beds && query.beds !== 'Any') {
+      const bStr = String(query.beds).trim();
+      filtered = filtered.filter((p) => {
+        const pBeds = p.specs?.bedroomsTotal ?? p.specs?.beds ?? 0;
+        if (bStr.toLowerCase() === 'studio') return pBeds <= 1;
+        if (bStr === '4+' || bStr === '5+') return pBeds >= 4;
+        return pBeds === Number(bStr);
+      });
     }
     if (query.baths) {
       filtered = filtered.filter((p) => ((p.specs?.bathroomsTotalInteger ?? p.specs?.baths ?? 0) >= Number(query.baths)));
@@ -848,8 +918,17 @@ export class PropertyService {
     if (query.search) {
       const q = query.search.toLowerCase();
       filtered = filtered.filter(
-        (p) => p.title.toLowerCase().includes(q) || p.location.address.toLowerCase().includes(q)
+        (p) =>
+          p.title.toLowerCase().includes(q) ||
+          p.location.address.toLowerCase().includes(q) ||
+          p.location.city.toLowerCase().includes(q) ||
+          (p.location.subdivisionName || '').toLowerCase().includes(q)
       );
+    }
+    if (query.sortBy === 'price_asc') {
+      filtered.sort((a, b) => a.price - b.price);
+    } else if (query.sortBy === 'price_desc') {
+      filtered.sort((a, b) => b.price - a.price);
     }
 
     // Confidential field redaction for client requests

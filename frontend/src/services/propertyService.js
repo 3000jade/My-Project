@@ -789,8 +789,8 @@ export const propertyService = {
   /**
    * Fetch a single property by its ID
    */
-  async getPropertyById(id) {
-    const response = await apiClient.get(`/properties/${id}`);
+  async getPropertyById(id, params = {}) {
+    const response = await apiClient.get(`/properties/${id}`, { params });
     const raw = response?.data || response;
     return raw ? normalizeProperty(raw) : null;
   },

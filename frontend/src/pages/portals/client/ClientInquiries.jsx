@@ -15,6 +15,37 @@ export default function ClientInquiries() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [sortBy, setSortBy] = useState('newest');
+  const [sendingReply, setSendingReply] = useState(false);
+
+  const handleSendReply = async (inquiryId, text, attachments = []) => {
+    setSendingReply(true);
+    const optimisticMsg = {
+      id: `msg-${Date.now()}`,
+      sender: 'client',
+      sender_name: 'You',
+      timestamp: 'Just now',
+      content: text,
+      attachments,
+      delivery_status: 'sent',
+    };
+
+    try {
+      await clientUserService.addInquiryMessage(inquiryId, text).catch(() => null);
+      setInquiries((prev) =>
+        prev.map((inq) =>
+          String(inq.id) === String(inquiryId)
+            ? {
+                ...inq,
+                last_message: text,
+                messages: [...(inq.messages || []), optimisticMsg],
+              }
+            : inq
+        )
+      );
+    } finally {
+      setSendingReply(false);
+    }
+  };
 
   const loadInquiries = useCallback(async () => {
     setLoading(true);
@@ -124,6 +155,9 @@ export default function ClientInquiries() {
       items={sorted}
       columns={columns}
       basePath="/client/inquiries"
+      viewerRole="client"
+      onSendReply={handleSendReply}
+      sendingReply={sendingReply}
       onOpenItem={(row) => navigate(`/client/inquiries/${row.id}`)}
       renderQuickView={(inq) => (
         <InquiryConversationPanel

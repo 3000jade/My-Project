@@ -7,11 +7,9 @@ import {
   createTeardropPinElement,
   createMinimalistMarkerElement,
   createPriceBadgeElement,
-  createStackedAnchorMarkerElement,
+  createClusterBadgeElement,
   formatPriceBadge,
 } from './googleMapMarkers';
-import MultiUnitDrawer from './MultiUnitDrawer';
-import { groupPropertiesByCoordinates } from '../../../utils/groupPropertiesByCoordinates';
 import { getPropertyCoordinates, DEFAULT_METRO_MANILA_COORDS } from '../../../utils/propertyCoordinates';
 import { MOCK_PH_DISTRICTS } from '../../../mockData/mockMapDistricts';
 
@@ -97,7 +95,7 @@ export default function GooglePropertyMap({
   onToggleSearchAsMove,
   singlePropertyMode = false,
   interactive = true,
-  initialZoom = 14,
+  initialZoom = 15,
   onOpenStreetView,
   forceEmbed = false,
   recenterTrigger = 0,
@@ -136,8 +134,8 @@ export default function GooglePropertyMap({
   const [isSearchActive, setIsSearchActive] = useState(searchAsMove);
   const [mapEngine, setMapEngine] = useState('initializing'); // 'google' | 'leaflet' | 'embed'
   const [embedZoom, setEmbedZoom] = useState(initialZoom || 15);
+  const [currentZoom, setCurrentZoom] = useState(singlePropertyMode ? 16 : (initialZoom || 13));
   const [embedLayer, setEmbedLayer] = useState('m'); // 'm' | 'k' | 'h' | 'p'
-  const [activeDrawerCluster, setActiveDrawerCluster] = useState(null);
   const [dismissedPreviewId, setDismissedPreviewId] = useState(null);
 
   isSearchActiveRef.current = isSearchActive;
@@ -272,6 +270,11 @@ export default function GooglePropertyMap({
               }, 350);
             });
 
+            map.addListener('zoom_changed', () => {
+              const z = map.getZoom();
+              if (typeof z === 'number') setCurrentZoom(z);
+            });
+
             googleMapInstanceRef.current = map;
             setMapEngine('google');
             return;
@@ -312,6 +315,12 @@ export default function GooglePropertyMap({
         }).addTo(map);
 
         leafletTileLayerRef.current = tileLayer;
+
+        map.on('zoomend', () => {
+          if (containerRef.current?.clientWidth > 0 && typeof map.getZoom === 'function') {
+            setCurrentZoom(map.getZoom());
+          }
+        });
 
         // Moveend listener for bounding box changes
         map.on('moveend', () => {
@@ -461,8 +470,99 @@ export default function GooglePropertyMap({
     if (mapEngine === 'embed') return;
 
     const existingMarkers = markersRef.current;
-    const clusters = groupPropertiesByCoordinates(properties);
-    const currentMarkerIds = new Set(clusters.map((c) => (c.isCluster ? c.id : c.properties[0].id)));
+    const isAreaZoom = !singlePropertyMode && currentZoom >= 13 && currentZoom <= 14;
+
+    const zoomToArea = (lat, lng) => {
+      if (mapEngine === 'google' && googleMapInstanceRef.current) {
+        googleMapInstanceRef.current.setCenter({ lat, lng });
+        googleMapInstanceRef.current.setZoom(15);
+      } else if (mapEngine === 'leaflet' && leafletMapInstanceRef.current) {
+        leafletMapInstanceRef.current.setView([lat, lng], 15);
+      }
+      setCurrentZoom(15);
+    };
+
+    if (isAreaZoom) {
+      const areaGroups = new Map();
+      properties.forEach((prop) => {
+        const coords = getPropertyCoordinates(prop);
+        if (!coords || !coords.lat || !coords.lng) return;
+        const label = String(prop.city || prop.location || prop.subdivision || 'Area').trim();
+        const key = `area-${label.toLowerCase()}`;
+        if (!areaGroups.has(key)) {
+          areaGroups.set(key, { key, label, items: [], sumLat: 0, sumLng: 0 });
+        }
+        const grp = areaGroups.get(key);
+        grp.items.push(prop);
+        grp.sumLat += coords.lat;
+        grp.sumLng += coords.lng;
+      });
+
+      const currentMarkerIds = new Set(areaGroups.keys());
+      existingMarkers.forEach((markerObj, id) => {
+        if (!currentMarkerIds.has(id)) {
+          if (markerObj.marker?.setMap) markerObj.marker.setMap(null);
+          if (markerObj.marker?.remove) markerObj.marker.remove();
+          existingMarkers.delete(id);
+        }
+      });
+
+      areaGroups.forEach((grp) => {
+        const avgLat = grp.sumLat / grp.items.length;
+        const avgLng = grp.sumLng / grp.items.length;
+        const element = createClusterBadgeElement(grp.items.length, grp.label, () =>
+          zoomToArea(avgLat, avgLng)
+        );
+
+        if (existingMarkers.has(grp.key)) {
+          const markerObj = existingMarkers.get(grp.key);
+          if (markerObj.count !== grp.items.length && markerObj.element) {
+            markerObj.element.className = element.className;
+            markerObj.element.innerHTML = element.innerHTML;
+            markerObj.count = grp.items.length;
+          }
+          return;
+        }
+
+        if (mapEngine === 'google' && googleMapInstanceRef.current && window.google) {
+          const map = googleMapInstanceRef.current;
+          const marker = window.google.maps.marker?.AdvancedMarkerElement
+            ? new window.google.maps.marker.AdvancedMarkerElement({
+                map,
+                position: { lat: avgLat, lng: avgLng },
+                content: element,
+                title: `${grp.label} (${grp.items.length})`,
+              })
+            : new window.google.maps.Marker({
+                map,
+                position: { lat: avgLat, lng: avgLng },
+                title: `${grp.label} (${grp.items.length})`,
+              });
+          existingMarkers.set(grp.key, { marker, element, count: grp.items.length });
+        } else if (mapEngine === 'leaflet' && leafletMapInstanceRef.current) {
+          const map = leafletMapInstanceRef.current;
+          const icon = L.divIcon({
+            html: element,
+            className: 'google-property-pin-container',
+            iconSize: [140, 36],
+            iconAnchor: [70, 18],
+          });
+          const marker = L.marker([avgLat, avgLng], { icon, zIndexOffset: 500 });
+          if (marker && typeof marker.addTo === 'function') {
+            marker.addTo(map);
+          } else if (map && typeof map.addLayer === 'function') {
+            map.addLayer(marker);
+          }
+          if (marker && typeof marker.on === 'function') {
+            marker.on('click', () => zoomToArea(avgLat, avgLng));
+          }
+          existingMarkers.set(grp.key, { marker, element, count: grp.items.length });
+        }
+      });
+      return;
+    }
+
+    const currentMarkerIds = new Set(properties.map((p) => p.id));
 
     // Remove obsolete markers
     existingMarkers.forEach((markerObj, id) => {
@@ -472,6 +572,14 @@ export default function GooglePropertyMap({
         existingMarkers.delete(id);
       }
     });
+
+    const isPriceZoom = currentZoom >= 15 && currentZoom <= 16;
+    const zoomMode =
+      isPriceZoom || markerVariant === 'pill'
+        ? 'price'
+        : markerVariant === 'dot'
+          ? 'dot'
+          : 'teardrop';
 
     // Helper to generate single marker element
     const createMarkerEl = (prop, isSel, isHov) => {
@@ -483,73 +591,58 @@ export default function GooglePropertyMap({
         },
         onHover: (p) => {
           if (typeof onHoverPropertyRef.current === 'function') {
-            onHoverPropertyRef.current(p);
+            const resolved = typeof p === 'string'
+              ? properties.find((item) => String(item.id) === p) || { id: p }
+              : p;
+            onHoverPropertyRef.current(resolved);
           }
         },
       };
 
-      if (markerVariant === 'pill') {
+      if (zoomMode === 'price') {
         return createPriceBadgeElement(prop, options);
       }
-      if (markerVariant === 'dot') {
+      if (zoomMode === 'dot') {
         return createMinimalistMarkerElement(prop, options);
       }
       return createTeardropPinElement(prop, options);
     };
 
-    const isTeardrop = markerVariant === 'pin' || markerVariant === 'teardrop';
+    const isTeardrop = zoomMode === 'teardrop';
 
-    // Render / Update Pins for Clusters and Single Properties
-    clusters.forEach((cluster) => {
-      const isMulti = cluster.isCluster;
-      const markerId = isMulti ? cluster.id : cluster.properties[0].id;
-      const coords = { lat: cluster.lat, lng: cluster.lng };
+    // Render / Update Pins directly per property (no grouping)
+    properties.forEach((singleProp) => {
+      const markerId = singleProp.id;
+      const coords = getPropertyCoordinates(singleProp);
       if (!coords || !coords.lat || !coords.lng) return;
 
-      const isSelected = isMulti
-        ? cluster.properties.some((p) => String(p.id) === String(selectedPropertyId))
-        : String(cluster.properties[0].id) === String(selectedPropertyId);
-      const isHovered = isMulti
-        ? cluster.properties.some((p) => String(p.id) === String(hoveredPropertyId))
-        : String(cluster.properties[0].id) === String(hoveredPropertyId);
-
-      const singleProp = cluster.properties[0];
-
-      const getElement = (isSel, isHov) => {
-        if (isMulti) {
-          return createStackedAnchorMarkerElement(cluster, {
-            isSelected: isSel,
-            isHovered: isHov,
-            onClick: () => setActiveDrawerCluster(cluster),
-            onHover: (hoveredId) => {
-              if (typeof onHoverPropertyRef.current === 'function') {
-                onHoverPropertyRef.current(hoveredId ? singleProp.id : null);
-              }
-            },
-          });
-        }
-        return createMarkerEl(singleProp, isSel, isHov);
-      };
+      const isSelected = String(singleProp.id) === String(selectedPropertyId);
+      const isHovered = String(singleProp.id) === String(hoveredPropertyId);
 
       if (existingMarkers.has(markerId)) {
         const markerObj = existingMarkers.get(markerId);
-        if (markerObj.isSelected !== isSelected || markerObj.isHovered !== isHovered) {
-          const newEl = getElement(isSelected, isHovered);
+        if (
+          markerObj.isSelected !== isSelected ||
+          markerObj.isHovered !== isHovered ||
+          markerObj.zoomMode !== zoomMode
+        ) {
+          const newEl = createMarkerEl(singleProp, isSelected, isHovered);
 
           if (markerObj.element) {
             markerObj.element.className = newEl.className;
             markerObj.element.innerHTML = newEl.innerHTML;
           }
           if (mapEngine === 'leaflet' && markerObj.marker && typeof markerObj.marker.setZIndexOffset === 'function') {
-            markerObj.marker.setZIndexOffset(isSelected || isMulti ? 2000 : 100);
+            markerObj.marker.setZIndexOffset(isSelected ? 2000 : 100);
           }
 
           markerObj.isSelected = isSelected;
           markerObj.isHovered = isHovered;
+          markerObj.zoomMode = zoomMode;
         }
       } else {
         // Create brand new pin
-        const element = getElement(isSelected, isHovered);
+        const element = createMarkerEl(singleProp, isSelected, isHovered);
 
         if (mapEngine === 'google' && googleMapInstanceRef.current && window.google) {
           const map = googleMapInstanceRef.current;
@@ -559,28 +652,24 @@ export default function GooglePropertyMap({
               map,
               position: { lat: coords.lat, lng: coords.lng },
               content: element,
-              title: isMulti ? `${cluster.count} Units at ${cluster.title}` : (singleProp.title || 'Luxury Residence'),
+              title: singleProp.title || 'Luxury Residence',
             });
           } else {
             marker = new window.google.maps.Marker({
               map,
               position: { lat: coords.lat, lng: coords.lng },
-              title: isMulti ? `${cluster.count} Units at ${cluster.title}` : singleProp.title,
+              title: singleProp.title,
             });
           }
-          existingMarkers.set(markerId, { marker, element, isSelected, isHovered });
+          existingMarkers.set(markerId, { marker, element, isSelected, isHovered, zoomMode });
         } else if (mapEngine === 'leaflet' && leafletMapInstanceRef.current) {
           const map = leafletMapInstanceRef.current;
-          const iconSize = isMulti
-            ? [140, 44]
-            : isTeardrop
-              ? (isSelected ? [34, 44] : [28, 36])
-              : (isSelected || isHovered ? [100, 38] : [24, 24]);
-          const iconAnchor = isMulti
-            ? [70, 44]
-            : isTeardrop
-              ? (isSelected ? [17, 44] : [14, 36])
-              : (isSelected || isHovered ? [50, 19] : [12, 12]);
+          const iconSize = isTeardrop
+            ? (isSelected ? [34, 44] : [28, 36])
+            : (isSelected || isHovered ? [100, 38] : [24, 24]);
+          const iconAnchor = isTeardrop
+            ? (isSelected ? [17, 44] : [14, 36])
+            : (isSelected || isHovered ? [50, 19] : [12, 12]);
 
           const icon = L.divIcon({
             html: element,
@@ -591,7 +680,7 @@ export default function GooglePropertyMap({
 
           const marker = L.marker([coords.lat, coords.lng], {
             icon,
-            zIndexOffset: isSelected || isMulti ? 2000 : 100,
+            zIndexOffset: isSelected ? 2000 : 100,
           });
 
           if (marker && typeof marker.addTo === 'function') {
@@ -602,9 +691,7 @@ export default function GooglePropertyMap({
 
           if (marker && typeof marker.on === 'function') {
             marker.on('click', () => {
-              if (isMulti) {
-                setActiveDrawerCluster(cluster);
-              } else if (typeof onSelectPropertyRef.current === 'function') {
+              if (typeof onSelectPropertyRef.current === 'function') {
                 onSelectPropertyRef.current(singleProp);
               }
             });
@@ -616,11 +703,11 @@ export default function GooglePropertyMap({
             });
           }
 
-          existingMarkers.set(markerId, { marker, element, isSelected, isHovered });
+          existingMarkers.set(markerId, { marker, element, isSelected, isHovered, zoomMode });
         }
       }
     });
-  }, [properties, selectedPropertyId, hoveredPropertyId, mapEngine, markerVariant]);
+  }, [properties, selectedPropertyId, hoveredPropertyId, mapEngine, markerVariant, currentZoom, singlePropertyMode]);
 
   // ==========================================
   // 4. AUTO-FIT ALL BOUNDS & DISTRICT NAVIGATION
@@ -1078,28 +1165,6 @@ export default function GooglePropertyMap({
           </div>
         </div>
       )}
-
-      {/* Multi-Unit Anchor Drawer */}
-      <MultiUnitDrawer
-        isOpen={Boolean(activeDrawerCluster)}
-        cluster={activeDrawerCluster}
-        onClose={() => setActiveDrawerCluster(null)}
-        onSelectProperty={(prop) => {
-          setActiveDrawerCluster(null);
-          if (typeof onSelectProperty === 'function') {
-            onSelectProperty(prop);
-          }
-          const propId =
-            prop?.id ||
-            prop?.ListingKey ||
-            prop?.listingKey ||
-            prop?.ListingId ||
-            prop?.listingId;
-          if (propId) {
-            navigate(`/properties/${propId}`, { state: { property: prop } });
-          }
-        }}
-      />
 
       {/* Floating Bottom-Right Manual Zoom Controls */}
       <div

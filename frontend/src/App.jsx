@@ -286,7 +286,8 @@ function AppRoutes({ isAppLoading }) {
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/verify-email" element={<VerifyEmailPage />} />
             <Route path="/unauthorized" element={<UnauthorizedPage />} />
-            <Route path="/demo-api" element={<DemoApiPage />} />
+            {import.meta.env.DEV && <Route path="/demo-api" element={<DemoApiPage />} />}
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
       </main>

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { WhatsAppController } from '../controllers/whatsapp.controller';
 import { requireAuth } from '../middleware/auth.middleware';
+import { requireRole } from '../middleware/role.middleware';
 
 const router = Router();
 
@@ -14,7 +15,7 @@ router.get('/link', WhatsAppController.getInquiryLink);
  * POST /api/whatsapp/send
  * Protected endpoint to dispatch lead alerts
  */
-router.post('/send', requireAuth, WhatsAppController.sendAlert);
+router.post('/send', requireAuth, requireRole(['agent', 'broker', 'admin']), WhatsAppController.sendAlert);
 
 /**
  * GET /api/whatsapp/webhook

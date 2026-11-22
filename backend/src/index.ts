@@ -31,13 +31,8 @@ app.use(
         return callback(null, true);
       }
 
-      // Automatically allow all Vercel deployments (preview & production)
-      if (/^https:\/\/.*\.vercel\.app$/.test(origin)) {
-        return callback(null, true);
-      }
-
-      // Allow local development origins
-      if (/^http:\/\/localhost(:\d+)?$/.test(origin)) {
+      // Allow local development origins only outside production
+      if (!config.isProduction && /^http:\/\/localhost(:\d+)?$/.test(origin)) {
         return callback(null, true);
       }
 
@@ -49,8 +44,8 @@ app.use(
 );
 app.use(helmet());
 app.use(morgan(config.isProduction ? 'combined' : 'dev'));
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
 // Health check endpoint for deployment probes (Render / Railway / Uptime)
 app.get('/api/health', (_req: Request, res: Response) => {

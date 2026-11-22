@@ -441,16 +441,7 @@ export default function BrokerAgentDetail() {
 
   return (
     <div className="flex flex-col gap-6 w-full min-w-0 max-w-full">
-      {/* Breadcrumbs */}
       <div>
-        <div className="flex items-center gap-1.5 text-xs text-[#64748B] mb-2 font-medium">
-          <Link to="/broker/agents" className="hover:text-[#1E293B] transition-colors">Agents</Link>
-          <ChevronRight className="w-3.5 h-3.5 text-[#94A3B8]" />
-          <Link to="/broker/agents" className="hover:text-[#1E293B] transition-colors">Agent Management</Link>
-          <ChevronRight className="w-3.5 h-3.5 text-[#94A3B8]" />
-          <span className="text-[#1E293B] font-semibold">{agent.name}</span>
-        </div>
-
         {/* Screen 3 Profile Header Banner */}
         <Card className="bg-white rounded-xl border border-[#E2E8F0] shadow-xs">
           <CardContent className="p-6">

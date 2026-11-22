@@ -17,7 +17,9 @@ function sendError(res: Response<ApiResponse>, err: unknown) {
     ? 403
     : message.startsWith('Too Many Requests')
       ? 429
-      : 500;
+      : message.startsWith('Invalid Backup')
+        ? 400
+        : 500;
   if (status === 429) {
     const match = message.match(/(\d+)s/);
     res.setHeader('Retry-After', match ? match[1] : '300');
@@ -51,6 +53,34 @@ export class DataManagementController {
         success: true,
         data: snapshot,
         message: 'Backup snapshot generated.',
+        timestamp: new Date().toISOString(),
+      });
+    } catch (err) {
+      sendError(res, err);
+    }
+  }
+
+  public static async previewRestore(req: AuthenticatedRequest, res: Response<ApiResponse>): Promise<void> {
+    try {
+      const preview = await DataManagementService.previewRestore(getActor(req), req.body?.snapshot);
+      res.status(200).json({
+        success: true,
+        data: preview,
+        message: 'Restore dry-run preview generated.',
+        timestamp: new Date().toISOString(),
+      });
+    } catch (err) {
+      sendError(res, err);
+    }
+  }
+
+  public static async commitRestore(req: AuthenticatedRequest, res: Response<ApiResponse>): Promise<void> {
+    try {
+      const result = await DataManagementService.commitRestore(getActor(req), req.body?.snapshot);
+      res.status(200).json({
+        success: true,
+        data: result,
+        message: 'Restore completed safely.',
         timestamp: new Date().toISOString(),
       });
     } catch (err) {

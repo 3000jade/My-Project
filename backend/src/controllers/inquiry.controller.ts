@@ -26,8 +26,8 @@ export class InquiryController {
       const user = (req as any).user;
       const inquiryPayload = {
         ...req.body,
-        clientId: user?.id || req.body.clientId || req.body.client_id,
-        client_id: user?.id || req.body.clientId || req.body.client_id,
+        clientId: user?.id || undefined,
+        client_id: user?.id || undefined,
       };
 
       const inquiry = await InquiryService.createInquiry(inquiryPayload);

@@ -24,6 +24,39 @@ export default function BrokerInquiries() {
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [agentFilter, setAgentFilter] = useState('ALL');
   const [sortBy, setSortBy] = useState('newest');
+  const [sendingReply, setSendingReply] = useState(false);
+
+  const handleSendReply = async (inquiryId, text, attachments = []) => {
+    setSendingReply(true);
+    const requestId = `req-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    const optimisticMsg = {
+      id: `msg-${Date.now()}`,
+      sender: 'broker',
+      sender_name: 'Broker Desk',
+      timestamp: 'Just now',
+      content: text,
+      attachments,
+      delivery_status: 'sent',
+    };
+
+    try {
+      await inquiryService.addMessage(inquiryId, text, requestId).catch(() => null);
+      setInquiries((prev) =>
+        prev.map((inq) =>
+          String(inq.id) === String(inquiryId)
+            ? {
+                ...inq,
+                last_message: text,
+                messages: [...(inq.messages || []), optimisticMsg],
+              }
+            : inq
+        )
+      );
+      toast({ title: 'Reply sent', description: 'Your message was added to the conversation.' });
+    } finally {
+      setSendingReply(false);
+    }
+  };
 
   const loadInquiriesAndMetrics = useCallback(async () => {
     setLoading(true);
@@ -238,6 +271,9 @@ export default function BrokerInquiries() {
       items={sorted}
       columns={columns}
       basePath="/broker/inquiries"
+      viewerRole="broker"
+      onSendReply={handleSendReply}
+      sendingReply={sendingReply}
       onOpenItem={(row) => navigate(`/broker/inquiries/${row.id}`)}
       renderQuickView={(inq) => (
         <InquiryConversationPanel

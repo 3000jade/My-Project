@@ -32,7 +32,7 @@ router.get('/my-inquiries', requireAuth, InquiryController.getMyInquiries);
 router.get('/broker-metrics', requireAuth, requireRole(['broker', 'admin']), InquiryController.getBrokerMetrics);
 
 // Authenticated list for agents & brokers
-router.get('/', requireAuth, validateQuery(queryInquirySchema), InquiryController.list);
+router.get('/', requireAuth, requireRole(['agent', 'broker', 'admin']), validateQuery(queryInquirySchema), InquiryController.list);
 
 // Reconnect & cursor synchronization
 router.get('/:id/reconnect', requireAuth, InquiryController.reconnect);

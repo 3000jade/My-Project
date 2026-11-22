@@ -55,7 +55,7 @@ export default function AgentDashboard() {
   const isPendingReview = verificationStatus === 'PENDING';
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <PageHeader
         title="Agent Workspace & Overview"
         subtitle="Track assigned property listings, client inquiries, viewing appointments, and sales milestones."

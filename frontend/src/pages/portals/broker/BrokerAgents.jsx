@@ -662,16 +662,8 @@ export default function BrokerAgents() {
 
   return (
     <div className="flex flex-col gap-6 w-full min-w-0 max-w-full">
-      {/* Breadcrumbs */}
-      <div>
-        <div className="flex items-center gap-1.5 text-xs text-[#64748B] mb-2 font-medium">
-          <span>Agents</span>
-          <ChevronRight className="w-3.5 h-3.5 text-[#94A3B8]" />
-          <span className="text-[#1E293B] font-semibold">Agent Management</span>
-        </div>
-
-        {/* Page Title & Action Cluster Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Page Title & Action Cluster Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl sm:text-[36px] font-bold font-display text-[#1E293B] tracking-tight leading-tight">
               Agents
@@ -771,7 +763,6 @@ export default function BrokerAgents() {
             </span>
           </button>
         </div>
-      </div>
 
       {/* Main Responsive Layout (Active Roster) */}
       {activeTab === 'roster' && (

@@ -10,5 +10,7 @@ router.use(requireAuth, requireRole(['admin']));
 
 router.get('/backup/summary', DataManagementController.getBackupSummary);
 router.get('/backup/export', DataManagementController.exportSnapshot);
+router.post('/restore/preview', DataManagementController.previewRestore);
+router.post('/restore/commit', DataManagementController.commitRestore);
 
 export default router;

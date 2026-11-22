@@ -8,12 +8,11 @@ import cmsService from '@/services/cmsService';
 vi.mock('@/services/cmsService', () => ({
   default: {
     getPublicContents: vi.fn(),
-    getPublicCollections: vi.fn(),
   },
 }));
 
 describe('CmsPublicSections', () => {
-  it('renders published banner, featured collections, and FAQs', async () => {
+  it('renders published banner and FAQs', async () => {
     cmsService.getPublicContents.mockImplementation((type) => {
       if (type === 'banner') {
         return Promise.resolve([
@@ -37,21 +36,6 @@ describe('CmsPublicSections', () => {
       return Promise.resolve([]);
     });
 
-    cmsService.getPublicCollections.mockResolvedValue([
-      {
-        id: 'c1',
-        title: 'Featured Metro Homes',
-        description: 'Hand-picked residences',
-        items: [
-          {
-            id: 'ci1',
-            custom_badge: 'Hot',
-            property: { id: 'p1', title: 'BGC Sky Loft', city: 'Taguig', price: 25000000 },
-          },
-        ],
-      },
-    ]);
-
     render(
       <MemoryRouter>
         <CmsPublicBanner />
@@ -61,15 +45,12 @@ describe('CmsPublicSections', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Open House Weekend')).toBeInTheDocument();
-      expect(screen.getByText('Featured Metro Homes')).toBeInTheDocument();
-      expect(screen.getByText('BGC Sky Loft')).toBeInTheDocument();
       expect(screen.getByText('How do I book a viewing?')).toBeInTheDocument();
     });
   });
 
   it('renders nothing when no CMS content is published', async () => {
     cmsService.getPublicContents.mockResolvedValue([]);
-    cmsService.getPublicCollections.mockResolvedValue([]);
 
     const { container } = render(
       <MemoryRouter>
@@ -79,7 +60,7 @@ describe('CmsPublicSections', () => {
     );
 
     await waitFor(() => {
-      expect(cmsService.getPublicCollections).toHaveBeenCalled();
+      expect(cmsService.getPublicContents).toHaveBeenCalledWith('faq');
     });
     expect(container.firstChild).toBeNull();
   });

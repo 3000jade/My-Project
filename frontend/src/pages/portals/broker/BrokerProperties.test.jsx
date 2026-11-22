@@ -102,12 +102,10 @@ describe('BrokerProperties Page (Mockup & Modern SaaS Layout)', () => {
       </BrowserRouter>
     );
 
-  it('renders breadcrumbs, title, and action buttons', async () => {
+  it('renders title and action buttons', async () => {
     renderComponent();
 
-    const allListingsElements = await screen.findAllByText('All Listings');
-    expect(allListingsElements.length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText('Property Listings')).toBeInTheDocument();
+    expect(await screen.findByText('Property Listings')).toBeInTheDocument();
     expect(screen.getByText('Manage and organize your property listings.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /refresh/i })).toBeInTheDocument();
 

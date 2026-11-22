@@ -52,7 +52,8 @@ export class GoogleAuthService {
     }
 
     const { email, name, picture, sub: googleId } = payload;
-    const safeRole = requestedRole === 'broker' ? 'broker' : (requestedRole === 'agent' ? 'agent' : 'client');
+    // Lock new Google signups to 'client' to prevent self-assigned role escalation
+    const safeRole = 'client';
 
     if (!isSupabaseConfigured) {
       return {

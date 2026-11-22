@@ -24,16 +24,9 @@ vi.mock('@/services/cmsService', () => ({
         sort_order: 1,
       },
     ]),
-    listAdminCollections: vi.fn().mockResolvedValue([]),
     createContent: vi.fn(),
     updateContent: vi.fn(),
     deleteContent: vi.fn(),
-  },
-}));
-
-vi.mock('@/services/propertyService', () => ({
-  default: {
-    getProperties: vi.fn().mockResolvedValue({ data: [] }),
   },
 }));
 
@@ -47,7 +40,7 @@ describe('AdminCmsPage', () => {
 
     expect(screen.getByText('Corporation Content Management')).toBeTruthy();
     expect(screen.getByRole('tab', { name: /Company Pages/i })).toBeTruthy();
-    expect(screen.getByRole('tab', { name: /Featured Collections/i })).toBeTruthy();
+    expect(screen.queryByRole('tab', { name: /Featured Collections/i })).toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: /New Company Pages/i }));
     await waitFor(() => {

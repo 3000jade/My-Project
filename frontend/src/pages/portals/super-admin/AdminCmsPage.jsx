@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { FileText, BookOpen, HelpCircle, Image, Layers, Plus, Search } from 'lucide-react';
+import { FileText, BookOpen, HelpCircle, Image, Plus, Search } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -8,7 +8,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import KpiCard from '@/components/ui/cards/KpiCard';
 import CmsContentTable from '@/components/cms/CmsContentTable';
 import CmsContentEditorDrawer from '@/components/cms/CmsContentEditorDrawer';
-import FeaturedCollectionEditor from '@/components/cms/FeaturedCollectionEditor';
 import cmsService from '@/services/cmsService';
 
 const CONTENT_TABS = [
@@ -16,13 +15,11 @@ const CONTENT_TABS = [
   { id: 'article', label: 'Guides & Blog', icon: BookOpen },
   { id: 'faq', label: 'FAQs', icon: HelpCircle },
   { id: 'banner', label: 'Hero Banners', icon: Image },
-  { id: 'collections', label: 'Featured Collections', icon: Layers },
 ];
 
 export default function AdminCmsPage() {
   const [activeTab, setActiveTab] = useState('page');
   const [contents, setContents] = useState([]);
-  const [collections, setCollections] = useState([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -34,14 +31,10 @@ export default function AdminCmsPage() {
     setLoading(true);
     setError('');
     try {
-      const [allContents, allCollections] = await Promise.all([
-        cmsService.listAdminContents(),
-        cmsService.listAdminCollections(),
-      ]);
+      const allContents = await cmsService.listAdminContents();
       setContents(allContents);
-      setCollections(allCollections);
     } catch (err) {
-      setError(err?.response?.data?.error || err.message || 'Failed to load CMS data.');
+      setError(err?.message || err?.data?.error || 'Failed to load CMS data.');
     } finally {
       setLoading(false);
     }
@@ -99,30 +92,27 @@ export default function AdminCmsPage() {
             Corporation Content Management
           </h1>
           <p className="text-sm text-[#64748B] mt-1">
-            Publish company pages, buying guides, FAQs, hero banners, and featured property collections.
+            Publish company pages, buying guides, FAQs, and hero banners.
           </p>
         </div>
 
-        {activeTab !== 'collections' && (
-          <Button
-            type="button"
-            onClick={() => {
-              setEditingItem(null);
-              setDrawerOpen(true);
-            }}
-            className="bg-[#0F766E] hover:bg-[#115E59] text-white h-10 px-4"
-          >
-            <Plus className="size-4 mr-2" />
-            New {CONTENT_TABS.find((t) => t.id === activeTab)?.label || 'Content'}
-          </Button>
-        )}
+        <Button
+          type="button"
+          onClick={() => {
+            setEditingItem(null);
+            setDrawerOpen(true);
+          }}
+          className="bg-[#0F766E] hover:bg-[#115E59] text-white h-10 px-4"
+        >
+          <Plus className="size-4 mr-2" />
+          New {CONTENT_TABS.find((t) => t.id === activeTab)?.label || 'Content'}
+        </Button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <KpiCard title="Published Content" value={publishedCount} icon={FileText} statusVariant="success" />
         <KpiCard title="Drafts Pending" value={draftCount} icon={BookOpen} statusVariant="warning" />
         <KpiCard title="Hero Banners" value={contents.filter((c) => c.content_type === 'banner').length} icon={Image} statusVariant="primary" />
-        <KpiCard title="Featured Collections" value={collections.length} icon={Layers} statusVariant="primary" />
       </div>
 
       {error && (
@@ -144,51 +134,45 @@ export default function AdminCmsPage() {
           })}
         </TabsList>
 
-        {activeTab !== 'collections' ? (
-          <TabsContent value={activeTab} className="mt-6">
-            <Card className="bg-white border border-[#E2E8F0] rounded-xl shadow-xs">
-              <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <CardTitle className="text-xl font-semibold text-[#1E293B]">
-                    {CONTENT_TABS.find((t) => t.id === activeTab)?.label}
-                  </CardTitle>
-                  <CardDescription>
-                    Drafts stay hidden from the public website until you switch them to Published.
-                  </CardDescription>
-                </div>
-                <div className="relative w-full sm:w-64">
-                  <Search className="size-4 text-[#64748B] absolute left-3 top-3" />
-                  <Input
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search title or slug..."
-                    className="pl-9"
-                  />
-                </div>
-              </CardHeader>
-              <CardContent>
-                {loading ? (
-                  <p className="text-sm text-[#64748B] py-8 text-center">Loading content...</p>
-                ) : (
-                  <CmsContentTable
-                    items={filteredContents}
-                    onEdit={(item) => {
-                      setEditingItem(item);
-                      setDrawerOpen(true);
-                    }}
-                    onTogglePublish={handleTogglePublish}
-                    onArchive={handleArchive}
-                    onDelete={handleDelete}
-                  />
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        ) : (
-          <TabsContent value="collections" className="mt-6">
-            <FeaturedCollectionEditor collections={collections} onRefresh={loadData} />
-          </TabsContent>
-        )}
+        <TabsContent value={activeTab} className="mt-6">
+          <Card className="bg-white border border-[#E2E8F0] rounded-xl shadow-xs">
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <CardTitle className="text-xl font-semibold text-[#1E293B]">
+                  {CONTENT_TABS.find((t) => t.id === activeTab)?.label}
+                </CardTitle>
+                <CardDescription>
+                  Drafts stay hidden from the public website until you switch them to Published.
+                </CardDescription>
+              </div>
+              <div className="relative w-full sm:w-64">
+                <Search className="size-4 text-[#64748B] absolute left-3 top-3" />
+                <Input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search title or slug..."
+                  className="pl-9"
+                />
+              </div>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <p className="text-sm text-[#64748B] py-8 text-center">Loading content...</p>
+              ) : (
+                <CmsContentTable
+                  items={filteredContents}
+                  onEdit={(item) => {
+                    setEditingItem(item);
+                    setDrawerOpen(true);
+                  }}
+                  onTogglePublish={handleTogglePublish}
+                  onArchive={handleArchive}
+                  onDelete={handleDelete}
+                />
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
 
       <CmsContentEditorDrawer

@@ -222,7 +222,7 @@ export default function UnifiedSearchBar({
           <input
             type="text"
             data-testid="unified-search-input"
-            placeholder="Search location, district, or building (Nominatim OSM)..."
+            placeholder="Search city, barangay, building, or keyword..."
             value={filters.keyword || ''}
             onChange={(e) => setFilter('keyword', e.target.value)}
             onFocus={() => {

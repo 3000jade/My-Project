@@ -19,6 +19,16 @@ const dataManagementService = {
     const res = await apiClient.get('/data-management/backup/export');
     return res?.data ?? res;
   },
+
+  async previewRestore(snapshot) {
+    const res = await apiClient.post('/data-management/restore/preview', { snapshot });
+    return res?.data ?? res;
+  },
+
+  async commitRestore(snapshot) {
+    const res = await apiClient.post('/data-management/restore/commit', { snapshot });
+    return res?.data ?? res;
+  },
 };
 
 export default dataManagementService;

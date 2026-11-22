@@ -31,7 +31,7 @@ function DashboardLayoutContent({ role, title }) {
           onMenuClick={() => setMobileSidebarOpen(true)}
         />
 
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 w-full space-y-6 sm:space-y-8">
+        <main className="flex-1 p-4 sm:p-6 w-full space-y-4 sm:space-y-6">
           <Suspense fallback={<DashboardPageSkeleton />}>
             <Outlet />
           </Suspense>

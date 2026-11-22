@@ -24,7 +24,7 @@ router.get('/public/:id', AgentController.getPublicById);
 router.get('/me', requireAuth, AgentController.getMyProfile);
 
 // 3. Brokerage Teams Management (Brokers & Admins, read access for authenticated agents)
-router.get('/teams', requireAuth, AgentController.listTeams);
+router.get('/teams', requireAuth, requireRole(['agent', 'broker', 'admin']), AgentController.listTeams);
 router.post('/teams', requireAuth, requireRole(['broker', 'admin']), validateBody(createTeamSchema), AgentController.createTeam);
 router.put('/teams/:teamId', requireAuth, requireRole(['broker', 'admin']), validateBody(updateTeamSchema), AgentController.updateTeam);
 router.delete('/teams/:teamId', requireAuth, requireRole(['broker', 'admin']), AgentController.deleteTeam);
@@ -38,9 +38,9 @@ router.post('/transfers/:transferId/retry', requireAuth, requireRole(['broker', 
 router.get('/', requireAuth, requireRole(['broker', 'admin']), validateQuery(queryAgentSchema), AgentController.list);
 
 // 6. Single Agent Sub-Resources
-router.get('/:id/availability', requireAuth, AgentController.getAvailability);
-router.put('/:id/availability', requireAuth, validateBody(updateAgentAvailabilitySchema), AgentController.updateAvailability);
-router.get('/:id/eligibility', requireAuth, AgentController.checkEligibility);
+router.get('/:id/availability', requireAuth, requireRole(['agent', 'broker', 'admin']), AgentController.getAvailability);
+router.put('/:id/availability', requireAuth, requireRole(['agent', 'broker', 'admin']), validateBody(updateAgentAvailabilitySchema), AgentController.updateAvailability);
+router.get('/:id/eligibility', requireAuth, requireRole(['agent', 'broker', 'admin']), AgentController.checkEligibility);
 router.get('/:id/responsibilities', requireAuth, requireRole(['broker', 'admin']), AgentController.previewResponsibilities);
 router.post(
   '/:id/responsibilities/transfer',
@@ -57,7 +57,7 @@ router.post(
   AgentController.departAgent
 );
 router.get('/:id/audit-events', requireAuth, requireRole(['broker', 'admin']), AgentController.getAuditEvents);
-router.get('/:id/performance', requireAuth, AgentController.getPerformance);
+router.get('/:id/performance', requireAuth, requireRole(['agent', 'broker', 'admin']), AgentController.getPerformance);
 
 // 7. Single Agent Core CRUD
 router.get('/:id', requireAuth, requireRole(['broker', 'admin']), AgentController.getById);

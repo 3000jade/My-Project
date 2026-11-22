@@ -84,6 +84,14 @@ export class AppointmentController {
 
       const user = (req as any).user;
       if (user) {
+        if (user.role === 'client' && appointment.client_id !== user.id && appointment.client_email !== user.email) {
+          res.status(403).json({
+            success: false,
+            error: 'Clients may only view their own appointments.',
+            timestamp: new Date().toISOString(),
+          });
+          return;
+        }
         if (user.role === 'agent' && appointment.agent_id !== user.id) {
           res.status(403).json({
             success: false,
@@ -329,6 +337,16 @@ export class AppointmentController {
   public static async delete(req: Request, res: Response<ApiResponse>): Promise<void> {
     try {
       const id = String(req.params.id);
+      const user = (req as any).user;
+      const existing = await AppointmentService.getAppointmentById(id);
+      if (existing && user?.brokerage_id && existing.brokerage_id && existing.brokerage_id !== user.brokerage_id) {
+        res.status(403).json({
+          success: false,
+          error: 'Cross-brokerage appointment deletion is forbidden.',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
       const success = await AppointmentService.deleteAppointment(id);
 
       res.status(200).json({

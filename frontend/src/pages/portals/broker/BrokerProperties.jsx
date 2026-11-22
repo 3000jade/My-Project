@@ -1421,19 +1421,6 @@ export default function BrokerProperties() {
       {/* Header Section Matching Mockup */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          {/* Breadcrumbs */}
-          <div className="flex items-center gap-1.5 text-xs text-[#64748B] mb-1 font-medium">
-            <Link to="/broker/dashboard" className="hover:text-[#1E293B] transition-colors">
-              Home
-            </Link>
-            <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-            <Link to="/broker/properties" className="hover:text-[#1E293B] transition-colors">
-              Properties
-            </Link>
-            <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-            <span className="text-[#1E293B] font-semibold">All Listings</span>
-          </div>
-
           <h1 className="text-3xl sm:text-[36px] font-bold font-display text-[#1E293B] tracking-tight leading-tight">
             Property Listings
           </h1>

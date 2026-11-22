@@ -2,6 +2,7 @@ import { Router } from 'express';
 import multer from 'multer';
 import { DriveController } from '../controllers/drive.controller';
 import { requireAuth } from '../middleware/auth.middleware';
+import { requireRole } from '../middleware/role.middleware';
 
 const router = Router();
 const upload = multer({
@@ -15,7 +16,7 @@ const upload = multer({
  * POST /api/drive/upload
  * Protected file upload to Google Drive
  */
-router.post('/upload', requireAuth, upload.single('file'), DriveController.uploadFile);
+router.post('/upload', requireAuth, requireRole(['agent', 'broker', 'admin']), upload.single('file'), DriveController.uploadFile);
 
 /**
  * GET /api/drive/listing/:propertyId
@@ -35,6 +36,6 @@ router.get('/files/:fileId/stream', DriveController.streamFile);
  * DELETE /api/drive/files/:fileId
  * Delete file from Google Drive
  */
-router.delete('/files/:fileId', requireAuth, DriveController.deleteFile);
+router.delete('/files/:fileId', requireAuth, requireRole(['agent', 'broker', 'admin']), DriveController.deleteFile);
 
 export default router;

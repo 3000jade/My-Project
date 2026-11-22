@@ -161,16 +161,7 @@ export default function BrokerAgentEdit() {
     <div className="flex flex-col gap-6 w-full min-w-0 max-w-full" data-testid="broker-agent-edit">
       <Toaster position="top-right" />
 
-      {/* Breadcrumbs */}
       <div>
-        <div className="flex items-center gap-1.5 text-xs text-[#64748B] mb-2 font-medium">
-          <Link to="/broker/agents" className="hover:text-[#1E293B] transition-colors">Agents</Link>
-          <ChevronRight className="w-3.5 h-3.5 text-[#94A3B8]" />
-          <Link to={`/broker/agents/${id}`} className="hover:text-[#1E293B] transition-colors">{formData.name}</Link>
-          <ChevronRight className="w-3.5 h-3.5 text-[#94A3B8]" />
-          <span className="text-[#1E293B] font-semibold">Edit Agent</span>
-        </div>
-
         {/* Page Title */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>

@@ -56,15 +56,6 @@ export class CmsController {
     }
   }
 
-  public static async listPublicCollections(_req: Request, res: Response<ApiResponse>): Promise<void> {
-    try {
-      const collections = await CmsService.listPublicCollections();
-      ok(res, { collections }, 'Featured collections loaded.');
-    } catch (err) {
-      fail(res, err);
-    }
-  }
-
   public static async listAdminContents(req: AuthenticatedRequest, res: Response<ApiResponse>): Promise<void> {
     try {
       const items = await CmsService.listAdminContents(req.query as any);
@@ -97,52 +88,6 @@ export class CmsController {
     try {
       await CmsService.deleteContent(String(req.params.id));
       ok(res, null, 'Content item deleted.');
-    } catch (err) {
-      fail(res, err, 400);
-    }
-  }
-
-  public static async listAdminCollections(_req: AuthenticatedRequest, res: Response<ApiResponse>): Promise<void> {
-    try {
-      const collections = await CmsService.listAdminCollections();
-      ok(res, { collections }, 'Admin collections loaded.');
-    } catch (err) {
-      fail(res, err);
-    }
-  }
-
-  public static async createCollection(req: AuthenticatedRequest, res: Response<ApiResponse>): Promise<void> {
-    try {
-      const actorId = req.user?.id || 'admin';
-      const collection = await CmsService.createCollection(actorId, req.body);
-      ok(res, { collection }, 'Featured collection created.', 201);
-    } catch (err) {
-      fail(res, err, 400);
-    }
-  }
-
-  public static async updateCollection(req: AuthenticatedRequest, res: Response<ApiResponse>): Promise<void> {
-    try {
-      const collection = await CmsService.updateCollection(String(req.params.id), req.body);
-      ok(res, { collection }, 'Featured collection updated.');
-    } catch (err) {
-      fail(res, err, 400);
-    }
-  }
-
-  public static async deleteCollection(req: AuthenticatedRequest, res: Response<ApiResponse>): Promise<void> {
-    try {
-      await CmsService.deleteCollection(String(req.params.id));
-      ok(res, null, 'Featured collection deleted.');
-    } catch (err) {
-      fail(res, err, 400);
-    }
-  }
-
-  public static async syncCollectionItems(req: AuthenticatedRequest, res: Response<ApiResponse>): Promise<void> {
-    try {
-      await CmsService.syncCollectionItems(String(req.params.id), req.body.items);
-      ok(res, null, 'Collection properties updated.');
     } catch (err) {
       fail(res, err, 400);
     }
