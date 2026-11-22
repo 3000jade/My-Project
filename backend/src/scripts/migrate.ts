@@ -27,6 +27,7 @@ async function runMigrations() {
       'subdivision_map_tables_migration.sql',
       'communication_audit_session_migration.sql',
       'user_sessions_migration.sql',
+      'cleanup_unused_property_columns_migration.sql',
     ];
 
     for (const file of files) {

@@ -130,7 +130,7 @@ export default function ClientDashboard() {
   const greetingName = profile?.firstName || profile?.name?.split(' ')[0] || 'Client';
 
   return (
-    <div className="space-y-8 font-sans antialiased text-[#141717]">
+    <div className="space-y-6 font-sans antialiased text-[#141717]">
       {/* Page Header */}
       <PageHeader
         title={`Welcome back, ${greetingName}`}
@@ -181,7 +181,7 @@ export default function ClientDashboard() {
       </div>
 
       {/* Two-Column Stage: Saved Properties Showcase & Inquiries/Appointments Tracker */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Column (col-span-7): Saved Properties Peek */}
         <section className="lg:col-span-7 space-y-4">
           <div className="flex items-center justify-between pb-1 border-b border-[#E5EBEB]">

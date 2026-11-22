@@ -116,5 +116,253 @@ describe('PropertyListingView - RESO Schema Integrity & Compliance', () => {
 
     spy.mockRestore();
   });
+
+  it('adapts brochure specs for Studio condos and Vacant Lots using Create Listing fields', async () => {
+    const { propertyService } = await import('../../services/propertyService');
+    const spy = vi.spyOn(propertyService, 'getPropertyById').mockResolvedValueOnce({
+      id: 'studio-condo-1',
+      listing_id: 'HSR-STUDIO-01',
+      title: 'Bright Studio at Rockwell',
+      transaction_type: 'For Rent',
+      property_type: 'Condominium',
+      price: 45000,
+      city: 'Makati',
+      bedrooms_total: 0,
+      bathrooms_total_integer: 1,
+      living_area: 36,
+      living_area_units: 'sqm',
+      custom_reso_attributes: {
+        propertyCategory: 'Residential',
+        propertyStatus: 'Pre-Selling',
+        turnoverDate: 'Q4 2027',
+        credentials: { titleStatus: 'Clean Title' },
+      },
+      images: ['https://example.com/studio.jpg'],
+    });
+
+    const { unmount } = render(
+      <MemoryRouter initialEntries={['/properties/studio-condo-1']}>
+        <Routes>
+          <Route path="/properties/:id" element={<PropertyListingView />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByTestId('reso-bedrooms')).toHaveTextContent('Studio');
+    expect(screen.getByText('Monthly Rent')).toBeInTheDocument();
+    expect(screen.getByLabelText('Brochure Sections')).toBeInTheDocument();
+    expect(screen.getByText('Q4 2027')).toBeInTheDocument();
+    unmount();
+
+    spy.mockResolvedValueOnce({
+      id: 'vacant-lot-1',
+      listing_id: 'HSR-LOT-01',
+      title: 'Corner Lot in Nuvali',
+      transaction_type: 'For Sale',
+      property_type: 'Vacant Lot',
+      price: 11880000,
+      city: 'Calamba',
+      lot_size_area: 330,
+      lot_size_units: 'sqm',
+      custom_reso_attributes: {
+        propertyCategory: 'Land',
+        credentials: { titleStatus: 'Clean Title' },
+      },
+      images: ['https://example.com/lot.jpg'],
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/properties/vacant-lot-1']}>
+        <Routes>
+          <Route path="/properties/:id" element={<PropertyListingView />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByTestId('reso-lot-size')).toHaveTextContent('330 sqm');
+    expect(screen.queryByTestId('reso-bedrooms')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('reso-bathrooms')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('reso-living-area')).not.toBeInTheDocument();
+
+    spy.mockRestore();
+  });
+
+  it('places status and price on hero gallery, keeps title and tagline in details, and moves actions to separate agent card alongside Step 4 sections', async () => {
+    const { propertyService } = await import('../../services/propertyService');
+    const spy = vi.spyOn(propertyService, 'getPropertyById').mockResolvedValueOnce({
+      id: 'media-rich-1',
+      listing_id: 'HSR-MEDIA-01',
+      title: 'Gallery Villa',
+      transaction_type: 'For Sale',
+      property_type: 'House & Lot',
+      standard_status: 'Active',
+      price: 25000000,
+      city: 'Makati',
+      bedrooms_total: 3,
+      bathrooms_total_integer: 2,
+      living_area: 200,
+      living_area_units: 'sqm',
+      media: [
+        {
+          mediaUrl: 'https://example.com/cover.jpg',
+          mediaCategory: 'Photo',
+          galleryCategory: 'Cover',
+          orderIndex: 1,
+        },
+        {
+          mediaUrl: 'https://example.com/living.jpg',
+          mediaCategory: 'Photo',
+          galleryCategory: 'Living',
+          shortDescription: 'Double-height ceiling with sunlit windows',
+          orderIndex: 2,
+        },
+        {
+          mediaUrl: 'https://example.com/floorplan.jpg',
+          mediaCategory: 'FloorPlan',
+          galleryCategory: 'FloorPlan',
+          shortDescription: 'Ground and second floor layout',
+          orderIndex: 3,
+        },
+        {
+          mediaUrl: 'https://example.com/living-tour.mp4',
+          mediaCategory: 'Video',
+          galleryCategory: 'Living',
+          shortDescription: 'Living room walkthrough',
+          orderIndex: 4,
+        },
+      ],
+      custom_reso_attributes: {
+        propertyCategory: 'Residential',
+        tagline: 'Sunlit corner villa near Greenbelt',
+        categoryDescriptions: {
+          Living: '<p>Spacious open living area facing the garden.</p>',
+        },
+      },
+    });
+
+    const { container } = render(
+      <MemoryRouter initialEntries={['/properties/media-rich-1']}>
+        <Routes>
+          <Route path="/properties/:id" element={<PropertyListingView />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    const hero = await screen.findByLabelText('Property Hero Gallery');
+    expect(hero).toHaveTextContent('Selling Price');
+    expect(hero).toHaveTextContent('₱25,000,000');
+    expect(hero).toHaveTextContent('For Sale');
+    expect(hero).toHaveTextContent('Active');
+    expect(hero).not.toHaveTextContent('Schedule Viewing');
+    expect(hero).not.toHaveTextContent('Inquire Now');
+    expect(hero).not.toHaveTextContent('Property Contact');
+
+    const detailsSection = container.querySelector('#sec-details');
+    expect(detailsSection).toBeInTheDocument();
+    expect(detailsSection).toHaveTextContent('Gallery Villa');
+    expect(detailsSection).toHaveTextContent('Sunlit corner villa near Greenbelt');
+    expect(detailsSection).not.toHaveTextContent('Selling Price');
+    expect(detailsSection).not.toHaveTextContent('Schedule Viewing');
+    expect(detailsSection).not.toHaveTextContent('Inquire Now');
+
+    const agentSection = container.querySelector('#sec-agent');
+    expect(agentSection).toBeInTheDocument();
+    expect(agentSection).toHaveTextContent('Property Contact');
+    expect(agentSection).toHaveTextContent('Schedule Viewing');
+    expect(agentSection).toHaveTextContent('Inquire Now');
+
+    expect(screen.getByRole('heading', { name: /Room Gallery & Videos/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Floor Plan/i })).toBeInTheDocument();
+    expect(screen.getByText('Spacious open living area facing the garden.')).toBeInTheDocument();
+    expect(screen.getByText('Double-height ceiling with sunlit windows')).toBeInTheDocument();
+    expect(screen.getByText('Living room walkthrough')).toBeInTheDocument();
+    expect(screen.getByText('Ground and second floor layout')).toBeInTheDocument();
+
+    spy.mockRestore();
+  });
+
+  it('renders Pricing & Partnered Banks and Developer Description from custom_reso_attributes', async () => {
+    const { propertyService } = await import('../../services/propertyService');
+    const spy = vi.spyOn(propertyService, 'getPropertyById').mockResolvedValueOnce({
+      id: 'banks-prop-1',
+      title: 'Alabang Courtyard Home',
+      price: 45000000,
+      property_type: 'House & Lot',
+      custom_reso_attributes: {
+        pricePerSqm: '125,000',
+        partneredBanks: [
+          { bankName: 'BDO Unibank (Banco de Oro)', logoUrl: 'https://example.com/bdo.png' },
+          { bankName: 'Pag-IBIG Fund (HDMF)', logoUrl: '' },
+        ],
+        paymentBreakdown: {
+          reservationFee: '100000',
+          downpayment: '20%',
+          downpaymentTerm: '12 Months',
+          loanableAmount: '36000000',
+        },
+        credentials: {
+          developer: 'Ayala Land Premier',
+          developerDescription: '<p>Master-planned residential community builder.</p>',
+        },
+      },
+    });
+
+    const { container } = render(
+      <MemoryRouter initialEntries={['/properties/banks-prop-1']}>
+        <Routes>
+          <Route path="/properties/:id" element={<PropertyListingView />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText('Pricing & Partnered Banks')).toBeInTheDocument();
+    const paymentSection = container.querySelector('#sec-payment');
+    expect(paymentSection).toHaveTextContent('Price per Sqm');
+    expect(paymentSection).toHaveTextContent('125,000');
+    expect(paymentSection).toHaveTextContent('Loanable Amount');
+    expect(paymentSection).toHaveTextContent('36,000,000');
+    expect(screen.getByText('BDO Unibank (Banco de Oro)')).toBeInTheDocument();
+    expect(screen.getByAltText('BDO Unibank (Banco de Oro)')).toHaveAttribute(
+      'src',
+      'https://example.com/bdo.png'
+    );
+    expect(screen.getByText('Pag-IBIG Fund (HDMF)')).toBeInTheDocument();
+    expect(screen.getByText('Developer Description')).toBeInTheDocument();
+    expect(screen.getByText('Master-planned residential community builder.')).toBeInTheDocument();
+
+    spy.mockRestore();
+  });
+
+  it('hides bedroom chip when bedrooms_total is 0 for non-Studio/Condominium types', async () => {
+    const { propertyService } = await import('../../services/propertyService');
+    const spy = vi.spyOn(propertyService, 'getPropertyById').mockResolvedValueOnce({
+      id: 'commercial-zero-beds-1',
+      listing_id: 'HSR-COMM-01',
+      title: 'BGC Retail Ground Unit',
+      transaction_type: 'For Lease',
+      property_type: 'Commercial Space',
+      price: 180000,
+      city: 'Taguig',
+      bedrooms_total: 0,
+      bathrooms_total_integer: 1,
+      living_area: 120,
+      living_area_units: 'sqm',
+      images: ['https://example.com/commercial.jpg'],
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/properties/commercial-zero-beds-1']}>
+        <Routes>
+          <Route path="/properties/:id" element={<PropertyListingView />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByTestId('reso-living-area')).toHaveTextContent('120 sqm');
+    expect(screen.queryByTestId('reso-bedrooms')).not.toBeInTheDocument();
+    expect(screen.queryByText('Studio')).not.toBeInTheDocument();
+
+    spy.mockRestore();
+  });
 });
 

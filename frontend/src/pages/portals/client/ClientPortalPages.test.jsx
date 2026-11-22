@@ -92,8 +92,8 @@ describe('Client User Management Module Pages', () => {
       </BrowserRouter>
     );
 
-    expect(screen.getByRole('button', { name: /^ALL$/i })).toBeDefined();
-    expect(screen.getByRole('button', { name: /^NEW$/i })).toBeDefined();
+    expect(screen.getByRole('tab', { name: /^ALL$/i })).toBeDefined();
+    expect(screen.getByRole('tab', { name: /^NEW$/i })).toBeDefined();
   });
 
   it('renders ClientProfile with personal information details', async () => {

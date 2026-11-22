@@ -11,6 +11,7 @@ import {
   buildPropertyAssignmentEmailHtml,
   buildAssignmentAcceptedEmailHtml,
   buildAssignmentDeclinedEmailHtml,
+  buildShareListingEmailHtml,
   InquiryEmailData,
   TourConfirmationEmailData,
   AgentInvitationEmailData,
@@ -18,6 +19,7 @@ import {
   PropertyAssignmentEmailData,
   AssignmentAcceptedEmailData,
   AssignmentDeclinedEmailData,
+  ShareListingEmailData,
 } from '../templates/emailTemplates';
 
 export class GmailService {
@@ -383,6 +385,43 @@ export class GmailService {
       success: true,
       messageId: mockId,
     };
+  }
+
+  private static shareIdempotencyCache = new Map<string, number>();
+
+  /**
+   * Send property listing share email to 1-5 recipients with 24h idempotency deduplication.
+   */
+  public static async sendShareListingEmail(
+    recipients: string[],
+    idempotencyKey: string,
+    data: ShareListingEmailData
+  ): Promise<{ success: boolean; deduplicated?: boolean; sentCount: number }> {
+    const now = Date.now();
+    // Prune expired idempotency entries (> 24h)
+    for (const [k, ts] of this.shareIdempotencyCache.entries()) {
+      if (now - ts > 24 * 60 * 60 * 1000) this.shareIdempotencyCache.delete(k);
+    }
+    if (this.shareIdempotencyCache.has(idempotencyKey)) {
+      logger.info(`[GmailService] Deduplicated share email for key ${idempotencyKey}`);
+      return { success: true, deduplicated: true, sentCount: 0 };
+    }
+    this.shareIdempotencyCache.set(idempotencyKey, now);
+
+    const subject = `Check out this property: ${data.propertyTitle.replace(/[\r\n]/g, ' ')}`;
+    const html = buildShareListingEmailHtml(data);
+    const fromName = 'Human Shelter Realty';
+    const fromEmail = config.integrations.gmailUserEmail || 'noreply@cpkerby.luxury';
+
+    let sentCount = 0;
+    for (const to of recipients) {
+      const res = await this.dispatchEmail(to, fromEmail, fromName, subject, html);
+      if (res.success || config.integrations.isMockMode) {
+        sentCount++;
+      }
+    }
+
+    return { success: sentCount > 0, sentCount };
   }
 }
 

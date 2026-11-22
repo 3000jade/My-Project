@@ -67,10 +67,17 @@ export function createTeardropPinElement(property, options = {}) {
 
   container.className = `relative flex items-center justify-center cursor-pointer transition-all duration-200 select-none group ${scaleClass}`;
 
+  const safeTitle = String(title ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
   container.innerHTML = `
     <!-- Floating Title Tooltip (Visible on Hover) -->
     <div class="absolute -top-8 left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-md bg-slate-900/95 text-white text-[11px] font-sans font-semibold shadow-lg pointer-events-none ${isHovered ? 'opacity-100 scale-105' : 'opacity-0 group-hover:opacity-100'} transition-opacity duration-150 whitespace-nowrap z-50 border border-slate-700/60 flex items-center gap-1.5">
-      <span>${title}</span>
+      <span>${safeTitle}</span>
     </div>
 
     <!-- Regular SVG Teardrop Pin -->
@@ -251,7 +258,7 @@ export function createPriceBadgeElement(property, options = {}) {
       <span class="tracking-tight">${priceText}</span>
     `;
   } else {
-    container.className = `${baseClasses} bg-white text-[#0F766E] border border-[#E2E8F0] hover:bg-[#0F766E] hover:text-white hover:border-[#0F766E] hover:scale-105 hover:shadow-md`;
+    container.className = `${baseClasses} bg-[#0F766E] text-white border border-[#0F766E] hover:bg-[#115E59] hover:border-[#115E59] hover:scale-105 hover:shadow-md`;
     container.innerHTML = `
       <span class="tracking-tight">${priceText}</span>
     `;
@@ -398,16 +405,42 @@ export function createStackedAnchorMarkerElement(cluster, options = {}) {
   return container;
 }
 
-export function createClusterBadgeElement(count) {
+export function createClusterBadgeElement(count, areaName = '', onClick) {
+  const safeArea = String(areaName || '')
+    .trim()
+    .replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const label = safeArea ? `${safeArea} · ${count}` : `${count} Homes`;
+  const slug = safeArea ? safeArea.toLowerCase().replace(/[^a-z0-9]+/g, '-') : 'cluster';
+
   const container = document.createElement('div');
   container.className =
-    'inline-flex items-center justify-center px-3.5 py-1.5 rounded-full bg-white/95 backdrop-blur-md text-[#0F766E] border border-[#E2E8F0] font-mono text-xs font-bold shadow-md cursor-pointer hover:bg-[#0F766E] hover:text-white transition-all scale-100 hover:scale-110';
+    'inline-flex items-center justify-center px-3.5 py-1.5 rounded-full bg-[#0F766E] text-white border border-[#0F766E] font-mono text-xs font-bold shadow-md cursor-pointer hover:bg-[#115E59] transition-all scale-100 hover:scale-110 whitespace-nowrap';
   container.setAttribute('role', 'button');
-  container.setAttribute('aria-label', `Group of ${count} properties`);
+  container.setAttribute('tabindex', '0');
+  container.setAttribute('data-testid', `area-cluster-${slug}`);
+  container.setAttribute(
+    'aria-label',
+    safeArea ? `Group of ${count} properties in ${safeArea}` : `Group of ${count} properties`
+  );
   container.innerHTML = `
-    <span class="w-2 h-2 rounded-full bg-[#14B8A6] mr-1.5"></span>
-    <span>${count} Homes</span>
+    <span class="w-2 h-2 rounded-full bg-[#14B8A6] mr-1.5 shrink-0"></span>
+    <span>${label}</span>
   `;
+
+  if (typeof onClick === 'function') {
+    container.addEventListener('click', (e) => {
+      e.stopPropagation();
+      onClick();
+    });
+    container.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        e.stopPropagation();
+        onClick();
+      }
+    });
+  }
+
   return container;
 }
 

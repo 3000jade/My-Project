@@ -25,6 +25,7 @@ export default function Footer() {
           <ul className="space-y-2 text-sm font-sans">
             <li><Link className="opacity-70 hover:opacity-100 hover:text-accent transition-all text-gray-500" to="/">Home</Link></li>
             <li><Link className="opacity-70 hover:opacity-100 hover:text-accent transition-all text-gray-500" to="/properties">Properties</Link></li>
+            <li><Link className="opacity-70 hover:opacity-100 hover:text-accent transition-all text-gray-500" to="/guides">Buying Guides</Link></li>
             <li><Link className="opacity-70 hover:opacity-100 hover:text-accent transition-all text-gray-500" to="/about">About Us</Link></li>
             <li><Link className="opacity-70 hover:opacity-100 hover:text-accent transition-all text-gray-500" to="/contact">Contact</Link></li>
           </ul>

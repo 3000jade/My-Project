@@ -11,7 +11,10 @@ import { Search } from 'lucide-react';
 import DashboardModal from '../../../components/dashboard/DashboardModal';
 import AgentScheduleCalendar from '../../../components/dashboard/AgentScheduleCalendar';
 import { agentService } from '../../../services/agentService';
-import { Spinner } from '../../../components/ui';
+import { Spinner, Card, CardContent, KpiCard, useToast, Toaster } from '../../../components/ui';
+import { Button } from '../../../components/ui/button';
+import { Badge } from '../../../components/ui/badge';
+import { Alert, AlertTitle, AlertDescription } from '../../../components/ui/alert';
 import { AgentDetailSkeleton } from '../../../components/dashboard/skeletons';
 import { propertyService } from '../../../services/propertyService';
 import { cn } from '../../../utils/cn';
@@ -78,11 +81,14 @@ export default function BrokerAgentDetail() {
   const [departureReason, setDepartureReason] = useState('Voluntary resignation / brokerage transfer');
   const [auditEvents, setAuditEvents] = useState([]);
   const [updating, setUpdating] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
+  const { toast } = useToast();
 
-  const showToast = (msg) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(''), 3500);
+  const showToast = (msg, variant = 'success') => {
+    toast({
+      title: variant === 'destructive' ? 'Action Failed' : 'Agent Profile',
+      description: msg,
+      variant,
+    });
   };
 
   useEffect(() => {
@@ -193,7 +199,7 @@ export default function BrokerAgentDetail() {
       const list = Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : []);
       setAssignedProps(list);
     } catch (err) {
-      showToast(`Failed to assign property: ${err.message || 'Unknown error'}`);
+      showToast(`Failed to assign property: ${err.message || 'Unknown error'}`, 'destructive');
     } finally {
       setIsAssigning(false);
     }
@@ -434,27 +440,11 @@ export default function BrokerAgentDetail() {
   });
 
   return (
-    <div className="space-y-6">
-      {/* Toast Notification */}
-      {toastMessage && (
-        <div className="fixed top-5 right-5 z-50 bg-[#1E293B] text-white text-xs font-medium px-4 py-2.5 rounded-lg shadow-lg flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-          <span>{toastMessage}</span>
-        </div>
-      )}
-
-      {/* Breadcrumbs */}
+    <div className="flex flex-col gap-6 w-full min-w-0 max-w-full">
       <div>
-        <div className="flex items-center gap-1.5 text-xs text-[#64748B] mb-2 font-medium">
-          <Link to="/broker/agents" className="hover:text-[#1E293B] transition-colors">Agents</Link>
-          <ChevronRight className="w-3.5 h-3.5 text-[#94A3B8]" />
-          <Link to="/broker/agents" className="hover:text-[#1E293B] transition-colors">Agent Management</Link>
-          <ChevronRight className="w-3.5 h-3.5 text-[#94A3B8]" />
-          <span className="text-[#1E293B] font-semibold">{agent.name}</span>
-        </div>
-
         {/* Screen 3 Profile Header Banner */}
-        <div className="bg-white rounded-lg border border-[#E2E8F0] p-6 shadow-2xs">
+        <Card className="bg-white rounded-xl border border-[#E2E8F0] shadow-xs">
+          <CardContent className="p-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="flex items-center gap-4">
               <div className="relative shrink-0">
@@ -511,64 +501,69 @@ export default function BrokerAgentDetail() {
 
             {/* Profile Action Buttons */}
             <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto shrink-0 mt-3 sm:mt-0">
-              <button
+              <Button
                 type="button"
+                variant="outline"
                 onClick={() => navigate(`/broker/agents/${agent.id}/edit`)}
-                className="h-9 px-3.5 bg-white hover:bg-slate-50 text-[#1E293B] border border-[#E2E8F0] rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+                className="h-11 px-3.5 bg-white border-[#E2E8F0] text-[#1E293B] gap-1.5 normal-case"
               >
-                <Edit3 className="w-3.5 h-3.5 text-[#64748B]" />
+                <Edit3 className="size-3.5 text-[#64748B]" />
                 <span>Edit</span>
-              </button>
+              </Button>
 
-              <button
+              <Button
                 type="button"
+                variant="outline"
                 onClick={() => handleOpenTransferOrDepart('transfer')}
-                className="h-9 px-3.5 bg-white hover:bg-slate-50 text-[#1E293B] border border-[#E2E8F0] rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+                className="h-11 px-3.5 bg-white border-[#E2E8F0] text-[#1E293B] gap-1.5 normal-case"
               >
-                <Send className="w-3.5 h-3.5 text-[#0F766E]" />
+                <Send className="size-3.5 text-[#0F766E]" />
                 <span>Transfer Work</span>
-              </button>
+              </Button>
 
               {agent.membership_status !== 'departed' && (
-                <button
+                <Button
                   type="button"
+                  variant="outline"
                   onClick={() => handleOpenTransferOrDepart('depart')}
-                  className="h-9 px-3.5 bg-white hover:bg-rose-50 text-rose-700 border border-rose-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+                  className="h-11 px-3.5 bg-white hover:bg-rose-50 text-rose-700 border-rose-200 gap-1.5 normal-case"
                 >
-                  <UserX className="w-3.5 h-3.5 text-rose-600" />
+                  <UserX className="size-3.5 text-rose-600" />
                   <span>Depart Agent</span>
-                </button>
+                </Button>
               )}
 
               {agent.verification_status !== 'SUSPENDED' ? (
-                <button
+                <Button
                   type="button"
+                  variant="outline"
                   onClick={() => setSuspendModalOpen(true)}
-                  className="h-9 px-3.5 bg-white hover:bg-rose-50 text-rose-700 border border-rose-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+                  className="h-11 px-3.5 bg-white hover:bg-rose-50 text-rose-700 border-rose-200 gap-1.5 normal-case"
                 >
-                  <AlertOctagon className="w-3.5 h-3.5 text-rose-600" />
+                  <AlertOctagon className="size-3.5 text-rose-600" />
                   <span>Suspend</span>
-                </button>
+                </Button>
               ) : (
-                <button
+                <Button
                   type="button"
+                  variant="outline"
                   onClick={() => handleApplyAction('VERIFIED')}
-                  className="h-9 px-3.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+                  className="h-11 px-3.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-200 gap-1.5 normal-case"
                 >
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                  <CheckCircle2 className="size-3.5 text-emerald-600" />
                   <span>Reactivate</span>
-                </button>
+                </Button>
               )}
 
               {agent.verification_status !== 'VERIFIED' && (
-                <button
+                <Button
                   type="button"
                   onClick={() => setConfirmModal({ open: true, action: 'VERIFIED' })}
-                  className="h-9 px-4 bg-[#0F766E] hover:bg-[#115E59] text-white rounded-lg text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 transition-colors shadow-2xs cursor-pointer"
+                  className="h-11 px-4 bg-[#0F766E] hover:bg-[#115E59] text-white gap-1.5 normal-case"
                 >
-                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <CheckCircle2 className="size-3.5" />
                   <span>Approve & Verify</span>
-                </button>
+                </Button>
               )}
             </div>
           </div>
@@ -598,18 +593,19 @@ export default function BrokerAgentDetail() {
               </button>
             ))}
           </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Rejection Notice Banner if Rejected */}
       {agent.verification_status === 'REJECTED' && agent.rejection_remarks && (
-        <div className="p-4 bg-rose-50 border border-rose-200 rounded-lg flex items-start gap-3">
-          <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+        <Alert variant="destructive" className="flex items-start gap-3">
+          <AlertTriangle className="size-5 shrink-0 mt-0.5" />
           <div className="text-xs">
-            <p className="font-semibold text-rose-800 uppercase tracking-wider">Credential Rejection Notice</p>
-            <p className="text-rose-700 mt-1 leading-relaxed">{agent.rejection_remarks}</p>
+            <AlertTitle className="font-semibold uppercase tracking-wider">Credential Rejection Notice</AlertTitle>
+            <AlertDescription className="mt-1 leading-relaxed">{agent.rejection_remarks}</AlertDescription>
           </div>
-        </div>
+        </Alert>
       )}
 
       {/* ========================================================================= */}
@@ -771,29 +767,33 @@ export default function BrokerAgentDetail() {
           </div>
 
           {/* Right Column (Performance KPIs + Screen 10 Completeness) ~65% */}
-          <div className="lg:col-span-8 space-y-6">
+          <div className="lg:col-span-8 min-w-0 space-y-6">
             
             {/* Performance Overview (4 KPI Cards Matching Screen 3) */}
             <div className="bg-white rounded-lg border border-[#E2E8F0] p-5 shadow-2xs space-y-4">
               <h3 className="text-sm font-bold text-[#1E293B]">Performance Overview</h3>
               
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-                <div className="p-4 bg-[#F8FAFC] rounded-lg border border-[#E2E8F0] text-center">
-                  <p className="text-2xl font-bold text-[#1E293B]">{assignedProps.length}</p>
-                  <p className="text-xs font-medium text-[#64748B] mt-1">Assigned Listings</p>
-                </div>
-                <div className="p-4 bg-[#F8FAFC] rounded-lg border border-[#E2E8F0] text-center">
-                  <p className="text-2xl font-bold text-[#1E293B]">{agent.active_inquiries_count ?? 0}</p>
-                  <p className="text-xs font-medium text-[#64748B] mt-1">Open Inquiries</p>
-                </div>
-                <div className="p-4 bg-[#F8FAFC] rounded-lg border border-[#E2E8F0] text-center">
-                  <p className="text-2xl font-bold text-[#1E293B]">{agent.recorded_sales_count ?? 0}</p>
-                  <p className="text-xs font-medium text-[#64748B] mt-1">Closed Deals</p>
-                </div>
-                <div className="p-4 bg-teal-50/50 rounded-lg border border-teal-100 text-center">
-                  <p className="text-2xl font-bold text-[#0F766E]">₱{(agent.total_sales_value || 0).toLocaleString()}</p>
-                  <p className="text-xs font-medium text-[#0F766E] mt-1">Total Sales Value</p>
-                </div>
+                <KpiCard
+                  size="sm"
+                  title="Assigned Listings"
+                  value={assignedProps.length}
+                />
+                <KpiCard
+                  size="sm"
+                  title="Open Inquiries"
+                  value={agent.active_inquiries_count ?? 0}
+                />
+                <KpiCard
+                  size="sm"
+                  title="Closed Deals"
+                  value={agent.recorded_sales_count ?? 0}
+                />
+                <KpiCard
+                  size="sm"
+                  title="Total Sales Value"
+                  value={`₱${(agent.total_sales_value || 0).toLocaleString()}`}
+                />
               </div>
             </div>
 
@@ -1852,6 +1852,7 @@ export default function BrokerAgentDetail() {
           })()}
         </div>
       </DashboardModal>
+      <Toaster position="top-right" />
     </div>
   );
 }

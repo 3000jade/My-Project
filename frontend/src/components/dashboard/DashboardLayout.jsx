@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom';
 import DashboardSidebar from './DashboardSidebar';
 import DashboardHeader from './DashboardHeader';
 import { DashboardThemeProvider, useDashboardDensity } from '../../context/DashboardThemeContext';
+import { useAuth } from '../../context/AuthContext';
 import { DashboardPageSkeleton } from './skeletons';
 
 function DashboardLayoutContent({ role, title }) {
@@ -30,7 +31,7 @@ function DashboardLayoutContent({ role, title }) {
           onMenuClick={() => setMobileSidebarOpen(true)}
         />
 
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 w-full space-y-6 sm:space-y-8">
+        <main className="flex-1 p-4 sm:p-6 w-full space-y-4 sm:space-y-6">
           <Suspense fallback={<DashboardPageSkeleton />}>
             <Outlet />
           </Suspense>
@@ -41,9 +42,12 @@ function DashboardLayoutContent({ role, title }) {
 }
 
 export default function DashboardLayout({ role = 'broker', title = 'Property Listings' }) {
+  const { user } = useAuth();
+  const effectiveRole = user?.role === 'admin' ? 'admin' : role;
+
   return (
-    <DashboardThemeProvider role={role}>
-      <DashboardLayoutContent role={role} title={title} />
+    <DashboardThemeProvider role={effectiveRole}>
+      <DashboardLayoutContent role={effectiveRole} title={title} />
     </DashboardThemeProvider>
   );
 }

@@ -4,6 +4,7 @@
 
 export type StandardStatus = 
   | 'Draft'
+  | 'Hold'
   | 'Pending Approval'
   | 'Pending Confirmation'
   | 'Action Required'

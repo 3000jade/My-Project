@@ -56,6 +56,8 @@ export default defineConfig({
       '@mantine/core',
       '@tabler/icons-react',
       '@tanstack/react-virtual',
+      '@base-ui/react/popover',
+      'cmdk',
     ],
   },
   test: {

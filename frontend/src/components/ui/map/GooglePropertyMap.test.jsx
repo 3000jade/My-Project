@@ -60,10 +60,9 @@ describe('GooglePropertyMap component (Minimal Interactive Interface with Regula
     expect(marker1.getAttribute('aria-label')).toContain('Rockwell Sky Penthouse');
     expect(marker2.getAttribute('aria-label')).toContain('BGC Luxury Villa');
 
-    // Verify regular SVG teardrop pins without price text
-    expect(marker1.querySelector('svg')).toBeDefined();
-    expect(marker1.innerHTML).toContain('#0F766E'); // Default Teal fill
-    expect(marker1.innerHTML).toContain('Rockwell Sky Penthouse'); // Tooltip
+    // Verify individual price pins at default zoom 15
+    expect(marker1.className).toContain('#0F766E');
+    expect(marker1.textContent).toContain('₱45M');
 
     // Verify HUD controls and manual zoom controls
     expect(screen.getByText('Street')).toBeDefined();
@@ -304,7 +303,7 @@ describe('GooglePropertyMap Multi-Property Pinpoint & MultiUnitDrawer', () => {
     },
   ];
 
-  it('renders stacked anchor pin with unit count and price range for co-located properties', () => {
+  it('renders individual pins directly without grouping or MultiUnitDrawer', () => {
     const handleSelect = vi.fn();
 
     render(
@@ -317,16 +316,15 @@ describe('GooglePropertyMap Multi-Property Pinpoint & MultiUnitDrawer', () => {
       </MemoryRouter>
     );
 
-    // Verify stacked anchor marker exists for co-located properties
-    const stackedMarker = screen.getByTestId('stacked-marker-anchor-14.551200-121.050100');
-    expect(stackedMarker).toBeDefined();
-    expect(stackedMarker.textContent).toContain('2 Units');
-    expect(stackedMarker.textContent).toContain('₱28M - ₱45M');
-
-    // Verify single standalone property is still rendered as regular teardrop marker
+    const firstMarker = screen.getByTestId('map-marker-tower-u1');
+    const secondMarker = screen.getByTestId('map-marker-tower-u2');
     const singleMarker = screen.getByTestId('map-marker-single-lot');
+
+    expect(firstMarker).toBeDefined();
+    expect(secondMarker).toBeDefined();
     expect(singleMarker).toBeDefined();
 
+<<<<<<< HEAD
     // Click the stacked anchor marker to open MultiUnitDrawer
     fireEvent.click(stackedMarker);
 
@@ -340,6 +338,36 @@ describe('GooglePropertyMap Multi-Property Pinpoint & MultiUnitDrawer', () => {
     // Click one of the units inside drawer
     const unit10ACard = screen.getByTestId('unit-card-tower-u1');
     fireEvent.click(unit10ACard);
+=======
+    fireEvent.click(firstMarker);
+>>>>>>> property-tech-v3.0
     expect(handleSelect).toHaveBeenCalledWith(coLocatedProperties[0]);
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('groups pins by area (e.g. Marikina) when zoom is between 13 and 14 and zooms to 15 on click', () => {
+    const areaProps = [
+      { id: 'm1', title: 'Marikina House 1', city: 'Marikina', price: 8500000, latitude: 14.6507, longitude: 121.1029 },
+      { id: 'm2', title: 'Marikina House 2', city: 'Marikina', price: 9500000, latitude: 14.6520, longitude: 121.1040 },
+      { id: 'mk1', title: 'Makati Condo', city: 'Makati', price: 18000000, latitude: 14.5547, longitude: 121.0244 },
+    ];
+
+    render(
+      <MemoryRouter>
+        <GooglePropertyMap properties={areaProps} initialZoom={13} showControls={true} />
+      </MemoryRouter>
+    );
+
+    const marikinaPin = screen.getByTestId('area-cluster-marikina');
+    const makatiPin = screen.getByTestId('area-cluster-makati');
+    expect(marikinaPin.textContent).toContain('Marikina · 2');
+    expect(makatiPin.textContent).toContain('Makati · 1');
+    expect(screen.queryByTestId('map-marker-m1')).toBeNull();
+
+    fireEvent.click(marikinaPin);
+    const m1Pin = screen.getByTestId('map-marker-m1');
+    const m2Pin = screen.getByTestId('map-marker-m2');
+    expect(m1Pin.textContent).toContain('₱8.5M');
+    expect(m2Pin.textContent).toContain('₱9.5M');
   });
 });

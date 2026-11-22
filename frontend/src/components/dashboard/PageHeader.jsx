@@ -5,31 +5,11 @@ export default function PageHeader({
   title,
   subtitle,
   badge,
-  breadcrumbs = [],
   actions,
   className = ""
 }) {
   return (
-    <div className={`mb-8 min-w-0 max-w-full ${className}`}>
-      {breadcrumbs.length > 0 && (
-        <nav className="flex items-center gap-2 text-xs font-sans text-gray-500 mb-2">
-          {breadcrumbs.map((crumb, idx) => (
-            <React.Fragment key={idx}>
-              {idx > 0 && <span className="text-gray-400">/</span>}
-              {crumb.to ? (
-                <Link
-                  to={crumb.to}
-                  className="hover:text-[#0F766E] transition-colors"
-                >
-                  {crumb.label}
-                </Link>
-              ) : (
-                <span className="text-gray-800 font-semibold">{crumb.label}</span>
-              )}
-            </React.Fragment>
-          ))}
-        </nav>
-      )}
+    <div className={`mb-6 min-w-0 max-w-full ${className}`}>
 
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 min-w-0">
         <div className="min-w-0">

@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { 
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import {
   Building2, CheckCircle2, Plus, RotateCw, Edit3, ExternalLink,
   MapPin, Maximize2, Bed, Bath, Copy, MoreVertical, ChevronRight,
   Search, X, SlidersHorizontal, AlertCircle, Home,
-  List, LayoutGrid, Map as MapIcon, Archive, Trash2, RotateCcw, UserCheck
+  List, LayoutGrid, Map as MapIcon, Archive, Trash2, RotateCcw, UserCheck, History
 } from 'lucide-react';
 import { GooglePropertyMap } from '../../../components/ui/map';
 import DataTable from '../../../components/dashboard/DataTable';
@@ -13,21 +13,29 @@ import ReassignAgentModal from '../../../components/dashboard/ReassignAgentModal
 import PropertyFilterToolbar from '../../../components/properties/PropertyFilterToolbar';
 import ArchivePropertyModal from '../../../components/ui/modals/ArchivePropertyModal';
 import DeletePropertyModal from '../../../components/ui/modals/DeletePropertyModal';
-import { 
-  DropdownMenu, 
-  DropdownMenuTrigger, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuSeparator 
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator
 } from '../../../components/ui/dropdown-menu';
+<<<<<<< HEAD
 import propertyService, {
   normalizeProperty,
   formatPropertyDeveloperName,
 } from '../../../services/propertyService';
+=======
+import propertyService, { normalizeProperty } from '../../../services/propertyService';
+import agentService from '../../../services/agentService';
+import auditService from '../../../services/auditService';
+import { useAuth } from '../../../context/AuthContext';
+>>>>>>> property-tech-v3.0
 import { cn } from '../../../utils/cn';
 import { Badge } from '../../../components/ui/badge';
 import { Button, buttonVariants } from '../../../components/ui/button';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, useToast, Toaster } from '../../../components/ui';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, Alert, AlertTitle, AlertDescription, useToast, Toaster } from '../../../components/ui';
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '../../../components/ui/empty';
 import { Spinner } from '../../../components/ui';
 import { TableSkeleton, CardGridSkeleton } from '../../../components/dashboard/skeletons';
 import useResponsiveColumns from '../../../hooks/useResponsiveColumns';
@@ -37,25 +45,25 @@ function formatPhilippineRelativeTime(dateStr) {
   try {
     const date = new Date(dateStr);
     if (isNaN(date.getTime())) return 'Unavailable';
-    
+
     const manilaFmt = new Intl.DateTimeFormat('en-CA', {
       timeZone: 'Asia/Manila',
       year: 'numeric',
       month: '2-digit',
       day: '2-digit'
     });
-    
+
     const nowParts = manilaFmt.format(new Date());
     const itemParts = manilaFmt.format(date);
-    
+
     const [nowY, nowM, nowD] = nowParts.split('-').map(Number);
     const [itemY, itemM, itemD] = itemParts.split('-').map(Number);
-    
+
     const nowDate = Date.UTC(nowY, nowM - 1, nowD);
     const itemDate = Date.UTC(itemY, itemM - 1, itemD);
-    
+
     const diffDays = Math.round((nowDate - itemDate) / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays === 0) return 'Today';
     if (diffDays === 1) return 'Yesterday';
     if (diffDays < 0) return 'Future date';
@@ -112,22 +120,125 @@ function PropertyThumbnail({ image, title }) {
   );
 }
 
+const SEEN_ACTIVITY_STORAGE_KEY = 'hsr_seen_property_activity';
+const ACTIVITY_TTL_MS = 3 * 24 * 60 * 60 * 1000;
+
+const BROKER_STATUS_STYLES = {
+  DRAFT: { label: 'Draft', pill: 'bg-blue-50 text-blue-700 border-blue-200', dot: 'bg-blue-500' },
+  PENDING_APPROVAL: { label: 'Pending Approval', pill: 'bg-amber-50 text-amber-700 border-amber-200', dot: 'bg-amber-500 animate-pulse' },
+  AWAITING_AGENT: { label: 'Awaiting Agent', pill: 'bg-amber-50 text-amber-700 border-amber-200', dot: 'bg-amber-500' },
+  NEEDS_AGENT: { label: 'Needs Agent', pill: 'bg-slate-100 text-slate-700 border-slate-300', dot: 'bg-slate-400' },
+  AGENT_DECLINED: { label: 'Agent Declined', pill: 'bg-red-50 text-red-700 border-red-200', dot: 'bg-red-500' },
+  PUBLISHED: { label: 'Published', pill: 'bg-emerald-50 text-emerald-700 border-emerald-200', dot: 'bg-emerald-500' },
+  RESERVED: { label: 'Reserved', pill: 'bg-indigo-50 text-indigo-700 border-indigo-200', dot: 'bg-indigo-500' },
+  UNPUBLISHED: { label: 'Off Market', pill: 'bg-orange-50 text-orange-700 border-orange-200', dot: 'bg-orange-500' },
+  CLOSED: { label: 'Closed', pill: 'bg-slate-100 text-slate-700 border-slate-300', dot: 'bg-slate-500' },
+};
+
+function hasAssignedAgent(p) {
+  const key = p.list_agent_key || p.listAgentKey || p.agent_id || p.agentId;
+  if (key && String(key).trim() !== '') return true;
+  if (p.isCorporateDesk || p.is_corporate_desk) return false;
+  const candidate =
+    p.custom_reso_attributes?.credentials?.assignedAgent ||
+    p.customResoAttributes?.credentials?.assignedAgent ||
+    p.agentName ||
+    p.agent_name ||
+    p.agent?.name ||
+    '';
+  return Boolean(candidate && candidate !== 'Human Shelter Realty Desk');
+}
+
+function getBrokerDisplayStatus(p) {
+  const std = String(p.standard_status || p.standardStatus || '').toUpperCase();
+  const s = String(p.status || '').toUpperCase();
+  if (std === 'DRAFT') return 'DRAFT';
+  if (std === 'PENDING APPROVAL' || std === 'PENDING_APPROVAL') return 'PENDING_APPROVAL';
+  if (std === 'PENDING CONFIRMATION' || std === 'PENDING_CONFIRMATION') {
+    return hasAssignedAgent(p) ? 'AWAITING_AGENT' : 'NEEDS_AGENT';
+  }
+  if (std === 'ACTION REQUIRED' || std === 'ACTION_REQUIRED') return 'AGENT_DECLINED';
+  if (std === 'CLOSED' || s === 'SOLD') return 'CLOSED';
+  if (s === 'INACTIVE' || std === 'INACTIVE' || std === 'HOLD' || std === 'CANCELED' || std === 'CANCELLED' || std === 'EXPIRED' || p.is_published === false || p.isPublished === false) {
+    return 'UNPUBLISHED';
+  }
+  if (std === 'ACTIVE UNDER CONTRACT' || std === 'RESERVED' || std === 'PENDING' || s === 'RESERVED') {
+    return 'RESERVED';
+  }
+  return 'PUBLISHED';
+}
+
+function formatPhilippineDateTime(dateStr) {
+  if (!dateStr) return 'Unavailable';
+  try {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return 'Unavailable';
+    return new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Manila',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    }).format(date) + ' PST';
+  } catch {
+    return 'Unavailable';
+  }
+}
+
+function getDateActivityBadge(row, seenMap = {}, currentUserId = null) {
+  const propId = row.id || row.listingKey;
+  const createdRaw = row.created_at || row.createdAt;
+  const updatedRaw = row.updated_at || row.updatedAt;
+  const lastEdit = row.lastEdit || row.custom_reso_attributes?.lastEdit || row.customResoAttributes?.lastEdit;
+  const latestIso = lastEdit?.editedAt || updatedRaw || createdRaw;
+  if (!latestIso) return null;
+
+  const latestMs = new Date(latestIso).getTime();
+  if (isNaN(latestMs) || Date.now() - latestMs > ACTIVITY_TTL_MS) return null;
+
+  const seenIso = propId ? seenMap[propId] : null;
+  if (seenIso) {
+    const seenMs = new Date(seenIso).getTime();
+    if (!isNaN(seenMs) && latestMs <= seenMs) {
+      return null;
+    }
+  }
+
+  const createdMs = createdRaw ? new Date(createdRaw).getTime() : NaN;
+  const updatedMs = updatedRaw ? new Date(updatedRaw).getTime() : NaN;
+  if (lastEdit || (!isNaN(createdMs) && !isNaN(updatedMs) && updatedMs - createdMs > 60_000)) {
+    if (currentUserId && String(lastEdit?.editedById || '') === String(currentUserId)) {
+      return null;
+    }
+    return 'EDITED';
+  }
+  if (!isNaN(createdMs) && Date.now() - createdMs <= ACTIVITY_TTL_MS) {
+    const creatorId = row.created_by || row.createdBy || row.custom_reso_attributes?.created_by;
+    if (currentUserId && creatorId && String(creatorId) === String(currentUserId)) {
+      return null;
+    }
+    return 'NEW';
+  }
+  return null;
+}
+
 const AVAILABLE_COLUMNS = [
   { id: 'property', label: 'Property', isLocked: true, tiers: ['mobile', 'tablet', 'desktop'] },
   { id: 'location', label: 'Location', tiers: ['tablet', 'desktop'] },
   { id: 'property_type', label: 'Property Type', tiers: ['tablet', 'desktop'] },
   { id: 'specs', label: 'Specs', tiers: ['desktop'] },
   { id: 'price', label: 'Price', tiers: ['mobile', 'tablet', 'desktop'] },
+  { id: 'assigned_agent', label: 'Assigned Agent', tiers: ['tablet', 'desktop'] },
   { id: 'status', label: 'Status', tiers: ['mobile', 'tablet', 'desktop'] },
   { id: 'date_added', label: 'Date Added', tiers: ['desktop'] },
   { id: 'actions', label: 'Actions', isLocked: true, tiers: ['mobile', 'tablet', 'desktop'] },
 ];
 
-const DEFAULT_VISIBLE_COLUMNS = AVAILABLE_COLUMNS.map((c) => c.id);
-const STORAGE_KEY_COLUMNS = 'hsr_broker_properties_columns';
-
 export default function BrokerProperties() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
   const [properties, setProperties] = useState([]);
   const [proposals, setProposals] = useState([]);
@@ -136,45 +247,74 @@ export default function BrokerProperties() {
   const [error, setError] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isProcessingProposal, setIsProcessingProposal] = useState(false);
+  const [agentsById, setAgentsById] = useState({});
+  const [editDetailsTarget, setEditDetailsTarget] = useState(null);
+  const [auditTarget, setAuditTarget] = useState(null);
+  const [auditActivityState, setAuditActivityState] = useState(null);
+  const [auditEvents, setAuditEvents] = useState([]);
+  const [auditLoading, setAuditLoading] = useState(false);
+  const latestAuditReqRef = useRef(0);
+  const [seenActivity, setSeenActivity] = useState(() => {
+    try {
+      const raw = localStorage.getItem(SEEN_ACTIVITY_STORAGE_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch {
+      return {};
+    }
+  });
 
-  // Filters & State
-  const [activeTab, setActiveTab] = useState('ALL');
-  const [search, setSearch] = useState('');
+  // Filters & State (hydrated from URL so edits/refreshes preserve broker view)
+  const [activeTab, setActiveTab] = useState(() => searchParams.get('status') || 'ALL');
+  const [search, setSearch] = useState(() => searchParams.get('q') || '');
   const [statusFilter, setStatusFilter] = useState('ALL');
-  const [typeFilter, setTypeFilter] = useState('ALL');
-  const [locationFilter, setLocationFilter] = useState('ALL');
-  const [priceRange, setPriceRange] = useState({ min: '', max: '' });
-  const [sortBy, setSortBy] = useState('newest');
+  const [typeFilter, setTypeFilter] = useState(() => searchParams.get('type') || 'ALL');
+  const [locationFilter, setLocationFilter] = useState(() => searchParams.get('location') || 'ALL');
+  const [priceRange, setPriceRange] = useState(() => ({
+    min: searchParams.get('minPrice') || '',
+    max: searchParams.get('maxPrice') || '',
+  }));
+  const [sortBy, setSortBy] = useState(() => searchParams.get('sort') || 'newest');
 
   // Device Viewport-Adaptive Column Visibility State
   const {
     visibleColumns: visibleColumnKeys,
-    setVisibleColumns: handleVisibleColumnsChange,
-    resetToDeviceDefault: handleResetVisibleColumns,
-    currentTier: currentDeviceTier
   } = useResponsiveColumns({
     availableColumns: AVAILABLE_COLUMNS,
-    storageKey: STORAGE_KEY_COLUMNS,
   });
 
   const [selectedKeys, setSelectedKeys] = useState(new Set());
-  const [viewMode, setViewMode] = useState('table'); // 'table' | 'grid' | 'map'
+  const [viewMode, setViewMode] = useState(() => searchParams.get('view') || 'table'); // 'table' | 'grid' | 'map'
+
+  // Sync active filters, sort, and view mode to URL query params
+  useEffect(() => {
+    const next = new URLSearchParams();
+    if (search.trim()) next.set('q', search.trim());
+    if (activeTab && activeTab !== 'ALL') next.set('status', activeTab);
+    if (typeFilter && typeFilter !== 'ALL') next.set('type', typeFilter);
+    if (locationFilter && locationFilter !== 'ALL') next.set('location', locationFilter);
+    if (priceRange.min) next.set('minPrice', String(priceRange.min));
+    if (priceRange.max) next.set('maxPrice', String(priceRange.max));
+    if (sortBy && sortBy !== 'newest') next.set('sort', sortBy);
+    if (viewMode && viewMode !== 'table') next.set('view', viewMode);
+
+    if (next.toString() !== searchParams.toString()) {
+      setSearchParams(next, { replace: true });
+    }
+  }, [search, activeTab, typeFilter, locationFilter, priceRange.min, priceRange.max, sortBy, viewMode, searchParams, setSearchParams]);
   const [selectedMapPropertyId, setSelectedMapPropertyId] = useState(null);
   const [hoveredMapPropertyId, setHoveredMapPropertyId] = useState(null);
   const [reassignProp, setReassignProp] = useState(null);
   const [isReassignModalOpen, setIsReassignModalOpen] = useState(false);
-  const [toastMessage, setToastMessage] = useState(null);
 
-  const showToast = (msg) => {
-    setToastMessage(msg);
+  const showToast = (msg, variant) => {
+    const resolvedVariant = variant || (/^(failed|partial failure)/i.test(String(msg)) ? 'destructive' : 'success');
     if (typeof toast === 'function') {
       toast({
-        title: 'Listing Update',
+        title: resolvedVariant === 'destructive' ? 'Listing Error' : 'Listing Update',
         description: msg,
-        variant: 'default',
+        variant: resolvedVariant,
       });
     }
-    setTimeout(() => setToastMessage(null), 3500);
   };
 
   // Archive & Delete Modal States
@@ -224,21 +364,40 @@ export default function BrokerProperties() {
     }
   };
 
+  const syncUpdatedPropertyRow = (row, res, fallbackStd) => {
+    const targetId = row.id || row.listingKey;
+    const updatedProp = res?.property || res?.data || res;
+    const nextStd = updatedProp?.standard_status ?? updatedProp?.standardStatus ?? fallbackStd ?? row.standard_status;
+    const nextPub = updatedProp?.is_published ?? updatedProp?.isPublished;
+    if (updatedProp && (updatedProp.standardStatus !== undefined || updatedProp.standard_status !== undefined || nextPub !== undefined || fallbackStd)) {
+      const normalized = normalizeProperty({
+        ...row,
+        ...(typeof updatedProp === 'object' ? updatedProp : {}),
+        ...(fallbackStd && nextPub === undefined ? { status: 'available' } : {}),
+        ...(nextPub === false ? { status: 'pending' } : {}),
+        standard_status: nextStd,
+        standardStatus: nextStd,
+        ...(nextPub !== undefined ? { is_published: Boolean(nextPub), isPublished: Boolean(nextPub) } : {}),
+      });
+      setProperties(prev => prev.map(p => ((p.id || p.listingKey) === targetId ? normalized : p)));
+    }
+    return nextPub === false;
+  };
+
   const handleReactivateClick = async (row) => {
     const targetId = row.id || row.listingKey;
     try {
-      await propertyService.updateProperty(targetId, {
+      const res = await propertyService.updateProperty(targetId, {
         status: 'available',
         standard_status: 'Active',
         standardStatus: 'Active',
       });
-      setProperties(prev => prev.map(p => {
-        if (p.id === targetId || p.listingKey === targetId) {
-          return { ...p, status: 'available', standard_status: 'Active', standardStatus: 'Active' };
-        }
-        return p;
-      }));
-      showToast(`Listing "${row.title}" reactivated and restored to Active status.`);
+      const heldForConfirmation = syncUpdatedPropertyRow(row, res, 'Active');
+      showToast(
+        heldForConfirmation
+          ? `Listing "${row.title}" updated — waiting for agent confirmation.`
+          : `Listing "${row.title}" reactivated and restored to Active status.`
+      );
     } catch (err) {
       showToast(err.message || 'Failed to reactivate listing.');
     }
@@ -349,8 +508,8 @@ export default function BrokerProperties() {
       const rawList = response?.data && Array.isArray(response.data)
         ? response.data
         : Array.isArray(response)
-        ? response
-        : [];
+          ? response
+          : [];
       setProperties(rawList);
       setError(null);
     } catch (err) {
@@ -371,8 +530,8 @@ export default function BrokerProperties() {
   const fetchProposals = useCallback(async () => {
     try {
       const response = await propertyService.getEditRequests({ status: 'PENDING' });
-      const rawList = Array.isArray(response?.data) 
-        ? response.data 
+      const rawList = Array.isArray(response?.data)
+        ? response.data
         : response?.data?.requests || [];
       setProposals(rawList);
     } catch (err) {
@@ -405,60 +564,112 @@ export default function BrokerProperties() {
   useEffect(() => {
     fetchProperties();
     fetchProposals();
+    agentService.getAgents?.()
+      .then((list) => {
+        if (!Array.isArray(list)) return;
+        const map = {};
+        list.forEach((a) => {
+          if (a?.id) map[String(a.id)] = a;
+        });
+        setAgentsById(map);
+      })
+      .catch(() => { });
   }, [fetchProperties, fetchProposals]);
+
+  const dismissActivityBadge = useCallback((row) => {
+    const propId = row.id || row.listingKey;
+    if (!propId) return;
+    const lastEdit = row.lastEdit || row.custom_reso_attributes?.lastEdit || row.customResoAttributes?.lastEdit;
+    const latestIso = lastEdit?.editedAt || row.updated_at || row.updatedAt || row.created_at || row.createdAt || new Date().toISOString();
+    setSeenActivity((prev) => {
+      const next = { ...prev, [propId]: latestIso };
+      try {
+        localStorage.setItem(SEEN_ACTIVITY_STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        // Ignore storage errors
+      }
+      return next;
+    });
+  }, []);
+
+  const handleOpenAuditModal = useCallback(async (row, activityState = null) => {
+    const resolvedState = activityState ?? getDateActivityBadge(row, seenActivity, user?.id);
+    if (resolvedState) dismissActivityBadge(row);
+    const reqId = ++latestAuditReqRef.current;
+    setAuditTarget(row);
+    setAuditActivityState(resolvedState);
+    setAuditEvents([]);
+    setAuditLoading(true);
+    try {
+      const events = await auditService.listAuditEvents({
+        targetType: 'property',
+        targetId: row.id || row.listingKey,
+      });
+      if (reqId === latestAuditReqRef.current) {
+        setAuditEvents(Array.isArray(events) ? events : []);
+      }
+    } catch {
+      if (reqId === latestAuditReqRef.current) {
+        setAuditEvents([]);
+      }
+    } finally {
+      if (reqId === latestAuditReqRef.current) {
+        setAuditLoading(false);
+      }
+    }
+  }, [dismissActivityBadge, seenActivity, user?.id]);
+
+  const resolveAssignedAgentName = useCallback((row) => {
+    const key = row.list_agent_key || row.listAgentKey || row.agent_id || row.agentId;
+    if (key && agentsById[String(key)]) {
+      return agentsById[String(key)].full_name || agentsById[String(key)].name || '';
+    }
+    const candidate =
+      row.custom_reso_attributes?.credentials?.assignedAgent ||
+      row.customResoAttributes?.credentials?.assignedAgent ||
+      row.agentName ||
+      row.agent_name ||
+      row.agent?.name ||
+      '';
+    if (!key && (row.isCorporateDesk || row.is_corporate_desk || candidate === 'Human Shelter Realty Desk')) {
+      return '';
+    }
+    return candidate;
+  }, [agentsById]);
 
   // Tab counts calculated exclusively from actual dataset
   const tabCounts = useMemo(() => {
-    let needsApproval = 0;
-    let pendingConfirmation = 0;
-    let actionRequired = 0;
-    let active = 0;
-    let reserved = 0;
-    let sold = 0;
     let draft = 0;
-    let inactive = 0;
+    let pendingApproval = 0;
+    let awaitingAgent = 0;
+    let agentDeclined = 0;
+    let published = 0;
+    let reserved = 0;
+    let unpublished = 0;
+    let closed = 0;
 
-    properties.forEach(p => {
-      const std = String(p.standard_status || p.standardStatus || '').toUpperCase();
-      const s = String(p.status || '').toUpperCase();
-      const asg = String(p.assignment_status || p.assignmentStatus || '').toUpperCase();
-
-      if (asg === 'PENDING_CONFIRMATION' || std === 'PENDING CONFIRMATION') {
-        pendingConfirmation++;
-      }
-      if (asg === 'REJECTED' || std === 'ACTION REQUIRED') {
-        actionRequired++;
-      }
-      if (std === 'PENDING APPROVAL') {
-        needsApproval++;
-      }
-      if (std === 'ACTIVE' || s === 'AVAILABLE') {
-        active++;
-      }
-      if (std === 'ACTIVE UNDER CONTRACT' || s === 'RESERVED' || s === 'PENDING' || s === 'UNDER CONTRACT') {
-        reserved++;
-      }
-      if (std === 'CLOSED' || s === 'SOLD') {
-        sold++;
-      }
-      if (std === 'DRAFT') {
-        draft++;
-      }
-      if (s === 'INACTIVE' || std === 'HOLD' || std === 'INACTIVE') {
-        inactive++;
-      }
+    properties.forEach((p) => {
+      const bucket = getBrokerDisplayStatus(p);
+      if (bucket === 'DRAFT') draft++;
+      else if (bucket === 'PENDING_APPROVAL') pendingApproval++;
+      else if (bucket === 'AWAITING_AGENT') awaitingAgent++;
+      else if (bucket === 'AGENT_DECLINED') agentDeclined++;
+      else if (bucket === 'PUBLISHED') published++;
+      else if (bucket === 'RESERVED') reserved++;
+      else if (bucket === 'UNPUBLISHED') unpublished++;
+      else if (bucket === 'CLOSED') closed++;
     });
 
     return {
       all: properties.length,
-      pendingConfirmation,
-      actionRequired,
-      needsApproval,
-      active,
-      reserved,
-      sold,
       draft,
-      inactive,
+      pendingApproval,
+      awaitingAgent,
+      agentDeclined,
+      published,
+      reserved,
+      unpublished,
+      closed,
     };
   }, [properties]);
 
@@ -492,65 +703,34 @@ export default function BrokerProperties() {
       const pLoc = (p.location || '').toLowerCase();
       const pAddr = (p.address || '').toLowerCase();
       const pCity = (p.city || '').toLowerCase();
+      const pSubdiv = (p.subdivisionName || p.subdivision_name || '').toLowerCase();
+      const pAgent = resolveAssignedAgentName(p).toLowerCase();
       const pKey = (p.listingKey || p.listing_key || '').toLowerCase();
       const pId = String(p.listingId || p.listing_id || p.id || '').toLowerCase();
 
-      const matchesSearch = 
+      const matchesSearch =
         !q ||
         pTitle.includes(q) ||
         pLoc.includes(q) ||
         pAddr.includes(q) ||
         pCity.includes(q) ||
+        pSubdiv.includes(q) ||
+        pAgent.includes(q) ||
         pKey.includes(q) ||
         pId.includes(q);
 
-      const pStatus = String(p.status || '').toUpperCase();
-      const pStdStatus = String(p.standard_status || p.standardStatus || '').toUpperCase();
+      const displayStatus = getBrokerDisplayStatus(p);
 
-      // Horizontal Sub-Tab filter
+      // Horizontal Sub-Tab filter (5 simplified statuses)
       let matchesTab = true;
-      const isPendingConfirm = (p.assignment_status || p.assignmentStatus) === 'PENDING_CONFIRMATION' || pStdStatus === 'PENDING CONFIRMATION';
-      const isActionReq = (p.assignment_status || p.assignmentStatus) === 'REJECTED' || pStdStatus === 'ACTION REQUIRED';
-
-      if (activeTab === 'PENDING_CONFIRMATION') {
-        matchesTab = isPendingConfirm;
-      } else if (activeTab === 'ACTION_REQUIRED') {
-        matchesTab = isActionReq;
-      } else if (activeTab === 'NEEDS_APPROVAL') {
-        matchesTab = pStdStatus === 'PENDING APPROVAL';
-      } else if (activeTab === 'ACTIVE') {
-        matchesTab = pStdStatus === 'ACTIVE' || pStatus === 'AVAILABLE';
-      } else if (activeTab === 'RESERVED' || activeTab === 'CONTRACT') {
-        matchesTab = pStdStatus === 'ACTIVE UNDER CONTRACT' || pStatus === 'RESERVED' || pStatus === 'PENDING' || pStatus === 'UNDER CONTRACT';
-      } else if (activeTab === 'SOLD' || activeTab === 'CLOSED') {
-        matchesTab = pStdStatus === 'CLOSED' || pStatus === 'SOLD';
-      } else if (activeTab === 'DRAFT') {
-        matchesTab = pStdStatus === 'DRAFT';
-      } else if (activeTab === 'INACTIVE' || activeTab === 'ARCHIVED') {
-        matchesTab = pStatus === 'INACTIVE' || pStdStatus === 'HOLD' || pStdStatus === 'INACTIVE';
+      if (activeTab && activeTab !== 'ALL') {
+        matchesTab = displayStatus === activeTab.toUpperCase();
       }
 
       // Dropdown Status Filter
       let matchesStatus = true;
       if (statusFilter !== 'ALL') {
-        const sf = statusFilter.toUpperCase();
-        if (sf === 'PENDING_CONFIRMATION') {
-          matchesStatus = isPendingConfirm;
-        } else if (sf === 'ACTION_REQUIRED') {
-          matchesStatus = isActionReq;
-        } else if (sf === 'ACTIVE') {
-          matchesStatus = pStdStatus === 'ACTIVE' || pStatus === 'AVAILABLE';
-        } else if (sf === 'NEEDS_APPROVAL') {
-          matchesStatus = pStdStatus === 'PENDING APPROVAL';
-        } else if (sf === 'RESERVED') {
-          matchesStatus = pStdStatus === 'ACTIVE UNDER CONTRACT' || pStatus === 'RESERVED' || pStatus === 'PENDING' || pStatus === 'UNDER CONTRACT';
-        } else if (sf === 'SOLD') {
-          matchesStatus = pStdStatus === 'CLOSED' || pStatus === 'SOLD';
-        } else if (sf === 'DRAFT') {
-          matchesStatus = pStdStatus === 'DRAFT' || pStatus === 'INACTIVE';
-        } else {
-          matchesStatus = pStatus === sf || pStdStatus === sf;
-        }
+        matchesStatus = displayStatus === statusFilter.toUpperCase();
       }
 
       // Dropdown Property Type Filter
@@ -565,13 +745,18 @@ export default function BrokerProperties() {
         matchesLocation = (p.city || p.location || '').toLowerCase().includes(locationFilter.toLowerCase());
       }
 
-      // Price Range Filter
+      // Price Range Filter (skip inverted bounds while inline warning is shown)
       let matchesPrice = true;
-      if (priceRange.min !== '') {
-        matchesPrice = matchesPrice && (p.price_raw || p.price || 0) >= Number(priceRange.min);
-      }
-      if (priceRange.max !== '') {
-        matchesPrice = matchesPrice && (p.price_raw || p.price || 0) <= Number(priceRange.max);
+      const minNum = priceRange.min !== '' ? Number(priceRange.min) : null;
+      const maxNum = priceRange.max !== '' ? Number(priceRange.max) : null;
+      const priceValid = !(minNum !== null && maxNum !== null && minNum > maxNum);
+      if (priceValid) {
+        if (minNum !== null && !isNaN(minNum)) {
+          matchesPrice = matchesPrice && (p.price_raw || p.price || 0) >= minNum;
+        }
+        if (maxNum !== null && !isNaN(maxNum)) {
+          matchesPrice = matchesPrice && (p.price_raw || p.price || 0) <= maxNum;
+        }
       }
 
       return matchesSearch && matchesTab && matchesStatus && matchesType && matchesLocation && matchesPrice;
@@ -586,6 +771,10 @@ export default function BrokerProperties() {
       result.sort((a, b) => (a.price_raw || a.price || 0) - (b.price_raw || b.price || 0));
     } else if (sortBy === 'title_asc') {
       result.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+    } else if (sortBy === 'oldest') {
+      result.sort((a, b) => new Date(a.created_at || a.createdAt || 0) - new Date(b.created_at || b.createdAt || 0));
+    } else if (sortBy === 'title_desc') {
+      result.sort((a, b) => (b.title || '').localeCompare(a.title || ''));
     }
 
     return result;
@@ -617,6 +806,7 @@ export default function BrokerProperties() {
   // Approve listing inline
   const handleInlineApprove = async (e, row) => {
     e.stopPropagation();
+    dismissActivityBadge(row);
     const targetId = row.id || row.listingKey;
     const previousProperties = properties;
     setProperties(prev => prev.map(p => {
@@ -631,11 +821,16 @@ export default function BrokerProperties() {
       return p;
     }));
     try {
-      await propertyService.updateProperty(targetId, {
+      const res = await propertyService.updateProperty(targetId, {
         standardStatus: 'Active',
         status: 'AVAILABLE'
       });
-      showToast(`Approved & published "${row.title}"`);
+      const heldForConfirmation = syncUpdatedPropertyRow(row, res);
+      showToast(
+        heldForConfirmation
+          ? `Approved "${row.title}" — waiting for agent confirmation.`
+          : `Approved & published "${row.title}"`
+      );
     } catch (err) {
       console.error('API update failed, reverting:', err);
       setProperties(previousProperties);
@@ -652,7 +847,7 @@ export default function BrokerProperties() {
         price: Number(row.price_raw || row.price) || 0,
         property_type: row.property_type || row.propertyType || 'Residential',
         standard_status: 'Draft',
-        status: 'INACTIVE',
+        status: 'PENDING',
         city: row.city || row.location || 'Metro Manila',
         address: row.address || '',
         beds: Number(row.bedrooms ?? row.beds) || 0,
@@ -729,6 +924,7 @@ export default function BrokerProperties() {
     {
       id: 'property',
       header: "Property",
+      sortKey: 'title',
       className: "min-w-[280px]",
       render: (row) => {
         const title = formatPropertyDeveloperName(row, 'Independent Developer');
@@ -861,6 +1057,7 @@ export default function BrokerProperties() {
     {
       id: 'price',
       header: "Price",
+      sortKey: 'price',
       className: "min-w-[130px] text-xs",
       render: (row) => {
         const rawPrice = row.price_raw ?? (typeof row.price === 'number' ? row.price : null);
@@ -887,105 +1084,83 @@ export default function BrokerProperties() {
       }
     },
     {
+      id: 'assigned_agent',
+      header: "Assigned Agent",
+      className: "min-w-[155px]",
+      render: (row) => {
+        const agentName = resolveAssignedAgentName(row);
+        const asg = String(row.assignment_status || row.assignmentStatus || '').toUpperCase();
+        const initials = agentName
+          ? agentName
+            .split(/\s+/)
+            .filter(Boolean)
+            .slice(0, 2)
+            .map((w) => w[0].toUpperCase())
+            .join('')
+          : '';
+        const goToAgentAssignment = (e) => {
+          e.stopPropagation();
+          navigate(`/broker/properties/${row.id || row.listingKey}/edit?step=5`);
+        };
+        return (
+          <button
+            type="button"
+            onClick={goToAgentAssignment}
+            className="flex items-center gap-2 min-w-0 text-left rounded-lg px-1.5 py-1 -mx-1.5 hover:bg-[#F0FDFA] transition-colors cursor-pointer"
+            title="Open agent assignment in Step 5"
+          >
+            {agentName ? (
+              <>
+                <span className="size-6 rounded-full bg-[#F0FDFA] border border-[#0F766E]/20 text-[#0F766E] text-[10px] font-bold flex items-center justify-center shrink-0">
+                  {initials || 'AG'}
+                </span>
+                <div className="min-w-0">
+                  <span className="text-xs font-medium text-[#1E293B] truncate block max-w-[110px]" title={agentName}>
+                    {agentName}
+                  </span>
+                  {asg === 'PENDING_CONFIRMATION' && (
+                    <span className="inline-flex items-center gap-1 mt-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-200 leading-none">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                      Awaiting
+                    </span>
+                  )}
+                  {asg === 'REJECTED' && (
+                    <span className="inline-flex items-center gap-1 mt-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-red-50 text-red-700 border border-red-200 leading-none">
+                      <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                      Declined
+                    </span>
+                  )}
+                </div>
+              </>
+            ) : (
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                No agent assigned
+              </span>
+            )}
+          </button>
+        );
+      }
+    },
+    {
       id: 'status',
       header: "Status",
-      className: "min-w-[125px]",
+      className: "min-w-[130px]",
       render: (row) => {
-        const std = String(row.standard_status || row.standardStatus || row.status || '').toUpperCase();
-        const isPendingConfirm = (row.assignment_status || row.assignmentStatus) === 'PENDING_CONFIRMATION' || std === 'PENDING CONFIRMATION';
-        const isActionReq = (row.assignment_status || row.assignmentStatus) === 'REJECTED' || std === 'ACTION REQUIRED';
-        const isPendingApproval = std === 'PENDING APPROVAL';
-        const isActive = std === 'ACTIVE' || std === 'AVAILABLE';
-        const isUnderContract = std === 'ACTIVE UNDER CONTRACT' || std === 'UNDER CONTRACT';
-        const isReserved = std === 'RESERVED';
-        const isPending = std === 'PENDING';
-        const isClosed = std === 'CLOSED' || std === 'SOLD';
-        const isDraft = std === 'DRAFT' || std === 'INACTIVE';
-        const isKnown = isActive || isPendingApproval || isUnderContract || isReserved || isPending || isClosed || isDraft || isPendingConfirm || isActionReq;
+        const displayStatus = getBrokerDisplayStatus(row);
+        const cfg = BROKER_STATUS_STYLES[displayStatus] || BROKER_STATUS_STYLES.PUBLISHED;
 
         return (
           <div className="flex items-center gap-2">
-            {isPendingConfirm && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 text-amber-800 border border-amber-200">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                Pending Confirmation
-              </span>
-            )}
-            {isActionReq && (
-              <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-rose-50 text-rose-800 border border-rose-200">
-                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                  Action Required
-                </span>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setReassignProp(row);
-                    setIsReassignModalOpen(true);
-                  }}
-                  className="text-[10px] font-semibold text-[#0F766E] hover:text-[#115E59] bg-teal-50 hover:bg-teal-100 border border-teal-200 px-2 py-0.5 rounded-md cursor-pointer transition-colors shadow-2xs"
-                  title="Reassign to another agent"
-                >
-                  Reassign
-                </button>
-              </div>
-            )}
-            {!isPendingConfirm && !isActionReq && isActive && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-teal-50 text-teal-700 border border-teal-200">
-                <span className="w-1.5 h-1.5 rounded-full bg-teal-600" />
-                Active
-              </span>
-            )}
-            {isPendingApproval && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 text-amber-800 border border-amber-200">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                Needs Approval
-              </span>
-            )}
-            {isUnderContract && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 text-amber-700 border border-amber-200/60">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                Under Contract
-              </span>
-            )}
-            {isReserved && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 text-amber-700 border border-amber-200/60">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                Reserved
-              </span>
-            )}
-            {isPending && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 text-amber-700 border border-amber-200/60">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                Pending
-              </span>
-            )}
-            {isClosed && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-300">
-                <span className="w-1.5 h-1.5 rounded-full bg-slate-500" />
-                Closed / Sold
-              </span>
-            )}
-            {isDraft && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-50 text-slate-600 border border-slate-200">
-                <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-                Draft
-              </span>
-            )}
-            {!isKnown && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200" aria-label="Unknown status">
-                <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-                Unknown
-              </span>
-            )}
-
-            {isPendingApproval && (
+            <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium border ${cfg.pill}`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+              {cfg.label}
+            </span>
+            {displayStatus === 'PENDING_APPROVAL' && (
               <button
                 type="button"
                 onClick={(e) => handleInlineApprove(e, row)}
                 className="text-[10px] font-medium text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded-md cursor-pointer transition-colors"
-                title="Approve and activate"
+                title="Approve and publish"
               >
                 Approve
               </button>
@@ -997,20 +1172,62 @@ export default function BrokerProperties() {
     {
       id: 'date_added',
       header: "Date Added",
-      className: "min-w-[130px]",
+      sortKey: 'date',
+      className: "min-w-[140px]",
       render: (row) => {
         const rawDate = row.created_at || row.createdAt;
         const calDate = formatPhilippineCalendarDate(rawDate);
         const relDate = formatPhilippineRelativeTime(rawDate);
+        const activityBadge = getDateActivityBadge(row, seenActivity, user?.id);
+
+        const isHighlighted = activityBadge === 'NEW' || activityBadge === 'EDITED';
         return (
-          <div>
-            <p className="text-xs text-[#1E293B] font-medium leading-snug" title={`Philippine Standard Time: ${calDate}`}>
-              {calDate}
-            </p>
-            <p className="text-[11px] text-[#64748B] leading-tight" title={relDate}>
+          <button
+            type="button"
+            data-testid={`date-added-btn-${row.id || row.listingKey}`}
+            data-highlighted={isHighlighted ? activityBadge.toLowerCase() : 'false'}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleOpenAuditModal(row, activityBadge);
+            }}
+            className={cn(
+              'text-left rounded-lg px-2 py-1 -mx-2 transition-colors cursor-pointer flex flex-col gap-0.5 border',
+              activityBadge === 'NEW'
+                ? 'bg-[#F0FDFA] border-[#0F766E]/30 hover:bg-[#CCFBF1]/60'
+                : activityBadge === 'EDITED'
+                  ? 'bg-amber-50 border-amber-200 hover:bg-amber-100/70'
+                  : 'border-transparent hover:bg-slate-50'
+            )}
+            title="Click to view audit trail and listing preview"
+          >
+            <div className="flex items-center gap-1.5">
+              <span
+                className={cn(
+                  'text-xs font-medium leading-snug',
+                  activityBadge === 'NEW'
+                    ? 'text-[#0F766E] font-semibold'
+                    : activityBadge === 'EDITED'
+                      ? 'text-amber-900 font-semibold'
+                      : 'text-[#1E293B]'
+                )}
+              >
+                {calDate}
+              </span>
+              {activityBadge === 'NEW' && (
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-white text-[#0F766E] border border-[#0F766E]/25">
+                  New
+                </span>
+              )}
+              {activityBadge === 'EDITED' && (
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-white text-amber-800 border border-amber-300">
+                  Edited
+                </span>
+              )}
+            </div>
+            <span className="text-[11px] text-[#64748B] leading-tight">
               {relDate}
-            </p>
-          </div>
+            </span>
+          </button>
         );
       }
     },
@@ -1019,7 +1236,13 @@ export default function BrokerProperties() {
       header: "Actions",
       className: "w-14 text-center",
       render: (row) => {
-        const isArchived = String(row.status || '').toUpperCase() === 'INACTIVE' || String(row.standard_status || row.standardStatus || '').toUpperCase() === 'CLOSED' || String(row.standard_status || row.standardStatus || '').toUpperCase() === 'HOLD' || String(row.standard_status || row.standardStatus || '').toUpperCase() === 'INACTIVE';
+        const displayStatus = getBrokerDisplayStatus(row);
+        const isArchived = displayStatus !== 'DRAFT' && (
+          String(row.status || '').toUpperCase() === 'INACTIVE' ||
+          displayStatus === 'CLOSED' ||
+          String(row.standard_status || row.standardStatus || '').toUpperCase() === 'HOLD' ||
+          String(row.standard_status || row.standardStatus || '').toUpperCase() === 'INACTIVE'
+        );
         return (
           <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
             <DropdownMenu>
@@ -1035,7 +1258,10 @@ export default function BrokerProperties() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48 p-1 rounded-xl border border-[#E2E8F0] bg-white shadow-lg text-xs z-30 font-sans">
                 <DropdownMenuItem
-                  onClick={() => navigate(`/broker/properties/${row.id || row.listingKey}/edit`)}
+                  onClick={() => {
+                    dismissActivityBadge(row);
+                    navigate(`/broker/properties/${row.id || row.listingKey}/edit`);
+                  }}
                   className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-[#1E293B] hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"
                 >
                   <Edit3 className="w-3.5 h-3.5 text-[#0F766E]" />
@@ -1057,6 +1283,13 @@ export default function BrokerProperties() {
                 >
                   <Copy className="w-3.5 h-3.5 text-[#64748B]" />
                   <span>Duplicate Property</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => handleOpenAuditModal(row)}
+                  className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-[#1E293B] hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"
+                >
+                  <History className="w-3.5 h-3.5 text-[#0F766E]" />
+                  <span>Audit Trail</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className="my-1 bg-[#E2E8F0]" />
                 {isArchived ? (
@@ -1174,15 +1407,7 @@ export default function BrokerProperties() {
   ];
 
   return (
-    <div className="space-y-5 min-w-0 max-w-full">
-      
-      {/* Toast Notification */}
-      {toastMessage && (
-        <div className="fixed top-20 right-6 z-50 bg-[#1E293B] text-white px-4 py-2.5 rounded-lg shadow-xl text-xs font-medium border border-slate-700 animate-in fade-in duration-150 flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-emerald-400" />
-          <span>{toastMessage}</span>
-        </div>
-      )}
+    <div className="flex flex-col gap-6 w-full min-w-0 max-w-full">
 
       {/* Truthful Connection Notice / Error State (No Mock Data Fallback) */}
       {error && properties.length > 0 && (
@@ -1204,20 +1429,7 @@ export default function BrokerProperties() {
       {/* Header Section Matching Mockup */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          {/* Breadcrumbs */}
-          <div className="flex items-center gap-1.5 text-xs text-[#64748B] mb-1 font-medium">
-            <Link to="/broker/dashboard" className="hover:text-[#1E293B] transition-colors">
-              Home
-            </Link>
-            <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-            <Link to="/broker/properties" className="hover:text-[#1E293B] transition-colors">
-              Properties
-            </Link>
-            <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-            <span className="text-[#1E293B] font-semibold">All Listings</span>
-          </div>
-
-          <h1 className="text-xl sm:text-2xl font-bold text-[#1E293B] tracking-tight">
+          <h1 className="text-3xl sm:text-[36px] font-bold font-display text-[#1E293B] tracking-tight leading-tight">
             Property Listings
           </h1>
           <p className="text-xs text-[#64748B] mt-0.5">
@@ -1275,26 +1487,17 @@ export default function BrokerProperties() {
             <RotateCw className={cn("w-3.5 h-3.5 text-slate-500", isRefreshing && "animate-spin")} />
             <span>Refresh</span>
           </button>
-          
+
           <Link
-            to="/broker/properties/select-type"
+            to="/broker/properties/create"
             className={cn(
               buttonVariants({ variant: "default" }),
-              "h-9 sm:h-10 px-3 sm:px-4 flex-1 sm:flex-none justify-center flex items-center gap-1.5 cursor-pointer shadow-xs whitespace-nowrap"
+              "h-9 sm:h-10 px-3 sm:px-4 flex-1 sm:flex-none justify-center flex items-center gap-1.5 cursor-pointer shadow-xs whitespace-nowrap normal-case"
             )}
             aria-label="New Listing / Add New Property"
           >
             <Plus className="w-4 h-4 stroke-[2.5]" />
             <span className="font-medium">Add New Property</span>
-          </Link>
-
-          <Link
-            to="/broker/properties/studio"
-            className="h-9 sm:h-10 px-3 sm:px-4 flex items-center gap-1.5 rounded-lg border border-[#0F766E]/40 bg-teal-50/70 hover:bg-teal-100 text-[#0F766E] text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
-            title="Open Cadastral Multi-Lot Map Studio"
-          >
-            <MapIcon className="w-4 h-4 stroke-[2.2]" />
-            <span>Map Studio</span>
           </Link>
         </div>
       </div>
@@ -1307,15 +1510,14 @@ export default function BrokerProperties() {
         onStatusTabChange={setActiveTab}
         statusCounts={{
           all: tabCounts.all,
-          active: tabCounts.active,
-          needsApproval: tabCounts.needsApproval,
-          proposals: proposals.length,
-          pendingConfirmation: tabCounts.pendingConfirmation,
-          actionRequired: tabCounts.actionRequired,
-          reserved: tabCounts.reserved,
-          sold: tabCounts.sold,
           draft: tabCounts.draft,
-          inactive: tabCounts.inactive
+          pendingApproval: tabCounts.pendingApproval,
+          awaitingAgent: tabCounts.awaitingAgent,
+          agentDeclined: tabCounts.agentDeclined,
+          published: tabCounts.published,
+          reserved: tabCounts.reserved,
+          unpublished: tabCounts.unpublished,
+          closed: tabCounts.closed,
         }}
         selectedType={typeFilter}
         onTypeChange={setTypeFilter}
@@ -1330,11 +1532,6 @@ export default function BrokerProperties() {
         onResetFilters={handleClearFilters}
         totalCount={properties.length}
         filteredCount={filteredProperties.length}
-        availableColumns={AVAILABLE_COLUMNS}
-        visibleColumns={visibleColumnKeys}
-        onVisibleColumnsChange={handleVisibleColumnsChange}
-        onResetColumns={handleResetVisibleColumns}
-        currentTier={currentDeviceTier}
       />
 
       {/* Main Data Table or Neutral Empty / Loading States */}
@@ -1366,64 +1563,93 @@ export default function BrokerProperties() {
           <TableSkeleton rows={6} />
         )
       ) : error && properties.length === 0 ? (
-        <div className="bg-white rounded-lg border border-red-200 bg-red-50/20 p-12 text-center space-y-4 shadow-xs">
-          <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto text-red-600">
-            <AlertCircle className="w-6 h-6" />
+        <Alert variant="destructive" className="rounded-xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <AlertCircle className="size-5" />
+          <div className="flex-1">
+            <AlertTitle className="text-sm font-semibold">Failed to load property listings</AlertTitle>
+            <AlertDescription className="text-xs mt-1">{error}</AlertDescription>
           </div>
-          <div>
-            <h3 className="text-sm font-bold text-[#1E293B]">Failed to load property listings</h3>
-            <p className="text-xs text-[#64748B] mt-1 max-w-sm mx-auto">
-              {error}
-            </p>
-          </div>
-          <button
+          <Button
             type="button"
             onClick={() => fetchProperties()}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-semibold rounded-lg shadow-2xs transition-colors cursor-pointer"
+            className="h-10 px-4 rounded-lg normal-case tracking-normal text-xs font-semibold shrink-0"
           >
-            <RotateCw className="w-4 h-4" />
+            <RotateCw data-icon="inline-start" />
             <span>Retry Connection</span>
-          </button>
-        </div>
+          </Button>
+        </Alert>
       ) : properties.length === 0 ? (
-        <div className="bg-white rounded-lg border border-[#E2E8F0] p-12 text-center space-y-4 shadow-xs">
-          <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto text-slate-400">
-            <Building2 className="w-6 h-6" />
-          </div>
-          <div>
-            <h3 className="text-sm font-bold text-[#1E293B]">No property listings yet</h3>
-            <p className="text-xs text-[#64748B] mt-1 max-w-sm mx-auto">
-              No property records currently exist in the database. Add your first listing to populate the directory.
-            </p>
-          </div>
-          <Link
-            to="/broker/properties/select-type"
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#FF6B6B] hover:bg-[#EE5A5A] text-[#1E293B] text-xs font-semibold rounded-lg shadow-2xs transition-colors cursor-pointer"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Create First Listing</span>
-          </Link>
-        </div>
+        <Empty className="bg-white border border-dashed border-[#CBD5E1] rounded-xl p-10 shadow-xs">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <Building2 />
+            </EmptyMedia>
+            <EmptyTitle>No property listings yet</EmptyTitle>
+            <EmptyDescription>Add your first property listing to begin managing your firm&apos;s inventory.</EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button asChild variant="coral" className="h-10 px-4 rounded-lg normal-case tracking-normal text-xs font-semibold">
+              <Link to="/broker/properties/create">
+                <Plus data-icon="inline-start" />
+                <span>Add New Listing</span>
+              </Link>
+            </Button>
+          </EmptyContent>
+        </Empty>
       ) : filteredProperties.length === 0 ? (
-        <div className="bg-white rounded-lg border border-[#E2E8F0] p-12 text-center space-y-4 shadow-xs">
-          <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto text-slate-400">
-            <Search className="w-6 h-6" />
-          </div>
-          <div>
-            <h3 className="text-sm font-bold text-[#1E293B]">No properties match your filter criteria</h3>
-            <p className="text-xs text-[#64748B] mt-1 max-w-sm mx-auto">
-              Try adjusting or clearing your search term and filters to see available listings.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={handleClearFilters}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-[#1E293B] text-xs font-semibold rounded-lg transition-colors cursor-pointer"
-          >
-            <SlidersHorizontal className="w-4 h-4" />
-            <span>Reset All Filters</span>
-          </button>
-        </div>
+        <Empty className="bg-white border border-dashed border-[#CBD5E1] rounded-xl p-10 shadow-xs">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <Search />
+            </EmptyMedia>
+            <EmptyTitle>No properties match your filter criteria</EmptyTitle>
+            <EmptyDescription>
+              Try removing a strict filter below or reset all filters to see available listings.
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              {search.trim() !== '' && (
+                <Button type="button" variant="outline" size="sm" onClick={() => setSearch('')} className="normal-case tracking-normal">
+                  Clear search &quot;{search.trim()}&quot;
+                  <X data-icon="inline-end" />
+                </Button>
+              )}
+              {activeTab !== 'ALL' && (
+                <Button type="button" variant="outline" size="sm" onClick={() => setActiveTab('ALL')} className="normal-case tracking-normal">
+                  Clear status filter
+                  <X data-icon="inline-end" />
+                </Button>
+              )}
+              {typeFilter !== 'ALL' && (
+                <Button type="button" variant="outline" size="sm" onClick={() => setTypeFilter('ALL')} className="normal-case tracking-normal">
+                  Clear type: {typeFilter}
+                  <X data-icon="inline-end" />
+                </Button>
+              )}
+              {locationFilter !== 'ALL' && (
+                <Button type="button" variant="outline" size="sm" onClick={() => setLocationFilter('ALL')} className="normal-case tracking-normal">
+                  Clear location: {locationFilter}
+                  <X data-icon="inline-end" />
+                </Button>
+              )}
+              {(priceRange.min || priceRange.max) && (
+                <Button type="button" variant="outline" size="sm" onClick={() => setPriceRange({ min: '', max: '' })} className="normal-case tracking-normal">
+                  Clear price range
+                  <X data-icon="inline-end" />
+                </Button>
+              )}
+              <Button
+                type="button"
+                onClick={handleClearFilters}
+                className="h-10 px-4 rounded-lg normal-case tracking-normal text-xs font-semibold"
+              >
+                <SlidersHorizontal data-icon="inline-start" />
+                <span>Reset All Filters</span>
+              </Button>
+            </div>
+          </EmptyContent>
+        </Empty>
       ) : (
         viewMode === 'map' ? (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start" data-lenis-prevent="true" data-testid="cadastral-split-view">
@@ -1436,8 +1662,8 @@ export default function BrokerProperties() {
               {filteredProperties.map((prop) => {
                 const isSelected = selectedMapPropertyId === prop.id;
                 const isHovered = hoveredMapPropertyId === prop.id;
-                const priceDisplay = typeof prop.price === 'number' 
-                  ? `₱${prop.price.toLocaleString()}` 
+                const priceDisplay = typeof prop.price === 'number'
+                  ? `₱${prop.price.toLocaleString()}`
                   : (prop.price || 'Price upon request');
 
                 return (
@@ -1487,7 +1713,7 @@ export default function BrokerProperties() {
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs">
                       <div className="flex items-center gap-3 text-[11px] text-[#64748B]">
                         {prop.bedrooms != null && (
@@ -1535,11 +1761,11 @@ export default function BrokerProperties() {
         ) : viewMode === 'grid' ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" data-testid="grid-view">
             {filteredProperties.map((prop) => {
-              const priceDisplay = typeof prop.price === 'number' 
-                ? `₱${prop.price.toLocaleString()}` 
+              const priceDisplay = typeof prop.price === 'number'
+                ? `₱${prop.price.toLocaleString()}`
                 : (prop.price || 'Price upon request');
               return (
-                <div
+                <Card
                   key={prop.id}
                   onClick={() => navigate(`/broker/properties/${prop.id || prop.listingKey || prop.listingId}/edit`)}
                   className="rounded-xl border border-[#E2E8F0] bg-white overflow-hidden shadow-xs hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between"
@@ -1587,36 +1813,42 @@ export default function BrokerProperties() {
                       <span>•</span>
                       <span>{prop.bathrooms ?? 0} baths</span>
                     </div>
-                    <button
+                    <Button
                       type="button"
+                      size="sm"
                       onClick={(e) => {
                         e.stopPropagation();
                         navigate(`/broker/properties/${prop.id || prop.listingKey || prop.listingId}/edit`);
                       }}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer select-none"
+                      className="rounded-full bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-semibold gap-1.5 normal-case"
                       title="Edit listing in studio"
                     >
-                      <Edit3 className="w-3 h-3" />
+                      <Edit3 className="size-3" />
                       <span>Edit</span>
-                    </button>
+                    </Button>
                   </div>
-                </div>
+                </Card>
               );
             })}
           </div>
         ) : (
-                  <DataTable
-          columns={displayedColumns}
-          data={filteredProperties}
-          keyField="id"
-          pageSize={8}
-          selectable={true}
-          selectedKeys={selectedKeys}
-          onToggleSelect={handleToggleSelect}
-          onToggleSelectAll={handleToggleSelectAll}
-          onRowClick={(row) => navigate(`/broker/properties/${row.id || row.listingKey || row.listingId}/edit`)}
-          emptyMessage="No properties match your filter criteria."
-        />
+          <DataTable
+            columns={displayedColumns}
+            data={filteredProperties}
+            keyField="id"
+            pageSize={8}
+            selectable={true}
+            selectedKeys={selectedKeys}
+            onToggleSelect={handleToggleSelect}
+            onToggleSelectAll={handleToggleSelectAll}
+            sortBy={sortBy}
+            onSortChange={setSortBy}
+            onRowClick={(row) => {
+              dismissActivityBadge(row);
+              navigate(`/broker/properties/${row.id || row.listingKey || row.listingId}/edit`);
+            }}
+            emptyMessage="No properties match your filter criteria."
+          />
         )
       )}
 
@@ -1741,7 +1973,246 @@ export default function BrokerProperties() {
           showToast('Listing successfully reassigned. Waiting for new agent confirmation.');
         }}
       />
-      <Toaster />
+      {/* Edit Details Dialog */}
+      <Dialog open={Boolean(editDetailsTarget)} onOpenChange={(open) => !open && setEditDetailsTarget(null)}>
+        <DialogContent className="max-w-lg bg-white border-[#E2E8F0] rounded-xl">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-[#1E293B]">
+              Listing Edit Details
+            </DialogTitle>
+            <DialogDescription className="text-xs text-[#64748B]">
+              {editDetailsTarget?.title || 'Property listing'}
+            </DialogDescription>
+          </DialogHeader>
+          {(() => {
+            const le =
+              editDetailsTarget?.lastEdit ||
+              editDetailsTarget?.custom_reso_attributes?.lastEdit ||
+              editDetailsTarget?.customResoAttributes?.lastEdit ||
+              {};
+            const editedAt = le.editedAt || editDetailsTarget?.updated_at || editDetailsTarget?.updatedAt;
+            const editorLabel = le.editedByName
+              ? `${le.editedByName}${le.editedByRole ? ` (${le.editedByRole})` : ''}`
+              : 'Broker / System';
+            const changes = Array.isArray(le.changes) ? le.changes : [];
+            return (
+              <div className="flex flex-col gap-4 text-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
+                  <div>
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-[#64748B] block">
+                      Changed By
+                    </span>
+                    <span className="text-xs font-semibold text-[#1E293B]">{editorLabel}</span>
+                  </div>
+                  <div>
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-[#64748B] block">
+                      Date &amp; Time
+                    </span>
+                    <span className="text-xs font-semibold text-[#1E293B]">
+                      {formatPhilippineDateTime(editedAt)}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <span className="text-xs font-semibold text-[#1E293B]">Changes Made</span>
+                  {changes.length > 0 ? (
+                    <div className="divide-y divide-[#E2E8F0] rounded-lg border border-[#E2E8F0] overflow-hidden">
+                      {changes.map((c, idx) => (
+                        <div key={`${c.field}-${idx}`} className="px-3 py-2 text-xs flex flex-col gap-0.5 bg-white">
+                          <span className="font-semibold text-[#1E293B]">{c.field}</span>
+                          <span className="text-[#64748B]">
+                            {String(c.from ?? '—')} → <span className="text-[#0F766E] font-medium">{String(c.to ?? '—')}</span>
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-[#64748B] p-3 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
+                      Updated listing details
+                    </p>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setEditDetailsTarget(null)}
+              className="min-h-10 rounded-lg border-[#E2E8F0]"
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Property Audit Trail Modal */}
+      <Dialog
+        open={Boolean(auditTarget)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setAuditTarget(null);
+            setAuditActivityState(null);
+            setAuditEvents([]);
+          }
+        }}
+      >
+        <DialogContent className="max-w-xl bg-white border-[#E2E8F0] rounded-xl">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-[#1E293B] flex items-center gap-2">
+              <History className="w-4 h-4 text-[#0F766E]" />
+              Property Audit Trail
+            </DialogTitle>
+            <DialogDescription className="text-xs text-[#64748B]">
+              ID: {auditTarget?.listingKey || auditTarget?.listing_key || auditTarget?.id}
+            </DialogDescription>
+          </DialogHeader>
+
+          {auditTarget && (() => {
+            const previewStatus = getBrokerDisplayStatus(auditTarget);
+            const statusMeta = BROKER_STATUS_STYLES[previewStatus] || BROKER_STATUS_STYLES.PUBLISHED;
+            const rawPrice = auditTarget.price_raw ?? auditTarget.price;
+            const previewPrice = rawPrice != null && !isNaN(Number(rawPrice)) && Number(rawPrice) > 0
+              ? `₱${Number(rawPrice).toLocaleString()}`
+              : 'Price not provided';
+            const previewLoc = [auditTarget.address, auditTarget.city].filter(Boolean).join(', ') || 'Location not set';
+            return (
+              <div className="p-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] flex items-center gap-3">
+                <PropertyThumbnail
+                  image={auditTarget.mainImage || auditTarget.image || (Array.isArray(auditTarget.images) ? auditTarget.images[0] : '') || (Array.isArray(auditTarget.property_images) && auditTarget.property_images[0] ? (auditTarget.property_images[0].imageUrl || auditTarget.property_images[0].image_url) : '')}
+                  title={auditTarget.title || 'Property'}
+                />
+                <div className="min-w-0 flex-1 flex flex-col gap-0.5">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-sm font-bold text-[#1E293B] truncate">
+                      {auditTarget.title || 'Untitled Property'}
+                    </span>
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${statusMeta.pill}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${statusMeta.dot}`} />
+                      {statusMeta.label}
+                    </span>
+                    {auditActivityState === 'NEW' && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#F0FDFA] text-[#0F766E] border border-[#0F766E]/25">
+                        New
+                      </span>
+                    )}
+                    {auditActivityState === 'EDITED' && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                        Edited
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-xs text-[#64748B] truncate">{previewLoc}</span>
+                  <span className="text-xs font-bold font-mono text-[#0F766E]">{previewPrice}</span>
+                </div>
+              </div>
+            );
+          })()}
+
+          <div className="max-h-[55vh] overflow-y-auto flex flex-col gap-3 pr-1">
+            {auditLoading ? (
+              <div className="py-8 flex items-center justify-center gap-2 text-xs text-[#64748B]">
+                <Spinner className="w-4 h-4" />
+                <span>Loading audit history...</span>
+              </div>
+            ) : (() => {
+              const lastEdit =
+                auditTarget?.lastEdit ||
+                auditTarget?.custom_reso_attributes?.lastEdit ||
+                auditTarget?.customResoAttributes?.lastEdit;
+              const createdRaw = auditTarget?.created_at || auditTarget?.createdAt;
+
+              if (auditEvents.length === 0 && !lastEdit && !createdRaw) {
+                return (
+                  <p className="text-xs text-[#64748B] p-4 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] text-center">
+                    No audit activity recorded for this listing yet.
+                  </p>
+                );
+              }
+
+              const renderAuditChanges = (changes) =>
+                Array.isArray(changes) && changes.length > 0 ? (
+                  <div className="mt-1 divide-y divide-[#E2E8F0] rounded-md border border-[#E2E8F0] bg-white overflow-hidden">
+                    {changes.map((c, idx) => (
+                      <div key={`${c.field}-${idx}`} className="px-2.5 py-1.5 flex items-center justify-between gap-2">
+                        <span className="font-semibold text-[#1E293B]">{c.field}</span>
+                        <span className="text-[#64748B]">
+                          {String(c.from ?? '—')} → <span className="text-[#0F766E] font-medium">{String(c.to ?? '—')}</span>
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : null;
+
+              return (
+                <>
+                  {auditEvents.map((ev) => (
+                    <div key={ev.id} className="p-3 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] flex flex-col gap-1.5 text-xs">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-semibold text-[#1E293B] capitalize">
+                          {String(ev.eventType || 'event').replace(/[._]/g, ' ')}
+                        </span>
+                        <span className="text-[11px] text-[#64748B]">
+                          {formatPhilippineDateTime(ev.createdAt)}
+                        </span>
+                      </div>
+                      <p className="text-[#475569]">
+                        By <span className="font-semibold text-[#1E293B]">{ev.actorName || 'Broker / System'}</span>
+                        {ev.actorRole ? ` (${ev.actorRole})` : ''}
+                        {ev.outcome ? ` • ${ev.outcome}` : ''}
+                      </p>
+                      {ev.reason && <p className="text-[#64748B]">{ev.reason}</p>}
+                      {renderAuditChanges(ev.newValues?.changes)}
+                    </div>
+                  ))}
+
+                  {auditEvents.length === 0 && lastEdit && (
+                    <div className="p-3 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] flex flex-col gap-1.5 text-xs">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-semibold text-[#1E293B]">Latest Listing Edit</span>
+                        <span className="text-[11px] text-[#64748B]">
+                          {formatPhilippineDateTime(lastEdit.editedAt || auditTarget?.updated_at || auditTarget?.updatedAt)}
+                        </span>
+                      </div>
+                      <p className="text-[#475569]">
+                        By <span className="font-semibold text-[#1E293B]">{lastEdit.editedByName || 'Broker / System'}</span>
+                        {lastEdit.editedByRole ? ` (${lastEdit.editedByRole})` : ''}
+                      </p>
+                      {renderAuditChanges(lastEdit.changes)}
+                    </div>
+                  )}
+
+                  {createdRaw && (
+                    <div className="p-3 rounded-lg border border-[#E2E8F0] bg-white flex items-center justify-between gap-2 text-xs">
+                      <span className="font-semibold text-[#1E293B]">Listing Created</span>
+                      <span className="text-[#64748B]">{formatPhilippineDateTime(createdRaw)}</span>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setAuditTarget(null);
+                setAuditEvents([]);
+              }}
+              className="min-h-10 rounded-lg border-[#E2E8F0]"
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Toaster position="top-right" />
     </div>
   );
 }

@@ -146,7 +146,9 @@ CREATE INDEX IF NOT EXISTS idx_inquiries_business_status ON public.inquiries(bus
 CREATE INDEX IF NOT EXISTS idx_inquiries_brokerage ON public.inquiries(brokerage_id);
 CREATE INDEX IF NOT EXISTS idx_inquiry_messages_request_id ON public.inquiry_messages(request_id);
 CREATE INDEX IF NOT EXISTS idx_inquiry_sessions_inquiry_id ON public.inquiry_chat_sessions(inquiry_id);
+CREATE INDEX IF NOT EXISTS idx_inquiry_sessions_agent_id ON public.inquiry_chat_sessions(agent_id);
 CREATE INDEX IF NOT EXISTS idx_inquiry_tasks_inquiry_id ON public.inquiry_follow_up_tasks(inquiry_id, status);
+CREATE INDEX IF NOT EXISTS idx_inquiry_tasks_assigned_to ON public.inquiry_follow_up_tasks(assigned_to, status);
 CREATE INDEX IF NOT EXISTS idx_inquiry_summaries_inquiry_id ON public.inquiry_ai_summaries(inquiry_id, version DESC);
 CREATE INDEX IF NOT EXISTS idx_audit_events_inquiry_id ON public.audit_events(inquiry_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_audit_events_brokerage ON public.audit_events(brokerage_id, event_type, created_at DESC);
@@ -168,7 +170,7 @@ CREATE POLICY "Brokers and admins can view audit events."
   TO authenticated
   USING (
     EXISTS (
-      SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('broker', 'admin')
+      SELECT 1 FROM public.profiles WHERE id = (select auth.uid()) AND role IN ('broker', 'admin')
     )
   );
 
@@ -181,8 +183,81 @@ CREATE POLICY "Authorized staff can view AI summaries."
     EXISTS (
       SELECT 1 FROM public.inquiries i
       WHERE i.id = inquiry_id AND (
-        i.assigned_agent_id = auth.uid() OR
-        EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('broker', 'admin'))
+        i.assigned_agent_id = (select auth.uid()) OR
+        EXISTS (SELECT 1 FROM public.profiles WHERE id = (select auth.uid()) AND role IN ('broker', 'admin'))
       )
+    )
+  );
+
+-- Policies for inquiry_chat_sessions (Client, assigned agent, broker, admin)
+DROP POLICY IF EXISTS "Stakeholders can view chat sessions." ON public.inquiry_chat_sessions;
+CREATE POLICY "Stakeholders can view chat sessions."
+  ON public.inquiry_chat_sessions FOR SELECT
+  TO authenticated
+  USING (
+    client_id = (select auth.uid()) OR
+    agent_id = (select auth.uid()) OR
+    EXISTS (
+      SELECT 1 FROM public.profiles WHERE id = (select auth.uid()) AND role IN ('broker', 'admin')
+    )
+  );
+
+-- Policies for inquiry_follow_up_tasks (Assigned agent, broker, admin)
+DROP POLICY IF EXISTS "Authorized staff can view follow-up tasks." ON public.inquiry_follow_up_tasks;
+CREATE POLICY "Authorized staff can view follow-up tasks."
+  ON public.inquiry_follow_up_tasks FOR SELECT
+  TO authenticated
+  USING (
+    assigned_to = (select auth.uid()) OR
+    EXISTS (
+      SELECT 1 FROM public.profiles WHERE id = (select auth.uid()) AND role IN ('broker', 'admin')
+    )
+  );
+
+DROP POLICY IF EXISTS "Authorized staff can manage follow-up tasks." ON public.inquiry_follow_up_tasks;
+CREATE POLICY "Authorized staff can manage follow-up tasks."
+  ON public.inquiry_follow_up_tasks FOR ALL
+  TO authenticated
+  USING (
+    assigned_to = (select auth.uid()) OR
+    EXISTS (
+      SELECT 1 FROM public.profiles WHERE id = (select auth.uid()) AND role IN ('broker', 'admin')
+    )
+  )
+  WITH CHECK (
+    assigned_to = (select auth.uid()) OR
+    EXISTS (
+      SELECT 1 FROM public.profiles WHERE id = (select auth.uid()) AND role IN ('broker', 'admin')
+    )
+  );
+
+-- Policies for notification_preferences (User owns their preferences)
+DROP POLICY IF EXISTS "Users can manage own notification preferences." ON public.notification_preferences;
+CREATE POLICY "Users can manage own notification preferences."
+  ON public.notification_preferences FOR ALL
+  TO authenticated
+  USING (user_id = (select auth.uid()))
+  WITH CHECK (user_id = (select auth.uid()));
+
+-- Policies for notification_jobs (Recipient or broker/admin)
+DROP POLICY IF EXISTS "Users can view own notification jobs." ON public.notification_jobs;
+CREATE POLICY "Users can view own notification jobs."
+  ON public.notification_jobs FOR SELECT
+  TO authenticated
+  USING (
+    recipient_id = (select auth.uid())::text OR
+    EXISTS (
+      SELECT 1 FROM public.profiles WHERE id = (select auth.uid()) AND role IN ('broker', 'admin')
+    )
+  );
+
+-- Policies for notification_delivery_attempts (Broker/Admin read only)
+DROP POLICY IF EXISTS "Brokers and admins can view delivery attempts." ON public.notification_delivery_attempts;
+CREATE POLICY "Brokers and admins can view delivery attempts."
+  ON public.notification_delivery_attempts FOR SELECT
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles WHERE id = (select auth.uid()) AND role IN ('broker', 'admin')
     )
   );

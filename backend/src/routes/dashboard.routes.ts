@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { DashboardController } from '../controllers/dashboard.controller';
-import { optionalAuth } from '../middleware/auth.middleware';
+import { requireAuth } from '../middleware/auth.middleware';
+import { requireRole } from '../middleware/role.middleware';
 
 const router = Router();
 
@@ -8,12 +9,12 @@ const router = Router();
  * GET /api/dashboard/summary
  * Retrieve aggregated dashboard metrics, recent records, and activity
  */
-router.get('/summary', optionalAuth, DashboardController.getSummary);
+router.get('/summary', requireAuth, requireRole(['agent', 'broker', 'admin']), DashboardController.getSummary);
 
 /**
  * GET /api/dashboard
  * Alias for summary
  */
-router.get('/', optionalAuth, DashboardController.getSummary);
+router.get('/', requireAuth, requireRole(['agent', 'broker', 'admin']), DashboardController.getSummary);
 
 export default router;

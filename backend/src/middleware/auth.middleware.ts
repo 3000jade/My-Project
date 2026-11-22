@@ -132,9 +132,10 @@ export const requireAuth = async (
     req.user = userObj;
     next();
   } catch (err: any) {
+    const isProd = process.env.NODE_ENV === 'production';
     res.status(500).json({
       success: false,
-      error: `Authentication failed: ${err.message || 'Internal server error'}`,
+      error: `Authentication failed: ${isProd ? 'Internal server error' : (err.message || 'Internal server error')}`,
       timestamp: new Date().toISOString(),
     });
   }
@@ -154,13 +155,15 @@ export const optionalAuth = async (
 
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.split(' ')[1];
-      const existingSession = SessionService.getSession(token);
-      if (existingSession) {
-        const check = SessionService.validateSession(token, Date.now(), false);
-        if (!check.valid) {
-          next();
-          return;
-        }
+      const existingSession = await SessionService.getSessionAsync(token);
+      if (!existingSession) {
+        next();
+        return;
+      }
+      const check = await SessionService.validateSessionAsync(token, Date.now(), false);
+      if (!check.valid) {
+        next();
+        return;
       }
 
       const { data } = await supabase.auth.getUser(token);

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { AuthController } from '../controllers/auth.controller';
-import { requireAuth } from '../middleware/auth.middleware';
+import { requireAuth, optionalAuth } from '../middleware/auth.middleware';
 import { authRateLimiter } from '../middleware/rateLimiter.middleware';
 import { validateBody } from '../middleware/validate.middleware';
 import {
@@ -22,7 +22,7 @@ router.post('/register-otp/initiate', authRateLimiter, validateBody(registerInit
 router.post('/register-otp/verify', authRateLimiter, validateBody(registerVerifyOtpSchema), AuthController.verifyRegistrationOtp);
 router.post('/register-otp/resend', authRateLimiter, validateBody(registerResendOtpSchema), AuthController.resendRegistrationOtp);
 router.post('/register-agent', authRateLimiter, validateBody(registerAgentSchema), AuthController.registerAgent);
-router.post('/logout', AuthController.logout);
+router.post('/logout', optionalAuth, AuthController.logout);
 router.post('/heartbeat', requireAuth, AuthController.heartbeat);
 router.post('/extend-session', requireAuth, AuthController.extendSession);
 router.post('/refresh', AuthController.refreshSession);

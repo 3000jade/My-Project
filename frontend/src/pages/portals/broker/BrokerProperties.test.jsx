@@ -1,9 +1,10 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import BrokerProperties from './BrokerProperties';
 import propertyService from '../../../services/propertyService';
+import auditService from '../../../services/auditService';
 
 const mockNavigate = vi.fn();
 vi.mock('react-router-dom', async () => {
@@ -18,6 +19,7 @@ vi.mock('react-router-dom', async () => {
 vi.mock('../../../services/propertyService', () => ({
   default: {
     getProperties: vi.fn(),
+    createProperty: vi.fn((p) => Promise.resolve({ ...p, id: 'prop-dup' })),
     updateProperty: vi.fn(),
     deleteProperty: vi.fn(),
     createProperty: vi.fn().mockImplementation((data) => Promise.resolve({ ...data, id: 'prop-copy-1', title: data.title, listingKey: 'HSR-10125001-COPY' })),
@@ -26,6 +28,18 @@ vi.mock('../../../services/propertyService', () => ({
   normalizeProperty: (p) => p,
   formatPropertyDeveloperName: (p, fallback = '') => p?.developer_name || p?.developer || p?.title || fallback,
   formatPropertyAddressHeading: (p, fallback = '') => p?.address || p?.location?.address || fallback,
+}));
+
+vi.mock('../../../services/auditService', () => ({
+  default: {
+    listAuditEvents: vi.fn().mockResolvedValue([]),
+  },
+}));
+
+vi.mock('../../../context/AuthContext', () => ({
+  useAuth: () => ({
+    user: { id: 'broker-current', role: 'broker', full_name: 'Principal Broker' },
+  }),
 }));
 
 const mockData = [
@@ -79,6 +93,8 @@ const mockData = [
 describe('BrokerProperties Page (Mockup & Modern SaaS Layout)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
+    window.history.replaceState(null, '', '/');
     propertyService.getProperties.mockResolvedValue({ data: mockData });
   });
 
@@ -89,34 +105,32 @@ describe('BrokerProperties Page (Mockup & Modern SaaS Layout)', () => {
       </BrowserRouter>
     );
 
-  it('renders breadcrumbs, title, and action buttons', async () => {
+  it('renders title and action buttons', async () => {
     renderComponent();
 
-    const allListingsElements = await screen.findAllByText('All Listings');
-    expect(allListingsElements.length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText('Property Listings')).toBeInTheDocument();
+    expect(await screen.findByText('Property Listings')).toBeInTheDocument();
     expect(screen.getByText('Manage and organize your property listings.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /refresh/i })).toBeInTheDocument();
 
     const newListingBtn = screen.getByRole('link', { name: /new listing/i });
     expect(newListingBtn).toBeInTheDocument();
-    expect(newListingBtn).toHaveAttribute('href', '/broker/properties/select-type');
+    expect(newListingBtn).toHaveAttribute('href', '/broker/properties/create');
   });
 
-  it('renders status dropdown with counts matching mockup', async () => {
+  it('renders unified Filters button with status options and counts', async () => {
     renderComponent();
 
-    const statusBtn = await screen.findByTestId('status-filter-dropdown-btn');
-    expect(statusBtn).toBeInTheDocument();
-    expect(statusBtn).toHaveTextContent(/Status:\s*All Listings/i);
+    const filterBtn = await screen.findByTestId('unified-filter-btn');
+    expect(filterBtn).toBeInTheDocument();
 
-    // Open status dropdown
-    fireEvent.click(statusBtn);
+    // Open unified Filters popover
+    fireEvent.click(filterBtn);
 
-    expect(screen.getByTestId('status-option-NEEDS_APPROVAL')).toBeInTheDocument();
-    expect(screen.getByTestId('status-option-ACTIVE')).toBeInTheDocument();
-    expect(screen.getByTestId('status-option-RESERVED')).toBeInTheDocument();
-    expect(screen.getByTestId('status-option-SOLD')).toBeInTheDocument();
+    expect(screen.getByTestId('status-option-DRAFT')).toBeInTheDocument();
+    expect(screen.getByTestId('status-option-PENDING_APPROVAL')).toBeInTheDocument();
+    expect(screen.getByTestId('status-option-PUBLISHED')).toBeInTheDocument();
+    expect(screen.getByTestId('status-option-UNPUBLISHED')).toBeInTheDocument();
+    expect(screen.getByTestId('status-option-CLOSED')).toBeInTheDocument();
   });
 
   it('renders table columns with specifications and bold price', async () => {
@@ -130,19 +144,19 @@ describe('BrokerProperties Page (Mockup & Modern SaaS Layout)', () => {
     expect(screen.getByText('₱158,000,000')).toBeInTheDocument();
   });
 
-  it('filters listings by clicking on status option from dropdown', async () => {
+  it('filters listings by clicking on status option from unified Filters popover', async () => {
     renderComponent();
 
     expect(await screen.findByText('Aurelia Modernist Penthouse at BGC')).toBeInTheDocument();
     expect(screen.getByText('Dasmarinas Village Sanctuary')).toBeInTheDocument();
 
-    // Open status dropdown
-    const statusBtn = await screen.findByTestId('status-filter-dropdown-btn');
-    fireEvent.click(statusBtn);
+    // Open unified Filters popover
+    const filterBtn = await screen.findByTestId('unified-filter-btn');
+    fireEvent.click(filterBtn);
 
-    // Click 'Needs Approval' option
-    const needsApprovalOption = screen.getByTestId('status-option-NEEDS_APPROVAL');
-    fireEvent.click(needsApprovalOption);
+    // Click 'Pending Approval' option
+    const pendingApprovalOption = screen.getByTestId('status-option-PENDING_APPROVAL');
+    fireEvent.click(pendingApprovalOption);
 
     // Only 'Dasmarinas Village Sanctuary' (Pending Approval) should remain
     expect(screen.getByText('Dasmarinas Village Sanctuary')).toBeInTheDocument();
@@ -269,27 +283,296 @@ describe('BrokerProperties Page (Mockup & Modern SaaS Layout)', () => {
     });
   });
 
-  it('allows customizing visible columns and toggling columns off from the table', async () => {
+  it('does not render column filter button and clamps pagination to page 1 when filtering from page 2', async () => {
+    const manyRows = Array.from({ length: 10 }, (_, idx) => ({
+      ...mockData[0],
+      id: `prop-page-${idx + 1}`,
+      listingKey: `HSR-2026-0${idx + 1}`,
+      title: idx === 9 ? 'Unique Makati Courtyard Penthouse' : `BGC Residence ${idx + 1}`,
+    }));
+    propertyService.getProperties.mockResolvedValueOnce({ data: manyRows });
+    renderComponent();
+
+    expect(await screen.findByText('BGC Residence 1')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /customize columns/i })).not.toBeInTheDocument();
+
+    // Navigate to Page 2
+    fireEvent.click(screen.getByRole('button', { name: 'Page 2' }));
+    expect(screen.getByText('Unique Makati Courtyard Penthouse')).toBeInTheDocument();
+
+    // Search for an item that shrinks results to 1 page -> should clamp back to Page 1 cleanly
+    const searchInput = screen.getByPlaceholderText(/search properties/i);
+    fireEvent.change(searchInput, { target: { value: 'BGC Residence 1' } });
+
+    expect(await screen.findByText('BGC Residence 1')).toBeInTheDocument();
+  });
+
+  it('supports sorting by clicking the Price column header', async () => {
     renderComponent();
 
     expect(await screen.findByText('Aurelia Modernist Penthouse at BGC')).toBeInTheDocument();
 
-    // Verify initial table headers include Specs and Price
-    expect(screen.getByRole('columnheader', { name: /specs/i })).toBeInTheDocument();
-    expect(screen.getByRole('columnheader', { name: /price/i })).toBeInTheDocument();
+    const priceHeaderBtn = screen.getByRole('button', { name: /^price$/i });
+    fireEvent.click(priceHeaderBtn);
 
-    // Open Columns dropdown
-    const columnsBtn = screen.getByRole('button', { name: /customize columns/i });
-    fireEvent.click(columnsBtn);
+    const rows = screen.getAllByRole('row');
+    // Row 1 (after header) should be highest price (Dasmarinas 295M)
+    expect(rows[1]).toHaveTextContent('Dasmarinas Village Sanctuary');
 
-    // Uncheck Price column
-    const priceCheckbox = screen.getByLabelText(/^price$/i);
-    expect(priceCheckbox).toBeChecked();
-    fireEvent.click(priceCheckbox);
+    fireEvent.click(priceHeaderBtn);
+    const rowsAsc = screen.getAllByRole('row');
+    // Row 1 after second click should be lowest price (Bespoke Rockwell 125M)
+    expect(rowsAsc[1]).toHaveTextContent('Bespoke Rockwell Sky Penthouse');
+  });
 
-    // The Price column header should now be removed from table
-    expect(screen.queryByRole('columnheader', { name: /price/i })).not.toBeInTheDocument();
-    // Specs should still be present
-    expect(screen.getByRole('columnheader', { name: /specs/i })).toBeInTheDocument();
+  it('displays Assigned Agent status or No agent assigned without Assign/Reassign buttons, dismisses New/Edited on click, and never renders Removed', async () => {
+    const now = Date.now();
+    const createdIso = new Date(now - 2 * 60 * 60 * 1000).toISOString();
+    const editedIso = new Date(now - 5 * 60 * 1000).toISOString();
+
+    propertyService.getProperties.mockResolvedValueOnce({
+      data: [
+        {
+          ...mockData[0],
+          id: 'prop-new-1',
+          title: 'Fresh Unassigned Listing',
+          created_at: createdIso,
+          updated_at: createdIso,
+        },
+        {
+          ...mockData[1],
+          id: 'prop-edited-1',
+          title: 'Edited Assigned Listing',
+          agentName: 'Maria Santos',
+          assignment_status: 'PENDING_CONFIRMATION',
+          created_at: createdIso,
+          updated_at: editedIso,
+          lastEdit: {
+            editedAt: editedIso,
+            editedByName: 'Principal Broker',
+            editedByRole: 'broker',
+            changes: [{ field: 'Price', from: '120000000', to: '125000000' }],
+          },
+        },
+      ],
+    });
+
+    renderComponent();
+
+    expect(await screen.findByText('Fresh Unassigned Listing')).toBeInTheDocument();
+    expect(screen.getByText('No agent assigned')).toBeInTheDocument();
+    expect(screen.getByText('Maria Santos')).toBeInTheDocument();
+    expect(screen.getByText('Awaiting').className).toContain('bg-amber-50');
+    expect(screen.getAllByText('Published')[0].className).toContain('bg-emerald-50');
+    expect(screen.getAllByText('Draft')[0].className).toContain('bg-blue-50');
+    expect(screen.queryByRole('button', { name: /^(Assign|Reassign)$/i })).not.toBeInTheDocument();
+    expect(screen.queryByText('Unassigned')).not.toBeInTheDocument();
+    expect(screen.queryByText('Removed')).not.toBeInTheDocument();
+
+    // Highlighted Date Added buttons for New and Edited
+    const newDateBtn = screen.getByTestId('date-added-btn-prop-new-1');
+    expect(newDateBtn).toHaveAttribute('data-highlighted', 'new');
+    expect(within(newDateBtn).getByText('New')).toBeInTheDocument();
+
+    const editedDateBtn = screen.getByTestId('date-added-btn-prop-edited-1');
+    expect(editedDateBtn).toHaveAttribute('data-highlighted', 'edited');
+    expect(within(editedDateBtn).getByText('Edited')).toBeInTheDocument();
+
+    // Clicking the highlighted New date clears the highlight immediately and opens the Audit Trail modal with Listing Preview
+    fireEvent.click(newDateBtn);
+    expect(newDateBtn).toHaveAttribute('data-highlighted', 'false');
+    expect(within(newDateBtn).queryByText('New')).not.toBeInTheDocument();
+
+    const newDialog = await screen.findByRole('dialog');
+    expect(within(newDialog).getByText('Property Audit Trail')).toBeInTheDocument();
+    expect(within(newDialog).getByText('Fresh Unassigned Listing')).toBeInTheDocument();
+    expect(within(newDialog).getByText('New')).toBeInTheDocument();
+    fireEvent.click(within(newDialog).getAllByRole('button', { name: 'Close' })[0]);
+
+    // Clicking the highlighted Edited date clears the highlight immediately AND opens Audit Trail with Listing Preview + Edit Details
+    fireEvent.click(editedDateBtn);
+    expect(editedDateBtn).toHaveAttribute('data-highlighted', 'false');
+    expect(within(editedDateBtn).queryByText('Edited')).not.toBeInTheDocument();
+
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByText('Property Audit Trail')).toBeInTheDocument();
+    expect(within(dialog).getByText('Edited Assigned Listing')).toBeInTheDocument();
+    expect(within(dialog).getByText('Edited')).toBeInTheDocument();
+    expect(within(dialog).getByText(/Principal Broker/i)).toBeInTheDocument();
+    expect(within(dialog).getByText('Price')).toBeInTheDocument();
+    expect(within(dialog).getByText(/120000000/)).toBeInTheDocument();
+    expect(within(dialog).getByText(/125000000/)).toBeInTheDocument();
+    fireEvent.click(within(dialog).getAllByRole('button', { name: 'Close' })[0]);
+
+    // Clicking on the Assigned Agent redirects to Step 5 of the Add/Edit Property Listing page
+    fireEvent.click(screen.getByText('Maria Santos'));
+    expect(mockNavigate).toHaveBeenCalledWith('/broker/properties/prop-edited-1/edit?step=5');
+  });
+
+  it('opens the Property Audit Trail modal for a specific property from the Actions menu', async () => {
+    auditService.listAuditEvents.mockResolvedValueOnce([
+      {
+        id: 'aud-1',
+        eventType: 'property.updated',
+        actorName: 'Principal Broker',
+        actorRole: 'broker',
+        outcome: 'success',
+        createdAt: new Date().toISOString(),
+        newValues: {
+          changes: [{ field: 'Price', from: '150000000', to: '158000000' }],
+        },
+      },
+    ]);
+
+    renderComponent();
+    expect(await screen.findByText('Aurelia Modernist Penthouse at BGC')).toBeInTheDocument();
+
+    const moreButtons = screen.getAllByRole('button', { name: /more options/i });
+    fireEvent.pointerDown(moreButtons[0]);
+    fireEvent.click(moreButtons[0]);
+
+    const auditMenuItem = await screen.findByText('Audit Trail');
+    fireEvent.click(auditMenuItem);
+
+    expect(auditService.listAuditEvents).toHaveBeenCalledWith({
+      targetType: 'property',
+      targetId: 'prop-1',
+    });
+
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByText('Property Audit Trail')).toBeInTheDocument();
+    expect(within(dialog).getByText(/Aurelia Modernist Penthouse at BGC/)).toBeInTheDocument();
+    expect(within(dialog).getByText(/Principal Broker/)).toBeInTheDocument();
+    expect(within(dialog).getByText('Price')).toBeInTheDocument();
+  });
+
+  it('inline Approve syncs with server response when held for agent confirmation', async () => {
+    propertyService.updateProperty.mockResolvedValueOnce({
+      id: 'prop-3',
+      listAgentKey: 'agent-1',
+      agentName: 'Elena Rossi',
+      standardStatus: 'Pending Confirmation',
+      isPublished: false,
+    });
+    renderComponent();
+
+    expect(await screen.findByText('Dasmarinas Village Sanctuary')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Approve' }));
+
+    expect((await screen.findAllByText(/waiting for agent confirmation/i)).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Awaiting Agent')[0].className).toContain('bg-amber-50');
+  });
+
+  it('keeps Draft distinct from Off Market (Hold), renders Agent Declined and Reserved colors, and hides Reactivate for Drafts', async () => {
+    propertyService.getProperties.mockResolvedValueOnce({
+      data: [
+        mockData[1], // Draft
+        {
+          ...mockData[0],
+          id: 'prop-hold-1',
+          title: 'Paused Hold Penthouse',
+          standard_status: 'Hold',
+          status: 'INACTIVE',
+          is_published: false,
+        },
+        {
+          ...mockData[0],
+          id: 'prop-declined-1',
+          title: 'Declined Estate',
+          standard_status: 'Action Required',
+          status: 'PENDING',
+          is_published: false,
+        },
+        {
+          ...mockData[0],
+          id: 'prop-reserved-1',
+          title: 'Reserved Condo',
+          standard_status: 'Active Under Contract',
+          status: 'RESERVED',
+          is_published: true,
+        },
+      ],
+    });
+    renderComponent();
+
+    expect(await screen.findByText('Bespoke Rockwell Sky Penthouse')).toBeInTheDocument();
+    expect(screen.getAllByText('Draft')[0].className).toContain('bg-blue-50');
+    expect(screen.getAllByText('Off Market')[0].className).toContain('bg-orange-50');
+    expect(screen.getAllByText('Agent Declined')[0].className).toContain('bg-red-50');
+    expect(screen.getAllByText('Reserved')[0].className).toContain('bg-indigo-50');
+
+    const moreButtons = screen.getAllByRole('button', { name: /more options/i });
+    fireEvent.pointerDown(moreButtons[0]);
+    fireEvent.click(moreButtons[0]);
+    expect(await screen.findByRole('menuitem', { name: /archive listing/i })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: /reactivate listing/i })).not.toBeInTheDocument();
+  });
+
+  it('expires old Edited badges (>3 days), skips self-authored highlights, and clears New/Edited when opening row or Audit Trail', async () => {
+    const now = Date.now();
+    const fourDaysAgo = new Date(now - 4 * 24 * 60 * 60 * 1000).toISOString();
+    const twoHoursAgo = new Date(now - 2 * 60 * 60 * 1000).toISOString();
+
+    propertyService.getProperties.mockResolvedValueOnce({
+      data: [
+        {
+          ...mockData[0],
+          id: 'prop-old-edit',
+          title: 'Stale Edited Condo',
+          created_at: fourDaysAgo,
+          updated_at: fourDaysAgo,
+          lastEdit: { editedAt: fourDaysAgo, editedByName: 'Other User', editedById: 'other-1', changes: [] },
+        },
+        {
+          ...mockData[0],
+          id: 'prop-self-new',
+          title: 'Self Created Condo',
+          created_by: 'broker-current',
+          created_at: twoHoursAgo,
+          updated_at: twoHoursAgo,
+        },
+        {
+          ...mockData[0],
+          id: 'prop-other-new',
+          title: 'Agent Submitted Condo',
+          created_by: 'agent-1',
+          created_at: twoHoursAgo,
+          updated_at: twoHoursAgo,
+        },
+      ],
+    });
+    renderComponent();
+
+    expect(await screen.findByText('Stale Edited Condo')).toBeInTheDocument();
+    expect(screen.getByTestId('date-added-btn-prop-old-edit')).toHaveAttribute('data-highlighted', 'false');
+    expect(screen.getByTestId('date-added-btn-prop-self-new')).toHaveAttribute('data-highlighted', 'false');
+    expect(screen.getByTestId('date-added-btn-prop-other-new')).toHaveAttribute('data-highlighted', 'new');
+
+    // Clicking the row to open/edit clears the New highlight automatically
+    fireEvent.click(screen.getByText('Agent Submitted Condo'));
+    expect(screen.getByTestId('date-added-btn-prop-other-new')).toHaveAttribute('data-highlighted', 'false');
+  });
+
+  it('shows Needs Agent instead of Awaiting Agent when standard_status is Pending Confirmation without an assigned agent', async () => {
+    propertyService.getProperties.mockResolvedValueOnce({
+      data: [
+        {
+          id: 'prop-unassigned-pending',
+          title: 'Unassigned Pending Listing',
+          standard_status: 'Pending Confirmation',
+          status: 'pending',
+          list_agent_key: null,
+          price: 15000000,
+          property_type: 'Condominium',
+        },
+      ],
+    });
+
+    renderComponent();
+
+    expect(await screen.findByText('Unassigned Pending Listing')).toBeInTheDocument();
+    expect(screen.getByText('No agent assigned')).toBeInTheDocument();
+    expect(screen.getByText('Needs Agent')).toBeInTheDocument();
+    expect(screen.queryByText('Awaiting Agent')).not.toBeInTheDocument();
   });
 });

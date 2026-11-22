@@ -13,6 +13,8 @@ export class AuditController {
       const events = await AuditService.listAuditEvents(
         {
           inquiryId: req.query.inquiryId as string | undefined,
+          targetType: req.query.targetType as string | undefined,
+          targetId: req.query.targetId as string | undefined,
           eventType: req.query.eventType as string | undefined,
           actorId: req.query.actorId as string | undefined,
           outcome: req.query.outcome as string | undefined,
@@ -50,6 +52,8 @@ export class AuditController {
       const payload = await AuditService.exportAuditEvents(
         {
           inquiryId: req.query.inquiryId as string | undefined,
+          targetType: req.query.targetType as string | undefined,
+          targetId: req.query.targetId as string | undefined,
           eventType: req.query.eventType as string | undefined,
         },
         {

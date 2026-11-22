@@ -33,4 +33,10 @@ router.get('/commute', MapsController.getCommute);
  */
 router.get('/streetview/metadata', MapsController.getStreetViewMetadata);
 
+/**
+ * POST /api/maps/nearby-ai
+ * Generate nearby places (highway, transit, school, hospital, mall) & coordinates
+ */
+router.post('/nearby-ai', MapsController.suggestNearbyPlaces);
+
 export default router;

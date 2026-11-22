@@ -3,13 +3,15 @@ import { PropertyController } from '../controllers/property.controller';
 import { requireAuth, optionalAuth } from '../middleware/auth.middleware';
 import { requireRole } from '../middleware/role.middleware';
 import { validateBody, validateQuery } from '../middleware/validate.middleware';
+import { shareEmailRateLimiter } from '../middleware/rateLimiter.middleware';
 import {
   createPropertySchema,
   queryPropertySchema,
   proposePropertyEditSchema,
   approveEditRequestSchema,
   rejectEditRequestSchema,
-  queryEditRequestsSchema
+  queryEditRequestsSchema,
+  shareListingEmailSchema
 } from '../schemas/property.schema';
 import multer from 'multer';
 import os from 'os';
@@ -84,6 +86,17 @@ router.post(
  * Single Property routes
  */
 router.get('/:id', optionalAuth, PropertyController.getProperty);
+
+/**
+ * Public Property Share-by-Email route (Rate-limited, honeypot-protected)
+ */
+router.post(
+  '/:id/share-email',
+  optionalAuth,
+  shareEmailRateLimiter,
+  validateBody(shareListingEmailSchema),
+  PropertyController.shareListingEmail
+);
 
 /**
  * Protected Property Management routes (Requires Bearer Auth Token + RBAC)

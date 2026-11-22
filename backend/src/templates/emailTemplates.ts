@@ -558,3 +558,85 @@ export function buildAssignmentDeclinedEmailHtml(data: AssignmentDeclinedEmailDa
 </body>
 </html>`;
 }
+
+export interface ShareListingEmailData {
+  propertyId: string;
+  propertyTitle: string;
+  price: string;
+  address: string;
+  specs: string;
+  heroImageUrl?: string;
+  listingUrl: string;
+  optionalNote?: string;
+}
+
+function escapeHtml(str: string): string {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+export function buildShareListingEmailHtml(data: ShareListingEmailData): string {
+  const safeTitle = escapeHtml(data.propertyTitle);
+  const safePrice = escapeHtml(data.price);
+  const safeAddress = escapeHtml(data.address);
+  const safeSpecs = escapeHtml(data.specs);
+  const safeNote = data.optionalNote ? escapeHtml(data.optionalNote) : '';
+  const safeUrl = escapeHtml(data.listingUrl);
+  const safeImage = data.heroImageUrl ? escapeHtml(data.heroImageUrl) : '';
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>${safeTitle} — Shared Listing</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; background-color: #F8FAFC; margin: 0; padding: 24px; color: #1E293B;">
+  <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 0 auto; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden;">
+    <tr>
+      <td style="padding: 20px 28px; background: #0F766E; color: #FFFFFF;">
+        <h1 style="margin: 0; font-size: 18px; font-weight: 700; letter-spacing: 0.02em;">HUMAN SHELTER REALTY</h1>
+        <p style="margin: 4px 0 0 0; font-size: 12px; color: #CCFBF1;">Someone shared a property listing with you</p>
+      </td>
+    </tr>
+    ${safeImage ? `
+    <tr>
+      <td>
+        <img src="${safeImage}" alt="${safeTitle}" style="width: 100%; max-height: 280px; object-fit: cover; display: block;" />
+      </td>
+    </tr>` : ''}
+    <tr>
+      <td style="padding: 28px;">
+        <div style="display: inline-block; padding: 4px 10px; background-color: #CCFBF1; color: #0F766E; font-weight: 700; font-size: 13px; border-radius: 6px; margin-bottom: 10px;">
+          ${safePrice}
+        </div>
+        <h2 style="margin: 0 0 8px 0; font-size: 20px; font-weight: 700; color: #1E293B;">${safeTitle}</h2>
+        <p style="margin: 0 0 12px 0; font-size: 13px; color: #64748B;">${safeAddress}</p>
+        ${safeSpecs ? `<p style="margin: 0 0 20px 0; font-size: 13px; font-weight: 600; color: #1E293B;">${safeSpecs}</p>` : ''}
+        ${safeNote ? `
+        <div style="background-color: #F8FAFC; border-left: 3px solid #0F766E; padding: 12px 16px; margin-bottom: 24px; border-radius: 0 6px 6px 0;">
+          <p style="margin: 0; font-size: 13px; color: #334155; font-style: italic;">"${safeNote}"</p>
+        </div>` : ''}
+        <table border="0" cellpadding="0" cellspacing="0" width="100%">
+          <tr>
+            <td align="center">
+              <a href="${safeUrl}" style="display: inline-block; padding: 12px 28px; background-color: #0F766E; color: #FFFFFF; text-decoration: none; font-weight: 700; font-size: 13px; letter-spacing: 0.04em; text-transform: uppercase; border-radius: 8px;">
+                View Listing
+              </a>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 16px 28px; background-color: #F8FAFC; border-top: 1px solid #E2E8F0; text-align: center; font-size: 12px; color: #94A3B8;">
+        Human Shelter Realty &bull; Shared Property Recommendation
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}

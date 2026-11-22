@@ -1,37 +1,50 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import BrokerCreateListings from './BrokerCreateListings';
+import MediaStudioModal from './components/property-form/MediaStudioModal';
+import propertyService from '../../../services/propertyService';
 
-// ---------------------------------------------------------------------------
-// Mocks
-// ---------------------------------------------------------------------------
+if (typeof window !== 'undefined' && !window.ResizeObserver) {
+  window.ResizeObserver = class ResizeObserver {
+    observe() { }
+    unobserve() { }
+    disconnect() { }
+  };
+}
+if (typeof Element !== 'undefined' && !Element.prototype.scrollIntoView) {
+  Element.prototype.scrollIntoView = () => { };
+}
+
 const mockNavigate = vi.fn();
 let mockLocation = { search: '', state: null };
+
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
   return {
     ...actual,
     useNavigate: () => mockNavigate,
     useLocation: () => mockLocation,
-    useParams: () => ({ id: undefined }), // 'new' mode
-    Link: ({ children, to, className }) => <a href={to} className={className}>{children}</a>
+    useParams: () => ({ id: undefined }),
   };
 });
 
-// Mock Auth Context
 vi.mock('../../../context/AuthContext', () => ({
   useAuth: () => ({
     user: {
       id: 'broker-1',
-      name: 'Broker Admin',
+      full_name: 'Principal Broker',
+      name: 'Principal Broker',
       role: 'broker',
-      email: 'broker@humanshelter.ph'
-    }
-  })
+      email: 'broker@humanshelter.ph',
+      prc_license: '0099887',
+      phone: '+63 917 000 0000',
+    },
+  }),
 }));
 
+<<<<<<< HEAD
 // Mock Property Service
 vi.mock('../../../services/propertyService', async (importOriginal) => {
   const actual = await importOriginal();
@@ -46,55 +59,78 @@ vi.mock('../../../services/propertyService', async (importOriginal) => {
     },
   };
 });
-
-// Mock Agent Service
-vi.mock('../../../services/agentService', () => ({
-  agentService: {
-    getAgents: vi.fn().mockResolvedValue([
-      { id: 'agent-1', name: 'Elena Rossi', email: 'elena@humanshelter.ph', role: 'Agent', assigned_properties_count: 5 },
-      { id: 'agent-2', name: 'Alexander Sterling', email: 'alex@humanshelter.ph', role: 'Agent', assigned_properties_count: 2 }
-    ])
-  }
+=======
+vi.mock('../../../services/propertyService', () => ({
+  default: {
+    getPropertyTypes: vi.fn().mockResolvedValue([]),
+    createProperty: vi.fn().mockResolvedValue({ id: 'new-prop-123', listing_key: 'HSR-9999' }),
+    updateProperty: vi.fn().mockResolvedValue({ id: 'new-prop-123' }),
+    getPropertyById: vi.fn().mockResolvedValue(null),
+    uploadImage: vi.fn().mockResolvedValue({ url: 'https://placehold.co/800x600.jpg' }),
+  },
+  normalizeProperty: (p) => p,
+  toApiPayload: (d) => d,
 }));
+>>>>>>> property-tech-v3.0
 
-// Mock Maps & Location Services
+vi.mock('../../../services/agentService', () => {
+  const agentsList = [
+    {
+      id: 'agent-1',
+      full_name: 'Elena Rossi',
+      email: 'elena@humanshelter.ph',
+      prc_license: '0011223',
+      phone: '+63 917 111 2222',
+    },
+    {
+      id: 'agent-2',
+      full_name: 'Alexander Sterling',
+      email: 'alex@humanshelter.ph',
+      prc_license: '0044556',
+      phone: '+63 917 333 4444',
+    },
+  ];
+  return {
+    default: {
+      getAgents: vi.fn().mockResolvedValue(agentsList),
+    },
+    agentService: {
+      getAgents: vi.fn().mockResolvedValue(agentsList),
+    },
+  };
+});
+
 vi.mock('../../../services/mapsService', () => ({
   default: {
-    searchAddressSuggestions: vi.fn().mockResolvedValue([]),
-    reverseGeocodeCoordinates: vi.fn().mockResolvedValue({ formattedAddress: 'Makati, Metro Manila' })
-  }
+    autocomplete: vi.fn().mockResolvedValue([]),
+    geocode: vi.fn().mockResolvedValue(null),
+    reverse: vi.fn().mockResolvedValue({ formattedAddress: 'Makati, Metro Manila' }),
+    suggestNearbyPlaces: vi.fn().mockResolvedValue({ nearbyPlaces: {}, pins: [] }),
+  },
+}));
+
+vi.mock('../../../services/driveService', () => ({
+  default: {
+    uploadListingPhoto: vi.fn().mockResolvedValue({ url: 'https://placehold.co/800x600.jpg' }),
+    uploadListingVideo: vi.fn().mockResolvedValue({ url: 'https://placehold.co/video.mp4' }),
+  },
+  resolveDriveImageUrl: (u) => u,
 }));
 
 vi.mock('../../../services/phLocationService', () => ({
   default: {
     getRegions: vi.fn().mockReturnValue([{ regionCode: '13', regionName: 'National Capital Region (NCR)' }]),
-    getProvinces: vi.fn().mockReturnValue([{ provinceCode: '1339', provinceName: 'Metro Manila' }]),
+    getProvinces: vi.fn().mockReturnValue([]),
     isProvinceApplicable: vi.fn().mockReturnValue(false),
-    getCities: vi.fn().mockReturnValue([{ cityCode: '133901', cityName: 'Makati City' }]),
-    getBarangays: vi.fn().mockResolvedValue([{ barangayCode: '133901001', barangayName: 'Bel-Air' }]),
-    getZipSuggestions: vi.fn().mockReturnValue(['1209']),
-    formatUnparsedAddress: vi.fn().mockReturnValue('Unit 42B, Makati City, Philippines')
+    getCities: vi.fn().mockReturnValue([{ cityCode: '137602', cityName: 'City Of Makati' }]),
+    getBarangays: vi.fn().mockResolvedValue([{ barangayCode: '137602002', barangayName: 'Bel-Air' }]),
   },
-  phLocationService: {
-    getRegions: vi.fn().mockReturnValue([{ regionCode: '13', regionName: 'National Capital Region (NCR)' }]),
-    getProvinces: vi.fn().mockReturnValue([{ provinceCode: '1339', provinceName: 'Metro Manila' }]),
-    isProvinceApplicable: vi.fn().mockReturnValue(false),
-    getCities: vi.fn().mockReturnValue([{ cityCode: '133901', cityName: 'Makati City' }]),
-    getBarangays: vi.fn().mockResolvedValue([{ barangayCode: '133901001', barangayName: 'Bel-Air' }]),
-    getZipSuggestions: vi.fn().mockReturnValue(['1209']),
-    formatUnparsedAddress: vi.fn().mockReturnValue('Unit 42B, Makati City, Philippines')
-  }
 }));
 
-// Mock Leaflet
-vi.mock('react-leaflet', () => ({
-  MapContainer: ({ children }) => <div data-testid="mock-map">{children}</div>,
-  TileLayer: () => <div data-testid="mock-tile-layer" />,
-  Marker: () => <div data-testid="mock-marker" />,
-  useMapEvents: () => ({ flyTo: vi.fn() })
+vi.mock('./components/property-form/LocationPinMap', () => ({
+  default: () => <div data-testid="mock-map" />,
 }));
 
-// Mock React Quill Rich Text Editor
 vi.mock('react-quill-new', () => ({
   default: ({ value, onChange, placeholder }) => (
     <textarea
@@ -103,75 +139,88 @@ vi.mock('react-quill-new', () => ({
       value={value || ''}
       onChange={(e) => onChange(e.target.value)}
     />
-  )
+  ),
 }));
 
-describe('BrokerCreateListings - Form Fields & Step Navigation', () => {
+describe('BrokerCreateListings - 5-Step Flow, Auto Ref Code, Multi-Bank & Sticky Preview', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockLocation = { search: '', state: null };
   });
 
-  const renderComponent = () => {
-    return render(
+  const renderComponent = () =>
+    render(
       <BrowserRouter>
         <BrokerCreateListings />
       </BrowserRouter>
     );
-  };
 
-  it('opens a named step using its native navigation control', () => {
-    renderComponent();
-    const step = screen.getByRole('button', { name: /Step 4: Pricing & Terms/i });
-    expect(step.tagName).toBe('BUTTON');
-    fireEvent.click(step);
-    expect(step).toHaveAttribute('aria-current', 'step');
-    expect(screen.getByPlaceholderText('150,000,000')).toBeInTheDocument();
+  it('renders 5-step header, required legend without (Optional), and sticky preview sidebar', () => {
+    const { container } = renderComponent();
+
+    expect(screen.getByRole('heading', { name: 'Create Property Listing' })).toBeInTheDocument();
+    expect(screen.getByText('Details & Price')).toBeInTheDocument();
+    expect(screen.getByText('Location')).toBeInTheDocument();
+    expect(screen.getByText('Specs & Features')).toBeInTheDocument();
+    expect(screen.getByText('Photos & Floor Plan')).toBeInTheDocument();
+    expect(screen.getByText('Review & Publish')).toBeInTheDocument();
+    expect(screen.getByText('Step 1 of 5')).toBeInTheDocument();
+
+    expect(screen.getByText(/Required fields/i)).toBeInTheDocument();
+    expect(screen.queryByText(/\(Optional\)/i)).not.toBeInTheDocument();
+
+    const stickyAside = container.querySelector('aside');
+    expect(stickyAside).toBeTruthy();
+    expect(stickyAside.className).toContain('lg:sticky');
+    expect(stickyAside.className).toContain('lg:top-20');
   });
 
-  it('renders the 7-step navigation header with real-world broker milestone names and step badge', () => {
+  it('displays auto-generated read-only Reference Code and manual Price per Sqm without auto-calc', () => {
     renderComponent();
 
-    // Verify all 7 real-world broker milestones appear in the navigation bar
-    expect(screen.getAllByText('Listing Overview')[0]).toBeInTheDocument();
-    expect(screen.getAllByText('Location & Address')[0]).toBeInTheDocument();
-    expect(screen.getAllByText('Property Specifications')[0]).toBeInTheDocument();
-    expect(screen.getAllByText('Pricing & Terms')[0]).toBeInTheDocument();
-    expect(screen.getAllByText('Features & Amenities')[0]).toBeInTheDocument();
-    expect(screen.getAllByText('Photos & Maps')[0]).toBeInTheDocument();
-    expect(screen.getAllByText('Review & Publish')[0]).toBeInTheDocument();
+    expect(screen.getByText('Auto-generated on save')).toBeInTheDocument();
+    expect(screen.getByText('Auto')).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText(/HSR-2026-001/i)).not.toBeInTheDocument();
 
-    // Stepper header badge
-    expect(screen.getAllByText(/Step 1 of 7/i)[0]).toBeInTheDocument();
+    expect(screen.queryByText('Auto-calculated')).not.toBeInTheDocument();
+    expect(screen.queryByText('Add area in Step 3')).not.toBeInTheDocument();
+
+    const pricePerSqmInput = screen.getByLabelText('Price per Sqm (PHP)');
+    expect(pricePerSqmInput.tagName).toBe('INPUT');
+    fireEvent.change(pricePerSqmInput, { target: { value: '185,000' } });
+    expect(pricePerSqmInput.value).toBe('185,000');
   });
 
-  it('allows filling Section 1 (Listing Overview) fields and verifies clean Add Property header, removal of agent dropdown and category grid', () => {
+  it('supports selecting multiple Partnered Banks without bank category body text', async () => {
     renderComponent();
 
-    // Verify PageHeader has clean title "Add Property" and no RESO jargon subtitle
-    expect(screen.getByText('Add Property')).toBeInTheDocument();
-    expect(screen.queryByText(/Modern SaaS registry compliant/i)).not.toBeInTheDocument();
+    const trigger = screen.getByRole('button', { name: /Partnered Banks/i });
+    fireEvent.click(trigger);
 
+<<<<<<< HEAD
     // Step 1: Listing Title input
     const titleInput = screen.getByPlaceholderText(/e\.g\. (Ayala Land Premier|Modernist Cantilever)/i);
     expect(titleInput).toBeInTheDocument();
     fireEvent.change(titleInput, { target: { value: 'Luxury Penthouse at The Proscenium' } });
     expect(titleInput.value).toBe('Luxury Penthouse at The Proscenium');
+=======
+    await waitFor(() => {
+      expect(screen.getByText('BDO Unibank (Banco de Oro)')).toBeInTheDocument();
+    });
+>>>>>>> property-tech-v3.0
 
-    // Tagline input
-    const taglineInput = screen.getByPlaceholderText(/e\.g\. Elevated residential lot overlooking Laguna de Bay/i);
-    expect(taglineInput).toBeInTheDocument();
-    fireEvent.change(taglineInput, { target: { value: 'High-floor Rockwell corner unit' } });
-    expect(taglineInput.value).toBe('High-floor Rockwell corner unit');
+    expect(screen.queryByText('Major Commercial and Universal Banks')).not.toBeInTheDocument();
+    expect(screen.queryByText('Government & Thrift / Foreign Partner Lenders')).not.toBeInTheDocument();
 
-    // Verify Reference Code input is removed from Step 1 Listing Overview
-    expect(screen.queryByPlaceholderText(/e\.g\. CAD-HAV-B12-L04/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/MLS \/ Cadastral Reference Code/i)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByText('BDO Unibank (Banco de Oro)'));
+    fireEvent.click(screen.getByText('Pag-IBIG Fund (HDMF)'));
 
-    // Verify Assigned Listing Agent and Category Option Grid are removed
-    expect(screen.queryByText(/Assigned Listing Agent/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/Category \/ Type Classification/i)).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Remove BDO Unibank (Banco de Oro)' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Remove Pag-IBIG Fund (HDMF)' })).toBeInTheDocument();
+    });
 
+<<<<<<< HEAD
     // Verify Active Property Type badge and Change link exist
     expect(screen.getByText(/Type:/i)).toBeInTheDocument();
     expect(screen.getByText(/Change/i)).toBeInTheDocument();
@@ -192,177 +241,220 @@ describe('BrokerCreateListings - Form Fields & Step Navigation', () => {
     const soldBtn = screen.getByRole('button', { name: 'Sold' });
     fireEvent.click(soldBtn);
     expect(soldBtn).toHaveClass('text-[#0F766E]');
+=======
+    expect(screen.queryByText('Major Commercial and Universal Banks')).not.toBeInTheDocument();
+    expect(screen.queryByText('Government & Thrift / Foreign Partner Lenders')).not.toBeInTheDocument();
+>>>>>>> property-tech-v3.0
   });
 
-  it('navigates to Section 2 (Location & Address) and verifies tailored subdivision block/lot fields', () => {
+  it('syncs Live Buyer Preview card and maps legacy ?type=condoUnit query slug cleanly', () => {
+    mockLocation = { search: '?type=condoUnit', state: null };
     renderComponent();
 
-    // Navigate to step 2: Location via stepper
-    fireEvent.click(screen.getAllByText(/Location/i)[0]);
+    expect(screen.getAllByText(/Condo Unit \(by cut\)/i).length).toBeGreaterThanOrEqual(1);
+    expect(screen.queryByText('CONDOUNIT')).not.toBeInTheDocument();
 
-    // Verify location controls exist
-    expect(screen.getByPlaceholderText(/Search Philippine address or landmark/i)).toBeInTheDocument();
-    expect(screen.getByPlaceholderText(/e\.g\. 142 Acacia Avenue, Phase 2/i)).toBeInTheDocument();
+    const titleInput = screen.getByLabelText(/Listing Title/i);
+    fireEvent.change(titleInput, { target: { value: 'Skyline Residence BGC' } });
+    expect(screen.getByRole('heading', { name: /Skyline Residence BGC/i })).toBeInTheDocument();
 
-    // Verify tailored subdivision fields exist for residential lot / house and lot
-    expect(screen.getByPlaceholderText(/e\.g\. Havila Highlands/i)).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Phase 2')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Block 12')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Lot 4')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Open Text Editor/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Foreclosure/i })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit property description' }));
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
   });
 
-  it('navigates to Section 3 (Property Specifications) and checks architectural and dimension fields', () => {
+  it('navigates across steps with zero (Optional) tags and shows Publish Listing in Step 5', () => {
     renderComponent();
 
-    // Navigate to Step 3: Specifications
-    fireEvent.click(screen.getAllByText(/Specifications/i)[0]);
+    fireEvent.click(screen.getByText('Location'));
+    expect(screen.getByText('Step 2 of 5')).toBeInTheDocument();
+    expect(screen.queryByText(/\(Optional\)/i)).not.toBeInTheDocument();
 
-    // Check presence of Section 3 heading and floor area input
-    expect(screen.getByText(/Section 3:.*Specifications/i)).toBeInTheDocument();
-    expect(screen.getByPlaceholderText(/e\.g\. 450/i)).toBeInTheDocument();
-    expect(screen.getByTestId('property-title-status-select')).toBeInTheDocument();
+    fireEvent.click(screen.getByText('Specs & Features'));
+    expect(screen.getByText('Step 3 of 5')).toBeInTheDocument();
+    expect(screen.queryByText(/\(Optional\)/i)).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('Photos & Floor Plan'));
+    expect(screen.getByText('Step 4 of 5')).toBeInTheDocument();
+    expect(screen.queryByText(/\(Optional\)/i)).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('Review & Publish'));
+    expect(screen.getByText('Step 5 of 5')).toBeInTheDocument();
+    expect(screen.queryByText(/\(Optional\)/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Publish Listing' })).toBeInTheDocument();
   });
 
-  it('navigates to Section 4 (Pricing & Terms) and verifies price formatting', () => {
+  it('supports editing/removing description, hides Load Sample, and gates Reset behind confirmation', async () => {
     renderComponent();
 
-    // Navigate to Step 4: Pricing & Terms
-    fireEvent.click(screen.getAllByText(/Pricing & Terms/i)[0]);
+    expect(screen.queryByRole('button', { name: /Load Sample/i })).not.toBeInTheDocument();
 
-    // Find price input (placeholder: 150,000,000)
-    const priceInput = screen.getByPlaceholderText('150,000,000');
-    expect(priceInput).toBeInTheDocument();
+    const titleInput = screen.getByLabelText(/Listing Title/i);
+    fireEvent.change(titleInput, { target: { value: 'Modern 4-Bedroom Pool Villa in Ayala Alabang' } });
+    expect(titleInput.value).toBe('Modern 4-Bedroom Pool Villa in Ayala Alabang');
 
-    // Input raw number
-    fireEvent.change(priceInput, { target: { value: '55000000' } });
-    fireEvent.blur(priceInput);
+    fireEvent.click(screen.getByRole('button', { name: 'Edit property description' }));
+    fireEvent.change(screen.getByTestId('mock-quill'), { target: { value: 'Sunlit corner villa' } });
+    fireEvent.click(screen.getByRole('button', { name: /Save Description/i }));
 
-    // Formatted price check with comma formatting
-    expect(priceInput.value).toBe('55,000,000');
-  });
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Remove property description' })).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Remove property description' }));
+    expect(screen.queryByRole('button', { name: 'Remove property description' })).not.toBeInTheDocument();
 
-  it('navigates to Section 7 (Review & Publish) and verifies submission actions', () => {
-    renderComponent();
+    fireEvent.click(screen.getByRole('button', { name: /Reset/i }));
+    expect(screen.getByText('Clear all entered listing details?')).toBeInTheDocument();
 
-    // Click step 7: Review & Publish
-    fireEvent.click(screen.getAllByText(/Review/i)[0]);
-
-    // Should render review summary and publish buttons
-    expect(screen.getByText(/Publish Listing/i)).toBeInTheDocument();
-    expect(screen.getByText(/Save Draft/i)).toBeInTheDocument();
-  });
-
-  it('confirms property type cards are absent from Step 1 and handled by pre-creation gateway', () => {
-    renderComponent();
-
-    const expectedTypes = [
-      'House and Lot',
-      'Condominium',
-      'Townhouse',
-      'Subdivision Lot',
-      'Commercial',
-      'Apartment',
-      'Villa',
-      'Warehouse',
-    ];
-
-    expectedTypes.forEach(type => {
-      // Buttons with these names should NOT be present in Step 1 form
-      expect(screen.queryByRole('button', { name: type })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm Reset' }));
+    await waitFor(() => {
+      expect(screen.getByLabelText(/Listing Title/i).value).toBe('');
     });
   });
 
-  it('receives Condominium via route param and activates conditional adaptations in Section 3', () => {
-    mockLocation = { search: '?type=condominium', state: null };
+  it('uses None furnishing without Interior & Building Details in Step 3, and updated contact/media fields in Step 5', async () => {
     renderComponent();
 
-    // Navigate to Step 3 (Specifications)
-    fireEvent.click(screen.getAllByText(/Specifications/i)[0]);
+    fireEvent.click(screen.getByText('Specs & Features'));
+    await waitFor(() => {
+      expect(screen.getAllByText('None').length).toBeGreaterThanOrEqual(2);
+    });
+    expect(screen.queryByText('Unfurnished')).not.toBeInTheDocument();
+    expect(screen.queryByText('Interior & Building Details')).not.toBeInTheDocument();
 
-    // Lot Area input must be absent for Condominium
-    expect(screen.queryByLabelText(/Lot Area \*/i)).not.toBeInTheDocument();
-    // Floor Area must be present
-    expect(screen.getByPlaceholderText(/e\.g\. (118|450)/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByText('Review & Publish'));
+    await waitFor(() => {
+      expect(screen.getByText('Assign an Agent')).toBeInTheDocument();
+    });
+    expect(screen.queryByLabelText(/Brokerage/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Use My Profile/i })).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/Contact Email/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Messenger Link/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Facebook Link/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/WhatsApp/i)).toBeInTheDocument();
   });
 
-  it('adapts Section 3 for Subdivision Lot by hiding interior room fields when passed via route param', () => {
-    mockLocation = { search: '?type=residentialLot', state: null };
-    renderComponent();
+  it('gates MediaStudioModal bulk photo deletion behind a confirmation dialog', () => {
+    const onRemovePhotoItem = vi.fn();
+    render(
+      <MediaStudioModal
+        open
+        onOpenChange={() => { }}
+        categories={[{ key: 'Living', label: 'Living' }]}
+        mediaPhotos={[
+          { id: 'p1', galleryCategory: 'Living', imageUrl: '/a.jpg', description: '' },
+          { id: 'p2', galleryCategory: 'Living', imageUrl: '/b.jpg', description: '' },
+        ]}
+        onRemovePhotoItem={onRemovePhotoItem}
+      />
+    );
 
-    // Navigate to Step 3 (Specifications)
-    fireEvent.click(screen.getAllByText(/Specifications/i)[0]);
+    const selectButtons = screen.getAllByRole('button', { name: 'Select photo' });
+    fireEvent.click(selectButtons[0]);
+    fireEvent.click(selectButtons[1]);
 
-    // Floor area should not be rendered for land
-    expect(screen.queryByPlaceholderText(/e\.g\. 450/i)).not.toBeInTheDocument();
-    // Land informational notice should be visible
-    expect(screen.getByText(/Vacant Land listing selected/i)).toBeInTheDocument();
+    expect(screen.getByText('2 selected')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Delete Selected/i }));
+    expect(screen.getByText('Delete 2 selected photos?')).toBeInTheDocument();
+    expect(onRemovePhotoItem).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm Delete' }));
+    expect(onRemovePhotoItem).toHaveBeenCalledTimes(2);
+    expect(onRemovePhotoItem).toHaveBeenCalledWith('p1');
+    expect(onRemovePhotoItem).toHaveBeenCalledWith('p2');
   });
 
-  it('renders Schema v1.0 specifications for Subdivision Lot (residentialLot) with dimensions, terrain, and title', () => {
-    mockLocation = { search: '?type=residentialLot', state: null };
+  it('shows warning modal on incomplete publish and allows saving as draft without publishing', async () => {
+    propertyService.createProperty.mockClear();
+    propertyService.createProperty.mockResolvedValue({ id: 'prop-draft-1' });
     renderComponent();
 
-    // Navigate to Step 3 (Specifications)
-    fireEvent.click(screen.getAllByText(/Specifications/i)[0]);
+    fireEvent.change(screen.getByLabelText(/Listing Title/i), {
+      target: { value: 'Incomplete Draft Condo' },
+    });
+    fireEvent.change(screen.getByLabelText(/Selling Price/i), {
+      target: { value: '18500000' },
+    });
 
-    // Check tailored land fields
-    expect(screen.getByPlaceholderText(/e\.g\. 15/i)).toBeInTheDocument(); // Road Frontage (m)
-    expect(screen.getByPlaceholderText(/e\.g\. 18/i)).toBeInTheDocument(); // Lot Depth (m)
-    expect(screen.getByText(/Topography \/ Terrain/i)).toBeInTheDocument();
-    expect(screen.getByText(/Cadastral Survey Reference/i)).toBeInTheDocument();
-    expect(screen.getByText(/Property Title Status/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByText('Review & Publish'));
+    fireEvent.click(screen.getByRole('button', { name: 'Publish Listing' }));
+
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog).toHaveTextContent('Cannot Publish Listing');
+    expect(dialog).toHaveTextContent('Field');
+    expect(dialog).toHaveTextContent('Current Value');
+    expect(dialog).toHaveTextContent('Action');
+    expect(dialog).toHaveTextContent('City');
+    expect(dialog).toHaveTextContent('Not selected');
+    expect(dialog).toHaveTextContent('Street Address');
+    expect(dialog).toHaveTextContent('Empty');
+    expect(dialog).toHaveTextContent('Cover Photo');
+    expect(dialog).toHaveTextContent('0 photos');
+    expect(dialog).toHaveTextContent('Assigned Agent');
+    expect(dialog).toHaveTextContent('No agent assigned');
+    expect(propertyService.createProperty).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: /Save as Draft/i }));
+    await waitFor(() => {
+      expect(propertyService.createProperty).toHaveBeenCalledTimes(1);
+    });
+    expect(propertyService.createProperty).toHaveBeenCalledWith(
+      expect.objectContaining({
+        standardStatus: 'Draft',
+        is_published: false,
+      })
+    );
   });
 
-  it('renders Schema v1.0 specifications for Condominium with usable floor area and balcony view', () => {
-    mockLocation = { search: '?type=condominium', state: null };
+  it('does not publish when no agent is assigned and shows Assigned Agent in the warning modal', async () => {
+    propertyService.createProperty.mockClear();
     renderComponent();
 
-    // Navigate to Step 3 (Specifications)
-    fireEvent.click(screen.getAllByText(/Specifications/i)[0]);
+    fireEvent.change(screen.getByLabelText(/Listing Title/i), {
+      target: { value: 'Pending Confirmation Villa' },
+    });
+    fireEvent.change(screen.getByLabelText(/Selling Price/i), {
+      target: { value: '22000000' },
+    });
 
-    // Check tailored condo fields
-    expect(screen.getByPlaceholderText(/e\.g\. 118/i)).toBeInTheDocument(); // Floor Area
-    expect(screen.getByText(/Balcony Details/i)).toBeInTheDocument();
-    expect(screen.getByPlaceholderText(/e\.g\. Makati CBD Skyline/i)).toBeInTheDocument(); // Balcony View Facing
+    fireEvent.click(screen.getByText('Review & Publish'));
+    fireEvent.click(screen.getByRole('button', { name: 'Publish Listing' }));
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog).toHaveTextContent('Assigned Agent');
+    expect(propertyService.createProperty).not.toHaveBeenCalled();
   });
 
-  it('initializes property type from URL query parameter ?type=Condominium', () => {
-    mockLocation = { search: '?type=Condominium', state: null };
+  it('shows Saved — Pending Agent Confirmation instead of Listing Published when broker publishes as self-handled or pending agent', async () => {
+    propertyService.createProperty.mockClear();
+    propertyService.createProperty.mockResolvedValue({ id: 'prop-pending-confirm' });
+    // Draft save returns Draft Saved modal, and verify no false Listing Published on Draft save
     renderComponent();
 
-    expect(screen.getByText(/Type:\s*Condominium/i)).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText(/Listing Title/i), {
+      target: { value: 'Audit Verified Listing' },
+    });
+    fireEvent.change(screen.getByLabelText(/Selling Price/i), {
+      target: { value: '19500000' },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Save Draft/i }));
+    await waitFor(() => {
+      expect(propertyService.createProperty).toHaveBeenCalledTimes(1);
+    });
+    expect(await screen.findByText('Draft Saved')).toBeInTheDocument();
+    expect(screen.queryByText('Listing Published')).not.toBeInTheDocument();
   });
 
-  it('does not render Subdivision Master Plan banner in Step 2 while preserving standard subdivision fields', () => {
-    mockLocation = { search: '?type=houseAndLot', state: null };
+  it('disables Save as Draft in the warning modal when Listing Title or Price is missing', async () => {
     renderComponent();
 
-    // Navigate to Step 2 (Location)
-    fireEvent.click(screen.getAllByText(/Location/i)[0]);
+    fireEvent.click(screen.getByText('Review & Publish'));
+    fireEvent.click(screen.getByRole('button', { name: 'Publish Listing' }));
 
-    // Verify Subdivision Master Plan banner is removed
-    expect(screen.queryByText(/Subdivision Master Plan/i)).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Select from Subdivision Plan/i })).not.toBeInTheDocument();
-
-    // Standard subdivision address inputs remain accessible
-    expect(screen.getByPlaceholderText(/e\.g\. Havila Highlands/i)).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Phase 2')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Block 12')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Lot 4')).toBeInTheDocument();
-  });
-
-  it('renders condition state badge and agent placeholder in the listing preview card', () => {
-    renderComponent();
-
-    // The listing preview card should render the default condition state (e.g. RFO)
-    const conditionBadges = screen.getAllByTestId('card-condition-badge');
-    expect(conditionBadges.length).toBeGreaterThan(0);
-    expect(conditionBadges[0]).toHaveTextContent(/RFO/i);
-
-    // The listing preview card should render the agent placeholder
-    const agentPlaceholder = screen.getByTestId('card-agent-placeholder');
-    expect(agentPlaceholder).toBeInTheDocument();
-    expect(agentPlaceholder).toHaveTextContent(/Human Shelter Desk/i);
-    expect(agentPlaceholder).toHaveTextContent(/Listing Agent/i);
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog).toHaveTextContent('Add Listing Title and Price first to save as a draft.');
+    expect(within(dialog).getByRole('button', { name: /Save as Draft/i })).toBeDisabled();
   });
 });

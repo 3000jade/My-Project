@@ -5,7 +5,6 @@ export const createPropertySchema = z.object({
     .string()
     .min(3, 'Title must be at least 3 characters long.')
     .trim(),
-  tagline: z.string().trim().optional(),
   price: z
     .number()
     .positive('Price must be greater than zero.'),
@@ -14,14 +13,12 @@ export const createPropertySchema = z.object({
   listPriceCurrency: z.enum(['PHP', 'USD', 'EUR', 'GBP', 'SGD', 'JPY']).optional().default('PHP'),
   originalListPrice: z.number().positive().optional(),
   associationFee: z.number().nonnegative().optional(),
-  associationFeeFrequency: z.string().trim().optional(),
   taxAnnualAmount: z.number().nonnegative().optional(),
   pricing: z.object({
     currency: z.string().max(3).optional().default('PHP'),
     rentFrequency: z.string().optional(),
     leaseTerm: z.string().optional(),
     associationFee: z.number().nonnegative().optional(),
-    associationFeeFrequency: z.string().optional(),
     associationFeeIncludes: z.array(z.string()).optional(),
     securityDeposit: z.number().nonnegative().optional(),
     advanceRent: z.number().nonnegative().optional(),
@@ -29,14 +26,11 @@ export const createPropertySchema = z.object({
   location: z
     .object({
       address: z.string().min(1, 'Address is required.').trim(),
-      unparsedAddress: z.string().trim().nullable().optional(),
-      subdivisionName: z.string().trim().nullable().optional(),
       buildingName: z.string().trim().nullable().optional(),
       building_name: z.string().trim().nullable().optional(),
       city: z.string().min(1, 'City is required.').trim(),
       state: z.string().trim().nullable().optional(),
       stateOrProvince: z.string().trim().nullable().optional(),
-      postalCode: z.string().trim().nullable().optional(),
       region: z.string().trim().nullable().optional(),
       regionPsgcCode: z.string().trim().nullable().optional().or(z.literal('')),
       region_psgc_code: z.string().trim().nullable().optional().or(z.literal('')),
@@ -62,24 +56,18 @@ export const createPropertySchema = z.object({
       baths: z.number().int().nonnegative().optional(),
       bedroomsTotal: z.number().int().nonnegative().optional(),
       bathroomsTotalInteger: z.number().int().nonnegative().optional(),
-      bathroomsFull: z.number().int().nonnegative().optional(),
-      bathroomsHalf: z.number().int().nonnegative().optional(),
-      storiesTotal: z.number().int().nonnegative().optional(),
-      sqft: z.number().positive().optional(),
-      livingArea: z.number().positive().optional(),
+      sqft: z.number().nonnegative().optional(),
+      livingArea: z.number().nonnegative().optional(),
       livingAreaUnits: z.enum(['Square Meters', 'Square Feet']).optional(),
       lotSizeArea: z.number().nonnegative().optional(),
       lotSizeUnits: z.string().optional(),
       propertyType: z.string().optional(),
       propertyTypeId: z.number().int().positive().optional(),
       property_type_id: z.number().int().positive().optional(),
-      transactionType: z.enum(['For Sale', 'For Rent']).optional(),
+      transactionType: z.enum(['For Sale', 'For Rent', 'For Rent / Lease']).optional(),
       propertyCondition: z.string().optional(),
       propertySubType: z.string().optional(),
-      yearBuilt: z.number().int().optional(),
       parkingTotal: z.number().int().nonnegative().optional(),
-      parkingCovered: z.number().int().nonnegative().optional(),
-      parkingOpen: z.number().int().nonnegative().optional(),
     })
     .optional(),
   features: z.array(z.string()).optional(),
@@ -91,6 +79,7 @@ export const createPropertySchema = z.object({
     mediaUrl: z.string().url(),
     orderIndex: z.number().int().nonnegative().optional(),
     mediaCategory: z.enum(['Photo', 'FloorPlan', 'Video', 'VirtualTour', 'Document']).optional(),
+    galleryCategory: z.string().trim().min(1).max(32).optional(),
     shortDescription: z.string().optional(),
   })).optional(),
   rooms: z.array(z.object({
@@ -114,8 +103,7 @@ export const createPropertySchema = z.object({
   }).optional(),
   publicRemarks: z.string().optional(),
   customResoAttributes: z.record(z.string(), z.unknown()).optional(),
-  architecturalStyle: z.string().optional(),
-  standardStatus: z.enum(['Draft', 'Pending Approval', 'Active', 'Active Under Contract', 'Pending', 'Closed', 'Canceled', 'Expired', 'Pending Confirmation', 'Action Required']).optional(),
+  standardStatus: z.enum(['Draft', 'Hold', 'Pending Approval', 'Active', 'Active Under Contract', 'Pending', 'Closed', 'Canceled', 'Expired', 'Pending Confirmation', 'Action Required']).optional(),
   status: z.enum(['available', 'pending', 'sold']).optional().default('available'),
   isFeatured: z.boolean().optional().default(false),
   agentId: z.string().trim().optional().nullable(),
@@ -128,16 +116,23 @@ export const createPropertySchema = z.object({
 
 export const queryPropertySchema = z.object({
   city: z.string().trim().optional(),
+  district: z.string().trim().optional(),
   propertyType: z.string().trim().optional(),
   propertyTypeId: z.coerce.number().int().positive().optional(),
   property_type_id: z.coerce.number().int().positive().optional(),
   transactionType: z.string().trim().optional(),
   minPrice: z.coerce.number().nonnegative().optional(),
   maxPrice: z.coerce.number().nonnegative().optional(),
-  beds: z.coerce.number().int().nonnegative().optional(),
+  beds: z.union([z.string().trim(), z.coerce.number().int().nonnegative()]).optional(),
   baths: z.coerce.number().int().nonnegative().optional(),
+  north: z.coerce.number().optional(),
+  south: z.coerce.number().optional(),
+  east: z.coerce.number().optional(),
+  west: z.coerce.number().optional(),
+  sortBy: z.enum(['newest', 'price_asc', 'price_desc', 'relevance']).optional(),
   status: z.string().optional(),
   standardStatus: z.string().optional(),
+  publicView: z.enum(['true', 'false']).optional(),
   isFeatured: z.preprocess((val) => val === 'true' || val === true, z.boolean().optional()),
   agentId: z.string().trim().optional(),
   list_agent_key: z.string().trim().optional(),
@@ -167,6 +162,17 @@ export const proposePropertyEditSchema = z.object({
   agentNotes: z.string().trim().max(2000).optional(),
 });
 export type ProposePropertyEditInput = z.infer<typeof proposePropertyEditSchema>;
+
+export const shareListingEmailSchema = z.object({
+  recipients: z
+    .array(z.string().trim().email('Invalid recipient email address.'))
+    .min(1, 'At least one recipient email is required.')
+    .max(5, 'Maximum of 5 recipients per share.'),
+  idempotency_key: z.string().trim().min(8).max(128),
+  optional_note: z.string().trim().max(500).optional(),
+  website: z.string().max(0, 'Bot submission rejected.').optional(), // Honeypot trap
+});
+export type ShareListingEmailInput = z.infer<typeof shareListingEmailSchema>;
 
 export const approveEditRequestSchema = z.object({
   reviewNotes: z.string().trim().max(2000).optional(),

@@ -15,6 +15,7 @@ import DashboardModal from '../../../components/dashboard/DashboardModal';
 import AgentScheduleCalendar from '../../../components/dashboard/AgentScheduleCalendar';
 import { mockAvailability } from '../../../mockData/mockAvailability';
 import { agentService } from '../../../services/agentService';
+import { Toaster, useToast } from '../../../components/ui';
 import { useAuth } from '../../../context/AuthContext';
 
 export default function AgentAvailability() {
@@ -31,7 +32,7 @@ export default function AgentAvailability() {
   const [newBlackout, setNewBlackout] = useState({ start: '', end: '', reason: '' });
 
   const [saving, setSaving] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
+  const { toast } = useToast();
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
@@ -41,8 +42,11 @@ export default function AgentAvailability() {
   const [isActive, setIsActive] = useState(true);
 
   const showToast = (msg) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(''), 3500);
+    toast({
+      title: 'Availability',
+      description: msg,
+      variant: 'success',
+    });
   };
 
   useEffect(() => {
@@ -180,13 +184,6 @@ export default function AgentAvailability() {
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
-      {toastMessage && (
-        <div className="fixed top-5 right-5 z-50 bg-[#1E293B] text-white text-xs font-medium px-4 py-2.5 rounded-lg shadow-lg flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-          <span>{toastMessage}</span>
-        </div>
-      )}
-
       <PageHeader
         title="Consultant Availability & Lead Routing"
         subtitle="Manage your live lead-routing status, weekly working windows, lead capacity, and blackout dates."
@@ -589,6 +586,7 @@ export default function AgentAvailability() {
           </div>
         </div>
       </DashboardModal>
+      <Toaster position="top-right" />
     </div>
   );
 }

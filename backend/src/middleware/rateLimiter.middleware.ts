@@ -80,3 +80,23 @@ export const apiRateLimiter = rateLimit({
     res.status(429).json(payload);
   },
 });
+
+/**
+ * Rate Limiter for Public Property Share-by-Email Endpoint
+ * Caps at 10 requests per hour per IP in production to prevent spam abuse.
+ */
+export const shareEmailRateLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: process.env.NODE_ENV === 'production' ? 10 : 100,
+  skip: (req) => process.env.NODE_ENV !== 'production' && (req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1'),
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (_req, res) => {
+    const payload: ApiResponse = {
+      success: false,
+      error: 'Share email limit reached (10 requests/hour). Please try again later.',
+      timestamp: new Date().toISOString(),
+    };
+    res.status(429).json(payload);
+  },
+});

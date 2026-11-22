@@ -45,14 +45,17 @@ export function normalizeInquiry(raw = {}) {
     property_id: String(raw.property_id || raw.propertyId || '1'),
     property_title: raw.property_title || raw.propertyTitle || 'Premier Estate Portfolio Asset',
     property_price: raw.property_price || raw.propertyPrice || 'Price upon request',
-    agent_id: raw.agent_id || raw.agentId || 'b6f46129-baad-409f-89a3-8ca504e068e2',
-    agent_name: raw.agent_name || raw.agentName || 'Carmela Del Rosario',
+    agent_id: raw.agent_id || raw.agentId || null,
+    agent_name: raw.agent_name || raw.agentName || null,
     status: normalizedStatus,
     source: raw.source || 'property_page',
     consentAccepted: Boolean(raw.consentAccepted ?? raw.consent_accepted ?? false),
     preferredReplyChannel: raw.preferredReplyChannel || raw.preferred_reply_channel || 'email',
     business_status: raw.business_status || raw.businessStatus || 'active',
-    operational_status: raw.operational_status || raw.operationalStatus || 'accepted',
+    operational_status:
+      raw.operational_status ||
+      raw.operationalStatus ||
+      (raw.agent_id || raw.agentId ? 'accepted' : 'unassigned'),
     closure_reason: raw.closure_reason || raw.closureReason,
     closed_at: raw.closed_at || raw.closedAt,
     created_at: formattedDate,
@@ -72,22 +75,13 @@ export const inquiryService = {
    * Submit client inquiry or appointment booking request (Public / Client)
    */
   async submitInquiry(inquiryData) {
-    try {
-      const response = await apiClient.post('/inquiries', inquiryData);
-      const raw = response?.data || response;
-      return {
-        success: true,
-        data: normalizeInquiry(raw),
-        message: response?.message || 'Inquiry received successfully.',
-      };
-    } catch (err) {
-      console.warn('[inquiryService] Backend submit failed, recording locally:', err.message);
-      return {
-        success: true,
-        data: normalizeInquiry(inquiryData),
-        message: 'Inquiry received and recorded in local session.',
-      };
-    }
+    const response = await apiClient.post('/inquiries', inquiryData);
+    const raw = response?.data || response;
+    return {
+      success: true,
+      data: normalizeInquiry(raw),
+      message: response?.message || 'Inquiry received successfully.',
+    };
   },
 
   /**
@@ -117,7 +111,12 @@ export const inquiryService = {
    */
   async reconnectInquiry(inquiryId, payload = {}) {
     try {
-      const response = await apiClient.post(`/inquiries/${inquiryId}/reconnect`, payload);
+      const params = {};
+      if (payload.sinceCursor) params.sinceCursor = payload.sinceCursor;
+      if (Array.isArray(payload.pendingRequestIds) && payload.pendingRequestIds.length > 0) {
+        params.pendingRequestIds = payload.pendingRequestIds.join(',');
+      }
+      const response = await apiClient.get(`/inquiries/${inquiryId}/reconnect`, { params });
       const raw = response?.data || response;
       return {
         inquiry: normalizeInquiry(raw?.inquiry || raw),
@@ -194,7 +193,7 @@ export const inquiryService = {
    */
   async updateFollowUpTask(inquiryId, taskId, updateData) {
     try {
-      const response = await apiClient.put(`/inquiries/${inquiryId}/tasks/${taskId}`, updateData);
+      const response = await apiClient.patch(`/inquiries/${inquiryId}/tasks/${taskId}`, updateData);
       return response?.data || response;
     } catch (err) {
       console.warn(`[inquiryService] Update task ${taskId} failed:`, err.message);
@@ -207,7 +206,7 @@ export const inquiryService = {
    */
   async changeBusinessStatus(inquiryId, payload) {
     try {
-      const response = await apiClient.put(`/inquiries/${inquiryId}/business-status`, payload);
+      const response = await apiClient.post(`/inquiries/${inquiryId}/status`, payload);
       const raw = response?.data || response;
       return normalizeInquiry(raw);
     } catch (err) {
@@ -282,11 +281,11 @@ export const inquiryService = {
   async getInquiries(params = {}) {
     try {
       const response = await apiClient.get('/inquiries', { params });
-      const rawList = response?.data || response || [];
-      if (Array.isArray(rawList) && rawList.length > 0) {
+      const rawList = response?.data ?? response;
+      if (Array.isArray(rawList)) {
         return rawList.map(normalizeInquiry);
       }
-      return mockInquiries.map(normalizeInquiry);
+      return [];
     } catch (err) {
       console.warn('[inquiryService] Fetch inquiries failed, falling back to mocks:', err.message);
       return mockInquiries.map(normalizeInquiry);

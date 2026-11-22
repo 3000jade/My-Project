@@ -21,7 +21,7 @@ export default function CondoLocationFields({ formData = {}, setFormData, setIsD
           placeholder="e.g. The Proscenium at Rockwell, Two Serendra"
           value={formData.building_name || ''}
           onChange={e => updateField('building_name', e.target.value)}
-          className="h-11 md:h-10 [@media(pointer:coarse)]:h-11 rounded-md text-sm shadow-none"
+          className="h-11 bg-white border-[#E2E8F0] rounded-lg text-sm shadow-none"
         />
         <BuildingCoordinateMatcher
           buildingName={formData.building_name}
@@ -50,7 +50,7 @@ export default function CondoLocationFields({ formData = {}, setFormData, setIsD
           placeholder="e.g. The Lincoln Tower, West Wing"
           value={formData.tower_name || ''}
           onChange={e => updateField('tower_name', e.target.value)}
-          className="h-11 md:h-10 [@media(pointer:coarse)]:h-11 rounded-md text-sm shadow-none"
+          className="h-11 bg-white border-[#E2E8F0] rounded-lg text-sm shadow-none"
         />
       </div>
 
@@ -64,7 +64,7 @@ export default function CondoLocationFields({ formData = {}, setFormData, setIsD
           placeholder="e.g. 28"
           value={formData.floor_level || ''}
           onChange={e => updateField('floor_level', e.target.value)}
-          className="h-11 md:h-10 [@media(pointer:coarse)]:h-11 rounded-md text-sm shadow-none"
+          className="h-11 bg-white border-[#E2E8F0] rounded-lg text-sm shadow-none"
         />
       </div>
 
@@ -78,7 +78,7 @@ export default function CondoLocationFields({ formData = {}, setFormData, setIsD
           placeholder="e.g. Unit 28-B"
           value={formData.unit_number || ''}
           onChange={e => updateField('unit_number', e.target.value)}
-          className="h-11 md:h-10 [@media(pointer:coarse)]:h-11 rounded-md text-sm shadow-none"
+          className="h-11 bg-white border-[#E2E8F0] rounded-lg text-sm shadow-none"
         />
       </div>
     </div>

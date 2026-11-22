@@ -1,41 +1,80 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import PageHeader from '../../../components/dashboard/PageHeader';
-import ViewPropertyButton from '../../../components/ui/buttons/ViewPropertyButton';
+import { useParams } from 'react-router-dom';
+import { CalendarPlus, CheckCircle2, History } from 'lucide-react';
 import StatusBadge from '../../../components/dashboard/StatusBadge';
+<<<<<<< HEAD
 import DashboardModal from '../../../components/dashboard/DashboardModal';
 import InquirySourceBadge from '../../../components/inquiries/InquirySourceBadge';
 import SlaCountdownPill from '../../../components/inquiries/SlaCountdownPill';
 import AiQualificationPanel from '../../../components/inquiries/AiQualificationPanel';
 import InternalNotesRail from '../../../components/inquiries/InternalNotesRail';
+=======
+import InquiryDetailShell from '../../../components/inquiries/InquiryDetailShell';
+import InquiryConversationPanel from '../../../components/inquiries/InquiryConversationPanel';
+import InquiryAiSummaryCard from '../../../components/inquiries/InquiryAiSummaryCard';
+import InquiryFollowUpTasksCard from '../../../components/inquiries/InquiryFollowUpTasksCard';
+import InquiryInternalNotesCard from '../../../components/inquiries/InquiryInternalNotesCard';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  Badge,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  Input,
+  Textarea,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+  ShadcnButton as Button,
+  useToast,
+} from '../../../components/ui';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../../components/ui/select';
+import { Field, FieldGroup, FieldLabel } from '../../../components/ui/field';
+>>>>>>> property-tech-v3.0
 import { inquiryService } from '../../../services/inquiryService';
 
 export default function AgentInquiryDetail() {
   const { id } = useParams();
+  const { toast } = useToast();
+
   const [inquiry, setInquiry] = useState(null);
+  const [allInquiries, setAllInquiries] = useState([]);
+  const [timeline, setTimeline] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [replyText, setReplyText] = useState('');
-  const [sendingReply, setSendingReply] = useState(false);
-  const [showAppointmentModal, setShowAppointmentModal] = useState(false);
-  const [appointmentDate, setAppointmentDate] = useState('2026-09-28');
-  const [appointmentTime, setAppointmentTime] = useState('10:00 AM');
-  const [appointmentType, setAppointmentType] = useState('Site Visit');
-  const [appointmentConfirmedMessage, setAppointmentConfirmedMessage] = useState(false);
 
-  // Communication & AI Enhancements (UX-01)
-  const [timeline, setTimeline] = useState([]);
+  const [detailTab, setDetailTab] = useState('conversation');
+  const [sendingReply, setSendingReply] = useState(false);
   const [generatingSummary, setGeneratingSummary] = useState(false);
+  const [creatingTask, setCreatingTask] = useState(false);
+  const [addingNote, setAddingNote] = useState(false);
+
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [targetBusinessStatus, setTargetBusinessStatus] = useState('inactive');
   const [inactivateOutcome, setInactivateOutcome] = useState('lost');
   const [statusReason, setStatusReason] = useState('');
   const [updatingStatus, setUpdatingStatus] = useState(false);
 
-  // Follow-up Task creation
-  const [newTaskTitle, setNewTaskTitle] = useState('');
-  const [newTaskDue, setNewTaskDue] = useState('');
-  const [creatingTask, setCreatingTask] = useState(false);
+  const [showAppointmentModal, setShowAppointmentModal] = useState(false);
+  const [appointmentDate, setAppointmentDate] = useState('2026-09-28');
+  const [appointmentTime, setAppointmentTime] = useState('10:00 AM');
+  const [appointmentType, setAppointmentType] = useState('Site Visit');
+  const [schedulingViewing, setSchedulingViewing] = useState(false);
+  const [appointmentConfirmedMessage, setAppointmentConfirmedMessage] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -43,24 +82,25 @@ export default function AgentInquiryDetail() {
       setLoading(true);
       setError(null);
       try {
-        const data = await inquiryService.getInquiryById(id);
-        if (mounted) {
-          if (data) {
-            setInquiry(data);
-            try {
-              const tl = await inquiryService.getTimeline(id);
-              if (mounted) setTimeline(tl || []);
-            } catch {
-              // ignore timeline fetch errors
-            }
-          } else {
-            setError(`Inquiry "${id}" was not found.`);
-          }
+        const [data, allList] = await Promise.all([
+          inquiryService.getInquiryById(id),
+          inquiryService.getInquiries?.()?.catch(() => []) || Promise.resolve([]),
+        ]);
+        if (!mounted) return;
+        setAllInquiries(Array.isArray(allList) ? allList : []);
+        if (data) {
+          setInquiry(data);
+          const [tl] = await Promise.all([
+            inquiryService.getTimeline?.(id)?.catch(() => []) || Promise.resolve([]),
+            inquiryService.markMessagesRead?.(id)?.catch(() => null) || Promise.resolve(null),
+            inquiryService.reconnectInquiry?.(id)?.catch(() => null) || Promise.resolve(null),
+          ]);
+          if (mounted) setTimeline(Array.isArray(tl) ? tl : []);
+        } else {
+          setError(`Inquiry "${id}" was not found.`);
         }
       } catch (err) {
-        if (mounted) {
-          setError(err.message || 'Failed to retrieve inquiry details.');
-        }
+        if (mounted) setError(err.message || 'Failed to retrieve inquiry details.');
       } finally {
         if (mounted) setLoading(false);
       }
@@ -71,6 +111,7 @@ export default function AgentInquiryDetail() {
     };
   }, [id]);
 
+<<<<<<< HEAD
   const [internalNotes, setInternalNotes] = useState([]);
   const [addingNote, setAddingNote] = useState(false);
 
@@ -85,10 +126,12 @@ export default function AgentInquiryDetail() {
     if (!replyText.trim() || !inquiry) return;
 
     const content = replyText.trim();
+=======
+  const handleSendReply = async (content) => {
+    if (!content || !inquiry) return;
+>>>>>>> property-tech-v3.0
     const requestId = `req-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-    setReplyText('');
     setSendingReply(true);
-
     try {
       const sentMessage = await inquiryService.addMessage(inquiry.id, content, requestId);
       setInquiry((prev) => ({
@@ -100,12 +143,12 @@ export default function AgentInquiryDetail() {
           ? { ...prev.latest_ai_summary, generationStatus: 'outdated' }
           : null,
       }));
-    } catch (err) {
-      console.warn('Error syncing message via API, updating locally:', err.message);
+      toast({ title: 'Message Sent', description: 'Your reply was delivered.', variant: 'success' });
+    } catch {
       const fallbackMsg = {
         id: `msg-${Date.now()}`,
         sender: 'agent',
-        sender_name: inquiry.agent_name || 'Elena Rossi',
+        sender_name: inquiry.agent_name || 'Assigned Specialist',
         timestamp: 'Just now',
         content,
         delivery_status: 'saved',
@@ -118,82 +161,84 @@ export default function AgentInquiryDetail() {
           ? { ...prev.latest_ai_summary, generationStatus: 'outdated' }
           : null,
       }));
+      toast({ title: 'Saved Locally', description: 'Reply queued in session.', variant: 'warning' });
     } finally {
       setSendingReply(false);
     }
   };
 
+<<<<<<< HEAD
   const handleAddInternalNote = async (noteContent) => {
     const content = (noteContent || '').trim();
     if (!content || !inquiry) return;
 
+=======
+  const handleAddInternalNote = async (content) => {
+    if (!content || !inquiry) return;
+>>>>>>> property-tech-v3.0
     setAddingNote(true);
-
     try {
       const added = await inquiryService.addNote(inquiry.id, content);
-      setInternalNotes((prev) => [...prev, added]);
-    } catch (err) {
-      console.warn('Error adding note via API, saving locally:', err.message);
+      setInquiry((prev) => ({
+        ...prev,
+        internal_notes: [...(prev.internal_notes || []), added],
+      }));
+      toast({ title: 'Note Saved', description: 'Private staff note added.', variant: 'success' });
+    } catch {
       const fallbackNote = {
         id: `note-${Date.now()}`,
-        authorName: inquiry.agent_name || 'Elena Rossi',
+        authorName: inquiry.agent_name || 'Assigned Specialist',
         authorRole: 'agent',
         content,
         timestamp: new Date().toISOString(),
       };
-      setInternalNotes((prev) => [...prev, fallbackNote]);
+      setInquiry((prev) => ({
+        ...prev,
+        internal_notes: [...(prev.internal_notes || []), fallbackNote],
+      }));
+      toast({ title: 'Saved Locally', description: 'Note stored in current session.', variant: 'warning' });
     } finally {
       setAddingNote(false);
     }
   };
 
-  const handleCreateTask = async (e) => {
-    e.preventDefault();
-    if (!newTaskTitle.trim() || !inquiry) return;
+  const handleCreateTask = async (title) => {
+    if (!title || !inquiry) return;
     setCreatingTask(true);
+    const dueAt = new Date(Date.now() + 86400_000).toISOString();
     try {
-      const task = await inquiryService.createFollowUpTask(inquiry.id, {
-        title: newTaskTitle.trim(),
-        dueAt: newTaskDue || new Date(Date.now() + 86400_000).toISOString(),
-      });
+      const task = await inquiryService.createFollowUpTask(inquiry.id, { title, dueAt });
       setInquiry((prev) => ({
         ...prev,
         follow_up_tasks: [...(prev.follow_up_tasks || []), task],
       }));
-      setNewTaskTitle('');
-      setNewTaskDue('');
-    } catch (err) {
-      console.warn('Failed creating task:', err.message);
-      const fallbackTask = {
-        id: `task-${Date.now()}`,
-        title: newTaskTitle.trim(),
-        dueAt: newTaskDue || new Date(Date.now() + 86400_000).toISOString(),
-        status: 'pending',
-      };
+      toast({ title: 'Task Added', description: `"${title}" scheduled.`, variant: 'success' });
+    } catch {
+      const fallbackTask = { id: `task-${Date.now()}`, title, dueAt, status: 'pending' };
       setInquiry((prev) => ({
         ...prev,
         follow_up_tasks: [...(prev.follow_up_tasks || []), fallbackTask],
       }));
-      setNewTaskTitle('');
-      setNewTaskDue('');
+      toast({ title: 'Saved Locally', description: 'Task added in current session.', variant: 'warning' });
     } finally {
       setCreatingTask(false);
     }
   };
 
   const handleToggleTaskStatus = async (task) => {
+    if (!inquiry) return;
     const nextStatus = task.status === 'completed' ? 'pending' : 'completed';
-    try {
-      await inquiryService.updateFollowUpTask(inquiry.id, task.id, { status: nextStatus });
-    } catch {
-      // ignore API failure in mock
-    }
     setInquiry((prev) => ({
       ...prev,
       follow_up_tasks: (prev.follow_up_tasks || []).map((t) =>
         t.id === task.id ? { ...t, status: nextStatus } : t
       ),
     }));
+    try {
+      await inquiryService.updateFollowUpTask(inquiry.id, task.id, { status: nextStatus });
+    } catch (err) {
+      console.warn('Failed updating task status:', err.message);
+    }
   };
 
   const handleGenerateSummary = async () => {
@@ -201,12 +246,14 @@ export default function AgentInquiryDetail() {
     setGeneratingSummary(true);
     try {
       const result = await inquiryService.generateAiSummary(inquiry.id);
-      setInquiry((prev) => ({
-        ...prev,
-        latest_ai_summary: result,
-      }));
+      setInquiry((prev) => ({ ...prev, latest_ai_summary: result }));
+      toast({ title: 'AI Summary Updated', description: 'Latest highlights extracted.', variant: 'success' });
     } catch (err) {
-      console.warn('Generate summary error:', err.message);
+      toast({
+        title: 'Summary Failed',
+        description: err.message || 'Could not regenerate AI summary.',
+        variant: 'destructive',
+      });
     } finally {
       setGeneratingSummary(false);
     }
@@ -225,35 +272,46 @@ export default function AgentInquiryDetail() {
       setInquiry(updated);
       setShowStatusModal(false);
       setStatusReason('');
-    } catch (err) {
-      console.warn('Update business status error:', err.message);
+      toast({
+        title: 'Status Updated',
+        description: `Inquiry marked ${targetBusinessStatus}.`,
+        variant: 'success',
+      });
+    } catch {
       setInquiry((prev) => ({
         ...prev,
         business_status: targetBusinessStatus,
+        status: targetBusinessStatus === 'inactive' ? 'RESOLVED' : 'REOPENED',
       }));
       setShowStatusModal(false);
+      setStatusReason('');
+      toast({ title: 'Updated Locally', description: 'Status updated in current session.', variant: 'warning' });
     } finally {
       setUpdatingStatus(false);
     }
   };
 
   const handleCreateAppointment = async () => {
-    setAppointmentConfirmedMessage(true);
-    if (inquiry) {
-      try {
-        await inquiryService.scheduleViewing(
-          inquiry.id,
-          `${appointmentDate} ${appointmentTime}`,
-          appointmentType
-        );
-      } catch (err) {
-        console.warn('API appointment scheduling failed, applying locally:', err.message);
-      }
-
+    if (!inquiry) return;
+    setSchedulingViewing(true);
+    try {
+      const updated = await inquiryService.scheduleViewing(
+        inquiry.id,
+        `${appointmentDate} ${appointmentTime}`,
+        appointmentType
+      );
+      if (updated && updated.id) setInquiry(updated);
+      setAppointmentConfirmedMessage(true);
+      toast({
+        title: 'Viewing Scheduled',
+        description: `${appointmentType} set for ${appointmentDate} at ${appointmentTime}.`,
+        variant: 'success',
+      });
+    } catch {
       const scheduleMsg = {
         id: `msg-${Date.now()}`,
         sender: 'agent',
-        sender_name: inquiry.agent_name || 'Elena Rossi',
+        sender_name: inquiry.agent_name || 'Assigned Specialist',
         timestamp: 'Just now',
         content: `Appointment scheduled: ${appointmentType} on ${appointmentDate} at ${appointmentTime}.`,
       };
@@ -263,67 +321,40 @@ export default function AgentInquiryDetail() {
         messages: [...(prev.messages || []), scheduleMsg],
         last_message: scheduleMsg.content,
       }));
+      setAppointmentConfirmedMessage(true);
+      toast({ title: 'Scheduled Locally', description: 'Viewing saved in current session.', variant: 'warning' });
+    } finally {
+      setSchedulingViewing(false);
     }
 
     setTimeout(() => {
       setAppointmentConfirmedMessage(false);
       setShowAppointmentModal(false);
-    }, 1800);
+    }, 1400);
   };
 
-  if (loading) {
-    return (
-      <div className="bg-white rounded-lg border border-[#E2E8F0] p-16 text-center space-y-3 max-w-6xl mx-auto">
-        <div className="inline-block animate-spin rounded-full h-8 w-8 border-3 border-[#0F766E] border-t-transparent"></div>
-        <p className="text-xs font-bold uppercase tracking-wider text-[#64748B] font-sans">
-          Loading assigned inquiry dossier...
-        </p>
-      </div>
-    );
-  }
-
-  if (error || !inquiry) {
-    return (
-      <div className="space-y-6 max-w-6xl mx-auto">
-        <PageHeader
-          title="Inquiry Not Found"
-          breadcrumbs={[
-            { label: "Dashboard", to: "/agent/dashboard" },
-            { label: "Inquiries", to: "/agent/inquiries" },
-            { label: "Error" }
-          ]}
-        />
-        <div className="p-8 bg-rose-50 border border-rose-200 rounded-lg text-center space-y-4">
-          <span className="material-symbols-outlined text-4xl text-rose-600">error</span>
-          <h2 className="text-lg font-bold text-[#1E293B]">Inquiry Record Unavailable</h2>
-          <p className="text-sm text-[#64748B] font-sans max-w-md mx-auto">
-            {error || "The inquiry record could not be located."}
-          </p>
-          <Link
-            to="/agent/inquiries"
-            className="inline-block px-5 py-2 bg-[#0F766E] text-white rounded-lg text-xs font-bold uppercase tracking-wider font-sans hover:bg-[#115E59] transition-colors"
-          >
-            ← Return to Inquiries List
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  const aiSummary = inquiry.latest_ai_summary;
-  const isInactive = inquiry.business_status === 'inactive';
+  const isInactive = inquiry?.business_status === 'inactive';
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto pb-12">
-      <PageHeader
-        title={`Inquiry from ${inquiry.client_name}`}
-        subtitle={`Reference: ${inquiry.reference_code || inquiry.id} • Registered ${inquiry.created_at}`}
+    <>
+      <InquiryDetailShell
+        testId="agent-inquiry-detail"
+        loading={loading}
+        error={error}
+        inquiry={inquiry}
+        backTo="/agent/inquiries"
+        backLabel="Back to Overview"
         breadcrumbs={[
-          { label: "Dashboard", to: "/agent/dashboard" },
-          { label: "Inquiries", to: "/agent/inquiries" },
-          { label: inquiry.client_name }
+          { label: 'Dashboard', to: '/agent/dashboard' },
+          { label: 'Inquiries', to: '/agent/inquiries' },
+          { label: inquiry?.client_name || 'Detail' },
         ]}
+        title={inquiry ? `Inquiry from ${inquiry.client_name}` : 'Inquiry Detail'}
+        subtitle={
+          inquiry ? `Reference: ${inquiry.reference_code || inquiry.id} • Registered ${inquiry.created_at}` : ''
+        }
         badge={
+<<<<<<< HEAD
           <div className="flex items-center gap-2 flex-wrap">
             <span
               className={`px-2.5 py-1 text-xs font-bold uppercase rounded tracking-wider ${
@@ -433,167 +464,122 @@ export default function AgentInquiryDetail() {
                 type="submit"
                 disabled={creatingTask || !newTaskTitle.trim()}
                 className="px-4 h-[38px] bg-[#0F766E] hover:bg-[#115E59] text-white rounded text-xs font-bold uppercase tracking-wider transition-colors disabled:opacity-50 cursor-pointer"
-              >
-                Add Task
-              </button>
-            </form>
-          </div>
-
-          {/* Conversation History */}
-          <div className="bg-white rounded-lg border border-[#E2E8F0] p-6 shadow-xs flex flex-col h-[520px]">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748B] font-sans pb-3 border-b border-[#E2E8F0] flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-[18px] text-[#0F766E]">forum</span>
-                <span>Conversation History</span>
-              </div>
-              <span className="text-[10px] font-mono text-emerald-600 font-semibold">
-                ● Live sync active
-              </span>
-            </h3>
-
-            {/* Messages Container */}
-            <div className="flex-1 overflow-y-auto py-4 space-y-4 custom-scrollbar" data-lenis-prevent="true">
-              {inquiry.messages && inquiry.messages.length > 0 ? (
-                inquiry.messages.map((msg) => {
-                  const isAgent = msg.sender === 'agent';
-                  return (
-                    <div
-                      key={msg.id}
-                      className={`flex flex-col ${isAgent ? 'items-end' : 'items-start'}`}
-                    >
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-[11px] font-bold text-gray-500 font-sans">
-                          {msg.sender_name}
-                        </span>
-                        <span className="text-[10px] text-gray-400 font-sans">
-                          {msg.timestamp}
-                        </span>
-                        {isAgent && (
-                          <span className="text-[10px] font-mono text-[#0F766E]">
-                            {msg.delivery_status === 'read' ? '✓✓ Read' : '✓ Sent'}
-                          </span>
-                        )}
-                      </div>
-                      <div
-                        className={`max-w-md p-3.5 rounded-lg text-xs leading-relaxed ${
-                          isAgent
-                            ? 'bg-[#0F766E] text-white'
-                            : 'bg-[#F1F5F9] text-slate-800'
-                        }`}
-                      >
-                        {msg.content}
-                      </div>
-                    </div>
-                  );
-                })
-              ) : (
-                <div className="text-center py-12 text-xs text-gray-400 font-sans">
-                  No conversation messages registered yet.
-                </div>
-              )}
+=======
+          inquiry && (
+            <div className="flex items-center gap-2">
+              <Badge variant={isInactive ? 'secondary' : 'success'}>
+                {isInactive ? 'Inactive Lead' : 'Active Lead'}
+              </Badge>
+              <StatusBadge status={inquiry.status} />
             </div>
+          )
+        }
+        allItems={allInquiries}
+        headerActions={
+          inquiry && (
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setTargetBusinessStatus(isInactive ? 'active' : 'inactive');
+                  setShowStatusModal(true);
+                }}
+                className="h-11 px-4"
+>>>>>>> property-tech-v3.0
+              >
+                {isInactive ? 'Reactivate Inquiry' : 'Mark Inactive'}
+              </Button>
+              <Button
+                type="button"
+                variant="coral"
+                onClick={() => setShowAppointmentModal(true)}
+                className="h-11 px-4"
+              >
+                <CalendarPlus data-icon="inline-start" />
+                <span>Schedule Viewing</span>
+              </Button>
+            </>
+          )
+        }
+      >
+        {inquiry && (
+          <Tabs value={detailTab} onValueChange={setDetailTab} className="w-full flex flex-col gap-6">
+            <TabsList className="bg-surface border border-outline p-1 h-auto flex-wrap w-fit">
+              <TabsTrigger value="conversation" className="min-h-10 text-xs font-semibold px-4 py-2">
+                Conversation
+              </TabsTrigger>
+              <TabsTrigger value="ai_tasks" className="min-h-10 text-xs font-semibold px-4 py-2">
+                AI Summary &amp; Tasks
+              </TabsTrigger>
+              <TabsTrigger value="notes_timeline" className="min-h-10 text-xs font-semibold px-4 py-2">
+                Notes &amp; Timeline
+              </TabsTrigger>
+            </TabsList>
 
-            {/* Reply Input Bar */}
-            <form onSubmit={handleSendReply} className="pt-4 border-t border-[#E2E8F0] flex gap-3 items-center">
-              <input
-                type="text"
-                placeholder="Type your message to the client..."
-                value={replyText}
-                onChange={(e) => setReplyText(e.target.value)}
-                className="flex-1 h-[46px] px-4 bg-slate-50 border border-[#E2E8F0] rounded-lg text-xs font-sans focus:border-[#0F766E] focus:bg-white outline-none"
+            <TabsContent value="conversation" className="mt-0">
+              <InquiryConversationPanel
+                inquiry={inquiry}
+                viewerRole="agent"
+                propertyLinkTo={`/agent/properties/${inquiry.property_id}`}
+                propertyLinkLabel="View property"
+                onSendReply={handleSendReply}
+                sendingReply={sendingReply}
               />
-              <button
-                type="submit"
-                disabled={sendingReply || !replyText.trim()}
-                className="h-[46px] px-5 bg-[#0F766E] hover:bg-[#115E59] text-white rounded-lg text-xs font-bold uppercase tracking-wider font-sans flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
-              >
-                <span>{sendingReply ? 'Sending...' : 'Send'}</span>
-                <span className="material-symbols-outlined text-[16px]">send</span>
-              </button>
-            </form>
-          </div>
-        </div>
+            </TabsContent>
 
-        {/* Right 1 Col: Client & Property Metadata & Timeline */}
-        <div className="space-y-6">
-          {/* Client Details */}
-          <div className="bg-white rounded-lg border border-[#E2E8F0] p-5 shadow-xs space-y-4">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748B] font-sans">
-              Client Details
-            </h3>
-            <div className="space-y-3 font-sans text-sm">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#0F766E]/10 text-[#0F766E] flex items-center justify-center font-bold font-display">
-                  {inquiry.client_name.charAt(0)}
-                </div>
-                <div>
-                  <p className="font-bold text-[#1E293B] text-sm">{inquiry.client_name}</p>
-                  <p className="text-[11px] text-[#64748B]">Prospective Buyer</p>
-                </div>
-              </div>
-              <div className="pt-3 border-t border-[#E2E8F0] space-y-2 text-xs">
-                <div className="flex items-center justify-between text-[#64748B]">
-                  <span>Email:</span>
-                  <span className="font-medium text-[#1E293B]">{inquiry.client_email}</span>
-                </div>
-                <div className="flex items-center justify-between text-[#64748B]">
-                  <span>Phone:</span>
-                  <span className="font-medium text-[#1E293B]">{inquiry.client_phone}</span>
-                </div>
-              </div>
-            </div>
-          </div>
+            <TabsContent value="ai_tasks" className="mt-0 flex flex-col gap-6">
+              <InquiryAiSummaryCard
+                aiSummary={inquiry.latest_ai_summary}
+                fallbackSummary={inquiry.ai_summary}
+                generating={generatingSummary}
+                onRefresh={handleGenerateSummary}
+              />
+              <InquiryFollowUpTasksCard
+                tasks={inquiry.follow_up_tasks || []}
+                onToggleTask={handleToggleTaskStatus}
+                onCreateTask={handleCreateTask}
+                creating={creatingTask}
+              />
+            </TabsContent>
 
-          {/* Property Reference */}
-          <div className="bg-white rounded-lg border border-[#E2E8F0] p-5 shadow-xs space-y-3">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748B] font-sans">
-              Property Referenced
-            </h3>
-            <div className="space-y-1">
-              <p className="font-bold text-[#1E293B] text-sm">
-                {inquiry.property_title}
-              </p>
-              <p className="text-sm font-bold font-display text-[#0F766E]">
-                {inquiry.property_price}
-              </p>
-                            <div className="pt-2">
-                <ViewPropertyButton
-                  to={`/agent/properties/${inquiry.property_id}`}
-                  size="sm"
-                  label="View property"
-                  title="View Listing Page"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Activity Timeline (AUD-01) */}
-          <div
-            data-testid="inquiry-activity-timeline"
-            className="bg-white rounded-lg border border-[#E2E8F0] p-5 shadow-xs space-y-3"
-          >
-            <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748B] font-sans flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[#0F766E] text-base">history</span>
-              Activity Timeline
-            </h3>
-
-            <div className="space-y-3 max-h-56 overflow-y-auto" data-lenis-prevent="true">
-              {timeline && timeline.length > 0 ? (
-                timeline.map((evt) => (
-                  <div key={evt.id} className="text-xs border-l-2 border-[#0F766E] pl-2.5 py-0.5 space-y-0.5">
-                    <p className="font-bold text-[#1E293B] text-[11px]">{evt.title}</p>
-                    <p className="text-[#64748B] text-[10px] leading-tight">{evt.description}</p>
-                    <span className="text-[9px] font-mono text-slate-400 block">
-                      {evt.timestamp ? evt.timestamp.substring(0, 16).replace('T', ' ') : 'Recent'}
-                    </span>
+            <TabsContent value="notes_timeline" className="mt-0 flex flex-col gap-6">
+              <InquiryInternalNotesCard
+                notes={inquiry.internal_notes || []}
+                onAddNote={handleAddInternalNote}
+                adding={addingNote}
+              />
+              <Card data-testid="inquiry-activity-timeline" className="bg-surface border border-outline shadow-xs">
+                <CardHeader className="pb-3 border-b border-outline">
+                  <CardTitle className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant flex items-center gap-2">
+                    <History className="size-4 text-primary" />
+                    <span>Activity Timeline</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-4">
+                  <div className="flex flex-col gap-3 max-h-56 overflow-y-auto" data-lenis-prevent="true">
+                    {timeline.length > 0 ? (
+                      timeline.map((evt) => (
+                        <div key={evt.id} className="text-xs border-l-2 border-primary pl-3 py-0.5 flex flex-col gap-0.5">
+                          <p className="font-semibold text-on-surface">{evt.title}</p>
+                          <p className="text-on-surface-variant leading-snug">{evt.description}</p>
+                          <span className="text-[11px] text-on-surface-variant tabular-nums">
+                            {evt.timestamp ? evt.timestamp.substring(0, 16).replace('T', ' ') : 'Recent'}
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-xs text-on-surface-variant italic py-1">No recorded timeline events.</p>
+                    )}
                   </div>
-                ))
-              ) : (
-                <p className="text-xs text-[#64748B] italic py-1">No recorded timeline events.</p>
-              )}
-            </div>
-          </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        )}
+      </InquiryDetailShell>
 
+<<<<<<< HEAD
           {/* Private Agent Dossier Notes */}
           <InternalNotesRail
             notes={internalNotes}
@@ -602,133 +588,153 @@ export default function AgentInquiryDetail() {
           />
         </div>
       </div>
+=======
+      {/* Lifecycle Status Dialog */}
+      <Dialog open={showStatusModal} onOpenChange={setShowStatusModal}>
+        <DialogContent className="max-w-lg bg-surface border border-outline">
+          <DialogHeader>
+            <DialogTitle>
+              {targetBusinessStatus === 'inactive' ? 'Mark Inquiry Inactive' : 'Reactivate Inquiry'}
+            </DialogTitle>
+            <DialogDescription>
+              Record reason and outcome for client relationship tracking.
+            </DialogDescription>
+          </DialogHeader>
 
-      {/* Lifecycle Status Modal (Active/Inactive with Reason & Outcome) */}
-      <DashboardModal
-        isOpen={showStatusModal}
-        onClose={() => setShowStatusModal(false)}
-        title={targetBusinessStatus === 'inactive' ? 'Mark Inquiry Inactive' : 'Reactivate Inquiry'}
-        subtitle="Record reason and audit outcome for client relationship tracking"
-        actions={
-          <div className="flex gap-2">
-            <button
-              onClick={() => setShowStatusModal(false)}
-              className="px-4 py-2 text-xs font-bold uppercase tracking-wider text-gray-500 font-sans cursor-pointer"
-            >
+          <FieldGroup className="gap-4 py-2">
+            {targetBusinessStatus === 'inactive' && (
+              <Field>
+                <FieldLabel>Inactivation Outcome</FieldLabel>
+                <Select value={inactivateOutcome} onValueChange={setInactivateOutcome}>
+                  <SelectTrigger className="w-full h-11 rounded-lg border border-outline bg-surface px-3">
+                    <SelectValue placeholder="Select outcome" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value="purchased">Purchased through firm</SelectItem>
+                      <SelectItem value="withdrawn">Client withdrawn / paused search</SelectItem>
+                      <SelectItem value="lost">Lost to competitor / alternative property</SelectItem>
+                      <SelectItem value="unresponsive">Unresponsive after multiple contacts</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </Field>
+            )}
+
+            <Field>
+              <FieldLabel htmlFor="status-transition-reason">Transition Reason (Required)</FieldLabel>
+              <Textarea
+                id="status-transition-reason"
+                value={statusReason}
+                onChange={(e) => setStatusReason(e.target.value)}
+                placeholder="Explain why this inquiry is transitioning..."
+                rows={3}
+                className="resize-none"
+              />
+            </Field>
+          </FieldGroup>
+>>>>>>> property-tech-v3.0
+
+          <DialogFooter className="gap-2 pt-3 border-t border-outline">
+            <Button type="button" variant="outline" onClick={() => setShowStatusModal(false)} className="h-11">
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
+              type="button"
               onClick={handleSaveBusinessStatus}
               disabled={updatingStatus || !statusReason.trim()}
-              className="px-5 py-2 bg-[#0F766E] hover:bg-[#115E59] text-white rounded-lg text-xs font-bold font-sans uppercase tracking-wider transition-colors disabled:opacity-50 cursor-pointer"
+              className="h-11"
             >
               {updatingStatus ? 'Updating...' : 'Confirm Transition'}
-            </button>
-          </div>
-        }
-      >
-        <div className="space-y-4 text-xs font-sans">
-          {targetBusinessStatus === 'inactive' && (
-            <div className="space-y-1">
-              <label className="font-bold uppercase tracking-wider text-slate-600 block">
-                Inactivation Outcome
-              </label>
-              <select
-                value={inactivateOutcome}
-                onChange={(e) => setInactivateOutcome(e.target.value)}
-                className="w-full h-[40px] px-3 border border-[#E2E8F0] rounded outline-none focus:border-[#0F766E]"
-              >
-                <option value="purchased">Purchased through firm</option>
-                <option value="withdrawn">Client withdrawn / paused search</option>
-                <option value="lost">Lost to competitor / alternative property</option>
-                <option value="unresponsive">Unresponsive after multiple contacts</option>
-              </select>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Coordinate Appointment Dialog */}
+      <Dialog open={showAppointmentModal} onOpenChange={setShowAppointmentModal}>
+        <DialogContent className="max-w-lg bg-surface border border-outline">
+          <DialogHeader>
+            <DialogTitle>Coordinate Client Appointment</DialogTitle>
+            <DialogDescription>
+              Schedule a viewing or consultation with {inquiry?.client_name}
+            </DialogDescription>
+          </DialogHeader>
+
+          {appointmentConfirmedMessage ? (
+            <div className="p-6 text-center flex flex-col items-center gap-2">
+              <CheckCircle2 className="size-12 text-primary" />
+              <h4 className="text-base font-bold text-on-surface">Appointment Scheduled</h4>
+              <p className="text-xs text-on-surface-variant">
+                Viewing registered for {appointmentDate} at {appointmentTime}.
+              </p>
             </div>
+          ) : (
+            <FieldGroup className="gap-4 py-2">
+              <Field>
+                <FieldLabel>Appointment Type</FieldLabel>
+                <Select value={appointmentType} onValueChange={setAppointmentType}>
+                  <SelectTrigger className="w-full h-11 rounded-lg border border-outline bg-surface px-3">
+                    <SelectValue placeholder="Select appointment type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value="Site Visit">Site Visit / Ocular Tour</SelectItem>
+                      <SelectItem value="Online Consultation">Online Consultation (Zoom / Teams)</SelectItem>
+                      <SelectItem value="Document Signing">Document Signing</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </Field>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Field>
+                  <FieldLabel htmlFor="appointment-date">Date</FieldLabel>
+                  <Input
+                    id="appointment-date"
+                    type="date"
+                    value={appointmentDate}
+                    onChange={(e) => setAppointmentDate(e.target.value)}
+                    className="h-11"
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel>Time</FieldLabel>
+                  <Select value={appointmentTime} onValueChange={setAppointmentTime}>
+                    <SelectTrigger className="w-full h-11 rounded-lg border border-outline bg-surface px-3">
+                      <SelectValue placeholder="Select time" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem value="09:00 AM">09:00 AM</SelectItem>
+                        <SelectItem value="10:00 AM">10:00 AM</SelectItem>
+                        <SelectItem value="02:00 PM">02:00 PM</SelectItem>
+                        <SelectItem value="04:00 PM">04:00 PM</SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </Field>
+              </div>
+            </FieldGroup>
           )}
 
-          <div className="space-y-1">
-            <label className="font-bold uppercase tracking-wider text-slate-600 block">
-              Transition Reason (Required)
-            </label>
-            <textarea
-              value={statusReason}
-              onChange={(e) => setStatusReason(e.target.value)}
-              placeholder="Explain why this inquiry is transitioning..."
-              rows={3}
-              className="w-full p-3 border border-[#E2E8F0] rounded outline-none focus:border-[#0F766E] resize-none"
-            />
-          </div>
-        </div>
-      </DashboardModal>
-
-      {/* Coordinate Appointment Modal */}
-      <DashboardModal
-        isOpen={showAppointmentModal}
-        onClose={() => setShowAppointmentModal(false)}
-        title="Coordinate Client Appointment"
-        subtitle={`Schedule a viewing or consultation with ${inquiry.client_name}`}
-        actions={
-          <div className="flex gap-2">
-            <button
-              onClick={() => setShowAppointmentModal(false)}
-              className="px-4 py-2 text-xs font-bold uppercase tracking-wider text-gray-500 font-sans cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleCreateAppointment}
-              className="px-5 py-2 bg-[#0F766E] hover:bg-[#115E59] text-white rounded-lg text-xs font-bold font-sans uppercase tracking-wider transition-colors cursor-pointer"
-            >
-              Confirm Schedule
-            </button>
-          </div>
-        }
-      >
-        {appointmentConfirmedMessage ? (
-          <div className="p-6 text-center space-y-2">
-            <span className="material-symbols-outlined text-[48px] text-[#0F766E]">check_circle</span>
-            <h4 className="text-base font-bold text-[#1E293B]">Appointment Scheduled</h4>
-            <p className="text-xs text-[#64748B] font-sans">
-              Viewing coordinates registered for {appointmentDate} at {appointmentTime}.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="space-y-1">
-              <label className="text-xs font-bold uppercase tracking-wider text-gray-600">Appointment Type</label>
-              <select
-                value={appointmentType}
-                onChange={e => setAppointmentType(e.target.value)}
-                className="w-full h-[46px] px-3 border border-[#E2E8F0] rounded-lg text-xs font-sans outline-none focus:border-[#0F766E] cursor-pointer"
+          {!appointmentConfirmedMessage && (
+            <DialogFooter className="gap-2 pt-3 border-t border-outline">
+              <Button type="button" variant="outline" onClick={() => setShowAppointmentModal(false)} className="h-11">
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                onClick={handleCreateAppointment}
+                disabled={schedulingViewing}
+                className="h-11"
               >
-                <option value="Site Visit">Site Visit / Ocular Tour</option>
-                <option value="Online Consultation">Online Consultation (Zoom / Teams)</option>
-                <option value="Document Signing">Document Signing</option>
-              </select>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-xs font-bold uppercase tracking-wider text-gray-600">Date</label>
-                <input
-                  type="date"
-                  value={appointmentDate}
-                  onChange={e => setAppointmentDate(e.target.value)}
-                  className="w-full h-[46px] px-3 border border-[#E2E8F0] rounded-lg text-xs font-sans outline-none focus:border-[#0F766E]"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-bold uppercase tracking-wider text-gray-600">Time</label>
-                <input
-                  type="text"
-                  value={appointmentTime}
-                  onChange={e => setAppointmentTime(e.target.value)}
-                  className="w-full h-[46px] px-3 border border-[#E2E8F0] rounded-lg text-xs font-sans outline-none focus:border-[#0F766E]"
-                />
-              </div>
-            </div>
-          </div>
-        )}
-      </DashboardModal>
-    </div>
+                {schedulingViewing ? 'Scheduling...' : 'Confirm Schedule'}
+              </Button>
+            </DialogFooter>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

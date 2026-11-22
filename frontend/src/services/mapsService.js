@@ -78,6 +78,19 @@ export const mapsService = {
       return [];
     }
   },
+
+  /**
+   * Suggests nearest highway, transit, school, hospital, and mall + coordinates via AI/Google Maps.
+   */
+  async suggestNearbyPlaces(locationContext = {}) {
+    try {
+      const response = await apiClient.post('/maps/nearby-ai', locationContext);
+      return response?.data || response || null;
+    } catch (error) {
+      console.error('[mapsService] AI nearby places lookup failed:', error);
+      return null;
+    }
+  },
 };
 
 export default mapsService;

@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import PageHeader from '../../../components/dashboard/PageHeader';
+import { useParams } from 'react-router-dom';
+import { UserPlus, Shield, Download } from 'lucide-react';
 import StatusBadge from '../../../components/dashboard/StatusBadge';
+import InquiryDetailShell from '../../../components/inquiries/InquiryDetailShell';
+import InquiryConversationPanel from '../../../components/inquiries/InquiryConversationPanel';
+import InquiryAiSummaryCard from '../../../components/inquiries/InquiryAiSummaryCard';
+import InquiryFollowUpTasksCard from '../../../components/inquiries/InquiryFollowUpTasksCard';
+import InquiryInternalNotesCard from '../../../components/inquiries/InquiryInternalNotesCard';
 import {
   Dialog,
   DialogContent,
@@ -14,31 +19,49 @@ import {
   CardTitle,
   CardDescription,
   CardContent,
+  Badge,
+  Input,
+  Label,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
   useToast,
-  Toaster
 } from '../../../components/ui';
+import { Button } from '../../../components/ui/button';
+import { Field, FieldGroup, FieldLabel } from '../../../components/ui/field';
 import { inquiryService } from '../../../services/inquiryService';
+<<<<<<< HEAD
 import { Spinner, ViewPropertyButton } from '../../../components/ui';
 import { InquiryDetailSkeleton } from '../../../components/dashboard/skeletons';
 import InquirySourceBadge from '../../../components/inquiries/InquirySourceBadge';
 import SlaCountdownPill from '../../../components/inquiries/SlaCountdownPill';
 import AiQualificationPanel from '../../../components/inquiries/AiQualificationPanel';
 import InternalNotesRail from '../../../components/inquiries/InternalNotesRail';
+=======
+>>>>>>> property-tech-v3.0
 import { agentService } from '../../../services/agentService';
 
 export default function BrokerInquiryDetail() {
   const { id } = useParams();
   const { toast } = useToast();
+
   const [inquiry, setInquiry] = useState(null);
+  const [allInquiries, setAllInquiries] = useState([]);
   const [auditEvents, setAuditEvents] = useState([]);
+  const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const [detailTab, setDetailTab] = useState('conversation');
   const [reassignModalOpen, setReassignModalOpen] = useState(false);
   const [selectedAgentId, setSelectedAgentId] = useState('');
-  const [agents, setAgents] = useState([]);
   const [reassignReason, setReassignReason] = useState('Reassigned by Broker');
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState('overview'); // overview | audit
+
+  const [generatingSummary, setGeneratingSummary] = useState(false);
+  const [creatingTask, setCreatingTask] = useState(false);
+  const [addingNote, setAddingNote] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -46,25 +69,24 @@ export default function BrokerInquiryDetail() {
       setLoading(true);
       setError(null);
       try {
-        const [data, audits, agentList] = await Promise.all([
+        const [data, audits, agentList, allList] = await Promise.all([
           inquiryService.getInquiryById(id),
-          inquiryService.getAuditEvents({ inquiryId: id }).catch(() => []),
-          agentService.getAgents().catch(() => []),
+          inquiryService.getAuditEvents?.({ inquiryId: id })?.catch(() => []) || Promise.resolve([]),
+          agentService.getAgents?.()?.catch(() => []) || Promise.resolve([]),
+          inquiryService.getInquiries?.()?.catch(() => []) || Promise.resolve([]),
         ]);
-        if (mounted) {
-          setAgents(Array.isArray(agentList) ? agentList : []);
-          if (data) {
-            setInquiry(data);
-            setSelectedAgentId(data.agent_id || '');
-            setAuditEvents(Array.isArray(audits) ? audits : []);
-          } else {
-            setError(`Inquiry with ID "${id}" could not be found.`);
-          }
+        if (!mounted) return;
+        setAgents(Array.isArray(agentList) ? agentList : []);
+        setAllInquiries(Array.isArray(allList) ? allList : []);
+        if (data) {
+          setInquiry(data);
+          setSelectedAgentId(data.agent_id || '');
+          setAuditEvents(Array.isArray(audits) ? audits : []);
+        } else {
+          setError(`Inquiry with ID "${id}" could not be found.`);
         }
       } catch (err) {
-        if (mounted) {
-          setError(err.message || 'Error loading inquiry details.');
-        }
+        if (mounted) setError(err.message || 'Error loading inquiry details.');
       } finally {
         if (mounted) setLoading(false);
       }
@@ -76,22 +98,24 @@ export default function BrokerInquiryDetail() {
   }, [id]);
 
   const handleSaveReassignment = async () => {
-    const selectedAgent = agents.find(a => a.id === selectedAgentId) || { id: selectedAgentId, name: 'Assigned Specialist' };
     if (!selectedAgentId || !inquiry) return;
+    const selectedAgent = agents.find((a) => a.id === selectedAgentId) || {
+      id: selectedAgentId,
+      name: 'Assigned Specialist',
+    };
 
     setSaving(true);
     try {
       const updated = await inquiryService.assignAgent(inquiry.id, selectedAgentId, reassignReason);
       setInquiry(updated);
-      const refreshedAudits = await inquiryService.getAuditEvents({ inquiryId: inquiry.id });
-      setAuditEvents(refreshedAudits);
+      const refreshedAudits = await inquiryService.getAuditEvents?.({ inquiryId: inquiry.id }).catch(() => []);
+      setAuditEvents(Array.isArray(refreshedAudits) ? refreshedAudits : []);
       toast({
         title: 'Specialist Reassigned',
-        description: `Inquiry successfully reassigned to ${selectedAgent.name}.`,
-        variant: 'success'
+        description: `Inquiry reassigned to ${selectedAgent.name}.`,
+        variant: 'success',
       });
     } catch (err) {
-      console.warn('Reassignment API call failed, falling back to local update:', err.message);
       const updated = await inquiryService.updateInquiry(inquiry.id, {
         agent_id: selectedAgent.id,
         agent_name: selectedAgent.name,
@@ -101,7 +125,7 @@ export default function BrokerInquiryDetail() {
       toast({
         title: 'Reassigned Locally',
         description: `Consultant reassigned to ${selectedAgent.name}.`,
-        variant: 'primary'
+        variant: 'primary',
       });
     } finally {
       setSaving(false);
@@ -109,42 +133,113 @@ export default function BrokerInquiryDetail() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="max-w-6xl mx-auto py-12">
-        <InquiryDetailSkeleton />
-      </div>
-    );
-  }
+  const handleRefreshSummary = async () => {
+    if (!inquiry) return;
+    setGeneratingSummary(true);
+    try {
+      const result = await inquiryService.generateAiSummary(inquiry.id);
+      setInquiry((prev) => ({ ...prev, latest_ai_summary: result }));
+      toast({ title: 'AI Summary Updated', description: '6-section report refreshed.', variant: 'success' });
+    } catch (err) {
+      toast({
+        title: 'Summary Failed',
+        description: err.message || 'Could not refresh AI summary.',
+        variant: 'destructive',
+      });
+    } finally {
+      setGeneratingSummary(false);
+    }
+  };
 
-  if (error || !inquiry) {
-    return (
-      <div className="space-y-6 max-w-6xl mx-auto">
-        <PageHeader title="Inquiry Not Found" />
-        <Card data-testid="broker-card" className="p-8 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-lg text-center space-y-4 shadow-xs">
-          <span className="material-symbols-outlined text-4xl text-rose-600 dark:text-rose-400">error</span>
-          <h2 className="text-lg font-bold text-[#1E293B] dark:text-slate-100 font-display">Inquiry Record Unavailable</h2>
-          <p className="text-sm text-[#64748B] dark:text-slate-400 font-sans max-w-md mx-auto">
-            {error || "The inquiry record could not be loaded."}
-          </p>
-          <Link
-            to="/broker/inquiries"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-[#0F766E] text-white text-xs font-bold uppercase rounded-lg tracking-wider"
-          >
-            Back to Inquiries
-          </Link>
-        </Card>
-      </div>
-    );
-  }
+  const handleCreateTask = async (title) => {
+    if (!title || !inquiry) return;
+    setCreatingTask(true);
+    const dueAt = new Date(Date.now() + 86400_000).toISOString();
+    try {
+      const task = await inquiryService.createFollowUpTask(inquiry.id, { title, dueAt });
+      setInquiry((prev) => ({
+        ...prev,
+        follow_up_tasks: [...(prev.follow_up_tasks || []), task],
+      }));
+      toast({ title: 'Task Added', description: `"${title}" scheduled.`, variant: 'success' });
+    } catch {
+      const fallbackTask = { id: `task-${Date.now()}`, title, dueAt, status: 'pending' };
+      setInquiry((prev) => ({
+        ...prev,
+        follow_up_tasks: [...(prev.follow_up_tasks || []), fallbackTask],
+      }));
+      toast({ title: 'Saved Locally', description: 'Task added in current session.', variant: 'warning' });
+    } finally {
+      setCreatingTask(false);
+    }
+  };
+
+  const handleToggleTask = async (task) => {
+    if (!inquiry) return;
+    const nextStatus = task.status === 'completed' ? 'pending' : 'completed';
+    setInquiry((prev) => ({
+      ...prev,
+      follow_up_tasks: (prev.follow_up_tasks || []).map((t) =>
+        t.id === task.id ? { ...t, status: nextStatus } : t
+      ),
+    }));
+    try {
+      await inquiryService.updateFollowUpTask(inquiry.id, task.id, { status: nextStatus });
+    } catch (err) {
+      console.warn('Failed updating task status:', err.message);
+    }
+  };
+
+  const handleAddInternalNote = async (content) => {
+    if (!content || !inquiry) return;
+    setAddingNote(true);
+    try {
+      const added = await inquiryService.addNote(inquiry.id, content);
+      setInquiry((prev) => ({
+        ...prev,
+        internal_notes: [...(prev.internal_notes || []), added],
+      }));
+      toast({ title: 'Note Saved', description: 'Private staff note recorded.', variant: 'success' });
+    } catch {
+      const fallbackNote = {
+        id: `note-${Date.now()}`,
+        authorName: 'Supervising Broker',
+        authorRole: 'broker',
+        content,
+        timestamp: new Date().toISOString(),
+      };
+      setInquiry((prev) => ({
+        ...prev,
+        internal_notes: [...(prev.internal_notes || []), fallbackNote],
+      }));
+      toast({ title: 'Saved Locally', description: 'Note stored in current session.', variant: 'warning' });
+    } finally {
+      setAddingNote(false);
+    }
+  };
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto font-sans" data-testid="broker-inquiry-detail">
-      <Toaster />
-      <PageHeader
-        title={`Inquiry Dossier: ${inquiry.client_name}`}
-        subtitle={`Session Ref: ${inquiry.reference_code || inquiry.id} • Created ${inquiry.created_at}`}
+    <>
+      <InquiryDetailShell
+        testId="broker-inquiry-detail"
+        loading={loading}
+        error={error}
+        inquiry={inquiry}
+        backTo="/broker/inquiries"
+        backLabel="Back to Overview"
+        breadcrumbs={[
+          { label: 'Dashboard', to: '/broker/dashboard' },
+          { label: 'Inquiries', to: '/broker/inquiries' },
+          { label: inquiry?.client_name || 'Detail' },
+        ]}
+        title={inquiry ? `Inquiry Dossier: ${inquiry.client_name}` : 'Inquiry Detail'}
+        subtitle={
+          inquiry
+            ? `Ref: ${inquiry.reference_code || inquiry.id} • Consultant: ${inquiry.agent_name || 'Unassigned'}`
+            : ''
+        }
         badge={
+<<<<<<< HEAD
           <div className="flex items-center gap-2 flex-wrap">
             <span
               className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
@@ -338,133 +433,236 @@ export default function BrokerInquiryDetail() {
               <p className="text-xs text-[#64748B] dark:text-slate-400">
                 Immutable, append-only security and operational audit trail with field redaction
               </p>
+=======
+          inquiry && (
+            <div className="flex items-center gap-2">
+              <Badge variant={inquiry.business_status === 'inactive' ? 'secondary' : 'success'}>
+                {inquiry.business_status || 'active'}
+              </Badge>
+              <StatusBadge status={inquiry.status} />
+>>>>>>> property-tech-v3.0
             </div>
-            <button
-              onClick={() => {
-                const blob = new Blob([JSON.stringify(auditEvents, null, 2)], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `audit-export-${inquiry.id}.json`;
-                a.click();
-              }}
-              className="px-3.5 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer"
-            >
-              Export Audit JSON
-            </button>
-          </div>
+          )
+        }
+        allItems={allInquiries}
+        headerActions={
+          <Button
+            type="button"
+            onClick={() => setReassignModalOpen(true)}
+            aria-label="Reassign Agent"
+            className="h-11 px-4"
+          >
+            <UserPlus data-icon="inline-start" />
+            <span>Reassign Agent</span>
+          </Button>
+        }
+      >
+        {inquiry && (
+          <Tabs value={detailTab} onValueChange={setDetailTab} className="w-full flex flex-col gap-6">
+            <TabsList className="bg-surface border border-outline p-1 h-auto flex-wrap w-fit">
+              <TabsTrigger value="conversation" className="min-h-10 text-xs font-semibold px-4 py-2">
+                Conversation
+              </TabsTrigger>
+              <TabsTrigger value="ai_tasks" className="min-h-10 text-xs font-semibold px-4 py-2">
+                AI Summary &amp; Tasks
+              </TabsTrigger>
+              <TabsTrigger value="notes" className="min-h-10 text-xs font-semibold px-4 py-2">
+                Private Notes ({(inquiry.internal_notes || []).length})
+              </TabsTrigger>
+              <TabsTrigger value="audit" className="min-h-10 text-xs font-semibold px-4 py-2 gap-1.5">
+                <Shield className="size-3.5" />
+                <span>Protected Audit Log ({auditEvents.length})</span>
+              </TabsTrigger>
+            </TabsList>
 
-          <div className="space-y-3">
-            {auditEvents && auditEvents.length > 0 ? (
-              auditEvents.map((evt) => (
-                <div key={evt.id} className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-lg border border-slate-200 dark:border-slate-700 text-xs space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono font-bold text-[#0F766E] dark:text-teal-400">{evt.eventType}</span>
-                    <span className="text-[10px] font-mono text-slate-400">{evt.createdAt}</span>
+            <TabsContent value="conversation" className="mt-0">
+              <InquiryConversationPanel
+                inquiry={inquiry}
+                viewerRole="broker"
+                propertyLinkTo={`/broker/properties/${inquiry.property_id}/edit`}
+                propertyLinkLabel="Edit property"
+                readOnlyNotice="Supervising view: use Reassign Agent above to assign or transfer consultant ownership."
+              />
+            </TabsContent>
+
+            <TabsContent value="ai_tasks" className="mt-0 flex flex-col gap-6">
+              <InquiryAiSummaryCard
+                aiSummary={inquiry.latest_ai_summary}
+                fallbackSummary={inquiry.ai_summary}
+                generating={generatingSummary}
+                onRefresh={handleRefreshSummary}
+              />
+              <InquiryFollowUpTasksCard
+                tasks={inquiry.follow_up_tasks || []}
+                onToggleTask={handleToggleTask}
+                onCreateTask={handleCreateTask}
+                creating={creatingTask}
+              />
+            </TabsContent>
+
+            <TabsContent value="notes" className="mt-0">
+              <InquiryInternalNotesCard
+                notes={inquiry.internal_notes || []}
+                onAddNote={handleAddInternalNote}
+                adding={addingNote}
+              />
+            </TabsContent>
+
+            <TabsContent value="audit" className="mt-0">
+              <Card data-testid="broker-protected-audit-viewer" className="bg-surface border border-outline shadow-xs">
+                <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3 border-b border-outline pb-4">
+                  <div>
+                    <CardTitle className="text-sm font-bold text-on-surface flex items-center gap-2">
+                      <Shield className="size-4 text-primary" />
+                      <span>Protected Broker Audit Evidence</span>
+                    </CardTitle>
+                    <CardDescription className="text-xs text-on-surface-variant">
+                      Immutable, append-only security and operational audit trail with field redaction
+                    </CardDescription>
                   </div>
-                  <div className="flex items-center gap-3 text-[11px] text-[#64748B] dark:text-slate-400">
-                    <span>Actor: <strong>{evt.actorName}</strong> ({evt.actorRole || 'system'})</span>
-                    <span>•</span>
-                    <span>Outcome: <strong className={evt.outcome === 'success' ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'}>{evt.outcome}</strong></span>
-                  </div>
-                  {evt.reason && (
-                    <p className="text-slate-700 dark:text-slate-300 italic">Reason: {evt.reason}</p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const blob = new Blob([JSON.stringify(auditEvents, null, 2)], { type: 'application/json' });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = `audit-export-${inquiry.id}.json`;
+                      a.click();
+                    }}
+                    className="min-h-11 sm:min-h-9"
+                  >
+                    <Download data-icon="inline-start" />
+                    <span>Export Audit JSON</span>
+                  </Button>
+                </CardHeader>
+
+                <CardContent className="pt-4 flex flex-col gap-3">
+                  {auditEvents.length > 0 ? (
+                    auditEvents.map((evt) => (
+                      <div
+                        key={evt.id}
+                        className="p-3 bg-surface-variant/60 rounded-lg border border-outline text-xs flex flex-col gap-1"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-semibold text-primary">{evt.eventType}</span>
+                          <span className="text-[11px] text-on-surface-variant tabular-nums">{evt.createdAt}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-on-surface-variant">
+                          <span>
+                            Actor: <strong className="text-on-surface">{evt.actorName}</strong> ({evt.actorRole || 'system'})
+                          </span>
+                          <span>•</span>
+                          <span>
+                            Outcome:{' '}
+                            <strong className={evt.outcome === 'success' ? 'text-emerald-700' : 'text-red-600'}>
+                              {evt.outcome}
+                            </strong>
+                          </span>
+                        </div>
+                        {evt.reason && <p className="text-on-surface italic">Reason: {evt.reason}</p>}
+                        {(evt.previousValues || evt.newValues) && (
+                          <div className="mt-1 pt-1 border-t border-outline text-[11px] text-on-surface-variant tabular-nums">
+                            {evt.previousValues && <div>Prev: {JSON.stringify(evt.previousValues)}</div>}
+                            {evt.newValues && <div>New: {JSON.stringify(evt.newValues)}</div>}
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-xs text-on-surface-variant italic py-4 text-center">
+                      No audit records logged for this inquiry.
+                    </p>
                   )}
-                  {(evt.previousValues || evt.newValues) && (
-                    <div className="mt-1 pt-1 border-t border-slate-200/60 dark:border-slate-700 font-mono text-[10px] text-slate-600 dark:text-slate-400">
-                      {evt.previousValues && <div>Prev: {JSON.stringify(evt.previousValues)}</div>}
-                      {evt.newValues && <div>New: {JSON.stringify(evt.newValues)}</div>}
-                    </div>
-                  )}
-                </div>
-              ))
-            ) : (
-              <p className="text-xs text-[#64748B] dark:text-slate-400 italic py-4 text-center">No audit records logged for this inquiry.</p>
-            )}
-          </div>
-        </Card>
-      )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        )}
+      </InquiryDetailShell>
 
       {/* Reassign Agent Dialog */}
       <Dialog open={reassignModalOpen} onOpenChange={setReassignModalOpen}>
         <DialogContent
           data-testid="broker-dialog"
-          className="max-w-2xl bg-white dark:bg-slate-900 border border-[#E2E8F0] dark:border-slate-800 text-[#1E293B] dark:text-slate-100"
+          className="max-w-2xl bg-surface border border-outline text-on-surface"
         >
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-[#1E293B] dark:text-slate-100 font-display">
-              Reassign Inquiry to Consultant
-            </DialogTitle>
-            <DialogDescription className="text-xs text-[#64748B] dark:text-slate-400">
-              Select a licensed agent to take over communication with {inquiry.client_name}
+            <DialogTitle>Reassign Inquiry to Consultant</DialogTitle>
+            <DialogDescription>
+              Select a licensed agent to take over communication with {inquiry?.client_name}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-slate-300 font-sans">
-              Select Active Consultant
-            </label>
-            <div className="space-y-2 max-h-56 overflow-y-auto custom-scrollbar">
-              {agents.map(ag => (
-                <label
-                  key={ag.id}
-                  className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all ${
-                    selectedAgentId === ag.id
-                      ? 'border-[#0F766E] bg-teal-50/40 dark:bg-teal-950/40'
-                      : 'border-gray-200 dark:border-slate-700 hover:border-gray-300 dark:hover:border-slate-600'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="radio"
-                      name="agentSelect"
-                      checked={selectedAgentId === ag.id}
-                      onChange={() => setSelectedAgentId(ag.id)}
-                      className="accent-[#0F766E]"
-                    />
-                    <div>
-                      <p className="font-bold text-xs text-[#1E293B] dark:text-slate-100 font-sans">{ag.name}</p>
-                      <p className="text-[11px] text-[#64748B] dark:text-slate-400 font-sans">{ag.assigned_properties_count} listings • {ag.active_inquiries_count} inquiries</p>
+          <FieldGroup className="gap-4 py-2">
+            <Field>
+              <FieldLabel>Select Active Consultant</FieldLabel>
+              <div className="flex flex-col gap-2 max-h-56 overflow-y-auto custom-scrollbar">
+                {agents.map((ag) => (
+                  <Label
+                    key={ag.id}
+                    className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors normal-case tracking-normal ${
+                      selectedAgentId === ag.id
+                        ? 'border-primary bg-teal-50/40'
+                        : 'border-outline hover:border-outline-variant'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="radio"
+                        name="agentSelect"
+                        checked={selectedAgentId === ag.id}
+                        onChange={() => setSelectedAgentId(ag.id)}
+                        className="accent-[#0F766E]"
+                      />
+                      <div className="flex flex-col gap-0.5">
+                        <span className="font-semibold text-sm text-on-surface">{ag.name}</span>
+                        <span className="text-xs font-normal text-on-surface-variant tabular-nums">
+                          {ag.assigned_properties_count} listings • {ag.active_inquiries_count} inquiries
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                  <StatusBadge status={ag.verification_status} />
-                </label>
-              ))}
-            </div>
+                    <StatusBadge status={ag.verification_status} />
+                  </Label>
+                ))}
+              </div>
+            </Field>
 
-            <div className="space-y-1 pt-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-slate-300 font-sans">
-                Reassignment Audit Reason
-              </label>
-              <input
+            <Field>
+              <FieldLabel htmlFor="reassign-audit-reason">Reassignment Audit Reason</FieldLabel>
+              <Input
+                id="reassign-audit-reason"
                 type="text"
                 value={reassignReason}
                 onChange={(e) => setReassignReason(e.target.value)}
                 placeholder="e.g. Load balancing or specialist expertise"
-                className="w-full h-[40px] px-3 bg-white dark:bg-slate-800 border border-[#E2E8F0] dark:border-slate-700 rounded text-xs text-[#1E293B] dark:text-slate-100 outline-none focus:border-[#0F766E]"
+                className="h-11"
               />
-            </div>
-          </div>
+            </Field>
+          </FieldGroup>
 
-          <DialogFooter className="flex gap-2 sm:justify-end pt-3 border-t border-[#E2E8F0] dark:border-slate-800">
-            <button
+          <DialogFooter className="gap-2 pt-3 border-t border-outline">
+            <Button
               type="button"
+              variant="outline"
               onClick={() => setReassignModalOpen(false)}
-              className="px-4 py-2 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-slate-400 font-sans cursor-pointer hover:text-[#1E293B] dark:hover:text-slate-200"
+              className="h-11"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
               onClick={handleSaveReassignment}
               disabled={saving}
-              className="px-5 py-2 bg-[#0F766E] hover:bg-[#115E59] text-white rounded-lg text-xs font-bold uppercase tracking-wider font-sans cursor-pointer transition-colors shadow-2xs disabled:opacity-50"
+              className="h-11"
             >
               {saving ? 'Assigning...' : 'Confirm Assignment'}
-            </button>
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }

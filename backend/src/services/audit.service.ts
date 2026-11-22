@@ -32,6 +32,8 @@ export interface ActivityTimelineItem {
 
 export interface AuditFilterQuery {
   inquiryId?: string;
+  targetType?: string;
+  targetId?: string;
   eventType?: string;
   actorId?: string;
   outcome?: string;
@@ -235,6 +237,12 @@ export class AuditService {
     }
     if (filters.inquiryId) {
       results = results.filter((e) => e.inquiryId === filters.inquiryId);
+    }
+    if (filters.targetType) {
+      results = results.filter((e) => e.targetType === filters.targetType);
+    }
+    if (filters.targetId) {
+      results = results.filter((e) => e.targetId === filters.targetId);
     }
     if (filters.eventType) {
       results = results.filter((e) => e.eventType === filters.eventType);

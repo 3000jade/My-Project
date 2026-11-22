@@ -202,19 +202,12 @@ ON CONFLICT (id) DO NOTHING;
 CREATE TABLE IF NOT EXISTS public.properties (
   id UUID NOT NULL DEFAULT gen_random_uuid(),
   title TEXT NOT NULL,
-  tagline TEXT NULL,
   price NUMERIC(15, 2) NOT NULL,
-  formatted_price TEXT NULL,
   address TEXT NOT NULL,
   city TEXT NOT NULL,
-  state TEXT NULL,
   latitude DOUBLE PRECISION NULL,
   longitude DOUBLE PRECISION NULL,
-  beds INTEGER NOT NULL DEFAULT 1,
-  baths INTEGER NOT NULL DEFAULT 1,
-  sqft NUMERIC(10, 2) NOT NULL,
   year_built INTEGER NULL,
-  architectural_style TEXT NULL,
   status TEXT NOT NULL DEFAULT 'available'::TEXT,
   created_by UUID NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::TEXT, now()),
@@ -223,18 +216,12 @@ CREATE TABLE IF NOT EXISTS public.properties (
   listing_id VARCHAR(32) NULL,
   standard_status VARCHAR(32) NOT NULL DEFAULT 'Draft'::VARCHAR,
   property_sub_type VARCHAR(64) NULL DEFAULT 'Residential Condominium'::VARCHAR,
-  association_fee_frequency VARCHAR(20) NULL DEFAULT 'Monthly'::VARCHAR,
   living_area NUMERIC(10, 2) NULL,
-  living_area_units VARCHAR(20) NULL DEFAULT 'Square Meters'::VARCHAR,
   lot_size_area NUMERIC(12, 2) NULL,
-  lot_size_units VARCHAR(20) NULL DEFAULT 'Square Meters'::VARCHAR,
   bedrooms_total SMALLINT NULL DEFAULT 1,
   bathrooms_total_integer SMALLINT NULL DEFAULT 1,
-  bathrooms_full SMALLINT NULL DEFAULT 1,
-  bathrooms_half SMALLINT NULL DEFAULT 0,
   stories_total SMALLINT NULL DEFAULT 1,
   parking_total SMALLINT NULL DEFAULT 0,
-  unparsed_address TEXT NULL,
   subdivision_name VARCHAR(128) NULL,
   state_or_province VARCHAR(64) NULL,
   region TEXT NULL,
@@ -250,8 +237,6 @@ CREATE TABLE IF NOT EXISTS public.properties (
   is_featured BOOLEAN NULL DEFAULT false,
   transaction_type VARCHAR(32) NULL DEFAULT 'For Sale'::VARCHAR,
   property_condition VARCHAR(32) NULL,
-  parking_covered SMALLINT NULL DEFAULT 0,
-  parking_open SMALLINT NULL DEFAULT 0,
   property_type_id BIGINT NOT NULL DEFAULT 1,
   CONSTRAINT properties_pkey PRIMARY KEY (id),
   CONSTRAINT properties_listing_id_key UNIQUE (listing_id),
@@ -275,31 +260,16 @@ CREATE INDEX IF NOT EXISTS idx_properties_fts ON public.properties USING gin (
       (
         (
           (
-            (
-              (
-                (
-                  (COALESCE(title, ''::TEXT) || ' '::TEXT) || COALESCE(unparsed_address, ''::TEXT)
-                ) || ' '::TEXT
-              ) || COALESCE(city, ''::TEXT)
-            ) || ' '::TEXT
-          ) || (COALESCE(subdivision_name, ''::VARCHAR))::TEXT
-        ) || ' '::TEXT
-      ) || COALESCE(public_remarks, ''::TEXT)
+            COALESCE(title, ''::TEXT) || ' '::TEXT || COALESCE(address, ''::TEXT)
+          ) || ' '::TEXT || COALESCE(city, ''::TEXT)
+        ) || ' '::TEXT || COALESCE(subdivision_name, ''::VARCHAR)::TEXT
+      ) || ' '::TEXT || COALESCE(public_remarks, ''::TEXT)
     )
   )
 );
 CREATE INDEX IF NOT EXISTS idx_properties_custom_reso ON public.properties USING gin (custom_reso_attributes);
 CREATE INDEX IF NOT EXISTS idx_properties_property_type ON public.properties USING btree (property_type_id);
 CREATE INDEX IF NOT EXISTS idx_properties_client_search ON public.properties USING btree (standard_status, city, price, property_type_id);
-  ADD COLUMN IF NOT EXISTS unparsed_address TEXT,
-  ADD COLUMN IF NOT EXISTS subdivision_name VARCHAR(128),
-  ADD COLUMN IF NOT EXISTS state_or_province VARCHAR(64),
-  ADD COLUMN IF NOT EXISTS postal_code VARCHAR(20) DEFAULT '1000',
-  ADD COLUMN IF NOT EXISTS latitude NUMERIC(10, 7),
-  ADD COLUMN IF NOT EXISTS longitude NUMERIC(10, 7),
-  ADD COLUMN IF NOT EXISTS public_remarks TEXT,
-  ADD COLUMN IF NOT EXISTS custom_reso_attributes JSONB DEFAULT '{}'::jsonb,
-  ADD COLUMN IF NOT EXISTS list_agent_key UUID REFERENCES public.profiles(id);
 
 -- Backfill legacy records if standard_status or listing_key is null or unpopulated
 UPDATE public.properties
@@ -409,6 +379,11 @@ CREATE TABLE IF NOT EXISTS public.property_media (
   media_url TEXT NOT NULL,
   media_category VARCHAR(32) NOT NULL DEFAULT 'Photo' 
     CHECK (media_category IN ('Photo', 'FloorPlan', 'Video', 'VirtualTour', 'Document')),
+  gallery_category VARCHAR(32) NULL
+    CHECK (
+      gallery_category IS NULL OR
+      (char_length(trim(gallery_category)) BETWEEN 1 AND 32)
+    ),
   order_index INTEGER NOT NULL DEFAULT 0,
   short_description VARCHAR(255),
   mime_type VARCHAR(64) DEFAULT 'image/jpeg',
@@ -417,6 +392,8 @@ CREATE TABLE IF NOT EXISTS public.property_media (
 
 CREATE INDEX IF NOT EXISTS idx_property_media_lookup 
   ON public.property_media(property_id, order_index ASC);
+CREATE INDEX IF NOT EXISTS idx_property_media_gallery_category
+  ON public.property_media(property_id, gallery_category);
 
 ALTER TABLE public.property_media ENABLE ROW LEVEL SECURITY;
 

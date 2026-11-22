@@ -8,11 +8,14 @@ export class NotificationController {
    */
   public static async list(req: Request, res: Response<ApiResponse>): Promise<void> {
     try {
+      const user = (req as any).user;
       const { status, type, role, limit } = req.query as any;
+      // Only brokers/admins may filter by another role; other users are scoped to their own role
+      const effectiveRole = ['broker', 'admin'].includes(user?.role) ? role : (user?.role || 'client');
       const notifications = await NotificationService.listNotifications({
         status: status || 'ALL',
         type,
-        role,
+        role: effectiveRole,
         limit: limit ? Number(limit) : undefined,
       });
 
@@ -36,7 +39,9 @@ export class NotificationController {
    */
   public static async getUnreadCount(req: Request, res: Response<ApiResponse>): Promise<void> {
     try {
-      const role = (req.query.role as string) || undefined;
+      const user = (req as any).user;
+      const requestedRole = (req.query.role as string) || undefined;
+      const role = ['broker', 'admin'].includes(user?.role) ? requestedRole : (user?.role || 'client');
       const count = await NotificationService.getUnreadCount(role);
 
       res.status(200).json({
@@ -169,7 +174,7 @@ export class NotificationController {
       const updated = await NotificationService.processProviderCallback(provider, {
         providerRef: req.body.providerRef,
         status: req.body.status,
-        signatureValid: Boolean(sigHeader !== 'invalid'),
+        signatureValid: Boolean(sigHeader && sigHeader !== 'invalid'),
         errorMessage: req.body.errorMessage,
       });
 

@@ -15,9 +15,24 @@ import {
   CardTitle,
   CardDescription,
   CardContent,
+  CardFooter,
+  KpiCard,
   useToast,
   Toaster
 } from '../../../components/ui';
+import { Button } from '../../../components/ui/button';
+import { Badge } from '../../../components/ui/badge';
+import { Alert, AlertTitle, AlertDescription } from '../../../components/ui/alert';
+import {
+  Eye,
+  RefreshCw,
+  AlertCircle,
+  TrendingUp,
+  CheckCircle2,
+  Clock,
+  FileText,
+  ShieldCheck
+} from 'lucide-react';
 import { Spinner } from '../../../components/ui';
 import { TableSkeleton } from '../../../components/dashboard/skeletons';
 import { saleService } from '../../../services/saleService';
@@ -101,6 +116,10 @@ export default function BrokerSales() {
     }
   };
 
+  const completedCount = filtered.filter(s => s.status === 'COMPLETED').length;
+  const pendingCount = filtered.filter(s => s.status === 'PENDING').length;
+  const cancelledCount = filtered.filter(s => s.status === 'CANCELLED').length;
+
   const agentOptions = [
     { label: "All Consultants", value: "ALL" },
     ...agents.map(a => ({ label: a.name, value: a.id }))
@@ -144,105 +163,200 @@ export default function BrokerSales() {
       header: "Actions",
       className: "text-right",
       render: (row) => (
-        <button
+        <Button
+          type="button"
+          size="sm"
           onClick={(e) => { e.stopPropagation(); setSelectedSale(row); }}
           aria-label="Inspect Record"
-          className="px-3 py-1.5 rounded-md bg-[#0F766E] hover:bg-[#115E59] active:bg-[#134E4A] text-white text-xs font-semibold font-sans uppercase tracking-wider inline-flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+          className="bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-semibold gap-1.5"
         >
-          <span className="material-symbols-outlined text-[14px] text-white">visibility</span>
+          <Eye className="size-3.5" />
           <span>Inspect Record</span>
-        </button>
+        </Button>
       )
     }
   ];
 
   return (
-    <div className="space-y-6 max-w-[1440px] mx-auto font-sans" data-testid="broker-sales-portal">
+    <div className="flex flex-col gap-6 w-full min-w-0 max-w-full font-sans" data-testid="broker-sales-portal">
       <Toaster />
       <PageHeader
         title="Firm-Wide Sales Audit & Monitoring"
         subtitle="Complete registry of property conveyance agreements, recorded valuations, and deed closing audits."
         actions={
-          <button
+          <Button
+            type="button"
+            variant="outline"
             onClick={loadData}
             disabled={loading}
             aria-label="Refresh sales data"
-            className="h-[46px] px-4 bg-white dark:bg-slate-900 hover:bg-gray-50 dark:hover:bg-slate-800 text-[#1E293B] dark:text-slate-100 border border-[#E2E8F0] dark:border-slate-800 rounded-xl text-xs font-bold font-sans uppercase tracking-wider flex items-center gap-2 transition-all shadow-xs cursor-pointer"
+            className="h-11 px-4 gap-2 border-[#E2E8F0] dark:border-slate-800"
           >
-            <span className={`material-symbols-outlined text-[18px] ${loading ? 'animate-spin' : ''}`}>
-              refresh
-            </span>
+            <RefreshCw className={`size-4 ${loading ? 'animate-spin' : ''}`} />
             <span>Refresh</span>
-          </button>
+          </Button>
         }
       />
 
       {error && (
-        <div role="alert" className="p-4 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-900 rounded-2xl flex items-center justify-between text-rose-700 dark:text-rose-300 font-sans text-sm">
+        <Alert variant="destructive" className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <span className="material-symbols-outlined text-rose-600 dark:text-rose-400">error</span>
-            <span>{error}</span>
+            <AlertCircle className="size-4 shrink-0" />
+            <div>
+              <AlertTitle>Synchronization Error</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </div>
           </div>
-          <button
-            onClick={loadData}
-            className="px-3 py-1 bg-rose-600 text-white text-xs font-bold uppercase rounded-lg tracking-wider hover:bg-rose-700 cursor-pointer"
-          >
+          <Button type="button" size="sm" variant="destructive" onClick={loadData}>
             Retry
-          </button>
-        </div>
+          </Button>
+        </Alert>
       )}
 
-      {/* Summary Card with Single-Column Responsive Card Layout */}
-      <Card data-testid="broker-card" className="border border-[#E2E8F0] dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
-        <CardContent className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-[#64748B] dark:text-slate-400 font-sans">
-              Total Closed Valuation (Filtered)
-            </span>
-            <p className="text-3xl font-display font-bold text-[#1E293B] dark:text-slate-100 mt-0.5">
-              {`₱${totalClosedValuation.toLocaleString()}`}
-            </p>
-          </div>
-          <div className="text-xs font-sans text-[#64748B] dark:text-slate-400 max-w-sm">
-            <strong>Compliance Notice:</strong> Sales records serve for supervisory real estate operational monitoring. No banking or payment gateway is processed.
-          </div>
-        </CardContent>
-      </Card>
+      {/* Top Executive KPI Strip */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <KpiCard
+          data-testid="broker-card"
+          variant="trend"
+          title="Total Closed Valuation (Filtered)"
+          value={`₱${totalClosedValuation.toLocaleString()}`}
+          icon={TrendingUp}
+          footerText="Verified completed conveyances in current view"
+        />
 
-      <SearchAndFilterBar
-        searchValue={search}
-        onSearchChange={setSearch}
-        searchPlaceholder="Search by property, client, or location..."
-        filters={[
-          {
-            value: statusFilter,
-            onChange: setStatusFilter,
-            options: [
-              { label: "All Statuses", value: "ALL" },
-              { label: "Completed", value: "COMPLETED" },
-              { label: "Pending", value: "PENDING" },
-              { label: "Cancelled", value: "CANCELLED" },
-            ]
-          },
-          {
-            value: agentFilter,
-            onChange: setAgentFilter,
-            options: agentOptions
-          }
-        ]}
-      />
+        <KpiCard
+          variant="progress"
+          title="Filtered Conveyance Records"
+          value={filtered.length}
+          progress={sales.length ? Math.round((filtered.length / sales.length) * 100) : 0}
+          targetLabel={`Out of ${sales.length} total firm records`}
+        />
 
-      {loading ? (
-        <TableSkeleton rows={5} />
-      ) : (
-        <Card data-testid="broker-card" className="border border-[#E2E8F0] dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-xs">
-          <DataTable
-            columns={columns}
-            data={filtered}
-            onRowClick={(row) => setSelectedSale(row)}
+        <KpiCard
+          variant="breakdown"
+          title="Completed Deals"
+          value={completedCount}
+          segments={[
+            { label: 'Completed', value: completedCount, color: 'emerald' },
+            { label: 'Pending', value: pendingCount, color: 'amber' },
+          ]}
+        />
+      </div>
+
+      {/* Asymmetric 8/4 Bento Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <div className="lg:col-span-8 min-w-0 flex flex-col gap-4">
+          <SearchAndFilterBar
+            searchValue={search}
+            onSearchChange={setSearch}
+            searchPlaceholder="Search by property, client, or location..."
+            filters={[
+              {
+                value: statusFilter,
+                onChange: setStatusFilter,
+                options: [
+                  { label: "All Statuses", value: "ALL" },
+                  { label: "Completed", value: "COMPLETED" },
+                  { label: "Pending", value: "PENDING" },
+                  { label: "Cancelled", value: "CANCELLED" },
+                ]
+              },
+              {
+                value: agentFilter,
+                onChange: setAgentFilter,
+                options: agentOptions
+              }
+            ]}
           />
-        </Card>
-      )}
+
+          {loading ? (
+            <TableSkeleton rows={5} />
+          ) : (
+            <Card data-testid="broker-card" className="border border-[#E2E8F0] dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-xs">
+              <CardHeader className="pb-3 border-b border-[#E2E8F0] dark:border-slate-800 flex flex-row items-center justify-between gap-2">
+                <div>
+                  <CardTitle className="text-base font-bold text-[#1E293B] dark:text-slate-100">
+                    Conveyance Registry
+                  </CardTitle>
+                  <CardDescription className="text-xs text-[#64748B] dark:text-slate-400">
+                    Click any row or Inspect Record to audit deed details and update status.
+                  </CardDescription>
+                </div>
+                <Badge variant="outline" className="font-mono text-xs">
+                  {filtered.length} records
+                </Badge>
+              </CardHeader>
+              <CardContent className="p-0">
+                <DataTable
+                  columns={columns}
+                  data={filtered}
+                  onRowClick={(row) => setSelectedSale(row)}
+                />
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        <div className="lg:col-span-4 flex flex-col gap-6">
+          <Card className="bg-white dark:bg-slate-900 border-[#E2E8F0] dark:border-slate-800 shadow-xs">
+            <CardHeader className="pb-3 border-b border-[#E2E8F0] dark:border-slate-800">
+              <CardTitle className="text-base font-bold text-[#1E293B] dark:text-slate-100">
+                Status Breakdown
+              </CardTitle>
+              <CardDescription className="text-xs text-[#64748B] dark:text-slate-400">
+                Quick filter by conveyance stage
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-4 flex flex-col gap-3">
+              <button
+                type="button"
+                onClick={() => setStatusFilter(statusFilter === 'COMPLETED' ? 'ALL' : 'COMPLETED')}
+                className="flex items-center justify-between p-3 rounded-lg border border-[#E2E8F0] dark:border-slate-800 hover:bg-[#F8FAFC] dark:hover:bg-slate-800/60 transition-colors text-left cursor-pointer"
+              >
+                <span className="flex items-center gap-2 text-sm font-medium text-[#1E293B] dark:text-slate-200">
+                  <CheckCircle2 className="size-4 text-emerald-600" />
+                  Completed
+                </span>
+                <Badge variant="outline" className="font-mono tabular-nums">
+                  {completedCount}
+                </Badge>
+              </button>
+              <button
+                type="button"
+                onClick={() => setStatusFilter(statusFilter === 'PENDING' ? 'ALL' : 'PENDING')}
+                className="flex items-center justify-between p-3 rounded-lg border border-[#E2E8F0] dark:border-slate-800 hover:bg-[#F8FAFC] dark:hover:bg-slate-800/60 transition-colors text-left cursor-pointer"
+              >
+                <span className="flex items-center gap-2 text-sm font-medium text-[#1E293B] dark:text-slate-200">
+                  <Clock className="size-4 text-amber-600" />
+                  Pending Execution
+                </span>
+                <Badge variant="outline" className="font-mono tabular-nums">
+                  {pendingCount}
+                </Badge>
+              </button>
+              <button
+                type="button"
+                onClick={() => setStatusFilter(statusFilter === 'CANCELLED' ? 'ALL' : 'CANCELLED')}
+                className="flex items-center justify-between p-3 rounded-lg border border-[#E2E8F0] dark:border-slate-800 hover:bg-[#F8FAFC] dark:hover:bg-slate-800/60 transition-colors text-left cursor-pointer"
+              >
+                <span className="flex items-center gap-2 text-sm font-medium text-[#1E293B] dark:text-slate-200">
+                  <AlertCircle className="size-4 text-rose-600" />
+                  Cancelled
+                </span>
+                <Badge variant="outline" className="font-mono tabular-nums">
+                  {cancelledCount}
+                </Badge>
+              </button>
+            </CardContent>
+            <CardFooter className="pt-3 border-t border-[#E2E8F0] dark:border-slate-800 flex items-start gap-2 text-xs text-[#64748B] dark:text-slate-400">
+              <ShieldCheck className="size-4 text-[#0F766E] shrink-0 mt-0.5" />
+              <span>
+                <strong>Compliance Notice:</strong> Sales records serve for supervisory real estate operational monitoring. No banking or payment gateway is processed.
+              </span>
+            </CardFooter>
+          </Card>
+        </div>
+      </div>
 
       {/* Sale Detail shadcn Dialog */}
       <Dialog open={!!selectedSale} onOpenChange={(open) => { if (!open) setSelectedSale(null); }}>

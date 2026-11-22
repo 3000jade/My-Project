@@ -1,25 +1,32 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, Link, useParams, useLocation } from 'react-router-dom';
-import axios from 'axios';
-import ReactQuill from 'react-quill-new';
-import 'react-quill-new/dist/quill.snow.css';
-import { 
-  ArrowLeft, ArrowRight, Check, CheckCircle2, Circle, 
-  FileText, MapPin, Sliders, DollarSign, Sparkles, 
-  Image as ImageIcon, Send, Lock, Building2, User, ChevronDown,
-  LayoutGrid, List, Search, Building, Home, Trees, Store,
-  Heart, Bed, Bath, Maximize2, ArrowUpRight
+import { MotionConfig, motion, AnimatePresence } from 'framer-motion';
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  Tag,
+  MapPin,
+  Sliders,
+  Image as ImageIcon,
+  ShieldCheck,
+  AlertCircle,
+  AlertTriangle,
+  Save,
+  Send,
+  CheckCircle2,
+  Eye,
+  RotateCcw,
 } from 'lucide-react';
-import { COMMON_PROPERTY_TYPES } from './BrokerPropertyTypeSelect';
-import PageHeader from '../../../components/dashboard/PageHeader';
 import DashboardModal from '../../../components/dashboard/DashboardModal';
-import { Button, buttonVariants } from '../../../components/ui/button';
-import { Badge } from '../../../components/ui/badge';
-import { 
-  Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, 
-  Input, Label, Textarea, Alert, AlertTitle, AlertDescription,
-  useToast, Toaster, ViewPropertyButton
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerFooter,
 } from '../../../components/ui';
+<<<<<<< HEAD
 import propertyService, {
   normalizeProperty,
   toApiPayload,
@@ -28,1278 +35,477 @@ import propertyService, {
   formatMergedStatusPill,
   resolvePropertyLifecycleState,
 } from '../../../services/propertyService';
+=======
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '../../../components/ui/dialog';
+import { Button } from '../../../components/ui/button';
+import { Card, CardContent } from '../../../components/ui/card';
+import { Alert, AlertTitle, AlertDescription } from '../../../components/ui/alert';
+import propertyService, { toApiPayload } from '../../../services/propertyService';
+>>>>>>> property-tech-v3.0
 import agentService from '../../../services/agentService';
 import { useAuth } from '../../../context/AuthContext';
 import mapsService from '../../../services/mapsService';
 import phLocationService from '../../../services/phLocationService';
 import driveService from '../../../services/driveService';
-import subdivisionService from '../../../services/subdivisionService';
-import SubdivisionCreateModal from '../../../components/ui/map/SubdivisionCreateModal';
-import { CadastralLocationPicker } from '../../../components/ui/map';
-import {
-  isLandFamily,
-  isStrataFamily,
-  isDwellingFamily,
-  getAssetFamily,
-} from './components/property-form/propertyTypeConfig';
-import SubdivisionLocationFields from './components/property-form/SubdivisionLocationFields';
-import CondoLocationFields from './components/property-form/CondoLocationFields';
-import SubdivisionLotSpecs from './components/property-form/SubdivisionLotSpecs';
-import CondominiumSpecs from './components/property-form/CondominiumSpecs';
-import HouseAndLotSpecs from './components/property-form/HouseAndLotSpecs';
-import CategoryAmenitiesPicker from './components/property-form/CategoryAmenitiesPicker';
-import { validatePropertyForm } from './components/property-form/typeAwareValidator';
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
 
-// Fix for default marker icon in Leaflet + React
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-});
+import ListingSkeleton from './components/property-form/ListingSkeleton';
+import ListingStepIdentityPricing from './components/property-form/ListingStepIdentityPricing';
+import ListingStepLocation from './components/property-form/ListingStepLocation';
+import ListingStepSpecsFeatures from './components/property-form/ListingStepSpecsFeatures';
+import ListingStepMedia from './components/property-form/ListingStepMedia';
+import ListingStepCredentialsReview from './components/property-form/ListingStepCredentialsReview';
+import ListingPreviewCard from './components/property-form/ListingPreviewCard';
+import LocationPinMap from './components/property-form/LocationPinMap';
+import { getPropertyTypeConfig } from './components/property-form/propertyTypeConfig';
 
-function LocationMarker({ position, setPosition, onPinMoved }) {
-  const map = useMapEvents({
-    click(e) {
-      const nextPos = [e.latlng.lat, e.latlng.lng];
-      setPosition(nextPos);
-      if (onPinMoved) onPinMoved(nextPos);
-    },
-  });
+const STEPS = [
+  { id: 1, title: 'Details & Price', icon: Tag },
+  { id: 2, title: 'Location', icon: MapPin },
+  { id: 3, title: 'Specs & Features', icon: Sliders },
+  { id: 4, title: 'Photos & Floor Plan', icon: ImageIcon },
+  { id: 5, title: 'Review & Publish', icon: ShieldCheck },
+];
 
-  useEffect(() => {
-    if (position) {
-      map.flyTo(position, map.getZoom());
-    }
-  }, [position, map]);
-
-  return position === null ? null : (
-    <Marker
-      draggable={true}
-      eventHandlers={{
-        dragend(e) {
-          const marker = e.target;
-          const pos = marker.getLatLng();
-          const nextPos = [pos.lat, pos.lng];
-          setPosition(nextPos);
-          if (onPinMoved) onPinMoved(nextPos);
-        },
-      }}
-      position={position}
-    />
-  );
-}
-
-function SearchableSelect({
-  id,
-  label,
-  required = false,
-  value,
-  options = [], // [{ value, label, sublabel }]
-  onChange,
-  placeholder = 'Select option...',
-  disabled = false,
-  disabledPlaceholder = 'Unavailable',
-  className = '',
-}) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const containerRef = useRef(null);
-  const inputRef = useRef(null);
-
-  const selectedOption = options.find(o => String(o.value) === String(value));
-
-  // Sync display search term with selected value when closed
-  useEffect(() => {
-    if (!isOpen) {
-      setSearchTerm('');
-    }
-  }, [isOpen]);
-
-  // Click outside listener to close dropdown
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (containerRef.current && !containerRef.current.contains(event.target)) {
-        setIsOpen(false);
-      }
-    }
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isOpen]);
-
-  const filteredOptions = useMemo(() => {
-    if (!searchTerm.trim()) return options;
-    const term = searchTerm.toLowerCase();
-    return options.filter(opt => 
-      opt.label.toLowerCase().includes(term) || 
-      (opt.sublabel && opt.sublabel.toLowerCase().includes(term))
-    );
-  }, [options, searchTerm]);
-
-  const handleSelect = (opt) => {
-    onChange(opt.value);
-    setIsOpen(false);
-    setSearchTerm('');
-  };
-
-  const handleClear = (e) => {
-    e.stopPropagation();
-    onChange('');
-    setSearchTerm('');
-    if (inputRef.current) inputRef.current.focus();
-  };
-
-  return (
-    <div className={`relative ${className}`} ref={containerRef}>
-      {label && (
-        <label htmlFor={id} className="text-sm font-semibold text-[#1E293B] block mb-2">
-          {label} {required && <span className="text-[#FF6B6B]">*</span>}
-        </label>
-      )}
-
-      <div
-        onClick={() => {
-          if (!disabled) {
-            setIsOpen(true);
-            setTimeout(() => inputRef.current?.focus(), 50);
-          }
-        }}
-        className={`w-full h-11 md:h-10 [@media(pointer:coarse)]:h-11 px-3 bg-white border rounded-md text-sm font-medium flex items-center justify-between gap-2 transition-all cursor-pointer ${
-          disabled 
-            ? 'bg-slate-50 text-slate-400 border-[#E2E8F0] cursor-not-allowed'
-            : isOpen 
-              ? 'border-[#0F766E] ring-1 ring-[#0F766E] shadow-2xs' 
-              : 'border-[#CBD5E1] hover:border-slate-400 text-[#1E293B] shadow-2xs'
-        }`}
-      >
-        <div className="flex-1 min-w-0 flex items-center gap-2">
-          {isOpen ? (
-            <input
-              ref={inputRef}
-              id={id}
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder={selectedOption ? selectedOption.label : placeholder}
-              className="min-w-0 w-full bg-transparent outline-none text-sm text-[#1E293B] placeholder-slate-400 font-medium"
-              onClick={(e) => e.stopPropagation()}
-              onKeyDown={(e) => {
-                if (e.key === 'Escape') setIsOpen(false);
-                if (e.key === 'Enter' && filteredOptions.length > 0) {
-                  e.preventDefault();
-                  handleSelect(filteredOptions[0]);
-                }
-              }}
-            />
-          ) : (
-            <span className={`block truncate ${selectedOption ? 'text-[#1E293B]' : 'text-slate-400'}`}>
-              {disabled ? disabledPlaceholder : selectedOption ? selectedOption.label : placeholder}
-            </span>
-          )}
-        </div>
-
-        <div className="flex items-center gap-1 shrink-0">
-          {!disabled && value && !isOpen && (
-            <button
-              type="button"
-              onClick={handleClear}
-              className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
-              title="Clear selection"
-            >
-              <span className="material-symbols-outlined text-[14px]">close</span>
-            </button>
-          )}
-          <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-150 ${isOpen ? 'rotate-180 text-[#0F766E]' : ''}`} />
-        </div>
-      </div>
-
-      {isOpen && !disabled && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-[#CBD5E1] rounded-md shadow-lg z-50 max-h-60 overflow-y-auto divide-y divide-slate-100 animate-in fade-in zoom-in-95 duration-100">
-          {filteredOptions.length > 0 ? (
-            filteredOptions.map((opt) => {
-              const isSelected = String(opt.value) === String(value);
-              return (
-                <div
-                  key={opt.value}
-                  onClick={() => handleSelect(opt)}
-                  className={`px-3 py-2.5 text-xs cursor-pointer flex items-center justify-between transition-colors ${
-                    isSelected 
-                      ? 'bg-teal-50 text-[#0F766E] font-semibold' 
-                      : 'hover:bg-slate-50 text-[#1E293B]'
-                  }`}
-                >
-                  <span className="truncate">{opt.label}</span>
-                  {isSelected && <Check className="w-3.5 h-3.5 text-[#0F766E] shrink-0" />}
-                </div>
-              );
-            })
-          ) : (
-            <div className="px-3 py-4 text-center text-xs text-slate-400 italic">
-              No matching results found for "{searchTerm}"
-            </div>
-          )}
-        </div>
-      )}
-      <Toaster />
-
-
-    </div>
-  );
-}
-
-const QUILL_MODULES = {
-  toolbar: [
-    [{ header: [1, 2, 3, false] }],
-    ['bold', 'italic', 'underline', 'strike'],
-    [{ list: 'ordered' }, { list: 'bullet' }],
-    ['clean'],
-  ],
+const INITIAL_FORM_DATA = {
+  listing_id: '',
+  title: '',
+  transaction_type: 'For Sale',
+  propertyCategory: 'Residential',
+  property_type: 'House & Lot',
+  property_type_id: 1,
+  propertyStatus: 'Ready for Occupancy',
+  property_condition: 'Ready for Occupancy',
+  price: '',
+  pricePerSqm: '',
+  partneredBanks: [],
+  selectedGalleryAreas: [],
+  customGalleryCategories: [],
+  categoryDescriptions: {},
+  paymentBreakdown: {
+    reservationFee: '',
+    downpayment: '',
+    downpaymentTerm: '',
+    loanTerm: '15 Years',
+    monthlyAmortization: '',
+    moveInFees: '',
+  },
+  association_fee: '',
+  associationFee: '',
+  // Location
+  region: '',
+  region_psgc_code: '',
+  province: '',
+  state_or_province: '',
+  state: '',
+  province_psgc_code: '',
+  city: '',
+  location: '',
+  city_psgc_code: '',
+  barangay: '',
+  barangay_psgc_code: '',
+  address: '',
+  building_name: '',
+  tower_name: '',
+  floor_level: '',
+  unit_number: '',
+  latitude: '',
+  longitude: '',
+  mapPinPrivacy: 'Exact Location',
+  // Specs & Features
+  lot_size_area: '',
+  living_area: '',
+  bedrooms_total: '3',
+  bathrooms_total_integer: '2',
+  parking_total: '1',
+  furnishing: 'None',
+  securityFeatures: [],
+  amenities: [],
+  utilities: [],
+  nearbyPlaces: {
+    highway: '',
+    transit: '',
+    school: '',
+    hospital: '',
+    mall: '',
+  },
+  nearbyPlacesPins: [],
+  // Media
+  description: '',
+  // Credentials & Agent Permissions
+  list_agent_key: null,
+  handlerMode: null,
+  agentPermissions: {
+    canEditListing: true,
+    notifyBrokerOnChange: true,
+  },
+  credentials: {
+    developer: '',
+    developerDescription: '',
+    brokerage: 'Human Shelter Realty',
+    dhsudLicenseNo: '',
+    assignedAgent: '',
+    prcLicenseNo: '',
+    brokerDhsudLicenseNo: '',
+    contactNumber: '',
+    contactEmail: '',
+    messengerUrl: '',
+    facebookUrl: '',
+    whatsapp: '',
+  },
+  status: 'AVAILABLE',
+  standard_status: 'Active',
+  is_published: true,
+  is_featured: false,
 };
 
-const ROOM_QUILL_MODULES = {
-  toolbar: [
-    ['bold', 'italic', 'underline'],
-    [{ list: 'bullet' }, { list: 'ordered' }],
-    ['clean'],
-  ],
-};
-
-
-
-export default function BrokerCreateListings({ isDrawer = false, onClose } = {}) {
+export default function BrokerCreateListings() {
+  const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { id } = useParams();
-  const isEditing = id && id !== 'new';
-  const searchParams = new URLSearchParams(location.search);
-  const typeParam = searchParams.get('type') || location.state?.propertyType;
+  const { user } = useAuth();
+  const isEditing = Boolean(id && id !== 'new');
 
-  const [formData, setFormData] = useState({
-    title: '',
-    tagline: '',
-    referenceCode: '',
-    transaction_type: 'For Sale',
-    property_type: (!isEditing && typeParam) ? typeParam : 'houseAndLot',
-    property_condition: 'RFO',
-    development_condition: '',
-    price: '',
-    currency: 'PHP',
-    price_term: 'Total Contract Price',
-    is_negotiable: false,
-    location: '',
-    city: '',
-    address: '',
-    subdivision: '',
-    subdivision_name: '',
-    subdivision_project_id: null,
-    subdivision_lot_id: null,
-    subdivision_lot_details: null,
-    phase: '',
-    block: '',
-    lot: '',
-    building_name: '',
-    tower_name: '',
-    floor_level: '',
-    unit_number: '',
-    barangay: '',
-    province: '',
-    state_or_province: '',
-    state: '',
-    region: '',
-    region_psgc_code: '',
-    province_psgc_code: '',
-    city_psgc_code: '',
-    barangay_psgc_code: '',
-    postal_code: '',
-    unparsed_address: '',
-    latitude: '',
-    longitude: '',
-    lot_boundary: null,
-    description: '',
-    // Specifications Fields
-    bedrooms_total: '3',
-    bathrooms_total_integer: '3',
-    bathrooms_full: '2',
-    bathrooms_half: '1',
-    living_area: '',
-    living_area_units: 'Square Meters',
-    lot_size_area: '',
-    lot_size_units: 'Square Meters',
-    stories_total: '2',
-    parking_total: '2',
-    parking_covered: '2',
-    parking_open: '0',
-    year_built: new Date().getFullYear().toString(),
-    architectural_style: 'Modern Contemporary',
-    property_condition: 'RFO',
-    // Repeatable Room Details Section
-    rooms: [
-      {
-        id: 'room-1',
-        room_type: 'Primary Bedroom',
-        room_level: '2nd Floor',
-        room_length: '',
-        room_width: '',
-        room_dimensions_units: 'Meters',
-        room_features: []
-      }
-    ],
-    // Backward compatibility fallbacks
-    bedrooms: '3',
-    bathrooms: '3',
-    parking: '2',
-    floor_area: '',
-    floor_area_unit: 'sqm',
-    lot_area: '',
-    lot_area_unit: 'sqm',
-    lot_frontage: '',
-    floor_level: '',
-    tower_name: '',
-    furnishing: 'Fully Furnished',
-    // Schema v1.0 Tailored Asset Specification Fields
-    frontage_meters: '',
-    depth_meters: '',
-    lot_position: 'corner',
-    terrain: 'level',
-    facing_direction: 'east',
-    cadastral_reference: '',
-    title_type: 'tct',
-    title_status: 'clean',
-    has_balcony: false,
-    balcony_area: '',
-    balcony_facing: '',
-    condo_unit_type: '2bedroom',
-    has_dedicated_parking_slot: false,
-    parking_slot_number: '',
-    has_maids_room: false,
-    status: 'AVAILABLE',
-    standard_status: 'Active',
-    is_published: true,
-    is_featured: false,
-    agent_id: '',
-    agent_name: '',
-    amenities: [],
-    interior_features: [],
-    exterior_features: [],
-    // Broker specific & confidential fields
-    listing_id: '',
-    cadastralLotId: '',
-    commissionSplit: '3.0%',
-    lockboxCode: '',
-    showingInstructions: '',
-    privateNotes: '',
-    seller_direct_phone: '',
-    // Property Pricing & Terms Fields
-    currency: 'PHP',
-    rent_frequency: 'Monthly',
-    lease_term: '12 Months',
-    association_fee: '',
-    associationFee: '',
-    association_fee_frequency: 'Monthly',
-    associationFeeFrequency: 'Monthly',
-    association_fee_includes: [],
-    security_deposit: '',
-    advance_rent: '',
-    taxAnnualAmount: '',
-    originalListPrice: '',
-    blueprintUrl: '',
-    virtualTourUrl: ''
-  });
+  const queryParams = new URLSearchParams(location.search);
+  const typeParam = queryParams.get('type');
+  const stepParam = Number(queryParams.get('step'));
 
-  const [displayPrice, setDisplayPrice] = useState('');
-  const [selectedFiles, setSelectedFiles] = useState([]);
-  const [isDragging, setIsDragging] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [amenitySearch, setAmenitySearch] = useState('');
+  const [currentStep, setCurrentStep] = useState(
+    stepParam >= 1 && stepParam <= 5 ? stepParam : 1
+  );
   const [isLoading, setIsLoading] = useState(isEditing);
   const [isDirty, setIsDirty] = useState(false);
-
-  // Subdivision project selection & cadastral lot picker states
-  const [subdivisionsList, setSubdivisionsList] = useState([]);
-  const [isLoadingSubdivisions, setIsLoadingSubdivisions] = useState(false);
-  const [isSubdivisionModalOpen, setIsSubdivisionModalOpen] = useState(false);
-  const [availableLots, setAvailableLots] = useState([]);
-  const [isLoadingLots, setIsLoadingLots] = useState(false);
-  const [isCustomSubdivisionMode, setIsCustomSubdivisionMode] = useState(true);
-
-  // =========================================================================
-  // Section 6: Media & Documents Dedicated States
-  // =========================================================================
-  const [mediaPhotos, setMediaPhotos] = useState([]); // [{ id, imageUrl, displayOrder, isUploading, progress, error, file }]
-  const [mediaFloorPlans, setMediaFloorPlans] = useState([]); // [{ id, mediaUrl, shortDescription, orderIndex, mimeType, isUploading, progress, error, file }]
-  const [mediaVideos, setMediaVideos] = useState([]); // [{ id, mediaUrl, shortDescription, orderIndex, mimeType, isUploading, progress, error, file, isLink }]
-  const [mediaVirtualTours, setMediaVirtualTours] = useState([]); // [{ id, mediaUrl, shortDescription, orderIndex, mimeType }]
-  const [mediaDocuments, setMediaDocuments] = useState([]); // [{ id, mediaUrl, shortDescription, orderIndex, mimeType, isUploading, progress, error, file }]
-  
-  // UI Helpers & Previews
-  const [videoSourceMode, setVideoSourceMode] = useState('upload'); // 'upload' | 'link'
-  const [newVideoUrl, setNewVideoUrl] = useState('');
-  const [newVideoDesc, setNewVideoDesc] = useState('');
-  const [newTourUrl, setNewTourUrl] = useState('');
-  const [newTourDesc, setNewTourDesc] = useState('');
-  const [previewMediaItem, setPreviewMediaItem] = useState(null); // { type, url, title }
-  const [itemToDelete, setItemToDelete] = useState(null); // { type, index, title, onConfirm }
-
-  // Step 7 States: Public Preview, Step Navigation Memory, Submission Status & Errors
-  const { user } = useAuth();
-  const [returnToReview, setReturnToReview] = useState(false);
-  const [showPublicPreview, setShowPublicPreview] = useState(false);
-  const [isInternalInfoOpen, setIsInternalInfoOpen] = useState(false);
-  const [savedStatusType, setSavedStatusType] = useState('Draft');
-  const [createdPropertyId, setCreatedPropertyId] = useState(id && id !== 'new' ? id : null);
-  const [submissionError, setSubmissionError] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeActionLabel, setActiveActionLabel] = useState('');
+  const [submissionError, setSubmissionError] = useState(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [createdPropertyId, setCreatedPropertyId] = useState(null);
+  const [savedStatusType, setSavedStatusType] = useState('Active');
+  const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false);
+  const [confirmResetOpen, setConfirmResetOpen] = useState(false);
+  const [missingFieldsModal, setMissingFieldsModal] = useState(null);
 
-  // 7 Canonical Form Sections per PROPERTY_LISTING_FORM.md
-  const [currentStep, setCurrentStep] = useState(1);
-  const stepTrackRef = useRef(null);
+  const [formData, setFormData] = useState(INITIAL_FORM_DATA);
+  const [propertyTypes, setPropertyTypes] = useState([]);
+  const [agents, setAgents] = useState([]);
+  const [mediaPhotos, setMediaPhotos] = useState([]);
+  const [categoryVideos, setCategoryVideos] = useState({});
 
-  useEffect(() => {
-    const track = stepTrackRef.current;
-    const activeStep = track?.querySelector('[aria-current="step"]');
-    if (!activeStep) return;
-    const viewport = track.getBoundingClientRect();
-    const active = activeStep.getBoundingClientRect();
-    if (active.left < viewport.left) track.scrollLeft += active.left - viewport.left;
-    else if (active.right > viewport.right) track.scrollLeft += active.right - viewport.right;
-  }, [currentStep]);
-  const [isGeocoding, setIsGeocoding] = useState(false);
-
-  // PSGC Geographic Reference States
+  // PSGC Geographic state
   const [geoRegions, setGeoRegions] = useState([]);
   const [geoProvinces, setGeoProvinces] = useState([]);
   const [geoCities, setGeoCities] = useState([]);
   const [geoBarangays, setGeoBarangays] = useState([]);
-  const [zipSuggestions, setZipSuggestions] = useState([]);
+  const [isLoadingProvinces, setIsLoadingProvinces] = useState(false);
+  const [isLoadingCities, setIsLoadingCities] = useState(false);
   const [isLoadingBarangays, setIsLoadingBarangays] = useState(false);
-  const [locationNotice, setLocationNotice] = useState(null); // { type: 'info' | 'warning', message: string }
+  const [locationNotice, setLocationNotice] = useState(null);
 
-  // Nominatim Autocomplete & Reverse Geocoding States
-  const [addressSuggestions, setAddressSuggestions] = useState([]);
-  const [showAddressSuggestions, setShowAddressSuggestions] = useState(false);
-  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+  // Map Geocoding state
   const [mapSearchQuery, setMapSearchQuery] = useState('');
-  const mapSearchContainerRef = useRef(null);
+  const [isGeocoding, setIsGeocoding] = useState(false);
+  const [addressSuggestions, setAddressSuggestions] = useState([]);
   const latestPinRequestRef = useRef(0);
 
-  // Unsaved changes alert
+  // Unsaved changes guard
   useEffect(() => {
     const handleBeforeUnload = (e) => {
-      if (isDirty && !isSubmitting) {
+      if (isDirty) {
         e.preventDefault();
         e.returnValue = '';
       }
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [isDirty, isSubmitting]);
+  }, [isDirty]);
 
-  // Restore listing draft or returned coordinates from Full View Map Studio
+  // Initial lookups: property types, agents, regions
   useEffect(() => {
-    try {
-      const savedDraft = sessionStorage.getItem('broker_listing_create_draft');
-      const updatedCoords = sessionStorage.getItem('broker_listing_updated_coords');
+    setGeoRegions(phLocationService.getRegions());
 
-      if (savedDraft) {
-        const parsed = JSON.parse(savedDraft);
-        if (parsed.formData) {
-          let mergedFormData = { ...parsed.formData };
-          if (updatedCoords) {
-            const coords = JSON.parse(updatedCoords);
-            if (coords.lat != null) mergedFormData.latitude = String(coords.lat);
-            if (coords.lng != null) mergedFormData.longitude = String(coords.lng);
-            if (coords.address) mergedFormData.address = coords.address;
-            if (coords.city) mergedFormData.city = coords.city;
-            if (coords.barangay) mergedFormData.barangay = coords.barangay;
-            sessionStorage.removeItem('broker_listing_updated_coords');
-          }
-          setFormData(mergedFormData);
-          if (parsed.currentStep) {
-            setCurrentStep(parsed.currentStep);
-          }
-        }
-      } else if (updatedCoords) {
-        const coords = JSON.parse(updatedCoords);
-        setFormData(prev => ({
-          ...prev,
-          latitude: coords.lat != null ? String(coords.lat) : prev.latitude,
-          longitude: coords.lng != null ? String(coords.lng) : prev.longitude,
-          address: coords.address || prev.address,
-          city: coords.city || prev.city,
-          barangay: coords.barangay || prev.barangay,
-        }));
-        sessionStorage.removeItem('broker_listing_updated_coords');
-      }
-    } catch (err) {
-      console.warn('[BrokerCreateListings] Error restoring draft from sessionStorage:', err);
-    }
+    propertyService
+      .getPropertyTypes?.()
+      .then((res) => {
+        const list = Array.isArray(res) ? res : res?.data || [];
+        setPropertyTypes(list);
+      })
+      .catch(() => { });
+
+    agentService
+      .getAgents?.()
+      .then((res) => {
+        const list = Array.isArray(res) ? res : res?.data || [];
+        setAgents(list);
+      })
+      .catch(() => { });
   }, []);
 
-  // Fetch registered subdivisions for combobox
-  useEffect(() => {
-    let isMounted = true;
-    async function loadSubdivisions() {
-      setIsLoadingSubdivisions(true);
-      try {
-        const res = await subdivisionService.getSubdivisions();
-        const list = res?.data?.data || res?.data || [];
-        if (isMounted) {
-          setSubdivisionsList(Array.isArray(list) ? list : []);
-        }
-      } catch (err) {
-        console.warn('[BrokerCreateListings] Failed to load subdivisions:', err);
-      } finally {
-        if (isMounted) setIsLoadingSubdivisions(false);
-      }
-    }
-    loadSubdivisions();
-    return () => { isMounted = false; };
-  }, []);
-
-  // Fetch cadastral lots whenever selected subdivision project changes
-  useEffect(() => {
-    let isMounted = true;
-    async function loadLots() {
-      if (!formData.subdivision_project_id) {
-        setAvailableLots([]);
-        return;
-      }
-      setIsLoadingLots(true);
-      try {
-        const res = await subdivisionService.getLots(formData.subdivision_project_id);
-        const lots = res?.data?.data || res?.data || [];
-        if (isMounted) {
-          setAvailableLots(Array.isArray(lots) ? lots : []);
-        }
-      } catch (err) {
-        console.warn('[BrokerCreateListings] Failed to load child lots for project:', err);
-        if (isMounted) setAvailableLots([]);
-      } finally {
-        if (isMounted) setIsLoadingLots(false);
-      }
-    }
-    loadLots();
-    return () => { isMounted = false; };
-  }, [formData.subdivision_project_id]);
-
-  const handleSubdivisionSelect = (projectId) => {
-    setIsDirty(true);
-    if (!projectId || projectId === '__CUSTOM__') {
-      setIsCustomSubdivisionMode(true);
-      setFormData(prev => ({
-        ...prev,
-        subdivision_project_id: null,
-        subdivision_lot_id: null,
-      }));
-      return;
-    }
-
-    const selectedProj = subdivisionsList.find(s => s.id === projectId);
-    if (selectedProj) {
-      setIsCustomSubdivisionMode(false);
-      const parsedLat = selectedProj.latitude != null ? String(selectedProj.latitude) : '';
-      const parsedLng = selectedProj.longitude != null ? String(selectedProj.longitude) : '';
-      setFormData(prev => ({
-        ...prev,
-        subdivision_project_id: selectedProj.id,
-        subdivision_name: selectedProj.name,
-        subdivision: selectedProj.name,
-        city: selectedProj.city || prev.city,
-        state_or_province: selectedProj.province_state || prev.state_or_province,
-        province: selectedProj.province_state || prev.province,
-        address: selectedProj.location_address || prev.address,
-        subdivision_lot_id: null,
-        ...(parsedLat && parsedLng ? {
-          latitude: parsedLat,
-          longitude: parsedLng,
-        } : {})
-      }));
-    }
-  };
-
-  const handleCadastralLotSelect = (lotId) => {
-    setIsDirty(true);
-    if (!lotId) {
-      setFormData(prev => ({
-        ...prev,
-        subdivision_lot_id: null,
-      }));
-      return;
-    }
-    const lot = availableLots.find(l => l.id === lotId);
-    if (lot) {
-      const areaVal = lot.verified_area_sqm != null ? Math.round(Number(lot.verified_area_sqm) * 100) / 100 : '';
-      const lotPrice = lot.price ? String(lot.price) : '';
-      const centroidLat = lot.centroid?.lat != null ? String(lot.centroid.lat) : '';
-      const centroidLng = lot.centroid?.lng != null ? String(lot.centroid.lng) : '';
-
-      setFormData(prev => ({
-        ...prev,
-        subdivision_lot_id: lot.id,
-        block: lot.block_number || prev.block,
-        lot: lot.lot_number || prev.lot,
-        lot_size_area: areaVal || prev.lot_size_area,
-        lot_area: areaVal || prev.lot_area,
-        lot_size_units: 'Square Meters',
-        cadastral_reference: `Block ${lot.block_number || '1'}, Lot ${lot.lot_number || ''}`,
-        cadastralLotId: `Block ${lot.block_number || '1'}, Lot ${lot.lot_number || ''}`,
-        ...(lotPrice && !prev.price ? { price: lotPrice } : {}),
-        ...(centroidLat && centroidLng ? {
-          latitude: centroidLat,
-          longitude: centroidLng,
-        } : {})
-      }));
-    }
-  };
-
-  const handleSubdivisionCreated = (newProject) => {
-    if (newProject) {
-      setSubdivisionsList(prev => [newProject, ...prev.filter(p => p.id !== newProject.id)]);
-      handleSubdivisionSelect(newProject.id);
-    }
-    setIsSubdivisionModalOpen(false);
-  };
-
-  const handleOpenFullViewMap = () => {
-    try {
-      sessionStorage.setItem('broker_listing_create_draft', JSON.stringify({
-        formData,
-        currentStep: 2,
-        propertyType: formData.propertyType || typeParam,
-      }));
-    } catch (e) {
-      console.warn('[BrokerCreateListings] Failed saving draft to sessionStorage:', e);
-    }
-    const params = new URLSearchParams();
-    if (formData.latitude) params.set('lat', formData.latitude);
-    if (formData.longitude) params.set('lng', formData.longitude);
-    if (formData.address) params.set('address', formData.address);
-    if (formData.title) params.set('title', formData.title);
-    if (isEditing) params.set('propertyId', id);
-    params.set('returnUrl', location.pathname);
-    navigate(`/broker/properties/location-map?${params.toString()}`);
-  };
-
-  // Close address predictions on outside click
-  useEffect(() => {
-    function handleClickOutside(e) {
-      if (mapSearchContainerRef.current && !mapSearchContainerRef.current.contains(e.target)) {
-        setShowAddressSuggestions(false);
-      }
-    }
-    if (showAddressSuggestions) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showAddressSuggestions]);
-
-  // Debounced address predictive autocomplete via Nominatim backend proxy
-  useEffect(() => {
-    const query = (mapSearchQuery || '').trim();
-    if (query.length < 2) {
-      setAddressSuggestions([]);
-      setShowAddressSuggestions(false);
-      setIsLoadingSuggestions(false);
-      return;
-    }
-
-    const timer = setTimeout(async () => {
-      try {
-        setIsLoadingSuggestions(true);
-        const results = await mapsService.autocomplete(query, 'ph');
-        setAddressSuggestions(results || []);
-        if (results && results.length > 0) {
-          setShowAddressSuggestions(true);
-        }
-      } catch (err) {
-        console.error('[BrokerCreateListings] Autocomplete error:', err);
-      } finally {
-        setIsLoadingSuggestions(false);
-      }
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [mapSearchQuery]);
-
-  const handleMapPositionChange = (pos) => {
-    setIsDirty(true);
-    setFormData(prev => ({ ...prev, latitude: pos[0].toFixed(7), longitude: pos[1].toFixed(7) }));
-  };
-
-  // Reverse geocode when map pin is moved or map is clicked
-  const handlePinMoved = async (pos) => {
-    setIsDirty(true);
-    const requestId = ++latestPinRequestRef.current;
-    try {
-      const geo = await mapsService.reverse(pos[0], pos[1]);
-      if (geo && requestId === latestPinRequestRef.current) {
-        setFormData(prev => ({
-          ...prev,
-          latitude: pos[0].toFixed(7),
-          longitude: pos[1].toFixed(7),
-        }));
-      }
-    } catch (err) {
-      console.warn('[BrokerCreateListings] Reverse geocode error:', err);
-    }
-  };
-
-  const mapPosition = formData.latitude && formData.longitude 
-    ? [parseFloat(formData.latitude), parseFloat(formData.longitude)] 
-    : [14.5995, 120.9842]; // Default Manila
-
-  // Forward geocode address via Nominatim backend proxy
-  const handleGeocode = async (e, isSilent = false) => {
-    if (e) e.preventDefault();
-    const query = mapSearchQuery.trim();
-
-    if (!query) return;
-    
-    setIsGeocoding(true);
-    try {
-      const geo = await mapsService.geocode(query, 'ph');
-      if (geo && geo.latitude && geo.longitude) {
-        setIsDirty(true);
-        setFormData(prev => ({
-          ...prev,
-          latitude: parseFloat(geo.latitude).toFixed(7),
-          longitude: parseFloat(geo.longitude).toFixed(7),
-        }));
-      } else {
-        if (!isSilent) {
-          alert('Could not find location coordinates automatically. Please position the pin manually on the map.');
-        }
-      }
-    } catch (err) {
-      console.error('[BrokerCreateListings] Geocoding error:', err);
-    } finally {
-      setIsGeocoding(false);
-    }
-  };
-
-  const handleSelectAddressSuggestion = (item) => {
-    setShowAddressSuggestions(false);
-    setIsDirty(true);
-    const chosenText = item.formattedAddress || item.description || item.mainText || '';
-    setMapSearchQuery(chosenText);
-    const nextLat = item.latitude ? parseFloat(item.latitude).toFixed(7) : formData.latitude;
-    const nextLng = item.longitude ? parseFloat(item.longitude).toFixed(7) : formData.longitude;
-    setFormData(prev => ({
-      ...prev,
-      latitude: nextLat,
-      longitude: nextLng,
-    }));
-  };
-
-  const handleGoogleMapsUrlPaste = async (e) => {
-    const text = e.target.value;
-    if (!text) return;
-
-    let lat, lng;
-    const pinMatch = text.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/);
-    if (pinMatch) {
-      lat = pinMatch[1];
-      lng = pinMatch[2];
-    } else {
-      const centerMatch = text.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
-      if (centerMatch) {
-        lat = centerMatch[1];
-        lng = centerMatch[2];
-      } else {
-        const queryMatch = text.match(/query=(-?\d+\.\d+),(-?\d+\.\d+)/);
-        if (queryMatch) {
-          lat = queryMatch[1];
-          lng = queryMatch[2];
-        }
-      }
-    }
-
-    if (lat && lng) {
-      const parsedLat = parseFloat(lat).toFixed(7);
-      const parsedLng = parseFloat(lng).toFixed(7);
-      
-      setIsDirty(true);
-      setFormData(prev => ({
-        ...prev,
-        latitude: parsedLat,
-        longitude: parsedLng,
-      }));
-      e.target.value = '';
-
-      try {
-        const geo = await mapsService.reverse(parsedLat, parsedLng);
-        if (geo) {
-          setFormData(prev => ({
-            ...prev,
-            latitude: parsedLat,
-            longitude: parsedLng,
-            ...(geo.formattedAddress && { address: geo.formattedAddress }),
-            ...(geo.city && { location: geo.city }),
-            ...(geo.subdivision && { subdivision: geo.subdivision }),
-            ...(geo.postalCode && { postal_code: geo.postalCode }),
-          }));
-        }
-      } catch (err) {
-        console.warn('[BrokerCreateListings] URL auto-fill reverse geocode failed:', err);
-      }
-    }
-  };
-
-  const PROPERTY_TYPE_CONFIGS = COMMON_PROPERTY_TYPES;
-  const propertyTypeOptions = COMMON_PROPERTY_TYPES.map(c => c.id);
-  const propertyConditionOptions = ['Brand New', 'RFO', 'Pre-selling', 'Newly Renovated', 'Well-Maintained', 'Bare Shell', 'Fitted', 'Needs Renovation / Fixer-Upper'];
-  const architecturalStyleOptions = [
-    'Modern Contemporary',
-    'Brutalist Modernism',
-    'Mid-Century Modern',
-    'Tropical Modern',
-    'Mediterranean / Spanish',
-    'Colonial Revival',
-    'Minimalist',
-    'Industrial',
-    'Traditional / Classical',
-    'Modern High-Rise',
-    'Japanese Contemporary',
-    'Nordic Minimalist',
-    'Other'
-  ];
-  const roomTypeOptions = [
-    'Primary Bedroom',
-    'Bedroom',
-    'Guest Room',
-    'Living Room',
-    'Dining Room',
-    'Kitchen',
-    'Dirty Kitchen / Auxiliary Kitchen',
-    'Family Room',
-    'Den / Home Office',
-    'Balcony / Terrace',
-    'Maid\'s Room',
-    'Driver\'s Quarters',
-    'Storage Room',
-    'Laundry / Utility Room',
-    'Entertainment Room',
-    'Gym / Fitness Room'
-  ];
-  const roomLevelOptions = [
-    'Ground Floor',
-    '2nd Floor',
-    '3rd Floor',
-    '4th Floor',
-    'Basement',
-    'Mezzanine',
-    'Penthouse Level',
-    'Roof Deck',
-    'Attic'
-  ];
-
-  // Pricing & Terms Constants
-  const currencyOptions = [
-    { code: 'PHP', symbol: '₱', label: 'PHP (Philippine Peso)' },
-    { code: 'USD', symbol: '$', label: 'USD (US Dollar)' },
-    { code: 'EUR', symbol: '€', label: 'EUR (Euro)' },
-    { code: 'GBP', symbol: '£', label: 'GBP (British Pound)' },
-    { code: 'SGD', symbol: 'S$', label: 'SGD (Singapore Dollar)' },
-    { code: 'JPY', symbol: '¥', label: 'JPY (Japanese Yen)' }
-  ];
-
-  const rentFrequencyOptions = ['Monthly', 'Weekly', 'Yearly'];
-  const leaseTermOptions = ['Month to Month', '6 Months', '12 Months', '24 Months'];
-  const associationFeeFrequencyOptions = ['Monthly', 'Quarterly', 'Semi-Annually', 'Annually', 'One-time'];
-  const associationFeeIncludesOptions = [
-    '24/7 Security & Guardhouse',
-    'Common Area Maintenance',
-    'Trash Collection & Disposal',
-    'Clubhouse & Amenities Access',
-    'Swimming Pool & Gym Maintenance',
-    'Landscaping & Grounds Care',
-    'Common Area Insurance',
-    'Pest Control Services'
-  ];
-
-  const stepTitles = [
-    'Listing Overview',
-    'Location & Address',
-    'Property Specifications',
-    'Pricing & Terms',
-    'Features & Amenities',
-    'Photos & Maps',
-    'Review & Publish'
-  ];
-
-  const interiorAmenitiesList = [
-    'Smart Home Automation', 'Wine Cellar', 'Private Elevator',
-    'Staff Quarters', 'Walk-in Closet', 'High Ceilings',
-    'Chef\'s Kitchen', 'Marble Countertops', 'Home Office', 'Spa / Sauna'
-  ];
-
-  const exteriorAmenitiesList = [
-    'Private Swimming Pool', 'Garden / Courtyard', 'Covered Garage',
-    'Balcony / Terrace', 'Solar Hybrid Power', 'Rooftop Deck', 'Outdoor Gazebo'
-  ];
-
-  const communityAmenitiesList = [
-    '24/7 Security', 'Gated Community', 'CCTV Surveillance',
-    'Lounge / Clubhouse', 'Gym / Fitness Center', 'Pet-Friendly Community', 'Flood-Free Area'
-  ];
-
+  // Pre-fill type from URL param when creating
   useEffect(() => {
     if (typeParam && !isEditing) {
-      setFormData(prev => ({
+      const matched = getPropertyTypeConfig(typeParam);
+      setFormData((prev) => ({
         ...prev,
-        property_type: typeParam,
+        property_type: matched?.name || typeParam,
+        property_type_id: matched?.dbTypeId || prev.property_type_id,
       }));
     }
   }, [typeParam, isEditing]);
 
+  // Load existing listing in edit mode
   useEffect(() => {
     if (!isEditing) return;
+    let cancelled = false;
+
     const fetchProperty = async () => {
       try {
         const p = await propertyService.getPropertyById(id);
-        if (p) {
-          setFormData(prev => ({
-            ...prev,
-            title: p.title || '',
-            property_type: p.property_type || p.type || 'House & Lot',
-            property_condition: p.property_condition || p.specs?.propertyCondition || 'RFO',
-            architectural_style: p.architectural_style || p.architecturalStyle || p.specs?.architecturalStyle || 'Modern Contemporary',
-            transaction_type: p.transaction_type || p.specs?.transactionType || 'For Sale',
-            price: p.price_raw || p.price || '',
-            location: p.location?.city || p.city || p.location || '',
-            city: p.location?.city || p.city || p.location || '',
-            address: p.location?.address || p.address || '',
-            subdivision: p.location?.subdivisionName || p.subdivision_name || '',
-            subdivision_name: p.location?.subdivisionName || p.subdivision_name || '',
-            building_name: p.location?.buildingName || p.location?.building_name || p.building_name || '',
-            barangay: p.location?.barangay || p.barangay || '',
-            province: p.location?.stateOrProvince || p.state_or_province || p.province || p.state || '',
-            state_or_province: p.location?.stateOrProvince || p.state_or_province || p.province || p.state || '',
-            state: p.location?.state || p.state || p.location?.stateOrProvince || p.state_or_province || '',
-            region: p.location?.region || p.region || '',
-            region_psgc_code: p.location?.region_psgc_code || p.location?.regionPsgcCode || p.region_psgc_code || '',
-            province_psgc_code: p.location?.province_psgc_code || p.location?.provincePsgcCode || p.province_psgc_code || '',
-            city_psgc_code: p.location?.city_psgc_code || p.location?.cityPsgcCode || p.city_psgc_code || '',
-            barangay_psgc_code: p.location?.barangay_psgc_code || p.location?.barangayPsgcCode || p.barangay_psgc_code || '',
-            unparsed_address: p.location?.unparsedAddress || p.unparsed_address || '',
-            postal_code: p.location?.postalCode || p.postal_code || '',
-            latitude: p.location?.coordinates?.lat || p.latitude || '',
-            longitude: p.location?.coordinates?.lng || p.longitude || '',
-            lot_boundary: p.lot_boundary || p.boundary || null,
-            description: p.publicRemarks || p.description || '',
-            status: p.status || 'AVAILABLE',
-            standard_status: p.standard_status || p.standardStatus || 'Active',
-            is_published: p.is_published !== undefined ? p.is_published : true,
-            is_featured: p.is_featured !== undefined ? Boolean(p.is_featured) : (p.isFeatured !== undefined ? Boolean(p.isFeatured) : false),
-            amenities: p.features || p.amenities || [],
-            interior_features: p.interior_features || p.interiorFeatures || [],
-            exterior_features: p.exterior_features || p.exteriorFeatures || [],
-            // Specifications
-            bedrooms_total: String(p.specs?.bedroomsTotal || p.bedrooms_total || p.specs?.beds || p.beds || '3'),
-            bathrooms_total_integer: String(p.specs?.bathroomsTotalInteger || p.bathrooms_total_integer || p.specs?.baths || p.baths || '3'),
-            bathrooms_full: String(p.specs?.bathroomsFull || p.bathrooms_full || '2'),
-            bathrooms_half: String(p.specs?.bathroomsHalf || p.bathrooms_half || '1'),
-            living_area: String(p.specs?.livingArea || p.living_area || p.livingArea || p.sqft || ''),
-            living_area_units: p.specs?.livingAreaUnits || p.living_area_units || 'Square Meters',
-            lot_size_area: String(p.specs?.lotSizeArea || p.lot_size_area || p.lotSizeArea || ''),
-            lot_size_units: p.specs?.lotSizeUnits || p.lot_size_units || 'Square Meters',
-            stories_total: String(p.specs?.storiesTotal || p.stories_total || '2'),
-            parking_total: String(p.specs?.parkingTotal || p.parking_total || p.parking || '2'),
-            parking_covered: String(p.specs?.parkingCovered || p.parking_covered || '2'),
-            parking_open: String(p.specs?.parkingOpen || p.parking_open || '0'),
-            year_built: String(p.specs?.yearBuilt || p.year_built || new Date().getFullYear()),
-            rooms: Array.isArray(p.rooms) && p.rooms.length > 0 ? p.rooms.map((r, idx) => ({
-              id: r.id || `room-${idx}-${Date.now()}`,
-              room_type: r.room_type || r.roomType || 'Bedroom',
-              room_level: r.room_level || r.roomLevel || 'Ground Floor',
-              room_length: r.room_length ?? r.roomLength ?? '',
-              room_width: r.room_width ?? r.roomWidth ?? '',
-              room_dimensions_units: r.room_dimensions_units || r.roomDimensionsUnits || 'Meters',
-              room_features: Array.isArray(r.room_features) ? r.room_features : (Array.isArray(r.roomFeatures) ? r.roomFeatures : [])
-            })) : [
-              {
-                id: 'room-1',
-                room_type: 'Primary Bedroom',
-                room_level: '2nd Floor',
-                room_length: '',
-                room_width: '',
-                room_dimensions_units: 'Meters',
-                room_features: []
-              }
-            ],
-            // Pricing & Terms
-            currency: p.pricing?.currency || p.currency || p.listPriceCurrency || 'PHP',
-            rent_frequency: p.pricing?.rentFrequency || p.rent_frequency || 'Monthly',
-            lease_term: p.pricing?.leaseTerm || p.lease_term || '12 Months',
-            association_fee: p.pricing?.associationFee ?? p.association_fee ?? p.associationFee ?? '',
-            associationFee: p.pricing?.associationFee ?? p.association_fee ?? p.associationFee ?? '',
-            association_fee_frequency: p.pricing?.associationFeeFrequency || p.association_fee_frequency || p.associationFeeFrequency || 'Monthly',
-            associationFeeFrequency: p.pricing?.associationFeeFrequency || p.association_fee_frequency || p.associationFeeFrequency || 'Monthly',
-            association_fee_includes: Array.isArray(p.pricing?.associationFeeIncludes) ? p.pricing.associationFeeIncludes : (Array.isArray(p.association_fee_includes) ? p.association_fee_includes : []),
-            security_deposit: p.pricing?.securityDeposit ?? p.security_deposit ?? '',
-            advance_rent: p.pricing?.advanceRent ?? p.advance_rent ?? '',
-            // Backwards compatibility fallbacks
-            floor_area: p.specs?.livingArea || p.livingArea || p.sqft || '',
-            lot_area: p.specs?.lotSizeArea || p.lot_size_area || '',
-            bedrooms: String(p.specs?.beds || p.bedrooms_total || '3'),
-            bathrooms: String(p.specs?.baths || p.bathrooms_total_integer || '3'),
-            parking: String(p.specs?.parkingTotal || p.parking || '2'),
-            lot_frontage: p.customResoAttributes?.lotFrontage || '',
-            floor_level: p.floor_level || '',
-            tower_name: p.tower_name || '',
-            furnishing: p.furnishing || 'Fully Furnished',
-            listing_id: p.listing_id || '',
-            cadastralLotId: p.listingKey || p.listing_key || '',
-            commissionSplit: p.confidential?.buyerAgencyCompensation || p.buyer_agency_compensation || '3.0%',
-            lockboxCode: p.confidential?.lockboxCode || p.lockbox_code || '',
-            showingInstructions: p.confidential?.showingInstructions || p.showing_instructions || '',
-            privateNotes: p.confidential?.privateRemarks || p.private_remarks || '',
-            seller_direct_phone: p.confidential?.sellerDirectPhone || p.seller_direct_phone || '',
-            taxAnnualAmount: p.taxAnnualAmount || p.tax_annual_amount || '',
-            originalListPrice: p.originalListPrice || p.original_list_price || '',
-            blueprintUrl: p.blueprintUrl || '',
-            virtualTourUrl: p.virtualTourUrl || ''
-          }));
-          setDisplayPrice(Number(p.price_raw || p.price || 0).toLocaleString());
+        if (!p || cancelled) return;
 
-          // Populate Section 6: Photos from property_images or images
-          if (Array.isArray(p.property_images) && p.property_images.length > 0) {
-            setMediaPhotos(p.property_images.map((img, idx) => ({
-              id: img.id || `photo-${idx}`,
-              imageUrl: img.imageUrl || img.image_url,
-              displayOrder: img.displayOrder || img.display_order || (idx + 1),
-            })));
-          } else if (Array.isArray(p.images) && p.images.length > 0) {
-            setMediaPhotos(p.images.map((url, idx) => ({
+        const custom = p.customResoAttributes || p.custom_reso_attributes || {};
+        const numericPrice = Number(p.price_raw ?? p.price ?? 0);
+
+        setFormData((prev) => ({
+          ...prev,
+          listing_id: p.listing_id || p.listingId || '',
+          title: p.title || '',
+          description: p.description || p.publicRemarks || '',
+          transaction_type: p.transaction_type || p.specs?.transactionType || 'For Sale',
+          propertyCategory: custom.propertyCategory || 'Residential',
+          property_type: p.property_type || p.type || 'House & Lot',
+          property_type_id: p.property_type_id || p.specs?.propertyTypeId || 1,
+          propertyStatus: custom.propertyStatus || p.property_condition || 'Ready for Occupancy',
+          property_condition: p.property_condition || 'Ready for Occupancy',
+          price: numericPrice > 0 ? numericPrice.toLocaleString() : '',
+          pricePerSqm: custom.pricePerSqm || '',
+          partneredBanks: Array.isArray(custom.partneredBanks) ? custom.partneredBanks : [],
+          selectedGalleryAreas: Array.isArray(custom.selectedGalleryAreas) ? custom.selectedGalleryAreas : [],
+          customGalleryCategories: Array.isArray(custom.customGalleryCategories) ? custom.customGalleryCategories : [],
+          categoryDescriptions: custom.categoryDescriptions || {},
+          paymentBreakdown: custom.paymentBreakdown || prev.paymentBreakdown,
+          association_fee: p.association_fee ?? p.associationFee ?? '',
+          associationFee: p.association_fee ?? p.associationFee ?? '',
+          // Location
+          region: p.location?.region || p.region || '',
+          region_psgc_code: p.location?.region_psgc_code || p.region_psgc_code || '',
+          province: p.location?.stateOrProvince || p.state_or_province || '',
+          state_or_province: p.location?.stateOrProvince || p.state_or_province || '',
+          state: p.location?.stateOrProvince || p.state_or_province || '',
+          province_psgc_code: p.location?.province_psgc_code || p.province_psgc_code || '',
+          city: p.location?.city || p.city || '',
+          location: p.location?.city || p.city || '',
+          city_psgc_code: p.location?.city_psgc_code || p.city_psgc_code || '',
+          barangay: p.location?.barangay || p.barangay || '',
+          barangay_psgc_code: p.location?.barangay_psgc_code || p.barangay_psgc_code || '',
+          address: p.location?.address || p.address || '',
+          building_name: p.location?.buildingName || p.building_name || '',
+          tower_name: custom.towerName || p.tower_name || '',
+          floor_level: custom.floorLevel || p.floor_level || '',
+          latitude: p.location?.coordinates?.lat || p.latitude || '',
+          longitude: p.location?.coordinates?.lng || p.longitude || '',
+          mapPinPrivacy: custom.mapPinPrivacy || 'Exact Location',
+          // Specs
+          lot_size_area: String(p.specs?.lotSizeArea ?? p.lot_size_area ?? ''),
+          living_area: String(p.specs?.livingArea ?? p.living_area ?? ''),
+          bedrooms_total: String(p.specs?.bedroomsTotal ?? p.bedrooms_total ?? '3'),
+          bathrooms_total_integer: String(p.specs?.bathroomsTotalInteger ?? p.bathrooms_total_integer ?? '2'),
+          parking_total: String(p.specs?.parkingTotal ?? p.parking_total ?? '1'),
+          furnishing: custom.furnishing || p.furnishing || 'None',
+          securityFeatures: Array.isArray(custom.securityFeatures) ? custom.securityFeatures : [],
+          amenities: Array.isArray(p.features) ? p.features : p.amenities || [],
+          utilities: Array.isArray(custom.utilities) ? custom.utilities : [],
+          nearbyPlaces: custom.nearbyPlaces || prev.nearbyPlaces,
+          nearbyPlacesPins: Array.isArray(custom.nearbyPlacesPins) ? custom.nearbyPlacesPins : [],
+          description: p.publicRemarks || p.description || '',
+          list_agent_key: p.list_agent_key || p.listAgentKey || null,
+          loaded_agent_key: p.list_agent_key || p.listAgentKey || null,
+          assignment_status: p.assignment_status || p.assignmentStatus || custom.assignment_status || '',
+          handlerMode: custom.handlerMode || null,
+          agentPermissions: custom.agentPermissions || prev.agentPermissions,
+          credentials: custom.credentials || prev.credentials,
+          status: p.status || 'AVAILABLE',
+          standard_status: p.standard_status || p.standardStatus || 'Active',
+          is_published: p.is_published !== undefined ? Boolean(p.is_published) : true,
+          is_featured: Boolean(p.is_featured),
+        }));
+
+        // Populate categorized photos
+        if (Array.isArray(p.media) && p.media.length > 0) {
+          const loadedPhotos = p.media
+            .filter((m) => ['Photo', 'FloorPlan'].includes(m.mediaCategory || m.media_category))
+            .map((m, idx) => ({
+              id: m.id || `photo-${idx}`,
+              imageUrl: m.mediaUrl || m.media_url,
+              mediaUrl: m.mediaUrl || m.media_url,
+              galleryCategory:
+                m.galleryCategory ||
+                m.gallery_category ||
+                ((m.mediaCategory || m.media_category) === 'FloorPlan'
+                  ? 'FloorPlan'
+                  : idx === 0
+                    ? 'Cover'
+                    : 'Living'),
+              shortDescription: m.shortDescription || m.short_description || '',
+              displayOrder: m.orderIndex ?? m.order_index ?? idx + 1,
+              mimeType: m.mimeType || m.mime_type || 'image/jpeg',
+            }));
+          setMediaPhotos(loadedPhotos);
+
+          const savedVideos = { ...(custom.categoryVideos || {}) };
+          p.media
+            .filter((m) => (m.mediaCategory || m.media_category) === 'Video')
+            .forEach((m) => {
+              const catKey = m.galleryCategory || m.gallery_category || 'Living';
+              savedVideos[catKey] = {
+                mediaUrl: m.mediaUrl || m.media_url,
+                shortDescription: m.shortDescription || m.short_description || '',
+                mimeType: m.mimeType || m.mime_type || 'video/mp4',
+                thumbnailUrl: savedVideos[catKey]?.thumbnailUrl || '',
+                fileName: savedVideos[catKey]?.fileName || `${catKey} Video`,
+              };
+            });
+          if (Object.keys(savedVideos).length > 0) {
+            setCategoryVideos(savedVideos);
+          }
+        } else if (Array.isArray(p.images) && p.images.length > 0) {
+          setMediaPhotos(
+            p.images.map((url, idx) => ({
               id: `photo-${idx}`,
               imageUrl: url,
+              mediaUrl: url,
+              galleryCategory: idx === 0 ? 'Cover' : 'Living',
+              shortDescription: '',
               displayOrder: idx + 1,
-            })));
-          }
-
-          // Populate Section 6: Media items (FloorPlan, Video, VirtualTour, Document)
-          if (Array.isArray(p.media) && p.media.length > 0) {
-            const plans = [];
-            const vids = [];
-            const tours = [];
-            const docs = [];
-
-            p.media.forEach((item, idx) => {
-              const cat = item.mediaCategory || item.media_category;
-              const formattedItem = {
-                id: item.id || `media-${idx}`,
-                mediaUrl: item.mediaUrl || item.media_url,
-                shortDescription: item.shortDescription || item.short_description || '',
-                orderIndex: item.orderIndex ?? item.order_index ?? (idx + 1),
-                mimeType: item.mimeType || item.mime_type || '',
-              };
-              if (cat === 'FloorPlan') plans.push(formattedItem);
-              else if (cat === 'Video') vids.push(formattedItem);
-              else if (cat === 'VirtualTour') tours.push(formattedItem);
-              else if (cat === 'Document') docs.push(formattedItem);
-            });
-
-            if (plans.length > 0) setMediaFloorPlans(plans.sort((a, b) => a.orderIndex - b.orderIndex));
-            if (vids.length > 0) setMediaVideos(vids.sort((a, b) => a.orderIndex - b.orderIndex));
-            if (tours.length > 0) setMediaVirtualTours(tours.sort((a, b) => a.orderIndex - b.orderIndex));
-            if (docs.length > 0) setMediaDocuments(docs.sort((a, b) => a.orderIndex - b.orderIndex));
-          } else {
-            // Legacy fallbacks for blueprint and virtual tour URL if media table was empty
-            if (p.virtualTourUrl) {
-              setMediaVirtualTours([{
-                id: 'tour-1',
-                mediaUrl: p.virtualTourUrl,
-                shortDescription: '3D Virtual Tour Showcase',
-                orderIndex: 1,
-                mimeType: 'text/html'
-              }]);
-            }
-            if (p.blueprintUrl) {
-              setMediaFloorPlans([{
-                id: 'plan-1',
-                mediaUrl: p.blueprintUrl,
-                shortDescription: 'Architectural Blueprint Layout',
-                orderIndex: 1,
-                mimeType: 'application/pdf'
-              }]);
-            }
-          }
+              mimeType: 'image/jpeg',
+            }))
+          );
         }
-      } catch (error) {
-        console.error("Error fetching property", error);
+      } catch (err) {
+        console.error('[BrokerCreateListings] Failed to load listing:', err);
       } finally {
-        setIsLoading(false);
+        if (!cancelled) setIsLoading(false);
       }
     };
+
     fetchProperty();
+    return () => {
+      cancelled = true;
+    };
   }, [id, isEditing]);
 
-  // Load Regions on component mount
-  useEffect(() => {
-    const regions = phLocationService.getRegions();
-    setGeoRegions(regions);
-  }, []);
-
-  // Sync provinces & cities when region changes
+  // Cascading PSGC Effects
   useEffect(() => {
     if (!formData.region_psgc_code) {
       setGeoProvinces([]);
+      return;
+    }
+    if (!phLocationService.isProvinceApplicable(formData.region_psgc_code)) {
+      setGeoProvinces([]);
+      setIsLoadingProvinces(false);
+      return;
+    }
+    setIsLoadingProvinces(true);
+    try {
+      const res = phLocationService.getProvinces(formData.region_psgc_code);
+      setGeoProvinces(Array.isArray(res) ? res : []);
+    } finally {
+      setIsLoadingProvinces(false);
+    }
+  }, [formData.region_psgc_code]);
+
+  useEffect(() => {
+    if (!formData.region_psgc_code) {
       setGeoCities([]);
       return;
     }
     const isProvApplicable = phLocationService.isProvinceApplicable(formData.region_psgc_code);
-    if (isProvApplicable) {
-      const provs = phLocationService.getProvinces(formData.region_psgc_code);
-      setGeoProvinces(provs);
-      if (formData.province_psgc_code) {
-        const cities = phLocationService.getCities({
-          regionCode: formData.region_psgc_code,
-          provinceCode: formData.province_psgc_code
-        });
-        setGeoCities(cities);
-      } else {
-        setGeoCities([]);
-      }
-    } else {
-      // Province inapplicable (e.g. NCR) - load cities directly by region
-      setGeoProvinces([]);
-      const cities = phLocationService.getCities({ regionCode: formData.region_psgc_code });
-      setGeoCities(cities);
+    if (isProvApplicable && !formData.province_psgc_code) {
+      setGeoCities([]);
+      return;
+    }
+    setIsLoadingCities(true);
+    try {
+      const res = isProvApplicable
+        ? phLocationService.getCities({ provinceCode: formData.province_psgc_code })
+        : phLocationService.getCities({ regionCode: formData.region_psgc_code });
+      setGeoCities(Array.isArray(res) ? res : []);
+    } finally {
+      setIsLoadingCities(false);
     }
   }, [formData.region_psgc_code, formData.province_psgc_code]);
 
-  // Load Barangays when city changes
   useEffect(() => {
-    let isCancelled = false;
     if (!formData.city_psgc_code) {
       setGeoBarangays([]);
       return;
     }
-
-    const loadBarangays = async () => {
-      setIsLoadingBarangays(true);
-      try {
-        const brgys = await phLocationService.getBarangays(formData.city_psgc_code);
-        if (!isCancelled) {
-          setGeoBarangays(brgys);
-        }
-      } catch (err) {
-        console.error('Failed to load barangays:', err);
-      } finally {
-        if (!isCancelled) {
-          setIsLoadingBarangays(false);
-        }
-      }
+    let cancelled = false;
+    setIsLoadingBarangays(true);
+    Promise.resolve(phLocationService.getBarangays(formData.city_psgc_code))
+      .then((res) => {
+        if (!cancelled) setGeoBarangays(Array.isArray(res) ? res : []);
+      })
+      .catch(() => {
+        if (!cancelled) setGeoBarangays([]);
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoadingBarangays(false);
+      });
+    return () => {
+      cancelled = true;
     };
-
-    loadBarangays();
-    return () => { isCancelled = true; };
   }, [formData.city_psgc_code]);
 
-  // Update ZIP code suggestions when City or Barangay changes
-  useEffect(() => {
-    if (formData.location || formData.city) {
-      const suggestions = phLocationService.getZipCodeSuggestions(
-        formData.location || formData.city,
-        formData.barangay
-      );
-      setZipSuggestions(suggestions);
-    } else {
-      setZipSuggestions([]);
-    }
-  }, [formData.location, formData.city, formData.barangay]);
+  // PSGC Selection Handlers (supports both shadcn Select string value and native event)
+  const extractVal = (valOrEvent) =>
+    typeof valOrEvent === 'string' ? valOrEvent : valOrEvent?.target?.value || '';
 
-  // Compute live unparsed address preview
-  const liveUnparsedAddress = phLocationService.formatUnparsedAddress({
-    buildingName: formData.building_name,
-    address: formData.address,
-    subdivisionName: formData.subdivision_name || formData.subdivision,
-    barangay: formData.barangay,
-    city: formData.location || formData.city,
-    stateOrProvince: formData.state_or_province || formData.province,
-    region: formData.region,
-    postalCode: formData.postal_code,
-  });
-
-  // Memoized options for SearchableSelect controls
-  const regionOptions = useMemo(() => {
-    return geoRegions.map(r => ({ value: r.regionCode, label: r.regionName }));
-  }, [geoRegions]);
-
-  const provinceOptions = useMemo(() => {
-    return geoProvinces.map(p => ({ value: p.provinceCode, label: p.provinceName }));
-  }, [geoProvinces]);
-
-  const cityOptions = useMemo(() => {
-    return geoCities.map(c => ({ value: c.cityCode, label: c.cityName }));
-  }, [geoCities]);
-
-  const barangayOptions = useMemo(() => {
-    return geoBarangays.map(b => ({ value: b.barangayCode, label: b.barangayName }));
-  }, [geoBarangays]);
-
-  // Handler: Region Selection with Cascading Clear
   const handleRegionSelect = (valOrEvent) => {
-    const selectedRegionCode = valOrEvent && typeof valOrEvent === 'object' && valOrEvent.target ? valOrEvent.target.value : valOrEvent;
-    const selectedRegionObj = geoRegions.find(r => r.regionCode === selectedRegionCode);
-    const regionName = selectedRegionObj ? selectedRegionObj.regionName : '';
+    const code = extractVal(valOrEvent);
+    const regObj = geoRegions.find((r) => r.regionCode === code);
+    const regName = regObj ? regObj.regionName : '';
+    const isProvApplicable = phLocationService.isProvinceApplicable(code);
 
     setIsDirty(true);
-
-    const isPrevCityChosen = Boolean(formData.city_psgc_code || formData.location);
-    if (isPrevCityChosen) {
+    if (formData.city_psgc_code || formData.city) {
       setLocationNotice({
         type: 'info',
-        message: 'Parent Region modified: City/Municipality and Barangay have been cleared to ensure geographic accuracy. Street and subdivision details were preserved.'
+        message: 'Region changed — city and barangay were cleared so they stay matched.',
       });
-      setTimeout(() => setLocationNotice(null), 6000);
+      setTimeout(() => setLocationNotice(null), 5000);
     }
 
-    const isProvApplicable = phLocationService.isProvinceApplicable(selectedRegionCode);
-
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      region: regionName,
-      region_psgc_code: selectedRegionCode,
+      region: regName,
+      region_psgc_code: code,
       province_psgc_code: '',
-      province: isProvApplicable ? '' : regionName,
-      state_or_province: isProvApplicable ? '' : regionName,
-      state: isProvApplicable ? '' : regionName,
+      province: isProvApplicable ? '' : regName,
+      state_or_province: isProvApplicable ? '' : regName,
+      state: isProvApplicable ? '' : regName,
       city_psgc_code: '',
       city: '',
       location: '',
       barangay_psgc_code: '',
       barangay: '',
     }));
-    setMapSearchQuery(regionName ? `${regionName}, Philippines` : '');
+    if (regName) setMapSearchQuery(`${regName}, Philippines`);
   };
 
-  // Handler: Province Selection with Cascading Clear
   const handleProvinceSelect = (valOrEvent) => {
-    const selectedProvCode = valOrEvent && typeof valOrEvent === 'object' && valOrEvent.target ? valOrEvent.target.value : valOrEvent;
-    const selectedProvObj = geoProvinces.find(p => p.provinceCode === selectedProvCode);
-    const provName = selectedProvObj ? selectedProvObj.provinceName : '';
-
+    const code = extractVal(valOrEvent);
+    const provObj = geoProvinces.find((p) => p.provinceCode === code);
+    const provName = provObj ? provObj.provinceName : '';
     setIsDirty(true);
-
-    const isPrevCityChosen = Boolean(formData.city_psgc_code || formData.location);
-    if (isPrevCityChosen) {
-      setLocationNotice({
-        type: 'info',
-        message: 'Parent Province modified: City/Municipality and Barangay have been cleared to prevent geographical mismatch. Street and subdivision details were preserved.'
-      });
-      setTimeout(() => setLocationNotice(null), 6000);
-    }
-
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      province_psgc_code: selectedProvCode,
+      province_psgc_code: code,
       province: provName,
       state_or_province: provName,
       state: provName,
@@ -1309,578 +515,584 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
       barangay_psgc_code: '',
       barangay: '',
     }));
-    setMapSearchQuery(provName ? `${provName}, Philippines` : '');
+    if (provName) setMapSearchQuery(`${provName}, Philippines`);
   };
 
-  // Handler: City / Municipality Selection
   const handleCitySelect = (valOrEvent) => {
-    const selectedCityCode = valOrEvent && typeof valOrEvent === 'object' && valOrEvent.target ? valOrEvent.target.value : valOrEvent;
-    const selectedCityObj = geoCities.find(c => c.cityCode === selectedCityCode);
-    const cityName = selectedCityObj ? selectedCityObj.cityName : '';
-
+    const code = extractVal(valOrEvent);
+    const cityObj = geoCities.find((c) => c.cityCode === code);
+    const cityName = cityObj ? cityObj.cityName : '';
     setIsDirty(true);
-
-    const isPrevBrgyChosen = Boolean(formData.barangay_psgc_code || formData.barangay);
-    if (isPrevBrgyChosen) {
-      setLocationNotice({
-        type: 'info',
-        message: 'City changed: Barangay selection cleared for re-selection in the new jurisdiction.'
-      });
-      setTimeout(() => setLocationNotice(null), 5000);
-    }
-
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      city_psgc_code: selectedCityCode,
+      city_psgc_code: code,
       city: cityName,
       location: cityName,
       barangay_psgc_code: '',
       barangay: '',
     }));
-    setMapSearchQuery(cityName ? `${cityName}, ${formData.province || formData.region || 'Philippines'}` : '');
+    if (cityName) {
+      setMapSearchQuery(`${cityName}, ${formData.province || formData.region || 'Philippines'}`);
+    }
   };
 
-  // Handler: Barangay Selection
   const handleBarangaySelect = (valOrEvent) => {
-    const selectedBrgyCode = valOrEvent && typeof valOrEvent === 'object' && valOrEvent.target ? valOrEvent.target.value : valOrEvent;
-    const selectedBrgyObj = geoBarangays.find(b => b.barangayCode === selectedBrgyCode);
-    const brgyName = selectedBrgyObj ? selectedBrgyObj.barangayName : '';
-
+    const code = extractVal(valOrEvent);
+    const brgyObj = geoBarangays.find((b) => b.barangayCode === code);
+    const brgyName = brgyObj ? brgyObj.barangayName : '';
     setIsDirty(true);
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      barangay_psgc_code: selectedBrgyCode,
+      barangay_psgc_code: code,
       barangay: brgyName,
     }));
   };
 
+  // Price Input Formatting
   const handlePriceChange = (e) => {
     setIsDirty(true);
-    const rawVal = e.target.value.replace(/[^0-9]/g, '');
-    setFormData(prev => ({ ...prev, price: rawVal }));
-    setDisplayPrice(rawVal);
-  };
-
-  const handlePriceBlur = () => {
-    if (formData.price) {
-      setDisplayPrice(Number(formData.price).toLocaleString());
-    }
+    const raw = e.target.value.replace(/[^0-9.]/g, '');
+    setFormData((prev) => ({ ...prev, price: raw }));
   };
 
   const handlePriceFocus = () => {
-    setDisplayPrice(formData.price);
+    const raw = String(formData.price || '').replace(/,/g, '');
+    setFormData((prev) => ({ ...prev, price: raw }));
   };
 
-  const handleAmenityToggle = (amenity, category = 'amenities') => {
+  const handlePriceBlur = () => {
+    const num = Number(String(formData.price || '').replace(/[^0-9.]/g, ''));
+    if (num > 0) {
+      setFormData((prev) => ({ ...prev, price: num.toLocaleString() }));
+    }
+  };
+
+  // Map Geocoding & Pin
+  const mapPosition =
+    formData.latitude && formData.longitude
+      ? [parseFloat(formData.latitude), parseFloat(formData.longitude)]
+      : [14.5995, 120.9842];
+
+  const handleMapPositionChange = (pos) => {
     setIsDirty(true);
-    setFormData(prev => {
-      const list = prev[category] || [];
-      return {
-        ...prev,
-        [category]: list.includes(amenity)
-          ? list.filter(a => a !== amenity)
-          : [...list, amenity]
-      };
-    });
+    setFormData((prev) => ({
+      ...prev,
+      latitude: pos[0].toFixed(7),
+      longitude: pos[1].toFixed(7),
+    }));
   };
 
-  // =========================================================================
-  // Section 6: Media & Documents Upload and Manipulation Handlers
-  // =========================================================================
+  const handlePinMoved = async (pos) => {
+    const reqId = ++latestPinRequestRef.current;
+    try {
+      const geo = await mapsService.reverse(pos[0], pos[1]);
+      if (geo && reqId === latestPinRequestRef.current) {
+        setFormData((prev) => ({
+          ...prev,
+          latitude: pos[0].toFixed(7),
+          longitude: pos[1].toFixed(7),
+        }));
+      }
+    } catch {
+      // Ignore reverse geocode errors when offline
+    }
+  };
 
-  // Upload a single file via driveService with graceful local fallback if unauthenticated
+  const handleGeocode = async (e) => {
+    if (e) e.preventDefault();
+    const query = mapSearchQuery.trim();
+    if (!query) return;
+    setIsGeocoding(true);
+    try {
+      const geo = await mapsService.geocode(query, 'ph');
+      if (geo?.latitude && geo?.longitude) {
+        setIsDirty(true);
+        setFormData((prev) => ({
+          ...prev,
+          latitude: parseFloat(geo.latitude).toFixed(7),
+          longitude: parseFloat(geo.longitude).toFixed(7),
+        }));
+        setAddressSuggestions([]);
+      }
+    } catch (err) {
+      console.error('[BrokerCreateListings] Geocode error:', err);
+    } finally {
+      setIsGeocoding(false);
+    }
+  };
+
+  // Debounced Google Maps address predictions when typing in Step 2 search box
+  useEffect(() => {
+    const query = (mapSearchQuery || '').trim();
+    if (query.length < 3 || currentStep !== 2) {
+      if (query.length < 3) setAddressSuggestions([]);
+      return;
+    }
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      try {
+        const results = await mapsService.autocomplete(query, 'ph');
+        if (!cancelled && Array.isArray(results)) {
+          setAddressSuggestions(results);
+        }
+      } catch {
+        // Ignore transient autocomplete errors
+      }
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [mapSearchQuery, currentStep]);
+
+  const handleSelectAddressSuggestion = async (item) => {
+    const label = item.description || item.display_name || item.label || item.mainText || '';
+    setMapSearchQuery(label);
+    setAddressSuggestions([]);
+    const lat = item.lat || item.latitude;
+    const lng = item.lon || item.lng || item.longitude;
+    if (lat && lng) {
+      handleMapPositionChange([parseFloat(lat), parseFloat(lng)]);
+      return;
+    }
+    if (label) {
+      setIsGeocoding(true);
+      try {
+        const geo = await mapsService.geocode(label, 'ph');
+        if (geo?.latitude && geo?.longitude) {
+          handleMapPositionChange([parseFloat(geo.latitude), parseFloat(geo.longitude)]);
+        }
+      } finally {
+        setIsGeocoding(false);
+      }
+    }
+  };
+
+  const handleSuggestNearbyPlaces = async () => {
+    const result = await mapsService.suggestNearbyPlaces({
+      latitude: formData.latitude ? Number(formData.latitude) : undefined,
+      longitude: formData.longitude ? Number(formData.longitude) : undefined,
+      address: formData.address,
+      barangay: formData.barangay,
+      city: formData.city || formData.location,
+      province: formData.province,
+      region: formData.region,
+    });
+    if (result) {
+      setIsDirty(true);
+      setFormData((prev) => ({
+        ...prev,
+        nearbyPlaces: {
+          highway: result.highway || prev.nearbyPlaces?.highway || '',
+          transit: result.transit || prev.nearbyPlaces?.transit || '',
+          school: result.school || prev.nearbyPlaces?.school || '',
+          hospital: result.hospital || prev.nearbyPlaces?.hospital || '',
+          mall: result.mall || prev.nearbyPlaces?.mall || '',
+        },
+        nearbyPlacesPins: Array.isArray(result.nearbyPins) ? result.nearbyPins : prev.nearbyPlacesPins,
+      }));
+    }
+  };
+
+  // Categorized Photo Upload Handlers
   const uploadSingleMediaFile = async (file, category, updateItemCallback) => {
     try {
-      updateItemCallback({ isUploading: true, progress: 25, error: null });
+      updateItemCallback({ isUploading: true, error: null });
       const targetPropertyId = id && id !== 'new' ? id : 'general';
       const uploaded = await driveService.uploadFile(file, targetPropertyId, category);
       const liveUrl = uploaded.directImageUrl || uploaded.webViewLink;
       updateItemCallback({
         isUploading: false,
-        progress: 100,
         error: null,
         mediaUrl: liveUrl,
         imageUrl: liveUrl,
-        mimeType: file.type || (category === 'Photos' ? 'image/jpeg' : 'application/octet-stream')
+        mimeType: file.type || 'image/jpeg',
       });
     } catch (err) {
-      console.warn('[BrokerCreateListings] Remote Drive upload unavailable:', err);
-      const isAuth = err.status === 401 || err.message?.includes('Unauthorized') || err.response?.status === 401;
+      const isAuth = err.status === 401 || err.response?.status === 401;
       updateItemCallback({
         isUploading: false,
-        progress: 0,
         error: isAuth
-          ? 'Cloud session expired. Please re-authenticate before uploading media.'
-          : (err.response?.data?.error || err.message || 'Upload failed'),
+          ? 'Session expired. Please sign in again before uploading.'
+          : err.response?.data?.error || err.message || 'Upload failed',
         mediaUrl: null,
-        imageUrl: null
       });
     }
   };
 
-  // 1. Photos Handlers
-  const handlePhotoUpload = (e) => {
-    const files = Array.from(e.target.files || []);
+  const handleUploadBankLogo = async (bankName, file) => {
+    if (!file || !file.type.startsWith('image/')) return;
+    setIsDirty(true);
+    const localPreview = URL.createObjectURL(file);
+    setFormData((prev) => ({
+      ...prev,
+      partneredBanks: (prev.partneredBanks || []).map((b) =>
+        b.bankName === bankName ? { ...b, logoUrl: localPreview } : b
+      ),
+    }));
+    try {
+      const targetPropertyId = id && id !== 'new' ? id : 'general';
+      const uploaded = await driveService.uploadFile(file, targetPropertyId, 'Photos');
+      const liveUrl = uploaded.directImageUrl || uploaded.webViewLink;
+      if (liveUrl) {
+        setFormData((prev) => ({
+          ...prev,
+          partneredBanks: (prev.partneredBanks || []).map((b) =>
+            b.bankName === bankName ? { ...b, logoUrl: liveUrl } : b
+          ),
+        }));
+      }
+    } catch {
+      // Keep local preview if offline or unauthenticated
+    }
+  };
+
+  const handleUploadCategoryFiles = (galleryCategory, fileList, maxLimit = 5) => {
+    const existingCount = mediaPhotos.filter((p) => p.galleryCategory === galleryCategory).length;
+    const remainingSlots = Math.max(0, maxLimit - existingCount);
+    if (remainingSlots === 0) return;
+
+    const files = Array.from(fileList || [])
+      .filter((f) => f.type.startsWith('image/'))
+      .slice(0, remainingSlots);
     if (files.length === 0) return;
     setIsDirty(true);
 
-    const validFiles = [];
-    for (const file of files) {
-      if (!file.type.startsWith('image/')) {
-        alert(`"${file.name}" is not a valid image file.`);
-        continue;
-      }
-      if (file.size > 50 * 1024 * 1024) {
-        alert(`"${file.name}" exceeds the maximum 50MB file size limit.`);
-        continue;
-      }
-      validFiles.push(file);
-    }
-
-    const currentCount = mediaPhotos.length;
-    const newItems = validFiles.map((file, idx) => ({
-      id: `photo-new-${Date.now()}-${idx}`,
+    const newItems = files.map((file, idx) => ({
+      id: `photo-${galleryCategory}-${Date.now()}-${idx}`,
       imageUrl: URL.createObjectURL(file),
-      displayOrder: currentCount + idx + 1,
+      mediaUrl: null,
+      galleryCategory,
+      shortDescription: '',
+      displayOrder: mediaPhotos.length + idx + 1,
       isUploading: true,
-      progress: 10,
       error: null,
-      file: file,
-      mimeType: file.type || 'image/jpeg'
+      file,
+      mimeType: file.type || 'image/jpeg',
     }));
 
-    setMediaPhotos(prev => [...prev, ...newItems]);
-
-    // Kick off uploads for each
+    setMediaPhotos((prev) => [...prev, ...newItems]);
     newItems.forEach((item) => {
       uploadSingleMediaFile(item.file, 'Photos', (updates) => {
-        setMediaPhotos(prev => prev.map(p => p.id === item.id ? { ...p, ...updates } : p));
+        setMediaPhotos((prev) =>
+          prev.map((p) => (p.id === item.id ? { ...p, ...updates } : p))
+        );
       });
     });
-
-    e.target.value = '';
   };
 
-  const handlePhotoMove = (fromIndex, toIndex) => {
-    if (toIndex < 0 || toIndex >= mediaPhotos.length) return;
-    setIsDirty(true);
-    setMediaPhotos(prev => {
-      const copy = [...prev];
-      const [moved] = copy.splice(fromIndex, 1);
-      copy.splice(toIndex, 0, moved);
-      return copy.map((item, idx) => ({ ...item, displayOrder: idx + 1 }));
-    });
-  };
-
-  const handlePhotoSetCover = (index) => {
-    if (index === 0) return;
-    setIsDirty(true);
-    setMediaPhotos(prev => {
-      const copy = [...prev];
-      const [cover] = copy.splice(index, 1);
-      copy.unshift(cover);
-      return copy.map((item, idx) => ({ ...item, displayOrder: idx + 1 }));
-    });
-  };
-
-  const handlePhotoReplace = (index, file) => {
+  const handleUploadCategoryVideo = async (galleryCategory, file) => {
     if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      alert('Selected file is not an image.');
-      return;
-    }
-    if (file.size > 50 * 1024 * 1024) {
-      alert('Selected image exceeds the 50MB size limit.');
-      return;
-    }
     setIsDirty(true);
-    const targetId = mediaPhotos[index]?.id;
-    setMediaPhotos(prev => prev.map((p, idx) => idx === index ? {
-      ...p,
-      imageUrl: URL.createObjectURL(file),
-      file,
-      isUploading: true,
-      progress: 10,
-      error: null
-    } : p));
-
-    uploadSingleMediaFile(file, 'Photos', (updates) => {
-      setMediaPhotos(prev => prev.map(p => p.id === targetId ? { ...p, ...updates } : p));
-    });
-  };
-
-  const handlePhotoRetry = (index) => {
-    const item = mediaPhotos[index];
-    if (!item?.file) return;
-    uploadSingleMediaFile(item.file, 'Photos', (updates) => {
-      setMediaPhotos(prev => prev.map((p, idx) => idx === index ? { ...p, ...updates } : p));
-    });
-  };
-
-  // 2. Floor Plans Handlers
-  const handleFloorPlanUpload = (e) => {
-    const files = Array.from(e.target.files || []);
-    if (files.length === 0) return;
-    setIsDirty(true);
-
-    const validFiles = files.filter(f => {
-      if (f.size > 50 * 1024 * 1024) {
-        alert(`"${f.name}" exceeds 50MB.`);
-        return false;
-      }
-      return true;
-    });
-
-    const currentCount = mediaFloorPlans.length;
-    const newItems = validFiles.map((file, idx) => ({
-      id: `floorplan-new-${Date.now()}-${idx}`,
-      mediaUrl: URL.createObjectURL(file),
-      shortDescription: file.name.replace(/\.[^/.]+$/, ""),
-      orderIndex: currentCount + idx + 1,
-      mimeType: file.type || 'application/pdf',
-      isUploading: true,
-      progress: 15,
-      error: null,
-      file: file
+    setCategoryVideos((prev) => ({
+      ...prev,
+      [galleryCategory]: {
+        ...(prev[galleryCategory] || {}),
+        fileName: file.name,
+        mimeType: file.type || 'video/mp4',
+        isUploading: true,
+        error: null,
+      },
     }));
 
-    setMediaFloorPlans(prev => [...prev, ...newItems]);
-
-    newItems.forEach(item => {
-      uploadSingleMediaFile(item.file, 'CAD', (updates) => {
-        setMediaFloorPlans(prev => prev.map(p => p.id === item.id ? { ...p, ...updates } : p));
-      });
-    });
-
-    e.target.value = '';
-  };
-
-  const handleFloorPlanMove = (fromIndex, toIndex) => {
-    if (toIndex < 0 || toIndex >= mediaFloorPlans.length) return;
-    setIsDirty(true);
-    setMediaFloorPlans(prev => {
-      const copy = [...prev];
-      const [moved] = copy.splice(fromIndex, 1);
-      copy.splice(toIndex, 0, moved);
-      return copy.map((item, idx) => ({ ...item, orderIndex: idx + 1 }));
-    });
-  };
-
-  // 3. Videos Handlers
-  const handleVideoUpload = (e) => {
-    const files = Array.from(e.target.files || []);
-    if (files.length === 0) return;
-    setIsDirty(true);
-
-    const validFiles = files.filter(f => {
-      if (!f.type.startsWith('video/')) {
-        alert(`"${f.name}" is not a valid video file.`);
-        return false;
-      }
-      if (f.size > 100 * 1024 * 1024) {
-        alert(`"${f.name}" exceeds maximum allowed 100MB.`);
-        return false;
-      }
-      return true;
-    });
-
-    const currentCount = mediaVideos.length;
-    const newItems = validFiles.map((file, idx) => ({
-      id: `video-new-${Date.now()}-${idx}`,
-      mediaUrl: URL.createObjectURL(file),
-      shortDescription: file.name.replace(/\.[^/.]+$/, ""),
-      orderIndex: currentCount + idx + 1,
-      mimeType: file.type || 'video/mp4',
-      isUploading: true,
-      progress: 10,
-      error: null,
-      file: file,
-      isLink: false
-    }));
-
-    setMediaVideos(prev => [...prev, ...newItems]);
-
-    newItems.forEach(item => {
-      uploadSingleMediaFile(item.file, 'Document', (updates) => {
-        setMediaVideos(prev => prev.map(p => p.id === item.id ? { ...p, ...updates } : p));
-      });
-    });
-
-    e.target.value = '';
-  };
-
-  const handleAddVideoUrl = () => {
-    if (!newVideoUrl.trim()) return;
-    if (!/^https?:\/\//i.test(newVideoUrl.trim())) {
-      alert('Please enter a valid HTTP or HTTPS video URL.');
-      return;
+    try {
+      const targetPropertyId = id && id !== 'new' ? id : 'general';
+      const uploaded = await driveService.uploadFile(file, targetPropertyId, 'Videos');
+      const liveUrl = uploaded.directImageUrl || uploaded.webViewLink;
+      setCategoryVideos((prev) => ({
+        ...prev,
+        [galleryCategory]: {
+          ...(prev[galleryCategory] || {}),
+          mediaUrl: liveUrl,
+          isUploading: false,
+          error: null,
+        },
+      }));
+    } catch (err) {
+      setCategoryVideos((prev) => ({
+        ...prev,
+        [galleryCategory]: {
+          ...(prev[galleryCategory] || {}),
+          isUploading: false,
+          error: err.response?.data?.error || err.message || 'Video upload failed',
+        },
+      }));
     }
-    setIsDirty(true);
-    const newItem = {
-      id: `video-url-${Date.now()}`,
-      mediaUrl: newVideoUrl.trim(),
-      shortDescription: newVideoDesc.trim() || 'Featured Property Video',
-      orderIndex: mediaVideos.length + 1,
-      mimeType: 'video/mp4',
-      isUploading: false,
-      progress: 100,
-      error: null,
-      isLink: true
-    };
-    setMediaVideos(prev => [...prev, newItem]);
-    setNewVideoUrl('');
-    setNewVideoDesc('');
   };
 
-  const handleVideoMove = (fromIndex, toIndex) => {
-    if (toIndex < 0 || toIndex >= mediaVideos.length) return;
+  const handleAddCategoryVideoUrl = (galleryCategory, url) => {
     setIsDirty(true);
-    setMediaVideos(prev => {
-      const copy = [...prev];
-      const [moved] = copy.splice(fromIndex, 1);
-      copy.splice(toIndex, 0, moved);
-      return copy.map((item, idx) => ({ ...item, orderIndex: idx + 1 }));
-    });
-  };
-
-  // 4. Virtual Tours Handlers
-  const handleAddVirtualTour = () => {
-    if (!newTourUrl.trim()) return;
-    if (!/^https?:\/\//i.test(newTourUrl.trim())) {
-      alert('Please enter a valid HTTP or HTTPS tour URL.');
-      return;
-    }
-    setIsDirty(true);
-    const newItem = {
-      id: `tour-${Date.now()}`,
-      mediaUrl: newTourUrl.trim(),
-      shortDescription: newTourDesc.trim() || 'Interactive 3D Virtual Tour',
-      orderIndex: mediaVirtualTours.length + 1,
-      mimeType: 'text/html'
-    };
-    setMediaVirtualTours(prev => [...prev, newItem]);
-    setNewTourUrl('');
-    setNewTourDesc('');
-  };
-
-  const handleTourMove = (fromIndex, toIndex) => {
-    if (toIndex < 0 || toIndex >= mediaVirtualTours.length) return;
-    setIsDirty(true);
-    setMediaVirtualTours(prev => {
-      const copy = [...prev];
-      const [moved] = copy.splice(fromIndex, 1);
-      copy.splice(toIndex, 0, moved);
-      return copy.map((item, idx) => ({ ...item, orderIndex: idx + 1 }));
-    });
-  };
-
-  // 5. Documents Handlers
-  const handleDocumentUpload = (e) => {
-    const files = Array.from(e.target.files || []);
-    if (files.length === 0) return;
-    setIsDirty(true);
-
-    const validFiles = files.filter(f => {
-      if (f.size > 50 * 1024 * 1024) {
-        alert(`"${f.name}" exceeds 50MB.`);
-        return false;
-      }
-      return true;
-    });
-
-    const currentCount = mediaDocuments.length;
-    const newItems = validFiles.map((file, idx) => ({
-      id: `doc-new-${Date.now()}-${idx}`,
-      mediaUrl: URL.createObjectURL(file),
-      shortDescription: file.name.replace(/\.[^/.]+$/, ""),
-      orderIndex: currentCount + idx + 1,
-      mimeType: file.type || 'application/pdf',
-      isUploading: true,
-      progress: 15,
-      error: null,
-      file: file
+    setCategoryVideos((prev) => ({
+      ...prev,
+      [galleryCategory]: {
+        ...(prev[galleryCategory] || {}),
+        mediaUrl: url,
+        fileName: url,
+        mimeType: 'video/mp4',
+        isUploading: false,
+        error: null,
+      },
     }));
-
-    setMediaDocuments(prev => [...prev, ...newItems]);
-
-    newItems.forEach(item => {
-      uploadSingleMediaFile(item.file, 'Document', (updates) => {
-        setMediaDocuments(prev => prev.map(p => p.id === item.id ? { ...p, ...updates } : p));
-      });
-    });
-
-    e.target.value = '';
   };
 
-  const handleDocumentMove = (fromIndex, toIndex) => {
-    if (toIndex < 0 || toIndex >= mediaDocuments.length) return;
+  const handleUploadCategoryVideoThumbnail = async (galleryCategory, file) => {
+    if (!file || !file.type.startsWith('image/')) return;
     setIsDirty(true);
-    setMediaDocuments(prev => {
-      const copy = [...prev];
-      const [moved] = copy.splice(fromIndex, 1);
-      copy.splice(toIndex, 0, moved);
-      return copy.map((item, idx) => ({ ...item, orderIndex: idx + 1 }));
+    const localPreview = URL.createObjectURL(file);
+    setCategoryVideos((prev) => ({
+      ...prev,
+      [galleryCategory]: {
+        ...(prev[galleryCategory] || {}),
+        thumbnailUrl: localPreview,
+      },
+    }));
+    try {
+      const targetPropertyId = id && id !== 'new' ? id : 'general';
+      const uploaded = await driveService.uploadFile(file, targetPropertyId, 'Photos');
+      const liveUrl = uploaded.directImageUrl || uploaded.webViewLink;
+      if (liveUrl) {
+        setCategoryVideos((prev) => ({
+          ...prev,
+          [galleryCategory]: {
+            ...(prev[galleryCategory] || {}),
+            thumbnailUrl: liveUrl,
+          },
+        }));
+      }
+    } catch {
+      // Keep local preview if offline
+    }
+  };
+
+  const handleUpdateCategoryVideo = (galleryCategory, patch) => {
+    setIsDirty(true);
+    setCategoryVideos((prev) => ({
+      ...prev,
+      [galleryCategory]: {
+        ...(prev[galleryCategory] || {}),
+        ...patch,
+      },
+    }));
+  };
+
+  const handleRemoveCategoryVideo = (galleryCategory) => {
+    setIsDirty(true);
+    setCategoryVideos((prev) => {
+      const next = { ...prev };
+      delete next[galleryCategory];
+      return next;
     });
   };
 
-  // Check if any media uploads are currently running or have unresolved errors
-  const hasActiveUploads = [
-    ...mediaPhotos,
-    ...mediaFloorPlans,
-    ...mediaVideos,
-    ...mediaDocuments
-  ].some(item => item.isUploading);
+  const handleAddCategoryImageUrl = (galleryCategory, url) => {
+    setIsDirty(true);
+    setMediaPhotos((prev) => [
+      ...prev,
+      {
+        id: `photo-url-${galleryCategory}-${Date.now()}`,
+        imageUrl: url,
+        mediaUrl: url,
+        galleryCategory,
+        shortDescription: '',
+        displayOrder: prev.length + 1,
+        isUploading: false,
+        error: null,
+        mimeType: 'image/jpeg',
+      },
+    ]);
+  };
 
-  const hasUploadErrors = [
-    ...mediaPhotos,
-    ...mediaFloorPlans,
-    ...mediaVideos,
-    ...mediaDocuments
-  ].some(item => Boolean(item.error));
+  const handleUpdatePhotoItem = (photoId, patch) => {
+    setIsDirty(true);
+    setMediaPhotos((prev) =>
+      prev.map((p) => (p.id === photoId ? { ...p, ...patch } : p))
+    );
+  };
 
-  const validationSummary = validatePropertyForm({
-    formData,
-    mediaPhotos,
-    mediaFloorPlans,
-    mediaVideos,
-    mediaVirtualTours,
-    mediaDocuments,
-    isProvinceApplicable: phLocationService.isProvinceApplicable,
-  });
-  const draftValidationErrors = validationSummary.draftErrors;
-  const finalValidationErrors = validationSummary.finalErrors;
+  const handleRemovePhotoItem = (photoId) => {
+    setIsDirty(true);
+    setMediaPhotos((prev) => prev.filter((p) => p.id !== photoId));
+  };
 
-  // Submit action handler supporting explicit Draft vs Publish vs Review workflows
+  const handleRetryPhotoItem = (photoId) => {
+    const target = mediaPhotos.find((p) => p.id === photoId);
+    if (!target?.file) return;
+    uploadSingleMediaFile(target.file, 'Photos', (updates) => {
+      setMediaPhotos((prev) =>
+        prev.map((p) => (p.id === photoId ? { ...p, ...updates } : p))
+      );
+    });
+  };
+
+  const hasActiveUploads =
+    mediaPhotos.some((p) => p.isUploading) ||
+    Object.values(categoryVideos).some((v) => v?.isUploading);
+  const hasUploadErrors =
+    mediaPhotos.some((p) => Boolean(p.error)) ||
+    Object.values(categoryVideos).some((v) => Boolean(v?.error));
+
+  const coverPhotoUrl = useMemo(() => {
+    const cover = mediaPhotos.find((p) => p.galleryCategory === 'Cover' && !p.error);
+    return cover?.imageUrl || cover?.mediaUrl || mediaPhotos[0]?.imageUrl || '';
+  }, [mediaPhotos]);
+
+  // Validation & Submission
+  const validateForSubmit = (isDraft) => {
+    const errors = [];
+    if (!formData.title?.trim()) {
+      errors.push({ field: 'Listing Title', value: 'Empty', step: 1, message: 'Add a listing title in Step 1.' });
+    }
+    const numericPrice = Number(String(formData.price || '').replace(/[^0-9.]/g, '')) || 0;
+    if (!numericPrice) {
+      errors.push({ field: 'Price', value: 'Not set', step: 1, message: 'Enter a selling price or monthly rent in Step 1.' });
+    }
+    if (!isDraft) {
+      if (!(formData.city || formData.location)) {
+        errors.push({ field: 'City', value: 'Not selected', step: 2, message: 'Select a city in Step 2.' });
+      }
+      if (!formData.address?.trim()) {
+        errors.push({ field: 'Street Address', value: 'Empty', step: 2, message: 'Enter a street address in Step 2.' });
+      }
+      if (mediaPhotos.length === 0) {
+        errors.push({ field: 'Cover Photo', value: '0 photos', step: 4, message: 'Upload at least 1 photo in Step 4.' });
+      }
+      const hasAssignedAgent = Boolean(
+        formData.list_agent_key || formData.assignedAgent?.trim() || formData.credentials?.assignedAgent?.trim()
+      );
+      if (!hasAssignedAgent) {
+        errors.push({ field: 'Assigned Agent', value: 'No agent assigned', step: 5, message: 'Assign an agent in Step 5 before publishing.' });
+      }
+    }
+    return errors;
+  };
+
   const executeSubmission = async (targetStandardStatus = 'Active') => {
     setSubmissionError(null);
-
-    // Draft Validation vs Final Validation
-    if (targetStandardStatus === 'Draft') {
-      if (draftValidationErrors.length > 0) {
-        setSubmissionError({
-          title: 'Database Requirements Missing for Draft',
-          message: `The database requires: ${draftValidationErrors.map(e => e.field).join(', ')}. Please provide these required fields.`,
-          errors: draftValidationErrors
-        });
+    const isDraft = targetStandardStatus === 'Draft';
+    const errors = validateForSubmit(isDraft);
+    if (errors.length > 0) {
+      if (!isDraft) {
+        setMissingFieldsModal({ errors });
         return;
       }
-    } else {
-      if (finalValidationErrors.length > 0) {
-        setSubmissionError({
-          title: 'Publication Requirements Incomplete',
-          message: 'Please resolve the following required fields before submitting or publishing:',
-          errors: finalValidationErrors
-        });
-        return;
-      }
+      setSubmissionError({
+        title: 'Missing Draft Basics',
+        message: 'Please fill in the highlighted items below:',
+        errors,
+      });
+      return;
     }
 
     if (hasActiveUploads) {
       setSubmissionError({
-        title: 'Uploads In Progress',
-        message: 'Media files are still uploading. Please wait for uploads to complete before submitting.',
-        errors: [{ field: 'Media & Documents', step: 6, message: 'Active uploads in progress' }]
+        title: 'Photos Still Uploading',
+        message: 'Please wait a moment for your photo uploads to finish.',
+        errors: [],
       });
       return;
     }
 
     if (hasUploadErrors) {
       setSubmissionError({
-        title: 'Unresolved Upload Failures',
-        message: 'One or more media uploads failed. Please retry or remove failed items in Section 6 before submitting.',
-        errors: [{ field: 'Media & Documents', step: 6, message: 'Unresolved media upload errors' }]
+        title: 'Photo Upload Needs Attention',
+        message: 'One or more photos failed to upload. Please retry or remove them in Step 4.',
+        errors: [],
       });
       return;
     }
 
-    // Set active progress label
-    if (targetStandardStatus === 'Draft') {
-      setActiveActionLabel('Saving...');
-    } else if (targetStandardStatus === 'Pending Approval') {
-      setActiveActionLabel('Submitting...');
-    } else {
-      setActiveActionLabel(isEditing ? 'Saving Changes...' : 'Publishing...');
-    }
-
+    setActiveActionLabel(
+      isDraft
+        ? 'Saving Draft...'
+        : targetStandardStatus === 'Pending Approval'
+          ? 'Submitting...'
+          : isEditing
+            ? 'Saving Changes...'
+            : 'Publishing...'
+    );
     setIsSubmitting(true);
-    try {
 
-      const isDraft = targetStandardStatus === 'Draft';
-      const determinedStatus = isDraft ? 'INACTIVE' : (formData.status || 'AVAILABLE');
-      
-      // Serialize property_images (Photos)
-      const formattedPropertyImages = mediaPhotos
-        .filter(p => (p.imageUrl || p.mediaUrl) && !p.error && !String(p.mediaUrl || p.imageUrl || '').startsWith('blob:'))
-        .map((p, idx) => ({
-          imageUrl: p.mediaUrl || p.imageUrl,
-          displayOrder: idx + 1
+    try {
+      const validPhotos = mediaPhotos.filter(
+        (p) =>
+          (p.mediaUrl || p.imageUrl) &&
+          !p.error &&
+          !String(p.mediaUrl || p.imageUrl || '').startsWith('blob:')
+      );
+
+      // Sort Cover first, then categorized gallery order
+      const sortedPhotos = [...validPhotos].sort((a, b) => {
+        if (a.galleryCategory === 'Cover' && b.galleryCategory !== 'Cover') return -1;
+        if (b.galleryCategory === 'Cover' && a.galleryCategory !== 'Cover') return 1;
+        return (a.displayOrder || 0) - (b.displayOrder || 0);
+      });
+
+      const formattedPropertyImages = sortedPhotos.map((p, idx) => ({
+        imageUrl: p.mediaUrl || p.imageUrl,
+        displayOrder: idx + 1,
+      }));
+
+      const formattedVideos = Object.entries(categoryVideos)
+        .filter(([, v]) => v?.mediaUrl && !v.error && !String(v.mediaUrl).startsWith('blob:'))
+        .map(([catKey, v], idx) => ({
+          mediaUrl: v.mediaUrl,
+          mediaCategory: 'Video',
+          galleryCategory: catKey,
+          orderIndex: sortedPhotos.length + idx + 1,
+          shortDescription: v.shortDescription || `${catKey} Video`,
+          mimeType: v.mimeType || 'video/mp4',
         }));
 
-      // Serialize property_media (Photos, FloorPlan, Video, VirtualTour, Document)
       const formattedMedia = [
-        ...mediaPhotos
-          .filter(p => (p.mediaUrl || p.imageUrl) && !p.error && !String(p.mediaUrl || p.imageUrl || '').startsWith('blob:'))
-          .map((p, idx) => ({
-            mediaUrl: p.mediaUrl || p.imageUrl,
-            mediaCategory: 'Photo',
-            orderIndex: idx + 1,
-            shortDescription: p.shortDescription || p.name || 'Listing Photo',
-            mimeType: p.mimeType || 'image/jpeg'
-          })),
-        ...mediaFloorPlans.map((m, idx) => ({
-          mediaUrl: m.mediaUrl,
-          mediaCategory: 'FloorPlan',
+        ...sortedPhotos.map((p, idx) => ({
+          mediaUrl: p.mediaUrl || p.imageUrl,
+          mediaCategory: p.galleryCategory === 'FloorPlan' ? 'FloorPlan' : 'Photo',
+          galleryCategory: p.galleryCategory || 'Living',
           orderIndex: idx + 1,
-          shortDescription: m.shortDescription || '',
-          mimeType: m.mimeType || 'application/pdf'
+          shortDescription: p.shortDescription || p.galleryCategory || 'Property Photo',
+          mimeType: p.mimeType || 'image/jpeg',
         })),
-        ...mediaVideos.map((m, idx) => ({
-          mediaUrl: m.mediaUrl,
-          mediaCategory: 'Video',
-          orderIndex: idx + 1,
-          shortDescription: m.shortDescription || '',
-          mimeType: m.mimeType || 'video/mp4'
-        })),
-        ...mediaVirtualTours.map((m, idx) => ({
-          mediaUrl: m.mediaUrl,
-          mediaCategory: 'VirtualTour',
-          orderIndex: idx + 1,
-          shortDescription: m.shortDescription || '',
-          mimeType: 'text/html'
-        })),
-        ...mediaDocuments.map((m, idx) => ({
-          mediaUrl: m.mediaUrl,
-          mediaCategory: 'Document',
-          orderIndex: idx + 1,
-          shortDescription: m.shortDescription || '',
-          mimeType: m.mimeType || 'application/pdf'
-        }))
+        ...formattedVideos,
       ];
+
+      const isSelfHandledBroker =
+        user?.role !== 'agent' &&
+        Boolean(user?.id) &&
+        String(formData.list_agent_key || '') === String(user.id);
+      const isConfirmedForPublish =
+        isSelfHandledBroker ||
+        (isEditing &&
+          String(formData.assignment_status || '').toUpperCase() === 'ACCEPTED' &&
+          String(formData.list_agent_key || '') === String(formData.loaded_agent_key || ''));
+      const effectiveStandardStatus = isDraft
+        ? 'Draft'
+        : (isConfirmedForPublish ? targetStandardStatus : 'Pending Confirmation');
+      const effectiveIsPublished = !isDraft && isConfirmedForPublish;
 
       const payload = toApiPayload({
         ...formData,
-        standardStatus: targetStandardStatus,
-        status: determinedStatus,
-        is_published: !isDraft,
-        is_featured: Boolean(formData.is_featured),
-        isFeatured: Boolean(formData.is_featured),
+        ...(isSelfHandledBroker ? { assignmentStatus: 'ACCEPTED', assignment_status: 'ACCEPTED' } : {}),
+        credentials: {
+          ...(formData.credentials || {}),
+          brokerName:
+            formData.credentials?.brokerName ||
+            user?.full_name ||
+            user?.name ||
+            '',
+        },
+        categoryVideos,
+        standardStatus: effectiveStandardStatus,
+        status: isDraft || !effectiveIsPublished ? 'PENDING' : formData.status || 'AVAILABLE',
+        is_published: effectiveIsPublished,
         property_images: formattedPropertyImages,
-        images: formattedPropertyImages.map(img => img.imageUrl),
+        images: formattedPropertyImages.map((img) => img.imageUrl),
         media: formattedMedia,
-        confidential: {
-          privateRemarks: formData.privateNotes || '',
-          showingInstructions: formData.showingInstructions || '',
-          lockboxCode: formData.lockboxCode || '',
-          buyerAgencyCompensation: formData.commissionSplit || '',
-          sellerDirectPhone: formData.seller_direct_phone || '',
-        }
       });
 
       let propertyId = id;
       if (isEditing) {
-        if (user?.role === 'agent' && targetStandardStatus !== 'Draft') {
-          // Agent proposing edits through existing proposeEdit workflow
-          await propertyService.proposeEdit(id, payload, formData.privateNotes || 'Agent listing modification request');
+        if (user?.role === 'agent' && !isDraft) {
+          await propertyService.proposeEdit(id, payload, 'Agent listing update');
         } else {
           await propertyService.updateProperty(id, payload);
         }
@@ -1891,15 +1103,13 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
 
       setIsDirty(false);
       setCreatedPropertyId(propertyId);
-      setSavedStatusType(targetStandardStatus);
+      setSavedStatusType(effectiveStandardStatus);
       setShowSuccessModal(true);
     } catch (err) {
-      console.error('[BrokerCreateListings] Submission error:', err);
-      const errMsg = err.response?.data?.error || err.message || 'Error occurred while saving listing.';
       setSubmissionError({
-        title: 'Submission Failed',
-        message: errMsg,
-        errors: []
+        title: 'Could Not Save Listing',
+        message: err.response?.data?.error || err.message || 'Something went wrong while saving.',
+        errors: [],
       });
     } finally {
       setIsSubmitting(false);
@@ -1907,28 +1117,12 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
     }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (user?.role === 'agent') {
-      executeSubmission('Pending Approval');
-    } else {
-      executeSubmission('Active');
-    }
-  };
-
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <span className="material-symbols-outlined text-4xl text-[#0D4446] animate-spin">sync</span>
-      </div>
-    );
+    return <ListingSkeleton />;
   }
 
-    const isCondo = isStrataFamily(formData.property_type);
-  const isLand = isLandFamily(formData.property_type);
-  const isHouseAndLot = isDwellingFamily(formData.property_type);
-
   return (
+<<<<<<< HEAD
     <div className={`mx-auto w-full max-w-7xl flex flex-col gap-4 p-4 md:p-6 ${isDrawer ? 'pb-6' : 'pb-16'}`}>
       {!isDrawer && (
         <PageHeader
@@ -4530,62 +3724,531 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
         <div className="sticky bottom-0 z-40 bg-white/95 backdrop-blur-sm border-t border-[#E2E8F0] p-3 rounded-md shadow-xs">
           <div className="max-w-[1440px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="flex items-center gap-3 w-full sm:w-auto">
+=======
+    <MotionConfig reducedMotion="user">
+      <div className="min-h-screen bg-[#F8FAFC] p-4 md:p-8">
+        <div className="max-w-7xl mx-auto flex flex-col gap-6">
+          {/* Header */}
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex flex-col gap-1">
+              <Link
+                to="/broker/properties"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#0F766E] hover:underline w-fit"
+              >
+                <ArrowLeft className="size-4" />
+                Back to Listings
+              </Link>
+              <h1 className="text-2xl md:text-3xl font-bold text-[#1E293B]">
+                {isEditing ? 'Edit Property Listing' : 'Create Property Listing'}
+              </h1>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+>>>>>>> property-tech-v3.0
               <Button
                 type="button"
                 variant="outline"
-                disabled={currentStep === 1 || isSubmitting}
-                onClick={() => setCurrentStep(prev => Math.max(1, prev - 1))}
-                className="h-auto min-h-11 md:min-h-10 [@media(pointer:coarse)]:min-h-11 whitespace-normal py-2 px-5"
+                onClick={() => setMobilePreviewOpen(true)}
+                className="lg:hidden min-h-11 px-3.5 border-[#E2E8F0] bg-white text-[#1E293B] font-semibold rounded-lg cursor-pointer"
               >
-                <ArrowLeft className="size-3.5" />
-                <span>Back</span>
+                <Eye className="size-4 mr-1.5 text-[#0F766E]" />
+                Preview
               </Button>
-              {isDrawer ? (
+              {!isEditing && isDirty && (
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={onClose}
-                  className="h-auto min-h-11 md:min-h-10 [@media(pointer:coarse)]:min-h-11 whitespace-normal py-2 px-4 text-slate-600 hover:text-[#1E293B]"
+                  onClick={() => setConfirmResetOpen(true)}
+                  className="min-h-11 px-3.5 border-[#E2E8F0] bg-white text-[#1E293B] font-semibold rounded-lg cursor-pointer"
                 >
-                  Cancel & Exit
+                  <RotateCcw className="size-4 mr-1.5 text-[#FF6B6B]" />
+                  Reset
                 </Button>
-              ) : (
-                <Link
-                  to="/broker/properties"
-                  className="h-auto min-h-11 md:min-h-10 [@media(pointer:coarse)]:min-h-11 whitespace-normal py-2 px-4 rounded-md border border-[#CBD5E1] bg-white hover:bg-[#F8FAFC] text-slate-600 hover:text-[#1E293B] text-xs font-semibold flex items-center transition-colors shadow-2xs"
-                >
-                  Cancel & Exit
-                </Link>
               )}
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isSubmitting}
+                onClick={() => executeSubmission('Draft')}
+                className="min-h-11 px-4 border-[#E2E8F0] bg-white text-[#1E293B] font-semibold rounded-lg cursor-pointer"
+              >
+                <Save className="size-4 mr-2 text-[#0F766E]" />
+                {isSubmitting && activeActionLabel === 'Saving Draft...'
+                  ? 'Saving Draft...'
+                  : 'Save Draft'}
+              </Button>
+            </div>
+          </div>
+
+          {/* 5-Step Progress Bar */}
+          <Card className="bg-white border-[#E2E8F0] rounded-xl shadow-xs">
+            <CardContent className="p-2 grid grid-cols-2 sm:grid-cols-5 gap-2">
+              {STEPS.map((step) => {
+                const Icon = step.icon;
+                const isActive = currentStep === step.id;
+                const isCompleted = currentStep > step.id;
+                return (
+                  <button
+                    key={step.id}
+                    type="button"
+                    onClick={() => setCurrentStep(step.id)}
+                    className={`relative min-h-11 px-3 py-2.5 rounded-lg flex items-center gap-2.5 text-left transition-colors cursor-pointer ${isActive ? 'text-white' : 'text-[#475569] hover:bg-[#F8FAFC]'
+                      }`}
+                  >
+                    {isActive && (
+                      <motion.span
+                        layoutId="create-listing-step-pill"
+                        transition={{ type: 'spring', stiffness: 360, damping: 28 }}
+                        className="absolute inset-0 rounded-lg bg-[#0F766E] shadow-xs"
+                      />
+                    )}
+                    <span
+                      className={`relative z-10 size-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${isActive
+                        ? 'bg-white/20 text-white'
+                        : isCompleted
+                          ? 'bg-[#F0FDFA] text-[#0F766E]'
+                          : 'bg-[#F8FAFC] text-[#64748B]'
+                        }`}
+                    >
+                      {isCompleted && !isActive ? (
+                        <Check className="size-3.5" />
+                      ) : (
+                        <Icon className="size-3.5" />
+                      )}
+                    </span>
+                    <div className="relative z-10 min-w-0">
+                      <p
+                        className={`text-[11px] font-medium ${isActive ? 'text-white/80' : 'text-[#64748B]'
+                          }`}
+                      >
+                        Step {step.id}
+                      </p>
+                      <p className="text-xs font-semibold truncate">{step.title}</p>
+                    </div>
+                  </button>
+                );
+              })}
+            </CardContent>
+          </Card>
+
+          <p className="text-xs text-[#64748B] px-1">
+            <span className="text-[#FF6B6B] font-bold">*</span> Required fields
+          </p>
+
+          {/* Validation / Submission Alert */}
+          {submissionError && (
+            <Alert className="bg-white border-[#FF6B6B] rounded-xl">
+              <AlertCircle className="size-4 text-[#FF6B6B]" />
+              <AlertTitle className="text-[#1E293B] font-bold">
+                {submissionError.title}
+              </AlertTitle>
+              <AlertDescription className="text-sm text-[#475569] flex flex-col gap-2">
+                <span>{submissionError.message}</span>
+                {submissionError.errors?.length > 0 && (
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {submissionError.errors.map((err, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => setCurrentStep(err.step)}
+                        className="px-2.5 py-1 rounded-md bg-[#FFF5F5] border border-[#FF6B6B]/40 text-xs font-semibold text-[#FF6B6B] hover:bg-red-50 cursor-pointer"
+                      >
+                        Step {err.step}: {err.field}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* 8/4 Bento Main Workspace */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="lg:col-span-8 flex flex-col gap-6">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentStep}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ type: 'spring', stiffness: 320, damping: 28 }}
+                >
+                  {currentStep === 1 && (
+                    <ListingStepIdentityPricing
+                      formData={formData}
+                      setFormData={setFormData}
+                      setIsDirty={setIsDirty}
+                      propertyTypes={propertyTypes}
+                      onPriceChange={handlePriceChange}
+                      onPriceFocus={handlePriceFocus}
+                      onPriceBlur={handlePriceBlur}
+                      onUploadBankLogo={handleUploadBankLogo}
+                    />
+                  )}
+
+                  {currentStep === 2 && (
+                    <ListingStepLocation
+                      formData={formData}
+                      setFormData={setFormData}
+                      setIsDirty={setIsDirty}
+                      geoRegions={geoRegions}
+                      geoProvinces={geoProvinces}
+                      geoCities={geoCities}
+                      geoBarangays={geoBarangays}
+                      isGeoLoading={{
+                        provinces: isLoadingProvinces,
+                        cities: isLoadingCities,
+                        barangays: isLoadingBarangays,
+                      }}
+                      locationNotice={locationNotice}
+                      onRegionSelect={handleRegionSelect}
+                      onProvinceSelect={handleProvinceSelect}
+                      onCitySelect={handleCitySelect}
+                      onBarangaySelect={handleBarangaySelect}
+                      mapSearchQuery={mapSearchQuery}
+                      setMapSearchQuery={setMapSearchQuery}
+                      onGeocode={handleGeocode}
+                      isGeocoding={isGeocoding}
+                      addressSuggestions={addressSuggestions}
+                      onSelectAddressSuggestion={handleSelectAddressSuggestion}
+                      onSuggestNearbyPlaces={handleSuggestNearbyPlaces}
+                      renderMap={() => (
+                        <LocationPinMap
+                          position={mapPosition}
+                          zoom={formData.latitude ? 15 : 11}
+                          onChange={(pos) => {
+                            handleMapPositionChange(pos);
+                            handlePinMoved(pos);
+                          }}
+                          className="h-72 w-full"
+                        />
+                      )}
+                    />
+                  )}
+
+                  {currentStep === 3 && (
+                    <ListingStepSpecsFeatures
+                      formData={formData}
+                      setFormData={setFormData}
+                      setIsDirty={setIsDirty}
+                    />
+                  )}
+
+                  {currentStep === 4 && (
+                    <ListingStepMedia
+                      formData={formData}
+                      setFormData={setFormData}
+                      setIsDirty={setIsDirty}
+                      mediaPhotos={mediaPhotos}
+                      categoryVideos={categoryVideos}
+                      onUploadCategoryFiles={handleUploadCategoryFiles}
+                      onAddCategoryImageUrl={handleAddCategoryImageUrl}
+                      onUpdatePhotoItem={handleUpdatePhotoItem}
+                      onRemovePhotoItem={handleRemovePhotoItem}
+                      onRetryPhotoItem={handleRetryPhotoItem}
+                      onUploadCategoryVideo={handleUploadCategoryVideo}
+                      onAddCategoryVideoUrl={handleAddCategoryVideoUrl}
+                      onUploadCategoryVideoThumbnail={handleUploadCategoryVideoThumbnail}
+                      onUpdateCategoryVideo={handleUpdateCategoryVideo}
+                      onRemoveCategoryVideo={handleRemoveCategoryVideo}
+                    />
+                  )}
+
+                  {currentStep === 5 && (
+                    <ListingStepCredentialsReview
+                      formData={formData}
+                      setFormData={setFormData}
+                      setIsDirty={setIsDirty}
+                      user={user}
+                      agents={agents}
+                      mediaPhotosCount={mediaPhotos.length}
+                      onJumpToStep={setCurrentStep}
+                    />
+                  )}
+                </motion.div>
+              </AnimatePresence>
+
+              {/* Step Footer Navigation (Single Solid Primary CTA) */}
+              <Card className="sticky bottom-2 z-20 lg:static bg-white border-[#E2E8F0] rounded-xl shadow-md lg:shadow-xs">
+                <CardContent className="p-4 flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    {currentStep > 1 && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setCurrentStep((s) => Math.max(1, s - 1))}
+                        className="min-h-11 px-4 border-[#E2E8F0] text-[#1E293B] font-semibold rounded-lg cursor-pointer"
+                      >
+                        <ArrowLeft className="size-4 mr-2" />
+                        Previous
+                      </Button>
+                    )}
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3">
+                    {currentStep < STEPS.length ? (
+                      <Button
+                        type="button"
+                        onClick={() => setCurrentStep((s) => Math.min(STEPS.length, s + 1))}
+                        className="min-h-11 px-5 bg-[#0F766E] hover:bg-[#115E59] text-white font-semibold rounded-lg cursor-pointer"
+                      >
+                        Next Step
+                        <ArrowRight className="size-4 ml-2" />
+                      </Button>
+                    ) : (
+                      <Button
+                        type="button"
+                        disabled={isSubmitting}
+                        onClick={() =>
+                          executeSubmission(
+                            user?.role === 'agent' ? 'Pending Approval' : 'Active'
+                          )
+                        }
+                        className="min-h-11 px-6 bg-[#0F766E] hover:bg-[#115E59] text-white font-semibold rounded-lg cursor-pointer"
+                      >
+                        <Send className="size-4 mr-2" />
+                        {isSubmitting
+                          ? activeActionLabel
+                          : user?.role === 'agent'
+                            ? 'Submit for Review'
+                            : isEditing
+                              ? 'Save Changes'
+                              : 'Publish Listing'}
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
-            <div className="flex items-center gap-3 w-full sm:w-auto">
-              {currentStep < 7 ? (
+            {/* Sticky Live Preview Sidebar */}
+            <aside className="lg:col-span-4 lg:sticky lg:top-20 lg:self-start">
+              <ListingPreviewCard
+                formData={formData}
+                user={user}
+                coverPhotoUrl={coverPhotoUrl}
+                currentStep={currentStep}
+                totalSteps={STEPS.length}
+              />
+            </aside>
+          </div>
+        </div>
+
+        {/* Success Modal */}
+        <DashboardModal
+          isOpen={showSuccessModal}
+          onClose={() => {
+            setShowSuccessModal(false);
+            navigate('/broker/properties');
+          }}
+          title={
+            savedStatusType === 'Draft'
+              ? 'Draft Saved'
+              : savedStatusType === 'Pending Confirmation'
+                ? 'Saved — Pending Agent Confirmation'
+                : savedStatusType === 'Pending Approval'
+                  ? 'Submitted for Review'
+                  : 'Listing Published'
+          }
+        >
+          <div className="flex flex-col items-center text-center gap-4 py-2">
+            <div className="size-12 rounded-full bg-[#F0FDFA] text-[#0F766E] flex items-center justify-center">
+              <CheckCircle2 className="size-6" />
+            </div>
+            <p className="text-sm text-[#475569]">
+              {savedStatusType === 'Draft'
+                ? 'Your listing draft has been saved. You can finish and publish it anytime.'
+                : savedStatusType === 'Pending Confirmation'
+                  ? 'Saved, but not published yet. The assigned agent must confirm before this listing goes live.'
+                  : 'Your property listing is saved and ready.'}
+            </p>
+            <div className="flex flex-wrap justify-center gap-3 pt-2">
+              {createdPropertyId && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => navigate(`/properties/${createdPropertyId}`)}
+                  className="min-h-11 px-4 border-[#E2E8F0] text-[#1E293B] font-semibold rounded-lg cursor-pointer"
+                >
+                  View Listing
+                </Button>
+              )}
+              <Button
+                type="button"
+                onClick={() => navigate('/broker/properties')}
+                className="min-h-11 px-5 bg-[#0F766E] hover:bg-[#115E59] text-white font-semibold rounded-lg cursor-pointer"
+              >
+                Go to My Listings
+              </Button>
+            </div>
+          </div>
+        </DashboardModal>
+
+        {/* Mobile Preview Drawer */}
+        <Drawer open={mobilePreviewOpen} onOpenChange={setMobilePreviewOpen} direction="bottom">
+          <DrawerContent className="max-h-[85vh] bg-[#F8FAFC] border-t border-[#E2E8F0]">
+            <DrawerHeader>
+              <DrawerTitle className="text-base font-bold text-[#1E293B]">
+                Live Buyer Preview
+              </DrawerTitle>
+            </DrawerHeader>
+            <div className="px-4 pb-2 overflow-y-auto">
+              <ListingPreviewCard
+                formData={formData}
+                user={user}
+                coverPhotoUrl={coverPhotoUrl}
+                currentStep={currentStep}
+                totalSteps={STEPS.length}
+              />
+            </div>
+            <DrawerFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setMobilePreviewOpen(false)}
+                className="min-h-11 w-full border-[#E2E8F0] bg-white font-semibold rounded-lg"
+              >
+                Close Preview
+              </Button>
+            </DrawerFooter>
+          </DrawerContent>
+        </Drawer>
+
+        {/* Reset Confirmation Dialog */}
+        <Dialog open={confirmResetOpen} onOpenChange={setConfirmResetOpen}>
+          <DialogContent className="max-w-md bg-white border-[#E2E8F0] rounded-xl">
+            <DialogHeader>
+              <DialogTitle className="text-lg font-bold text-[#1E293B]">
+                Clear all entered listing details?
+              </DialogTitle>
+              <DialogDescription className="text-sm text-[#64748B]">
+                This will reset the form fields back to blank defaults.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setConfirmResetOpen(false)}
+                className="min-h-11 px-4 border-[#E2E8F0] rounded-lg"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={() => {
+                  setFormData(INITIAL_FORM_DATA);
+                  setMediaPhotos([]);
+                  setCategoryVideos({});
+                  setIsDirty(false);
+                  setCurrentStep(1);
+                  setConfirmResetOpen(false);
+                }}
+                className="min-h-11 px-4 rounded-lg"
+              >
+                Confirm Reset
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Missing Required Fields Warning Modal (Save as Draft Only) */}
+        <Dialog open={Boolean(missingFieldsModal)} onOpenChange={(open) => !open && setMissingFieldsModal(null)}>
+          <DialogContent className="max-w-lg bg-white border-[#E2E8F0] rounded-xl">
+            <DialogHeader>
+              <DialogTitle className="text-lg font-bold text-[#1E293B] flex items-center gap-2.5 pr-6">
+                <span className="size-8 rounded-lg bg-amber-50 border border-amber-200 flex items-center justify-center shrink-0">
+                  <AlertTriangle className="size-4 text-amber-600" aria-hidden="true" />
+                </span>
+                Cannot Publish Listing
+              </DialogTitle>
+              <DialogDescription className="text-sm text-[#64748B]">
+                Some required details are still missing. Complete them below to publish, or save your progress as a draft.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="border border-[#E2E8F0] rounded-xl overflow-hidden max-h-64 overflow-y-auto">
+              <table className="w-full text-left border-collapse">
+                <thead className="bg-[#F8FAFC] border-b border-[#E2E8F0]">
+                  <tr>
+                    <th className="py-2.5 px-3.5 text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">
+                      Field
+                    </th>
+                    <th className="py-2.5 px-3.5 text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">
+                      Current Value
+                    </th>
+                    <th className="py-2.5 px-3.5 text-[11px] font-semibold uppercase tracking-wider text-[#64748B] text-right">
+                      Action
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#E2E8F0] bg-white">
+                  {(missingFieldsModal?.errors || []).map((err, idx) => (
+                    <tr key={`${err.field}-${idx}`} className="hover:bg-[#F8FAFC]/70 transition-colors">
+                      <td className="py-2.5 px-3.5 align-middle">
+                        <span className="text-xs font-semibold text-[#1E293B] block">{err.field}</span>
+                      </td>
+                      <td className="py-2.5 px-3.5 align-middle">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 text-amber-800 border border-amber-200">
+                          {err.value || 'Missing'}
+                        </span>
+                      </td>
+                      <td className="py-2.5 px-3.5 align-middle text-right">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setMissingFieldsModal(null);
+                            setCurrentStep(err.step);
+                          }}
+                          className="h-7 px-2.5 text-xs font-medium border-[#E2E8F0] bg-white hover:bg-[#F0FDFA] hover:text-[#0F766E] hover:border-[#0F766E]/30 rounded-md cursor-pointer"
+                        >
+                          Step {err.step}
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {(() => {
+              const missingDraftBasics = (missingFieldsModal?.errors || []).some(
+                (e) => e.field === 'Listing Title' || e.field === 'Price'
+              );
+              return (
                 <>
-                  {returnToReview && (
+                  {missingDraftBasics && (
+                    <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                      Add Listing Title and Price first to save as a draft.
+                    </p>
+                  )}
+                  <DialogFooter className="gap-2 pt-1">
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => {
-                        setReturnToReview(false);
-                        setCurrentStep(7);
-                      }}
-                      className="w-full sm:w-auto h-auto min-h-11 md:min-h-10 [@media(pointer:coarse)]:min-h-11 whitespace-normal py-2 px-5 bg-teal-50 hover:bg-teal-100 text-[#0F766E] border-teal-300"
+                      onClick={() => setMissingFieldsModal(null)}
+                      className="min-h-11 px-4 border-[#E2E8F0] rounded-lg cursor-pointer"
                     >
-                      <span>Return to Review</span>
-                      <ArrowRight className="size-3.5" />
+                      Go Back & Fix
                     </Button>
-                  )}
-                  <Button
-                    type="button"
-                    variant="default"
-                    onClick={() => setCurrentStep(prev => Math.min(7, prev + 1))}
-                    className="w-full sm:w-auto h-auto min-h-11 md:min-h-10 [@media(pointer:coarse)]:min-h-11 whitespace-normal py-2 px-6"
-                  >
-                    <span>Next Section</span>
-                    <ArrowRight className="size-3.5" />
-                  </Button>
+                    <Button
+                      type="button"
+                      disabled={isSubmitting || missingDraftBasics}
+                      onClick={() => {
+                        setMissingFieldsModal(null);
+                        executeSubmission('Draft');
+                      }}
+                      className="min-h-11 px-4 bg-[#0F766E] hover:bg-[#115E59] text-white font-semibold rounded-lg cursor-pointer disabled:opacity-50"
+                    >
+                      <Save className="size-4 mr-2" />
+                      Save as Draft
+                    </Button>
+                  </DialogFooter>
                 </>
+<<<<<<< HEAD
               ) : (
                 <>
                   {/* Save Draft Action */}
@@ -5204,5 +4867,13 @@ export default function BrokerCreateListings({ isDrawer = false, onClose } = {})
       )}
 
     </div>
+=======
+              );
+            })()}
+          </DialogContent>
+        </Dialog>
+      </div>
+    </MotionConfig>
+>>>>>>> property-tech-v3.0
   );
 }

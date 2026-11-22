@@ -27,8 +27,8 @@ export class InquiryController {
       const user = (req as any).user;
       const inquiryPayload = {
         ...req.body,
-        clientId: user?.id || req.body.clientId || req.body.client_id,
-        client_id: user?.id || req.body.clientId || req.body.client_id,
+        clientId: user?.id || undefined,
+        client_id: user?.id || undefined,
       };
 
       const inquiry = await InquiryService.createInquiry(inquiryPayload);
@@ -142,7 +142,7 @@ export class InquiryController {
       let agentId = req.query.agentId as string | undefined;
 
       const user = (req as any).user;
-      if (user && user.role === 'agent' && !agentId) {
+      if (user && user.role === 'agent') {
         agentId = user.id;
       }
 

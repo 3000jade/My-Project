@@ -161,6 +161,12 @@ export const auditService = {
       }
       // If server returned empty array or demo environment, provide rich baseline events
       let results = [...MOCK_AUDIT_EVENTS];
+      if (params.targetType) {
+        results = results.filter(e => e.targetType === params.targetType);
+      }
+      if (params.targetId) {
+        results = results.filter(e => e.targetId === params.targetId);
+      }
       if (params.eventType && params.eventType !== 'all') {
         results = results.filter(e => e.eventType === params.eventType);
       }
@@ -174,6 +180,12 @@ export const auditService = {
     } catch {
       // Offline fallback: filter in-memory mock records
       let results = [...MOCK_AUDIT_EVENTS];
+      if (params.targetType) {
+        results = results.filter(e => e.targetType === params.targetType);
+      }
+      if (params.targetId) {
+        results = results.filter(e => e.targetId === params.targetId);
+      }
       if (params.eventType && params.eventType !== 'all') {
         results = results.filter(e => e.eventType === params.eventType);
       }

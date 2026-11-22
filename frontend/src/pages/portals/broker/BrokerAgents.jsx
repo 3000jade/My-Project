@@ -3,7 +3,7 @@ import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import {
   Users, ShieldCheck, Clock, Send, UserPlus, RotateCw, Download,
   Search, SlidersHorizontal, ChevronRight, ChevronDown, MoreVertical,
-  Check, CheckCircle2, AlertCircle, ArrowUpRight, ArrowDownRight,
+  Check, AlertCircle, ArrowUpRight, ArrowDownRight,
   ExternalLink, Mail, Phone, Eye, FileText, Copy, Calendar,
   BarChart2, X, BadgeCheck, ClipboardList, MailPlus
 } from 'lucide-react';
@@ -18,14 +18,16 @@ import {
   DialogDescription,
   DialogFooter,
   Card,
+  CardHeader,
+  CardTitle,
   CardContent,
   useToast,
   Toaster
 } from '../../../components/ui';
+import { Button } from '../../../components/ui/button';
 import { TableSkeleton } from '../../../components/dashboard/skeletons';
 import AgentScheduleCalendar from '../../../components/dashboard/AgentScheduleCalendar';
 import BrokerInviteModal from '../../../components/dashboard/BrokerInviteModal';
-import AgentTelemetryStrip from '../../../components/dashboard/AgentTelemetryStrip';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -94,7 +96,6 @@ export default function BrokerAgents() {
 
   // Invitation & Teams state
   const [activeTab, setActiveTab] = useState(initialTab); // 'roster' | 'invitations' | 'teams' | 'calendar'
-  const [showAnalytics, setShowAnalytics] = useState(true);
   const [invitationsFilter, setInvitationsFilter] = useState('ALL');
   const [invitations, setInvitations] = useState([]);
   const [teams, setTeams] = useState([]);
@@ -103,13 +104,16 @@ export default function BrokerAgents() {
   const [newTeamBranch, setNewTeamBranch] = useState('Manila Head Office');
   const [creatingTeam, setCreatingTeam] = useState(false);
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
+  const { toast } = useToast();
 
   const displayInvitations = invitations || [];
 
-  const showToast = (msg) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(''), 3500);
+  const showToast = (msg, variant = 'success') => {
+    toast({
+      title: variant === 'destructive' ? 'Action Failed' : variant === 'primary' ? 'Invitation Details' : 'Agent Directory',
+      description: msg,
+      variant,
+    });
   };
 
   // Close context menu on outside click
@@ -178,7 +182,7 @@ export default function BrokerAgents() {
       await loadAgents();
       showToast(`Created team "${newTeamName.trim()}"`);
     } catch (err) {
-      showToast(err?.message || 'Failed to create team');
+      showToast(err?.message || 'Failed to create team', 'destructive');
     } finally {
       setCreatingTeam(false);
     }
@@ -191,7 +195,7 @@ export default function BrokerAgents() {
   };
 
   const handleResend = async (agent) => {
-    showToast(`Resending onboarding invitation to ${agent.email}...`);
+    showToast(`Resending onboarding invitation to ${agent.email}...`, 'default');
     try {
       const inv = invitations.find(i => i.email === agent.email) || agent;
       if (inv && inv.id) {
@@ -199,10 +203,10 @@ export default function BrokerAgents() {
         await loadInvitations();
         showToast(`Fresh 72-hour invitation email sent to ${agent.email}`);
       } else {
-        showToast(`Could not find active invitation for ${agent.email}`);
+        showToast(`Could not find active invitation for ${agent.email}`, 'destructive');
       }
     } catch (err) {
-      showToast(err.message || `Failed to resend invite to ${agent.email}`);
+      showToast(err.message || `Failed to resend invite to ${agent.email}`, 'destructive');
     }
   };
 
@@ -391,7 +395,7 @@ export default function BrokerAgents() {
           )}
           <button
             type="button"
-            onClick={() => showToast(`Viewing invitation token metadata for ${row.email}`)}
+            onClick={() => showToast(`Viewing invitation token metadata for ${row.email}`, 'primary')}
             className="px-3 py-1 bg-white hover:bg-slate-50 text-[#1E293B] border border-[#E2E8F0] text-xs font-semibold rounded-lg transition-colors cursor-pointer shadow-2xs"
           >
             View
@@ -655,33 +659,13 @@ export default function BrokerAgents() {
   const pendingPct = totalAgents > 0 ? Math.round((pendingCount / totalAgents) * 100) : 0;
   const suspendedPct = totalAgents > 0 ? Math.round((suspendedCount / totalAgents) * 100) : 0;
 
-  const circumference = 251.327; // 2 * Math.PI * 40
-  const verifiedStroke = (verifiedPct / 100) * circumference;
-  const pendingStroke = (pendingPct / 100) * circumference;
-  const suspendedStroke = (suspendedPct / 100) * circumference;
 
   return (
-    <div className="space-y-6">
-      {/* Toast Notification */}
-      {toastMessage && (
-        <div className="fixed top-5 right-5 z-50 bg-[#1E293B] text-white text-xs font-medium px-4 py-2.5 rounded-lg shadow-lg flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-          <span>{toastMessage}</span>
-        </div>
-      )}
-
-      {/* Breadcrumbs */}
-      <div>
-        <div className="flex items-center gap-1.5 text-xs text-[#64748B] mb-2 font-medium">
-          <span>Agents</span>
-          <ChevronRight className="w-3.5 h-3.5 text-[#94A3B8]" />
-          <span className="text-[#1E293B] font-semibold">Agent Management</span>
-        </div>
-
-        {/* Page Title & Action Cluster Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="flex flex-col gap-6 w-full min-w-0 max-w-full">
+      {/* Page Title & Action Cluster Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-[#1E293B] tracking-tight">
+            <h1 className="text-3xl sm:text-[36px] font-bold font-display text-[#1E293B] tracking-tight leading-tight">
               Agents
             </h1>
             <p className="text-xs sm:text-sm text-[#64748B] mt-0.5">
@@ -689,44 +673,35 @@ export default function BrokerAgents() {
             </p>
           </div>
           <div className="flex flex-wrap lg:flex-nowrap items-center gap-2 w-full lg:w-auto">
-            <button
-              onClick={() => setInviteModalOpen(true)}
-              className="h-[38px] px-3.5 sm:px-4 bg-[#0F766E] hover:bg-[#115E59] active:bg-[#134E4A] text-white rounded-md text-xs font-semibold uppercase tracking-wider inline-flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer flex-1 sm:flex-none"
-            >
-              <UserPlus className="w-4 h-4 text-white" />
-              <span>Invite Agent</span>
-            </button>
-            <button
+            <Button
               type="button"
-              onClick={() => setShowAnalytics(prev => !prev)}
-              className={cn(
-                "h-[38px] px-3 sm:px-3.5 rounded-lg text-xs font-semibold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-2xs cursor-pointer border shrink-0",
-                showAnalytics
-                  ? "bg-teal-50 border-teal-200 text-[#0F766E]"
-                  : "bg-white border-[#E2E8F0] text-[#1E293B] hover:bg-slate-50"
-              )}
-              title="Toggle Analytics & Insights panel"
+              onClick={() => setInviteModalOpen(true)}
+              className="h-11 px-4 bg-[#0F766E] hover:bg-[#115E59] text-white gap-2 flex-1 sm:flex-none normal-case"
             >
-              <BarChart2 className="w-4 h-4 text-[#0F766E]" />
-              <span className="hidden sm:inline">{showAnalytics ? "Hide Insights" : "Insights"}</span>
-            </button>
-            <button
+              <UserPlus className="size-4 text-white" />
+              <span>Invite Agent</span>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="h-[38px] px-3 sm:px-3.5 bg-white hover:bg-slate-50 text-[#1E293B] border border-[#E2E8F0] rounded-lg text-xs font-semibold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-2xs cursor-pointer shrink-0"
+              className="h-11 px-3.5 bg-white border-[#E2E8F0] text-[#1E293B] gap-1.5 shrink-0 normal-case"
               title="Refresh roster"
             >
-              <RotateCw className={cn("w-4 h-4 text-[#64748B]", isRefreshing && "animate-spin")} />
+              <RotateCw className={cn("size-4 text-[#64748B]", isRefreshing && "animate-spin")} />
               <span className="hidden xs:inline">Refresh</span>
-            </button>
-            <button
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
               onClick={handleExportCSV}
-              className="h-[38px] px-3 sm:px-3.5 bg-white hover:bg-slate-50 text-[#1E293B] border border-[#E2E8F0] rounded-lg text-xs font-semibold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-2xs cursor-pointer shrink-0"
+              className="h-11 px-3.5 bg-white border-[#E2E8F0] text-[#1E293B] gap-1.5 shrink-0 normal-case"
               title="Export agent data to CSV"
             >
-              <Download className="w-4 h-4 text-[#64748B]" />
+              <Download className="size-4 text-[#64748B]" />
               <span className="hidden xs:inline">Export</span>
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -788,25 +763,12 @@ export default function BrokerAgents() {
             </span>
           </button>
         </div>
-      </div>
 
       {/* Main Responsive Layout (Active Roster) */}
       {activeTab === 'roster' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start min-w-0 max-w-full">
           {/* Main Content Column (High-Density Console) */}
-          <div className={cn(
-            "min-w-0 max-w-full space-y-6 transition-all duration-200",
-            showAnalytics ? "lg:col-span-8 xl:col-span-9" : "lg:col-span-12"
-          )}>
-
-            {/* 4 Metric Telemetry Strip (Consistent Modern SaaS Design, Icon on Left) */}
-            <AgentTelemetryStrip
-              totalAgents={totalAgents}
-              verifiedCount={verifiedCount}
-              pendingCount={pendingCount}
-              activeInvitationsCount={activeInvitationsCount}
-            />
-
+          <div className="min-w-0 max-w-full lg:col-span-12 space-y-6 transition-all duration-200">
             {/* Single-Row Unified Command Bar for Ultra-Clean Filtering */}
             <div className="flex flex-col 2xl:flex-row 2xl:items-center justify-between gap-3 pt-1 border-t border-[#F1F5F9]">
               {/* Left: Sleek Status Pill Tabs for Rapid Triage */}
@@ -1198,215 +1160,6 @@ export default function BrokerAgents() {
             )}
 
           </div>
-
-          {/* Right Column (Analytics & Insights Widgets) */}
-          <div className={cn(
-            "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-6 transition-all duration-200",
-            showAnalytics ? "lg:col-span-4 xl:col-span-3" : "hidden"
-          )}>
-
-            {/* Widget 1: Verification Summary */}
-            <div className="bg-white rounded-lg border border-[#E2E8F0] p-5 shadow-2xs">
-              <h3 className="text-sm font-bold text-[#1E293B]">Verification Summary</h3>
-
-              {/* SVG Donut Chart */}
-              <div className="relative w-40 h-40 mx-auto my-4 flex items-center justify-center">
-                <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-                  {/* Background Ring */}
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="40"
-                    fill="transparent"
-                    stroke="#F1F5F9"
-                    strokeWidth="10"
-                  />
-                  {/* Verified Segment (Emerald) */}
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="40"
-                    fill="transparent"
-                    stroke="#10B981"
-                    strokeWidth="10"
-                    strokeDasharray={`${verifiedStroke} ${circumference}`}
-                    strokeDashoffset="0"
-                  />
-                  {/* Pending Segment (Amber) */}
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="40"
-                    fill="transparent"
-                    stroke="#F59E0B"
-                    strokeWidth="10"
-                    strokeDasharray={`${pendingStroke} ${circumference}`}
-                    strokeDashoffset={`-${verifiedStroke}`}
-                  />
-                  {/* Suspended Segment (Slate) */}
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="40"
-                    fill="transparent"
-                    stroke="#94A3B8"
-                    strokeWidth="10"
-                    strokeDasharray={`${suspendedStroke} ${circumference}`}
-                    strokeDashoffset={`-${verifiedStroke + pendingStroke}`}
-                  />
-                </svg>
-
-                {/* Inner Center Label */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-2xl font-bold text-[#1E293B] leading-none">{totalAgents}</span>
-                  <span className="text-[11px] text-[#64748B] font-medium mt-1">Agents</span>
-                </div>
-              </div>
-
-              {/* Donut Legend */}
-              <div className="grid grid-cols-3 gap-2 pt-2 border-t border-[#F1F5F9] text-xs">
-                <div className="flex flex-col items-center text-center">
-                  <div className="flex items-center gap-1">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                    <span className="text-[#64748B] text-[11px]">Verified</span>
-                  </div>
-                  <span className="font-semibold text-[#1E293B] mt-0.5">{verifiedCount} ({verifiedPct}%)</span>
-                </div>
-                <div className="flex flex-col items-center text-center">
-                  <div className="flex items-center gap-1">
-                    <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-                    <span className="text-[#64748B] text-[11px]">Pending</span>
-                  </div>
-                  <span className="font-semibold text-[#1E293B] mt-0.5">{pendingCount} ({pendingPct}%)</span>
-                </div>
-                <div className="flex flex-col items-center text-center">
-                  <div className="flex items-center gap-1">
-                    <span className="w-2 h-2 rounded-full bg-slate-400"></span>
-                    <span className="text-[#64748B] text-[11px]">Suspended</span>
-                  </div>
-                  <span className="font-semibold text-[#1E293B] mt-0.5">{suspendedCount} ({suspendedPct}%)</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Widget 2: Recent Activities */}
-            <div className="bg-white rounded-lg border border-[#E2E8F0] p-5 shadow-2xs">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-bold text-[#1E293B]">Recent Activities</h3>
-              </div>
-
-              {recentAudits && recentAudits.length > 0 ? (
-                <div className="space-y-3 text-xs">
-                  {recentAudits.slice(0, 5).map((ev, idx) => (
-                    <div key={ev.id || idx} className="flex items-start gap-2.5">
-                      <span className="w-2 h-2 rounded-full bg-[#0F766E] mt-1.5 shrink-0"></span>
-                      <div className="min-w-0">
-                        <p className="font-semibold text-[#1E293B] truncate">{ev.action}</p>
-                        {ev.notes && <p className="text-[11px] text-[#64748B] truncate">{ev.notes}</p>}
-                        <p className="text-[10px] text-[#94A3B8]">
-                          {ev.created_at ? new Date(ev.created_at).toLocaleString() : 'Just now'}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-6 px-4 bg-slate-50/50 rounded-lg border border-dashed border-[#E2E8F0]">
-                  <Clock className="w-6 h-6 text-slate-300 mx-auto mb-2" />
-                  <p className="text-xs font-medium text-[#64748B]">No recent audit events recorded</p>
-                  <p className="text-[11px] text-slate-400 mt-0.5">Lifecycle transitions, transfers, and approvals will appear here.</p>
-                </div>
-              )}
-            </div>
-
-            {/* Widget 3: Agent Onboarding Checklist */}
-            <div className="bg-white rounded-lg border border-[#E2E8F0] p-5 shadow-2xs md:col-span-2 lg:col-span-1">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-bold text-[#1E293B]">Agent Onboarding Checklist</h3>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3.5">
-                <div>
-                  <div className="flex items-center justify-between text-xs mb-1">
-                    <span className="text-[#1E293B] font-medium">Profile Information</span>
-                    <span className="text-[#64748B] font-semibold">{totalAgents > 0 ? `${totalAgents}/${totalAgents}` : '0/0'}</span>
-                  </div>
-                  <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-[#0F766E] rounded-full" style={{ width: totalAgents > 0 ? '100%' : '0%' }}></div>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between text-xs mb-1">
-                    <span className="text-[#1E293B] font-medium">PRC License Submitted</span>
-                    <span className="text-[#64748B] font-semibold">
-                      {agents.filter(a => a.prc_license_no && a.prc_license_no.trim() !== '' && a.prc_license_no !== 'N/A').length}/{totalAgents}
-                    </span>
-                  </div>
-                  <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-[#0F766E] rounded-full"
-                      style={{
-                        width: totalAgents > 0
-                          ? `${Math.round((agents.filter(a => a.prc_license_no && a.prc_license_no.trim() !== '' && a.prc_license_no !== 'N/A').length / totalAgents) * 100)}%`
-                          : '0%'
-                      }}
-                    ></div>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between text-xs mb-1">
-                    <span className="text-[#1E293B] font-medium">DHSUD Accreditation Submitted</span>
-                    <span className="text-[#64748B] font-semibold">
-                      {agents.filter(a => a.dhsud_accreditation_no && a.dhsud_accreditation_no.trim() !== '' && a.dhsud_accreditation_no !== 'N/A').length}/{totalAgents}
-                    </span>
-                  </div>
-                  <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-[#0F766E] rounded-full"
-                      style={{
-                        width: totalAgents > 0
-                          ? `${Math.round((agents.filter(a => a.dhsud_accreditation_no && a.dhsud_accreditation_no.trim() !== '' && a.dhsud_accreditation_no !== 'N/A').length / totalAgents) * 100)}%`
-                          : '0%'
-                      }}
-                    ></div>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between text-xs mb-1">
-                    <span className="text-[#1E293B] font-medium">Account Verified</span>
-                    <span className="text-[#64748B] font-semibold">{verifiedCount}/{totalAgents}</span>
-                  </div>
-                  <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-emerald-500 rounded-full"
-                      style={{ width: totalAgents > 0 ? `${verifiedPct}%` : '0%' }}
-                    ></div>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between text-xs mb-1">
-                    <span className="text-[#1E293B] font-medium">Invited Agents</span>
-                    <span className="text-[#64748B] font-semibold">{activeInvitationsCount}/{totalAgents || 1}</span>
-                  </div>
-                  <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-sky-500 rounded-full"
-                      style={{
-                        width: totalAgents > 0
-                          ? `${Math.min(100, Math.round((activeInvitationsCount / totalAgents) * 100))}%`
-                          : '0%'
-                      }}
-                    ></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-          </div>
         </div>
       )}
 
@@ -1551,6 +1304,7 @@ export default function BrokerAgents() {
         onClose={() => setInviteModalOpen(false)}
         onSuccess={handleInviteSuccess}
       />
+      <Toaster position="top-right" />
     </div>
   );
 }

@@ -60,6 +60,7 @@ CREATE INDEX IF NOT EXISTS idx_inquiries_status ON public.inquiries(status);
 CREATE INDEX IF NOT EXISTS idx_inquiry_messages_inquiry_id ON public.inquiry_messages(inquiry_id, created_at ASC);
 CREATE INDEX IF NOT EXISTS idx_inquiry_notes_inquiry_id ON public.inquiry_internal_notes(inquiry_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_inquiry_audit_inquiry_id ON public.inquiry_assignment_audit(inquiry_id);
+CREATE INDEX IF NOT EXISTS idx_inquiry_audit_assigned_to ON public.inquiry_assignment_audit(assigned_to);
 CREATE INDEX IF NOT EXISTS idx_appointments_inquiry_id ON public.appointments(inquiry_id);
 
 -- 7. Enable RLS
@@ -68,7 +69,7 @@ ALTER TABLE public.inquiry_messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.inquiry_internal_notes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.inquiry_assignment_audit ENABLE ROW LEVEL SECURITY;
 
--- 8. Row Level Security Policies
+-- 8. Row Level Security Policies (wrapped (select auth.uid()) for single-eval initplan)
 
 -- public.inquiries policies
 DROP POLICY IF EXISTS "Anyone can submit an inquiry." ON public.inquiries;
@@ -81,10 +82,10 @@ CREATE POLICY "Users can view relevant inquiries."
   ON public.inquiries FOR SELECT
   TO authenticated
   USING (
-    client_id = auth.uid() OR
-    assigned_agent_id = auth.uid() OR
+    client_id = (select auth.uid()) OR
+    assigned_agent_id = (select auth.uid()) OR
     EXISTS (
-      SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('broker', 'admin')
+      SELECT 1 FROM public.profiles WHERE id = (select auth.uid()) AND role IN ('broker', 'admin')
     )
   );
 
@@ -93,9 +94,9 @@ CREATE POLICY "Staff can update inquiries."
   ON public.inquiries FOR UPDATE
   TO authenticated
   USING (
-    assigned_agent_id = auth.uid() OR
+    assigned_agent_id = (select auth.uid()) OR
     EXISTS (
-      SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('broker', 'admin')
+      SELECT 1 FROM public.profiles WHERE id = (select auth.uid()) AND role IN ('broker', 'admin')
     )
   );
 
@@ -108,9 +109,9 @@ CREATE POLICY "Stakeholders can view thread messages."
     EXISTS (
       SELECT 1 FROM public.inquiries i
       WHERE i.id = inquiry_id AND (
-        i.client_id = auth.uid() OR
-        i.assigned_agent_id = auth.uid() OR
-        EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('broker', 'admin'))
+        i.client_id = (select auth.uid()) OR
+        i.assigned_agent_id = (select auth.uid()) OR
+        EXISTS (SELECT 1 FROM public.profiles WHERE id = (select auth.uid()) AND role IN ('broker', 'admin'))
       )
     )
   );
@@ -123,9 +124,9 @@ CREATE POLICY "Stakeholders can post thread messages."
     EXISTS (
       SELECT 1 FROM public.inquiries i
       WHERE i.id = inquiry_id AND (
-        i.client_id = auth.uid() OR
-        i.assigned_agent_id = auth.uid() OR
-        EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('broker', 'admin'))
+        i.client_id = (select auth.uid()) OR
+        i.assigned_agent_id = (select auth.uid()) OR
+        EXISTS (SELECT 1 FROM public.profiles WHERE id = (select auth.uid()) AND role IN ('broker', 'admin'))
       )
     )
   );
@@ -137,7 +138,7 @@ CREATE POLICY "Agents and brokers can view internal notes."
   TO authenticated
   USING (
     EXISTS (
-      SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('agent', 'broker', 'admin')
+      SELECT 1 FROM public.profiles WHERE id = (select auth.uid()) AND role IN ('agent', 'broker', 'admin')
     )
   );
 
@@ -147,7 +148,7 @@ CREATE POLICY "Agents and brokers can create internal notes."
   TO authenticated
   WITH CHECK (
     EXISTS (
-      SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('agent', 'broker', 'admin')
+      SELECT 1 FROM public.profiles WHERE id = (select auth.uid()) AND role IN ('agent', 'broker', 'admin')
     )
   );
 
@@ -158,6 +159,6 @@ CREATE POLICY "Staff can view assignment audit."
   TO authenticated
   USING (
     EXISTS (
-      SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('agent', 'broker', 'admin')
+      SELECT 1 FROM public.profiles WHERE id = (select auth.uid()) AND role IN ('agent', 'broker', 'admin')
     )
   );

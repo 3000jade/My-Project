@@ -246,11 +246,18 @@ export class AdminController {
         return;
       }
 
+<<<<<<< HEAD
       // Self-Lockout Prevention Guard
       if (req.user && req.user.id === id) {
         res.status(403).json({
           success: false,
           error: 'Self-modification forbidden: Administrators cannot modify their own role to prevent accidental lockout.',
+=======
+      if (req.user?.id && id === req.user.id) {
+        res.status(400).json({
+          success: false,
+          error: 'Administrators cannot change their own role.',
+>>>>>>> property-tech-v3.0
           timestamp: new Date().toISOString(),
         });
         return;
@@ -316,6 +323,7 @@ export class AdminController {
         return;
       }
 
+<<<<<<< HEAD
       // Mandatory justification check for account suspension
       if (status === 'SUSPENDED' && (!reason || typeof reason !== 'string' || reason.trim().length < 5)) {
         res.status(400).json({
@@ -331,6 +339,12 @@ export class AdminController {
         res.status(403).json({
           success: false,
           error: 'Self-modification forbidden: Administrators cannot modify their own suspension status.',
+=======
+      if (req.user?.id && id === req.user.id && status === 'SUSPENDED') {
+        res.status(400).json({
+          success: false,
+          error: 'Administrators cannot suspend their own account.',
+>>>>>>> property-tech-v3.0
           timestamp: new Date().toISOString(),
         });
         return;

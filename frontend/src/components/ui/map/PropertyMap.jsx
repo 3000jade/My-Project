@@ -5,8 +5,6 @@ import { useNavigate } from 'react-router-dom';
 import { getPropertyCoordinates, formatPricePill } from '../../../utils/propertyCoordinates';
 import { PHILIPPINE_BASEMAPS, MOCK_PH_DISTRICTS } from '../../../mockData/mockMapDistricts';
 import MapLayerControl from './MapLayerControl';
-import MultiUnitDrawer from './MultiUnitDrawer';
-import { groupPropertiesByCoordinates } from '../../../utils/groupPropertiesByCoordinates';
 
 export default function PropertyMap({
   properties = [],
@@ -33,7 +31,6 @@ export default function PropertyMap({
   const [activeBasemap, setActiveBasemap] = useState('osm-standard');
   const [showDistricts, setShowDistricts] = useState(false);
   const [mapReady, setMapReady] = useState(false);
-  const [activeDrawerCluster, setActiveDrawerCluster] = useState(null);
 
   // Initialize Map Instance
   useEffect(() => {
@@ -215,72 +212,17 @@ export default function PropertyMap({
 
     const bounds = L.latLngBounds([]);
 
-    const clusters = groupPropertiesByCoordinates(properties);
-
-    clusters.forEach((cluster) => {
-      const lat = cluster.lat;
-      const lng = cluster.lng;
-      const isMulti = cluster.isCluster;
-      const isSelected = isMulti
-        ? cluster.properties.some((p) => p.id === selectedPropertyId)
-        : selectedPropertyId === cluster.properties[0].id;
-      const isHovered = isMulti
-        ? cluster.properties.some((p) => p.id === hoveredPropertyId)
-        : hoveredPropertyId === cluster.properties[0].id;
+    properties.forEach((property) => {
+      const coords = getPropertyCoordinates(property);
+      if (!coords || !coords.lat || !coords.lng) return;
+      const lat = coords.lat;
+      const lng = coords.lng;
+      const isSelected = selectedPropertyId === property.id;
+      const isHovered = hoveredPropertyId === property.id;
       const isHighlighted = isSelected || isHovered;
 
-      let customIcon;
-
-      if (isMulti) {
-        const markerHtml = `
-          <div class="property-map-pin is-cluster ${isHighlighted ? 'is-active' : ''}" style="cursor: pointer;" data-testid="stacked-marker-${cluster.id}">
-            <div class="pin-pill ${
-              isHighlighted
-                ? 'bg-[#FF6B6B] text-white shadow-xl scale-110 border-[#E05353]'
-                : 'bg-[#0F766E] text-white border-teal-800/80 shadow-md hover:scale-105'
-            }"
-                 style="
-                   display: inline-flex;
-                   align-items: center;
-                   gap: 6px;
-                   padding: 6px 12px;
-                   border-radius: 9999px;
-                   font-family: inherit;
-                   font-size: 11px;
-                   font-weight: 800;
-                   letter-spacing: -0.01em;
-                   border-width: 1px;
-                   white-space: nowrap;
-                   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-                   transform-origin: center bottom;
-                 ">
-              <span style="display:inline-block; padding: 1px 6px; border-radius: 4px; background-color: rgba(255,255,255,0.25); font-weight: 900;">
-                ${cluster.count} Units
-              </span>
-              <span>${cluster.priceRange || cluster.title}</span>
-            </div>
-            <div class="pin-arrow" style="
-              width: 0;
-              height: 0;
-              border-left: 5px solid transparent;
-              border-right: 5px solid transparent;
-              border-top: 5px solid ${isHighlighted ? '#FF6B6B' : '#0F766E'};
-              margin: -1px auto 0 auto;
-            "></div>
-          </div>
-        `;
-
-        customIcon = L.divIcon({
-          className: 'custom-property-div-icon',
-          html: markerHtml,
-          iconSize: [140, 36],
-          iconAnchor: [70, 36],
-          popupAnchor: [0, -38]
-        });
-      } else {
-        const property = cluster.properties[0];
-        const pricePill = formatPricePill(property.price, property.price_raw);
-        const markerHtml = `
+      const pricePill = formatPricePill(property.price, property.price_raw);
+      const markerHtml = `
           <div class="property-map-pin ${isHighlighted ? 'is-active' : ''}" style="cursor: pointer;" data-testid="map-marker-${property.id}">
             <div class="pin-pill ${
               isHighlighted
@@ -305,7 +247,7 @@ export default function PropertyMap({
               <span style="display:inline-block; width: 6px; height: 6px; border-radius: 9999px; background-color: ${
                 isHighlighted ? '#E76F51' : '#174849'
               };"></span>
-              <span>${pricePill}</span>
+              <span>${String(pricePill || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))}</span>
             </div>
             <div class="pin-arrow" style="
               width: 0;
@@ -318,25 +260,22 @@ export default function PropertyMap({
           </div>
         `;
 
-        customIcon = L.divIcon({
-          className: 'custom-property-div-icon',
-          html: markerHtml,
-          iconSize: [80, 36],
-          iconAnchor: [40, 36],
-          popupAnchor: [0, -38]
-        });
-      }
+      const customIcon = L.divIcon({
+        className: 'custom-property-div-icon',
+        html: markerHtml,
+        iconSize: [80, 36],
+        iconAnchor: [40, 36],
+        popupAnchor: [0, -38]
+      });
 
       const marker = L.marker([lat, lng], {
         icon: customIcon,
-        zIndexOffset: isHighlighted || isMulti ? 1000 : 100
+        zIndexOffset: isHighlighted ? 1000 : 100
       });
 
       marker.on('click', () => {
-        if (isMulti) {
-          setActiveDrawerCluster(cluster);
-        } else if (onSelectProperty) {
-          onSelectProperty(cluster.properties[0]);
+        if (onSelectProperty) {
+          onSelectProperty(property);
         }
       });
 

@@ -83,6 +83,7 @@ export { default as ActionConsole } from './cards/ActionConsole';
 export { default as AgentCard } from './cards/AgentCard';
 export { default as AnalyticsMetricCard } from './cards/AnalyticsMetricCard';
 export { default as GalleryCard } from './cards/GalleryCard';
+export { default as KpiCard } from './cards/KpiCard';
 export { default as NeighborhoodCard } from './cards/NeighborhoodCard';
 export { default as PropertyCard } from './cards/PropertyCard';
 
@@ -130,3 +131,7 @@ export { default as SearchBarSection } from './sections/SearchBarSection';
 export { default as SocialProofSection } from './sections/SocialProofSection';
 export { default as TestimonialCarousel } from './sections/TestimonialCarousel';
 export { default as BuyerProtectionPromiseSection } from './sections/BuyerProtectionPromiseSection';
+export { default as PropertyBrochureGallery } from './sections/PropertyBrochureGallery';
+export { default as PropertyHeroDetailsCard } from './sections/PropertyHeroDetailsCard';
+export { default as PropertyMediaShowcaseSection } from './sections/PropertyMediaShowcaseSection';
+export { default as PropertyAgentCard } from './sections/PropertyAgentCard';

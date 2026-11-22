@@ -8,6 +8,8 @@ import {
 import { invitationService } from '../../../services/invitationService';
 import { agentService } from '../../../services/agentService';
 import { Card, CardContent, useToast, Toaster } from '../../../components/ui';
+import { Button } from '../../../components/ui/button';
+import { Alert, AlertDescription } from '../../../components/ui/alert';
 import { cn } from '../../../utils/cn';
 
 const STEPS = [
@@ -138,7 +140,7 @@ export default function BrokerInviteAgent() {
   };
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto font-sans" data-testid="broker-invite-agent">
+    <div className="flex flex-col gap-6 w-full min-w-0 max-w-full font-sans" data-testid="broker-invite-agent">
       <Toaster />
       {/* Breadcrumbs */}
       <div>
@@ -256,7 +258,8 @@ export default function BrokerInviteAgent() {
           </div>
 
           {/* Left Column: Progress Stepper (4-Cols on Desktop) */}
-          <div data-testid="broker-card" className="hidden md:block md:col-span-4 bg-white dark:bg-slate-900 rounded-lg border border-[#E2E8F0] dark:border-slate-800 p-5 shadow-2xs space-y-4">
+          <Card data-testid="broker-card" className="hidden md:block md:col-span-4 bg-white dark:bg-slate-900 rounded-xl border border-[#E2E8F0] dark:border-slate-800 shadow-xs">
+            <CardContent className="p-5 flex flex-col gap-4">
             <h3 className="text-xs font-bold text-[#1E293B] uppercase tracking-wider pb-3 border-b border-[#E2E8F0]">
               Onboarding Steps
             </h3>
@@ -300,17 +303,19 @@ export default function BrokerInviteAgent() {
               })}
             </div>
 
-            <div className="pt-4 border-t border-[#E2E8F0] text-[11px] text-[#64748B] space-y-1">
+            <div className="pt-4 border-t border-[#E2E8F0] text-[11px] text-[#64748B] flex flex-col gap-1">
               <div className="flex items-center gap-1.5 text-emerald-700 font-semibold">
-                <Lock className="w-3.5 h-3.5 text-emerald-600" />
+                <Lock className="size-3.5 text-emerald-600" />
                 <span>Single-Use Onboarding Token</span>
               </div>
               <p>Link expires in 72 hours and requires government ID confirmation.</p>
             </div>
-          </div>
+            </CardContent>
+          </Card>
 
           {/* Right Column: Active Step Form (8-Cols on Desktop) */}
-          <div data-testid="broker-card" className="md:col-span-8 bg-white dark:bg-slate-900 rounded-lg border border-[#E2E8F0] dark:border-slate-800 p-6 shadow-2xs space-y-6">
+          <Card data-testid="broker-card" className="md:col-span-8 min-w-0 bg-white dark:bg-slate-900 rounded-xl border border-[#E2E8F0] dark:border-slate-800 shadow-xs">
+            <CardContent className="p-6 flex flex-col gap-6">
             
             {error && (
               <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-700 animate-in fade-in duration-150 space-y-2">
@@ -701,37 +706,40 @@ export default function BrokerInviteAgent() {
 
             {/* Stepper Navigation Footer Buttons */}
             <div className="pt-4 border-t border-[#E2E8F0] flex items-center justify-between">
-              <button
+              <Button
                 type="button"
+                variant="outline"
                 onClick={currentStep === 1 ? () => navigate('/broker/agents') : handlePrev}
-                className="px-4 py-2 bg-white hover:bg-slate-50 text-[#1E293B] border border-[#E2E8F0] rounded-lg text-xs font-semibold uppercase tracking-wider transition-colors shadow-2xs cursor-pointer"
+                className="h-11 px-4 bg-white border-[#E2E8F0] text-[#1E293B] normal-case"
               >
                 {currentStep === 1 ? 'Cancel' : 'Back'}
-              </button>
+              </Button>
 
               {currentStep < STEPS.length ? (
-                <button
+                <Button
                   type="button"
                   onClick={handleNext}
-                  className="px-5 py-2 bg-[#0F766E] hover:bg-[#115E59] text-white rounded-lg text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 transition-colors shadow-2xs cursor-pointer"
+                  className="h-11 px-5 bg-[#0F766E] hover:bg-[#115E59] text-white gap-1.5 normal-case"
                 >
                   <span>Next Step</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
+                  <ArrowRight className="size-4" />
+                </Button>
               ) : (
-                <button
+                <Button
                   type="button"
+                  variant="coral"
                   onClick={handleSubmit}
                   disabled={submitting}
-                  className="px-5 py-2 bg-[#FF6B6B] hover:bg-[#EE5A5A] text-[#1E293B] rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors shadow-2xs cursor-pointer disabled:opacity-50"
+                  className="h-11 px-5 bg-[#FF6B6B] hover:bg-[#EE5A5A] text-[#1E293B] font-bold gap-1.5 normal-case"
                 >
-                  <Send className="w-3.5 h-3.5" />
+                  <Send className="size-4" />
                   <span>{submitting ? 'Sending...' : 'Dispatch Invitation'}</span>
-                </button>
+                </Button>
               )}
             </div>
 
-          </div>
+            </CardContent>
+          </Card>
 
         </div>
       )}

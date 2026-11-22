@@ -11,10 +11,6 @@ export function usePropertyFilterEngine(initialProperties = []) {
     maxPrice: null,
     beds: '',
     baths: '',
-    furnishing: '',
-    floorLevel: '',
-    financingTerms: [],
-    communityRules: [],
     mapBounds: null, // { north, south, east, west }
   });
 
@@ -96,46 +92,7 @@ export function usePropertyFilterEngine(initialProperties = []) {
       if (pBaths < reqBaths) return false;
     }
 
-    // 8. Furnishing
-    if (activeFilters.furnishing && activeFilters.furnishing !== 'Any') {
-      const pFurn = (property.furnishing || '').toLowerCase();
-      if (!pFurn.includes(activeFilters.furnishing.toLowerCase())) return false;
-    }
-
-    // 9. Floor Level
-    if (activeFilters.floorLevel && activeFilters.floorLevel !== 'Any') {
-      const pFloor = (property.floorLevel || property.floor_level || '').toLowerCase();
-      if (!pFloor.includes(activeFilters.floorLevel.toLowerCase())) return false;
-    }
-
-    // 10. Financing Terms (Array check)
-    if (activeFilters.financingTerms && activeFilters.financingTerms.length > 0) {
-      const pTerms = Array.isArray(property.financingTerms) 
-        ? property.financingTerms.map(t => t.toLowerCase())
-        : (property.payment_methods ? property.payment_methods.map(t => t.toLowerCase()) : []);
-      const matchesAny = activeFilters.financingTerms.some(term => 
-        pTerms.some(pt => pt.includes(term.toLowerCase()))
-      );
-      if (!matchesAny) return false;
-    }
-
-    // 11. Community Rules & Lifestyle (Array check)
-    if (activeFilters.communityRules && activeFilters.communityRules.length > 0) {
-      const pRules = Array.isArray(property.communityRules) 
-        ? property.communityRules.map(r => r.toLowerCase())
-        : [];
-      const pAmenities = Array.isArray(property.amenities)
-        ? property.amenities.map(a => a.toLowerCase())
-        : [];
-      const combined = [...pRules, ...pAmenities, (property.pet_policy || '').toLowerCase(), (property.terrain || '').toLowerCase()];
-
-      const matchesAll = activeFilters.communityRules.every(rule => 
-        combined.some(c => c.includes(rule.toLowerCase()))
-      );
-      if (!matchesAll) return false;
-    }
-
-    // 12. Geographic Bounding Box (Map Viewport Sync)
+    // 8. Geographic Bounding Box (Map Viewport Sync)
     if (activeFilters.mapBounds) {
       const coords = getPropertyCoordinates(property);
       const { north, south, east, west } = activeFilters.mapBounds;
@@ -219,12 +176,10 @@ export function usePropertyFilterEngine(initialProperties = []) {
       { key: 'maxPrice', label: 'Clear price ceiling' },
       { key: 'minPrice', label: 'Clear minimum price' },
       { key: 'beds', label: 'Clear bedroom count' },
+      { key: 'baths', label: 'Clear bathroom count' },
       { key: 'district', label: 'Clear district location' },
       { key: 'keyword', label: 'Clear search keyword' },
-      { key: 'communityRules', label: 'Relax community rules' },
-      { key: 'financingTerms', label: 'Relax financing requirements' },
       { key: 'mapBounds', label: 'Expand map boundary' },
-      { key: 'furnishing', label: 'Clear turnover condition' }
     ];
 
     testableKeys.forEach(({ key, label }) => {
@@ -258,10 +213,6 @@ export function usePropertyFilterEngine(initialProperties = []) {
     if (filters.minPrice || filters.maxPrice) count++;
     if (filters.beds && filters.beds !== 'Any') count++;
     if (filters.baths && filters.baths !== 'Any') count++;
-    if (filters.furnishing && filters.furnishing !== 'Any') count++;
-    if (filters.floorLevel && filters.floorLevel !== 'Any') count++;
-    if (filters.financingTerms && filters.financingTerms.length > 0) count += filters.financingTerms.length;
-    if (filters.communityRules && filters.communityRules.length > 0) count += filters.communityRules.length;
     return count;
   }, [filters]);
 
@@ -271,7 +222,7 @@ export function usePropertyFilterEngine(initialProperties = []) {
 
   const clearFilters = useCallback(() => {
     setFilters({
-      transactionType: 'For Sale',
+      transactionType: 'All',
       keyword: '',
       district: '',
       propertyType: '',
@@ -279,10 +230,6 @@ export function usePropertyFilterEngine(initialProperties = []) {
       maxPrice: null,
       beds: '',
       baths: '',
-      furnishing: '',
-      floorLevel: '',
-      financingTerms: [],
-      communityRules: [],
       mapBounds: null,
     });
   }, []);

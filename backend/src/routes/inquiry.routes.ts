@@ -35,7 +35,7 @@ router.get('/broker-metrics', requireAuth, requireRole(['broker', 'admin']), Inq
 router.get('/stream', requireAuth, requireRole(['agent', 'broker', 'admin']), InquiryController.stream);
 
 // Authenticated list for agents & brokers
-router.get('/', requireAuth, validateQuery(queryInquirySchema), InquiryController.list);
+router.get('/', requireAuth, requireRole(['agent', 'broker', 'admin']), validateQuery(queryInquirySchema), InquiryController.list);
 
 // Reconnect & cursor synchronization
 router.get('/:id/reconnect', requireAuth, InquiryController.reconnect);
@@ -44,7 +44,7 @@ router.get('/:id/reconnect', requireAuth, InquiryController.reconnect);
 router.get('/:id/timeline', requireAuth, InquiryController.getTimeline);
 
 // Authenticated detail lookup
-router.get('/:id', optionalAuth, InquiryController.getById);
+router.get('/:id', requireAuth, InquiryController.getById);
 
 // Update inquiry status / closure / details
 router.put(

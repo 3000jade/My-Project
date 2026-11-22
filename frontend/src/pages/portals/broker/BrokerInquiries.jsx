@@ -1,76 +1,95 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { MessageSquare, Building2, Clock, Sparkles, ChevronRight, Search } from 'lucide-react';
-import PageHeader from '../../../components/dashboard/PageHeader';
-import SearchAndFilterBar from '../../../components/dashboard/SearchAndFilterBar';
+import { useNavigate } from 'react-router-dom';
+import { MessageSquare, Building2, Clock } from 'lucide-react';
 import StatusBadge from '../../../components/dashboard/StatusBadge';
+<<<<<<< HEAD
 import DataTable from '../../../components/dashboard/DataTable';
 import EmptyState from '../../../components/dashboard/EmptyState';
 import { Card, CardContent, useToast, Toaster, Spinner } from '../../../components/ui';
 import { TableSkeleton } from '../../../components/dashboard/skeletons';
 import InquirySourceBadge from '../../../components/inquiries/InquirySourceBadge';
 import SlaCountdownPill from '../../../components/inquiries/SlaCountdownPill';
+=======
+import InquiryOverviewShell from '../../../components/inquiries/InquiryOverviewShell';
+import { sortInquiriesByDate } from '../../../components/inquiries/InquiryFilterToolbar';
+import InquiryConversationPanel from '../../../components/inquiries/InquiryConversationPanel';
+import { useToast } from '../../../components/ui';
+>>>>>>> property-tech-v3.0
 import { inquiryService } from '../../../services/inquiryService';
 import { agentService } from '../../../services/agentService';
-
-const AVATAR_BG_COLORS = [
-  'bg-teal-700 text-teal-100',
-  'bg-indigo-700 text-indigo-100',
-  'bg-sky-700 text-sky-100',
-  'bg-emerald-700 text-emerald-100',
-  'bg-amber-700 text-amber-100',
-  'bg-rose-700 text-rose-100',
-  'bg-violet-700 text-violet-100',
-];
-
-function getInitials(name) {
-  if (!name) return '??';
-  const parts = name.trim().split(/\s+/);
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
-
-function getAvatarColor(name = '') {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const idx = Math.abs(hash) % AVATAR_BG_COLORS.length;
-  return AVATAR_BG_COLORS[idx];
-}
 
 export default function BrokerInquiries() {
   const navigate = useNavigate();
   const { toast } = useToast();
+
   const [inquiries, setInquiries] = useState([]);
   const [metrics, setMetrics] = useState(null);
+  const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
   const [search, setSearch] = useState('');
+<<<<<<< HEAD
   const [activeTab, setActiveTab] = useState('ALL'); // ALL, ACTIVE, INACTIVE, UNASSIGNED, UNANSWERED, OVERDUE, AI_CHATBOT
   const [selectedId, setSelectedId] = useState(null);
+=======
+  const [activeTab, setActiveTab] = useState('ALL');
+>>>>>>> property-tech-v3.0
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [agentFilter, setAgentFilter] = useState('ALL');
-  const [agents, setAgents] = useState([]);
+  const [sortBy, setSortBy] = useState('newest');
+  const [sendingReply, setSendingReply] = useState(false);
+
+  const handleSendReply = async (inquiryId, text, attachments = []) => {
+    setSendingReply(true);
+    const requestId = `req-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    const optimisticMsg = {
+      id: `msg-${Date.now()}`,
+      sender: 'broker',
+      sender_name: 'Broker Desk',
+      timestamp: 'Just now',
+      content: text,
+      attachments,
+      delivery_status: 'sent',
+    };
+
+    try {
+      await inquiryService.addMessage(inquiryId, text, requestId).catch(() => null);
+      setInquiries((prev) =>
+        prev.map((inq) =>
+          String(inq.id) === String(inquiryId)
+            ? {
+                ...inq,
+                last_message: text,
+                messages: [...(inq.messages || []), optimisticMsg],
+              }
+            : inq
+        )
+      );
+      toast({ title: 'Reply sent', description: 'Your message was added to the conversation.' });
+    } finally {
+      setSendingReply(false);
+    }
+  };
 
   const loadInquiriesAndMetrics = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const [data, agentList] = await Promise.all([
+      const [data, agentList, met] = await Promise.all([
         inquiryService.getInquiries(),
         agentService.getAgents().catch(() => []),
+        typeof inquiryService.getBrokerMetrics === 'function'
+          ? inquiryService.getBrokerMetrics().catch(() => null)
+          : Promise.resolve(null),
       ]);
       setInquiries(Array.isArray(data) ? data : []);
       setAgents(Array.isArray(agentList) ? agentList : []);
-      if (typeof inquiryService.getBrokerMetrics === 'function') {
-        const met = await inquiryService.getBrokerMetrics().catch(() => null);
-        if (met) setMetrics(met);
-      }
+      if (met) setMetrics(met);
     } catch (err) {
       const msg = err.message || 'Failed to load firm inquiries.';
       setError(msg);
-      toast({ title: 'Error', description: msg, variant: 'destructive' });
+      toast({ title: 'Inquiry Sync Error', description: msg, variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -80,9 +99,8 @@ export default function BrokerInquiries() {
     loadInquiriesAndMetrics();
   }, [loadInquiriesAndMetrics]);
 
-  // Compute live KPI stats
   const totalCount = inquiries.length;
-  const newCount = inquiries.filter(i => (i.status || '').toUpperCase() === 'NEW').length;
+  const newCount = inquiries.filter((i) => (i.status || '').toUpperCase() === 'NEW').length;
   const activeCount = inquiries.filter((i) => i.business_status !== 'inactive').length;
   const inactiveCount = inquiries.filter((i) => i.business_status === 'inactive').length;
   const unassignedCount = inquiries.filter((i) => i.operational_status === 'unassigned' || !i.agent_id).length;
@@ -119,6 +137,13 @@ export default function BrokerInquiries() {
     }
   };
 
+  const avgResponseMinutes =
+    metrics?.avgFirstHumanResponseMinutes != null
+      ? Math.round(metrics.avgFirstHumanResponseMinutes)
+      : metrics?.averageFirstResponseSeconds != null
+      ? Math.round(metrics.averageFirstResponseSeconds / 60)
+      : 0;
+
   const filtered = inquiries.filter((inq) => {
     const clientName = inq.client_name || '';
     const propertyTitle = inq.property_title || '';
@@ -133,6 +158,7 @@ export default function BrokerInquiries() {
     const matchesAgent = agentFilter === 'ALL' || inq.agent_id === agentFilter;
 
     let matchesTab = true;
+<<<<<<< HEAD
     if (activeTab === 'ACTIVE') {
       matchesTab = inq.business_status !== 'inactive';
     } else if (activeTab === 'INACTIVE') {
@@ -144,17 +170,21 @@ export default function BrokerInquiries() {
     } else if (activeTab === 'AI_CHATBOT') {
       matchesTab = inq.source === 'ai_chatbot';
     }
+=======
+    if (activeTab === 'ACTIVE') matchesTab = inq.business_status !== 'inactive';
+    else if (activeTab === 'INACTIVE') matchesTab = inq.business_status === 'inactive';
+    else if (activeTab === 'UNASSIGNED') matchesTab = inq.operational_status === 'unassigned' || !inq.agent_id;
+    else if (activeTab === 'OVERDUE') matchesTab = inq.operational_status === 'overdue';
+>>>>>>> property-tech-v3.0
 
     return matchesSearch && matchesStatus && matchesAgent && matchesTab;
   });
 
-  const agentOptions = [
-    { label: "All Agents", value: "ALL" },
-    ...agents.map(a => ({ label: a.name || a.fullName, value: a.id }))
-  ];
+  const sorted = sortInquiriesByDate(filtered, sortBy);
 
   const columns = [
     {
+<<<<<<< HEAD
       header: "Client & Inbound Date",
       render: (row) => {
         const initials = getInitials(row.client_name);
@@ -233,46 +263,33 @@ export default function BrokerInquiries() {
     },
     {
       header: "Latest Message",
+=======
+      header: 'Client & Inbound Date',
+>>>>>>> property-tech-v3.0
       render: (row) => (
-        <div className="max-w-xs sm:max-w-sm space-y-1">
-          <div className="flex items-start gap-1.5">
-            <MessageSquare className="w-3.5 h-3.5 text-[#0F766E] dark:text-teal-400 shrink-0 mt-0.5" />
-            <p className="text-xs text-slate-700 dark:text-slate-200 font-sans line-clamp-2 italic font-normal leading-relaxed">
-              {row.last_message ? (
-                `“${row.last_message}”`
-              ) : (
-                <span className="text-slate-400 dark:text-slate-500 not-italic">No message excerpt</span>
-              )}
-            </p>
-          </div>
-          {row.ai_summary && (
-            <div className="flex items-center gap-1 text-[10px] text-teal-800 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/50 px-2 py-0.5 rounded border border-teal-200/50 dark:border-teal-900 w-fit">
-              <Sparkles className="w-2.5 h-2.5 shrink-0 text-teal-600 dark:text-teal-400" />
-              <span className="truncate max-w-[240px] font-sans font-medium">{row.ai_summary}</span>
-            </div>
-          )}
+        <div className="min-w-0">
+          <p className="font-semibold text-on-surface text-sm truncate">{row.client_name}</p>
+          <p className="text-xs text-on-surface-variant truncate">{row.client_email || row.client_phone}</p>
+          <span className="text-[11px] text-on-surface-variant tabular-nums">
+            Ref: {row.reference_code || row.id}
+          </span>
         </div>
       ),
     },
     {
-      header: "Property Interested",
+      header: 'Property Interested',
       render: (row) => (
-        <div className="space-y-1">
-          <div className="flex items-center gap-1.5">
-            <Building2 className="w-3.5 h-3.5 text-[#0F766E] dark:text-teal-400 shrink-0" />
-            <p className="font-semibold text-[#0F766E] dark:text-teal-400 font-sans text-xs truncate max-w-[180px]">
-              {row.property_title || 'General Inquiry'}
-            </p>
-          </div>
-          {row.property_price && (
-            <p className="text-[11px] font-mono text-[#64748B] dark:text-slate-400 pl-5">
-              {row.property_price}
-            </p>
-          )}
+        <div className="min-w-0">
+          <p className="font-semibold text-primary text-sm truncate max-w-[200px] inline-flex items-center gap-1.5">
+            <Building2 className="size-3.5 shrink-0" />
+            <span className="truncate">{row.property_title || 'General Inquiry'}</span>
+          </p>
+          <p className="text-xs text-on-surface-variant tabular-nums">{row.property_price}</p>
         </div>
       ),
     },
     {
+<<<<<<< HEAD
       header: "Assigned Consultant",
       render: (row) => {
         const isAssigned = Boolean(row.agent_name);
@@ -339,29 +356,40 @@ export default function BrokerInquiries() {
             <span>{row.created_at || 'Recent'}</span>
           </div>
         </div>
-      ),
-    },
-    {
-      header: "Status",
-      render: (row) => <StatusBadge status={row.status} />,
-    },
-    {
-      header: "Actions",
-      className: "text-right",
+=======
+      header: 'Latest Message',
       render: (row) => (
-        <Link
-          to={`/broker/inquiries/${row.id}`}
-          aria-label={`View inquiry from ${row.client_name}`}
-          title="View Inquiry"
-          className="w-8 h-8 rounded-lg bg-[#0F766E] hover:bg-[#115E59] active:bg-[#134E4A] text-white transition-all inline-flex items-center justify-center shadow-2xs hover:shadow-xs shrink-0"
-        >
-          <Search className="w-4 h-4" />
-        </Link>
+        <p className="text-xs text-on-surface-variant line-clamp-2 max-w-xs">
+          {row.last_message ? `“${row.last_message}”` : 'No messages yet'}
+        </p>
+>>>>>>> property-tech-v3.0
       ),
+    },
+    {
+      header: 'Assigned Consultant',
+      render: (row) => (
+        <span className={`text-xs font-medium ${row.agent_name ? 'text-on-surface' : 'text-amber-700 font-semibold'}`}>
+          {row.agent_name || 'Unassigned'}
+        </span>
+      ),
+    },
+    {
+      header: 'Received',
+      render: (row) => (
+        <span className="inline-flex items-center gap-1 text-xs text-on-surface-variant tabular-nums">
+          <Clock className="size-3.5 shrink-0" />
+          <span>{row.created_at || 'Recent'}</span>
+        </span>
+      ),
+    },
+    {
+      header: 'Status',
+      render: (row) => <StatusBadge status={row.status} />,
     },
   ];
 
   return (
+<<<<<<< HEAD
     <div className="space-y-6 max-w-[1440px] mx-auto font-sans" data-testid="broker-inquiries-portal">
       <Toaster />
       <PageHeader
@@ -521,7 +549,112 @@ export default function BrokerInquiries() {
             onRowClick={(row) => navigate(`/broker/inquiries/messages/${row.id}`)}
           />
         </Card>
+=======
+    <InquiryOverviewShell
+      testId="broker-inquiries-portal"
+      title="Inquiries"
+      subtitle="Monitor incoming client requests, oversee consultant communication, and enforce response SLAs."
+      onRefresh={loadInquiriesAndMetrics}
+      loading={loading}
+      error={error ? `Failed to load firm inquiries: ${error}` : null}
+      kpiTestId="broker-sla-metrics-bar"
+      kpis={[
+        {
+          'data-testid': 'broker-card',
+          title: 'Total Inquiries',
+          value: metrics?.totalInquiries ?? totalCount,
+          icon: MessageSquare,
+        },
+        {
+          'data-testid': 'broker-card',
+          title: 'New Inbound',
+          value: newCount,
+          statusLabel:
+            (metrics?.unassignedCount ?? unassignedCount) > 0
+              ? `${metrics?.unassignedCount ?? unassignedCount} Unassigned`
+              : 'All Assigned',
+          statusVariant: (metrics?.unassignedCount ?? unassignedCount) > 0 ? 'coral' : 'success',
+        },
+        {
+          'data-testid': 'broker-card',
+          title: 'Avg First Response',
+          value: `${avgResponseMinutes}m`,
+          trend:
+            metrics?.conversionRatePercent != null
+              ? `${metrics.conversionRatePercent}% conv`
+              : `${metrics?.overdueCount ?? overdueCount} overdue`,
+          trendDirection:
+            metrics?.conversionRatePercent != null
+              ? 'up'
+              : (metrics?.overdueCount ?? overdueCount) > 0
+              ? 'down'
+              : 'up',
+        },
+      ]}
+      tabsTestId="broker-queue-tabs"
+      queueTabs={[
+        { value: 'ALL', label: `All (${totalCount})` },
+        { value: 'ACTIVE', label: `Active (${activeCount})` },
+        { value: 'UNASSIGNED', label: `Unassigned (${unassignedCount})` },
+        { value: 'OVERDUE', label: `Overdue SLA (${overdueCount})` },
+        { value: 'INACTIVE', label: `Inactive (${inactiveCount})` },
+      ]}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      searchValue={search}
+      onSearchChange={setSearch}
+      searchPlaceholder="Search client name, property, or inquiry snippet..."
+      filters={[
+        {
+          label: 'Status',
+          value: statusFilter,
+          onChange: setStatusFilter,
+          placeholder: 'All Statuses',
+          options: [
+            { label: 'All Statuses', value: 'ALL' },
+            { label: 'New', value: 'NEW' },
+            { label: 'Assigned', value: 'ASSIGNED' },
+            { label: 'Resolved', value: 'RESOLVED' },
+            { label: 'Reopened', value: 'REOPENED' },
+          ],
+        },
+        {
+          label: 'Consultant',
+          value: agentFilter,
+          onChange: setAgentFilter,
+          placeholder: 'All Agents',
+          options: [
+            { label: 'All Agents', value: 'ALL' },
+            ...agents.map((a) => ({ label: a.name || a.fullName, value: a.id })),
+          ],
+        },
+      ]}
+      sortBy={sortBy}
+      onSortChange={setSortBy}
+      onResetFilters={() => {
+        setSearch('');
+        setStatusFilter('ALL');
+        setAgentFilter('ALL');
+        setActiveTab('ALL');
+        setSortBy('newest');
+      }}
+      items={sorted}
+      columns={columns}
+      basePath="/broker/inquiries"
+      viewerRole="broker"
+      onSendReply={handleSendReply}
+      sendingReply={sendingReply}
+      onOpenItem={(row) => navigate(`/broker/inquiries/${row.id}`)}
+      renderQuickView={(inq) => (
+        <InquiryConversationPanel
+          inquiry={inq}
+          viewerRole="broker"
+          propertyLinkTo={`/broker/properties/${inq.property_id}/edit`}
+          propertyLinkLabel="Edit property"
+          readOnlyNotice="Open the full inquiry page to reassign consultant, view AI summary, or inspect audit logs."
+        />
+>>>>>>> property-tech-v3.0
       )}
-    </div>
+    />
   );
 }

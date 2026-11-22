@@ -39,6 +39,7 @@ export default function StatusBadge({ status, className = '' }) {
     // Inactive / Draft (Slate Muted tokens)
     DRAFT: 'bg-slate-50 text-slate-600 border-slate-200',
     INACTIVE: 'bg-slate-50 text-slate-600 border-slate-200',
+    UNPUBLISHED: 'bg-slate-100 text-slate-600 border-slate-200',
 
     // Alert / Cancelled / Rejected (Coral / Alert #FF6B6B tokens)
     REJECTED: 'bg-rose-50 text-rose-700 border-rose-200',

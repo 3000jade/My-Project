@@ -20,6 +20,7 @@ const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'mock-client-i
 const PropertiesPage = lazy(() => import('./pages/public/PropertiesPage'));
 const PropertyListingView = lazy(() => import('./pages/public/PropertyListingView'));
 const AboutPage = lazy(() => import('./pages/public/AboutPage'));
+const GuidesPage = lazy(() => import('./pages/public/GuidesPage'));
 const ContactPage = lazy(() => import('./pages/public/ContactPage'));
 const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
 const RegisterPage = lazy(() => import('./pages/auth/RegisterPage'));
@@ -53,7 +54,6 @@ const AgentProfile = lazy(() => import('./pages/portals/agent/AgentProfile'));
 const BrokerDashboard = lazy(() => import('./pages/portals/broker/BrokerDashboard'));
 const BrokerProperties = lazy(() => import('./pages/portals/broker/BrokerProperties'));
 const BrokerCreateListings = lazy(() => import('./pages/portals/broker/BrokerCreateListings'));
-const BrokerPropertyTypeSelect = lazy(() => import('./pages/portals/broker/BrokerPropertyTypeSelect'));
 const BrokerInquiries = lazy(() => import('./pages/portals/broker/BrokerInquiries'));
 const BrokerInquiryDetail = lazy(() => import('./pages/portals/broker/BrokerInquiryDetail'));
 const BrokerAppointments = lazy(() => import('./pages/portals/broker/BrokerAppointments'));
@@ -69,16 +69,18 @@ const BrokerProfile = lazy(() => import('./pages/portals/broker/BrokerProfile'))
 const BrokerSubdivisionInventory = lazy(() => import('./pages/portals/broker/BrokerSubdivisionInventory'));
 const SubdivisionMapEditor = lazy(() => import('./pages/portals/broker/SubdivisionMapEditor'));
 const BrokerFullViewMap = lazy(() => import('./pages/portals/broker/BrokerFullViewMap'));
-const BrokerMultiPropertyMapStudio = lazy(() => import('./pages/portals/broker/BrokerMultiPropertyMapStudio'));
 
 // Client Portal Pages
 const ClientDashboard = lazy(() => import('./pages/portals/client/ClientDashboard'));
 const ClientProfile = lazy(() => import('./pages/portals/client/ClientProfile'));
 const ClientSavedProperties = lazy(() => import('./pages/portals/client/ClientSavedProperties'));
 const ClientInquiries = lazy(() => import('./pages/portals/client/ClientInquiries'));
+const ClientInquiryDetail = lazy(() => import('./pages/portals/client/ClientInquiryDetail'));
 
 // Super Admin Portal Pages
 const AdminUsersPage = lazy(() => import('./pages/portals/super-admin/AdminUsersPage'));
+const AdminCmsPage = lazy(() => import('./pages/portals/super-admin/AdminCmsPage'));
+const AdminDataManagementPage = lazy(() => import('./pages/portals/super-admin/AdminDataManagementPage'));
 
 // Session Inactivity Watcher
 import SessionWatcher from './components/auth/SessionWatcher';
@@ -165,8 +167,8 @@ function AppRoutes({ isAppLoading }) {
             <Route index element={<Navigate to="/broker/dashboard" replace />} />
             <Route path="dashboard" element={<BrokerDashboard />} />
             <Route path="properties" element={<BrokerProperties />} />
-            <Route path="properties/select-type" element={<BrokerPropertyTypeSelect />} />
-            <Route path="properties/types" element={<BrokerPropertyTypeSelect />} />
+            <Route path="properties/select-type" element={<Navigate to="/broker/properties/create" replace />} />
+            <Route path="properties/types" element={<Navigate to="/broker/properties/create" replace />} />
             <Route path="properties/create" element={<BrokerCreateListings />} />
             <Route path="properties/new" element={<BrokerCreateListings />} />
             <Route path="properties/:id/edit" element={<BrokerCreateListings />} />
@@ -215,15 +217,6 @@ function AppRoutes({ isAppLoading }) {
               </ProtectedRoute>
             }
           />
-          {/* Fullscreen Multi-Property Cadastral Map Studio */}
-          <Route
-            path="/broker/properties/studio"
-            element={
-              <ProtectedRoute allowedRoles={['broker', 'admin']}>
-                <BrokerMultiPropertyMapStudio />
-              </ProtectedRoute>
-            }
-          />
           {/* Client Routes (Protected for Client, Broker & Admin) */}
           <Route
             path="/client"
@@ -237,6 +230,7 @@ function AppRoutes({ isAppLoading }) {
             <Route path="dashboard" element={<ClientDashboard />} />
             <Route path="saved-properties" element={<ClientSavedProperties />} />
             <Route path="inquiries" element={<ClientInquiries />} />
+            <Route path="inquiries/:id" element={<ClientInquiryDetail />} />
             <Route path="profile" element={<ClientProfile />} />
           </Route>
 
@@ -245,12 +239,14 @@ function AppRoutes({ isAppLoading }) {
             path="/admin"
             element={
               <ProtectedRoute allowedRoles={['admin']}>
-                <DashboardLayout role="broker" title="Admin Portal" />
+                <DashboardLayout role="admin" title="Admin Portal" />
               </ProtectedRoute>
             }
           >
             <Route index element={<Navigate to="/admin/users" replace />} />
             <Route path="users" element={<AdminUsersPage />} />
+            <Route path="cms" element={<AdminCmsPage />} />
+            <Route path="data-management" element={<AdminDataManagementPage />} />
           </Route>
         </Routes>
       </Suspense>
@@ -284,6 +280,8 @@ function AppRoutes({ isAppLoading }) {
             <Route path="/listing/:id" element={<PropertyListingView />} />
             <Route path="/subdivisions/:id/map" element={<PublicSubdivisionMap />} />
             <Route path="/about" element={<AboutPage />} />
+            <Route path="/guides" element={<GuidesPage />} />
+            <Route path="/guides/:slug" element={<GuidesPage />} />
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
@@ -293,7 +291,8 @@ function AppRoutes({ isAppLoading }) {
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/verify-email" element={<VerifyEmailPage />} />
             <Route path="/unauthorized" element={<UnauthorizedPage />} />
-            <Route path="/demo-api" element={<DemoApiPage />} />
+            {import.meta.env.DEV && <Route path="/demo-api" element={<DemoApiPage />} />}
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
       </main>
