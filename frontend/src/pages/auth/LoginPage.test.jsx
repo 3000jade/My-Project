@@ -172,4 +172,35 @@ describe('LoginPage (Full Functional & Security Specifications)', () => {
 
     window.history.pushState({}, '', '/');
   });
+
+  it('redirects broker to /broker/dashboard when returnUrl targets /agent/*', async () => {
+    mockLogin.mockResolvedValueOnce({
+      user: { id: 'u123', email: 'broker@realestate.ph', role: 'broker' },
+      token: 'jwt-123',
+    });
+
+    window.history.pushState({}, '', '/login?returnUrl=%2Fagent%2Finquiries');
+
+    render(
+      <GoogleOAuthProvider clientId="test-client-id">
+        <BrowserRouter>
+          <LoginPage />
+        </BrowserRouter>
+      </GoogleOAuthProvider>
+    );
+
+    fireEvent.change(screen.getByPlaceholderText(/Enter your email or username/i), {
+      target: { value: 'broker@realestate.ph' },
+    });
+    fireEvent.change(screen.getByPlaceholderText(/••••••••••••/i), {
+      target: { value: 'ValidPass123!' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /^Sign In$/i }));
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith('/broker/dashboard');
+    });
+
+    window.history.pushState({}, '', '/');
+  });
 });

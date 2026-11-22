@@ -26,8 +26,7 @@ import {
 } from '../../../components/ui';
 import { Button } from '../../../components/ui/button';
 import { TableSkeleton } from '../../../components/dashboard/skeletons';
-import AgentScheduleCalendar from '../../../components/dashboard/AgentScheduleCalendar';
-import BrokerInviteModal from '../../../components/dashboard/BrokerInviteModal';
+import AddAgentModal from '../../../components/dashboard/AddAgentModal';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -75,8 +74,6 @@ function AgentAvatar({ src, name, size = "w-8 h-8", textSize = "text-xs" }) {
 
 export default function BrokerAgents() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const initialTab = searchParams.get('tab') === 'calendar' ? 'calendar' : 'roster';
   const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -87,23 +84,18 @@ export default function BrokerAgents() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [roleFilter, setRoleFilter] = useState('ALL');
-  const [teamFilter, setTeamFilter] = useState('ALL');
   const [sortBy, setSortBy] = useState('newest');
 
   // Popover menu state for row options
   const [activeMenuRowId, setActiveMenuRowId] = useState(null);
   const menuRef = useRef(null);
 
-  // Invitation & Teams state
-  const [activeTab, setActiveTab] = useState(initialTab); // 'roster' | 'invitations' | 'teams' | 'calendar'
+  // Invitation state
+  const [activeTab, setActiveTab] = useState('roster'); // 'roster' | 'invitations'
   const [invitationsFilter, setInvitationsFilter] = useState('ALL');
   const [invitations, setInvitations] = useState([]);
-  const [teams, setTeams] = useState([]);
   const [recentAudits, setRecentAudits] = useState([]);
-  const [newTeamName, setNewTeamName] = useState('');
-  const [newTeamBranch, setNewTeamBranch] = useState('Manila Head Office');
-  const [creatingTeam, setCreatingTeam] = useState(false);
-  const [inviteModalOpen, setInviteModalOpen] = useState(false);
+  const [addAgentModalOpen, setAddAgentModalOpen] = useState(false);
   const { toast } = useToast();
 
   const displayInvitations = invitations || [];
@@ -131,13 +123,11 @@ export default function BrokerAgents() {
     setLoading(true);
     setError(null);
     try {
-      const [data, teamData, auditData] = await Promise.all([
+      const [data, auditData] = await Promise.all([
         agentService.getAgents(),
-        Promise.resolve(agentService.getTeams?.()).catch(() => []),
         Promise.resolve(agentService.getAuditEvents?.({ limit: 5 })).catch(() => []),
       ]);
       setAgents(Array.isArray(data) ? data : []);
-      setTeams(Array.isArray(teamData) ? teamData : []);
       setRecentAudits(Array.isArray(auditData) ? auditData : []);
     } catch (err) {
       console.warn('Agent loading error:', err);
@@ -169,29 +159,16 @@ export default function BrokerAgents() {
     showToast('Agent directory refreshed');
   };
 
-  const handleCreateTeam = async (e) => {
-    if (e && e.preventDefault) e.preventDefault();
-    if (!newTeamName.trim()) return;
-    setCreatingTeam(true);
-    try {
-      await agentService.createTeam({
-        name: newTeamName.trim(),
-        locationBranch: newTeamBranch.trim() || 'Manila',
-      });
-      setNewTeamName('');
-      await loadAgents();
-      showToast(`Created team "${newTeamName.trim()}"`);
-    } catch (err) {
-      showToast(err?.message || 'Failed to create team', 'destructive');
-    } finally {
-      setCreatingTeam(false);
-    }
-  };
-
   const handleInviteSuccess = async ({ email }) => {
     showToast(`Invitation successfully sent to ${email}`);
     await Promise.all([loadInvitations(), loadAgents()]);
     setActiveTab('invitations');
+  };
+
+  const handleCreateAgentSuccess = async (created) => {
+    showToast(`Agent "${created?.name || 'New Agent'}" added to roster`);
+    await loadAgents();
+    setActiveTab('roster');
   };
 
   const handleResend = async (agent) => {
@@ -292,12 +269,7 @@ export default function BrokerAgents() {
         roleFilter === 'ALL' ||
         (ag.role || '').toLowerCase() === roleFilter.toLowerCase();
 
-      const matchesTeam =
-        teamFilter === 'ALL' ||
-        ag.team_id === teamFilter ||
-        ag.team_name === teamFilter;
-
-      return matchesSearch && matchesStatus && matchesRole && matchesTeam;
+      return matchesSearch && matchesStatus && matchesRole;
     });
 
     if (sortBy === 'name') {
@@ -309,7 +281,7 @@ export default function BrokerAgents() {
     }
 
     return result;
-  }, [agents, search, statusFilter, roleFilter, teamFilter, sortBy]);
+  }, [agents, search, statusFilter, roleFilter, sortBy]);
 
   // Invitations Filter Logic (Screen 8)
   const filteredInvitations = useMemo(() => {
@@ -664,262 +636,129 @@ export default function BrokerAgents() {
     <div className="flex flex-col gap-6 w-full min-w-0 max-w-full">
       {/* Page Title & Action Cluster Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl sm:text-[36px] font-bold font-display text-[#1E293B] tracking-tight leading-tight">
-              Agents
-            </h1>
-            <p className="text-xs sm:text-sm text-[#64748B] mt-0.5">
-              Manage agent profiles, review submitted credentials, send invitations, and monitor agent activity.
-            </p>
-          </div>
-          <div className="flex flex-wrap lg:flex-nowrap items-center gap-2 w-full lg:w-auto">
-            <Button
-              type="button"
-              onClick={() => setInviteModalOpen(true)}
-              className="h-11 px-4 bg-[#0F766E] hover:bg-[#115E59] text-white gap-2 flex-1 sm:flex-none normal-case"
-            >
-              <UserPlus className="size-4 text-white" />
-              <span>Invite Agent</span>
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-              className="h-11 px-3.5 bg-white border-[#E2E8F0] text-[#1E293B] gap-1.5 shrink-0 normal-case"
-              title="Refresh roster"
-            >
-              <RotateCw className={cn("size-4 text-[#64748B]", isRefreshing && "animate-spin")} />
-              <span className="hidden xs:inline">Refresh</span>
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleExportCSV}
-              className="h-11 px-3.5 bg-white border-[#E2E8F0] text-[#1E293B] gap-1.5 shrink-0 normal-case"
-              title="Export agent data to CSV"
-            >
-              <Download className="size-4 text-[#64748B]" />
-              <span className="hidden xs:inline">Export</span>
-            </Button>
-          </div>
+        <div>
+          <h1 className="text-3xl sm:text-[36px] font-bold font-display text-[#1E293B] tracking-tight leading-tight">
+            Agents
+          </h1>
+          <p className="text-xs sm:text-sm text-[#64748B] mt-0.5">
+            Manage agents, review licenses, and send invites.
+          </p>
         </div>
+        <div className="flex flex-wrap lg:flex-nowrap items-center gap-2 w-full lg:w-auto">
+          <Button
+            type="button"
+            onClick={() => setAddAgentModalOpen(true)}
+            className="h-11 px-4 bg-[#0F766E] hover:bg-[#115E59] text-white gap-2 flex-1 sm:flex-none normal-case"
+          >
+            <UserPlus className="size-4 text-white" />
+            <span>Add Agent</span>
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="h-11 px-3.5 bg-white border-[#E2E8F0] text-[#1E293B] gap-1.5 shrink-0 normal-case"
+            title="Refresh roster"
+          >
+            <RotateCw className={cn("size-4 text-[#64748B]", isRefreshing && "animate-spin")} />
+            <span className="hidden xs:inline">Refresh</span>
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleExportCSV}
+            className="h-11 px-3.5 bg-white border-[#E2E8F0] text-[#1E293B] gap-1.5 shrink-0 normal-case"
+            title="Export agent data to CSV"
+          >
+            <Download className="size-4 text-[#64748B]" />
+            <span className="hidden xs:inline">Export</span>
+          </Button>
+        </div>
+      </div>
 
-        {/* Sub-Tabs: Agent Roster vs Invitations Ledger (Screen 8) */}
-        <div className="flex items-center gap-4 sm:gap-6 mt-4 border-b border-[#E2E8F0] text-xs font-semibold overflow-x-auto scrollbar-none whitespace-nowrap">
-          <button
-            type="button"
-            onClick={() => setActiveTab('roster')}
-            className={cn(
-              "pb-2.5 border-b-2 transition-colors cursor-pointer",
-              activeTab === 'roster'
-                ? "border-[#0F766E] text-[#0F766E]"
-                : "border-transparent text-[#64748B] hover:text-[#1E293B]"
-            )}
-          >
-            Agent Management ({totalAgents})
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('invitations')}
-            className={cn(
-              "pb-2.5 border-b-2 transition-colors cursor-pointer flex items-center gap-2",
-              activeTab === 'invitations'
-                ? "border-[#0F766E] text-[#0F766E]"
-                : "border-transparent text-[#64748B] hover:text-[#1E293B]"
-            )}
-          >
-            <span>Agent Invitations</span><span className="sr-only">Pending Invitations</span>
-            <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-slate-100 text-[#64748B] font-mono">
-              {displayInvitations.length}
-            </span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('calendar')}
-            className={cn(
-              "pb-2.5 border-b-2 transition-colors cursor-pointer flex items-center gap-2",
-              activeTab === 'calendar'
-                ? "border-[#0F766E] text-[#0F766E]"
-                : "border-transparent text-[#64748B] hover:text-[#1E293B]"
-            )}
-          >
-            <Calendar className="w-3.5 h-3.5" />
-            <span>Calendar</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('teams')}
-            className={cn(
-              "pb-2.5 border-b-2 transition-colors cursor-pointer flex items-center gap-2",
-              activeTab === 'teams'
-                ? "border-[#0F766E] text-[#0F766E]"
-                : "border-transparent text-[#64748B] hover:text-[#1E293B]"
-            )}
-          >
-            <span>Teams</span>
-            <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-slate-100 text-[#64748B] font-mono">
-              {teams.length}
-            </span>
-          </button>
-        </div>
+      {/* Sub-Tabs: Agent Roster vs Invitations Ledger (Screen 8) */}
+      <div className="flex items-center gap-4 sm:gap-6 mt-4 border-b border-[#E2E8F0] text-xs font-semibold overflow-x-auto scrollbar-none whitespace-nowrap">
+        <button
+          type="button"
+          onClick={() => setActiveTab('roster')}
+          className={cn(
+            "pb-2.5 border-b-2 transition-colors cursor-pointer",
+            activeTab === 'roster'
+              ? "border-[#0F766E] text-[#0F766E]"
+              : "border-transparent text-[#64748B] hover:text-[#1E293B]"
+          )}
+        >
+          Agents ({totalAgents})
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('invitations')}
+          className={cn(
+            "pb-2.5 border-b-2 transition-colors cursor-pointer flex items-center gap-2",
+            activeTab === 'invitations'
+              ? "border-[#0F766E] text-[#0F766E]"
+              : "border-transparent text-[#64748B] hover:text-[#1E293B]"
+          )}
+        >
+          <span>Invitations</span><span className="sr-only">Pending Invitations</span>
+          <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-slate-100 text-[#64748B] font-mono">
+            {displayInvitations.length}
+          </span>
+        </button>
+      </div>
 
       {/* Main Responsive Layout (Active Roster) */}
       {activeTab === 'roster' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start min-w-0 max-w-full">
           {/* Main Content Column (High-Density Console) */}
           <div className="min-w-0 max-w-full lg:col-span-12 space-y-6 transition-all duration-200">
-            {/* Single-Row Unified Command Bar for Ultra-Clean Filtering */}
-            <div className="flex flex-col 2xl:flex-row 2xl:items-center justify-between gap-3 pt-1 border-t border-[#F1F5F9]">
-              {/* Left: Sleek Status Pill Tabs for Rapid Triage */}
-              <div className="flex items-center gap-1.5 p-1 bg-slate-100/80 rounded-xl border border-slate-200/70 text-xs font-semibold overflow-x-auto scrollbar-none whitespace-nowrap">
-                <button
-                  type="button"
-                  onClick={() => setStatusFilter('ALL')}
-                  className={cn(
-                    "px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap",
-                    statusFilter === 'ALL'
-                      ? "bg-white text-[#0F766E] shadow-2xs font-bold"
-                      : "text-[#64748B] hover:text-[#1E293B]"
+            {/* Single-Row Inline Search + Filters Dropdown + Sort */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 pt-2 border-t border-[#F1F5F9]">
+              {/* Search Input */}
+              <div className="relative flex-1 min-w-0 h-10">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search name, email, or PRC..."
+                  className="w-full h-full pl-9 pr-14 bg-white border border-[#E2E8F0] rounded-lg text-xs text-[#1E293B] placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#0F766E] focus:border-[#0F766E] transition-all shadow-2xs"
+                />
+                <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                  {search && (
+                    <button
+                      type="button"
+                      onClick={() => setSearch('')}
+                      className="p-1 text-slate-400 hover:text-slate-600 rounded"
+                      aria-label="Clear search"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
                   )}
-                >
-                  <span>All Agents</span>
-                  <span className={cn(
-                    "px-1.5 py-0.2 rounded-full text-[10px] font-mono",
-                    statusFilter === 'ALL' ? "bg-teal-50 text-[#0F766E]" : "bg-white text-slate-600"
-                  )}>
-                    {totalAgents}
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setStatusFilter('PENDING')}
-                  className={cn(
-                    "px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap",
-                    statusFilter === 'PENDING'
-                      ? "bg-white text-amber-900 shadow-2xs font-bold"
-                      : "text-[#64748B] hover:text-[#1E293B]"
-                  )}
-                >
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                  <span>Pending Review</span>
-                  <span className={cn(
-                    "px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold",
-                    statusFilter === 'PENDING' ? "bg-amber-100 text-amber-900" : "bg-amber-100/70 text-amber-800"
-                  )}>
-                    {pendingCount}
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setStatusFilter('VERIFIED')}
-                  className={cn(
-                    "px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap",
-                    statusFilter === 'VERIFIED'
-                      ? "bg-white text-emerald-900 shadow-2xs font-bold"
-                      : "text-[#64748B] hover:text-[#1E293B]"
-                  )}
-                >
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                  <span>Verified</span>
-                  <span className={cn(
-                    "px-1.5 py-0.2 rounded-full text-[10px] font-mono",
-                    statusFilter === 'VERIFIED' ? "bg-emerald-100 text-emerald-900" : "bg-emerald-100/70 text-emerald-800"
-                  )}>
-                    {verifiedCount}
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setStatusFilter('INVITED')}
-                  className={cn(
-                    "px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap",
-                    statusFilter === 'INVITED'
-                      ? "bg-white text-sky-900 shadow-2xs font-bold"
-                      : "text-[#64748B] hover:text-[#1E293B]"
-                  )}
-                >
-                  <span className="w-1.5 h-1.5 rounded-full bg-sky-500"></span>
-                  <span>Invited</span>
-                  <span className={cn(
-                    "px-1.5 py-0.2 rounded-full text-[10px] font-mono",
-                    statusFilter === 'INVITED' ? "bg-sky-100 text-sky-900" : "bg-sky-100/70 text-sky-800"
-                  )}>
-                    {agents.filter(a => (a.verification_status || '').toUpperCase() === 'INVITED').length}
-                  </span>
-                </button>
-
-                {suspendedCount > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setStatusFilter('SUSPENDED')}
-                    className={cn(
-                      "px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap",
-                      statusFilter === 'SUSPENDED'
-                        ? "bg-white text-slate-900 shadow-2xs font-bold"
-                        : "text-[#64748B] hover:text-[#1E293B]"
-                    )}
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-                    <span>Suspended</span>
-                    <span className={cn(
-                      "px-1.5 py-0.2 rounded-full text-[10px] font-mono",
-                      statusFilter === 'SUSPENDED' ? "bg-slate-200 text-slate-800" : "bg-slate-100 text-slate-600"
-                    )}>
-                      {suspendedCount}
-                    </span>
-                  </button>
-                )}
+                  <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono text-slate-400 bg-[#F8FAFC] border border-[#E2E8F0] rounded">
+                    ⌘K
+                  </kbd>
+                </div>
               </div>
 
-              {/* Right: Search + Compact Filters Dropdown + Sort + Reset */}
-              <div className="flex items-center gap-2">
-                {/* Search Input with Clear Button and Shortcut Key */}
-                <div className="relative flex-1 sm:w-44 md:w-48 lg:w-64 sm:flex-none h-10 w-full sm:w-auto min-w-0">
-                  <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  <input
-                    type="text"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search agent name, email, or license..."
-                    className="w-full h-full pl-9 pr-14 bg-white border border-[#E2E8F0] rounded-lg text-xs text-[#1E293B] placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#0F766E] focus:border-[#0F766E] transition-all shadow-2xs"
-                  />
-                  <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                    {search && (
-                      <button
-                        type="button"
-                        onClick={() => setSearch('')}
-                        className="p-1 text-slate-400 hover:text-slate-600 rounded"
-                        aria-label="Clear search"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                    <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono text-slate-400 bg-[#F8FAFC] border border-[#E2E8F0] rounded">
-                      ⌘K
-                    </kbd>
-                  </div>
-                </div>
-
-                {/* Secondary Filters Dropdown Menu (Role & Team) */}
+              {/* Right Controls: Filters Dropdown + Sort + Reset */}
+              <div className="flex items-center gap-2 shrink-0">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button
                       type="button"
                       className={cn(
                         "h-10 px-3 bg-white hover:bg-slate-50 border rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs shrink-0",
-                        (roleFilter !== 'ALL' || teamFilter !== 'ALL')
+                        (statusFilter !== 'ALL' || roleFilter !== 'ALL')
                           ? "border-[#0F766E] text-[#0F766E] bg-teal-50/50"
                           : "border-[#E2E8F0] text-[#1E293B]"
                       )}
                       aria-label="Filters"
                     >
                       <SlidersHorizontal className="w-3.5 h-3.5 text-[#64748B]" />
-                      <span className="hidden sm:inline">Filters</span>
-                      {(roleFilter !== 'ALL' || teamFilter !== 'ALL') && (
+                      <span>Filters</span>
+                      {(statusFilter !== 'ALL' || roleFilter !== 'ALL') && (
                         <span className="w-2 h-2 rounded-full bg-[#0F766E]"></span>
                       )}
                     </button>
@@ -927,12 +766,12 @@ export default function BrokerAgents() {
                   <DropdownMenuContent align="end" className="w-64 p-3 rounded-xl border border-[#E2E8F0] bg-white shadow-lg text-xs space-y-3 z-30 font-sans">
                     <div className="flex items-center justify-between pb-2 border-b border-[#E2E8F0]">
                       <span className="font-bold text-[#1E293B]">Filter Roster</span>
-                      {(roleFilter !== 'ALL' || teamFilter !== 'ALL') && (
+                      {(statusFilter !== 'ALL' || roleFilter !== 'ALL') && (
                         <button
                           type="button"
                           onClick={() => {
+                            setStatusFilter('ALL');
                             setRoleFilter('ALL');
-                            setTeamFilter('ALL');
                           }}
                           className="text-[11px] font-semibold text-[#0F766E] hover:underline cursor-pointer"
                         >
@@ -941,10 +780,36 @@ export default function BrokerAgents() {
                       )}
                     </div>
 
+                    {/* Status Selector */}
+                    <div className="space-y-1">
+                      <label htmlFor="roster-status-filter" className="text-[11px] font-semibold text-[#64748B]">
+                        Status
+                      </label>
+                      <select
+                        id="roster-status-filter"
+                        aria-label="Status"
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                        className="w-full h-8 px-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-md text-xs font-medium text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
+                      >
+                        <option value="ALL">All Agents ({totalAgents})</option>
+                        <option value="PENDING">Pending Review ({pendingCount})</option>
+                        <option value="VERIFIED">Verified ({verifiedCount})</option>
+                        <option value="INVITED">
+                          Invited ({agents.filter(a => (a.verification_status || '').toUpperCase() === 'INVITED').length})
+                        </option>
+                        <option value="SUSPENDED">Suspended ({suspendedCount})</option>
+                      </select>
+                    </div>
+
                     {/* Role Selector */}
                     <div className="space-y-1">
-                      <label className="text-[11px] font-semibold text-[#64748B]">Agent Role</label>
+                      <label htmlFor="roster-role-filter" className="text-[11px] font-semibold text-[#64748B]">
+                        Role
+                      </label>
                       <select
+                        id="roster-role-filter"
+                        aria-label="Role"
                         value={roleFilter}
                         onChange={(e) => setRoleFilter(e.target.value)}
                         className="w-full h-8 px-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-md text-xs font-medium text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
@@ -952,21 +817,6 @@ export default function BrokerAgents() {
                         <option value="ALL">All Roles</option>
                         <option value="Senior Agent">Senior Agent</option>
                         <option value="Agent">Agent</option>
-                      </select>
-                    </div>
-
-                    {/* Team Selector */}
-                    <div className="space-y-1">
-                      <label className="text-[11px] font-semibold text-[#64748B]">Team / Department</label>
-                      <select
-                        value={teamFilter}
-                        onChange={(e) => setTeamFilter(e.target.value)}
-                        className="w-full h-8 px-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-md text-xs font-medium text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
-                      >
-                        <option value="ALL">All Teams</option>
-                        {teams.map((t) => (
-                          <option key={t.id} value={t.id}>{t.name}</option>
-                        ))}
                       </select>
                     </div>
                   </DropdownMenuContent>
@@ -989,14 +839,13 @@ export default function BrokerAgents() {
                 </div>
 
                 {/* Reset Filters Icon Button (Visible when any non-default filter is active) */}
-                {(search || statusFilter !== 'ALL' || roleFilter !== 'ALL' || teamFilter !== 'ALL' || sortBy !== 'newest') && (
+                {(search || statusFilter !== 'ALL' || roleFilter !== 'ALL' || sortBy !== 'newest') && (
                   <button
                     type="button"
                     onClick={() => {
                       setSearch('');
                       setStatusFilter('ALL');
                       setRoleFilter('ALL');
-                      setTeamFilter('ALL');
                       setSortBy('newest');
                     }}
                     className="h-10 w-10 flex items-center justify-center rounded-lg border border-teal-200 bg-teal-50 text-[#0F766E] hover:bg-teal-100 transition-colors cursor-pointer shadow-2xs shrink-0"
@@ -1171,13 +1020,14 @@ export default function BrokerAgents() {
               <h2 className="text-lg font-bold text-[#1E293B]">Agent Invitations</h2>
               <p className="text-xs text-[#64748B] mt-0.5">Manage and track sent invitations.</p>
             </div>
-            <Link
-              to="/broker/agents/invite"
-              className="h-10 px-4 bg-[#FF6B6B] hover:bg-[#EE5A5A] text-[#1E293B] rounded-lg text-xs font-semibold uppercase tracking-wider flex items-center gap-2 transition-all shadow-2xs cursor-pointer shrink-0"
+            <button
+              type="button"
+              onClick={() => setAddAgentModalOpen(true)}
+              className="h-10 px-4 bg-[#0F766E] hover:bg-[#115E59] text-white rounded-lg text-xs font-semibold uppercase tracking-wider flex items-center gap-2 transition-all shadow-2xs cursor-pointer shrink-0"
             >
               <UserPlus className="w-4 h-4" />
-              <span>+ Invite Agent</span>
-            </Link>
+              <span>Add Agent</span>
+            </button>
           </div>
 
           {/* Filter Tabs Matching Mockup Screen 8 */}
@@ -1212,97 +1062,12 @@ export default function BrokerAgents() {
         </div>
       )}
 
-      {/* Teams Management Tab */}
-      {activeTab === 'teams' && (
-        <div className="bg-white rounded-lg border border-[#E2E8F0] p-6 shadow-2xs space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h2 className="text-lg font-bold text-[#1E293B]">Brokerage Teams</h2>
-              <p className="text-xs text-[#64748B] mt-0.5">
-                Organize agents into specialized branches or sales teams for routing and performance tracking.
-              </p>
-            </div>
-            <form onSubmit={handleCreateTeam} className="flex flex-wrap items-center gap-2">
-              <input
-                type="text"
-                required
-                value={newTeamName}
-                onChange={(e) => setNewTeamName(e.target.value)}
-                placeholder="New team name (e.g. Luxury BGC)"
-                className="h-9 px-3 bg-white border border-[#E2E8F0] rounded-lg text-xs text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
-              />
-              <input
-                type="text"
-                value={newTeamBranch}
-                onChange={(e) => setNewTeamBranch(e.target.value)}
-                placeholder="Branch / Location"
-                className="h-9 px-3 bg-white border border-[#E2E8F0] rounded-lg text-xs text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
-              />
-              <button
-                type="submit"
-                disabled={creatingTeam}
-                className="h-9 px-4 bg-[#0F766E] hover:bg-[#115E59] text-white rounded-lg text-xs font-semibold uppercase tracking-wider cursor-pointer transition-colors shadow-2xs disabled:opacity-50"
-              >
-                {creatingTeam ? 'Creating...' : '+ Create Team'}
-              </button>
-            </form>
-          </div>
-
-          {teams.length === 0 ? (
-            <div className="p-8 text-center bg-[#F8FAFC] border border-dashed border-[#E2E8F0] rounded-lg">
-              <p className="text-xs font-semibold text-[#1E293B]">No teams created yet</p>
-              <p className="text-[11px] text-[#64748B] mt-1">Create your first team above to group agents by specialty or branch.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {teams.map((t) => {
-                const memberCount = agents.filter(a => a.team_id === t.id || a.team_name === t.name).length;
-                return (
-                  <div key={t.id} className="p-4 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] flex flex-col justify-between gap-3">
-                    <div>
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-sm font-bold text-[#1E293B]">{t.name}</h3>
-                        <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-teal-50 text-[#0F766E] border border-teal-200">
-                          {memberCount} {memberCount === 1 ? 'Agent' : 'Agents'}
-                        </span>
-                      </div>
-                      <p className="text-xs text-[#64748B] mt-1">{t.location_branch || 'General Branch'}</p>
-                    </div>
-                    <div className="pt-2 border-t border-[#E2E8F0] flex items-center justify-between text-xs">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setTeamFilter(t.id);
-                          setActiveTab('roster');
-                        }}
-                        className="text-[#0F766E] font-semibold hover:underline cursor-pointer"
-                      >
-                        Filter Roster →
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Calendar Unified Sub-Tab */}
-      {activeTab === 'calendar' && (
-        <AgentScheduleCalendar
-          role="broker"
-          title="Calendar"
-          subtitle="Coordinate agent viewings, client consultations, document signings, and schedule availability across the brokerage."
-          initialView="month"
-        />
-      )}
-
-      {/* Issue Agent Invitation Modal */}
-      <BrokerInviteModal
-        isOpen={inviteModalOpen}
-        onClose={() => setInviteModalOpen(false)}
-        onSuccess={handleInviteSuccess}
+      {/* Unified Add Agent Choice Modal (Create or Invite) */}
+      <AddAgentModal
+        isOpen={addAgentModalOpen}
+        onClose={() => setAddAgentModalOpen(false)}
+        onInviteSuccess={handleInviteSuccess}
+        onCreateSuccess={handleCreateAgentSuccess}
       />
       <Toaster position="top-right" />
     </div>

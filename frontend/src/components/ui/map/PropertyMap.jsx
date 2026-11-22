@@ -3,7 +3,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useNavigate } from 'react-router-dom';
 import { getPropertyCoordinates, formatPricePill } from '../../../utils/propertyCoordinates';
-import { PHILIPPINE_BASEMAPS, MOCK_PH_DISTRICTS } from '../../../mockData/mockMapDistricts';
+import { PHILIPPINE_BASEMAPS } from '../../../mockData/mockMapDistricts';
 import MapLayerControl from './MapLayerControl';
 
 export default function PropertyMap({
@@ -11,7 +11,6 @@ export default function PropertyMap({
   selectedPropertyId = null,
   hoveredPropertyId = null,
   onSelectProperty,
-  onBoundsChange,
   targetDistrict = null,
   className = '',
   showControls = true,
@@ -23,13 +22,9 @@ export default function PropertyMap({
   const mapInstanceRef = useRef(null);
   const tileLayerRef = useRef(null);
   const markersLayerRef = useRef(null);
-  const districtsLayerRef = useRef(null);
-  const moveTimeoutRef = useRef(null);
   const navigate = useNavigate();
 
-  const [searchOnMove, setSearchOnMove] = useState(false);
   const [activeBasemap, setActiveBasemap] = useState('osm-standard');
-  const [showDistricts, setShowDistricts] = useState(false);
   const [mapReady, setMapReady] = useState(false);
 
   // Initialize Map Instance
@@ -94,7 +89,6 @@ export default function PropertyMap({
       mapInstanceRef.current = null;
       tileLayerRef.current = null;
       markersLayerRef.current = null;
-      districtsLayerRef.current = null;
     };
   }, [showControls, singlePropertyMode, interactive, initialZoom, properties]);
 
@@ -121,75 +115,6 @@ export default function PropertyMap({
 
     tileLayerRef.current = nextTileLayer;
   }, [activeBasemap]);
-
-  // Handle District Polygon Boundaries Overlay
-  useEffect(() => {
-    const map = mapInstanceRef.current;
-    if (!map) return;
-
-    if (districtsLayerRef.current) {
-      if (typeof map.removeLayer === 'function') {
-        map.removeLayer(districtsLayerRef.current);
-      } else if (typeof districtsLayerRef.current.remove === 'function') {
-        districtsLayerRef.current.remove();
-      }
-      districtsLayerRef.current = null;
-    }
-
-    if (showDistricts) {
-      const districtsLayer = L.geoJSON(MOCK_PH_DISTRICTS, {
-        style: (feature) => ({
-          color: feature?.properties?.highlightColor || '#174849',
-          weight: 2,
-          dashArray: '4, 4',
-          fillColor: feature?.properties?.highlightColor || '#174849',
-          fillOpacity: 0.12,
-        }),
-        onEachFeature: (feature, layer) => {
-          if (feature?.properties?.name) {
-            layer.bindTooltip(
-              `<strong>${feature.properties.name}</strong><br/><span style="font-size:11px;color:#555;">${feature.properties.city} • ${feature.properties.propertyCount || 0} Residences</span>`,
-              { sticky: true, className: 'district-tooltip' }
-            );
-          }
-        }
-      }).addTo(map);
-
-      districtsLayerRef.current = districtsLayer;
-    }
-  }, [showDistricts]);
-
-  // Listen to map pan/zoom for "Search as I move the map"
-  useEffect(() => {
-    const map = mapInstanceRef.current;
-    if (!map) return;
-
-    const handleMoveEnd = () => {
-      if (!searchOnMove || !onBoundsChange) return;
-
-      if (moveTimeoutRef.current) {
-        clearTimeout(moveTimeoutRef.current);
-      }
-
-      moveTimeoutRef.current = setTimeout(() => {
-        const bounds = map.getBounds();
-        onBoundsChange({
-          north: bounds.getNorth(),
-          south: bounds.getSouth(),
-          east: bounds.getEast(),
-          west: bounds.getWest()
-        });
-      }, 300);
-    };
-
-    map.on('moveend', handleMoveEnd);
-    return () => {
-      if (map && typeof map.off === 'function') {
-        map.off('moveend', handleMoveEnd);
-      }
-      if (moveTimeoutRef.current) clearTimeout(moveTimeoutRef.current);
-    };
-  }, [searchOnMove, onBoundsChange]);
 
   // Handle Target District Fly-to
   useEffect(() => {
@@ -319,31 +244,11 @@ export default function PropertyMap({
       {/* Top Floating Controls Bar */}
       {showControls && !singlePropertyMode && (
         <div className="absolute top-4 left-4 right-4 z-20 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
-          {/* Left Side: "Search as I move" Checkbox + MapLayerControl */}
+          {/* Left Side: MapLayerControl */}
           <div className="flex flex-wrap items-center gap-2 pointer-events-auto">
-            <label className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-white/95 backdrop-blur-md rounded-full border border-gray-200/80 shadow-sm pointer-events-auto cursor-pointer hover:bg-white transition-all select-none">
-              <input
-                type="checkbox"
-                checked={searchOnMove}
-                onChange={(e) => {
-                  setSearchOnMove(e.target.checked);
-                  if (!e.target.checked && onBoundsChange) {
-                    onBoundsChange(null); // Clear bounding box restriction
-                  }
-                }}
-                className="w-3.5 h-3.5 rounded text-[#174849] accent-[#174849] cursor-pointer"
-              />
-              <span className="text-[11px] font-bold text-gray-700 whitespace-nowrap">
-                Search as I move map
-              </span>
-            </label>
-
-            {/* Floating Glass Basemap & District Layer Control */}
             <MapLayerControl
               activeBasemap={activeBasemap}
               onBasemapChange={setActiveBasemap}
-              showDistricts={showDistricts}
-              onToggleDistricts={() => setShowDistricts((prev) => !prev)}
             />
           </div>
 

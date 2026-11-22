@@ -13,10 +13,6 @@ vi.mock('../../components/ui/map/PropertyMap', () => ({
   default: () => <div data-testid="mock-property-map">Mock Property Map</div>,
 }));
 
-vi.mock('../../components/ui/modals/StreetViewModal', () => ({
-  default: () => <div data-testid="mock-streetview-modal">Mock Street View</div>,
-}));
-
 // Mock propertyService
 const { mockData } = vi.hoisted(() => ({
   mockData: [

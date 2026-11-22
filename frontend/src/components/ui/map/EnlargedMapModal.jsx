@@ -191,7 +191,6 @@ export default function EnlargedMapModal({
           singlePropertyMode={false}
           interactive={true}
           showControls={true}
-          searchAsMove={false}
           recenterTrigger={recenterCount}
           className="w-full h-full"
           onSelectProperty={(p) => {

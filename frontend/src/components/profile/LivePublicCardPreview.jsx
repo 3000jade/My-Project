@@ -268,11 +268,6 @@ export default function LivePublicCardPreview({
                           <CardDescription className="text-xs text-on-surface-variant flex items-center gap-1.5 flex-wrap">
                             <Building2 className="size-3.5 text-primary shrink-0" />
                             <span>{profile.brokerage_name || 'Human Shelter Realty'}</span>
-                            {profile.team_name && (
-                              <span className="text-primary font-semibold">
-                                • {profile.team_name}
-                              </span>
-                            )}
                           </CardDescription>
                           {profile.location_branch && (
                             <p className="text-xs text-on-surface-variant flex items-center gap-1.5">

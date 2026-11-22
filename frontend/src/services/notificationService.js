@@ -134,4 +134,31 @@ export const notificationService = {
   },
 };
 
+export function formatNotificationTime(dateStr) {
+  if (!dateStr) return 'Recent';
+  const parsed = new Date(dateStr);
+  if (Number.isNaN(parsed.getTime())) return String(dateStr);
+
+  const diffSec = Math.floor((Date.now() - parsed.getTime()) / 1000);
+  if (diffSec < 60) return 'Just now';
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `${diffHr}h ago`;
+  const diffDay = Math.floor(diffHr / 24);
+  if (diffDay === 1) return 'Yesterday';
+  if (diffDay < 7) return `${diffDay}d ago`;
+  return parsed.toISOString().slice(0, 10);
+}
+
+export function getNotificationTargetPath(notification = {}, role = 'broker') {
+  const r = role === 'admin' ? 'broker' : role;
+  const type = String(notification.type || '').toLowerCase();
+  if (type === 'inquiry') return `/${r}/inquiries`;
+  if (type === 'appointment') return r === 'broker' ? '/broker/appointments' : r === 'agent' ? '/agent/availability' : '/client/inquiries';
+  if (type === 'verification') return r === 'broker' ? '/broker/agents' : `/${r}/profile`;
+  if (type === 'sale') return r === 'client' ? '/client/dashboard' : `/${r}/sales`;
+  return `/${r}/dashboard`;
+}
+
 export default notificationService;

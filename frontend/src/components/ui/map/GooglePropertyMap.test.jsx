@@ -354,4 +354,32 @@ describe('GooglePropertyMap Multi-Property Pinpoint & MultiUnitDrawer', () => {
     expect(m1Pin.textContent).toContain('₱8.5M');
     expect(m2Pin.textContent).toContain('₱9.5M');
   });
+
+  it('locks zoom controls and omits 360° Street View when lockZoom is true', () => {
+    render(
+      <MemoryRouter>
+        <GooglePropertyMap
+          properties={mockProperties}
+          selectedPropertyId="101"
+          singlePropertyMode={true}
+          lockZoom={true}
+          generalAreaOnly={true}
+        />
+      </MemoryRouter>
+    );
+
+    expect(screen.queryByTestId('manual-zoom-controls')).toBeNull();
+    expect(screen.queryByText(/360° Street View/i)).toBeNull();
+  });
+
+  it('omits Districts and Search as I move map buttons from the map HUD', () => {
+    render(
+      <MemoryRouter>
+        <GooglePropertyMap properties={mockProperties} showControls={true} />
+      </MemoryRouter>
+    );
+
+    expect(screen.queryByRole('button', { name: /Districts/i })).toBeNull();
+    expect(screen.queryByRole('button', { name: /Search as I move map/i })).toBeNull();
+  });
 });

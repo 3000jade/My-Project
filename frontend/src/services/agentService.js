@@ -179,12 +179,22 @@ export function normalizeAgent(raw = {}) {
     license_status: raw.license_status || evaluateLicenseStatus(prcLicenseNo, prcValidity),
     brokerage_id: raw.brokerage_id || '00000000-0000-0000-0000-000000000001',
     brokerage_name: raw.brokerage_name || 'Human Shelter Realty',
+    branch_id: raw.branch_id || null,
     team_id: raw.team_id || null,
     team_name: raw.team_name || null,
     can_create_listings: Boolean(raw.can_create_listings),
+    permission_grants: raw.permission_grants || {
+      create_listings: Boolean(raw.can_create_listings),
+      edit_listings: true,
+      manage_inquiries: true,
+      manage_appointments: true,
+      view_reports: false,
+    },
     access_tier: raw.access_tier || 'standard_agent',
     commission_tier: raw.commission_tier || '',
     location_branch: raw.location_branch || raw.location || '',
+    date_of_birth: raw.date_of_birth || '',
+    gender: raw.gender || '',
     emergency_contact_name: raw.emergency_contact_name || '',
     emergency_contact_phone: raw.emergency_contact_phone || '',
     internal_notes: raw.internal_notes || '',
@@ -267,6 +277,15 @@ export const agentService = {
   },
 
   /**
+   * Directly create a new agent profile (Broker / Admin)
+   */
+  async createAgent(payload) {
+    const response = await apiClient.post('/agents', payload);
+    const raw = response?.data || response;
+    return normalizeAgent(raw);
+  },
+
+  /**
    * Update consultant profile details (Edit Profile)
    */
   async updateAgentProfile(id, profileData) {
@@ -292,8 +311,13 @@ export const agentService = {
   },
 
   /**
-   * Brokerage Teams CRUD
+   * Brokerage Branches & Teams
    */
+  async getBranches(params = {}) {
+    const response = await apiClient.get('/agents/branches', { params });
+    return response?.data || response || [];
+  },
+
   async getTeams(params = {}) {
     const response = await apiClient.get('/agents/teams', { params });
     return response?.data || response || [];

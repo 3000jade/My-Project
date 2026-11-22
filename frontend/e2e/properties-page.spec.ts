@@ -93,15 +93,11 @@ test.describe('Properties Page - Comprehensive Feature Suite', () => {
     // HUD Pill buttons
     const streetBtn = page.getByRole('button', { name: /^Street$/i });
     const satelliteBtn = page.getByRole('button', { name: /^Satellite$/i });
-    const districtsBtn = page.getByRole('button', { name: /Districts/i });
     const fitAllBtn = page.getByRole('button', { name: /Fit All/i });
-    const moveSearchBtn = page.getByRole('button', { name: /Search on Move|Move/i });
 
     await expect(streetBtn).toBeVisible();
     await expect(satelliteBtn).toBeVisible();
-    await expect(districtsBtn).toBeVisible();
     await expect(fitAllBtn).toBeVisible();
-    await expect(moveSearchBtn).toBeVisible();
 
     // Switch to Satellite layer
     await satelliteBtn.click();
@@ -111,15 +107,8 @@ test.describe('Properties Page - Comprehensive Feature Suite', () => {
     await streetBtn.click();
     await expect(streetBtn).toHaveClass(/bg-\[#0F766E\]/);
 
-    // Toggle Districts
-    await districtsBtn.click();
-    await expect(districtsBtn).toHaveClass(/bg-\[#FF6B6B\]/);
-
     // Click Fit All
     await fitAllBtn.click();
-
-    // Toggle Search on Move
-    await moveSearchBtn.click();
   });
 
   test('Responsive Tablet: switches between List and Map without blank grey canvas void', async ({ page }) => {

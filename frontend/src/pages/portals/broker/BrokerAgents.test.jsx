@@ -88,8 +88,8 @@ describe('BrokerAgents Component', () => {
     renderComponent();
 
     expect(screen.getByRole('heading', { name: /Agents/i, level: 1 })).toBeInTheDocument();
-    expect(screen.getByText(/Manage agent profiles, review submitted credentials/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Invite Agent/i })).toBeInTheDocument();
+    expect(screen.getByText(/Manage agents, review licenses, and send invites/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Add Agent/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Refresh/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Export/i })).toBeInTheDocument();
   });
@@ -134,13 +134,17 @@ describe('BrokerAgents Component', () => {
     expect(screen.getAllByRole('button', { name: /^View$/i }).length).toBeGreaterThanOrEqual(1);
   });
 
-  it('opens and closes the Invite Agent modal', async () => {
+  it('opens Add Agent modal with Create and Invite options', async () => {
     renderComponent();
 
-    const inviteBtn = screen.getByRole('button', { name: /Invite Agent/i });
-    fireEvent.click(inviteBtn);
+    const addBtn = screen.getByRole('button', { name: /Add Agent/i });
+    fireEvent.click(addBtn);
 
-    expect(screen.getByText(/Issue Agent Invitation/i)).toBeInTheDocument();
+    expect(screen.getByText(/Choose how you want to add this agent/i)).toBeInTheDocument();
+    expect(screen.getByText(/Quick Add/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Invite Agent/i }));
+    expect(screen.getByText(/Send a 3-day sign-up link/i)).toBeInTheDocument();
     expect(screen.getByPlaceholderText('agent@example.com')).toBeInTheDocument();
 
     const cancelBtn = screen.getByRole('button', { name: /Cancel/i });
@@ -151,7 +155,7 @@ describe('BrokerAgents Component', () => {
     });
   });
 
-  it('filters roster when clicking status pill tabs', async () => {
+  it('filters roster using the Verification Status selector in Filters', async () => {
     renderComponent();
 
     await waitFor(() => {
@@ -159,19 +163,17 @@ describe('BrokerAgents Component', () => {
       expect(screen.getByText('Marcus Aurelius Tan')).toBeInTheDocument();
     });
 
-    // Click Pending Review pill tab
-    const pendingPill = screen.getByRole('button', { name: /Pending Review/i });
-    fireEvent.click(pendingPill);
+    const filtersBtn = screen.getByRole('button', { name: /Filters/i });
+    fireEvent.pointerDown(filtersBtn);
+    fireEvent.click(filtersBtn);
 
-    // Marcus Aurelius Tan is PENDING -> should be in document
+    const statusSelect = await screen.findByLabelText(/^Status$/i);
+    fireEvent.change(statusSelect, { target: { value: 'PENDING' } });
+
     expect(screen.getByText('Marcus Aurelius Tan')).toBeInTheDocument();
-    // Elena Rossi is VERIFIED -> should NOT be in document
     expect(screen.queryByText('Elena Rossi')).not.toBeInTheDocument();
 
-    // Click All Agents pill tab to reset
-    const allAgentsPill = screen.getByRole('button', { name: /All Agents/i });
-    fireEvent.click(allAgentsPill);
-
+    fireEvent.change(statusSelect, { target: { value: 'ALL' } });
     expect(screen.getByText('Elena Rossi')).toBeInTheDocument();
   });
 

@@ -11,7 +11,6 @@ import {
   formatPriceBadge,
 } from './googleMapMarkers';
 import { getPropertyCoordinates, DEFAULT_METRO_MANILA_COORDS } from '../../../utils/propertyCoordinates';
-import { MOCK_PH_DISTRICTS } from '../../../mockData/mockMapDistricts';
 
 /**
  * Modern SaaS cartographic styling JSON for Google Maps Vector Canvas.
@@ -80,23 +79,38 @@ export const LUXURY_MAP_STYLES = [
   },
 ];
 
+const GENERAL_AREA_ZOOM = 14;
+const GENERAL_AREA_RADIUS_M = 300;
+
+function getGeneralAreaCoords(coords, id) {
+  if (!coords) return coords;
+  // Deterministic ~120m offset so the circle center is not the exact property
+  const seedStr = String(id ?? '0');
+  let hash = 0;
+  for (let i = 0; i < seedStr.length; i += 1) {
+    hash = (hash * 31 + seedStr.charCodeAt(i)) >>> 0;
+  }
+  const angle = (hash % 360) * (Math.PI / 180);
+  return {
+    lat: coords.lat + 0.00108 * Math.sin(angle),
+    lng: coords.lng + 0.00108 * Math.cos(angle),
+  };
+}
+
 export default function GooglePropertyMap({
   properties = [],
   selectedPropertyId = null,
   hoveredPropertyId = null,
   onSelectProperty,
   onHoverProperty,
-  onBoundsChange,
   targetDistrict = null,
   className = '',
   showControls = true,
-  searchAsMove = false,
-  showSearchAsMove = true,
-  onToggleSearchAsMove,
   singlePropertyMode = false,
   interactive = true,
   initialZoom = 15,
-  onOpenStreetView,
+  lockZoom = false,
+  generalAreaOnly = false,
   forceEmbed = false,
   recenterTrigger = 0,
   markerVariant = 'pin', // 'pin' (default teardrop) | 'dot' | 'pill'
@@ -105,16 +119,10 @@ export default function GooglePropertyMap({
   const googleMapInstanceRef = useRef(null);
   const leafletMapInstanceRef = useRef(null);
   const leafletTileLayerRef = useRef(null);
-  const leafletDistrictsLayerRef = useRef(null);
-  const googleDistrictFeaturesRef = useRef([]);
   const markersRef = useRef(new Map()); // Map of property.id -> { marker, element, isSelected, isHovered }
-  const debounceTimerRef = useRef(null);
-  const isSearchActiveRef = useRef(searchAsMove);
-  const onBoundsChangeRef = useRef(onBoundsChange);
   const onSelectPropertyRef = useRef(onSelectProperty);
   const onHoverPropertyRef = useRef(onHoverProperty);
   const prevRecenterTriggerRef = useRef(recenterTrigger);
-  const isUserBoundsFilteringRef = useRef(false);
 
   const hasRouter = useInRouterContext();
   const routerNavigate = hasRouter ? useNavigate() : null;
@@ -130,16 +138,17 @@ export default function GooglePropertyMap({
   );
 
   const [activeLayer, setActiveLayer] = useState('vector'); // 'vector' (Roadmap) | 'satellite' (Hybrid) | 'terrain'
-  const [showDistricts, setShowDistricts] = useState(false);
-  const [isSearchActive, setIsSearchActive] = useState(searchAsMove);
   const [mapEngine, setMapEngine] = useState('initializing'); // 'google' | 'leaflet' | 'embed'
-  const [embedZoom, setEmbedZoom] = useState(initialZoom || 15);
-  const [currentZoom, setCurrentZoom] = useState(singlePropertyMode ? 16 : (initialZoom || 13));
+  const effectiveZoom = lockZoom
+    ? GENERAL_AREA_ZOOM
+    : singlePropertyMode
+      ? initialZoom || 16
+      : initialZoom;
+  const [embedZoom, setEmbedZoom] = useState(effectiveZoom || 15);
+  const [currentZoom, setCurrentZoom] = useState(effectiveZoom || 13);
   const [embedLayer, setEmbedLayer] = useState('m'); // 'm' | 'k' | 'h' | 'p'
   const [dismissedPreviewId, setDismissedPreviewId] = useState(null);
 
-  isSearchActiveRef.current = isSearchActive;
-  onBoundsChangeRef.current = onBoundsChange;
   onSelectPropertyRef.current = onSelectProperty;
   onHoverPropertyRef.current = onHoverProperty;
 
@@ -170,55 +179,34 @@ export default function GooglePropertyMap({
   const activeCoords = useMemo(() => {
     if (activeProperty) {
       const c = getPropertyCoordinates(activeProperty);
-      if (c && c.lat && c.lng) return c;
+      if (c && c.lat && c.lng) {
+        return generalAreaOnly && singlePropertyMode ? getGeneralAreaCoords(c, activeProperty.id) : c;
+      }
     }
     return { ...DEFAULT_METRO_MANILA_COORDS };
-  }, [activeProperty]);
-
-  const emitCurrentBounds = useCallback(() => {
-    if (typeof onBoundsChangeRef.current !== 'function') return;
-    if (mapEngine === 'google' && googleMapInstanceRef.current) {
-      const bounds = googleMapInstanceRef.current.getBounds();
-      if (bounds) {
-        const ne = bounds.getNorthEast();
-        const sw = bounds.getSouthWest();
-        onBoundsChangeRef.current({
-          north: ne.lat(),
-          east: ne.lng(),
-          south: sw.lat(),
-          west: sw.lng(),
-        });
-      }
-    } else if (mapEngine === 'leaflet' && leafletMapInstanceRef.current) {
-      const bounds = leafletMapInstanceRef.current.getBounds();
-      if (bounds && typeof bounds.getNorth === 'function') {
-        onBoundsChangeRef.current({
-          north: bounds.getNorth(),
-          east: bounds.getEast(),
-          south: bounds.getSouth(),
-          west: bounds.getWest(),
-        });
-      }
-    }
-  }, [mapEngine]);
+  }, [activeProperty, generalAreaOnly, singlePropertyMode]);
 
   // Construct official Google Maps Embed URL (used only if forceEmbed is requested)
   const googleMapsEmbedUrl = useMemo(() => {
     const lat = activeCoords.lat.toFixed(6);
     const lng = activeCoords.lng.toFixed(6);
-    return `https://maps.google.com/maps?q=${lat},${lng}&t=${embedLayer}&z=${embedZoom}&output=embed`;
-  }, [activeCoords, embedLayer, embedZoom]);
+    const z = lockZoom ? GENERAL_AREA_ZOOM : embedZoom;
+    return `https://maps.google.com/maps?q=${lat},${lng}&t=${embedLayer}&z=${z}&output=embed`;
+  }, [activeCoords, embedLayer, embedZoom, lockZoom]);
 
   // Calculate default center across all valid properties
   const defaultCenter = useMemo(() => {
     if (properties.length > 0) {
       for (const prop of properties) {
         const c = getPropertyCoordinates(prop);
-        if (c && c.lat && c.lng) return [c.lat, c.lng];
+        if (c && c.lat && c.lng) {
+          const resolved = generalAreaOnly && singlePropertyMode ? getGeneralAreaCoords(c, prop.id) : c;
+          return [resolved.lat, resolved.lng];
+        }
       }
     }
     return [DEFAULT_METRO_MANILA_COORDS.lat, DEFAULT_METRO_MANILA_COORDS.lng];
-  }, [properties]);
+  }, [properties, generalAreaOnly, singlePropertyMode]);
 
   // ==========================================
   // 1. ENGINE INITIALIZATION (Google vs Leaflet Tiles)
@@ -240,34 +228,15 @@ export default function GooglePropertyMap({
           if (google && containerRef.current) {
             const map = new google.maps.Map(containerRef.current, {
               center: { lat: defaultCenter[0], lng: defaultCenter[1] },
-              zoom: singlePropertyMode ? 16 : initialZoom,
-              minZoom: 1,
-              maxZoom: 21,
+              zoom: effectiveZoom,
+              minZoom: lockZoom ? GENERAL_AREA_ZOOM : 1,
+              maxZoom: lockZoom ? GENERAL_AREA_ZOOM : 21,
               disableDefaultUI: true,
+              scrollwheel: interactive && !lockZoom,
+              disableDoubleClickZoom: !interactive || lockZoom,
               gestureHandling: interactive ? 'greedy' : 'none',
               styles: LUXURY_MAP_STYLES,
               mapTypeId: google.maps.MapTypeId.ROADMAP,
-            });
-
-            // Idle bounds listener
-            map.addListener('idle', () => {
-              if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
-              debounceTimerRef.current = setTimeout(() => {
-                if (typeof onBoundsChangeRef.current === 'function' && isSearchActiveRef.current) {
-                  const bounds = map.getBounds();
-                  if (bounds) {
-                    isUserBoundsFilteringRef.current = true;
-                    const ne = bounds.getNorthEast();
-                    const sw = bounds.getSouthWest();
-                    onBoundsChangeRef.current({
-                      north: ne.lat(),
-                      east: ne.lng(),
-                      south: sw.lat(),
-                      west: sw.lng(),
-                    });
-                  }
-                }
-              }, 350);
             });
 
             map.addListener('zoom_changed', () => {
@@ -295,14 +264,14 @@ export default function GooglePropertyMap({
 
         const map = L.map(containerRef.current, {
           center: defaultCenter,
-          zoom: singlePropertyMode ? 16 : initialZoom,
-          minZoom: 1,
-          maxZoom: 21,
+          zoom: effectiveZoom,
+          minZoom: lockZoom ? GENERAL_AREA_ZOOM : 1,
+          maxZoom: lockZoom ? GENERAL_AREA_ZOOM : 21,
           zoomControl: false,
-          scrollWheelZoom: interactive,
+          scrollWheelZoom: interactive && !lockZoom,
           dragging: interactive,
-          touchZoom: interactive,
-          doubleClickZoom: interactive,
+          touchZoom: interactive && !lockZoom,
+          doubleClickZoom: interactive && !lockZoom,
           attributionControl: false,
         });
 
@@ -322,25 +291,6 @@ export default function GooglePropertyMap({
           }
         });
 
-        // Moveend listener for bounding box changes
-        map.on('moveend', () => {
-          if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
-          debounceTimerRef.current = setTimeout(() => {
-            if (typeof onBoundsChangeRef.current === 'function' && isSearchActiveRef.current) {
-              const bounds = map.getBounds();
-              if (bounds && typeof bounds.getNorth === 'function') {
-                isUserBoundsFilteringRef.current = true;
-                onBoundsChangeRef.current({
-                  north: bounds.getNorth(),
-                  east: bounds.getEast(),
-                  south: bounds.getSouth(),
-                  west: bounds.getWest(),
-                });
-              }
-            }
-          }, 350);
-        });
-
         leafletMapInstanceRef.current = map;
         setMapEngine('leaflet');
       } catch (e) {
@@ -352,7 +302,6 @@ export default function GooglePropertyMap({
 
     return () => {
       isCancelled = true;
-      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
       if (leafletMapInstanceRef.current) {
         try {
           if (typeof leafletMapInstanceRef.current.stop === 'function') {
@@ -366,7 +315,7 @@ export default function GooglePropertyMap({
       }
       googleMapInstanceRef.current = null;
     };
-  }, [forceEmbed, singlePropertyMode, interactive, initialZoom]);
+  }, [forceEmbed, singlePropertyMode, interactive, initialZoom, lockZoom]);
 
   // ==========================================
   // 2. LAYER SWITCHING (Vector vs Satellite)
@@ -390,78 +339,6 @@ export default function GooglePropertyMap({
       leafletTileLayerRef.current.setUrl(`https://mt1.google.com/vt/lyrs=${layerCode}&x={x}&y={y}&z={z}`);
     }
   }, [activeLayer, mapEngine]);
-
-  // ==========================================
-  // 2B. DISTRICT BOUNDARIES OVERLAY (MOCK_PH_DISTRICTS)
-  // ==========================================
-  useEffect(() => {
-    if (mapEngine === 'leaflet' && leafletMapInstanceRef.current) {
-      const map = leafletMapInstanceRef.current;
-
-      if (leafletDistrictsLayerRef.current) {
-        try {
-          if (typeof map.removeLayer === 'function') {
-            map.removeLayer(leafletDistrictsLayerRef.current);
-          } else if (typeof leafletDistrictsLayerRef.current.remove === 'function') {
-            leafletDistrictsLayerRef.current.remove();
-          }
-        } catch {
-          // ignore
-        }
-        leafletDistrictsLayerRef.current = null;
-      }
-
-      if (showDistricts && typeof L.geoJSON === 'function') {
-        const layer = L.geoJSON(MOCK_PH_DISTRICTS, {
-          style: (feature) => ({
-            color: feature?.properties?.highlightColor || '#0F766E',
-            weight: 2,
-            dashArray: '4, 4',
-            fillColor: feature?.properties?.highlightColor || '#0F766E',
-            fillOpacity: 0.14,
-          }),
-          onEachFeature: (feature, featureLayer) => {
-            if (feature?.properties?.name && typeof featureLayer.bindTooltip === 'function') {
-              featureLayer.bindTooltip(
-                `<strong>${feature.properties.name}</strong><br/><span style="font-size:11px;color:#64748B;">${feature.properties.city} • ${feature.properties.propertyCount || 0} Residences</span>`,
-                { sticky: true, className: 'district-tooltip' }
-              );
-            }
-            if (typeof featureLayer.on === 'function') {
-              featureLayer.on('click', () => {
-                if (typeof featureLayer.getBounds === 'function' && typeof map.fitBounds === 'function') {
-                  map.fitBounds(featureLayer.getBounds(), { padding: [32, 32], maxZoom: 15 });
-                }
-              });
-            }
-          },
-        });
-        if (layer && typeof layer.addTo === 'function') {
-          layer.addTo(map);
-        }
-        leafletDistrictsLayerRef.current = layer;
-      }
-    } else if (mapEngine === 'google' && googleMapInstanceRef.current && window.google) {
-      const map = googleMapInstanceRef.current;
-      if (map.data) {
-        googleDistrictFeaturesRef.current.forEach((f) => map.data.remove(f));
-        googleDistrictFeaturesRef.current = [];
-        if (showDistricts) {
-          const features = map.data.addGeoJson(MOCK_PH_DISTRICTS);
-          googleDistrictFeaturesRef.current = features || [];
-          map.data.setStyle((feature) => {
-            const color = feature.getProperty('highlightColor') || '#0F766E';
-            return {
-              fillColor: color,
-              fillOpacity: 0.14,
-              strokeColor: color,
-              strokeWeight: 2,
-            };
-          });
-        }
-      }
-    }
-  }, [showDistricts, mapEngine]);
 
   // ==========================================
   // 3. MULTI-PIN & STACKED ANCHOR MARKER SYNCHRONIZATION
@@ -618,13 +495,19 @@ export default function GooglePropertyMap({
 
       const isSelected = String(singleProp.id) === String(selectedPropertyId);
       const isHovered = String(singleProp.id) === String(hoveredPropertyId);
+      const isAreaCircle = generalAreaOnly && singlePropertyMode;
 
       if (existingMarkers.has(markerId)) {
         const markerObj = existingMarkers.get(markerId);
-        if (
-          markerObj.isSelected !== isSelected ||
+        if (Boolean(markerObj.isAreaCircle) !== isAreaCircle) {
+          if (markerObj.marker?.setMap) markerObj.marker.setMap(null);
+          if (markerObj.marker?.remove) markerObj.marker.remove();
+          existingMarkers.delete(markerId);
+        } else if (
+          !isAreaCircle &&
+          (markerObj.isSelected !== isSelected ||
           markerObj.isHovered !== isHovered ||
-          markerObj.zoomMode !== zoomMode
+          markerObj.zoomMode !== zoomMode)
         ) {
           const newEl = createMarkerEl(singleProp, isSelected, isHovered);
 
@@ -640,7 +523,37 @@ export default function GooglePropertyMap({
           markerObj.isHovered = isHovered;
           markerObj.zoomMode = zoomMode;
         }
-      } else {
+      }
+
+      if (!existingMarkers.has(markerId)) {
+        if (isAreaCircle) {
+          const circleCoords = getGeneralAreaCoords(coords, singleProp.id);
+          if (mapEngine === 'google' && googleMapInstanceRef.current && window.google?.maps?.Circle) {
+            const circle = new window.google.maps.Circle({
+              map: googleMapInstanceRef.current,
+              center: { lat: circleCoords.lat, lng: circleCoords.lng },
+              radius: GENERAL_AREA_RADIUS_M,
+              strokeColor: '#0F766E',
+              strokeOpacity: 0.75,
+              strokeWeight: 2,
+              fillColor: '#0F766E',
+              fillOpacity: 0.16,
+            });
+            existingMarkers.set(markerId, { marker: circle, isAreaCircle: true });
+          } else if (mapEngine === 'leaflet' && leafletMapInstanceRef.current && typeof L.circle === 'function') {
+            const circle = L.circle([circleCoords.lat, circleCoords.lng], {
+              radius: GENERAL_AREA_RADIUS_M,
+              color: '#0F766E',
+              weight: 2,
+              opacity: 0.75,
+              fillColor: '#0F766E',
+              fillOpacity: 0.16,
+            }).addTo(leafletMapInstanceRef.current);
+            existingMarkers.set(markerId, { marker: circle, isAreaCircle: true });
+          }
+          return;
+        }
+
         // Create brand new pin
         const element = createMarkerEl(singleProp, isSelected, isHovered);
 
@@ -707,7 +620,7 @@ export default function GooglePropertyMap({
         }
       }
     });
-  }, [properties, selectedPropertyId, hoveredPropertyId, mapEngine, markerVariant, currentZoom, singlePropertyMode]);
+  }, [properties, selectedPropertyId, hoveredPropertyId, mapEngine, markerVariant, currentZoom, singlePropertyMode, generalAreaOnly]);
 
   // ==========================================
   // 4. AUTO-FIT ALL BOUNDS & DISTRICT NAVIGATION
@@ -767,13 +680,11 @@ export default function GooglePropertyMap({
   );
 
   const handleFitAll = useCallback(() => {
-    isUserBoundsFilteringRef.current = false;
     fitPropertiesBounds(false);
   }, [fitPropertiesBounds]);
 
   // Fit pins automatically on initial load or non-viewport filter change
   useEffect(() => {
-    if (isSearchActiveRef.current || isUserBoundsFilteringRef.current) return;
     if (targetDistrict && targetDistrict.name && targetDistrict.name !== 'All Metro Manila') return;
 
     if (properties.length > 0 && (mapEngine === 'google' || mapEngine === 'leaflet')) {
@@ -784,7 +695,6 @@ export default function GooglePropertyMap({
   // Navigate to selected district preset or geocoded location
   useEffect(() => {
     if (!targetDistrict || !targetDistrict.lat || !targetDistrict.lng) return;
-    isUserBoundsFilteringRef.current = false;
 
     if (targetDistrict.name === 'All Metro Manila' && properties.length > 0) {
       fitPropertiesBounds(true);
@@ -895,6 +805,7 @@ export default function GooglePropertyMap({
 
   // Manual zoom control handlers
   const handleZoomIn = () => {
+    if (lockZoom) return;
     if (mapEngine === 'google' && googleMapInstanceRef.current) {
       googleMapInstanceRef.current.setZoom(Math.min(21, googleMapInstanceRef.current.getZoom() + 1));
     } else if (mapEngine === 'leaflet' && leafletMapInstanceRef.current) {
@@ -905,6 +816,7 @@ export default function GooglePropertyMap({
   };
 
   const handleZoomOut = () => {
+    if (lockZoom) return;
     if (mapEngine === 'google' && googleMapInstanceRef.current) {
       googleMapInstanceRef.current.setZoom(Math.max(1, googleMapInstanceRef.current.getZoom() - 1));
     } else if (mapEngine === 'leaflet' && leafletMapInstanceRef.current) {
@@ -978,18 +890,6 @@ export default function GooglePropertyMap({
               </div>
 
               <div className="flex items-center gap-2 pt-1">
-                {onOpenStreetView && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const coords = getPropertyCoordinates(activeProperty);
-                      onOpenStreetView(coords);
-                    }}
-                    className="flex-1 h-9 px-3 bg-white border border-[#E2E8F0] text-[#1E293B] text-xs font-semibold rounded-lg hover:bg-slate-50 transition-colors flex items-center justify-center cursor-pointer shadow-2xs"
-                  >
-                    360° Street View
-                  </button>
-                )}
                 <button
                   type="button"
                   onClick={() => navigate(`/properties/${activeProperty.id}`)}
@@ -1046,19 +946,6 @@ export default function GooglePropertyMap({
           >
             Satellite
           </button>
-          <button
-            type="button"
-            onClick={() => setShowDistricts((prev) => !prev)}
-            aria-label="Districts"
-            title="Toggle Philippine Prime Business Districts"
-            className={`flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer shrink-0 ${showDistricts
-                ? 'bg-[#FF6B6B] text-[#1E293B] shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-              }`}
-          >
-            <span>Districts</span>
-            <span className={`w-1.5 h-1.5 rounded-full ${showDistricts ? 'bg-[#1E293B]' : 'bg-slate-300'}`} />
-          </button>
 
           <span className="w-px h-3.5 bg-slate-200 mx-0.5 shrink-0" />
 
@@ -1072,35 +959,6 @@ export default function GooglePropertyMap({
             <span className="material-symbols-outlined text-[13px]">crop_free</span>
             <span>Fit All</span>
           </button>
-
-          {/* Search As I Move */}
-          {showSearchAsMove && (
-            <button
-              type="button"
-              onClick={() => {
-                const next = !isSearchActive;
-                setIsSearchActive(next);
-                isSearchActiveRef.current = next;
-                if (next) {
-                  isUserBoundsFilteringRef.current = true;
-                  emitCurrentBounds();
-                } else {
-                  isUserBoundsFilteringRef.current = false;
-                  if (typeof onBoundsChangeRef.current === 'function') {
-                    onBoundsChangeRef.current(null);
-                  }
-                }
-                if (typeof onToggleSearchAsMove === 'function') onToggleSearchAsMove(next);
-              }}
-              aria-label="Search as I move map"
-              title="Search as I move map"
-              className={`flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer whitespace-nowrap shrink-0 ${isSearchActive ? 'bg-[#CCFBF1] text-[#0F766E]' : 'text-slate-600 hover:bg-slate-100'
-                }`}
-            >
-              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isSearchActive ? 'bg-[#0F766E] animate-pulse' : 'bg-slate-300'}`} />
-              <span>Search as I move map</span>
-            </button>
-          )}
         </div>
       )}
 
@@ -1141,18 +999,6 @@ export default function GooglePropertyMap({
             </div>
 
             <div className="flex items-center gap-2 pt-0.5">
-              {onOpenStreetView && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    const coords = getPropertyCoordinates(selectedProperty);
-                    onOpenStreetView(coords);
-                  }}
-                  className="flex-1 h-9 px-2.5 bg-white border border-[#E2E8F0] text-[#1E293B] text-xs font-semibold rounded-lg hover:bg-slate-50 transition-colors flex items-center justify-center cursor-pointer whitespace-nowrap"
-                >
-                  360° Street View
-                </button>
-              )}
               <button
                 type="button"
                 onClick={() => navigate(`/properties/${selectedProperty.id}`)}
@@ -1167,30 +1013,32 @@ export default function GooglePropertyMap({
       )}
 
       {/* Floating Bottom-Right Manual Zoom Controls */}
-      <div
-        data-testid="manual-zoom-controls"
-        className="absolute bottom-20 right-4 sm:right-6 z-20 flex flex-col items-center bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200/90 shadow-xl p-1 pointer-events-auto"
-      >
-        <button
-          type="button"
-          onClick={handleZoomIn}
-          title="Zoom In"
-          aria-label="Zoom in"
-          className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-700 hover:text-[#0F766E] hover:bg-slate-100 transition-colors cursor-pointer font-bold text-lg select-none"
+      {!lockZoom && (
+        <div
+          data-testid="manual-zoom-controls"
+          className="absolute bottom-20 right-4 sm:right-6 z-20 flex flex-col items-center bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200/90 shadow-xl p-1 pointer-events-auto"
         >
-          +
-        </button>
-        <span className="w-6 h-px bg-slate-200 my-0.5" />
-        <button
-          type="button"
-          onClick={handleZoomOut}
-          title="Zoom Out"
-          aria-label="Zoom out"
-          className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-700 hover:text-[#0F766E] hover:bg-slate-100 transition-colors cursor-pointer font-bold text-lg select-none"
-        >
-          −
-        </button>
-      </div>
+          <button
+            type="button"
+            onClick={handleZoomIn}
+            title="Zoom In"
+            aria-label="Zoom in"
+            className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-700 hover:text-[#0F766E] hover:bg-slate-100 transition-colors cursor-pointer font-bold text-lg select-none"
+          >
+            +
+          </button>
+          <span className="w-6 h-px bg-slate-200 my-0.5" />
+          <button
+            type="button"
+            onClick={handleZoomOut}
+            title="Zoom Out"
+            aria-label="Zoom out"
+            className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-700 hover:text-[#0F766E] hover:bg-slate-100 transition-colors cursor-pointer font-bold text-lg select-none"
+          >
+            −
+          </button>
+        </div>
+      )}
     </div>
   );
 }

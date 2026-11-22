@@ -155,6 +155,30 @@ export class AgentController {
   }
 
   /**
+   * POST /api/agents
+   * Directly create an agent account & profile (Broker / Admin)
+   */
+  public static async create(req: AuthenticatedRequest, res: Response<ApiResponse>): Promise<void> {
+    try {
+      const actor = req.user ? { id: req.user.id, role: req.user.role || 'broker' } : undefined;
+      const created = await AgentService.createAgent(req.body, actor);
+      res.status(201).json({
+        success: true,
+        data: created,
+        message: 'Agent created successfully.',
+        timestamp: new Date().toISOString(),
+      });
+    } catch (err: any) {
+      const isConflict = err.message?.toLowerCase().includes('already exists');
+      res.status(isConflict ? 409 : 500).json({
+        success: false,
+        error: err.message || 'Error creating agent.',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
+  /**
    * GET /api/agents/:id
    */
   public static async getById(req: Request, res: Response<ApiResponse>): Promise<void> {
@@ -362,6 +386,28 @@ export class AgentController {
       res.status(400).json({
         success: false,
         error: err.message || 'Error resubmitting credentials.',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
+  /**
+   * GET /api/agents/branches
+   */
+  public static async listBranches(req: Request, res: Response<ApiResponse>): Promise<void> {
+    try {
+      const brokerageId = (req.query.brokerage_id as string) || DEFAULT_BROKERAGE_ID;
+      const branches = await AgentService.listBranches(brokerageId);
+      res.status(200).json({
+        success: true,
+        data: branches,
+        message: 'Branches retrieved successfully.',
+        timestamp: new Date().toISOString(),
+      });
+    } catch (err: any) {
+      res.status(500).json({
+        success: false,
+        error: err.message || 'Error retrieving branches.',
         timestamp: new Date().toISOString(),
       });
     }
