@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { stripHtml } from '@/pages/portals/broker/components/property-form/DescriptionEditorModal';
@@ -105,7 +105,7 @@ export default function PropertyCard({
   if (property.formattedPrice) {
     formattedPriceDisplay = property.formattedPrice;
   } else if (rawPrice > 0) {
-    formattedPriceDisplay = `₱ ${rawPrice.toLocaleString('en-PH')}`;
+    formattedPriceDisplay = `â‚± ${rawPrice.toLocaleString('en-PH')}`;
   } else if (typeof property.price === 'string' && property.price.trim()) {
     formattedPriceDisplay = property.price;
   } else {
@@ -227,41 +227,19 @@ export default function PropertyCard({
             }`}
           />
 
-<<<<<<< HEAD
-          {/* Top-Left Pills: Max 2 pills (Pill 1: Merged Status, Pill 2: Condition) - No circle dots */}
-          <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 flex-wrap max-w-[78%]">
-            <span 
-              data-testid="card-status-badge"
-              className={`inline-flex items-center px-3 py-1 rounded-full text-[11px] font-semibold backdrop-blur-xs shadow-xs ${
-                statusPill.isClosed
-                  ? 'bg-rose-600 text-white border border-rose-700'
-                  : statusPill.isUnderContract
-                    ? 'bg-amber-50/95 text-amber-800 border border-amber-300'
-                    : 'bg-white/95 text-[#1E293B] border border-slate-200/80'
-              }`}
-            >
-              {statusPill.label}
-=======
           {/* Top-Left Pill: For sale / For rent + Condition State + RESO Status Badges */}
           <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 flex-wrap max-w-[75%]">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/95 backdrop-blur-xs text-[11px] font-medium text-[#1E293B] shadow-xs">
               <TransactionIcon className={`size-3.5 shrink-0 ${isRent ? 'text-amber-600' : 'text-[#0F766E]'}`} aria-hidden="true" />
               <span>{typeBadgeLabel}</span>
->>>>>>> property-tech-v3.0
             </span>
 
             {condition && (
               <span 
-<<<<<<< HEAD
-                className="inline-flex items-center px-2.5 py-1 rounded-full bg-white/95 backdrop-blur-xs text-[11px] font-semibold text-[#0F766E] shadow-xs border border-teal-100/60"
-                data-testid="card-condition-badge"
-              >
-=======
                 className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/95 backdrop-blur-xs text-[11px] font-semibold text-[#0F766E] shadow-xs border border-teal-100/60"
                 data-testid="card-condition-badge"
               >
                 <ConditionIcon className="size-3.5 shrink-0 text-[#0F766E]" aria-hidden="true" />
->>>>>>> property-tech-v3.0
                 {condition}
               </span>
             )}
@@ -271,7 +249,7 @@ export default function PropertyCard({
                 data-testid="card-map-focused-badge"
                 className="inline-flex items-center px-2.5 py-1 rounded-full bg-[#0F766E] text-white text-[11px] font-semibold shadow-xs"
               >
-                Pinned on Map • Click again for details
+                Pinned on Map â€¢ Click again for details
               </span>
             )}
           </div>
@@ -302,23 +280,20 @@ export default function PropertyCard({
               )}
             </button>
           </div>
-<<<<<<< HEAD
-=======
 
           {/* Under Contract Contextual Overlay Banner */}
           {isUnderContract && (
             <div className="absolute bottom-0 inset-x-0 bg-amber-500/90 backdrop-blur-xs text-white text-[10px] font-bold py-1 px-3 text-center uppercase tracking-wider z-10 shadow-xs">
-              Under Contract • Backup Inquiries Welcome
+              Under Contract â€¢ Backup Inquiries Welcome
             </div>
           )}
 
           {/* Sold / Closed Contextual Overlay Banner */}
           {isClosed && (
             <div className="absolute bottom-0 inset-x-0 bg-slate-900/85 backdrop-blur-xs text-white text-[10px] font-bold py-1 px-3 text-center uppercase tracking-widest z-10 shadow-xs">
-              Transaction Closed • Sold Benchmark
+              Transaction Closed â€¢ Sold Benchmark
             </div>
           )}
->>>>>>> property-tech-v3.0
         </div>
 
         {/* Content Section below photo */}
@@ -352,7 +327,7 @@ export default function PropertyCard({
               <div className="flex items-center gap-1.5">
                 <IconBed size={16} stroke={1.8} className="text-slate-400 shrink-0" />
                 <span>
-                  <span className="font-medium text-slate-700">{beds != null ? beds : '—'}</span>{' '}
+                  <span className="font-medium text-slate-700">{beds != null ? beds : 'â€”'}</span>{' '}
                   <span className="lowercase">Beds</span>
                 </span>
               </div>
@@ -361,7 +336,7 @@ export default function PropertyCard({
               <div className="flex items-center gap-1.5">
                 <IconBath size={16} stroke={1.8} className="text-slate-400 shrink-0" />
                 <span>
-                  <span className="font-medium text-slate-700">{baths != null ? baths : '—'}</span>{' '}
+                  <span className="font-medium text-slate-700">{baths != null ? baths : 'â€”'}</span>{' '}
                   <span className="lowercase">Baths</span>
                 </span>
               </div>
@@ -370,7 +345,7 @@ export default function PropertyCard({
               <div className="flex items-center gap-1.5">
                 <Car className="size-4 text-slate-400 shrink-0" aria-hidden="true" />
                 <span>
-                  <span className="font-medium text-slate-700">{parking != null ? parking : '—'}</span>{' '}
+                  <span className="font-medium text-slate-700">{parking != null ? parking : 'â€”'}</span>{' '}
                   <span className="lowercase">parking space</span>
                 </span>
               </div>
@@ -384,25 +359,13 @@ export default function PropertyCard({
                       {floorAreaFormatted}
                     </span>
                   ) : (
-                    <span>— m²</span>
+                    <span>â€” mÂ²</span>
                   )}
                 </span>
               </div>
             )}
           </div>
 
-<<<<<<< HEAD
-          {/* Property Title with Coral Period */}
-          <h3 className="text-xl sm:text-2xl font-bold text-[#0F4C5C] group-hover:text-[#0F766E] tracking-tight line-clamp-2 leading-tight transition-colors flex items-center gap-2">
-            <span className="w-7 h-7 rounded-full bg-rose-50 flex items-center justify-center text-[#E07A5F] shrink-0" data-testid="card-address-pin-icon">
-              <IconMapPin size={16} stroke={2.2} className="text-[#E07A5F]" />
-            </span>
-            <span className="truncate">
-              <span>{propertyTitle}</span>
-              <span className="text-[#E07A5F]">.</span>
-            </span>
-          </h3>
-=======
           {/* Listing Agent Row */}
           <div className="pt-2 pb-0.5 border-t border-slate-100 flex items-center justify-between gap-2" data-testid="card-agent-placeholder">
             {(() => {
@@ -427,7 +390,6 @@ export default function PropertyCard({
                 email: property.broker_email || credentials.brokerEmail || 'inquiries@humanshelterrealty.com',
                 phone: property.broker_phone || credentials.contactNumber || '+63 2 8888 0000',
               };
->>>>>>> property-tech-v3.0
 
               return (
                 <div className="flex items-center gap-3 min-w-0">

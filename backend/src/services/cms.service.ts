@@ -78,7 +78,16 @@ export class CmsService {
       .order('sort_order', { ascending: true })
       .order('published_at', { ascending: false });
 
-    if (error) throw new Error(error.message);
+    if (error) {
+      if (
+        error.code === '42P01' ||
+        error.code === 'PGRST205' ||
+        /does not exist|schema cache/i.test(error.message || '')
+      ) {
+        return [];
+      }
+      throw new Error(error.message);
+    }
     return (data || []) as CmsContentRecord[];
   }
 
@@ -145,7 +154,16 @@ export class CmsService {
     }
 
     const { data, error } = await query;
-    if (error) throw new Error(error.message);
+    if (error) {
+      if (
+        error.code === '42P01' ||
+        error.code === 'PGRST205' ||
+        /does not exist|schema cache/i.test(error.message || '')
+      ) {
+        return [];
+      }
+      throw new Error(error.message);
+    }
     return (data || []) as CmsContentRecord[];
   }
 

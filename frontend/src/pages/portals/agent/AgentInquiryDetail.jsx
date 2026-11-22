@@ -1,14 +1,7 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { CalendarPlus, CheckCircle2, History } from 'lucide-react';
 import StatusBadge from '../../../components/dashboard/StatusBadge';
-<<<<<<< HEAD
-import DashboardModal from '../../../components/dashboard/DashboardModal';
-import InquirySourceBadge from '../../../components/inquiries/InquirySourceBadge';
-import SlaCountdownPill from '../../../components/inquiries/SlaCountdownPill';
-import AiQualificationPanel from '../../../components/inquiries/AiQualificationPanel';
-import InternalNotesRail from '../../../components/inquiries/InternalNotesRail';
-=======
 import InquiryDetailShell from '../../../components/inquiries/InquiryDetailShell';
 import InquiryConversationPanel from '../../../components/inquiries/InquiryConversationPanel';
 import InquiryAiSummaryCard from '../../../components/inquiries/InquiryAiSummaryCard';
@@ -44,7 +37,6 @@ import {
   SelectValue,
 } from '../../../components/ui/select';
 import { Field, FieldGroup, FieldLabel } from '../../../components/ui/field';
->>>>>>> property-tech-v3.0
 import { inquiryService } from '../../../services/inquiryService';
 
 export default function AgentInquiryDetail() {
@@ -111,25 +103,8 @@ export default function AgentInquiryDetail() {
     };
   }, [id]);
 
-<<<<<<< HEAD
-  const [internalNotes, setInternalNotes] = useState([]);
-  const [addingNote, setAddingNote] = useState(false);
-
-  useEffect(() => {
-    if (inquiry?.internal_notes) {
-      setInternalNotes(inquiry.internal_notes);
-    }
-  }, [inquiry]);
-
-  const handleSendReply = async (e) => {
-    e.preventDefault();
-    if (!replyText.trim() || !inquiry) return;
-
-    const content = replyText.trim();
-=======
   const handleSendReply = async (content) => {
     if (!content || !inquiry) return;
->>>>>>> property-tech-v3.0
     const requestId = `req-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     setSendingReply(true);
     try {
@@ -167,15 +142,8 @@ export default function AgentInquiryDetail() {
     }
   };
 
-<<<<<<< HEAD
-  const handleAddInternalNote = async (noteContent) => {
-    const content = (noteContent || '').trim();
-    if (!content || !inquiry) return;
-
-=======
   const handleAddInternalNote = async (content) => {
     if (!content || !inquiry) return;
->>>>>>> property-tech-v3.0
     setAddingNote(true);
     try {
       const added = await inquiryService.addNote(inquiry.id, content);
@@ -351,120 +319,9 @@ export default function AgentInquiryDetail() {
         ]}
         title={inquiry ? `Inquiry from ${inquiry.client_name}` : 'Inquiry Detail'}
         subtitle={
-          inquiry ? `Reference: ${inquiry.reference_code || inquiry.id} • Registered ${inquiry.created_at}` : ''
+          inquiry ? `Reference: ${inquiry.reference_code || inquiry.id} â€¢ Registered ${inquiry.created_at}` : ''
         }
         badge={
-<<<<<<< HEAD
-          <div className="flex items-center gap-2 flex-wrap">
-            <span
-              className={`px-2.5 py-1 text-xs font-bold uppercase rounded tracking-wider ${
-                isInactive ? 'bg-slate-100 text-slate-700' : 'bg-emerald-100 text-emerald-800'
-              }`}
-            >
-              {isInactive ? 'Inactive Lead' : 'Active Lead'}
-            </span>
-            <StatusBadge status={inquiry.status} />
-            <InquirySourceBadge
-              source={inquiry.source}
-              consentAccepted={inquiry.consentAccepted ?? inquiry.consent_accepted}
-            />
-            <SlaCountdownPill
-              createdAt={inquiry.created_at}
-              operationalStatus={inquiry.operational_status}
-              businessStatus={inquiry.business_status}
-              firstRespondedAt={inquiry.first_responded_at}
-            />
-          </div>
-        }
-        actions={
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => {
-                setTargetBusinessStatus(isInactive ? 'active' : 'inactive');
-                setShowStatusModal(true);
-              }}
-              className="h-[42px] px-3.5 bg-white hover:bg-slate-50 text-slate-700 border border-[#E2E8F0] rounded-lg text-xs font-bold font-sans uppercase tracking-wider transition-colors cursor-pointer"
-            >
-              {isInactive ? 'Reactivate Inquiry' : 'Mark Inactive'}
-            </button>
-            <button
-              onClick={() => setShowAppointmentModal(true)}
-              className="h-[42px] px-4 bg-[#FF6B6B] hover:bg-[#fa5252] text-white rounded-lg text-xs font-bold font-sans uppercase tracking-wider flex items-center gap-1.5 transition-colors shadow-xs cursor-pointer"
-            >
-              <span className="material-symbols-outlined text-[18px]">calendar_add_on</span>
-              Schedule Viewing
-            </button>
-          </div>
-        }
-      />
-
-      {/* Main Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left 2 Cols: 6-Section AI Client Summary Report & Messages */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* AI Client Summary Report Card (UX-01, AI-01, AI-02) */}
-          <div data-testid="ai-client-summary-card">
-            <AiQualificationPanel
-              aiSummary={aiSummary}
-              fallbackSummaryText={inquiry.ai_summary}
-              onRefresh={handleGenerateSummary}
-              refreshing={generatingSummary}
-            />
-          </div>
-
-          {/* Follow-up Tasks Panel (TASK-01) */}
-          <div className="bg-white rounded-lg border border-[#E2E8F0] p-5 shadow-xs space-y-3">
-            <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-2">
-              <h3 className="text-sm font-bold text-[#1E293B] flex items-center gap-2">
-                <span className="material-symbols-outlined text-[#0F766E] text-lg">checklist</span>
-                Follow-up Tasks
-              </h3>
-              <span className="text-xs text-[#64748B] font-mono">
-                {inquiry.follow_up_tasks?.length || 0} active
-              </span>
-            </div>
-
-            <div className="space-y-2">
-              {inquiry.follow_up_tasks && inquiry.follow_up_tasks.length > 0 ? (
-                inquiry.follow_up_tasks.map((task) => (
-                  <div
-                    key={task.id}
-                    className="flex items-center justify-between p-2.5 rounded bg-slate-50 border border-slate-200 text-xs"
-                  >
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={task.status === 'completed'}
-                        onChange={() => handleToggleTaskStatus(task)}
-                        className="rounded accent-[#0F766E] cursor-pointer"
-                      />
-                      <span className={task.status === 'completed' ? 'line-through text-slate-400' : 'font-medium text-slate-800'}>
-                        {task.title}
-                      </span>
-                    </div>
-                    <span className="text-[10px] font-mono text-[#64748B]">
-                      Due: {task.dueAt ? task.dueAt.substring(0, 10) : 'Soon'}
-                    </span>
-                  </div>
-                ))
-              ) : (
-                <p className="text-xs text-[#64748B] italic py-2">No follow-up tasks scheduled.</p>
-              )}
-            </div>
-
-            <form onSubmit={handleCreateTask} className="pt-2 flex gap-2">
-              <input
-                type="text"
-                placeholder="New follow-up task (e.g., Send deeded parking schematic)..."
-                value={newTaskTitle}
-                onChange={(e) => setNewTaskTitle(e.target.value)}
-                className="flex-1 h-[38px] px-3 border border-[#E2E8F0] rounded text-xs outline-none focus:border-[#0F766E]"
-              />
-              <button
-                type="submit"
-                disabled={creatingTask || !newTaskTitle.trim()}
-                className="px-4 h-[38px] bg-[#0F766E] hover:bg-[#115E59] text-white rounded text-xs font-bold uppercase tracking-wider transition-colors disabled:opacity-50 cursor-pointer"
-=======
           inquiry && (
             <div className="flex items-center gap-2">
               <Badge variant={isInactive ? 'secondary' : 'success'}>
@@ -486,7 +343,6 @@ export default function AgentInquiryDetail() {
                   setShowStatusModal(true);
                 }}
                 className="h-11 px-4"
->>>>>>> property-tech-v3.0
               >
                 {isInactive ? 'Reactivate Inquiry' : 'Mark Inactive'}
               </Button>
@@ -579,16 +435,6 @@ export default function AgentInquiryDetail() {
         )}
       </InquiryDetailShell>
 
-<<<<<<< HEAD
-          {/* Private Agent Dossier Notes */}
-          <InternalNotesRail
-            notes={internalNotes}
-            onAddNote={handleAddInternalNote}
-            addingNote={addingNote}
-          />
-        </div>
-      </div>
-=======
       {/* Lifecycle Status Dialog */}
       <Dialog open={showStatusModal} onOpenChange={setShowStatusModal}>
         <DialogContent className="max-w-lg bg-surface border border-outline">
@@ -633,7 +479,6 @@ export default function AgentInquiryDetail() {
               />
             </Field>
           </FieldGroup>
->>>>>>> property-tech-v3.0
 
           <DialogFooter className="gap-2 pt-3 border-t border-outline">
             <Button type="button" variant="outline" onClick={() => setShowStatusModal(false)} className="h-11">

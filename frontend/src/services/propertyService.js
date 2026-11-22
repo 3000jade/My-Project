@@ -269,8 +269,8 @@ export function normalizeProperty(rawItem = {}) {
     : Number(String(rawItem.price || '0').replace(/[^0-9.-]+/g, '')) || 0;
 
   const displayPrice = rawItem.formattedPrice ||
-    (typeof rawItem.price === 'string' && rawItem.price.startsWith('₱') ? rawItem.price : null) ||
-    (rawNumericPrice > 0 ? `₱${rawNumericPrice.toLocaleString()}` : null);
+    (typeof rawItem.price === 'string' && rawItem.price.startsWith('â‚±') ? rawItem.price : null) ||
+    (rawNumericPrice > 0 ? `â‚±${rawNumericPrice.toLocaleString()}` : null);
 
   const lifecycle = resolvePropertyLifecycleState({
     status: rawItem.status,
@@ -284,13 +284,8 @@ export function normalizeProperty(rawItem = {}) {
   const isPublished = rawItem.is_published !== undefined
     ? Boolean(rawItem.is_published)
     : (rawItem.isPublished !== undefined
-<<<<<<< HEAD
-        ? Boolean(rawItem.isPublished)
-        : lifecycle.isPublished);
-=======
       ? Boolean(rawItem.isPublished)
       : (normalizedStatus !== 'SOLD' && normalizedStatus !== 'INACTIVE'));
->>>>>>> property-tech-v3.0
 
   const explicitAgentName = rawItem.agent_name || rawItem.agentName || rawItem.agent?.name || rawItem.custom_reso_attributes?.credentials?.assignedAgent || rawItem.customResoAttributes?.credentials?.assignedAgent || '';
   const agentId = rawItem.agent_id || rawItem.agentId || null;
@@ -575,16 +570,6 @@ export function toApiPayload(item = {}) {
           : []))
   })) : undefined;
 
-<<<<<<< HEAD
-  // Resolve and synchronize standardStatus, status, and isPublished via resolvePropertyLifecycleState
-  const lifecycle = resolvePropertyLifecycleState({
-    status: item.status,
-    standardStatus: item.standardStatus || item.standard_status,
-    transactionType: item.transactionType || item.transaction_type,
-    propertyStatusKey: item.propertyStatusKey || item.property_status_key || item.propertyStatus,
-    isPublished: item.is_published !== undefined ? item.is_published : item.isPublished,
-  });
-=======
   // Resolve and synchronize standardStatus, status, and isPublished
   const rawStandardStatus = item.standardStatus || item.standard_status;
   const rawStatus = (item.status || '').toUpperCase();
@@ -614,20 +599,12 @@ export function toApiPayload(item = {}) {
   } else {
     derivedStatus = 'pending';
   }
->>>>>>> property-tech-v3.0
 
-  const resolvedStandardStatus = lifecycle.standardStatus;
-  const derivedStatus = lifecycle.dbStatus;
   const resolvedIsPublished = item.is_published !== undefined
     ? Boolean(item.is_published)
     : (item.isPublished !== undefined
-<<<<<<< HEAD
-        ? Boolean(item.isPublished)
-        : lifecycle.isPublished);
-=======
       ? Boolean(item.isPublished)
       : (resolvedStandardStatus === 'Active'));
->>>>>>> property-tech-v3.0
 
   const resolvedListAgentKey = item.listAgentKey || item.list_agent_key || item.agentId || item.agent_id || item.assignedAgent?.agentId || item.assignedAgent?.id || undefined;
 
@@ -835,12 +812,7 @@ export function toApiPayload(item = {}) {
   };
 
   return {
-<<<<<<< HEAD
-    title: (item.developer_name || item.developerName || item.title || formatPropertyAddressHeading(item)).trim(),
-    tagline: item.tagline || '',
-=======
     title: (item.title || 'Untitled Luxury Property').trim(),
->>>>>>> property-tech-v3.0
     listingKey: item.cadastralLotId || item.listingKey || item.listing_key || undefined,
     listingId: (item.listing_id || item.listingId || '').trim() || undefined,
     price: numericPrice,

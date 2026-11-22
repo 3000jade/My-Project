@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import PageHeader from '../../../components/dashboard/PageHeader';
 import SearchAndFilterBar from '../../../components/dashboard/SearchAndFilterBar';
@@ -134,8 +134,6 @@ export default function AgentProperties() {
               </div>
               <p className="text-xs text-[#64748B]">{formatPropertyAddressHeading(row, 'Metro Manila')}</p>
             </div>
-<<<<<<< HEAD
-=======
             <p className="text-xs text-[#64748B]">{typeof row.location === 'string' ? row.location : row.location?.address || 'Metro Manila'}</p>
             {getAssignedByName(row) && (
               <p className="text-[11px] text-[#0F766E] font-medium flex items-center gap-1 mt-0.5">
@@ -143,7 +141,6 @@ export default function AgentProperties() {
                 <span>Assigned by {getAssignedByName(row)}</span>
               </p>
             )}
->>>>>>> property-tech-v3.0
           </div>
         );
       }
@@ -160,7 +157,7 @@ export default function AgentProperties() {
       header: "Price",
       render: (row) => (
         <span className="font-mono font-bold text-sm text-[#0F766E]">
-          {row.price || (row.price_raw ? `₱${row.price_raw.toLocaleString()}` : 'Price on Request')}
+          {row.price || (row.price_raw ? `â‚±${row.price_raw.toLocaleString()}` : 'Price on Request')}
         </span>
       )
     },
@@ -172,7 +169,7 @@ export default function AgentProperties() {
         const area = row.living_area ?? row.livingArea ?? row.sqm ?? row.specs?.livingArea;
         return (
           <span className="text-xs font-mono text-slate-500">
-            {beds} Beds • {baths} Baths • {area ? `${area} sqm` : '—'}
+            {beds} Beds â€¢ {baths} Baths â€¢ {area ? `${area} sqm` : 'â€”'}
           </span>
         );
       }
@@ -300,7 +297,7 @@ export default function AgentProperties() {
                     </Link>
                     <p className="text-xs text-[#64748B] flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
                       <span>{typeof item.location === 'string' ? item.location : item.location?.address || 'Metro Manila'}</span>
-                      <span>•</span>
+                      <span>â€¢</span>
                       <span className="font-medium text-[#0F766E]">Assigned by {assigner}</span>
                     </p>
                   </div>
@@ -457,7 +454,7 @@ export default function AgentProperties() {
                       {item.is_published ? 'Published' : 'Draft / Unlisted'}
                     </span>
                     <span className="text-base font-bold font-mono text-[#0F766E]">
-                      {item.price || (item.price_raw ? `₱${item.price_raw.toLocaleString()}` : 'Price on Request')}
+                      {item.price || (item.price_raw ? `â‚±${item.price_raw.toLocaleString()}` : 'Price on Request')}
                     </span>
                   </div>
                   <h3 className="font-semibold text-base text-[#1E293B] line-clamp-1 group-hover:text-[#0F766E] transition-colors">
@@ -477,10 +474,10 @@ export default function AgentProperties() {
 
                 <div className="pt-3 border-t border-[#E2E8F0] flex items-center justify-between text-xs font-mono text-[#64748B]">
                   <span>{item.bedrooms ?? item.specs?.beds ?? 0} Beds</span>
-                  <span>•</span>
+                  <span>â€¢</span>
                   <span>{item.bathrooms ?? item.specs?.baths ?? 0} Baths</span>
-                  <span>•</span>
-                  <span>{item.sqm || (item.specs?.livingArea ? `${item.specs.livingArea} sqm` : '—')}</span>
+                  <span>â€¢</span>
+                  <span>{item.sqm || (item.specs?.livingArea ? `${item.specs.livingArea} sqm` : 'â€”')}</span>
                 </div>
 
                 <div className="pt-2 flex items-center gap-2">

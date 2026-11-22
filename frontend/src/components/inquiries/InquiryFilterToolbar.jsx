@@ -50,6 +50,7 @@ export default function InquiryFilterToolbar({
   sortBy = 'newest',
   onSortChange,
   onResetFilters,
+  layout = 'stacked',
 }) {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const searchInputRef = useRef(null);
@@ -79,8 +80,19 @@ export default function InquiryFilterToolbar({
 
   return (
     <div className="flex flex-col gap-2.5">
-      {/* Search Input with "/" Shortcut */}
-      <InputGroup className="h-10 rounded-lg border border-outline bg-surface">
+      <div
+        className={
+          layout === 'inline'
+            ? 'flex flex-col md:flex-row md:items-center gap-2.5'
+            : 'flex flex-col gap-2.5'
+        }
+      >
+        {/* Search Input with "/" Shortcut */}
+        <InputGroup
+          className={`h-10 rounded-lg border border-outline bg-surface ${
+            layout === 'inline' ? 'flex-1 min-w-0' : ''
+          }`}
+        >
         <InputGroupAddon align="inline-start">
           <Search className="size-4 text-on-surface-variant" />
         </InputGroupAddon>
@@ -111,7 +123,11 @@ export default function InquiryFilterToolbar({
 
       {/* Filters Popover + Sort Controls */}
       {(filters.length > 0 || onSortChange) && (
-        <div className="flex flex-wrap items-center justify-between gap-2">
+        <div
+          className={`flex flex-wrap items-center justify-between gap-2 ${
+            layout === 'inline' ? 'shrink-0' : ''
+          }`}
+        >
           {filters.length > 0 && (
             <Popover open={filtersOpen} onOpenChange={setFiltersOpen}>
               <PopoverTrigger
@@ -201,6 +217,7 @@ export default function InquiryFilterToolbar({
           )}
         </div>
       )}
+      </div>
 
       {/* Active Filter Chips + Reset */}
       {hasAnyFilter && (

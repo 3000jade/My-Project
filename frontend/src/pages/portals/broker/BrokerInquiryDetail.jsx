@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { UserPlus, Shield, Download } from 'lucide-react';
 import StatusBadge from '../../../components/dashboard/StatusBadge';
@@ -31,15 +31,6 @@ import {
 import { Button } from '../../../components/ui/button';
 import { Field, FieldGroup, FieldLabel } from '../../../components/ui/field';
 import { inquiryService } from '../../../services/inquiryService';
-<<<<<<< HEAD
-import { Spinner, ViewPropertyButton } from '../../../components/ui';
-import { InquiryDetailSkeleton } from '../../../components/dashboard/skeletons';
-import InquirySourceBadge from '../../../components/inquiries/InquirySourceBadge';
-import SlaCountdownPill from '../../../components/inquiries/SlaCountdownPill';
-import AiQualificationPanel from '../../../components/inquiries/AiQualificationPanel';
-import InternalNotesRail from '../../../components/inquiries/InternalNotesRail';
-=======
->>>>>>> property-tech-v3.0
 import { agentService } from '../../../services/agentService';
 
 export default function BrokerInquiryDetail() {
@@ -235,212 +226,16 @@ export default function BrokerInquiryDetail() {
         title={inquiry ? `Inquiry Dossier: ${inquiry.client_name}` : 'Inquiry Detail'}
         subtitle={
           inquiry
-            ? `Ref: ${inquiry.reference_code || inquiry.id} • Consultant: ${inquiry.agent_name || 'Unassigned'}`
+            ? `Ref: ${inquiry.reference_code || inquiry.id} â€¢ Consultant: ${inquiry.agent_name || 'Unassigned'}`
             : ''
         }
         badge={
-<<<<<<< HEAD
-          <div className="flex items-center gap-2 flex-wrap">
-            <span
-              className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                inquiry.business_status === 'inactive'
-                  ? 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
-                  : 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300'
-              }`}
-            >
-              {inquiry.business_status || 'active'}
-            </span>
-            <StatusBadge status={inquiry.status} />
-            <InquirySourceBadge
-              source={inquiry.source}
-              consentAccepted={inquiry.consentAccepted ?? inquiry.consent_accepted}
-            />
-            <SlaCountdownPill
-              createdAt={inquiry.created_at}
-              operationalStatus={inquiry.operational_status}
-              businessStatus={inquiry.business_status}
-              firstRespondedAt={inquiry.first_responded_at}
-            />
-          </div>
-        }
-        actions={
-          <div className="flex items-center gap-2">
-            <Link
-              to="/broker/inquiries"
-              className="h-[42px] px-4 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-[#1E293B] dark:text-slate-100 border border-[#E2E8F0] dark:border-slate-800 rounded-lg text-xs font-bold font-sans uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-xs"
-            >
-              <span className="material-symbols-outlined text-[18px]">arrow_back</span>
-              Back
-            </Link>
-            <button
-              onClick={() => setReassignModalOpen(true)}
-              aria-label="Reassign Agent"
-              className="h-[42px] px-5 bg-[#0F766E] hover:bg-[#115E59] text-white rounded-lg text-xs font-bold font-sans uppercase tracking-wider flex items-center gap-2 shadow-xs transition-all cursor-pointer"
-            >
-              <span className="material-symbols-outlined text-[18px]">person_add</span>
-              Reassign Agent
-            </button>
-          </div>
-        }
-      />
-
-      {/* Tabs */}
-      <div className="flex items-center gap-3 border-b border-[#E2E8F0] dark:border-slate-800 pb-2">
-        <button
-          onClick={() => setActiveTab('overview')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider cursor-pointer transition-colors ${
-            activeTab === 'overview'
-              ? 'bg-[#0F766E] text-white shadow-xs'
-              : 'bg-white dark:bg-slate-900 text-[#64748B] dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 border border-[#E2E8F0] dark:border-slate-800'
-          }`}
-        >
-          Inquiry Overview &amp; Thread
-        </button>
-        <button
-          onClick={() => setActiveTab('audit')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider cursor-pointer flex items-center gap-1.5 transition-colors ${
-            activeTab === 'audit'
-              ? 'bg-[#0F766E] text-white shadow-xs'
-              : 'bg-white dark:bg-slate-900 text-[#64748B] dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 border border-[#E2E8F0] dark:border-slate-800'
-          }`}
-        >
-          <span className="material-symbols-outlined text-sm">shield</span>
-          <span>Protected Audit Log ({auditEvents.length})</span>
-        </button>
-      </div>
-
-      {activeTab === 'overview' ? (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left 2 Cols: AI Insights & Message Thread */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* AI Assistance Context */}
-            {(inquiry.latest_ai_summary || inquiry.ai_summary) && (
-              <AiQualificationPanel
-                aiSummary={inquiry.latest_ai_summary}
-                fallbackSummaryText={inquiry.ai_summary}
-              />
-            )}
-
-            {/* Messages Feed */}
-            <Card data-testid="broker-card" className="bg-white dark:bg-slate-900 border border-[#E2E8F0] dark:border-slate-800 p-6 shadow-xs flex flex-col h-[500px]">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748B] dark:text-slate-400 font-sans pb-3 border-b border-[#E2E8F0] dark:border-slate-800 flex items-center gap-2">
-                <span className="material-symbols-outlined text-[18px] text-[#0F766E] dark:text-teal-400">forum</span>
-                Communication Audit History
-              </h3>
-
-              <div className="flex-1 overflow-y-auto py-4 space-y-4 custom-scrollbar" data-lenis-prevent="true">
-                {inquiry.messages && inquiry.messages.length > 0 ? (
-                  inquiry.messages.map((msg) => {
-                    const isAgent = msg.sender === 'agent';
-                    return (
-                      <div
-                        key={msg.id}
-                        className={`flex flex-col ${isAgent ? 'items-end' : 'items-start'}`}
-                      >
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 font-sans">
-                            {msg.sender_name}
-                          </span>
-                          <span className="text-[10px] text-slate-400 dark:text-slate-500 font-sans">
-                            {msg.timestamp}
-                          </span>
-                        </div>
-                        <div
-                          className={`max-w-md p-3.5 rounded-lg text-xs leading-relaxed ${
-                            isAgent
-                              ? 'bg-[#0F766E] text-white'
-                              : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200'
-                          }`}
-                        >
-                          {msg.content}
-                        </div>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div className="text-center py-12 text-xs text-slate-400 font-sans">
-                    No previous communication history recorded.
-                  </div>
-                )}
-              </div>
-            </Card>
-          </div>
-
-          {/* Right 1 Col: Assigned Agent & Property Info */}
-          <div className="space-y-6">
-            {/* Handling Agent */}
-            <Card data-testid="broker-card" className="bg-white dark:bg-slate-900 border border-[#E2E8F0] dark:border-slate-800 p-5 shadow-xs space-y-4">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748B] dark:text-slate-400 font-sans">
-                Supervising Consultant
-              </h3>
-              <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-full bg-[#0F766E]/10 text-[#0F766E] dark:text-teal-400 flex items-center justify-center font-bold">
-                  {(inquiry.agent_name || 'U').charAt(0)}
-                </div>
-                <div>
-                  <p className="font-bold text-sm text-[#1E293B] dark:text-slate-100 font-sans">{inquiry.agent_name || 'Unassigned'}</p>
-                  <p className="text-xs text-[#64748B] dark:text-slate-400 font-sans">Assigned Consultant</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setReassignModalOpen(true)}
-                className="w-full py-2 bg-slate-100 dark:bg-slate-800 hover:bg-[#0F766E] hover:text-white dark:hover:bg-[#0F766E] rounded-lg text-xs font-bold font-sans uppercase tracking-wider transition-colors cursor-pointer text-[#1E293B] dark:text-slate-200"
-              >
-                Reassign to Different Agent
-              </button>
-            </Card>
-
-            {/* Client Details */}
-            <Card data-testid="broker-card" className="bg-white dark:bg-slate-900 border border-[#E2E8F0] dark:border-slate-800 p-5 shadow-xs space-y-2 text-xs font-sans">
-              <h3 className="font-bold uppercase tracking-wider text-[#64748B] dark:text-slate-400 text-[10px]">
-                Client Dossier
-              </h3>
-              <p className="font-bold text-sm text-[#1E293B] dark:text-slate-100">{inquiry.client_name}</p>
-              <p className="text-slate-600 dark:text-slate-400">Email: {inquiry.client_email}</p>
-              <p className="text-slate-600 dark:text-slate-400">Phone: {inquiry.client_phone}</p>
-            </Card>
-
-            {/* Property Reference */}
-            <Card data-testid="broker-card" className="bg-white dark:bg-slate-900 border border-[#E2E8F0] dark:border-slate-800 p-5 shadow-xs space-y-2">
-              <h3 className="font-bold uppercase tracking-wider text-[#64748B] dark:text-slate-400 text-[10px] font-sans">
-                Property Referenced
-              </h3>
-              <p className="font-bold text-sm text-[#1E293B] dark:text-slate-100 font-sans">{inquiry.property_title}</p>
-              <p className="text-base font-bold font-display text-[#0F766E] dark:text-teal-400">{inquiry.property_price}</p>
-                            <div className="pt-2">
-                <ViewPropertyButton
-                  to={`/broker/properties/${inquiry.property_id}/edit`}
-                  size="sm"
-                  label="Edit property"
-                  title="Edit Property in Studio"
-                />
-              </div>
-            </Card>
-
-            {/* Private Internal Staff Notes */}
-            <InternalNotesRail notes={inquiry.internal_notes || []} />
-          </div>
-        </div>
-      ) : (
-        /* Protected Broker Audit Viewer (AUD-02, UX-01) */
-        <Card data-testid="broker-protected-audit-viewer" className="bg-white dark:bg-slate-900 border border-[#E2E8F0] dark:border-slate-800 p-6 shadow-xs space-y-4">
-          <div className="flex items-center justify-between border-b border-[#E2E8F0] dark:border-slate-800 pb-3">
-            <div>
-              <h3 className="text-sm font-bold text-[#1E293B] dark:text-slate-100 flex items-center gap-2">
-                <span className="material-symbols-outlined text-[#0F766E] dark:text-teal-400">security</span>
-                Protected Broker Audit Evidence
-              </h3>
-              <p className="text-xs text-[#64748B] dark:text-slate-400">
-                Immutable, append-only security and operational audit trail with field redaction
-              </p>
-=======
           inquiry && (
             <div className="flex items-center gap-2">
               <Badge variant={inquiry.business_status === 'inactive' ? 'secondary' : 'success'}>
                 {inquiry.business_status || 'active'}
               </Badge>
               <StatusBadge status={inquiry.status} />
->>>>>>> property-tech-v3.0
             </div>
           )
         }
@@ -554,7 +349,7 @@ export default function BrokerInquiryDetail() {
                           <span>
                             Actor: <strong className="text-on-surface">{evt.actorName}</strong> ({evt.actorRole || 'system'})
                           </span>
-                          <span>•</span>
+                          <span>â€¢</span>
                           <span>
                             Outcome:{' '}
                             <strong className={evt.outcome === 'success' ? 'text-emerald-700' : 'text-red-600'}>
@@ -620,7 +415,7 @@ export default function BrokerInquiryDetail() {
                       <div className="flex flex-col gap-0.5">
                         <span className="font-semibold text-sm text-on-surface">{ag.name}</span>
                         <span className="text-xs font-normal text-on-surface-variant tabular-nums">
-                          {ag.assigned_properties_count} listings • {ag.active_inquiries_count} inquiries
+                          {ag.assigned_properties_count} listings â€¢ {ag.active_inquiries_count} inquiries
                         </span>
                       </div>
                     </div>

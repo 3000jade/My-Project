@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
@@ -44,22 +44,6 @@ vi.mock('../../../context/AuthContext', () => ({
   }),
 }));
 
-<<<<<<< HEAD
-// Mock Property Service
-vi.mock('../../../services/propertyService', async (importOriginal) => {
-  const actual = await importOriginal();
-  return {
-    ...actual,
-    default: {
-      ...actual.default,
-      createProperty: vi.fn().mockResolvedValue({ id: 'new-prop-123', listing_key: 'HSR-9999' }),
-      updateProperty: vi.fn().mockResolvedValue({ id: 'new-prop-123' }),
-      getPropertyById: vi.fn().mockResolvedValue(null),
-      uploadImage: vi.fn().mockResolvedValue({ url: 'https://placehold.co/800x600.jpg' })
-    },
-  };
-});
-=======
 vi.mock('../../../services/propertyService', () => ({
   default: {
     getPropertyTypes: vi.fn().mockResolvedValue([]),
@@ -71,7 +55,6 @@ vi.mock('../../../services/propertyService', () => ({
   normalizeProperty: (p) => p,
   toApiPayload: (d) => d,
 }));
->>>>>>> property-tech-v3.0
 
 vi.mock('../../../services/agentService', () => {
   const agentsList = [
@@ -197,17 +180,9 @@ describe('BrokerCreateListings - 5-Step Flow, Auto Ref Code, Multi-Bank & Sticky
     const trigger = screen.getByRole('button', { name: /Partnered Banks/i });
     fireEvent.click(trigger);
 
-<<<<<<< HEAD
-    // Step 1: Listing Title input
-    const titleInput = screen.getByPlaceholderText(/e\.g\. (Ayala Land Premier|Modernist Cantilever)/i);
-    expect(titleInput).toBeInTheDocument();
-    fireEvent.change(titleInput, { target: { value: 'Luxury Penthouse at The Proscenium' } });
-    expect(titleInput.value).toBe('Luxury Penthouse at The Proscenium');
-=======
     await waitFor(() => {
       expect(screen.getByText('BDO Unibank (Banco de Oro)')).toBeInTheDocument();
     });
->>>>>>> property-tech-v3.0
 
     expect(screen.queryByText('Major Commercial and Universal Banks')).not.toBeInTheDocument();
     expect(screen.queryByText('Government & Thrift / Foreign Partner Lenders')).not.toBeInTheDocument();
@@ -220,31 +195,8 @@ describe('BrokerCreateListings - 5-Step Flow, Auto Ref Code, Multi-Bank & Sticky
       expect(screen.getByRole('button', { name: 'Remove Pag-IBIG Fund (HDMF)' })).toBeInTheDocument();
     });
 
-<<<<<<< HEAD
-    // Verify Active Property Type badge and Change link exist
-    expect(screen.getByText(/Type:/i)).toBeInTheDocument();
-    expect(screen.getByText(/Change/i)).toBeInTheDocument();
-
-    // Verify Single Merged Property Status exists in Section 1 Listing Overview
-    expect(screen.getByTestId('property-status-row')).toBeInTheDocument();
-    expect(screen.getByText(/Property Status/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'For Sale' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Reserved' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Sold' })).toBeInTheDocument();
-
-    // Verify selecting Reserved updates selection styling
-    const reservedBtn = screen.getByRole('button', { name: 'Reserved' });
-    fireEvent.click(reservedBtn);
-    expect(reservedBtn).toHaveClass('text-[#0F766E]');
-
-    // Verify selecting Sold updates selection styling
-    const soldBtn = screen.getByRole('button', { name: 'Sold' });
-    fireEvent.click(soldBtn);
-    expect(soldBtn).toHaveClass('text-[#0F766E]');
-=======
     expect(screen.queryByText('Major Commercial and Universal Banks')).not.toBeInTheDocument();
     expect(screen.queryByText('Government & Thrift / Foreign Partner Lenders')).not.toBeInTheDocument();
->>>>>>> property-tech-v3.0
   });
 
   it('syncs Live Buyer Preview card and maps legacy ?type=condoUnit query slug cleanly', () => {
@@ -426,7 +378,7 @@ describe('BrokerCreateListings - 5-Step Flow, Auto Ref Code, Multi-Bank & Sticky
     expect(propertyService.createProperty).not.toHaveBeenCalled();
   });
 
-  it('shows Saved — Pending Agent Confirmation instead of Listing Published when broker publishes as self-handled or pending agent', async () => {
+  it('shows Saved â€” Pending Agent Confirmation instead of Listing Published when broker publishes as self-handled or pending agent', async () => {
     propertyService.createProperty.mockClear();
     propertyService.createProperty.mockResolvedValue({ id: 'prop-pending-confirm' });
     // Draft save returns Draft Saved modal, and verify no false Listing Published on Draft save

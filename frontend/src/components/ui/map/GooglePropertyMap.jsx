@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+﻿import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useNavigate, useInRouterContext } from 'react-router-dom';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -424,7 +424,7 @@ export default function GooglePropertyMap({
           onEachFeature: (feature, featureLayer) => {
             if (feature?.properties?.name && typeof featureLayer.bindTooltip === 'function') {
               featureLayer.bindTooltip(
-                `<strong>${feature.properties.name}</strong><br/><span style="font-size:11px;color:#64748B;">${feature.properties.city} • ${feature.properties.propertyCount || 0} Residences</span>`,
+                `<strong>${feature.properties.name}</strong><br/><span style="font-size:11px;color:#64748B;">${feature.properties.city} â€¢ ${feature.properties.propertyCount || 0} Residences</span>`,
                 { sticky: true, className: 'district-tooltip' }
               );
             }
@@ -617,35 +617,8 @@ export default function GooglePropertyMap({
       const coords = getPropertyCoordinates(singleProp);
       if (!coords || !coords.lat || !coords.lng) return;
 
-<<<<<<< HEAD
-      const isSelected = isMulti
-        ? cluster.properties.some((p) => p.id === selectedPropertyId)
-        : cluster.properties[0].id === selectedPropertyId;
-      const isHovered = isMulti
-        ? cluster.properties.some((p) => p.id === hoveredPropertyId)
-        : cluster.properties[0].id === hoveredPropertyId;
-
-      const singleProp = cluster.properties[0];
-
-      const getElement = (isSel, isHov) => {
-        if (isMulti) {
-          return createStackedAnchorMarkerElement(cluster, {
-            isSelected: isSel,
-            isHovered: isHov,
-            onClick: () => setActiveDrawerCluster(cluster),
-            onHover: (hoveredId) => {
-              if (typeof onHoverPropertyRef.current === 'function') {
-                onHoverPropertyRef.current(hoveredId ? singleProp.id : null);
-              }
-            },
-          });
-        }
-        return createMarkerEl(singleProp, isSel, isHov);
-      };
-=======
       const isSelected = String(singleProp.id) === String(selectedPropertyId);
       const isHovered = String(singleProp.id) === String(hoveredPropertyId);
->>>>>>> property-tech-v3.0
 
       if (existingMarkers.has(markerId)) {
         const markerObj = existingMarkers.get(markerId);
@@ -1015,7 +988,7 @@ export default function GooglePropertyMap({
                     }}
                     className="flex-1 h-9 px-3 bg-white border border-[#E2E8F0] text-[#1E293B] text-xs font-semibold rounded-lg hover:bg-slate-50 transition-colors flex items-center justify-center cursor-pointer shadow-2xs"
                   >
-                    360° Street View
+                    360Â° Street View
                   </button>
                 )}
                 <button
@@ -1024,7 +997,7 @@ export default function GooglePropertyMap({
                   className="flex-1 h-9 px-4 bg-[#FF6B6B] hover:bg-[#FF5252] text-[#1E293B] text-xs font-bold rounded-lg transition-colors shadow-xs flex items-center justify-center gap-1 cursor-pointer"
                 >
                   <span>View Residence</span>
-                  <span>→</span>
+                  <span>â†’</span>
                 </button>
               </div>
             </div>
@@ -1166,7 +1139,7 @@ export default function GooglePropertyMap({
                 onClick={() => setDismissedPreviewId(selectedProperty.id)}
                 className="w-6 h-6 rounded-full flex items-center justify-center text-[#64748B] hover:text-[#1E293B] hover:bg-slate-100 transition-colors cursor-pointer shrink-0 text-xs"
               >
-                ✕
+                âœ•
               </button>
             </div>
 
@@ -1180,7 +1153,7 @@ export default function GooglePropertyMap({
                   }}
                   className="flex-1 h-9 px-2.5 bg-white border border-[#E2E8F0] text-[#1E293B] text-xs font-semibold rounded-lg hover:bg-slate-50 transition-colors flex items-center justify-center cursor-pointer"
                 >
-                  360° Street View
+                  360Â° Street View
                 </button>
               )}
               <button
@@ -1189,7 +1162,7 @@ export default function GooglePropertyMap({
                 className="flex-1 h-9 px-3 bg-[#FF6B6B] hover:bg-[#EE5A5A] text-[#1E293B] text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-1 cursor-pointer"
               >
                 <span>View Residence</span>
-                <span>→</span>
+                <span>â†’</span>
               </button>
             </div>
           </div>
@@ -1218,7 +1191,7 @@ export default function GooglePropertyMap({
           aria-label="Zoom out"
           className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-700 hover:text-[#0F766E] hover:bg-slate-100 transition-colors cursor-pointer font-bold text-lg select-none"
         >
-          −
+          âˆ’
         </button>
       </div>
     </div>
