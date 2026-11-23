@@ -93,6 +93,7 @@ export default function InquiryOverviewShell({
       sortBy={sortBy}
       onSortChange={onSortChange}
       onResetFilters={onResetFilters}
+      layout={viewMode === 'table' ? 'inline' : 'stacked'}
     />
   );
 

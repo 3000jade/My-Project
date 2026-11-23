@@ -20,7 +20,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator
 } from '../../../components/ui/dropdown-menu';
-import propertyService, { normalizeProperty } from '../../../services/propertyService';
+import propertyService, { normalizeProperty, formatPropertyDeveloperName } from '../../../services/propertyService';
 import agentService from '../../../services/agentService';
 import auditService from '../../../services/auditService';
 import { useAuth } from '../../../context/AuthContext';
@@ -388,7 +388,7 @@ export default function BrokerProperties() {
       const heldForConfirmation = syncUpdatedPropertyRow(row, res, 'Active');
       showToast(
         heldForConfirmation
-          ? `Listing "${row.title}" updated — waiting for agent confirmation.`
+          ? `Listing "${row.title}" updated â€” waiting for agent confirmation.`
           : `Listing "${row.title}" reactivated and restored to Active status.`
       );
     } catch (err) {
@@ -821,7 +821,7 @@ export default function BrokerProperties() {
       const heldForConfirmation = syncUpdatedPropertyRow(row, res);
       showToast(
         heldForConfirmation
-          ? `Approved "${row.title}" — waiting for agent confirmation.`
+          ? `Approved "${row.title}" â€” waiting for agent confirmation.`
           : `Approved & published "${row.title}"`
       );
     } catch (err) {
@@ -920,7 +920,7 @@ export default function BrokerProperties() {
       sortKey: 'title',
       className: "min-w-[280px]",
       render: (row) => {
-        const title = row.title || 'Untitled property';
+        const title = formatPropertyDeveloperName(row, 'Independent Developer');
         const rawKey = row.listing_key || row.listingKey;
         const listingCode = row.listing_id || row.listingId || (rawKey ? `ID: ${rawKey}` : (row.id ? `ID: ${row.id}` : 'Not provided'));
         const thumbnailImg = row.mainImage || (Array.isArray(row.images) && row.images.length > 0 ? row.images[0] : null) || row.thumbnail || row.image || (Array.isArray(row.property_images) && row.property_images[0] ? (row.property_images[0].imageUrl || row.property_images[0].image_url) : null);
@@ -929,6 +929,7 @@ export default function BrokerProperties() {
             <PropertyThumbnail image={thumbnailImg} title={title} />
             <div className="min-w-0 flex-1">
               <span
+                data-testid="datatable-developer-name"
                 className="font-semibold text-[#1E293B] block truncate text-xs hover:text-[#0F766E] transition-colors"
                 title={title}
               >
@@ -1012,19 +1013,19 @@ export default function BrokerProperties() {
       render: (row) => {
         const rawArea = row.livingArea ?? row.living_area ?? row.sqft ?? row.specs?.livingArea;
         const hasArea = rawArea !== null && rawArea !== undefined && rawArea !== '';
-        let unitLabel = 'm²';
+        let unitLabel = 'mÂ²';
         const units = (row.living_area_units || row.livingAreaUnits || '').toLowerCase();
         if (units.includes('foot') || units.includes('feet') || units === 'sqft') {
           unitLabel = 'sq ft';
         } else if (units.includes('meter') || units === 'sqm') {
-          unitLabel = 'm²';
+          unitLabel = 'mÂ²';
         }
         const areaDisplay = hasArea ? `${rawArea} ${unitLabel}` : 'Not provided';
 
         const beds = row.bedrooms_total ?? row.bedroomsTotal ?? row.beds ?? row.specs?.bedroomsTotal ?? row.specs?.beds;
         const baths = row.bathrooms_total_integer ?? row.bathroomsTotalInteger ?? row.baths ?? row.specs?.bathroomsTotalInteger ?? row.specs?.baths;
-        const bedsDisplay = beds !== null && beds !== undefined && beds !== '' ? beds : '—';
-        const bathsDisplay = baths !== null && baths !== undefined && baths !== '' ? baths : '—';
+        const bedsDisplay = beds !== null && beds !== undefined && beds !== '' ? beds : 'â€”';
+        const bathsDisplay = baths !== null && baths !== undefined && baths !== '' ? baths : 'â€”';
 
         return (
           <div>
@@ -1055,8 +1056,8 @@ export default function BrokerProperties() {
         const rawPrice = row.price_raw ?? (typeof row.price === 'number' ? row.price : null);
         const hasValidPrice = rawPrice !== null && rawPrice !== undefined && Number(rawPrice) > 0;
         const formatted = hasValidPrice
-          ? `₱${Number(rawPrice).toLocaleString()}`
-          : (typeof row.price === 'string' && row.price.startsWith('₱') ? row.price : 'Price not provided');
+          ? `â‚±${Number(rawPrice).toLocaleString()}`
+          : (typeof row.price === 'string' && row.price.startsWith('â‚±') ? row.price : 'Price not provided');
 
         const assocFee = row.association_fee ?? row.associationFee;
         const hasAssocFee = assocFee !== null && assocFee !== undefined && Number(assocFee) > 0;
@@ -1067,8 +1068,8 @@ export default function BrokerProperties() {
               {formatted}
             </span>
             {hasAssocFee ? (
-              <span className="text-[10px] text-[#64748B] block truncate" title={`+₱${Number(assocFee).toLocaleString()}/mo HOA`}>
-                +₱{Number(assocFee).toLocaleString()}/mo HOA
+              <span className="text-[10px] text-[#64748B] block truncate" title={`+â‚±${Number(assocFee).toLocaleString()}/mo HOA`}>
+                +â‚±{Number(assocFee).toLocaleString()}/mo HOA
               </span>
             ) : null}
           </div>
@@ -1334,7 +1335,7 @@ export default function BrokerProperties() {
               {propTitle}
             </span>
             <span className="text-[11px] text-[#64748B] font-mono block mt-0.5">
-              ID: {propId ? String(propId).slice(0, 8) : '—'}
+              ID: {propId ? String(propId).slice(0, 8) : 'â€”'}
             </span>
           </div>
         );
@@ -1655,7 +1656,7 @@ export default function BrokerProperties() {
                 const isSelected = selectedMapPropertyId === prop.id;
                 const isHovered = hoveredMapPropertyId === prop.id;
                 const priceDisplay = typeof prop.price === 'number'
-                  ? `₱${prop.price.toLocaleString()}`
+                  ? `â‚±${prop.price.toLocaleString()}`
                   : (prop.price || 'Price upon request');
 
                 return (
@@ -1754,7 +1755,7 @@ export default function BrokerProperties() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" data-testid="grid-view">
             {filteredProperties.map((prop) => {
               const priceDisplay = typeof prop.price === 'number'
-                ? `₱${prop.price.toLocaleString()}`
+                ? `â‚±${prop.price.toLocaleString()}`
                 : (prop.price || 'Price upon request');
               return (
                 <Card
@@ -1802,7 +1803,7 @@ export default function BrokerProperties() {
                   <div className="px-4 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs text-[#64748B]">
                     <div className="flex items-center gap-2.5 text-[11px]">
                       <span>{prop.bedrooms ?? 0} beds</span>
-                      <span>•</span>
+                      <span>â€¢</span>
                       <span>{prop.bathrooms ?? 0} baths</span>
                     </div>
                     <Button
@@ -2014,7 +2015,7 @@ export default function BrokerProperties() {
                         <div key={`${c.field}-${idx}`} className="px-3 py-2 text-xs flex flex-col gap-0.5 bg-white">
                           <span className="font-semibold text-[#1E293B]">{c.field}</span>
                           <span className="text-[#64748B]">
-                            {String(c.from ?? '—')} → <span className="text-[#0F766E] font-medium">{String(c.to ?? '—')}</span>
+                            {String(c.from ?? 'â€”')} â†’ <span className="text-[#0F766E] font-medium">{String(c.to ?? 'â€”')}</span>
                           </span>
                         </div>
                       ))}
@@ -2068,7 +2069,7 @@ export default function BrokerProperties() {
             const statusMeta = BROKER_STATUS_STYLES[previewStatus] || BROKER_STATUS_STYLES.PUBLISHED;
             const rawPrice = auditTarget.price_raw ?? auditTarget.price;
             const previewPrice = rawPrice != null && !isNaN(Number(rawPrice)) && Number(rawPrice) > 0
-              ? `₱${Number(rawPrice).toLocaleString()}`
+              ? `â‚±${Number(rawPrice).toLocaleString()}`
               : 'Price not provided';
             const previewLoc = [auditTarget.address, auditTarget.city].filter(Boolean).join(', ') || 'Location not set';
             return (
@@ -2132,7 +2133,7 @@ export default function BrokerProperties() {
                       <div key={`${c.field}-${idx}`} className="px-2.5 py-1.5 flex items-center justify-between gap-2">
                         <span className="font-semibold text-[#1E293B]">{c.field}</span>
                         <span className="text-[#64748B]">
-                          {String(c.from ?? '—')} → <span className="text-[#0F766E] font-medium">{String(c.to ?? '—')}</span>
+                          {String(c.from ?? 'â€”')} â†’ <span className="text-[#0F766E] font-medium">{String(c.to ?? 'â€”')}</span>
                         </span>
                       </div>
                     ))}
@@ -2154,7 +2155,7 @@ export default function BrokerProperties() {
                       <p className="text-[#475569]">
                         By <span className="font-semibold text-[#1E293B]">{ev.actorName || 'Broker / System'}</span>
                         {ev.actorRole ? ` (${ev.actorRole})` : ''}
-                        {ev.outcome ? ` • ${ev.outcome}` : ''}
+                        {ev.outcome ? ` â€¢ ${ev.outcome}` : ''}
                       </p>
                       {ev.reason && <p className="text-[#64748B]">{ev.reason}</p>}
                       {renderAuditChanges(ev.newValues?.changes)}

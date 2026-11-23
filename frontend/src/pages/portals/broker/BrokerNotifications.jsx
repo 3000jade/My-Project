@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import PageHeader from '../../../components/dashboard/PageHeader';
 import {
   Card,
@@ -29,9 +30,21 @@ import {
 } from 'lucide-react';
 import { Spinner } from '../../../components/ui';
 import { ListSkeleton } from '../../../components/dashboard/skeletons';
-import { notificationService } from '../../../services/notificationService';
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyDescription,
+} from '../../../components/ui/empty';
+import {
+  notificationService,
+  formatNotificationTime,
+  getNotificationTargetPath,
+} from '../../../services/notificationService';
 
 export default function BrokerNotifications() {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [notifications, setNotifications] = useState([]);
   const [filter, setFilter] = useState('ALL'); // 'ALL' | 'UNREAD' | 'READ'
@@ -117,6 +130,7 @@ export default function BrokerNotifications() {
       <PageHeader
         title="Notifications & System Alerts"
         subtitle="Operational event feed for client inquiries, agent accreditation filings, and transaction milestones."
+        className="mb-0"
         actions={
           <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 w-full sm:w-auto min-w-0">
             <Button
@@ -206,14 +220,20 @@ export default function BrokerNotifications() {
           </Tabs>
 
           {loading ? (
-            <Spinner centered size="lg" text="Loading system notifications..." />
+            <ListSkeleton rows={5} />
           ) : filtered.length === 0 ? (
-            <Card data-testid="broker-card" className="py-16 text-center bg-white dark:bg-slate-900 rounded-xl border border-[#E2E8F0] dark:border-slate-800 p-8 font-sans shadow-xs">
-              <BellOff className="size-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
-              <h3 className="text-base font-bold text-[#1E293B] dark:text-slate-100">No notifications found</h3>
-              <p className="text-xs text-[#64748B] dark:text-slate-400 mt-1">
-                There are no notifications matching the {filter.toLowerCase()} filter.
-              </p>
+            <Card data-testid="broker-card" className="bg-white dark:bg-slate-900 rounded-xl border border-[#E2E8F0] dark:border-slate-800 shadow-xs">
+              <Empty className="p-12">
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <BellOff />
+                  </EmptyMedia>
+                  <EmptyTitle>No notifications found</EmptyTitle>
+                  <EmptyDescription>
+                    There are no notifications matching the {filter.toLowerCase()} filter.
+                  </EmptyDescription>
+                </EmptyHeader>
+              </Empty>
             </Card>
           ) : (
             <div className="flex flex-col gap-3">
@@ -221,7 +241,11 @@ export default function BrokerNotifications() {
                 <Card
                   key={item.id}
                   data-testid="broker-card"
-                  className={`border border-[#E2E8F0] dark:border-slate-800 shadow-xs transition-colors overflow-hidden ${
+                  onClick={async () => {
+                    if (!item.is_read) await toggleRead(item.id, false);
+                    navigate(getNotificationTargetPath(item, 'broker'));
+                  }}
+                  className={`border border-[#E2E8F0] dark:border-slate-800 shadow-xs transition-colors overflow-hidden cursor-pointer ${
                     !item.is_read ? 'bg-[#FF6B6B]/5 dark:bg-rose-950/20' : 'bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/60'
                   }`}
                 >
@@ -247,7 +271,7 @@ export default function BrokerNotifications() {
                           {item.message}
                         </p>
                         <div className="flex items-center gap-3 text-[11px] text-[#64748B] dark:text-slate-400 pt-1">
-                          <span>{item.timestamp}</span>
+                          <span className="tabular-nums">{formatNotificationTime(item.created_at)}</span>
                           {item.related_record && (
                             <>
                               <span>•</span>
@@ -262,7 +286,10 @@ export default function BrokerNotifications() {
                       type="button"
                       variant="ghost"
                       size="sm"
-                      onClick={() => toggleRead(item.id, item.is_read)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleRead(item.id, item.is_read);
+                      }}
                       aria-label={item.is_read ? "Mark Unread" : "Mark Read"}
                       className="text-xs font-semibold text-[#0F766E] dark:text-teal-400 shrink-0"
                     >

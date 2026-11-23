@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+﻿import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 
 import { mockProperties } from '../../mockData/mockProperties';
-import { propertyService } from '../../services/propertyService';
+import { propertyService, formatPropertyAddressHeading } from '../../services/propertyService';
 import { inquiryService } from '../../services/inquiryService';
 import useViewingList from '../../hooks/useViewingList';
 import AuthContext from '../../context/AuthContext';
@@ -76,7 +76,7 @@ function formatPhpCurrency(val) {
   if (val === undefined || val === null || val === '') return null;
   const num = typeof val === 'number' ? val : Number(String(val).replace(/[^0-9.-]+/g, ''));
   if (!Number.isFinite(num) || num <= 0) return String(val);
-  return `₱${num.toLocaleString('en-PH')}`;
+  return `â‚±${num.toLocaleString('en-PH')}`;
 }
 
 function SectionHeading({ eyebrow, title, rightSlot }) {
@@ -262,7 +262,7 @@ export default function PropertyListingView() {
     property?.pricing?.rentFrequency ||
     (property?.priceSuffix ? property.priceSuffix.replace(/^\s*\/?\s*/, '') : 'mo');
   const currency = property?.currency || property?.pricing?.currency || 'PHP';
-  const currencySymbol = currency === 'PHP' ? '₱' : currency;
+  const currencySymbol = currency === 'PHP' ? 'â‚±' : currency;
 
   const formattedPriceDisplay = useMemo(() => {
     if (property?.formattedPrice) return property.formattedPrice;
@@ -312,7 +312,7 @@ export default function PropertyListingView() {
     const areaVal =
       typeof basisArea === 'number' ? basisArea : parseFloat(String(basisArea || '0'));
     if (rawPrice > 0 && areaVal > 0) {
-      return `₱${Math.round(rawPrice / areaVal).toLocaleString('en-PH')} / sqm`;
+      return `â‚±${Math.round(rawPrice / areaVal).toLocaleString('en-PH')} / sqm`;
     }
     return null;
   }, [custom.pricePerSqm, isVacantLot, lotArea, livingArea, rawPrice]);
@@ -885,9 +885,9 @@ export default function PropertyListingView() {
     [phase, block, lot].filter(Boolean).join(', '),
   ]
     .filter(Boolean)
-    .join(' — ');
+    .join(' â€” ');
 
-  const buildingSummary = [buildingName, towerName].filter(Boolean).join(' · ');
+  const buildingSummary = [buildingName, towerName].filter(Boolean).join(' Â· ');
 
   const specRows = [
     { label: 'Property Type', value: propertyType },
@@ -1148,7 +1148,7 @@ export default function PropertyListingView() {
                             className="min-h-11 px-4 rounded-lg text-xs normal-case tracking-normal"
                           >
                             <Compass data-icon="inline-start" className="text-[#0F766E]" />
-                            360° Street View
+                            360Â° Street View
                           </Button>
                         </div>
                       }
@@ -1159,7 +1159,7 @@ export default function PropertyListingView() {
                         {isGeneralAreaOnly
                           ? 'Map Pin: General Area Only'
                           : 'Map Pin: Exact Location'}
-                        {region ? ` · ${region}` : ''}
+                        {region ? ` Â· ${region}` : ''}
                       </span>
                     </CardDescription>
                   </CardHeader>
@@ -1347,7 +1347,7 @@ export default function PropertyListingView() {
                             className="font-semibold text-[#1E293B]"
                           >
                             {assocFee != null && !isNaN(assocFee)
-                              ? `₱${Number(assocFee).toLocaleString('en-PH')}`
+                              ? `â‚±${Number(assocFee).toLocaleString('en-PH')}`
                               : 'Included in dues'}
                           </span>
                         </div>
@@ -1522,7 +1522,7 @@ export default function PropertyListingView() {
                   Contact Listing Agent
                 </CardTitle>
                 <CardDescription className="text-xs">
-                  {agent.name} · {agent.brokerage}
+                  {agent.name} Â· {agent.brokerage}
                 </CardDescription>
               </div>
               <Button

@@ -14,11 +14,12 @@ export function validatePropertyForm({
   // 1. Core Draft Validation (Essential DB schema requirements)
   const draftValidationErrors = [];
 
-  if (!formData.title || formData.title.trim().length === 0) {
+  const devName = formData.developer_name || formData.title || '';
+  if (!devName || devName.trim().length === 0) {
     draftValidationErrors.push({
-      field: 'Title',
+      field: 'Developer Name',
       step: 1,
-      message: 'Property title is required by the database schema.',
+      message: 'Developer Name is required.',
     });
   }
 
@@ -57,11 +58,11 @@ export function validatePropertyForm({
   // 2. Full Publication Validation
   const finalValidationErrors = [...draftValidationErrors];
 
-  if (formData.title && formData.title.trim().length < 3) {
+  if (devName && devName.trim().length < 2) {
     finalValidationErrors.push({
-      field: 'Title',
+      field: 'Developer Name',
       step: 1,
-      message: 'Provide a title with at least 3 characters.',
+      message: 'Provide a Developer Name with at least 2 characters.',
     });
   }
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MessageSquare, Building2, Clock } from 'lucide-react';
 import StatusBadge from '../../../components/dashboard/StatusBadge';
@@ -91,6 +91,37 @@ export default function BrokerInquiries() {
   const inactiveCount = inquiries.filter((i) => i.business_status === 'inactive').length;
   const unassignedCount = inquiries.filter((i) => i.operational_status === 'unassigned' || !i.agent_id).length;
   const overdueCount = inquiries.filter((i) => i.operational_status === 'overdue').length;
+  const aiChatbotCount = inquiries.filter((i) => i.source === 'ai_chatbot').length;
+
+  const eligibleAgents = agents.filter(
+    (a) => a.verification_status !== 'REJECTED' && a.verification_status !== 'PENDING'
+  );
+
+  const handleQuickAssign = async (inquiryId, agentId) => {
+    if (!agentId) return;
+    const selected = eligibleAgents.find((a) => a.id === agentId);
+    try {
+      await inquiryService.assignAgent(inquiryId, agentId, 'Quick-assigned by Broker');
+      setInquiries((prev) =>
+        prev.map((item) =>
+          item.id === inquiryId
+            ? { ...item, agent_id: agentId, agent_name: selected?.name || selected?.fullName || item.agent_name }
+            : item
+        )
+      );
+      toast({
+        title: 'Consultant Assigned',
+        description: `Assigned to ${selected?.name || selected?.fullName || 'eligible agent'}.`,
+        variant: 'success',
+      });
+    } catch (err) {
+      toast({
+        title: 'Assignment Failed',
+        description: err.message || 'Could not assign consultant.',
+        variant: 'destructive',
+      });
+    }
+  };
 
   const avgResponseMinutes =
     metrics?.avgFirstHumanResponseMinutes != null
@@ -152,7 +183,7 @@ export default function BrokerInquiries() {
       header: 'Latest Message',
       render: (row) => (
         <p className="text-xs text-on-surface-variant line-clamp-2 max-w-xs">
-          {row.last_message ? `“${row.last_message}”` : 'No messages yet'}
+          {row.last_message ? `â€œ${row.last_message}â€` : 'No messages yet'}
         </p>
       ),
     },

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { stripHtml } from '@/pages/portals/broker/components/property-form/DescriptionEditorModal';
@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { resolveDriveImageUrl } from '../../../services/driveService';
+import { formatPropertyAddressHeading, formatMergedStatusPill } from '../../../services/propertyService';
 import useViewingList from '../../../hooks/useViewingList';
 import ViewPropertyButton from '../buttons/ViewPropertyButton';
 import ShareListingModal from '../modals/ShareListingModal';
@@ -80,7 +81,7 @@ export default function PropertyCard({
   const isClosed = lowerStatus.includes('closed') || lowerStatus.includes('sold');
 
   // Title mapping (Name -> properties.title)
-  const propertyTitle = property.title || property.name || 'Untitled Property';
+  const propertyTitle = formatPropertyAddressHeading(property, 'Metro Manila, Philippines');
 
   // Transaction classification & Badge: For Sale / For Rent
   const transactionType = property.transaction_type || property.transactionType || property.specs?.transactionType || '';
@@ -91,6 +92,7 @@ export default function PropertyCard({
   );
   const typeBadgeLabel = isRent ? 'For Rent' : 'For Sale';
   const isFeatured = Boolean(property.is_featured || property.isFeatured);
+  const statusPill = formatMergedStatusPill(property);
 
   // Property Type
   const propertyType = property.property_type || property.propertyType || property.specs?.propertyType || property.PropertyType || 'Residential';
@@ -103,7 +105,7 @@ export default function PropertyCard({
   if (property.formattedPrice) {
     formattedPriceDisplay = property.formattedPrice;
   } else if (rawPrice > 0) {
-    formattedPriceDisplay = `₱ ${rawPrice.toLocaleString('en-PH')}`;
+    formattedPriceDisplay = `â‚± ${rawPrice.toLocaleString('en-PH')}`;
   } else if (typeof property.price === 'string' && property.price.trim()) {
     formattedPriceDisplay = property.price;
   } else {
@@ -242,39 +244,12 @@ export default function PropertyCard({
               </span>
             )}
 
-            {isUnderContract && (
-              <span 
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full backdrop-blur-md bg-amber-50/95 text-amber-800 border border-amber-300 text-[11px] font-bold shadow-xs uppercase tracking-wide" 
-                data-testid="card-status-badge"
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                Under Contract
-              </span>
-            )}
-
-            {isClosed && (
-              <span 
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full backdrop-blur-md bg-rose-600 text-white border border-rose-700 text-[11px] font-extrabold shadow-sm uppercase tracking-wider" 
-                data-testid="card-status-badge"
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                SOLD / CLOSED
-              </span>
-            )}
-
-            {isFeatured && (
-              <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-[#FF6B6B] text-white text-[11px] font-bold shadow-xs uppercase tracking-wide">
-                Featured
-              </span>
-            )}
-
             {isSelected && typeof onSelect === 'function' && (
               <span
                 data-testid="card-map-focused-badge"
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#0F766E] text-white text-[11px] font-semibold shadow-xs"
+                className="inline-flex items-center px-2.5 py-1 rounded-full bg-[#0F766E] text-white text-[11px] font-semibold shadow-xs"
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-[#FF6B6B] animate-pulse" />
-                <span>Pinned on Map • Click again for details</span>
+                Pinned on Map â€¢ Click again for details
               </span>
             )}
           </div>
@@ -309,14 +284,14 @@ export default function PropertyCard({
           {/* Under Contract Contextual Overlay Banner */}
           {isUnderContract && (
             <div className="absolute bottom-0 inset-x-0 bg-amber-500/90 backdrop-blur-xs text-white text-[10px] font-bold py-1 px-3 text-center uppercase tracking-wider z-10 shadow-xs">
-              Under Contract • Backup Inquiries Welcome
+              Under Contract â€¢ Backup Inquiries Welcome
             </div>
           )}
 
           {/* Sold / Closed Contextual Overlay Banner */}
           {isClosed && (
             <div className="absolute bottom-0 inset-x-0 bg-slate-900/85 backdrop-blur-xs text-white text-[10px] font-bold py-1 px-3 text-center uppercase tracking-widest z-10 shadow-xs">
-              Transaction Closed • Sold Benchmark
+              Transaction Closed â€¢ Sold Benchmark
             </div>
           )}
         </div>
@@ -352,7 +327,7 @@ export default function PropertyCard({
               <div className="flex items-center gap-1.5">
                 <IconBed size={16} stroke={1.8} className="text-slate-400 shrink-0" />
                 <span>
-                  <span className="font-medium text-slate-700">{beds != null ? beds : '—'}</span>{' '}
+                  <span className="font-medium text-slate-700">{beds != null ? beds : 'â€”'}</span>{' '}
                   <span className="lowercase">Beds</span>
                 </span>
               </div>
@@ -361,7 +336,7 @@ export default function PropertyCard({
               <div className="flex items-center gap-1.5">
                 <IconBath size={16} stroke={1.8} className="text-slate-400 shrink-0" />
                 <span>
-                  <span className="font-medium text-slate-700">{baths != null ? baths : '—'}</span>{' '}
+                  <span className="font-medium text-slate-700">{baths != null ? baths : 'â€”'}</span>{' '}
                   <span className="lowercase">Baths</span>
                 </span>
               </div>
@@ -370,7 +345,7 @@ export default function PropertyCard({
               <div className="flex items-center gap-1.5">
                 <Car className="size-4 text-slate-400 shrink-0" aria-hidden="true" />
                 <span>
-                  <span className="font-medium text-slate-700">{parking != null ? parking : '—'}</span>{' '}
+                  <span className="font-medium text-slate-700">{parking != null ? parking : 'â€”'}</span>{' '}
                   <span className="lowercase">parking space</span>
                 </span>
               </div>
@@ -384,7 +359,7 @@ export default function PropertyCard({
                       {floorAreaFormatted}
                     </span>
                   ) : (
-                    <span>— m²</span>
+                    <span>â€” mÂ²</span>
                   )}
                 </span>
               </div>

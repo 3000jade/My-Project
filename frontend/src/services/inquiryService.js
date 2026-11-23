@@ -48,6 +48,9 @@ export function normalizeInquiry(raw = {}) {
     agent_id: raw.agent_id || raw.agentId || null,
     agent_name: raw.agent_name || raw.agentName || null,
     status: normalizedStatus,
+    source: raw.source || 'property_page',
+    consentAccepted: Boolean(raw.consentAccepted ?? raw.consent_accepted ?? false),
+    preferredReplyChannel: raw.preferredReplyChannel || raw.preferred_reply_channel || 'email',
     business_status: raw.business_status || raw.businessStatus || 'active',
     operational_status:
       raw.operational_status ||

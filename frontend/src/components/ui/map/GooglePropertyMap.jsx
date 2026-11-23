@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+﻿import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useNavigate, useInRouterContext } from 'react-router-dom';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -11,6 +11,7 @@ import {
   formatPriceBadge,
 } from './googleMapMarkers';
 import { getPropertyCoordinates, DEFAULT_METRO_MANILA_COORDS } from '../../../utils/propertyCoordinates';
+import { formatPropertyAddressHeading } from '../../../services/propertyService';
 import { MOCK_PH_DISTRICTS } from '../../../mockData/mockMapDistricts';
 
 /**
@@ -423,7 +424,7 @@ export default function GooglePropertyMap({
           onEachFeature: (feature, featureLayer) => {
             if (feature?.properties?.name && typeof featureLayer.bindTooltip === 'function') {
               featureLayer.bindTooltip(
-                `<strong>${feature.properties.name}</strong><br/><span style="font-size:11px;color:#64748B;">${feature.properties.city} • ${feature.properties.propertyCount || 0} Residences</span>`,
+                `<strong>${feature.properties.name}</strong><br/><span style="font-size:11px;color:#64748B;">${feature.properties.city} â€¢ ${feature.properties.propertyCount || 0} Residences</span>`,
                 { sticky: true, className: 'district-tooltip' }
               );
             }
@@ -733,9 +734,9 @@ export default function GooglePropertyMap({
 
       const coordsToFit =
         preferMetroManilaCluster &&
-        !singlePropertyMode &&
-        metroManilaCoords.length >= 2 &&
-        metroManilaCoords.length >= allCoords.length * 0.5
+          !singlePropertyMode &&
+          metroManilaCoords.length >= 2 &&
+          metroManilaCoords.length >= allCoords.length * 0.5
           ? metroManilaCoords
           : allCoords;
 
@@ -813,15 +814,15 @@ export default function GooglePropertyMap({
     if (mapEngine === 'google' && googleMapInstanceRef.current) {
       googleMapInstanceRef.current.panTo({ lat: c.lat, lng: c.lng });
       const currentZoom = googleMapInstanceRef.current.getZoom?.() || 14;
-      if (currentZoom < 16) {
-        googleMapInstanceRef.current.setZoom(16);
+      if (currentZoom < 15) {
+        googleMapInstanceRef.current.setZoom(15);
       }
     } else if (mapEngine === 'leaflet' && leafletMapInstanceRef.current) {
       const currentZoom =
         typeof leafletMapInstanceRef.current.getZoom === 'function'
           ? leafletMapInstanceRef.current.getZoom()
           : 14;
-      const nextZoom = Math.max(currentZoom || 14, 16);
+      const nextZoom = Math.max(currentZoom || 14, 15);
       if (typeof leafletMapInstanceRef.current.setView === 'function') {
         leafletMapInstanceRef.current.setView([c.lat, c.lng], nextZoom, { animate: true });
       } else if (typeof leafletMapInstanceRef.current.panTo === 'function') {
@@ -947,8 +948,8 @@ export default function GooglePropertyMap({
                 type="button"
                 onClick={() => setEmbedLayer(layer.id)}
                 className={`px-3 py-1.5 rounded-full text-xs font-semibold min-h-[36px] transition-colors cursor-pointer ${embedLayer === layer.id
-                    ? 'bg-[#0F766E] text-white shadow-xs'
-                    : 'text-[#64748B] hover:text-[#1E293B] hover:bg-slate-100'
+                  ? 'bg-[#0F766E] text-white shadow-xs'
+                  : 'text-[#64748B] hover:text-[#1E293B] hover:bg-slate-100'
                   }`}
               >
                 {layer.label}
@@ -987,7 +988,7 @@ export default function GooglePropertyMap({
                     }}
                     className="flex-1 h-9 px-3 bg-white border border-[#E2E8F0] text-[#1E293B] text-xs font-semibold rounded-lg hover:bg-slate-50 transition-colors flex items-center justify-center cursor-pointer shadow-2xs"
                   >
-                    360° Street View
+                    360Â° Street View
                   </button>
                 )}
                 <button
@@ -996,7 +997,7 @@ export default function GooglePropertyMap({
                   className="flex-1 h-9 px-4 bg-[#FF6B6B] hover:bg-[#FF5252] text-[#1E293B] text-xs font-bold rounded-lg transition-colors shadow-xs flex items-center justify-center gap-1 cursor-pointer"
                 >
                   <span>View Residence</span>
-                  <span>→</span>
+                  <span>â†’</span>
                 </button>
               </div>
             </div>
@@ -1020,16 +1021,16 @@ export default function GooglePropertyMap({
 
       {/* Floating Bauhaus Glass Minimal HUD Dock (Narrow & Compact) */}
       {showControls && (
-        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-0.5 p-1 bg-white/95 backdrop-blur-md rounded-full border border-[#E2E8F0] shadow-md max-w-[calc(100%-1rem)] overflow-x-auto no-scrollbar">
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 p-1 px-1.5 bg-white/95 backdrop-blur-md rounded-full border border-[#E2E8F0] shadow-md max-w-[calc(100%-1rem)] overflow-x-auto no-scrollbar">
           {/* Layer Switcher */}
           <button
             type="button"
             onClick={() => setActiveLayer('vector')}
             aria-label="Street"
             title="Street View / Roadmap"
-            className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer shrink-0 ${activeLayer === 'vector'
-                ? 'bg-[#0F766E] text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            className={`px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all cursor-pointer shrink-0 ${activeLayer === 'vector'
+              ? 'bg-[#0F766E] text-white shadow-xs'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
           >
             Street
@@ -1039,9 +1040,9 @@ export default function GooglePropertyMap({
             onClick={() => setActiveLayer('satellite')}
             aria-label="Satellite"
             title="Satellite Imagery"
-            className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer shrink-0 ${activeLayer === 'satellite'
-                ? 'bg-[#0F766E] text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            className={`px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all cursor-pointer shrink-0 ${activeLayer === 'satellite'
+              ? 'bg-[#0F766E] text-white shadow-xs'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
           >
             Satellite
@@ -1051,9 +1052,9 @@ export default function GooglePropertyMap({
             onClick={() => setShowDistricts((prev) => !prev)}
             aria-label="Districts"
             title="Toggle Philippine Prime Business Districts"
-            className={`flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer shrink-0 ${showDistricts
-                ? 'bg-[#FF6B6B] text-[#1E293B] shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all cursor-pointer shrink-0 ${showDistricts
+              ? 'bg-[#FF6B6B] text-[#1E293B] shadow-xs'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
           >
             <span>Districts</span>
@@ -1067,7 +1068,7 @@ export default function GooglePropertyMap({
             type="button"
             onClick={handleFitAll}
             title="Fit All Property Listings into View"
-            className="flex items-center gap-1 px-2 py-1 text-[10px] font-bold text-slate-700 hover:text-[#0F766E] hover:bg-teal-50/70 rounded-full transition-colors cursor-pointer uppercase tracking-wider shrink-0"
+            className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-slate-700 hover:text-[#0F766E] hover:bg-teal-50/70 rounded-full transition-colors cursor-pointer uppercase tracking-wider shrink-0"
           >
             <span className="material-symbols-outlined text-[13px]">crop_free</span>
             <span>Fit All</span>
@@ -1094,7 +1095,7 @@ export default function GooglePropertyMap({
               }}
               aria-label="Search as I move map"
               title="Search as I move map"
-              className={`flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer whitespace-nowrap shrink-0 ${isSearchActive ? 'bg-[#CCFBF1] text-[#0F766E]' : 'text-slate-600 hover:bg-slate-100'
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider transition-colors cursor-pointer whitespace-nowrap shrink-0 ${isSearchActive ? 'bg-[#CCFBF1] text-[#0F766E]' : 'text-slate-600 hover:bg-slate-100'
                 }`}
             >
               <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isSearchActive ? 'bg-[#0F766E] animate-pulse' : 'bg-slate-300'}`} />
@@ -1108,7 +1109,7 @@ export default function GooglePropertyMap({
       {selectedProperty && !singlePropertyMode && dismissedPreviewId !== selectedProperty.id && (
         <div
           data-testid="map-selected-property-card"
-          className="absolute bottom-4 left-4 z-20 w-[calc(100%-5rem)] max-w-sm pointer-events-auto"
+          className="absolute bottom-4 left-4 z-20 w-[calc(100%-5rem)] max-w-xs pointer-events-auto"
         >
           <div className="bg-white/95 backdrop-blur-md rounded-xl border border-[#E2E8F0] shadow-xl overflow-hidden p-3 space-y-2.5">
             <div className="flex items-start justify-between gap-2">
@@ -1117,15 +1118,17 @@ export default function GooglePropertyMap({
                   {formatPriceBadge(selectedProperty.price_raw || selectedProperty.price || 0, selectedProperty.currency)}
                 </span>
                 <h4 className="text-sm font-semibold text-[#1E293B] mt-1 line-clamp-1">
-                  {selectedProperty.title || selectedProperty.name || 'Luxury Residence'}
+                  {formatPropertyAddressHeading(selectedProperty, 'Luxury Residence')}
                 </h4>
                 <p className="text-xs text-[#64748B] truncate mt-0.5">
-                  {[
-                    selectedProperty.subdivision || selectedProperty.location?.subdivisionName,
-                    selectedProperty.city || selectedProperty.location?.city,
-                  ]
-                    .filter(Boolean)
-                    .join(', ') ||
+                  {selectedProperty.developer_name ||
+                    selectedProperty.developerName ||
+                    [
+                      selectedProperty.subdivision || selectedProperty.location?.subdivisionName,
+                      selectedProperty.city || selectedProperty.location?.city,
+                    ]
+                      .filter(Boolean)
+                      .join(', ') ||
                     (typeof selectedProperty.location === 'string' ? selectedProperty.location : '') ||
                     'Metro Manila'}
                 </p>
@@ -1136,7 +1139,7 @@ export default function GooglePropertyMap({
                 onClick={() => setDismissedPreviewId(selectedProperty.id)}
                 className="w-6 h-6 rounded-full flex items-center justify-center text-[#64748B] hover:text-[#1E293B] hover:bg-slate-100 transition-colors cursor-pointer shrink-0 text-xs"
               >
-                ✕
+                âœ•
               </button>
             </div>
 
@@ -1148,18 +1151,18 @@ export default function GooglePropertyMap({
                     const coords = getPropertyCoordinates(selectedProperty);
                     onOpenStreetView(coords);
                   }}
-                  className="flex-1 h-9 px-2.5 bg-white border border-[#E2E8F0] text-[#1E293B] text-xs font-semibold rounded-lg hover:bg-slate-50 transition-colors flex items-center justify-center cursor-pointer whitespace-nowrap"
+                  className="flex-1 h-9 px-2.5 bg-white border border-[#E2E8F0] text-[#1E293B] text-xs font-semibold rounded-lg hover:bg-slate-50 transition-colors flex items-center justify-center cursor-pointer"
                 >
-                  360° Street View
+                  360Â° Street View
                 </button>
               )}
               <button
                 type="button"
                 onClick={() => navigate(`/properties/${selectedProperty.id}`)}
-                className="flex-1 h-9 px-3 bg-[#FF6B6B] hover:bg-[#EE5A5A] text-[#1E293B] text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap"
+                className="flex-1 h-9 px-3 bg-[#FF6B6B] hover:bg-[#EE5A5A] text-[#1E293B] text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-1 cursor-pointer"
               >
                 <span>View Residence</span>
-                <span>→</span>
+                <span>â†’</span>
               </button>
             </div>
           </div>
@@ -1188,7 +1191,7 @@ export default function GooglePropertyMap({
           aria-label="Zoom out"
           className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-700 hover:text-[#0F766E] hover:bg-slate-100 transition-colors cursor-pointer font-bold text-lg select-none"
         >
-          −
+          âˆ’
         </button>
       </div>
     </div>

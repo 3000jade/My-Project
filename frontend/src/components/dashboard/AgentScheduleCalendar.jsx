@@ -325,7 +325,9 @@ export default function AgentScheduleCalendar({
 
       const [apptList, agentList, availData] = await Promise.all([
         appointmentService.getAppointments(queryParams),
-        agentService?.getAgents ? agentService.getAgents().catch(() => []) : Promise.resolve([]),
+        role === 'broker' && agentService?.getAgents
+          ? agentService.getAgents().catch(() => [])
+          : Promise.resolve([]),
         agentService?.getAvailability
           ? agentService.getAvailability(effectiveAgent || 'agent-1').catch(() => null)
           : Promise.resolve(null),

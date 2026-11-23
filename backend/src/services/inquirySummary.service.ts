@@ -37,7 +37,7 @@ const PROMPT_INJECTION_REGEX =
 
 let summariesByInquiry = new Map<string, InquiryAiSummary[]>();
 
-function stripPromptInjectionInstructions(text: string): { sanitized: string; blocked: boolean } {
+export function stripPromptInjectionInstructions(text: string): { sanitized: string; blocked: boolean } {
   const blocked = PROMPT_INJECTION_REGEX.test(text);
   // Keep factual parts while neutralizing imperative instruction injection phrases
   const sanitized = text.replace(

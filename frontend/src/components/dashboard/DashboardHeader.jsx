@@ -1,11 +1,30 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useLocation, Link, useNavigate } from 'react-router-dom';
-import { 
-  Bell, Search, Menu, CheckCheck, ChevronDown, User, LogOut, Home, 
-  LayoutDashboard, X, ExternalLink, History, ArrowRight, ShieldCheck 
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import {
+  Bell,
+  Search,
+  Menu,
+  CheckCheck,
+  Check,
+  Circle,
+  ChevronDown,
+  User,
+  LogOut,
+  Home,
+  LayoutDashboard,
+  X,
+  ExternalLink,
+  Mail,
+  Calendar,
+  ShieldCheck,
+  Banknote,
+  Building2,
 } from 'lucide-react';
-import { notificationService } from '../../services/notificationService';
-import { auditService } from '../../services/auditService';
+import {
+  notificationService,
+  formatNotificationTime,
+  getNotificationTargetPath,
+} from '../../services/notificationService';
 import { useAuth } from '../../context/AuthContext';
 import { cn } from '@/utils/cn';
 import {
@@ -15,6 +34,15 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyDescription,
+} from '@/components/ui/empty';
 
 export default function DashboardHeader({
   role = 'broker',
@@ -23,34 +51,9 @@ export default function DashboardHeader({
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
-  const [activeTab, setActiveTab] = useState('notifications');
+  const [notifFilter, setNotifFilter] = useState('ALL'); // 'ALL' | 'UNREAD'
   const [notifications, setNotifications] = useState([]);
-  const [recentActivities, setRecentActivities] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
-
-  const notificationRef = useRef(null);
-
-  // Close notifications popover on outside click or escape
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
-        setShowNotifications(false);
-      }
-    }
-
-    function handleKeyDown(e) {
-      if (e.key === 'Escape') {
-        setShowNotifications(false);
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -69,29 +72,28 @@ export default function DashboardHeader({
     };
   }, []);
 
-  useEffect(() => {
-    let isMounted = true;
-    if (showNotifications) {
-      (async () => {
-        try {
-          const events = await auditService.listAuditEvents({ limit: 6 });
-          if (isMounted && Array.isArray(events)) {
-            setRecentActivities(events);
-          }
-        } catch {
-          // Handled silently
-        }
-      })();
-    }
-    return () => {
-      isMounted = false;
-    };
-  }, [showNotifications]);
+  const unreadCount = notifications.filter((n) => !n.is_read).length;
+  const badgeLabel = unreadCount > 9 ? '9+' : String(unreadCount);
+  const visibleNotifications =
+    notifFilter === 'UNREAD' ? notifications.filter((n) => !n.is_read) : notifications;
 
-  const unreadCount = notifications.filter(n => !n.is_read).length;
+  const getNotifIcon = (type) => {
+    switch (type) {
+      case 'inquiry':
+        return <Mail className="size-4 text-[#0F766E]" />;
+      case 'appointment':
+        return <Calendar className="size-4 text-blue-700" />;
+      case 'verification':
+        return <ShieldCheck className="size-4 text-amber-700" />;
+      case 'sale':
+        return <Banknote className="size-4 text-emerald-700" />;
+      default:
+        return <Building2 className="size-4 text-[#64748B]" />;
+    }
+  };
 
   const markAllRead = async () => {
-    setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+    setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
     try {
       await notificationService.markAllAsRead();
     } catch (err) {
@@ -99,15 +101,32 @@ export default function DashboardHeader({
     }
   };
 
+  const toggleNotifRead = async (e, n) => {
+    e.stopPropagation();
+    const nextRead = !n.is_read;
+    setNotifications((prev) =>
+      prev.map((item) => (item.id === n.id ? { ...item, is_read: nextRead } : item))
+    );
+    try {
+      await notificationService.markAsRead(n.id, nextRead);
+    } catch (err) {
+      console.warn('Failed to toggle notification status:', err.message);
+    }
+  };
+
   const handleNotificationClick = async (n) => {
     if (!n.is_read) {
-      setNotifications(prev => prev.map(item => item.id === n.id ? { ...item, is_read: true } : item));
+      setNotifications((prev) =>
+        prev.map((item) => (item.id === n.id ? { ...item, is_read: true } : item))
+      );
       try {
         await notificationService.markAsRead(n.id, true);
       } catch (err) {
         console.warn('Failed to mark notification as read:', err.message);
       }
     }
+    setShowNotifications(false);
+    navigate(getNotificationTargetPath(n, role));
   };
 
   const handleLogout = async () => {
@@ -188,175 +207,157 @@ export default function DashboardHeader({
 
       {/* Right: Notifications & User Avatar Profile Dropdown */}
       <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-        {/* Notification Bell Popover */}
-        <div className="relative" ref={notificationRef}>
-          <button
-            onClick={() => setShowNotifications(prev => !prev)}
-            className="w-10 h-10 rounded-lg text-slate-500 hover:text-[#1E293B] hover:bg-slate-100 flex items-center justify-center transition-colors relative cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#0F766E]"
-            aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
-            aria-expanded={showNotifications}
+        {/* Smart Notification Bell Popover (All / Unread + 9+ Badge) */}
+        <Popover open={showNotifications} onOpenChange={setShowNotifications}>
+          <PopoverTrigger
+            render={
+              <button
+                type="button"
+                className="size-10 rounded-lg text-slate-500 hover:text-[#1E293B] hover:bg-slate-100 flex items-center justify-center transition-colors relative cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#0F766E]"
+                aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
+              />
+            }
           >
-            <Bell className="w-4 h-4" />
+            <Bell className="size-4" />
             {unreadCount > 0 && (
-              <span className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-[#FF6B6B] ring-2 ring-white" />
+              <span
+                data-testid="notification-unread-badge"
+                className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#FF6B6B] text-[#1E293B] text-[10px] font-bold leading-none inline-flex items-center justify-center ring-2 ring-white tabular-nums"
+              >
+                {badgeLabel}
+              </span>
             )}
-          </button>
+          </PopoverTrigger>
 
-          {/* Slide-Down Notifications & Recent Activity Popover Menu */}
-          {showNotifications && (
-            <div className="absolute right-0 mt-2 w-84 sm:w-96 bg-white rounded-xl shadow-xl border border-[#E2E8F0] py-2 z-50 animate-in fade-in duration-150 font-sans">
-              {/* Dual-Tab Navigation Bar */}
-              <div className="px-4 pt-1 pb-2 border-b border-[#E2E8F0] flex items-center justify-between gap-2">
-                <div className="flex items-center gap-3">
+          <PopoverContent
+            align="end"
+            className="w-88 sm:w-96 p-0 rounded-xl border border-[#E2E8F0] bg-white shadow-xl overflow-hidden font-sans"
+          >
+            {/* Header: Title + Mark all read + All / Unread Tabs */}
+            <div className="p-3 border-b border-[#E2E8F0] bg-[#F8FAFC] flex flex-col gap-2.5">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#1E293B]">
+                  Notifications
+                </span>
+                {unreadCount > 0 && (
                   <button
                     type="button"
-                    onClick={() => setActiveTab('notifications')}
-                    className={cn(
-                      "text-xs font-semibold pb-1.5 border-b-2 transition-colors cursor-pointer",
-                      activeTab === 'notifications'
-                        ? "border-[#0F766E] text-[#0F766E]"
-                        : "border-transparent text-slate-500 hover:text-[#1E293B]"
-                    )}
-                  >
-                    Notifications {unreadCount > 0 && `(${unreadCount})`}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('activities')}
-                    className={cn(
-                      "text-xs font-semibold pb-1.5 border-b-2 transition-colors cursor-pointer flex items-center gap-1.5",
-                      activeTab === 'activities'
-                        ? "border-[#0F766E] text-[#0F766E]"
-                        : "border-transparent text-slate-500 hover:text-[#1E293B]"
-                    )}
-                  >
-                    <History className="w-3.5 h-3.5" />
-                    <span>Recent Activity</span>
-                  </button>
-                </div>
-
-                {activeTab === 'notifications' && unreadCount > 0 && (
-                  <button
                     onClick={markAllRead}
-                    className="flex items-center gap-1 text-[11px] text-[#0F766E] hover:underline font-medium cursor-pointer"
+                    className="inline-flex items-center gap-1 text-[11px] text-[#0F766E] hover:underline font-semibold cursor-pointer"
                   >
-                    <CheckCheck className="w-3.5 h-3.5" />
+                    <CheckCheck className="size-3.5" />
                     <span>Mark all read</span>
                   </button>
                 )}
               </div>
 
-              {/* Tab 1: Notifications List */}
-              {activeTab === 'notifications' && (
-                <>
-                  <div className="max-h-72 overflow-y-auto divide-y divide-[#E2E8F0] text-xs">
-                    {notifications.length === 0 ? (
-                      <div className="p-6 text-center text-slate-400 text-xs">
-                        No new alerts or client inquiries.
-                      </div>
-                    ) : (
-                      notifications.map((n) => (
-                        <div
-                          key={n.id}
-                          onClick={() => handleNotificationClick(n)}
+              <Tabs value={notifFilter} onValueChange={setNotifFilter} className="w-full">
+                <TabsList className="w-full grid grid-cols-2 bg-white border border-[#E2E8F0] p-0.5 h-8">
+                  <TabsTrigger value="ALL" className="text-xs font-semibold h-7">
+                    All ({notifications.length})
+                  </TabsTrigger>
+                  <TabsTrigger value="UNREAD" className="text-xs font-semibold h-7">
+                    Unread ({unreadCount})
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
+
+            {/* Notification List */}
+            <div className="max-h-80 overflow-y-auto divide-y divide-[#E2E8F0]">
+              {visibleNotifications.length === 0 ? (
+                <Empty className="p-6">
+                  <EmptyHeader>
+                    <EmptyMedia variant="icon">
+                      <Bell />
+                    </EmptyMedia>
+                    <EmptyTitle className="text-sm">
+                      {notifFilter === 'UNREAD' ? 'All caught up' : 'No notifications'}
+                    </EmptyTitle>
+                    <EmptyDescription className="text-xs">
+                      {notifFilter === 'UNREAD'
+                        ? 'You have no unread alerts right now.'
+                        : 'New inquiries and updates will appear here.'}
+                    </EmptyDescription>
+                  </EmptyHeader>
+                </Empty>
+              ) : (
+                visibleNotifications.map((n) => (
+                  <div
+                    key={n.id}
+                    onClick={() => handleNotificationClick(n)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleNotificationClick(n);
+                      }
+                    }}
+                    className={cn(
+                      'group p-3 flex items-start gap-3 hover:bg-[#F8FAFC] transition-colors cursor-pointer text-left',
+                      !n.is_read ? 'bg-teal-50/50' : 'bg-white'
+                    )}
+                  >
+                    <div className="size-8 rounded-lg bg-white border border-[#E2E8F0] flex items-center justify-center shrink-0 mt-0.5">
+                      {getNotifIcon(n.type)}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <p
                           className={cn(
-                            "p-3.5 hover:bg-[#F8FAFC] transition-colors cursor-pointer",
-                            !n.is_read ? "bg-[#0F766E]/5 font-medium" : "text-slate-600"
+                            'text-xs leading-snug text-[#1E293B]',
+                            !n.is_read ? 'font-semibold' : 'font-normal'
                           )}
                         >
-                          <div className="flex items-start justify-between gap-2">
-                            <p className="text-xs text-[#1E293B] leading-snug">{n.title || n.message}</p>
-                            {!n.is_read && (
-                              <span className="w-1.5 h-1.5 rounded-full bg-[#0F766E] shrink-0 mt-1" />
-                            )}
-                          </div>
-                          <span className="text-[10px] font-mono text-slate-400 mt-1 block">
-                            {n.created_at ? new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recent'}
-                          </span>
-                        </div>
-                      ))
-                    )}
-                  </div>
-
-                  {role === 'broker' && (
-                    <div className="px-3 pt-2 pb-1 border-t border-[#E2E8F0] text-center">
-                      <Link
-                        to="/broker/notifications"
-                        onClick={() => setShowNotifications(false)}
-                        className="text-[11px] font-medium text-[#0F766E] hover:text-[#115E59] inline-flex items-center gap-1"
-                      >
-                        <span>View all notifications & alerts</span>
-                        <ExternalLink className="w-3 h-3" />
-                      </Link>
-                    </div>
-                  )}
-                </>
-              )}
-
-              {/* Tab 2: Recent Activity Audit Stream */}
-              {activeTab === 'activities' && (
-                <>
-                  <div className="max-h-72 overflow-y-auto divide-y divide-[#E2E8F0] text-xs">
-                    {recentActivities.length === 0 ? (
-                      <div className="p-6 text-center text-slate-400 text-xs">
-                        No recent activity recorded in the past 24 hours.
+                          {n.title || n.message}
+                        </p>
+                        {!n.is_read && (
+                          <span
+                            className="size-2 rounded-full bg-[#FF6B6B] shrink-0 mt-1"
+                            aria-label="Unread"
+                          />
+                        )}
                       </div>
-                    ) : (
-                      recentActivities.map((act) => {
-                        const isDenied = act.outcome === 'denied';
-                        return (
-                          <div
-                            key={act.id}
-                            className="p-3 hover:bg-[#F8FAFC] transition-colors text-left"
-                          >
-                            <div className="flex items-start gap-2.5">
-                              <span
-                                className={cn(
-                                  "w-2 h-2 rounded-full shrink-0 mt-1.5",
-                                  isDenied ? "bg-[#DC2626]" : "bg-[#10B981]"
-                                )}
-                              />
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between gap-1">
-                                  <span className="font-semibold text-[#1E293B] truncate">
-                                    {act.actorName || 'System'}
-                                  </span>
-                                  <span className="text-[10px] font-mono text-slate-400 shrink-0">
-                                    {act.createdAt ? new Date(act.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}
-                                  </span>
-                                </div>
-                                <p className="text-slate-600 line-clamp-1 mt-0.5">
-                                  {act.reason || act.targetTitle || act.eventType}
-                                </p>
-                                {act.targetTitle && (
-                                  <span className="inline-block px-1.5 py-0.5 mt-1 text-[10px] bg-slate-100 text-slate-600 rounded font-mono truncate max-w-full">
-                                    {act.targetTitle}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })
-                    )}
-                  </div>
+                      {n.message && n.title && (
+                        <p className="text-[11px] text-[#64748B] line-clamp-1 mt-0.5">
+                          {n.message}
+                        </p>
+                      )}
+                      <span className="text-[10px] text-[#64748B] tabular-nums mt-1 block">
+                        {formatNotificationTime(n.created_at)}
+                      </span>
+                    </div>
 
-                  <div className="px-3 pt-2.5 pb-1 border-t border-[#E2E8F0] text-center">
-                    <Link
-                      to="/broker/audit"
-                      onClick={() => setShowNotifications(false)}
-                      className="text-xs font-semibold text-[#0F766E] hover:text-[#115E59] inline-flex items-center justify-center gap-1.5 transition-colors"
+                    <button
+                      type="button"
+                      onClick={(e) => toggleNotifRead(e, n)}
+                      aria-label={n.is_read ? 'Mark as unread' : 'Mark as read'}
+                      title={n.is_read ? 'Mark as unread' : 'Mark as read'}
+                      className="opacity-0 group-hover:opacity-100 focus:opacity-100 p-1.5 rounded-md text-[#64748B] hover:text-[#0F766E] hover:bg-teal-50 transition-opacity shrink-0"
                     >
-                      <ShieldCheck className="w-3.5 h-3.5" />
-                      <span>View Full Audit Trail</span>
-                      <ArrowRight className="w-3 h-3" />
-                    </Link>
+                      {n.is_read ? <Circle className="size-3.5" /> : <Check className="size-3.5" />}
+                    </button>
                   </div>
-                </>
+                ))
               )}
             </div>
-          )}
-        </div>
+
+            {role === 'broker' && (
+              <div className="px-3 py-2 border-t border-[#E2E8F0] bg-[#F8FAFC] text-center">
+                <Link
+                  to="/broker/notifications"
+                  onClick={() => setShowNotifications(false)}
+                  className="text-xs font-semibold text-[#0F766E] hover:text-[#115E59] inline-flex items-center gap-1"
+                >
+                  <span>View all notifications</span>
+                  <ExternalLink className="size-3.5" />
+                </Link>
+              </div>
+            )}
+          </PopoverContent>
+        </Popover>
 
         {/* User Profile Accessible Radix Dropdown */}
         <DropdownMenu>

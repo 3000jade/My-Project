@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { UserPlus, Shield, Download } from 'lucide-react';
 import StatusBadge from '../../../components/dashboard/StatusBadge';
@@ -226,7 +226,7 @@ export default function BrokerInquiryDetail() {
         title={inquiry ? `Inquiry Dossier: ${inquiry.client_name}` : 'Inquiry Detail'}
         subtitle={
           inquiry
-            ? `Ref: ${inquiry.reference_code || inquiry.id} • Consultant: ${inquiry.agent_name || 'Unassigned'}`
+            ? `Ref: ${inquiry.reference_code || inquiry.id} â€¢ Consultant: ${inquiry.agent_name || 'Unassigned'}`
             : ''
         }
         badge={
@@ -349,7 +349,7 @@ export default function BrokerInquiryDetail() {
                           <span>
                             Actor: <strong className="text-on-surface">{evt.actorName}</strong> ({evt.actorRole || 'system'})
                           </span>
-                          <span>•</span>
+                          <span>â€¢</span>
                           <span>
                             Outcome:{' '}
                             <strong className={evt.outcome === 'success' ? 'text-emerald-700' : 'text-red-600'}>
@@ -415,7 +415,7 @@ export default function BrokerInquiryDetail() {
                       <div className="flex flex-col gap-0.5">
                         <span className="font-semibold text-sm text-on-surface">{ag.name}</span>
                         <span className="text-xs font-normal text-on-surface-variant tabular-nums">
-                          {ag.assigned_properties_count} listings • {ag.active_inquiries_count} inquiries
+                          {ag.assigned_properties_count} listings â€¢ {ag.active_inquiries_count} inquiries
                         </span>
                       </div>
                     </div>

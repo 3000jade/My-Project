@@ -1,87 +1,87 @@
 # Graph Report - CP_kerby  (2026-11-22)
 
 ## Corpus Check
-- 1284 files · ~1,136,899 words
+- 1304 files · ~1,149,236 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 93 file(s) not represented in the graph (top: .ttf 54, .csv 23, (none) 6)
 
 ## Summary
-- 10047 nodes · 17521 edges · 776 communities (703 shown, 73 thin omitted)
-- Extraction: 93% EXTRACTED · 7% INFERRED · 0% AMBIGUOUS · INFERRED: 1208 edges (avg confidence: 0.94)
+- 10109 nodes · 17857 edges · 769 communities (697 shown, 72 thin omitted)
+- Extraction: 93% EXTRACTED · 7% INFERRED · 0% AMBIGUOUS · INFERRED: 1207 edges (avg confidence: 0.94)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `f1f119b6`
+- Built from commit: `68e5ebc2`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
 - NotificationService
-- Button
-- Card
+- Badge
+- lucide-react
 - frontend/package.json
-- Component Selection
-- AuthenticatedRequest
-- toApiPayload
+- Assistant activity uses Trace
+- questionnaire.jsx
+- InquiryMessagingWorkspace.jsx
 - frontend/package.json
 - sidebar.jsx
 - server.cjs
 - App.jsx
-- PropertyService
+- Decouple Agent Assignment from Property Listings Input Implementation Plan
 - SessionService
-- Home.jsx
+- SubdivisionVectorCanvas
 - toolbar
-- AgentScheduleCalendar.jsx
+- ui/index.js
 - Design Systems from DESIGN.md
 - AppointmentService
 - InquiryService
 - toast
-- button.jsx
+- StatusBadge
 - Phase 6: Controlled Implementation and Deployment
-- WhatsAppService
+- react
 - select
 - Phase 4: Frontend UI and Workflow Integration Design
 - item.jsx
 - UI/UX Pro Max - Design Intelligence
 - Human Shelter Realty | Soft Minimalist SaaS UI/UX Design System Specification
 - Changes from v3
-- sale.service.ts
+- sale.routes.ts
 - Property Listings Functions Specification
 - 3D Web Experience
 - Tailwind CSS Patterns (v4 - 2025)
 - Pseudo-class reference
-- AuthGuard
+- useAuth
 - Subagent-Driven Development
 - Phase 3: Backend API and Database Integration Design
 - gmail.service.ts
-- Phase 5 Verification Report — Calendar & Appointment Scheduling Integration into Agent Management
-- lucide-react
-- ui/index.js
+- 3. Specific Functional Requirements (FR)
+- property.routes.ts
+- AgentInquiryDetail.jsx
 - new-work.md
 - InquiryConversationPanel.jsx
 - React Patterns
 - The Design System Page
-- AgentService
+- propertyTypeConfig.js
 - Phase 5: System Integration and Testing Design
 - 02-property-listing/INDEX.md
 - Test-Driven Development (TDD)
 - Phase 3: Backend API and Database Integration Design Report
-- End-to-End Data-Field Verification Report: Broker Property Listings
+- Global Constraints
 - compilerOptions
 - Mastering Modern TypeScript
 - sessionCoordinator.js
 - Phase 1: Database Inspection and Schema Design Report
-- SubdivisionService
+- subdivision.service.ts
 - TypeScript Type System Reference
-- .registerInvitedAgent
+- InvitationService
 - live.md
 - TASK: Update Existing Property Details Page to Match Reference Design
 - Phase 2: Security and Approval Workflow Design
-- CreateListingModal.jsx
+- PropertyCard.jsx
 - steps
 - context-menu.jsx
 - Modern Toolchain Reference
-- AgentService
+- agent.service.ts
 - Phase 2: Security and Approval Workflow Design Report
 - .recordEvent
 - Per-component notes
@@ -92,7 +92,7 @@
 - dropdown-menu (Radix `DropdownMenu` → Base UI `Menu`)
 - Phase 5: System Integration and Testing Design Report
 - Generics Reference
-- System Requirements Specification (SRS)
+- devDependencies
 - Tasks: [FEATURE NAME]
 - 2. Core Motion Patterns
 - PropertyMap.jsx
@@ -100,7 +100,7 @@
 - Enterprise Patterns Reference
 - Thinking in utility classes
 - core.py
-- BrokerProperties.jsx
+- AgentService
 - Listing Wizard Steps 1–7 Spacing Implementation Plan
 - speckit-analyze/SKILL.md
 - components.json
@@ -111,10 +111,10 @@
 - Customizing your theme
 - Implementation Plan: Comprehensive User Management Module
 - Google Maps Platform Interface & Geospatial Engine Implementation Plan
-- Phase 4: Frontend UI and Workflow Integration Design Report
+- .recordEvent
 - inquiry.routes.ts
 - 5. Screen Specifications & shadcn/ui Refactoring
-- 2. Full-Stack Layer Architecture
+- Property Listing Form Scope Adaptation & shadcn/ui Component Redesign Implementation Plan
 - Visual Companion Guide
 - Creation Log: Systematic Debugging Skill
 - Container queries
@@ -123,7 +123,7 @@
 - Graphify Complete User Guide for Antigravity & AI Assistants
 - Phase 1: Database Schema Design and Verification
 - Property Listing Module — UI Specification
-- Skeleton
+- react-router-dom
 - @playwright/test
 - Non-Traditional UI & Editorial Layout Architecture
 - GoogleDriveService
@@ -139,8 +139,8 @@
 - Phase 6, Stage 0: Pre-Implementation Verification Report
 - Agent Management — AI Implementation Workflow
 - Human Sales Agent Portal & Workflows — Requirements Specification
-- services/apiClient.js
-- .recordEvent
+- agent.routes.ts
+- context-menu (Radix `ContextMenu` → Base UI `ContextMenu`)
 - Code Review Reception
 - Changelog
 - DesignSystemGenerator
@@ -153,8 +153,8 @@
 - ApiResponse
 - Agent Management — Calendar & Appointment Scheduling
 - 3. Installed Skills & Commands
-- InvitationService
-- subdivision.service.ts
+- cms.routes.ts
+- InquirySummaryService
 - 2. 🏠 Core Navigation Pages
 - document.md
 - scripts
@@ -164,7 +164,7 @@
 - Root Cause Tracing
 - Systematic Debugging
 - Persuasion Principles for Skill Design
-- devDependencies
+- SubdivisionService
 - Property Listing Inquiry Management: Communication, Notification, Audit, AI Summary & Session Handling — Design Specification
 - 01-user-management/INDEX.md
 - Module 01: Authentication & Authorization (`auth-rbac`)
@@ -185,12 +185,12 @@
 - 6. Ordered Execution Tasks
 - 2. Reference Information & Data Contracts
 - Database Pipeline & API Route Audit Specification
-- Module 03: Property Listing Management (`property-listings`)
+- PropertyService
 - Luxury Real Estate Search & Filter UX Concepts
-- CmsPublicSections.jsx
+- services/apiClient.js
 - Dispatching Parallel Agents
-- agentTeam.service.ts
-- PropertyMap.jsx
+- Skeleton
+- BrokerAudit.jsx
 - Examples
 - Examples
 - Advanced v4 Patterns
@@ -210,16 +210,16 @@
 - Examples
 - Media and feature queries
 - Testing Skills With Subagents
-- breadcrumb.jsx
-- InquirySummaryService
+- navigation-menu (Radix `NavigationMenu` → Base UI `NavigationMenu`)
+- Full-Stack Account Profile Management Implementation Plan
 - 3. Acceptance Criteria Mapping & Verification Results
 - Property Type Option Cards & Adaptive Intake Verification Record
 - 3. Verification & Evidence
 - 2. Architecture & Implementation
-- 4. End-to-End System Flows
+- Component Composition
 - Property Listing Inquiry Management — Scope and AI Implementation Workflow
 - Session Database Integration — AI Workflow
-- src/index.ts
+- GooglePropertyMap
 - 4. Ordered Implementation Steps
 - Implementation Plan: Public Properties Immersive Status Cards & Header Height Layout Adaptation
 - Full-Stack Directory Migration & Architecture Map Design
@@ -235,17 +235,17 @@
 - sync_tailwind_docs.py
 - Writing Plans
 - 3. Verification Evidence
-- Property Listing Inquiry Management — AI Implementation Workflow
+- Phase 4: Frontend UI and Workflow Integration Design Report
 - Session Management — Functional Verification Report (Post-Remediation)
 - inquiry.service.ts
-- requireAuth
+- types/index.ts
 - Dedicated Property Type Selection Page & Minimalist Intake Verification Record
 - RESTful API Design & Full-Stack Integration Standards
 - Verification Record — Public Properties Google Maps Interface & Card Scroll Fix
-- property.routes.ts
+- 2. Core Module Functions (Part 1)
 - Implementation Plan: Audit Interface & Recent Activities Slide-Down Integration
-- Decouple Agent Assignment from Property Listings Input Implementation Plan
-- 2. Subsystem Specifications (Backend Only)
+- propertyCoordinates.js
+- config/index.ts
 - animate.md
 - Handle `generate`
 - compilerOptions
@@ -264,17 +264,17 @@
 - code-block.jsx
 - Screen: [Screen Name]
 - 2. Installation Methods
-- LoginPage.jsx
+- Per-component notes
 - Diagnostic Scan
 - SubdivisionLotPickerModal
 - highlighter.jsx
 - 2. Tested Journey & Executed Scenarios
-- bubble.jsx
+- Property Listing Inquiry Management — AI Implementation Workflow
 - BrokerAgents Monolith Component Refactoring Report
 - OmniRoute Installation & Quickstart Guide
 - Broker Property Lifecycle & Detail Studio Implementation Plan
 - Frontend Directory Reorganization & Sandbox Isolation Design
-- shadcn/ui
+- System Requirements Specification (SRS)
 - 3. End-to-End Workflow Execution Loop
 - New visual work
 - Brainstorming Ideas Into Designs
@@ -283,7 +283,7 @@
 - tooltip
 - dialog
 - Target wrapper shapes (golden-derived specifics)
-- Full-Stack Account Profile Management Implementation Plan
+- 2. Full-Stack Layer Architecture
 - Section Definitions
 - Examples
 - Examples
@@ -301,13 +301,13 @@
 - 2. Verification Evidence
 - 2. Delivered Services and Capabilities
 - Phase 1 Verification Record: AI-Assisted Subdivision Map & Lot Lifecycle Schema Design
-- navigation-menu.jsx
+- WhatsAppService
 - 3. Defects Resolution & Verification Summary
 - 3. Architecture & Routing
 - Agent Management Module — Architecture & Design Specification
-- config/index.ts
+- CommuteAnalysisCard
 - helper.js
-- valuation.controller.ts
+- Agent Management Module — Architecture & Technical Reference
 - hover-card → preview-card
 - Ponytail Help
 - Global Constraints
@@ -323,19 +323,19 @@
 - Skill authoring best practices
 - Advanced: Skills with executable code
 - Tasks
-- Styling & Customization
+- auth.ts
 - RESPONSIVE UI/UX REQUIREMENTS
 - Property Listings Intake & Agent Assignment Decoupling Verification Record
 - Verification Record: Public Property Card Lifecycle Status Presentation & Dynamic Viewport Adaptation (FR-PL-021)
-- Base vs Radix
+- Home.jsx
 - 2. Delivered Changes
 - Diagnostic Scan
-- 7. API Contracts & Endpoint Specifications
+- Global Constraints
 - bolder.md
 - Global Constraints
 - Impeccable Asset Producer
 - carousel.jsx
-- Session Management — Functional Testing Instructions
+- Module 03: Property Listing Management (`property-listings`)
 - Data Management Module — Context Principles & Specification
 - Examples
 - Examples
@@ -363,28 +363,28 @@
 - Examples
 - Patterns
 - LiveCmsEditor.jsx
-- Authentication & Authorization Module — Corrected Gap & Remediation Report
+- NotificationController
 - critique.md
-- Property Status Alignment & Synchronization Engine Implementation Plan
+- inquiryStream.ts
 - Phase 3 Verification Record: Frontend Custom React SVG Vector Canvas
 - Be Ambitious
-- main.jsx
-- navigation-menu (Radix `NavigationMenu` → Base UI `NavigationMenu`)
-- OtpService
+- AgentCredentialsService
+- 3. Verification Evidence
+- Plan: Broker Portal UI/UX Refactor
 - Simplify the Design
-- input-otp.jsx
+- property.ts
 - Hardening Dimensions
 - UnifiedSearchBar
 - Adaptation Strategies
 - integrations.ts
 - Tasks
 - 4. Specific System Checks & Investigations
-- auth.ts
+- Subdivision AI Picture Analysis & Vector Polygon Layout Generation (FR-SM-056)
 - 3. Verification Evidence
 - clarify.md
 - stop-server.sh
 - Class-string rewrites (layer 2)
-- health.controller.ts
+- Session Management — Functional Testing Instructions
 - Nielsen's 10 Heuristics
 - Radix UI -> Base UI migration
 - Scroll Experience
@@ -430,19 +430,19 @@
 - Clean Map Interface & Stepper Progress Loading Bar Removal
 - Google Maps Rendering for Full-View Location Map Page
 - polish.md
-- CadastralLocationPicker
+- 1. Revision & Update History
 - Verification Record — Property Filter Status Tabs to Dropdown Refactor
 - Tasks: Comprehensive User Management Module
 - quieter.md
 - useResponsiveColumns
 - Tasks: Stakeholder UI/UX Experience for User Management
 - Product
-- Architecture Note: Controller, Service, and Schema Pattern
+- 4. Findings and Risks
 - Global Constraints
-- Verification Record — Broker Portal Overlapping Elements & Dynamic Layout Resolution
+- DashboardLayout.jsx
 - Global Constraints
-- agent.routes.ts
-- 05-database/INDEX.md
+- 7. API Contracts & Endpoint Specifications
+- Phase 5 Verification Report — Calendar & Appointment Scheduling Integration into Agent Management
 - validate-setup.sh
 - Consumer-side prop changes (call sites, not wrappers)
 - Init flow
@@ -501,7 +501,7 @@
 - Skill Discovery Optimization (SDO)
 - Bulletproofing Skills Against Rationalization
 - reso
-- StreetViewModal
+- subdivisionAi.service.ts
 - mockNeighborhoods.js
 - .updateUserStatus
 - 2. Verification Evidence
@@ -509,20 +509,20 @@
 - 2. Verification Evidence
 - speckit-plan/SKILL.md
 - StandardStatus
-- context-menu (Radix `ContextMenu` → Base UI `ContextMenu`)
+- main.jsx
 - Common Cognitive Load Violations
 - sonner.jsx
 - iOS platform
 - Shape
 - speckit-specify/SKILL.md
-- Client Self-Registration with In-Place Email OTP Verification Report
+- StreetViewModal
 - Android platform
 - scripts
 - Persona-Based Design Testing
 - speckit-tasks/SKILL.md
 - Database Schema & Trigger Safety Invariants
 - Generic Constraints
-- Feature Specification: Comprehensive User Management Module
+- Architecture Note: Controller, Service, and Schema Pattern
 - ponytail-audit/SKILL.md
 - Ponytail Gain
 - ponytail-review/SKILL.md
@@ -579,9 +579,9 @@
 - RED-GREEN-REFACTOR for Skills
 - VERIFY GREEN: Pressure Testing
 - Core Principles
-- SubdivisionAiService
-- Agent Management Module — Architecture & Technical Reference
-- 6. Agent Edit Property Form
+- requireAuth
+- health.controller.ts
+- 2. Delivered Behavior
 - Core Principles
 - Read
 - Feature Specification: User Management Security Hardening & Admin Enhancements
@@ -623,15 +623,15 @@
 - Skill Types
 - Example: TDD Skill Bulletproofing
 - Impeccable Manual Edit Applier
-- AboutPage.jsx
-- 5. Defects Catalog
+- Verification Record: Google Maps Platform Full-Stack Implementation
+- Tasks: User Management Security Hardening & Admin Enhancements
 - Visualize: Direction Comps & Asset Production
 - compilerOptions
 - System Modules Reference & Technical Notes
 - React + Vite
 - chat.ts
-- react
-- Verification Record: Module 02 Property Listing UI Refactoring to shadcn/ui
+- 5. Defects Catalog
+- CmsPublicSections.jsx
 - property.service.ts
 - Animation.js (Anime.js)
 - start-server.sh
@@ -639,7 +639,7 @@
 - Antigravity CLI (`agy`) Tool Mapping
 - Anti-patterns to avoid
 - Technical notes
-- Audit Interface & Recent Activities Slide-Down — Full-Stack Verification Report
+- chat.service.ts
 - Implementation Plan: [FEATURE]
 - interface
 - spec-document-reviewer-prompt.md
@@ -688,7 +688,7 @@
 - mockUsers.js
 - vercel.json
 - Implementation Plan: [FEATURE]
-- GooglePropertyMap
+- Verification Record — Broker Portal Overlapping Elements & Dynamic Layout Resolution
 - frontend-e2e-properties-pa-8ac6e--modes-and-fit-all-controls/error-context.md
 - frontend-e2e-properties-pa-b1f3d-oids-FAB-and-toggle-overlap/error-context.md
 - frontend-e2e-properties-pa-e2371-es-via-filter-action-button/error-context.md
@@ -699,98 +699,91 @@
 - speckit-checklist/SKILL.md
 - Project Agent Rules
 - Property
-- Global Constraints
+- Change Record: Broker Portal Standardized Skeleton Loading Suite
 - speckit-clarify/SKILL.md
 - rules/design-system.md
 - speckit-implement/SKILL.md
 - Agent Management Remediation Implementation Plan
 - Property Listing Showcase & Tour Conversion Suite Implementation Plan
-- usePropertyFilterEngine
+- propertyService.js
 - speckit-constitution/SKILL.md
 - test-setup.js
-- @tabler/icons-react
-- 2. Delivered Components and Interfaces
-- Tasks: User Management Security Hardening & Admin Enhancements
+- useAuth
+- End-to-End Data-Field Verification Report: Broker Property Listings
+- 8. Phase 5: Live Interactive E2E Verification via Playwright MCP
 - Quickstart: User Management Module
-- Plan: Broker Portal UI/UX Refactor
+- Operate
 - Data & UI State Model: Stakeholder User Management
 - Registry Authoring and Addresses
-- ui/index.js
+- BrokerProperties.jsx
 - Agent Security & Robust Handover Implementation Report
 - [CHECKLIST TYPE] Checklist: [FEATURE NAME]
 - Data Model: User Management & Authentication
 - Quickstart: Stakeholder User Management UI/UX
 - Technical Research: Stakeholder UI/UX Experience for User Management
 - View Property Contrast Capsule Button Implementation
-- Global Constraints
-- menubar (Radix `Menubar` → Base UI `Menubar` + `Menu`)
-- FeaturesAmenitiesSection.jsx
-- Global Constraints
-- Module 02: Property Listing Module
-- 05-database/INDEX.md
-- AgentInquiryDetail.jsx
 - 3. Core UI Components & Guards (Part 2)
-- InstitutionalAuthoritySection.jsx
+- Feature Specification: Comprehensive User Management Module
+- 4. End-to-End System Flows
 - Global Constraints
-- colorize.md
-- 2. Executed Test Journeys & Results
+- FeaturesAmenitiesSection.jsx
+- Session Database Integration — Implementation & Verification Report
+- AgentInquiryDetail.jsx
+- OtpService
+- RelatedListingsSection.jsx
+- Global Constraints
+- src/index.ts
+- 2. Subsystem Specifications (Backend Only)
 - Subdivision Map Editor & Intake Studio Integration Record (Phases 5 & 6)
 - search
-- Human Shelter Realty — Master Database Schema Specification
-- 2. Delivered Behavior
-- docs/README.md
+- PropertyDetailModal.jsx
+- bubble.jsx
+- Calendar & Appointment Scheduling in Agent Management — `/learn` Technical Reference
 - scroll-area
-- Agent Management Email Service & Lifecycle Notification Report
+- 5.3 Database Schema & Persistence
 - Global Constraints
 - Global Constraints
 - Specification Quality Checklist: Inquiry Messaging Inbox
-- Backend Type Safety & Service Contracts Verification Report
-- Phase 2 — Finalize and Review the Integration Design
+- Global Constraints
+- Global Constraints
 - 2. Functional Layers & shadcn Component Mapping
 - Verification Record — Property Listing View Dribbble-Inspired shadcn/ui Refactoring
 - Persuade and Experience
 - phLocationService.js
-- Button
+- 1. Overview & Delivered Capabilities
 - Global Constraints
-- Phase 3 — Design UI/UX, Data, and Contracts
-- requireAuth
+- Button
+- express
 - form
-- Calendar & Appointment Scheduling in Agent Management — `/learn` Technical Reference
-- cn
-- 04-sales-and-reports/INDEX.md
+- Change Record: Subdivision Map Editor Executive Header Redesign & Common Industry Labels
+- breadcrumb.jsx
+- docs/README.md
 - display-misc.md
 - avatar
-- Verification Record: Broker Map Refactoring & Cadastral Split-View Integration
-- 8. Phase 5: Live Interactive E2E Verification via Playwright MCP
+- 4.2 Standard API Request/Response Payloads
+- Verification Record: Module 02 Property Listing UI Refactoring to shadcn/ui
 - Progress.Indicator → Progress.Indicator
-- types/index.ts
+- Property Listing Module shadcn/ui Refactoring Implementation Plan
 - 4. TypeScript Architecture Verification (`.agents/skills/mastering-typescript`)
 - Separator.Root → Separator
-- Command guidance
-- pagination.jsx
-- Agent Management — Calendar & Appointment Scheduling Design Specification
+- button-group.jsx
+- Component Selection
+- types/index.ts
 - (new) Fieldset.Root and Fieldset.Legend
 - 3. Verification Evidence
-- Clean Removal of Standalone Subdivision Catalog (`BrokerSubdivisions.jsx`) & Navigation Streamlining
-- Global Constraints
-- Clean Property Filtering Toolbar Redesign & Verification
+- InstitutionalAuthoritySection.jsx
 - Broker Portal Bento Layout & shadcn/ui Refactoring Plan
-- 12. AI implementation phases
-- Change Record: Contrast Teal & Coral Pill Button & Sidebar Redesign
-- 1. Overview & Delivered Capabilities
-- 9. Web session handling
-- overrides
 
 ## God Nodes (most connected - your core abstractions)
-1. `react` - 289 edges
-2. `ApiResponse` - 175 edges
-3. `lucide-react` - 125 edges
+1. `react` - 300 edges
+2. `ApiResponse` - 176 edges
+3. `lucide-react` - 131 edges
 4. `Button` - 125 edges
-5. `react-router-dom` - 102 edges
+5. `react-router-dom` - 108 edges
 6. `Badge()` - 99 edges
 7. `Card` - 86 edges
 8. `CardContent` - 81 edges
-9. `@testing-library/react` - 68 edges
+9. `@testing-library/react` - 73 edges
 10. `CardHeader` - 67 edges
 
 ## Surprising Connections (you probably didn't know these)
@@ -798,121 +791,121 @@
   docs/superpowers/plans/2026-09-24-frontend-directory-reorganization.md → .agents/skills/ui-ux-pro-max/scripts/core.py
 - `4. API & Service Contracts` --references--> `search()`  [INFERRED]
   docs/superpowers/specs/2026-10-21-agent-management-module-design.md → .agents/skills/ui-ux-pro-max/scripts/core.py
+- `Architecture & Technology Stack` --references--> `AdminController`  [INFERRED]
+  specs/002-user-management-security/plan.md → backend/src/controllers/admin.controller.ts
 - `Layer Responsibilities & Hard Rules` --references--> `requireAuth()`  [INFERRED]
   .agents/skills/restful-api-design/SKILL.md → backend/src/middleware/auth.middleware.ts
 - `7.10 `GET /api/admin/users`, `PATCH /api/admin/users/:id/role`, `PATCH /api/admin/users/:id/status`` --references--> `requireAuth()`  [INFERRED]
   docs/modules/01-user-management/2026-10-08-authentication-and-authorization-spec.md → backend/src/middleware/auth.middleware.ts
-- `3.2 Authoritative Validation Invariant Rules` --references--> `requireAuth()`  [INFERRED]
-  docs/modules/01-user-management/2026-10-18-session-management-specification-and-flow-report.md → backend/src/middleware/auth.middleware.ts
 
 ## Import Cycles
 - None detected.
 
-## Communities (776 total, 73 thin omitted)
+## Communities (769 total, 72 thin omitted)
 
 ### Community 0 - "NotificationService"
-Cohesion: 0.16
-Nodes (5): generateReferenceCode(), validateInternalReturnPath(), NotificationService, Task 3: Multi-Channel Notification Job Queue, Deduplication, Preferences & Callbacks, NotificationJobRecord
+Cohesion: 0.23
+Nodes (3): NotificationService, Task 3: Multi-Channel Notification Job Queue, Deduplication, Preferences & Callbacks, NotificationJobRecord
 
-### Community 1 - "Button"
-Cohesion: 0.08
-Nodes (68): 2.4 Frontend Design & Components (`frontend/src/`), A. Subdivision Master Catalog (`BrokerSubdivisions.jsx`), 5.3.2 shadcn/ui Component Refactoring Mapping, 1. Revision & Update History, 7. Phase 4: Frontend Presentation Layer (`design.md` & `shadcn/ui`), Task 4.1: Reusable `EditProfileDialog` & `ChangePasswordDialog` Components, Task 4.2: Client Portal Profile Modernization (`ClientProfile.jsx`), Task 4.3: Sales Agent Portal Profile Modernization (`AgentProfile.jsx`) (+60 more)
+### Community 1 - "Badge"
+Cohesion: 0.07
+Nodes (83): Forms use FieldGroup + Field, Use Components, Not Custom Markup → [composition.md](./rules/composition.md), 3.2 Frontend Unit & Component Tests, CitationValue(), InquiryAiSummaryCard(), InquiryFollowUpTasksCard(), InquiryInternalNotesCard(), ProfileCardStudio() (+75 more)
 
-### Community 2 - "Card"
+### Community 2 - "lucide-react"
 Cohesion: 0.08
-Nodes (57): FieldSet + FieldLegend for grouping related fields, Forms & Inputs → [forms.md](./rules/forms.md), 3.2 Frontend Unit & Component Tests, LICENSE_BADGE_MAP, ProfileCardStudio(), StudioHarness(), Alert, AlertDescription (+49 more)
+Nodes (34): addDays(), AgentScheduleCalendar(), CALENDAR_STATUS_STYLES, getMonthGridDays(), getStartOfWeek(), MiniSideCalendar(), dispatch(), genId() (+26 more)
 
 ### Community 3 - "frontend/package.json"
 Cohesion: 0.04
-Nodes (67): dependencies, axios@^1.7.9, @base-ui/react@^1.9.0, class-variance-authority@^0.7.1, cmdk@^1.1.1, cn@^0.5.0, cp-kerby-monorepo@file:.., date-fns@^4.4.0 (+59 more)
+Nodes (72): dependencies, axios@^1.7.9, class-variance-authority@^0.7.1, cmdk@^1.1.1, cn@^0.5.0, cp-kerby-monorepo@file:.., date-fns@^4.4.0, embla-carousel@^8.6.0 (+64 more)
 
-### Community 4 - "Component Selection"
+### Community 4 - "Assistant activity uses Trace"
+Cohesion: 0.28
+Nodes (14): Assistant activity uses Trace, Chat & Messaging → [chat.md](./rules/chat.md), sendMessage(), Collapsible(), CollapsibleContent(), CollapsibleTrigger(), Trace(), TraceCollapsible() (+6 more)
+
+### Community 5 - "questionnaire.jsx"
+Cohesion: 0.13
+Nodes (7): buttonVariants, Calendar(), CalendarDayButton(), QuestionnaireNext(), QuestionnairePrevious(), QuestionnaireSkip(), QuestionnaireSubmit()
+
+### Community 6 - "InquiryMessagingWorkspace.jsx"
 Cohesion: 0.30
-Nodes (13): Assistant activity uses Trace, Chat & Messaging → [chat.md](./rules/chat.md), Collapsible(), CollapsibleContent(), CollapsibleTrigger(), Trace(), TraceCollapsible(), TraceCollapsibleContent() (+5 more)
-
-### Community 5 - "AuthenticatedRequest"
-Cohesion: 0.14
-Nodes (15): CmsController, fail(), ok(), router, CmsContentType, cmsContentTypeEnum, CmsStatus, cmsStatusEnum (+7 more)
-
-### Community 6 - "toApiPayload"
-Cohesion: 0.15
-Nodes (15): 8.1 Summary of Corrections Applied, Component 2: Frontend Service Contracts (`frontend/src/services/propertyService.js`), [MODIFY] `frontend/src/services/propertyService.js`, Remove Property Linking from Master Subdivision Project Implementation Plan, Task 1: Simplify `SubdivisionLocationFields.jsx`, Task 2: Remove Master Subdivision Project State, Functions & UI from `BrokerCreateListings.jsx`, Task 3: Remove `subdivision_project_id` & `subdivision_lot_id` from Property Data Mapping (and Optional DB Migration), Task 4: Verify Build & Tests (+7 more)
+Nodes (8): AiQualificationPanel(), CitationChip(), InquiryMessagingWorkspace(), InquirySourceBadge(), InternalNotesRail(), SlaCountdownPill(), InquiryMessagesPage(), RAW_API_BASE
 
 ### Community 7 - "frontend/package.json"
 Cohesion: 0.06
 Nodes (33): devDependencies, agentation@^3.0.2, eslint@^10.6.0, @eslint/js@^10.0.1, eslint-plugin-react-hooks@^7.1.1, eslint-plugin-react-refresh@^0.5.3, globals@^17.7.0, jsdom@^29.1.1 (+25 more)
 
 ### Community 8 - "sidebar.jsx"
-Cohesion: 0.08
-Nodes (17): Composition: asChild (radix) vs render (base), BreadcrumbLink(), NavigationMenuLink(), SidebarContext, SidebarInput(), SidebarMenuButton(), sidebarMenuButtonVariants, SidebarMenuSkeleton() (+9 more)
+Cohesion: 0.13
+Nodes (23): DashboardSidebar(), Sidebar(), SidebarContent(), SidebarContext, SidebarFooter(), SidebarGroup(), SidebarGroupLabel(), SidebarHeader() (+15 more)
 
 ### Community 9 - "server.cjs"
 Cohesion: 0.05
-Nodes (62): bootstrapPage(), brandMarkup(), broadcast(), browserLauncherForPlatform(), chmodOwnerOnly(), clients, companionUrl(), computeAcceptKey() (+54 more)
+Nodes (57): bootstrapPage(), brandMarkup(), broadcast(), browserLauncherForPlatform(), chmodOwnerOnly(), clients, companionUrl(), computeAcceptKey() (+49 more)
 
 ### Community 10 - "App.jsx"
 Cohesion: 0.06
-Nodes (59): 3.1 Relocated Files, AboutPage, AdminCmsPage, AdminDataManagementPage, AdminUsersPage, AgentAppointments, AgentAvailability, AgentDashboard (+51 more)
+Nodes (61): 3.1 Relocated Files, 3.2 Import Reference Updates, 3. Frontend Migration Plan, AboutPage, AdminCmsPage, AdminDataManagementPage, AdminUsersPage, AgentAppointments (+53 more)
 
-### Community 11 - "PropertyService"
-Cohesion: 0.13
-Nodes (10): ProfileController, main(), ProfileService, isValidUuid(), normalizePsgc(), PropertyService, 2. End-to-End Architecture Trace, 1. Executive Summary & Delivered Behavior (+2 more)
+### Community 11 - "Decouple Agent Assignment from Property Listings Input Implementation Plan"
+Cohesion: 0.17
+Nodes (11): Decouple Agent Assignment from Property Listings Input Implementation Plan, Environment Readiness & Existing State, Explicit Approval Boundaries (AGENTS.md Section 9), Global Constraints & Boundaries, Implementation Tasks, Task 1: Relax Backend Validation & Enable Unassigned Property Creation, Task 2: Streamline Property Creation Wizard (`BrokerCreateListings.jsx`), Task 3: Implement Agent-Centric Property Assignment in `BrokerAgentDetail.jsx` (+3 more)
 
 ### Community 12 - "SessionService"
-Cohesion: 0.10
-Nodes (22): executeFunctionalChecks(), RevokeSessionOptions, SessionListDTO, SessionService, 4. Defects Found, Fixes Implemented, and Retest Evidence, 2. Session Architecture & Policy Inventory, 4. Detailed Results Matrix (SM-01 – SM-25), Configured Session Timeout Policies by Role (+14 more)
+Cohesion: 0.11
+Nodes (21): executeFunctionalChecks(), RevokeSessionOptions, SessionService, 4. Defects Found, Fixes Implemented, and Retest Evidence, 2. Session Architecture & Policy Inventory, 4. Detailed Results Matrix (SM-01 – SM-25), Configured Session Timeout Policies by Role, 2.1 Backend Core Services: `SessionService.ts` (+13 more)
 
-### Community 13 - "Home.jsx"
-Cohesion: 0.25
-Nodes (14): LiveEditFloatingBar(), LiveEditProvider(), ArchitecturalGallerySection(), getFinancingInfo(), AwardsShowcase(), BuyerProtectionPromiseSection(), ClientStoriesSection(), InstitutionalAuthoritySection() (+6 more)
+### Community 13 - "SubdivisionVectorCanvas"
+Cohesion: 0.09
+Nodes (21): 1. Executive Summary, 2. Verification Evidence, Seamless Interactive Subdivision Vectors, Parcel Splitting & Batch Actions, 1. `frontend/src/components/subdivision/SubdivisionAiDock.jsx`, 1. Overview, 2. Delivered Components and Interfaces, 2. `frontend/src/components/subdivision/SubdivisionLotInspector.jsx`, 3. `frontend/src/pages/portals/broker/SubdivisionMapEditor.jsx` (+13 more)
 
 ### Community 14 - "toolbar"
 Cohesion: 0.04
 Nodes (46): accordion, Accordion.Content → Accordion.Panel, Accordion.Header → Accordion.Header, Accordion.Item → Accordion.Item, Accordion.Root → Accordion.Root, Accordion.Trigger → Accordion.Trigger, Base UI only props worth knowing, Base UI only props worth knowing (+38 more)
 
-### Community 15 - "AgentScheduleCalendar.jsx"
-Cohesion: 0.27
-Nodes (11): Wave 2: Leads, Inquiries & Appointments, addDays(), AgentScheduleCalendar(), CALENDAR_STATUS_STYLES, getMonthGridDays(), getStartOfWeek(), MiniSideCalendar(), mockAppointments (+3 more)
+### Community 15 - "ui/index.js"
+Cohesion: 0.05
+Nodes (86): 1. Summary of Delivered Behavior, 2. Verification Evidence, Clean Removal of Standalone Subdivision Catalog (`BrokerSubdivisions.jsx`) & Navigation Streamlining, CmsContentTable(), STATUS_BADGE, BrokerInviteModal(), EmptyState(), SubdivisionAiDock() (+78 more)
 
 ### Community 16 - "Design Systems from DESIGN.md"
-Cohesion: 0.10
-Nodes (20): Contents, Coverage check, Dark mode, Design Systems from DESIGN.md, Elevation, Focus, Fonts, Inputs to Confirm (+12 more)
+Cohesion: 0.11
+Nodes (19): Contents, Coverage check, Dark mode, Design Systems from DESIGN.md, Elevation, Focus, Fonts, Inputs to Confirm (+11 more)
 
 ### Community 17 - "AppointmentService"
-Cohesion: 0.09
-Nodes (28): AppointmentController, agentBookingLocks, AppointmentActorContext, AppointmentFilterQuery, AppointmentItem, AppointmentService, buildRemindersForStart(), decodeNotesAndMetadata() (+20 more)
+Cohesion: 0.07
+Nodes (32): AppointmentController, agentBookingLocks, AppointmentActorContext, AppointmentFilterQuery, AppointmentItem, AppointmentService, buildRemindersForStart(), decodeNotesAndMetadata() (+24 more)
 
 ### Community 18 - "InquiryService"
 Cohesion: 0.09
-Nodes (3): InquiryController, InquiryService, Task 7: Frontend Session Coordinator, Inquiry Service & Portal UI Touchpoints (`UX-01`, `SESSION-02`, `SESSION-03`)
+Nodes (4): InquiryController, InquiryService, Summary, Task 7: Frontend Session Coordinator, Inquiry Service & Portal UI Touchpoints (`UX-01`, `SESSION-02`, `SESSION-03`)
 
 ### Community 19 - "toast"
 Cohesion: 0.18
 Nodes (11): Base UI only props worth knowing, CSS variables, Data attributes, toast, Toast.Action → Toast.Action, Toast.Close → Toast.Close, Toast.Description → Toast.Description, Toast.Provider → Toast.Provider (+3 more)
 
-### Community 20 - "button.jsx"
-Cohesion: 0.11
-Nodes (6): @shadcn/react@^0.3.1, QuestionnaireNext(), QuestionnairePrevious(), QuestionnaireSkip(), QuestionnaireSubmit(), @shadcn/react
+### Community 20 - "StatusBadge"
+Cohesion: 0.08
+Nodes (30): 2. Current Page and Component Inventory, AgentAssignmentActionModal(), MetricCard(), SearchAndFilterBar(), StatusBadge(), sortInquiriesByDate(), mockInquiries, AgentDashboard() (+22 more)
 
 ### Community 21 - "Phase 6: Controlled Implementation and Deployment"
 Cohesion: 0.04
 Nodes (46): 10. Stage 4: Frontend Implementation, 11. Stage 5: Integration and Regression Testing, 12. Stage 6: Staging Deployment, 13. Stage 7: Production Deployment, 14. Change Control, 15. Progress Reporting, 16. Mandatory Restrictions, 17. Completion Criteria (+38 more)
 
-### Community 22 - "WhatsAppService"
-Cohesion: 0.26
-Nodes (3): WhatsAppController, WhatsAppService, Task 5: WhatsApp ("wattsup") Cloud API Dispatcher & Webhook Engine
+### Community 22 - "react"
+Cohesion: 0.05
+Nodes (31): 5.2.2 7-Step Architecture & shadcn/ui Refactoring (FR-PL-022), getInitials(), LivePublicCardPreview(), spotlightClass(), formatAuditDate(), getInitials(), IdentitySummaryBanner(), LICENSE_BADGE_MAP (+23 more)
 
 ### Community 23 - "select"
 Cohesion: 0.04
 Nodes (44): Base UI only props worth knowing (checkbox), Base UI only props worth knowing (radio-group), Base UI only props worth knowing (select), Base UI only props worth knowing (slider), Base UI only props worth knowing (switch), checkbox, Checkbox.Indicator → Checkbox.Indicator, Checkbox.Root → Checkbox.Root (+36 more)
 
 ### Community 24 - "Phase 4: Frontend UI and Workflow Integration Design"
-Cohesion: 0.05
-Nodes (36): 10. Administrator Approval Interface, 11. API Integration Design, 12. Form State and Validation, 13. Approval and Rejection Feedback, 14. Navigation and Role Visibility, 15. Component Reuse and UI Consistency, 16. Security Considerations, 17. Frontend Testing Requirements (+28 more)
+Cohesion: 0.04
+Nodes (44): 10. Administrator Approval Interface, 11. API Integration Design, 12. Form State and Validation, 13. Approval and Rejection Feedback, 14. Navigation and Role Visibility, 15. Component Reuse and UI Consistency, 16. Security Considerations, 17. Frontend Testing Requirements (+36 more)
 
 ### Community 25 - "item.jsx"
-Cohesion: 0.15
-Nodes (8): Data-attribute mapping, Part-rename quick reference, Item(), ItemActions(), ItemMedia(), itemMediaVariants, ItemSeparator(), itemVariants
+Cohesion: 0.16
+Nodes (7): Data-attribute mapping, Item(), ItemActions(), ItemMedia(), itemMediaVariants, ItemSeparator(), itemVariants
 
 ### Community 26 - "UI/UX Pro Max - Design Intelligence"
 Cohesion: 0.05
@@ -926,13 +919,13 @@ Nodes (42): 10. DESIGN TOKEN AND RESPONSIVE COMPATIBILITY, 11. CHANGE CLASSIFICA
 Cohesion: 0.05
 Nodes (41): Adding custom utilities, Arbitrary values in grid and object-position utilities, Browser requirements, Buttons use the default cursor, Changes from v3, Container configuration, Default border color, Default ring width and color (+33 more)
 
-### Community 29 - "sale.service.ts"
+### Community 29 - "sale.routes.ts"
 Cohesion: 0.07
-Nodes (30): QueryDashboardInput, queryDashboardSchema, CreateSaleInput, createSaleSchema, DealStage, DealStageEnum, PayoutStatus, PayoutStatusEnum (+22 more)
+Nodes (29): QueryDashboardInput, queryDashboardSchema, CreateSaleInput, createSaleSchema, DealStage, DealStageEnum, PayoutStatus, PayoutStatusEnum (+21 more)
 
 ### Community 30 - "Property Listings Functions Specification"
-Cohesion: 0.18
-Nodes (11): 2.1 Function Taxonomy Matrix, 2. System Architecture & Functional Decomposition (ISO/IEC/IEEE 42010:2022), 4.1 Property Standard Status Machine, 4.2 Agent Staged Proposal State Machine, 4. State Machines & Status Transitions, 5.1 Field Projection & Redaction Table, 5. Security Architecture & Confidentiality Matrix, 6. Software Product Quality Requirements (ISO/IEC 25010:2023) (+3 more)
+Cohesion: 0.22
+Nodes (9): 2. System Architecture & Functional Decomposition (ISO/IEC/IEEE 42010:2022), 4.1 Property Standard Status Machine, 4.2 Agent Staged Proposal State Machine, 4. State Machines & Status Transitions, 5.1 Field Projection & Redaction Table, 5. Security Architecture & Confidentiality Matrix, 6. Software Product Quality Requirements (ISO/IEC 25010:2023), 8. Non-Interference Boundary & Scope Confirmation (+1 more)
 
 ### Community 31 - "3D Web Experience"
 Cohesion: 0.05
@@ -946,9 +939,9 @@ Nodes (39): 10. Component Extraction, 11. Anti-Patterns, 12. Performance Princip
 Cohesion: 0.05
 Nodes (34): :active, :autofill, :checked, :default, :details-content, :disabled, :empty, :enabled (+26 more)
 
-### Community 34 - "AuthGuard"
-Cohesion: 0.16
-Nodes (16): Authentication and Authorization Module Implementation Plan, Global Constraints, Task 2: Core Functions in Network & Logic Layer (`authService.js`), Task 3: Auth State Adapter Hook (`AuthContext.jsx`), Task 4: Interactive Input Forms (`LoginForm.jsx` & `RegisterForm.jsx`), Task 5: Access Guards (`AuthGuard.jsx` & `PermissionGate.jsx`), Task 6: Session & Security Modals (`SessionTimeoutModal.jsx` & `MfaChallengeModal.jsx`), Task 7: Page Integration, Header Profile Dock & Full Verification (+8 more)
+### Community 34 - "useAuth"
+Cohesion: 0.08
+Nodes (36): 3. Reconciled Inventory Table, 1.1 Metrics Breakdown, 1. Executive Summary & Verification Metrics, 1. Problem Statement & Symptoms, Root Cause Analysis, Authentication and Authorization Module Implementation Plan, Global Constraints, Task 2: Core Functions in Network & Logic Layer (`authService.js`) (+28 more)
 
 ### Community 35 - "Subagent-Driven Development"
 Cohesion: 0.05
@@ -959,20 +952,20 @@ Cohesion: 0.05
 Nodes (36): 10. Rejection Service, 11. Property Status Validation, 12. Input Validation, 13. Duplicate Field Consistency, 14. Database Transaction Design, 15. Supabase Integration, 16. Audit Trail Integration, 17. Error Handling Design (+28 more)
 
 ### Community 37 - "gmail.service.ts"
-Cohesion: 0.13
-Nodes (25): GmailService, AgentInvitationEmailData, AgentVerificationStatusEmailData, AssignmentAcceptedEmailData, AssignmentDeclinedEmailData, BrokerApprovalEmailData, buildAgentInvitationEmailHtml(), buildAgentVerificationStatusEmailHtml() (+17 more)
+Cohesion: 0.09
+Nodes (33): nodemailer@^10.1.1, GmailService, AgentInvitationEmailData, AgentVerificationStatusEmailData, AssignmentAcceptedEmailData, AssignmentDeclinedEmailData, BrokerApprovalEmailData, buildAgentInvitationEmailHtml() (+25 more)
 
-### Community 38 - "Phase 5 Verification Report — Calendar & Appointment Scheduling Integration into Agent Management"
-Cohesion: 0.33
-Nodes (5): 1. Executive Summary, 3.1 Backend Test Suite (`34/34 Passed`), 3.2 Frontend Test Suite (`22/22 Passed`), 3. Automated Test Execution Results, Phase 5 Verification Report — Calendar & Appointment Scheduling Integration into Agent Management
+### Community 38 - "3. Specific Functional Requirements (FR)"
+Cohesion: 0.09
+Nodes (22): 3.1 Feature Group 1: Property Listing Ingestion & Creation (Broker/Admin), 3.2 Feature Group 2: Cadastral Geocoding & Mapping Services, 3.3 Feature Group 3: Staged Agent Proposal Workflow (`property_edit_requests`), 3.4 Feature Group 4: Broker Review, Diff Comparison & Stored Procedure Execution, 3.5 Feature Group 5: Confidential Data Isolation & Protection, 3.6 Feature Group 6: Immutable Transaction Auditing, 3.7 Feature Group 7: Public Catalog, Filtering & Client Engagement, 3. Specific Functional Requirements (FR) (+14 more)
 
-### Community 39 - "lucide-react"
-Cohesion: 0.05
-Nodes (58): 3. `frontend/src/pages/portals/broker/SubdivisionMapEditor.jsx`, 1. Summary of Delivered Behavior, Global Constraints, Property Listing View (Lamudi Architecture) Implementation Plan, Task 1: Discrete Listing Entity & Viewing List Hook, Task 2: Philippine Financing & Amortization Calculator Component, Task 3: Inspection Schedule & Move-in Selector Modal (Section 7), Task 4: Lamudi-Style Media Mosaic Gallery Component (+50 more)
-
-### Community 40 - "ui/index.js"
+### Community 39 - "property.routes.ts"
 Cohesion: 0.06
-Nodes (46): 5.5.2 shadcn/ui Component Refactoring Mapping, AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter(), AlertDialogHeader() (+38 more)
+Nodes (40): optionalAuth(), authRateLimiter, chatRateLimiter, shareEmailRateLimiter, uploadRateLimiter, router, router, upload (+32 more)
+
+### Community 40 - "AgentInquiryDetail.jsx"
+Cohesion: 0.12
+Nodes (49): 2.4 Frontend Design & Components (`frontend/src/`), Refactored Interfaces:, A. Subdivision Master Catalog (`BrokerSubdivisions.jsx`), 5.3.2 shadcn/ui Component Refactoring Mapping, 7. Phase 4: Frontend Presentation Layer (`design.md` & `shadcn/ui`), Task 4.1: Reusable `EditProfileDialog` & `ChangePasswordDialog` Components, Task 4.2: Client Portal Profile Modernization (`ClientProfile.jsx`), Task 4.3: Sales Agent Portal Profile Modernization (`AgentProfile.jsx`) (+41 more)
 
 ### Community 41 - "new-work.md"
 Cohesion: 0.06
@@ -980,7 +973,7 @@ Nodes (32): Assess Adaptation Challenge, Implement & Verify, Recommended Actions
 
 ### Community 42 - "InquiryConversationPanel.jsx"
 Cohesion: 0.11
-Nodes (41): Known traps, Attachments use Attachment, Chat & Messaging, Contents, Escape hatch: the scroller hooks, Message rows use Message, Scrollable threads use MessageScroller, Streaming, anchoring, and jump-to-latest are built in (+33 more)
+Nodes (43): Known traps, Attachments use Attachment, Chat & Messaging, Contents, Escape hatch: the scroller hooks, Message rows use Message, Scrollable threads use MessageScroller, Streaming, anchoring, and jump-to-latest are built in (+35 more)
 
 ### Community 43 - "React Patterns"
 Cohesion: 0.06
@@ -990,29 +983,29 @@ Nodes (31): 10. Anti-Patterns, 11. File Structure, 1. Component Design Principle
 Cohesion: 0.08
 Nodes (29): ColorPair(), contrast(), luminance(), toHex(), toRgb(), defaultStates, previewState(), StateMatrix() (+21 more)
 
-### Community 45 - "AgentService"
-Cohesion: 0.07
-Nodes (20): main(), AgentService, AgentEligibilityService, AgentRegistrationService, AgentTransferService, 1. Executive Summary, 2.2 Profiles and Permissions, 2.3 Availability and Assignment (+12 more)
+### Community 45 - "propertyTypeConfig.js"
+Cohesion: 0.15
+Nodes (21): getConditionIcon(), getTransactionIcon(), PropertyCard(), PublicAgentProfileModal(), CategoryAmenitiesPicker(), ListingPreviewCard(), ALL_PROPERTY_TYPES, ASSET_FAMILIES (+13 more)
 
 ### Community 46 - "Phase 5: System Integration and Testing Design"
 Cohesion: 0.06
 Nodes (31): 1. Objective, 2. Required References, 3. Confirmed System Requirements, 4. Existing Testing Environment Inspection, 5.1 Existing Schema, 5.2 Proposed Edit Requests, 5.3 Approved Changes, 5.4 Concurrency (+23 more)
 
 ### Community 47 - "02-property-listing/INDEX.md"
-Cohesion: 0.06
-Nodes (27): 1. Overview, 2. Delivered Behavior & Features, 3. Verification Evidence, Clean CAD Workstation Layout & Multi-Tab Studio Dock, 1. Overview, 2. Terminology Standardization, 3. Visual & Functional Architecture, 4. Verification Evidence (+19 more)
+Cohesion: 0.07
+Nodes (22): 1. Overview, 2. Delivered Behavior & Features, 3. Verification Evidence, Clean CAD Workstation Layout & Multi-Tab Studio Dock, Clean Property Filtering Toolbar Redesign & Verification, Key Changes, Summary, Verification Evidence (+14 more)
 
 ### Community 48 - "Test-Driven Development (TDD)"
 Cohesion: 0.06
 Nodes (29): Common Rationalizations, Debugging Integration, Example: Bug Fix, Final Rule, Good Tests, GREEN - Minimal Code, Overview, Red Flags - STOP and Start Over (+21 more)
 
 ### Community 49 - "Phase 3: Backend API and Database Integration Design Report"
-Cohesion: 0.06
-Nodes (33): 10.1 Inspection of Existing Audit Facilities, 10.2 Audit Event Schema, 10. Audit Trail Integration Analysis, 11. Backend Requirements Compliance Matrix, 12. Proposed Implementation Sequence (Phase 4 Roadmap), 13. Risks and Unresolved Dependencies, 14. Completion Status & Stop Gate, 2.1 Existing Property Endpoints (`backend/src/routes/property.routes.ts`) (+25 more)
+Cohesion: 0.07
+Nodes (29): 10.1 Inspection of Existing Audit Facilities, 10.2 Audit Event Schema, 10. Audit Trail Integration Analysis, 11. Backend Requirements Compliance Matrix, 12. Proposed Implementation Sequence (Phase 4 Roadmap), 14. Completion Status & Stop Gate, 2.1 Existing Property Endpoints (`backend/src/routes/property.routes.ts`), 2. API Endpoint Inventory (+21 more)
 
-### Community 50 - "End-to-End Data-Field Verification Report: Broker Property Listings"
-Cohesion: 0.12
-Nodes (16): 1. Test Context, 3. Field Verification Matrix, 6.1 Generated Evidence Artifacts, 6.2 Test Limitations & Untested Cases, 6. Evidence and Limitations, 7. Initial Summary & Recommendation (Pre-Fix Baseline), 8.2 Post-Fix Verification Evidence, 8.3 Automated Unit & Component Test Suite Results (+8 more)
+### Community 50 - "Global Constraints"
+Cohesion: 0.22
+Nodes (10): 2.1 Public & Client Persona (`client` / Anonymous), Global Constraints, Property Listing View (Lamudi Architecture) Implementation Plan, Task 1: Discrete Listing Entity & Viewing List Hook, Task 2: Philippine Financing & Amortization Calculator Component, Task 3: Inspection Schedule & Move-in Selector Modal (Section 7), Task 4: Lamudi-Style Media Mosaic Gallery Component, Task 5: Property Listing View Page & Application Routing Integration (+2 more)
 
 ### Community 51 - "compilerOptions"
 Cohesion: 0.07
@@ -1023,28 +1016,28 @@ Cohesion: 0.07
 Nodes (30): Assets, Basic Generic Function, Common Mistakes, Conditional Types, Constrained Generics, Cross-Language Comparison, ESLint Flat Config (ESLint 9+), Framework Integration (+22 more)
 
 ### Community 53 - "sessionCoordinator.js"
-Cohesion: 0.11
-Nodes (22): 2.4 Frontend Services & Context, 1. Problem Statement & Symptoms, 2.1 SessionWatcher Inactivity Reset (`frontend/src/components/auth/SessionWatcher.jsx`), 2.2 Role-Based Routing & Return-URL Restoration (`frontend/src/pages/auth/LoginPage.jsx`), 2. Technical Remediation & Implementation, 3.1 Unit Testing, 3. Verification & Evidence, 4. Summary of Changes (+14 more)
+Cohesion: 0.08
+Nodes (28): 1. Scope & Reconciliation Context, 2. Executive Summary & Inventory Reconciliation, 4.1 Server Session Extension vs Heartbeats, 4.2 Role-Specific Timeouts, 4.3 Refresh Token Invariants, 4. Key Invariants & Remediation Architecture, 5. Verification Summary, Authentication & Authorization Module — Corrected Gap & Remediation Report (+20 more)
 
 ### Community 54 - "Phase 1: Database Inspection and Schema Design Report"
 Cohesion: 0.06
 Nodes (30): 10. Confirmed Requirements vs Assumptions & Recommendations, 11. Completion Status & Stop Gate, 1.1 Source Files Inspected, 1.2 Existing Database Tables & Structures, 1.3 Existing Triggers and Database Functions, 1. Existing Database Inspection Summary, 2.1 Analysis of Overlapping & Duplicate Fields in `public.properties`, 2.2 Field Exclusions Assessment (Add Property Form) (+22 more)
 
-### Community 55 - "SubdivisionService"
-Cohesion: 0.24
-Nodes (3): isValidUuid(), SubdivisionService, ValidationResult
+### Community 55 - "subdivision.service.ts"
+Cohesion: 0.16
+Nodes (10): SubdivisionLot, SubdivisionMapVersion, SubdivisionPlan, SubdivisionProject, subdivisionService, LotInput, Point, SubdivisionValidationService (+2 more)
 
 ### Community 56 - "TypeScript Type System Reference"
 Cohesion: 0.07
 Nodes (29): any vs unknown, Assertion Functions, Built-in Type Guards, Contents, Custom Type Guards, Decision Guide, Function Annotations, instanceof Guard (+21 more)
 
-### Community 57 - ".registerInvitedAgent"
-Cohesion: 0.12
-Nodes (8): AgentCredentialsController, AgentCredentialsService, 4. Key Workflows & Tracing, Workflow 1: Broker Issues Onboarding Invitation, Workflow 2: Candidate Validates Token, Workflow 3: Candidate Submits Onboarding Dossier, Workflow 4: Broker Vetting & Verification Decision, Workflow 5: Enforced Listing RBAC Gate
+### Community 57 - "InvitationService"
+Cohesion: 0.08
+Nodes (23): classifyInvitationError(), InvitationController, testResend(), main(), InvitationService, 2.1 Invitations and Onboarding, 2.2 Profiles and Permissions, 2.3 Availability and Assignment (+15 more)
 
 ### Community 58 - "live.md"
-Cohesion: 0.07
-Nodes (26): Step 1: Parse the request, Step 2: Reuse the page, then start, Step 3: Generate, Step 4: Accept and close, Cleanup, Exit, First-time setup, Handle `accept` (+18 more)
+Cohesion: 0.06
+Nodes (33): Apply at system scale, Audit before choosing, Choose a strategy, Contrast and perception, Live-mode signature params, Verify, Visitor mode, Step 1: Parse the request (+25 more)
 
 ### Community 59 - "TASK: Update Existing Property Details Page to Match Reference Design"
 Cohesion: 0.07
@@ -1054,9 +1047,9 @@ Nodes (27): 10. Expected Output, 11. Restrictions, 12. Completion Criteria, 1. O
 Cohesion: 0.07
 Nodes (27): 10. Property Status Security, 11. Conflict and Concurrency Handling, 12. Audit Trail Requirements, 13. Requirements Compliance Analysis, 14. Expected Deliverables, 15. Restrictions, 16. Completion Criteria, 1. Objective (+19 more)
 
-### Community 61 - "CreateListingModal.jsx"
-Cohesion: 0.29
-Nodes (11): ARCHITECTURAL_STYLES, AVAILABLE_AMENITIES, CreateListingModal(), FURNISHING_OPTIONS, PROPERTY_TYPES, driveService, extractDriveFileId(), getDriveProxyUrl() (+3 more)
+### Community 61 - "PropertyCard.jsx"
+Cohesion: 0.26
+Nodes (12): ARCHITECTURAL_STYLES, AVAILABLE_AMENITIES, CreateListingModal(), FURNISHING_OPTIONS, PROPERTY_TYPES, MultiUnitDrawer(), driveService, extractDriveFileId() (+4 more)
 
 ### Community 62 - "steps"
 Cohesion: 0.06
@@ -1070,9 +1063,9 @@ Nodes (4): ContextMenuContent(), ContextMenuGroup(), ContextMenuItem(), ContextM
 Cohesion: 0.08
 Nodes (26): Basic Commands, Build Tool (Vite), Common Rules Explained, Complete Project Setup, Contents, Example Tests, Flat Config Format, Formatting (Prettier) (+18 more)
 
-### Community 65 - "AgentService"
-Cohesion: 0.07
-Nodes (50): AgentAggregates, AgentFilterQuery, AgentItem, localAgentsState, AgentAvailabilityService, DEFAULT_WEEKLY_SCHEDULE, localAvailabilityMap, AgentOperation (+42 more)
+### Community 65 - "agent.service.ts"
+Cohesion: 0.05
+Nodes (56): AgentAggregates, AgentFilterQuery, AgentItem, localAgentsState, AgentAvailabilityService, DEFAULT_WEEKLY_SCHEDULE, localAvailabilityMap, AgentOperation (+48 more)
 
 ### Community 66 - "Phase 2: Security and Approval Workflow Design Report"
 Cohesion: 0.08
@@ -1083,12 +1076,12 @@ Cohesion: 0.07
 Nodes (30): 10. Cross-Module Dependencies & Integrations, 1.1 Core Mission & Architectural Tenets, 1. Executive Summary & Domain Purpose, 2.1 Public & Guest Visitor (`guest` / Anonymous), 2.2 Sales Agent Persona (`agent`), 2.3 Real Estate Broker Persona (`broker`), 2.4 System Administrator Persona (`admin`), 2.5 System & Integration Actors (`system` / `integration`) (+22 more)
 
 ### Community 68 - "Per-component notes"
-Cohesion: 0.08
-Nodes (23): accordion, asChild -> render, breadcrumb / marker (Slot users), Coverage matrix, CSS custom properties, Data attributes / class hooks, dialog / alert-dialog / sheet, Doc-validation TODOs (before specs are final) (+15 more)
+Cohesion: 0.14
+Nodes (13): asChild -> render, Coverage matrix, CSS custom properties, Data attributes / class hooks, Doc-validation TODOs (before specs are final), Imports, Part-rename quick reference, Portal / positioning model (biggest structural change) (+5 more)
 
 ### Community 69 - "shadcn/SKILL.md"
-Cohesion: 0.20
-Nodes (4): Icons, Icons in Button use data-icon attribute, No sizing classes on icons inside components, Pass icons as component objects, not string keys
+Cohesion: 0.09
+Nodes (18): Icons, Icons in Button use data-icon attribute, No sizing classes on icons inside components, Pass icons as component objects, not string keys, CLI, Component Docs, Examples, and Usage, Critical Rules, Current Project Context (+10 more)
 
 ### Community 70 - "scripts"
 Cohesion: 0.17
@@ -1114,9 +1107,9 @@ Nodes (24): 10. Test Execution Sequence & Pre-Flight Checklist, 11. Completion S
 Cohesion: 0.08
 Nodes (23): Advanced Template Patterns, Basic Conditional Types, Basic Generic Function, Basic Mapped Types, Basic Template Literals, Basic Variadic Tuples, Built-in Utility Types Reference, Conditional Types (+15 more)
 
-### Community 76 - "System Requirements Specification (SRS)"
-Cohesion: 0.04
-Nodes (47): 1.1 Purpose, 1.2 Scope of the Module, 1.4 Definitions, Acronyms, and Abbreviations, 1. Introduction, 2.1 Product Perspective & Context, 2.2 Stakeholder Role Profiles & Access Matrix, 2.3 Operating Environment & Technical Dependencies, 2.4 Design System Constraints & Brand Tokens (+39 more)
+### Community 76 - "devDependencies"
+Cohesion: 0.09
+Nodes (30): author, description, devDependencies, tsx@^4.23.13, @types/cors@^2.8.19, @types/express@^5.0.6, @types/morgan@^1.9.10, @types/multer@^2.2.0 (+22 more)
 
 ### Community 77 - "Tasks: [FEATURE NAME]"
 Cohesion: 0.07
@@ -1127,11 +1120,11 @@ Cohesion: 0.09
 Nodes (22): 1. Aesthetic Movement & Core Principles, 2. Core Motion Patterns, 3. Checklist for Luxury Editorial Polish, A. Typography Mask Reveal, B. Image Curtain Sweep, Editorial Motion & High-End Reveals, Pattern 10: The "Editorial Split" (Masked Line-by-Line), Pattern 11: The "Liquid Kerning" Expand (Kinetic Tracking Out) (+14 more)
 
 ### Community 79 - "PropertyMap.jsx"
-Cohesion: 0.12
-Nodes (16): 1. Executive Overview, 2.1 Dynamic HTML Price Badge Pins (`L.divIcon`), 2.2 Rich Interactive Residence Popups, 2.3 "Search As I Move" Dynamic Bounding-Box Filter, 2.4 Floating Bauhaus Glass HUD Dock (`MapLayerControl.jsx`), 2.5 Spatial Telemetry & Recenter Controls, 2.6 Lenis Momentum-Scroll Isolation, 2. Key Features & Capabilities (+8 more)
+Cohesion: 0.13
+Nodes (14): 1. Executive Overview, 2.1 Dynamic HTML Price Badge Pins (`L.divIcon`), 2.2 Rich Interactive Residence Popups, 2.3 "Search As I Move" Dynamic Bounding-Box Filter, 2.4 Floating Bauhaus Glass HUD Dock (`MapLayerControl.jsx`), 2.5 Spatial Telemetry & Recenter Controls, 2.6 Lenis Momentum-Scroll Isolation, 2. Key Features & Capabilities (+6 more)
 
 ### Community 80 - "Agent Management Module — `/learn` Technical Reference & Implementation Summary"
-Cohesion: 0.08
+Cohesion: 0.09
 Nodes (23): 10. Suspension, Departure, and Transfer Behavior, 11. Performance Metric Definitions and Attribution Rules, 12. Verification Evidence and Results, 13. Decisions, Deviations, Limitations, and Deferred Work, 14. Relevant Files, Migrations, Contracts, and Tests, 15. Implementation Version and Verification Date, 1. Purpose and Boundaries, 2. Implemented Stakeholder Capabilities (+15 more)
 
 ### Community 81 - "Enterprise Patterns Reference"
@@ -1146,13 +1139,13 @@ Nodes (21): Complex selectors, Conflicting utility classes, How does this even w
 Cohesion: 0.13
 Nodes (4): BM25, _load_csv(), _search_csv(), search_stack()
 
-### Community 84 - "BrokerProperties.jsx"
-Cohesion: 0.15
-Nodes (37): 5. Design Token Compliance Matrix, 3. Verification Evidence, CmsContentEditorDrawer(), toSlug(), ProposalReviewDrawer(), getInitials(), InquiryInboxSplitView(), InquiryOverviewShell() (+29 more)
+### Community 84 - "AgentService"
+Cohesion: 0.08
+Nodes (16): AgentService, AgentEligibilityService, AgentRegistrationService, AgentTransferService, 1. Executive Summary, 2.4 Suspension and Departure, 3. Environment Notes & Known Constraints, Agent Management Module — Phase 5 End-to-End Verification Report (+8 more)
 
 ### Community 85 - "Listing Wizard Steps 1–7 Spacing Implementation Plan"
-Cohesion: 0.12
-Nodes (16): Approval and execution boundary, Execution record — 2026-11-05, Files and boundaries, Fixed presentation decisions, Global constraints, Listing Wizard Steps 1–7 Spacing Implementation Plan, Proposal images, Review: confirmed inconsistencies (+8 more)
+Cohesion: 0.10
+Nodes (18): Antigravity AI Workflow: `design.md` & `shadcn-ui` System Guide, Quick Summary, Approval and execution boundary, Execution record — 2026-11-05, Files and boundaries, Fixed presentation decisions, Global constraints, Listing Wizard Steps 1–7 Spacing Implementation Plan (+10 more)
 
 ### Community 86 - "speckit-analyze/SKILL.md"
 Cohesion: 0.08
@@ -1175,8 +1168,8 @@ Cohesion: 0.10
 Nodes (20): Common Event Types, Component Patterns, Contents, Context API, Custom Hooks, Event Handling, Form with TypeScript, Functional Components (+12 more)
 
 ### Community 91 - "03-agent-management/INDEX.md"
-Cohesion: 0.18
-Nodes (7): 1. Overview, 2. Key Architecture & Deliverables, 3. Verification Evidence, Broker Agents Dynamic Responsive Layout Refactoring Report, 1. Document Registry & Change History, 2. Instructions for AI Agents & Developers, Agent Management Module — Master Index
+Cohesion: 0.09
+Nodes (17): 1. Executive Summary, 2. Executed Test Journeys & Results, 3. Requirements Traceability Matrix, 4. Verification Conclusion, Journey 1: Authentication & Session Hydration, Journey 2: Agent Dashboard & Regulatory Credential Watchdog, Journey 3: Assigned Properties & Alignment Option A Flow, Journey 4: Strict Broker Gate (INV-01) Listing Proposal Wizard (+9 more)
 
 ### Community 92 - "Customizing your theme"
 Cohesion: 0.10
@@ -1190,9 +1183,9 @@ Nodes (13): Content Quality, Feature Readiness, Notes, Requirement Completeness,
 Cohesion: 0.12
 Nodes (16): Affected Files & Components, Environment Readiness Assessment, Explicit Approval Boundaries, Global Constraints & `design.md` Specifications, Google Maps Platform Interface & Geospatial Engine Implementation Plan, Implementation Tasks, Phase 1: Foundation, Shared Contracts & Client Loader, Phase 2: Core Map Components & Reusable Widgets (+8 more)
 
-### Community 95 - "Phase 4: Frontend UI and Workflow Integration Design Report"
-Cohesion: 0.11
-Nodes (18): 10.1 Sidebar Modifications (`DashboardSidebar.jsx`), 10.2 App Router Modifications (`App.jsx`), 10. Navigation and Role-Visibility Changes, 11. Frontend Testing Plan (Vitest & React Testing Library), 12. Recommended Implementation Sequence, 13. Completion Status & Stop Gate, 3.1 Prohibited Creation Controls, 3.2 Unauthorized Direct Editing Controls (+10 more)
+### Community 95 - ".recordEvent"
+Cohesion: 0.31
+Nodes (6): AuditController, AuditService, sanitizeObject(), 11. Verification Matrix & Acceptance Criteria, Task 2: Protected Audit Service, Activity Timeline & Broker Audit Controller, AuditEventRecord
 
 ### Community 96 - "inquiry.routes.ts"
 Cohesion: 0.15
@@ -1202,9 +1195,9 @@ Nodes (19): router, AssignInquiryInput, assignInquirySchema, changeBusinessStatu
 Cohesion: 0.10
 Nodes (20): 5.2.1 Visual Hierarchy & Tokens, 5.2.3 Interaction & Decoupled Input Rules, 5.2.4 Acceptance Criteria, 5.2 M02-SCR-02: 7-Step Listing Intake & Edit Studio, 5.3.1 Visual Hierarchy & Tokens, 5.3.3 Acceptance Criteria, 5.3 M02-SCR-03: Quick Listing Intake Modal, 5.5.1 Visual Hierarchy & Tokens (+12 more)
 
-### Community 98 - "2. Full-Stack Layer Architecture"
-Cohesion: 0.18
-Nodes (10): 1. Executive Summary, 2.1 Data Layer (`backend/src/models/`), 2.2 Backend API & Controllers (`backend/src/`), 2. Full-Stack Layer Architecture, 3.1 Backend Integration Tests, 3.3 Automated End-to-End Playwright Tests, 3.4 Live Browser Playwright MCP Verification, 3. Verification Evidence (+2 more)
+### Community 98 - "Property Listing Form Scope Adaptation & shadcn/ui Component Redesign Implementation Plan"
+Cohesion: 0.08
+Nodes (24): 1.1 Step Navigation Milestones, 1.2 Asset-Specific Real Estate Vocabulary Matrix, 1. Real-World Broker Terminology & UI Navigation Lexicon, 2. shadcn Skill Principles & Enforcement Matrix, 3.1 Foreign Key Linkage & Profiles Model, 3.2 Supabase Row-Level Security (RLS) Policy Verification, 3.3 Supabase Postgres Best Practices (`.agents/skills/supabase-postgres-best-practices`), 3. Supabase & PostgreSQL Architecture Verification (Agent Assignment) (+16 more)
 
 ### Community 99 - "Visual Companion Guide"
 Cohesion: 0.10
@@ -1238,9 +1231,9 @@ Nodes (19): 10. Restrictions, 11. Completion Criteria, 1. Objective, 2. Existing
 Cohesion: 0.12
 Nodes (17): 10. Module Business Rules & Dependencies, 11. Acceptance & Verification Traceability, 12. Open Questions and Assumptions, 13. Revision History, 1.1 In Scope, 1.2 Out of Scope, 1. Purpose and Scope, 2. Roles and UI Access (+9 more)
 
-### Community 107 - "Skeleton"
-Cohesion: 0.28
-Nodes (14): 2. Key Architecture & Deliverables, 2. Delivered Components, 3. Functional Requirements (FR) Specification Table, AgentDetailSkeleton(), CardGridSkeleton(), DashboardPageSkeleton(), InquiryDetailSkeleton(), ListSkeleton() (+6 more)
+### Community 107 - "react-router-dom"
+Cohesion: 0.08
+Nodes (19): mockInquiries, StudioHarness(), mockProperties, mockSingleProperty, ArchitecturalGallerySection(), GALLERY_ITEMS, getFinancingInfo(), mockAgent (+11 more)
 
 ### Community 109 - "Non-Traditional UI & Editorial Layout Architecture"
 Cohesion: 0.11
@@ -1251,8 +1244,8 @@ Cohesion: 0.22
 Nodes (4): DriveController, testUpload(), GoogleDriveService, DriveUploadResult
 
 ### Community 111 - "Agent Management Module Design Specification"
-Cohesion: 0.11
-Nodes (17): 1. Executive Summary & Purpose, 2. Architecture & Data Flow, 3.1 New Table: `public.agent_invitations`, 3.2 Non-Destructive Extension to `public.profiles`, 3. Database Schema & Migration Specification, 4.1 Invitation Endpoints (`/api/invitations`), 4.2 Agent Registration Endpoint (`POST /api/auth/register-agent`), 4.3 Agent Verification Status (`PUT /api/agents/:id/status`) (+9 more)
+Cohesion: 0.15
+Nodes (12): 1. Executive Summary & Purpose, 2. Architecture & Data Flow, 3.1 New Table: `public.agent_invitations`, 3.2 Non-Destructive Extension to `public.profiles`, 3. Database Schema & Migration Specification, 5.1 Public Agent Invitation Registration Page (`/register/agent?token=...`), 5.2 Broker Portal: Agent Directory & Invitations ([BrokerAgents.jsx](file:///c:/Users/Win11x64/Desktop/My%20code%20space/CP_kerby/frontend/src/pages/portals/broker/BrokerAgents.jsx)), 5.3 Broker Portal: Credential Review Dossier ([BrokerAgentDetail.jsx](file:///c:/Users/Win11x64/Desktop/My%20code%20space/CP_kerby/frontend/src/pages/portals/broker/BrokerAgentDetail.jsx)) (+4 more)
 
 ### Community 112 - "PropertyFilterToolbar"
 Cohesion: 0.20
@@ -1291,20 +1284,20 @@ Cohesion: 0.11
 Nodes (17): 1. Executive Summary & Stage 0 Objectives, 2.1 Branch Identification, 2.2 Uncommitted Modifications Inventory, 2. Git Working Tree & Branch Inspection, 3.1 Existing Migration Architecture, 3.2 Connection Configuration & Secret Isolation, 3.3 Target Environment, 3. Database Migration Environment & Configuration Verification (+9 more)
 
 ### Community 121 - "Agent Management — AI Implementation Workflow"
-Cohesion: 0.11
-Nodes (17): Agent Management — AI Implementation Workflow, Availability and Assignment, Broker, Client, Invitations and Onboarding, Module Boundaries, Objective, Phase 1 — Review the Existing System (+9 more)
+Cohesion: 0.08
+Nodes (25): Agent Management — AI Implementation Workflow, API and Event Contracts, Availability and Assignment, Broker, Broker Screens, Client, Client Experience, Critical Rules (+17 more)
 
 ### Community 122 - "Human Sales Agent Portal & Workflows — Requirements Specification"
 Cohesion: 0.11
 Nodes (18): 1. Executive Summary & Regulatory Context, 2. Architecture & Ecosystem Interaction (ISO/IEC/IEEE 42010:2022), 3. Core Lifecycle & Governance Invariants, 4. Functional Requirements Specification (ISO/IEC/IEEE 29148:2018), 5. Non-Functional & Quality Requirements (ISO/IEC 25010:2023), 6. Data Model & Database Schema Alignment, 7. REST API & Authorization Matrix, 8. Requirements Traceability Matrix (RTM) (+10 more)
 
-### Community 123 - "services/apiClient.js"
-Cohesion: 0.11
-Nodes (13): Task 2: Frontend Sale Service & Normalized Pipeline DTOs, mockNotifications, mockSales, agentCredentialsService, apiClient, axiosInstance, rawBaseUrl, chatService (+5 more)
+### Community 123 - "agent.routes.ts"
+Cohesion: 0.06
+Nodes (40): zod@^4.6.5, validateBody(), validateQuery(), router, router, router, router, createTeamSchema (+32 more)
 
-### Community 124 - ".recordEvent"
-Cohesion: 0.31
-Nodes (6): AuditController, AuditService, sanitizeObject(), 11. Verification Matrix & Acceptance Criteria, Task 2: Protected Audit Service, Activity Timeline & Broker Audit Controller, AuditEventRecord
+### Community 124 - "context-menu (Radix `ContextMenu` → Base UI `ContextMenu`)"
+Cohesion: 0.13
+Nodes (16): Arrow / Item / Group / Label / CheckboxItem / RadioGroup / RadioItem / ItemIndicator / Separator / Sub / SubTrigger / SubContent, Base UI only, data attributes, CSS variables, Content → ContextMenu.Portal > Positioner > Popup, context-menu (Radix `ContextMenu` → Base UI `ContextMenu`), Data attributes / CSS variables, Menu → Menu.Root, menubar (Radix `Menubar` → Base UI `Menubar` + `Menu`), Portal / Content / Arrow / Item / Group / Label / CheckboxItem / RadioGroup / RadioItem / ItemIndicator / Separator / Sub / SubTrigger / SubContent (+8 more)
 
 ### Community 125 - "Code Review Reception"
 Cohesion: 0.12
@@ -1319,12 +1312,12 @@ Cohesion: 0.12
 Nodes (16): Documentation Variants to Test, Expected Results, Next Steps, NULL (Baseline - no skills doc), Scenario 1: Time Pressure + Confidence, Scenario 2: Sunk Cost + Works Already, Scenario 3: Authority + Speed Bias, Scenario 4: Familiarity + Efficiency (+8 more)
 
 ### Community 129 - "dependencies"
-Cohesion: 0.11
-Nodes (18): dependencies, axios@^1.20.0, cp-kerby-monorepo@file:.., dotenv@^17.4.2, express@^5.2.1, express-rate-limit@^8.7.0, google-auth-library@^11.1.0, multer@^2.4.0 (+10 more)
+Cohesion: 0.12
+Nodes (17): dependencies, axios@^1.20.0, cp-kerby-monorepo@file:.., dotenv@^17.4.2, express@^5.2.1, express-rate-limit@^8.7.0, google-auth-library@^11.1.0, googleapis@^182.0.0 (+9 more)
 
 ### Community 130 - "3. Module Schema Catalog"
-Cohesion: 0.12
-Nodes (17): 3. Module Schema Catalog, Core Database Triggers & Functions, Module 01: User Management & Authentication, Module 03: Agent Management Module, Module 04: Sales and Reports Module, Module 05: Database Functions, Triggers & Reference Data, Module 06: Audit Module, Module 07: Inquiry & Communication Module (+9 more)
+Cohesion: 0.08
+Nodes (26): 3. Module Schema Catalog, Core Database Triggers & Functions, Module 01: User Management & Authentication, Module 02: Property Listing Module, Module 03: Agent Management Module, Module 04: Sales and Reports Module, Module 05: Database Functions, Triggers & Reference Data, Module 06: Audit Module (+18 more)
 
 ### Community 131 - "Property Listing Management Module — Functional Verification & Test Report"
 Cohesion: 0.12
@@ -1332,7 +1325,7 @@ Nodes (16): 1. Executive Summary & Verification Scope, 2.1 Metrics Breakdown, 2.
 
 ### Community 132 - "Property Schema Update: Validation and Controlled Editing"
 Cohesion: 0.12
-Nodes (16): 1. Inspect existing implementation (read-only), 2. Baseline facts from supplied files, 3. Proposed efficient schema (not an assumed existing database), 4. Schema and behavior corrections to PROPOSE, 5. Migration design (only after verification), 6. Mandatory validation report BEFORE editing, 7. Controlled implementation AFTER approval, 8. Verification and acceptance criteria (+8 more)
+Nodes (15): 2. Baseline facts from supplied files, 3. Proposed efficient schema (not an assumed existing database), 4. Schema and behavior corrections to PROPOSE, 5. Migration design (only after verification), 6. Mandatory validation report BEFORE editing, 7. Controlled implementation AFTER approval, 8. Verification and acceptance criteria, A. Data integrity and no mock data (+7 more)
 
 ### Community 133 - "adapt.md"
 Cohesion: 0.08
@@ -1340,7 +1333,7 @@ Nodes (25): Assess Adaptation Challenge, Breakpoints: Content-Driven, Content Ad
 
 ### Community 134 - "ApiResponse"
 Cohesion: 0.04
-Nodes (16): AgentController, AuthController, DataManagementController, getActor(), sendError(), classifyInvitationError(), InvitationController, NotificationController (+8 more)
+Nodes (17): AgentController, AuthController, DataManagementController, getActor(), sendError(), ProfileController, PropertyController, SaleController (+9 more)
 
 ### Community 135 - "Agent Management — Calendar & Appointment Scheduling"
 Cohesion: 0.12
@@ -1350,13 +1343,13 @@ Nodes (16): Agent Management — Calendar & Appointment Scheduling, Calendar Int
 Cohesion: 0.12
 Nodes (16): 1. Overview & Core Decision Ladder, 1. `ponytail` (Main Skill), 2. Intensity Modes, 2. `ponytail-review`, 3. Installed Skills & Commands, 3. `ponytail-audit`, 4. How to "Tail" Ponytail (Observing & Tracking Behavior), 4. `ponytail-debt` (+8 more)
 
-### Community 137 - "InvitationService"
-Cohesion: 0.16
-Nodes (11): testResend(), InvitationService, 2.1 Invitations and Onboarding, 7.1 Single-Use Guarantee & Replay Prevention, 7.2 Lazy Status Expiration, 7.3 Rate Limiting & Input Sanitization, 7.4 Postgres UUID Defensive Validation, 7.5 Dual-Layer Resilience Architecture (+3 more)
+### Community 137 - "cms.routes.ts"
+Cohesion: 0.14
+Nodes (15): CmsController, fail(), ok(), router, CmsContentType, cmsContentTypeEnum, CmsStatus, cmsStatusEnum (+7 more)
 
-### Community 138 - "subdivision.service.ts"
-Cohesion: 0.16
-Nodes (10): SubdivisionLot, SubdivisionMapVersion, SubdivisionPlan, SubdivisionProject, subdivisionService, LotInput, Point, SubdivisionValidationService (+2 more)
+### Community 138 - "InquirySummaryService"
+Cohesion: 0.21
+Nodes (7): InquirySummaryService, notProvidedCitation(), Communication, Notification, Audit, AI Summary & Session Handling Implementation Plan, Global Constraints, Task 4: AI Client Summary Report Service (`AI-01`, `AI-02`), Task 6: Inquiry Lifecycle, Guest vs. Registered Agent Chat, Request-ID Deduplication, Reassignment Access & Broker Metrics, Task 8: Phase 5 & Phase 6 — Full Acceptance Matrix Verification & `/learn` Documentation
 
 ### Community 139 - "2. 🏠 Core Navigation Pages"
 Cohesion: 0.12
@@ -1394,17 +1387,17 @@ Nodes (15): Common Rationalizations, Overview, Phase 1: Root Cause Investigation
 Cohesion: 0.12
 Nodes (15): 1. Authority, 2. Commitment, 3. Scarcity, 4. Social Proof, 5. Unity, 6. Reciprocity, 7. Liking, Ethical Use (+7 more)
 
-### Community 148 - "devDependencies"
-Cohesion: 0.09
-Nodes (30): author, description, devDependencies, tsx@^4.23.13, @types/cors@^2.8.19, @types/express@^5.0.6, @types/morgan@^1.9.10, @types/multer@^2.2.0 (+22 more)
+### Community 148 - "SubdivisionService"
+Cohesion: 0.24
+Nodes (3): isValidUuid(), SubdivisionService, ValidationResult
 
 ### Community 149 - "Property Listing Inquiry Management: Communication, Notification, Audit, AI Summary & Session Handling — Design Specification"
 Cohesion: 0.18
 Nodes (10): 1.1 Purpose, 1.2 Stakeholder Role & Permission Matrix, 1.3 Resolved Product Decisions (Section 13), 1. Purpose, Stakeholders, and Resolved Product Decisions, 2.1 Augmented Tables, 2.2 New Domain Tables, 2. Database Schema & Relational Data Model, 4. Frontend UI/UX Architecture (`modern-saas-design`) (+2 more)
 
 ### Community 150 - "01-user-management/INDEX.md"
-Cohesion: 0.11
-Nodes (12): 1. Overview, 3. Verification Evidence, Broker Portal Layout-Tailored Skeleton Loading Suite & Button Spinners, 1. Overview & Business Context, 3. Integration Coverage, 4. Verification & Testing Evidence, Change Record: Broker Portal Standardized Skeleton Loading Suite, 1. Overview (+4 more)
+Cohesion: 0.14
+Nodes (9): 1. Overview, 3. Verification Evidence, Broker Portal Layout-Tailored Skeleton Loading Suite & Button Spinners, 1. Overview & Business Context, 3. Verification & Testing Evidence, Change Record: Contrast Teal & Coral Pill Button & Sidebar Redesign, 1. Document Registry & Change History, 2. Instructions for AI Agents & Developers (+1 more)
 
 ### Community 151 - "Module 01: Authentication & Authorization (`auth-rbac`)"
 Cohesion: 0.12
@@ -1478,29 +1471,29 @@ Nodes (14): 1. Overview & Objective, 2.1 Section 1: Listing Identification, 2.2 
 Cohesion: 0.13
 Nodes (14): 1. Overview & Objectives, 2. Database Cleanup Specification (`clean-database.ts`), 3. Full-Field Data Push Specification (`push-all-data.ts`), 4. API Route Flow & Logic Audit Specification (`test-api-routes.ts`), 5. NPM Script Integration, Authentication & Authorization, Comprehensive Property Payload (100% Frontend Parity), Database Pipeline & API Route Audit Specification (+6 more)
 
-### Community 169 - "Module 03: Property Listing Management (`property-listings`)"
-Cohesion: 0.17
-Nodes (11): 2.1 Public & Client Persona (`client` / Anonymous), 2.2 Sales Agent Persona (`agent`), 2.3 Managing Broker Persona (`broker`), 2.4 System Administrator Persona (`admin`), 2. Multi-Stakeholder Workspaces & Role Profiles, 3.1 Primary Entities, 3.2 Key Stored Procedures (PL/pgSQL), 3. Data Architecture & Schema Relationships (+3 more)
+### Community 169 - "PropertyService"
+Cohesion: 0.08
+Nodes (19): main(), ProfileService, isValidUuid(), normalizePsgc(), PropertyFilterQuery, PropertyService, 13. Risks and Unresolved Dependencies, 2. End-to-End Architecture Trace (+11 more)
 
 ### Community 170 - "Luxury Real Estate Search & Filter UX Concepts"
 Cohesion: 0.13
 Nodes (14): 1. The "Single-Purpose Hero" Search Bar (First-Order Filters), 2. The Rich Price Popover (Instead of a Dropdown), 3. The "Specification Pills" (Bedrooms & Bathrooms), 4. The "Architectural Side-Drawer" (Second & Third-Order Filters), 5. The "Sticky" Transformation, 6. Algorithmic Empty State (Zero-Result Recovery), Design Paradigm: "Flush Sticky Header", Design Paradigm: "Segmented Control Chips" (+6 more)
 
-### Community 171 - "CmsPublicSections.jsx"
-Cohesion: 0.38
-Nodes (7): CmsPublicBanner(), CmsPublicCollectionsAndFaqs(), Accordion(), AccordionContent(), AccordionItem(), AccordionTrigger(), cmsService
+### Community 171 - "services/apiClient.js"
+Cohesion: 0.09
+Nodes (19): BED_OPTIONS, DISTRICT_PRESETS, PRICE_PRESETS, UnifiedSearchBar(), mockSales, ChatWidget(), AgentRegisterPage(), agentCredentialsService (+11 more)
 
 ### Community 172 - "Dispatching Parallel Agents"
 Cohesion: 0.14
 Nodes (13): 1. Identify Independent Domains, 2. Create Focused Agent Tasks, 3. Dispatch in Parallel, 4. Review and Integrate, Agent Prompt Structure, Common Mistakes, Dispatching Parallel Agents, Overview (+5 more)
 
-### Community 173 - "agentTeam.service.ts"
-Cohesion: 0.18
-Nodes (6): AgentTeamService, DEFAULT_BROKERAGE_ID, DEFAULT_BROKERAGE_NAME, DEFAULT_SEEDED_TEAMS, localTeamsState, AgentTeamDTO
+### Community 173 - "Skeleton"
+Cohesion: 0.28
+Nodes (14): 2. Key Architecture & Deliverables, 2. Delivered Components, 3. Functional Requirements (FR) Specification Table, AgentDetailSkeleton(), CardGridSkeleton(), DashboardPageSkeleton(), InquiryDetailSkeleton(), ListSkeleton() (+6 more)
 
-### Community 174 - "PropertyMap.jsx"
-Cohesion: 0.14
-Nodes (14): Task 2: Clean Up Property Coordinates & Geocoding Resolver, leaflet@^1.9.4, PROPERTY_TYPES, STATUS_OPTIONS, MapLayerControl(), MOCK_PH_DISTRICTS, PHILIPPINE_BASEMAPS, DEFAULT_METRO_MANILA_COORDS (+6 more)
+### Community 174 - "BrokerAudit.jsx"
+Cohesion: 0.08
+Nodes (38): 7.3 KPI Card Standard (`KpiCard` — No-Pill & Status-Colored Icon Design), 2. Delivered Behavior, 1. Overview, 2. Key Changes, 3. Verification, Unified Icon Loading State with Shadcn UI Spinner, 3. Verification Evidence, 5.5.2 shadcn/ui Component Refactoring Mapping (+30 more)
 
 ### Community 175 - "Examples"
 Cohesion: 0.14
@@ -1523,20 +1516,20 @@ Cohesion: 0.14
 Nodes (13): 1.1 Key Architecture & Implementation Milestones, 1. Overview & Delivered Capabilities, 2. Invariant Audit Verification, 3. Playwright E2E Verification, 4.1 Frontend Component & Service Suites, 4.2 Backend Property Suites, 4. Vitest Unit & Integration Suites, 5. Master Specification Traceability (+5 more)
 
 ### Community 180 - "DESIGN.md — Human Shelter Realty Design System"
-Cohesion: 0.10
-Nodes (20): 1. Core Philosophy & Visual Identity, 2.1 Surface, Text & Brand Tokens, 2.2 Semantic Status Tokens, 2. Color Palette & Semantic Tokens, 3.1 Font Stack, 3.2 Responsive Type Scale (1.250 Major Third), 3. Typography System, 4.1 Strict 8-Point Spacing Grid (+12 more)
+Cohesion: 0.08
+Nodes (24): 1. Core Philosophy & Visual Identity, 2.1 Surface, Text & Brand Tokens, 2.2 Semantic Status Tokens, 2. Color Palette & Semantic Tokens, 3.1 Font Stack, 3.2 Responsive Type Scale (1.250 Major Third), 3. Typography System, 4.1 Strict 8-Point Spacing Grid (+16 more)
 
 ### Community 181 - "AnalyticsMetricCard.jsx"
 Cohesion: 0.52
 Nodes (6): AnalyticsMetricCard(), MetricCardContent(), MetricCardSkeleton(), Odometer(), ShimmerBlock(), Tooltip()
 
 ### Community 182 - "Property Listing Inquiry Management — AI Implementation Workflow"
-Cohesion: 0.08
-Nodes (20): 2. Test Execution Summary, 3. Engineering Artifacts Created & Modified, 4. Operational Sign-Off, Backend Test Suites (28 / 28 Tests Passed), Communication, Notification, Audit, AI Summary & Session Handling (Phases 1–6), Frontend Test Suites (6 / 6 Tests Passed), Property Listing Inquiry Management: Verification & Acceptance Report, 2. Relational Schema & Data Model (+12 more)
+Cohesion: 0.09
+Nodes (18): 2. Test Execution Summary, 3. Engineering Artifacts Created & Modified, 4. Operational Sign-Off, Backend Test Suites (28 / 28 Tests Passed), Communication, Notification, Audit, AI Summary & Session Handling (Phases 1–6), Frontend Test Suites (6 / 6 Tests Passed), Property Listing Inquiry Management: Verification & Acceptance Report, 2. Relational Schema & Data Model (+10 more)
 
 ### Community 183 - "Proposed Changes"
-Cohesion: 0.13
-Nodes (15): deriveLegacyStatus(), Component 1: Backend Services (`backend/src/services/property.service.ts`), Component 3: Design Tokens & Shared Status Badge (`frontend/src/components/dashboard/StatusBadge.jsx`), Component 4: Broker Administrative Consoles, Component 5: Master Registries & Documentation, [MODIFY] `backend/src/services/property.service.ts`, [MODIFY] `docs/modules/02-property-listing/INDEX.md`, [MODIFY] `docs/modules/02-property-listing/ui-specification.md` (+7 more)
+Cohesion: 0.12
+Nodes (16): deriveLegacyStatus(), Component 1: Backend Services (`backend/src/services/property.service.ts`), Component 2: Frontend Service Contracts (`frontend/src/services/propertyService.js`), Component 3: Design Tokens & Shared Status Badge (`frontend/src/components/dashboard/StatusBadge.jsx`), Component 4: Broker Administrative Consoles, Component 5: Master Registries & Documentation, [MODIFY] `backend/src/services/property.service.ts`, [MODIFY] `docs/modules/02-property-listing/INDEX.md` (+8 more)
 
 ### Community 184 - "shadcn/ui Technical Specification & Architecture Guide"
 Cohesion: 0.14
@@ -1578,13 +1571,13 @@ Nodes (13): forced-colors, inverted-colors, Media and feature queries, orientati
 Cohesion: 0.15
 Nodes (13): Common Mistakes (Same as TDD), GREEN Phase: Write Minimal Skill (Make It Pass), Meta-Testing (When GREEN Isn't Working), Overview, Quick Reference (TDD Cycle), Real-World Impact, RED Phase: Baseline Testing (Watch It Fail), TDD Mapping for Skill Testing (+5 more)
 
-### Community 194 - "breadcrumb.jsx"
-Cohesion: 0.20
-Nodes (4): 5.4.1 Visual Hierarchy & Tokens, 5.4.3 Acceptance Criteria, 5.4 M02-SCR-04: Broker Property Dossier & Audit View, Breadcrumb()
+### Community 194 - "navigation-menu (Radix `NavigationMenu` → Base UI `NavigationMenu`)"
+Cohesion: 0.09
+Nodes (18): Base UI only props worth knowing (NavigationMenu), Content → NavigationMenu.Content, CSS variable mapping (navigation-menu), Data-attribute mapping (navigation-menu), Gaps / caveats, Indicator → NavigationMenu.Icon (per wrapper ground truth), Item → NavigationMenu.Item, Link → NavigationMenu.Link (+10 more)
 
-### Community 195 - "InquirySummaryService"
-Cohesion: 0.19
-Nodes (8): InquirySummaryService, notProvidedCitation(), stripPromptInjectionInstructions(), Communication, Notification, Audit, AI Summary & Session Handling Implementation Plan, Global Constraints, Task 4: AI Client Summary Report Service (`AI-01`, `AI-02`), Task 6: Inquiry Lifecycle, Guest vs. Registered Agent Chat, Request-ID Deduplication, Reassignment Access & Broker Metrics, Task 8: Phase 5 & Phase 6 — Full Acceptance Matrix Verification & `/learn` Documentation
+### Community 195 - "Full-Stack Account Profile Management Implementation Plan"
+Cohesion: 0.17
+Nodes (11): 10. Explicit Approval Boundaries, 1. Global Constraints & Guardrails, 2. Environment Readiness Checklist, 3. Affected Files Directory Map, 4. Phase 1: Data Layer (PostgreSQL & RLS Policies), 5. Phase 2: Backend API & Validation Layer, 6. Phase 3: Shared Contracts Layer, 9. Master Documentation & Requirements Maintenance (+3 more)
 
 ### Community 196 - "3. Acceptance Criteria Mapping & Verification Results"
 Cohesion: 0.15
@@ -1602,21 +1595,21 @@ Nodes (12): 1. Overview & Context, 2. Changes Applied, 3. Verification & Evidenc
 Cohesion: 0.15
 Nodes (12): 1. Executive Summary, 2.1 Backend Services & Controller, 2.2 Frontend Client Service & Modal Pinning, 2.3 Pure SVG Vector Canvas & Flexible Editing, 2.4 Studio Editor & Public Visitor Experience, 2. Architecture & Implementation, 3.1 Automated Vitest Test Suites, 3.2 Frontend Production Build (+4 more)
 
-### Community 200 - "4. End-to-End System Flows"
-Cohesion: 0.22
-Nodes (9): 4. End-to-End System Flows, Flow 1: Authentication & Session Creation Flow, Flow 2: Authenticated API Request Validation Pipeline, Flow 3: Client Inactivity, Countdown Warning & Server Session Extension, Flow 4: Informational Presence Heartbeat Flow, Flow 5: Serialized Token Refresh Rotation with Ceiling Preservation, Flow 6: Multi-Device Inspection & Remote Device Revocation, Flow 7: Cross-Tab Session Synchronization & Sensitive Cache Sanitization (+1 more)
+### Community 200 - "Component Composition"
+Cohesion: 0.08
+Nodes (25): Avatar always needs AvatarFallback, Button has no isPending or isLoading prop, Callouts use Alert, Card structure, Choosing between overlay components, Component Composition, Contents, Dialog, Sheet, and Drawer always need a Title (+17 more)
 
 ### Community 201 - "Property Listing Inquiry Management — Scope and AI Implementation Workflow"
-Cohesion: 0.10
-Nodes (20): 10. Logical data and service components, 11. Acceptance and end-to-end verification, 13. Decisions to resolve before implementation, 14. Research references, 1. Purpose and stakeholders, 2.1 Guest inquiry, 2.2 Registered agent chat, 2. Entry paths (+12 more)
+Cohesion: 0.05
+Nodes (39): 10. Logical data and service components, 11. Acceptance and end-to-end verification, 12. AI implementation phases, 13. Decisions to resolve before implementation, 14. Research references, 1. Purpose and stakeholders, 2.1 Guest inquiry, 2.2 Registered agent chat (+31 more)
 
 ### Community 202 - "Session Database Integration — AI Workflow"
-Cohesion: 0.15
-Nodes (13): Execution Discipline, Final Response, Inputs, Objective, Phase 1 — Inspect and Establish the Baseline, Phase 3 — Build the Shared Session Layer, Phase 4 — Integrate Existing Frontend Components, Phase 5 — Verification and Cutover Readiness (+5 more)
+Cohesion: 0.07
+Nodes (24): Module 02: AI Chat Concierge, Module 02: AI Chat Concierge, A. Stable Session Identity, B. Fields and Invariants, C. Activity, Refresh, and Presence, D. Database Access and Concurrency, E. Transition Existing Sessions, Execution Discipline (+16 more)
 
-### Community 203 - "src/index.ts"
-Cohesion: 0.20
-Nodes (9): cors@^2.8.6, helmet@^8.3.0, morgan@^1.11.0, app, errorHandler(), router, cors, helmet (+1 more)
+### Community 203 - "GooglePropertyMap"
+Cohesion: 0.27
+Nodes (11): 1. Overview & Delivered Capabilities, 2. Test Execution & Evidence, 3. Design & Quality Compliance, Verification Record: Property Detail Pinpoint Map & Enlarged Full-Scale Map Modal, createClusterBadgeElement(), createMinimalistMarkerElement(), createPriceBadgeElement(), createTeardropPinElement() (+3 more)
 
 ### Community 204 - "4. Ordered Implementation Steps"
 Cohesion: 0.15
@@ -1627,8 +1620,8 @@ Cohesion: 0.15
 Nodes (12): Automated Tests, Component 1: Public Property Card Status & Interaction ([`PropertyCard.jsx`](file:///c:/Users/Win11x64/Desktop/My%20code%20space/CP_kerby/frontend/src/components/ui/cards/PropertyCard.jsx)), Component 2: Immersive Layout & Header Height Adaptation ([`PropertiesPage.jsx`](file:///c:/Users/Win11x64/Desktop/My%20code%20space/CP_kerby/frontend/src/pages/public/PropertiesPage.jsx)), Goal Description, Implementation Plan: Public Properties Immersive Status Cards & Header Height Layout Adaptation, Manual & Browser Verification (Playwright MCP), [MODIFY] `frontend/src/components/ui/cards/PropertyCard.jsx`, [MODIFY] `frontend/src/pages/public/PropertiesPage.jsx` (+4 more)
 
 ### Community 206 - "Full-Stack Directory Migration & Architecture Map Design"
-Cohesion: 0.17
-Nodes (11): 1. Executive Summary & Objectives, 2. Directory Architecture, 3.2 Import Reference Updates, 3. Frontend Migration Plan, 4.1 Directory & Layer Standardization, 4. Backend Migration Plan, 5. Shared Layer (`shared/types/`), 6. Living Map Specification (`ARCHITECTURE_MAP.md`) (+3 more)
+Cohesion: 0.20
+Nodes (9): 1. Executive Summary & Objectives, 2. Directory Architecture, 4.1 Directory & Layer Standardization, 4. Backend Migration Plan, 5. Shared Layer (`shared/types/`), 6. Living Map Specification (`ARCHITECTURE_MAP.md`), 7. Verification Plan, Core Goals: (+1 more)
 
 ### Community 207 - "canvas-design/SKILL.md"
 Cohesion: 0.17
@@ -1675,24 +1668,24 @@ Cohesion: 0.17
 Nodes (11): Bite-Sized Task Granularity, Execution Handoff, File Structure, No Placeholders, Overview, Plan Document Header, Scope Check, Self-Review (+3 more)
 
 ### Community 218 - "3. Verification Evidence"
-Cohesion: 0.15
-Nodes (12): UserProfileData, 1. Requirement & Summary, 2. Changes Implemented, 3. Verification Evidence, Backend Layer, Backend Unit & Integration Tests, Browser E2E Test (Playwright), Change Record: Broker Dashboard Font Size & Typography Density Adjustment (+4 more)
+Cohesion: 0.17
+Nodes (11): UserProfileData, 1. Requirement & Summary, 2. Changes Implemented, 3. Verification Evidence, Backend Layer, Backend Unit & Integration Tests, Browser E2E Test (Playwright), Change Record: Broker Dashboard Font Size & Typography Density Adjustment (+3 more)
 
-### Community 219 - "Property Listing Inquiry Management — AI Implementation Workflow"
-Cohesion: 0.14
-Nodes (14): API and Event Contracts, Broker, Client, Data Design, Objective, Phase 1 — Review the Existing System, Phase 2 — Define Module Requirements and Boundaries, Phase 3 — Design UI/UX, Data, and Contracts (+6 more)
+### Community 219 - "Phase 4: Frontend UI and Workflow Integration Design Report"
+Cohesion: 0.10
+Nodes (20): 10.1 Sidebar Modifications (`DashboardSidebar.jsx`), 10.2 App Router Modifications (`App.jsx`), 10. Navigation and Role-Visibility Changes, 11. Frontend Testing Plan (Vitest & React Testing Library), 12. Recommended Implementation Sequence, 13. Completion Status & Stop Gate, 1.2 Critical Frontend Deficiencies & Workflow Gaps, 1. Existing Frontend Architecture Assessment (+12 more)
 
 ### Community 220 - "Session Management — Functional Verification Report (Post-Remediation)"
 Cohesion: 0.17
 Nodes (11): 1. Scope & Execution Environment, 3. Executive Summary (Post-Remediation), 5. Automated Regression Test Evidence, 6. Full Suite Verification Summary, 7. Migration & Storage Changes Prepared for Review, Dedicated Regression Suite (`test files/backend/services/session-management-regression.test.ts`), Environment Details, Functional Script Execution (+3 more)
 
 ### Community 221 - "inquiry.service.ts"
-Cohesion: 0.20
-Nodes (19): InquiryAssignmentAudit, InquiryFilterQuery, InquiryInternalNote, InquiryItem, InquiryMessage, localInquiriesState, requestIdToMessageMap, seedInquiries (+11 more)
+Cohesion: 0.15
+Nodes (21): generateReferenceCode(), InquiryAssignmentAudit, InquiryFilterQuery, InquiryInternalNote, InquiryItem, InquiryMessage, localInquiriesState, requestIdToMessageMap (+13 more)
 
-### Community 222 - "requireAuth"
-Cohesion: 0.06
-Nodes (46): 3. RESTful Resource Conventions, Resource: `/api/inquiries`, Resource: `/api/properties`, Resource: `/api/valuations`, requireAuth(), Architectural Purpose, Layer Responsibilities, 1.1 Backend Authentication Flow (`backend/src/middleware/auth.middleware.ts`) (+38 more)
+### Community 222 - "types/index.ts"
+Cohesion: 0.52
+Nodes (6): 2.3 Shared TypeScript Contracts (`shared/types/`), Task 3.1: Universal TypeScript Interfaces & DTOs, NotificationPreferences, ProfileVerificationStatus, UpdateProfilePayload, UserProfileDTO
 
 ### Community 223 - "Dedicated Property Type Selection Page & Minimalist Intake Verification Record"
 Cohesion: 0.17
@@ -1706,21 +1699,21 @@ Nodes (11): 1. The 3-Tier Layered Architecture, 2. Universal API Envelope Contra
 Cohesion: 0.17
 Nodes (11): 1. Overview & Objective, 2. Changes Delivered, 3. Verification Evidence, 4. Status, A. Fluid Card Scroll in `PropertiesPage.jsx`, B. Authentic Google Maps Interface in `GooglePropertyMap.jsx`, C. Coordinate Normalization in `propertyCoordinates.js`, Playwright MCP Interactive Verification (+3 more)
 
-### Community 226 - "property.routes.ts"
-Cohesion: 0.06
-Nodes (39): optionalAuth(), apiRateLimiter, authRateLimiter, shareEmailRateLimiter, router, router, upload, uploadDir (+31 more)
+### Community 226 - "2. Core Module Functions (Part 1)"
+Cohesion: 0.29
+Nodes (7): 2.1 `loginWithCredentials(identity, password)`, 2.2 `registerUser(payload)`, 2.4 `refreshSession()`, 2.5 `validateSession()`, 2.6 `hasRole(user, requiredRole)`, 2.7 `can(user, permission)` / `hasPermission(user, permission)`, 2. Core Module Functions (Part 1)
 
 ### Community 227 - "Implementation Plan: Audit Interface & Recent Activities Slide-Down Integration"
 Cohesion: 0.17
 Nodes (11): 1. Intended Outcome & Task Scope, 2. Applicable Design Tokens & UI Guidelines (`design.md`), 3. Affected Files, 4. Detailed Implementation Steps, 5. Verification & Testing Strategy, 6. Approval Boundary, Implementation Plan: Audit Interface & Recent Activities Slide-Down Integration, Key Deliverables: (+3 more)
 
-### Community 228 - "Decouple Agent Assignment from Property Listings Input Implementation Plan"
-Cohesion: 0.17
-Nodes (11): Decouple Agent Assignment from Property Listings Input Implementation Plan, Environment Readiness & Existing State, Explicit Approval Boundaries (AGENTS.md Section 9), Global Constraints & Boundaries, Implementation Tasks, Task 1: Relax Backend Validation & Enable Unassigned Property Creation, Task 2: Streamline Property Creation Wizard (`BrokerCreateListings.jsx`), Task 3: Implement Agent-Centric Property Assignment in `BrokerAgentDetail.jsx` (+3 more)
+### Community 228 - "propertyCoordinates.js"
+Cohesion: 0.12
+Nodes (20): Task 2: Clean Up Property Coordinates & Geocoding Resolver, Task 8: Upgrade Public Properties Catalog (`PropertiesPage.jsx` - Page P1), PROPERTY_TYPES, STATUS_OPTIONS, MapLayerControl(), PropertyMap(), MOCK_PH_DISTRICTS, PHILIPPINE_BASEMAPS (+12 more)
 
-### Community 229 - "2. Subsystem Specifications (Backend Only)"
-Cohesion: 0.18
-Nodes (9): 1. Architectural Overview & Boundary Isolation, 2.1 Google Auth Service & Endpoint (`POST /api/auth/google`), 2.2 Google Drive Service & Endpoints (`/api/drive/*`), 2.3 Gmail Transactional Email Engine (`/api/mail/*` & Event Hooks), 2.4 WhatsApp ("wattsup") Cloud API & Webhook (`/api/whatsapp/*`), 2.5 Google Maps Platform Gateway (`/api/maps/*`), 2. Subsystem Specifications (Backend Only), 3. Security, Configuration & Mock Resilience (+1 more)
+### Community 229 - "config/index.ts"
+Cohesion: 0.05
+Nodes (31): combineGraphs(), extractDotBlocks(), extractGraphBody(), main(), renderToSvg(), config, MapsController, resolveWithFallback() (+23 more)
 
 ### Community 230 - "animate.md"
 Cohesion: 0.12
@@ -1794,17 +1787,17 @@ Nodes (46): 1. Executive Summary & Philosophy, 1. Project Context, 2. Directory 
 Cohesion: 0.18
 Nodes (10): 1. In Your Current Project (Project Scope), 1. What are Agent Skills?, 2. Globally on Your Machine (User Scope), 2. Installation Methods, 3. Creating Your Own Agent Skill, Agent Skills Installation & Ecosystem Guide, Directory Hierarchy:, Method A: Using GitHub CLI (`gh skill`) (+2 more)
 
-### Community 248 - "LoginPage.jsx"
-Cohesion: 0.31
-Nodes (7): @react-oauth/google@^0.13.5, GoogleOAuthSafe(), LoginPage(), mockLogin, mockNavigate, sessionCoordinator, @react-oauth/google
+### Community 248 - "Per-component notes"
+Cohesion: 0.18
+Nodes (11): accordion, breadcrumb / marker (Slot users), dialog / alert-dialog / sheet, drawer (vaul -> Base UI) — OPT-IN ONLY, not part of a radix migration, form controls, menus (dropdown-menu -> Menu; context-menu; menubar), navigation-menu, Per-component notes (+3 more)
 
 ### Community 249 - "Diagnostic Scan"
 Cohesion: 0.33
 Nodes (6): 1. Accessibility (A11y), 2. Performance, 3. Theming, 4. Responsive Design, 5. Implementation Integrity (CRITICAL), Diagnostic Scan
 
 ### Community 250 - "SubdivisionLotPickerModal"
-Cohesion: 0.22
-Nodes (6): 1. Executive Summary, 2. Verification Evidence, Automated Unit Test Results, Production Build, Verification Record — Removal of Subdivision Master Plan Banner from Listing Studio, SubdivisionLotPickerModal()
+Cohesion: 0.33
+Nodes (5): 1. Executive Summary, 2. Verification Evidence, Automated Unit Test Results, Production Build, Verification Record — Removal of Subdivision Master Plan Banner from Listing Studio
 
 ### Community 251 - "highlighter.jsx"
 Cohesion: 0.26
@@ -1814,9 +1807,9 @@ Nodes (9): shiki@^4.6.0, useHighlightedCode(), aliases, getHighlighter(), getLan
 Cohesion: 0.18
 Nodes (10): 1. Overview & Verification Objective, 2. Tested Journey & Executed Scenarios, 3. Evidence & Artifacts, Journey 1: Subdivision Project Registration, Journey 2: Pure React SVG Vector Canvas & Manual Geometry, Journey 3: Lot Inspector & Shoelace Area Computation, Journey 4: Pre-Flight Topology & Rule Validation, Journey 5: Snapshot Immutability & Map Publication (+2 more)
 
-### Community 253 - "bubble.jsx"
-Cohesion: 0.39
-Nodes (7): Message surfaces use Bubble, Bubble(), BubbleContent(), BubbleGroup(), BubbleReactions(), bubbleReactionsVariants, bubbleVariants
+### Community 253 - "Property Listing Inquiry Management — AI Implementation Workflow"
+Cohesion: 0.14
+Nodes (14): API and Event Contracts, Broker, Client, Data Design, Objective, Phase 1 — Review the Existing System, Phase 2 — Define Module Requirements and Boundaries, Phase 3 — Design UI/UX, Data, and Contracts (+6 more)
 
 ### Community 254 - "BrokerAgents Monolith Component Refactoring Report"
 Cohesion: 0.18
@@ -1834,13 +1827,13 @@ Nodes (10): Automated Tests, Broker Property Lifecycle & Detail Studio Implement
 Cohesion: 0.18
 Nodes (10): 1. Executive Summary & Problem Statement, 2. Master Architecture & Directory Blueprint, 3.1 Relocation of 20 Showcase Components to Sandbox, 3.2 Categorization of Production UI Components, 3.3 Pages Categorization, 3. Migration Details & Component Relocation Mapping, 4. Zero-Disruption Backward Compatibility Strategy, 5. Verification Plan (+2 more)
 
-### Community 258 - "shadcn/ui"
-Cohesion: 0.14
-Nodes (14): CLI, Component Docs, Examples, and Usage, Critical Rules, Current Project Context, Design Systems from DESIGN.md, Detailed References, Icons → [icons.md](./rules/icons.md), Key Fields (+6 more)
+### Community 258 - "System Requirements Specification (SRS)"
+Cohesion: 0.12
+Nodes (16): 2.1 Product Perspective & Context, 2.2 Stakeholder Role Profiles & Access Matrix, 2.3 Operating Environment & Technical Dependencies, 2.4 Design System Constraints & Brand Tokens, 2. Overall Description, 5.1 Entity-Relationship Model (PostgreSQL DDL), 5.2 Transactional Approval Stored Procedure, 5. Data & Database Architecture (+8 more)
 
 ### Community 259 - "3. End-to-End Workflow Execution Loop"
-Cohesion: 0.11
-Nodes (16): Antigravity AI Workflow: `design.md` & `shadcn-ui` System Guide, 1. Executive Summary, 2. The 3-Tier System Architecture, 3. End-to-End Workflow Execution Loop, 4. Directory Layering Contract, 5. Record of Initial Implementation (2026-10-27), 6. Summary for Future Agent Sessions, Antigravity AI Agent Design Workflow: `design.md` to `shadcn-ui` Execution Flow (+8 more)
+Cohesion: 0.14
+Nodes (14): 1. Executive Summary, 2. The 3-Tier System Architecture, 3. End-to-End Workflow Execution Loop, 4. Directory Layering Contract, 5. Record of Initial Implementation (2026-10-27), 6. Summary for Future Agent Sessions, Antigravity AI Agent Design Workflow: `design.md` to `shadcn-ui` Execution Flow, Key Architectural Invariants Delivered: (+6 more)
 
 ### Community 260 - "New visual work"
 Cohesion: 0.14
@@ -1870,9 +1863,9 @@ Nodes (10): Base UI only props worth knowing (dialog), Content → Popup, CSS va
 Cohesion: 0.20
 Nodes (9): Accordion animation placement, Button, Conventions, DropdownMenu / ContextMenu SubContent, Select, SubTrigger open styling, Tabs, Target wrapper shapes (golden-derived specifics) (+1 more)
 
-### Community 267 - "Full-Stack Account Profile Management Implementation Plan"
-Cohesion: 0.15
-Nodes (17): 2.3 Shared TypeScript Contracts (`shared/types/`), 10. Explicit Approval Boundaries, 1. Global Constraints & Guardrails, 2. Environment Readiness Checklist, 3. Affected Files Directory Map, 4. Phase 1: Data Layer (PostgreSQL & RLS Policies), 5. Phase 2: Backend API & Validation Layer, 6. Phase 3: Shared Contracts Layer (+9 more)
+### Community 267 - "2. Full-Stack Layer Architecture"
+Cohesion: 0.18
+Nodes (10): 1. Executive Summary, 2.1 Data Layer (`backend/src/models/`), 2.2 Backend API & Controllers (`backend/src/`), 2. Full-Stack Layer Architecture, 3.1 Backend Integration Tests, 3.3 Automated End-to-End Playwright Tests, 3.4 Live Browser Playwright MCP Verification, 3. Verification Evidence (+2 more)
 
 ### Community 268 - "Section Definitions"
 Cohesion: 0.20
@@ -1942,13 +1935,13 @@ Nodes (9): 1. `backend/src/services/subdivisionValidation.service.ts`, 1. Overvi
 Cohesion: 0.20
 Nodes (9): 1. `backend/src/models/subdivision_map_tables_migration.sql`, 1. Overview, 2. Delivered Schema Artifacts, 2. Indexes and Performance Optimization, 3. Living Documentation Updates, 3. Row-Level Security (RLS) Policies, 4. Verification Evidence, 5. Next Steps (+1 more)
 
-### Community 285 - "navigation-menu.jsx"
-Cohesion: 0.28
-Nodes (4): NavigationMenu(), NavigationMenuPositioner(), NavigationMenuTrigger(), navigationMenuTriggerStyle
+### Community 285 - "WhatsAppService"
+Cohesion: 0.26
+Nodes (3): WhatsAppController, WhatsAppService, Task 5: WhatsApp ("wattsup") Cloud API Dispatcher & Webhook Engine
 
 ### Community 286 - "3. Defects Resolution & Verification Summary"
-Cohesion: 0.10
-Nodes (20): 1.1 Environment & System Configuration, 1.2 Verification Scope, 1.3 Executive Summary & Remediation Result, 1. Test Context, 2. Field Verification Matrix (Post-Remediation), 3. Defects Resolution & Verification Summary, 4. Evidence and Artifacts Catalog, 5. Verification Sign-Off (+12 more)
+Cohesion: 0.07
+Nodes (30): QueryPropertyInput, 1.1 Environment & System Configuration, 1.2 Verification Scope, 1.3 Executive Summary & Remediation Result, 1. Test Context, 2. Field Verification Matrix (Post-Remediation), 3. Defects Resolution & Verification Summary, 4. Evidence and Artifacts Catalog (+22 more)
 
 ### Community 287 - "3. Architecture & Routing"
 Cohesion: 0.20
@@ -1958,17 +1951,17 @@ Nodes (9): 1. Overview & Objectives, 2. Target Pages to Migrate, 3. Architecture
 Cohesion: 0.20
 Nodes (9): 1.1 Resolved Architectural & Policy Decisions, 1. Purpose, Scope & Resolved Policy Decisions, 2. Three-Dimensional Lifecycle Model, 3.1 Reconciling Unapplied Prior Migrations, 3.2 New Relational Tables & Synced Projection, 3. Database Schema & Migration Design (`backend/src/models/agent_management_v2_migration.sql`), 4. API & Service Contracts, Agent Management Module — Architecture & Design Specification (+1 more)
 
-### Community 289 - "config/index.ts"
-Cohesion: 0.04
-Nodes (40): googleapis@^182.0.0, config, MapsController, resolveWithFallback(), StepResult, createMimeMessage(), testGmail(), checkGoogleDriveHealth() (+32 more)
+### Community 289 - "CommuteAnalysisCard"
+Cohesion: 0.20
+Nodes (12): 7.1 Exhaustive Page Integration Matrix, 7.2 Core User Journeys, 7. User Journeys & Page Map Requirements Matrix, Journey 2: Listing Broker Inputting Cadastral Location, Pages Requiring the Map Module (Determination Matrix), Phase 3: Page-Level Map Upgrades, Task 10: Upgrade Broker Listing Studio & Property Details (Pages P4 & P5), Task 11: Upgrade Agent Portal Pages (Pages P6 & P7) (+4 more)
 
 ### Community 290 - "helper.js"
 Cohesion: 0.42
 Nodes (7): connect(), nextReconnectDelay(), reloadAfterRecovery(), sessionKey(), setStatus(), showTombstone(), websocketUrl()
 
-### Community 291 - "valuation.controller.ts"
-Cohesion: 0.27
-Nodes (5): ValuationController, router, ValuationInput, ValuationOutput, ValuationService
+### Community 291 - "Agent Management Module — Architecture & Technical Reference"
+Cohesion: 0.14
+Nodes (13): 1.1 Problems Solved, 1.2 Out of Scope, 1. Executive Summary & Purpose, 2. Architecture & Component Interaction, 3. Agent Lifecycle, 6. Dependencies & External Integrations, 8.1 Automated Test Suite, 8.2 Identified Gaps & Operational Considerations (+5 more)
 
 ### Community 292 - "hover-card → preview-card"
 Cohesion: 0.22
@@ -1979,8 +1972,8 @@ Cohesion: 0.22
 Nodes (8): Band (Claude Code), Configure Default Mode, Deactivate, Levels, More, Ponytail Help, Skills, Update
 
 ### Community 294 - "Global Constraints"
-Cohesion: 0.08
-Nodes (21): Global Constraints, Realty Platform Architecture & Content Implementation Plan, Task 1: Static "In Progress" Architectural Hero Visual Anchor, Task 2: Advanced Search Console with Buy/Sell/Rent Tabs, Task 3: Exclusive Listings Showcase & Inspection Modal, Task 4: Free Home Valuation CMA Tool & Dedicated Landing, Task 5: Neighborhood Guides & District Intelligence, Task 6: Real Estate Blog & Market Intelligence Editorial (+13 more)
+Cohesion: 0.15
+Nodes (11): Global Constraints, Realty Platform Architecture & Content Implementation Plan, Task 2: Advanced Search Console with Buy/Sell/Rent Tabs, Task 3: Exclusive Listings Showcase & Inspection Modal, Task 4: Free Home Valuation CMA Tool & Dedicated Landing, Task 5: Neighborhood Guides & District Intelligence, Task 6: Real Estate Blog & Market Intelligence Editorial, Task 7: Verified Client Testimonials & Case Studies (+3 more)
 
 ### Community 295 - "Examples"
 Cohesion: 0.22
@@ -2030,9 +2023,9 @@ Nodes (9): Advanced: Skills with executable code, Avoid assuming tools are insta
 Cohesion: 0.25
 Nodes (7): Sandbox Sub-App & Target Pages Migration Implementation Plan, Task 1: Create Sandbox Header & Layout, Task 2: Create Sandbox Hub Page, Task 3: Create Pinned Sandbox Launcher Button, Task 4: Streamline Main Header & Configure Routes, Task 5: Build Verification & Verification Testing, Tasks
 
-### Community 307 - "Styling & Customization"
-Cohesion: 0.07
-Nodes (25): Avatar always needs AvatarFallback, Button has no isPending or isLoading prop, Callouts use Alert, Card structure, Choosing between overlay components, Component Composition, Contents, Dialog, Sheet, and Drawer always need a Title (+17 more)
+### Community 307 - "auth.ts"
+Cohesion: 0.42
+Nodes (8): Task 1: Shared Auth & RBAC Type Contracts, AuthSession, AuthUser, LoginCredentials, MfaVerificationPayload, Permission, RegisterPayload, UserRole
 
 ### Community 308 - "RESPONSIVE UI/UX REQUIREMENTS"
 Cohesion: 0.22
@@ -2046,9 +2039,9 @@ Nodes (7): 2. Traceability Matrix, 3.1 Backend Service Tests, 3.2 Frontend Unit 
 Cohesion: 0.22
 Nodes (8): 1.1 Key Architecture & Implementation Milestones, 1. Overview & Delivered Capabilities, 2. Design Token Validation & Contrast Checks, 3.1 Unit & Component Tests (`vitest`), 3.2 End-to-End Tests (`playwright`), 3. Test Evidence, 4. Conclusion & Status, Verification Record: Public Property Card Lifecycle Status Presentation & Dynamic Viewport Adaptation (FR-PL-021)
 
-### Community 311 - "Base vs Radix"
-Cohesion: 0.25
-Nodes (8): Accordion, Base vs Radix, Button / trigger as non-button element (base only), Contents, Select, Select — multiple selection and object values (base only), Slider, ToggleGroup
+### Community 311 - "Home.jsx"
+Cohesion: 0.24
+Nodes (12): CmsPublicBanner(), AwardsShowcase(), BuyerProtectionPromiseSection(), ClientStoriesSection(), InstitutionalAuthoritySection(), LeadCaptureSection(), ListingHeroGallery(), NeighborhoodSpotlightsSection() (+4 more)
 
 ### Community 312 - "2. Delivered Changes"
 Cohesion: 0.22
@@ -2058,9 +2051,9 @@ Nodes (8): 1. Overview & Objective, 2.1 CadastralLocationPicker (`frontend/src/c
 Cohesion: 0.33
 Nodes (6): 1. Accessibility (VoiceOver / TalkBack), 2. Performance, 3. Appearance & Theming, 4. Platform Conformance (CRITICAL), 5. Adaptivity, Diagnostic Scan
 
-### Community 314 - "7. API Contracts & Endpoint Specifications"
-Cohesion: 0.18
-Nodes (11): 7.10 `GET /api/admin/users`, `PATCH /api/admin/users/:id/role`, `PATCH /api/admin/users/:id/status`, 7.1 `POST /api/auth/login`, 7.2 `POST /api/auth/google`, 7.3 `POST /api/auth/register-agent`, 7.4 `POST /api/auth/forgot-password`, 7.5 `POST /api/auth/reset-password`, 7.6 `POST /api/auth/refresh`, 7.7 `POST /api/auth/extend-session` (+3 more)
+### Community 314 - "Global Constraints"
+Cohesion: 0.25
+Nodes (7): Global Constraints, Parallax Multi-Vector Scrolling Intro Implementation Plan, Task 1: Test Infrastructure & Parallax Layer Asset Pipeline, Task 2: Starfield Canvas Particle Component (`StarTwinkleCanvas.jsx`), Task 3: Architectural Vector HUD Overlay (`VectorHUDOverlay.jsx`), Task 4: Master Parallax Controller (`ParallaxMultiVectorHero.jsx`), Task 6: Full Test Suite, Build Verification & Visual Polish
 
 ### Community 315 - "bolder.md"
 Cohesion: 0.33
@@ -2075,12 +2068,12 @@ Cohesion: 0.15
 Nodes (11): Act on the receipt, Assemble and review, Plan and asset review, Plan, capture, serve, Core Rule, Decision Comps, Impeccable Asset Producer, Input Contract (+3 more)
 
 ### Community 318 - "carousel.jsx"
-Cohesion: 0.23
-Nodes (8): CarouselContent(), CarouselContext, CarouselItem(), CarouselNext(), CarouselPrevious(), useCarousel(), TESTIMONIALS, embla-carousel-react
+Cohesion: 0.29
+Nodes (8): embla-carousel-react@^8.6.0, CarouselContent(), CarouselContext, CarouselItem(), CarouselNext(), CarouselPrevious(), useCarousel(), embla-carousel-react
 
-### Community 319 - "Session Management — Functional Testing Instructions"
+### Community 319 - "Module 03: Property Listing Management (`property-listings`)"
 Cohesion: 0.18
-Nodes (11): Completion and Final Response, Execution Rules, Objective, Phase 1 — Discover the Current Session Architecture, Phase 2 — Prepare Controlled Test Data and Baselines, Phase 3 — Execute the Functional Matrix, Phase 4 — Independently Check Stored Data, Phase 5 — Evaluate Failures and Clean Up (+3 more)
+Nodes (10): 2.2 Sales Agent Persona (`agent`), 2.3 Managing Broker Persona (`broker`), 2.4 System Administrator Persona (`admin`), 2. Multi-Stakeholder Workspaces & Role Profiles, 3.1 Primary Entities, 3.2 Key Stored Procedures (PL/pgSQL), 3. Data Architecture & Schema Relationships, 4. RESTful API Surface & Endpoint Contracts (+2 more)
 
 ### Community 320 - "Data Management Module — Context Principles & Specification"
 Cohesion: 0.29
@@ -2187,20 +2180,16 @@ Cohesion: 0.25
 Nodes (7): Pattern 1: CVA (Class Variance Authority) Components, Pattern 2: Compound Components (React 19), Pattern 3: Form Components, Pattern 4: Responsive Grid System, Patterns, tailwind-design-system — detailed patterns and worked examples, Utility Functions
 
 ### Community 346 - "LiveCmsEditor.jsx"
-Cohesion: 0.54
-Nodes (6): LiveEditableText(), LiveEditContext, Editable(), EditableContext, EditableInput(), EditablePreview()
-
-### Community 347 - "Authentication & Authorization Module — Corrected Gap & Remediation Report"
-Cohesion: 0.18
-Nodes (10): 1. Scope & Reconciliation Context, 2. Executive Summary & Inventory Reconciliation, 4.1 Server Session Extension vs Heartbeats, 4.2 Role-Specific Timeouts, 4.3 Refresh Token Invariants, 4. Key Invariants & Remediation Architecture, 5. Verification Summary, Authentication & Authorization Module — Corrected Gap & Remediation Report (+2 more)
+Cohesion: 0.26
+Nodes (12): LiveEditableText(), LiveEditContext, LiveEditFloatingBar(), LiveEditProvider(), Editable(), EditableContext, EditableInput(), EditablePreview() (+4 more)
 
 ### Community 348 - "critique.md"
 Cohesion: 0.17
 Nodes (11): Action Summary, Ask the User, Assessment A: Design Review, Assessment B: Detector + Browser Evidence, Assessment Orchestration, Deliver the Report, Hard Invariants, Persist the Snapshot (+3 more)
 
-### Community 349 - "Property Status Alignment & Synchronization Engine Implementation Plan"
-Cohesion: 0.29
-Nodes (6): Automated Tests, Global Constraints & Invariants, Manual Verification in Browser (Playwright MCP), Property Status Alignment & Synchronization Engine Implementation Plan, User Review Required, Verification Plan
+### Community 349 - "inquiryStream.ts"
+Cohesion: 0.25
+Nodes (6): InquiryStreamPayload, publishInquiryEvent(), shouldDeliverInquiryEvent(), StreamSubscriber, subscribeInquiryStream(), subscribers
 
 ### Community 350 - "Phase 3 Verification Record: Frontend Custom React SVG Vector Canvas"
 Cohesion: 0.25
@@ -2210,33 +2199,37 @@ Nodes (7): 1. `frontend/src/components/subdivision/SubdivisionVectorCanvas.jsx`,
 Cohesion: 0.22
 Nodes (8): 1. Altitude: Aim at the Outcome, 2. Depth: Work Like the Field's Best, 3. Range: Cross-Disciplinary Perspectives, Be Ambitious, Core Rules, Input Evaluation, Output Structure, The Three Types of Ambition
 
-### Community 352 - "main.jsx"
-Cohesion: 0.29
-Nodes (5): @mantine/core@^9.4.2, react-dom@^19.2.7, theme, @mantine/core, react-dom
+### Community 353 - "3. Verification Evidence"
+Cohesion: 0.25
+Nodes (7): 1. Executive Summary, 2. Affected Files, 3. Verification Evidence, Automated Unit Tests, Playwright Headless Verification, Production Build, Verification Record — Restored Clean 2-Row Filter Toolbar Layout
 
-### Community 353 - "navigation-menu (Radix `NavigationMenu` → Base UI `NavigationMenu`)"
-Cohesion: 0.14
-Nodes (14): Base UI only props worth knowing (NavigationMenu), Content → NavigationMenu.Content, CSS variable mapping (navigation-menu), Data-attribute mapping (navigation-menu), Gaps / caveats, Indicator → NavigationMenu.Icon (per wrapper ground truth), Item → NavigationMenu.Item, Link → NavigationMenu.Link (+6 more)
+### Community 354 - "Plan: Broker Portal UI/UX Refactor"
+Cohesion: 0.25
+Nodes (7): Affected Files (excluding tests), Approval Requirements, Implementation Steps, Plan: Broker Portal UI/UX Refactor, Required Skills & Tools, Risks & Mitigations, Verification Commands (to be executed after implementation)
 
 ### Community 355 - "Simplify the Design"
 Cohesion: 0.17
 Nodes (11): Assess Current State, Code Simplification, Content Simplification, Document Removed Complexity, Information Architecture, Interaction Simplification, Layout Simplification, Plan Simplification (+3 more)
+
+### Community 356 - "property.ts"
+Cohesion: 0.29
+Nodes (10): PropertyModel, PropertyItem, ConfidentialItem, MediaItem, ResoConfidentialItem, ResoMediaItem, ResoPropertyType, ResoRoomItem (+2 more)
 
 ### Community 357 - "Hardening Dimensions"
 Cohesion: 0.17
 Nodes (11): Accessibility Resilience, Assess Hardening Needs, Edge Cases & Boundary Conditions, Error Handling, Hardening Dimensions, Input Validation & Sanitization, Internationalization (i18n), Performance Resilience (+3 more)
 
 ### Community 358 - "UnifiedSearchBar"
-Cohesion: 0.09
-Nodes (19): 1. Overview & Objective, 2. Changes Delivered, 3. Verification Evidence, 4. Status, A. Minimalist Filter Bar & "Hide Filters" Toggle (`UnifiedSearchBar.jsx`), B. Public Properties Integration (`PropertiesPage.jsx`), C. Functional Testing & Database Data Validation (`propertyFilterAndDataValidation.test.jsx`), Playwright Automated Interactive Browser Verification (+11 more)
+Cohesion: 0.17
+Nodes (11): 1. Overview & Objective, 2. Changes Delivered, 3. Verification Evidence, 4. Status, A. Minimalist Filter Bar & "Hide Filters" Toggle (`UnifiedSearchBar.jsx`), B. Public Properties Integration (`PropertiesPage.jsx`), C. Functional Testing & Database Data Validation (`propertyFilterAndDataValidation.test.jsx`), Playwright Automated Interactive Browser Verification (+3 more)
 
 ### Community 359 - "Adaptation Strategies"
 Cohesion: 0.40
 Nodes (5): Adaptation Strategies, Orientation & foldables, Phone → Tablet (iPad / large screens), Platform → platform (iOS ↔ Android), Web → native (porting a website or web app)
 
 ### Community 360 - "integrations.ts"
-Cohesion: 0.18
-Nodes (17): 1. Overview & Delivered Capabilities, 2. Test Execution & Evidence, 3. Design & System Boundaries Compliance, Delivered Capabilities:, Test Summary, Verification Record: Google Maps Platform Full-Stack Implementation, Task 1: Environment Configuration & Shared Integration Contracts, Task 1: Shared TypeScript Contracts & Geospatial Data Types (+9 more)
+Cohesion: 0.23
+Nodes (13): Delivered Capabilities:, Task 1: Environment Configuration & Shared Integration Contracts, Task 1: Shared TypeScript Contracts & Geospatial Data Types, CommuteDestinationEstimate, CommuteEstimate, EmailNotificationRequest, GeoCoordinates, GoogleAuthPayload (+5 more)
 
 ### Community 361 - "Tasks"
 Cohesion: 0.25
@@ -2246,9 +2239,9 @@ Nodes (7): Clean Up Directory Typos, Consolidate Mock Data, and Update Directory
 Cohesion: 0.18
 Nodes (11): 4.10 Data Access & Role Verification, 4.1 Schema Reconciliation & Removed `property_types` Table, 4.2 Repeated Images & Unreachable Placeholder Icons, 4.3 Listing Code: `listing_id` vs. `listing_key`, 4.4 Zero Values vs. Missing Data, 4.5 Floor Area Units & Conversions, 4.6 Bedrooms / Bathrooms Legacy Field Mapping, 4.7 Status Mapping: Reserved vs. Pending vs. Pending Approval (+3 more)
 
-### Community 363 - "auth.ts"
-Cohesion: 0.42
-Nodes (8): Task 1: Shared Auth & RBAC Type Contracts, AuthSession, AuthUser, LoginCredentials, MfaVerificationPayload, Permission, RegisterPayload, UserRole
+### Community 363 - "Subdivision AI Picture Analysis & Vector Polygon Layout Generation (FR-SM-056)"
+Cohesion: 0.33
+Nodes (5): 1. Overview & Objective, 2. Issues Diagnosed and Resolved, 3. Verification Evidence, Subdivision AI Picture Analysis & Vector Polygon Layout Generation (FR-SM-056), loadProjectData()
 
 ### Community 364 - "3. Verification Evidence"
 Cohesion: 0.18
@@ -2266,9 +2259,9 @@ Nodes (6): command_has_server_id(), command_line_for_pid(), is_brainstorm_server
 Cohesion: 0.29
 Nodes (6): Animation idiom, Class-string rewrites (layer 2), CSS variables, Data-attribute selectors, Disabled-state hooks, Element changes kill pseudo-class variants
 
-### Community 368 - "health.controller.ts"
-Cohesion: 0.36
-Nodes (4): checkHealth(), router, HealthService, HealthStatus
+### Community 368 - "Session Management — Functional Testing Instructions"
+Cohesion: 0.18
+Nodes (11): Completion and Final Response, Execution Rules, Objective, Phase 1 — Discover the Current Session Architecture, Phase 2 — Prepare Controlled Test Data and Baselines, Phase 3 — Execute the Functional Matrix, Phase 4 — Independently Check Stored Data, Phase 5 — Evaluate Failures and Clean Up (+3 more)
 
 ### Community 369 - "Nielsen's 10 Heuristics"
 Cohesion: 0.18
@@ -2446,9 +2439,9 @@ Nodes (6): 1. Overview & Objective, 2.1 Google Maps Engine (`frontend/src/pages/
 Cohesion: 0.18
 Nodes (10): 1. Establish the system, 2. Gather the evidence, 3. Triage, 4. Polish the whole path, 5. Verify and finish, Color, imagery, and icons, Content and code, Flow and hierarchy (+2 more)
 
-### Community 414 - "CadastralLocationPicker"
-Cohesion: 0.16
-Nodes (17): 7.1 Exhaustive Page Integration Matrix, 7.2 Core User Journeys, 7. User Journeys & Page Map Requirements Matrix, Journey 2: Listing Broker Inputting Cadastral Location, Pages Requiring the Map Module (Determination Matrix), Phase 3: Page-Level Map Upgrades, Task 10: Upgrade Broker Listing Studio & Property Details (Pages P4 & P5), Task 11: Upgrade Agent Portal Pages (Pages P6 & P7) (+9 more)
+### Community 414 - "1. Revision & Update History"
+Cohesion: 0.14
+Nodes (15): 1. Overview & Delivered Capabilities, 2. Verification Summary, 3. Compliance & Standards, A. Automated Unit & Integration Tests (100% Passed), B. End-to-End Playwright MCP Verification, Verification Record: Broker Map Refactoring & Cadastral Split-View Integration, 1. Revision & Update History, leaflet@^1.9.4 (+7 more)
 
 ### Community 415 - "Verification Record — Property Filter Status Tabs to Dropdown Refactor"
 Cohesion: 0.29
@@ -2467,14 +2460,14 @@ Cohesion: 0.57
 Nodes (5): getDefaultColumnsForTier(), getViewportTier(), MOCK_COLUMNS, useResponsiveColumns(), VIEWPORT_BREAKPOINTS
 
 ### Community 419 - "Tasks: Stakeholder UI/UX Experience for User Management"
-Cohesion: 0.15
-Nodes (12): Dependencies & Execution Order, Format: `[ID] [P?] [Story] Description`, Implementation Strategy (MVP First), Phase 1: Setup & Shared UI Tokens, Phase 2: Foundational (Backend Metrics & Validation APIs), Phase 3: User Story 1 - Executive Summary & Quick Triage (Priority: P1) 🎯 MVP, Phase 4: User Story 2 - High-Clarity User Directory & Multi-Dimension Filtering (Priority: P2), Phase 5: User Story 3 - Safe Role Elevation & Two-Step Suspension Modal (Priority: P3) (+4 more)
+Cohesion: 0.17
+Nodes (11): Dependencies & Execution Order, Format: `[ID] [P?] [Story] Description`, Implementation Strategy (MVP First), Phase 1: Setup & Shared UI Tokens, Phase 2: Foundational (Backend Metrics & Validation APIs), Phase 4: User Story 2 - High-Clarity User Directory & Multi-Dimension Filtering (Priority: P2), Phase 5: User Story 3 - Safe Role Elevation & Two-Step Suspension Modal (Priority: P3), Phase 6: User Story 4 - Agent Professional Accreditation Compliance Drawer (Priority: P4) (+3 more)
 
 ### Community 420 - "Product"
 Cohesion: 0.17
 Nodes (11): Accessibility & Inclusion, Brand Commitments, Capabilities and Constraints, Evidence on Hand, Operating Context, Platform, Positioning, Product (+3 more)
 
-### Community 421 - "Architecture Note: Controller, Service, and Schema Pattern"
+### Community 421 - "4. Findings and Risks"
 Cohesion: 0.15
 Nodes (13): 1. Outcome and Limitations, 2. Field Checklist, 3. Existing Functions and Evidence, 4. Findings and Risks, 5. Required Follow-Up Verification, 6. Recommended Order and Final Assessment, Session Fields — Implementation Verification and Risk Report, SF-01 — High: Raw bearer tokens are included in file persistence (+5 more)
 
@@ -2482,21 +2475,21 @@ Nodes (13): 1. Outcome and Limitations, 2. Field Checklist, 3. Existing Function
 Cohesion: 0.22
 Nodes (8): Full-Stack Directory Migration Implementation Plan, Global Constraints, Task 1: Shared Layer Scaffolding & Root Environment Template, Task 2: Frontend Directory Migration & Import Updates, Task 3: Backend Layering & Structure Standardization, Task 4: Master Architecture Map (`ARCHITECTURE_MAP.md`) & Rule Alignment, Task 5: End-to-End Build & Final Verification, ValuationEstimate
 
-### Community 423 - "Verification Record — Broker Portal Overlapping Elements & Dynamic Layout Resolution"
-Cohesion: 0.40
-Nodes (4): 1. Overview & Context, 2. Root Cause & Changes Applied, 3. Verification & Evidence, Verification Record — Broker Portal Overlapping Elements & Dynamic Layout Resolution
+### Community 423 - "DashboardLayout.jsx"
+Cohesion: 0.32
+Nodes (9): Frontend Layer, DashboardLayout(), DashboardLayoutContent(), renderSidebar(), SidebarInset(), SidebarProvider(), TooltipProvider(), DashboardThemeProvider() (+1 more)
 
 ### Community 424 - "Global Constraints"
 Cohesion: 0.22
 Nodes (8): Global Constraints, Property Listing Agent Assignment & Confirmation Implementation Plan, Task 1: Database Migration & Schema Updates, Task 3: Backend Controller & API Routes, Task 4: Frontend Listing Form Cleanup (Remove Hardcoded Defaults), Task 5: Frontend Agent Portal Confirmation Workflow, Task 6: Frontend Broker Portal Reassignment & Status Filters, Task 7: Full System Verification & Regression Testing
 
-### Community 425 - "agent.routes.ts"
-Cohesion: 0.07
-Nodes (29): zod@^4.6.5, router, createTeamSchema, departAgentSchema, QueryAgentInput, queryAgentSchema, transferResponsibilitiesSchema, UpdateAgentAvailabilityInput (+21 more)
+### Community 425 - "7. API Contracts & Endpoint Specifications"
+Cohesion: 0.18
+Nodes (11): 7.10 `GET /api/admin/users`, `PATCH /api/admin/users/:id/role`, `PATCH /api/admin/users/:id/status`, 7.1 `POST /api/auth/login`, 7.2 `POST /api/auth/google`, 7.3 `POST /api/auth/register-agent`, 7.4 `POST /api/auth/forgot-password`, 7.5 `POST /api/auth/reset-password`, 7.6 `POST /api/auth/refresh`, 7.7 `POST /api/auth/extend-session` (+3 more)
 
-### Community 426 - "05-database/INDEX.md"
-Cohesion: 0.22
-Nodes (8): 1. High-Level Summary, 🛡️ 1. SCHEMA (The Gatekeeper), 🎮 2. CONTROLLER (The Receptionist), 2. The Three Layers Explained, 3. Concrete Example: Chat Concierge Module, ⚙️ 3. SERVICE (The Engine & Worker), 4. Why Use This Separation?, Architecture Note: Controller, Service, and Schema Pattern
+### Community 426 - "Phase 5 Verification Report — Calendar & Appointment Scheduling Integration into Agent Management"
+Cohesion: 0.33
+Nodes (5): 1. Executive Summary, 3.1 Backend Test Suite (`34/34 Passed`), 3.2 Frontend Test Suite (`22/22 Passed`), 3. Automated Test Execution Results, Phase 5 Verification Report — Calendar & Appointment Scheduling Integration into Agent Management
 
 ### Community 427 - "validate-setup.sh"
 Cohesion: 0.60
@@ -2730,13 +2723,13 @@ Nodes (6): Address "Spirit vs Letter" Arguments, Build Rationalization Table, Bu
 Cohesion: 0.33
 Nodes (5): reso, RESO_BASE_URL, RESO_CLIENT_ID, RESO_CLIENT_SECRET, node
 
-### Community 485 - "StreetViewModal"
-Cohesion: 0.45
-Nodes (8): initEngine(), StreetViewModal(), initStreetView(), LocationPinMap(), initMap(), getGoogleMapsApiKey(), isGoogleMapsConfigured(), loadGoogleMapsApi()
+### Community 485 - "subdivisionAi.service.ts"
+Cohesion: 0.20
+Nodes (7): AutoLayoutLotCandidate, AutoLayoutResult, BoundaryDetectionResult, CropBox, LabelRecognitionResult, SubdivisionAiService, subdivisionAiService
 
 ### Community 487 - ".updateUserStatus"
-Cohesion: 0.21
-Nodes (9): AdminController, invalidateAuthCache(), 1. Database Layer, 2. Backend Controller Layer, 3. Frontend Component Layer, Architecture & Technology Stack, Technical Constraints & Quality Gates, Technical Design & Endpoints (+1 more)
+Cohesion: 0.22
+Nodes (7): 1. Database Layer, 2. Backend Controller Layer, 3. Frontend Component Layer, Architecture & Technology Stack, Technical Constraints & Quality Gates, Technical Design & Endpoints, Technical Plan: User Management Security Hardening & Admin Enhancements
 
 ### Community 488 - "2. Verification Evidence"
 Cohesion: 0.33
@@ -2756,11 +2749,11 @@ Nodes (10): Completion Report, Done When, Key rules, Mandatory Post-Execution Ho
 
 ### Community 492 - "StandardStatus"
 Cohesion: 0.13
-Nodes (23): PropertyModel, DerivedStatusResult, PropertyItem, 1.3 Regulatory & Industry Compliance, 1.1 Regulatory & Real Estate Standards Compliance, 1. Executive Summary & Domain Purpose, 1.1 Statutory & Domain Governance Principles, 1. Executive Summary & Domain Scope (+15 more)
+Nodes (18): DerivedStatusResult, 1.1 Purpose, 1.2 Scope of the Module, 1.3 Regulatory & Industry Compliance, 1.4 Definitions, Acronyms, and Abbreviations, 1. Introduction, 1.1 Regulatory & Real Estate Standards Compliance, 1. Executive Summary & Domain Purpose (+10 more)
 
-### Community 493 - "context-menu (Radix `ContextMenu` → Base UI `ContextMenu`)"
-Cohesion: 0.20
-Nodes (9): Arrow / Item / Group / Label / CheckboxItem / RadioGroup / RadioItem / ItemIndicator / Separator / Sub / SubTrigger / SubContent, Base UI only, data attributes, CSS variables, Content → ContextMenu.Portal > Positioner > Popup, context-menu (Radix `ContextMenu` → Base UI `ContextMenu`), Portal → ContextMenu.Portal, Radix → Base UI props mapping: menu family, Root → ContextMenu.Root, Trigger → ContextMenu.Trigger (+1 more)
+### Community 493 - "main.jsx"
+Cohesion: 0.29
+Nodes (5): @mantine/core@^9.4.2, react-dom@^19.2.7, theme, @mantine/core, react-dom
 
 ### Community 494 - "Common Cognitive Load Violations"
 Cohesion: 0.22
@@ -2782,9 +2775,9 @@ Nodes (8): Cadence, Confirm and stop, Phase 1: Discovery interview, Phase 2: Res
 Cohesion: 0.18
 Nodes (10): Completion Report, Done When, For AI Generation, Mandatory Post-Execution Hooks, Outline, Pre-Execution Checks, Quick Guidelines, Section Requirements (+2 more)
 
-### Community 499 - "Client Self-Registration with In-Place Email OTP Verification Report"
-Cohesion: 0.29
-Nodes (6): 1. Executive Summary, 2.1 Backend Layer (`backend/src/`), 2.2 Frontend Layer (`frontend/src/`), 2. Technical Architecture & Layer Implementations, 3. Verification Evidence, Client Self-Registration with In-Place Email OTP Verification Report
+### Community 499 - "StreetViewModal"
+Cohesion: 0.45
+Nodes (8): initEngine(), StreetViewModal(), initStreetView(), LocationPinMap(), initMap(), getGoogleMapsApiKey(), isGoogleMapsConfigured(), loadGoogleMapsApi()
 
 ### Community 500 - "Android platform"
 Cohesion: 0.25
@@ -2810,9 +2803,9 @@ Nodes (4): 1. Live Schema Cache Verification Before Code Assumptions, 2. Trigger
 Cohesion: 0.40
 Nodes (5): Default Type Parameters, extends Constraint, Generic Constraints, keyof Constraint, Multiple Constraints
 
-### Community 506 - "Feature Specification: Comprehensive User Management Module"
-Cohesion: 0.20
-Nodes (10): Executive Overview, Feature Specification: Comprehensive User Management Module, Functional Requirements, Key Entities, Success Criteria, User Scenarios & Testing *(mandatory)*, User Story 1 - Role Assignment & Privilege Enforcement (Priority: P1) 🎯 MVP, User Story 2 - Account Suspension & Security Kill Switch (Priority: P2) (+2 more)
+### Community 506 - "Architecture Note: Controller, Service, and Schema Pattern"
+Cohesion: 0.13
+Nodes (11): 1. High-Level Summary, 🛡️ 1. SCHEMA (The Gatekeeper), 🎮 2. CONTROLLER (The Receptionist), 2. The Three Layers Explained, 3. Concrete Example: Chat Concierge Module, ⚙️ 3. SERVICE (The Engine & Worker), 4. Why Use This Separation?, Architecture Note: Controller, Service, and Schema Pattern (+3 more)
 
 ### Community 507 - "ponytail-audit/SKILL.md"
 Cohesion: 0.40
@@ -3038,13 +3031,17 @@ Nodes (5): Key Elements of Good Scenarios, Pressure Types, Testing Setup, VERIFY
 Cohesion: 0.18
 Nodes (10): Core Principles, Governance, [PRINCIPLE_1_NAME], [PRINCIPLE_2_NAME], [PRINCIPLE_3_NAME], [PRINCIPLE_4_NAME], [PRINCIPLE_5_NAME], [PROJECT_NAME] Constitution (+2 more)
 
-### Community 564 - "Agent Management Module — Architecture & Technical Reference"
-Cohesion: 0.09
-Nodes (21): RegisterAgentInput, 1.1 Problems Solved, 1.2 Out of Scope, 1. Executive Summary & Purpose, 2. Architecture & Component Interaction, 3. Agent Lifecycle, 5.1 REST API Contracts, 5.2 Zod Validation Schemas (+13 more)
+### Community 563 - "requireAuth"
+Cohesion: 0.05
+Nodes (54): 3. RESTful Resource Conventions, Resource: `/api/inquiries`, Resource: `/api/properties`, Resource: `/api/valuations`, requireAuth(), Architectural Purpose, Layer Responsibilities, 1.1 Backend Authentication Flow (`backend/src/middleware/auth.middleware.ts`) (+46 more)
 
-### Community 565 - "6. Agent Edit Property Form"
+### Community 564 - "health.controller.ts"
+Cohesion: 0.47
+Nodes (3): checkHealth(), HealthService, HealthStatus
+
+### Community 565 - "2. Delivered Behavior"
 Cohesion: 0.25
-Nodes (8): 6. Agent Edit Property Form, Section 1: Basic Information, Section 2: Location, Section 3: Pricing, Section 4: Property Specifications, Section 5: Features and Amenities, Section 6: Description and Media, Section 7: Listing Management
+Nodes (7): 1. Overview & Context, 2.1 Dual-Workspace Calendar (`AgentScheduleCalendar.jsx`), 2.2 Clean Single-Row Filter Command Bar (`BrokerAgents.jsx`), 2.3 Consistent Modern SaaS KPI Cards (`BrokerAgents.jsx` & `AgentScheduleCalendar.jsx`), 2. Delivered Behavior, 3. Verification Evidence, Dual-Workspace Calendar Interface & Clean Single-Row Filter Command Bar
 
 ### Community 566 - "Core Principles"
 Cohesion: 0.20
@@ -3210,13 +3207,13 @@ Nodes (4): Example: TDD Skill Bulletproofing, Initial Test (Failed), Iteration 1
 Cohesion: 0.29
 Nodes (6): Checks, Entry Atomicity, Impeccable Manual Edit Applier, Input Contract, Output Contract, Workflow
 
-### Community 607 - "AboutPage.jsx"
-Cohesion: 0.70
-Nodes (3): accolades, journeyMilestones, leadershipTeam
+### Community 607 - "Verification Record: Google Maps Platform Full-Stack Implementation"
+Cohesion: 0.33
+Nodes (5): 1. Overview & Delivered Capabilities, 2. Test Execution & Evidence, 3. Design & System Boundaries Compliance, Test Summary, Verification Record: Google Maps Platform Full-Stack Implementation
 
-### Community 608 - "5. Defects Catalog"
-Cohesion: 0.25
-Nodes (8): 5. Defects Catalog, Defect #1: Unreachable Building2 Fallback Icon Due to Hardcoded Unsplash Fallback, Defect #2: Listing Code Renders `ID: KEY-...` Instead of RESO Listing ID, Defect #3: Zero-Value Coercion in Bedrooms, Bathrooms, and Floor Area, Defect #4: Hardcoded `m²` Unit Ignores `living_area_units`, Defect #5: Ignored `bedrooms_total` and `bathrooms_total_integer` in Table Render, Defect #6: Conflation of `PENDING` Status into "Reserved" Badge, Defect #7: Date Display Omits Explicit `Asia/Manila` Timezone Pinning
+### Community 608 - "Tasks: User Management Security Hardening & Admin Enhancements"
+Cohesion: 0.33
+Nodes (5): Phase 1: Foundational (Database Trigger Hardening), Phase 2: User Story 1 & 2 - Backend Security & Self-Lockout Guards, Phase 3: User Story 3 & 4 - Frontend Admin Portal Enhancements, Phase 4: Verification & Quality Gates, Tasks: User Management Security Hardening & Admin Enhancements
 
 ### Community 609 - "Visualize: Direction Comps & Asset Production"
 Cohesion: 0.33
@@ -3238,17 +3235,17 @@ Nodes (3): Expanding the ESLint configuration, React Compiler, React + Vite
 Cohesion: 0.50
 Nodes (3): ChatMessage, ChatRequest, ChatResponse
 
-### Community 614 - "react"
-Cohesion: 0.03
-Nodes (70): 1.1 Architectural Strengths, 1.2 Critical Frontend Deficiencies & Workflow Gaps, 1. Existing Frontend Architecture Assessment, 2. Current Page and Component Inventory, Manual Verification Table, OtpInput(), AgentAssignmentActionModal(), DashboardLayout() (+62 more)
-
-### Community 615 - "Verification Record: Module 02 Property Listing UI Refactoring to shadcn/ui"
+### Community 614 - "5. Defects Catalog"
 Cohesion: 0.25
-Nodes (7): 1. Scope & Objective, 2. Invariant Compliance Audit, 3. Unit & Component Test Evidence, 4. End-to-End Playwright Verification, 6. Conclusion, Refactored Interfaces:, Verification Record: Module 02 Property Listing UI Refactoring to shadcn/ui
+Nodes (8): 5. Defects Catalog, Defect #1: Unreachable Building2 Fallback Icon Due to Hardcoded Unsplash Fallback, Defect #2: Listing Code Renders `ID: KEY-...` Instead of RESO Listing ID, Defect #3: Zero-Value Coercion in Bedrooms, Bathrooms, and Floor Area, Defect #4: Hardcoded `m²` Unit Ignores `living_area_units`, Defect #5: Ignored `bedrooms_total` and `bathrooms_total_integer` in Table Render, Defect #6: Conflation of `PENDING` Status into "Reserved" Badge, Defect #7: Date Display Omits Explicit `Asia/Manila` Timezone Pinning
+
+### Community 615 - "CmsPublicSections.jsx"
+Cohesion: 0.42
+Nodes (6): CmsPublicCollectionsAndFaqs(), Accordion(), AccordionContent(), AccordionItem(), AccordionTrigger(), cmsService
 
 ### Community 616 - "property.service.ts"
-Cohesion: 0.05
-Nodes (59): isSupabaseConfigured, supabase, supabaseAdmin, main(), CORE_USERS, SEED_PROPERTY_IDS, SEED_PROPERTIES, SYSTEM_USERS (+51 more)
+Cohesion: 0.04
+Nodes (69): isSupabaseConfigured, supabase, supabaseAdmin, main(), CORE_USERS, SEED_PROPERTY_IDS, SEED_PROPERTIES, SYSTEM_USERS (+61 more)
 
 ### Community 622 - "Anti-patterns to avoid"
 Cohesion: 0.67
@@ -3258,9 +3255,9 @@ Nodes (3): Anti-patterns to avoid, Avoid offering too many options, Avoid Window
 Cohesion: 0.67
 Nodes (3): Technical notes, Token budgets, YAML frontmatter requirements
 
-### Community 624 - "Audit Interface & Recent Activities Slide-Down — Full-Stack Verification Report"
-Cohesion: 0.20
-Nodes (6): 2. Automated Vitest Unit Test Results, 4. Design Standards Conformance (`design.md`), Audit Interface & Recent Activities Slide-Down — Full-Stack Verification Report, 1. Document Registry & Change History, 2. Instructions for AI Agents & Developers, Audit Module — Master Index
+### Community 624 - "chat.service.ts"
+Cohesion: 0.33
+Nodes (5): ChatService, chatService, fetchGroundedListings(), GroundedListingSummary, stripPromptInjectionInstructions()
 
 ### Community 625 - "Implementation Plan: [FEATURE]"
 Cohesion: 0.22
@@ -3282,9 +3279,9 @@ Nodes (4): Containment, Painted material, Region map, What varies independently
 Cohesion: 0.22
 Nodes (8): Complexity Tracking, Constitution Check, Documentation (this feature), Implementation Plan: [FEATURE], Project Structure, Source Code (repository root), Summary, Technical Context
 
-### Community 677 - "GooglePropertyMap"
-Cohesion: 0.15
-Nodes (17): 1. Overview & Delivered Capabilities, 1. Overview & Delivered Capabilities, 1. Overview & Delivered Capabilities, 2. Test Execution & Evidence, 3. Design & Quality Compliance, Verification Record: Property Detail Pinpoint Map & Enlarged Full-Scale Map Modal, EnlargedMapModal(), createClusterBadgeElement() (+9 more)
+### Community 677 - "Verification Record — Broker Portal Overlapping Elements & Dynamic Layout Resolution"
+Cohesion: 0.40
+Nodes (4): 1. Overview & Context, 2. Root Cause & Changes Applied, 3. Verification & Evidence, Verification Record — Broker Portal Overlapping Elements & Dynamic Layout Resolution
 
 ### Community 678 - "frontend-e2e-properties-pa-8ac6e--modes-and-fit-all-controls/error-context.md"
 Cohesion: 0.40
@@ -3323,12 +3320,12 @@ Cohesion: 0.50
 Nodes (3): Communication Style, Design System, Project Agent Rules
 
 ### Community 691 - "Property"
-Cohesion: 0.14
-Nodes (13): DataTable Responsive Column Viewport Adaptation Verification, Key Changes, Summary, Verification Evidence, Global Constraints, Property Listings Mockup Redesign Implementation Plan, Task 1: Enhance `DataTable.jsx` with Numbered Pagination & Multi-Action Cell Support, Task 2: Refactor `SearchAndFilterBar.jsx` for Mockup Toolbar Alignment (+5 more)
+Cohesion: 0.29
+Nodes (7): DataTable Responsive Column Viewport Adaptation Verification, Key Changes, Summary, Verification Evidence, Task 3: Redesign `BrokerProperties.jsx` Layout & Data Columns, Property, PropertyItem
 
-### Community 692 - "Global Constraints"
-Cohesion: 0.18
-Nodes (10): QueryPropertyInput, Broker Agent Management Data & UI Defects Fix Implementation Plan, Global Constraints, Task 2: Backend - Support `list_agent_key` in Property Query API, Task 3: Backend - Real Batched Aggregation & Safe Profile Formatting in `agent.service.ts`, Task 4: Backend - Secure Invitation List Allowlist (Omit Raw Tokens), Task 6: Frontend UI - Correct Broker Agent Management Page (`BrokerAgents.jsx`), Task 7: Frontend UI - Correct Broker Agent Detail View (`BrokerAgentDetail.jsx`) (+2 more)
+### Community 692 - "Change Record: Broker Portal Standardized Skeleton Loading Suite"
+Cohesion: 0.40
+Nodes (4): 1. Overview & Business Context, 3. Integration Coverage, 4. Verification & Testing Evidence, Change Record: Broker Portal Standardized Skeleton Loading Suite
 
 ### Community 693 - "speckit-clarify/SKILL.md"
 Cohesion: 0.29
@@ -3346,33 +3343,33 @@ Nodes (15): Agent Management Remediation Implementation Plan, File responsibilit
 Cohesion: 0.18
 Nodes (10): 1. UI/UX Design Mockup Showcase (Focused Scope), 2. Streamlined UI/UX Component Inventory Table, 3. Explicitly Excluded Components (Out of Scope), 4. Execution Tasks, 5. Structured Manual Testing Table, Property Listing Showcase & Tour Conversion Suite Implementation Plan, Task 1: Component Scaffolding & Media Stage, Task 2: Core Details, Features Grid & Cadastral Preview (+2 more)
 
-### Community 698 - "usePropertyFilterEngine"
-Cohesion: 0.08
-Nodes (24): 1. Description, 2. Verification Evidence, Change Record: PropertiesPage UI Overlapping & Hover/Highlight Optimization, Global Constraints, Search & Filter Engine Implementation Plan, Task 1: Update Shared Contracts & Mock Data, Task 3: Core Filter Hook Engine, Task 4: Empty State Algorithm & Component (+16 more)
+### Community 698 - "propertyService.js"
+Cohesion: 0.05
+Nodes (47): 8.1 Summary of Corrections Applied, 2.1 Function Taxonomy Matrix, 7. Traceability Matrix & Verification Reference, Global Constraints, Search & Filter Engine Implementation Plan, Task 1: Update Shared Contracts & Mock Data, Task 3: Core Filter Hook Engine, Task 4: Empty State Algorithm & Component (+39 more)
 
 ### Community 699 - "speckit-constitution/SKILL.md"
 Cohesion: 0.33
 Nodes (5): Outline, Post-Execution Checks, Pre-Execution Checks, Scope Guard, User Input
 
-### Community 701 - "@tabler/icons-react"
-Cohesion: 0.16
-Nodes (18): 3. Reconciled Inventory Table, 1.1 Metrics Breakdown, 1. Executive Summary & Verification Metrics, 3.7 Atomic Reusable Form Components (Slice G), AuthFeedback(), AuthLayout(), AuthSubmitButton(), AuthTextField() (+10 more)
+### Community 701 - "useAuth"
+Cohesion: 0.13
+Nodes (21): 3.7 Atomic Reusable Form Components (Slice G), @tabler/icons-react@^3.45.0, AgentCredentialDrawer(), AuthFeedback(), AuthLayout(), AuthSubmitButton(), AuthTextField(), PasswordField() (+13 more)
 
-### Community 702 - "2. Delivered Components and Interfaces"
+### Community 702 - "End-to-End Data-Field Verification Report: Broker Property Listings"
 Cohesion: 0.20
-Nodes (9): 1. `frontend/src/components/subdivision/SubdivisionAiDock.jsx`, 1. Overview, 2. Delivered Components and Interfaces, 2. `frontend/src/components/subdivision/SubdivisionLotInspector.jsx`, 3. Verification Evidence, 4. `frontend/src/pages/portals/broker/BrokerSubdivisions.jsx`, 4. Next Steps, 5. Routing & Navigation (+1 more)
+Nodes (9): 1. Test Context, 6.1 Generated Evidence Artifacts, 6.2 Test Limitations & Untested Cases, 6. Evidence and Limitations, 7. Initial Summary & Recommendation (Pre-Fix Baseline), 8.2 Post-Fix Verification Evidence, 8.3 Automated Unit & Component Test Suite Results, 8. Remediation & Post-Fix End-to-End Verification (+1 more)
 
-### Community 703 - "Tasks: User Management Security Hardening & Admin Enhancements"
-Cohesion: 0.33
-Nodes (5): Phase 1: Foundational (Database Trigger Hardening), Phase 2: User Story 1 & 2 - Backend Security & Self-Lockout Guards, Phase 3: User Story 3 & 4 - Frontend Admin Portal Enhancements, Phase 4: Verification & Quality Gates, Tasks: User Management Security Hardening & Admin Enhancements
+### Community 703 - "8. Phase 5: Live Interactive E2E Verification via Playwright MCP"
+Cohesion: 0.40
+Nodes (5): 8. Phase 5: Live Interactive E2E Verification via Playwright MCP, Task 5.1: Live Playwright MCP Client Profile Verification, Task 5.2: Live Playwright MCP Sales Agent Profile & Licensing Verification, Task 5.3: Live Playwright MCP Broker Profile Verification, Task 5.4: Automated Test Scripts & Build Checks
 
 ### Community 704 - "Quickstart: User Management Module"
 Cohesion: 0.33
 Nodes (5): Navigating to the Admin Portal, Prerequisites, Quickstart: User Management Module, Running User Management Tests, Starting the Application
 
-### Community 705 - "Plan: Broker Portal UI/UX Refactor"
-Cohesion: 0.25
-Nodes (7): Affected Files (excluding tests), Approval Requirements, Implementation Steps, Plan: Broker Portal UI/UX Refactor, Required Skills & Tools, Risks & Mitigations, Verification Commands (to be executed after implementation)
+### Community 705 - "Operate"
+Cohesion: 0.50
+Nodes (3): Comps, Directions, Operate
 
 ### Community 706 - "Data & UI State Model: Stakeholder User Management"
 Cohesion: 0.33
@@ -3382,9 +3379,9 @@ Nodes (5): 1. Executive Metrics DTO (`UserManagementStats`), 2. Table Filter & P
 Cohesion: 0.22
 Nodes (9): Address Schemes, Build and Verify, GitHub Registries, Include, Item Definitions, Mental Model, Registry Authoring and Addresses, Registry Dependencies (+1 more)
 
-### Community 708 - "ui/index.js"
-Cohesion: 0.06
-Nodes (89): 2. Delivered Behavior, 2. Key Changes, 3. Verification, 1. Executive Summary & Delivered Capabilities, 3. Playwright MCP Functional Browser Verification, Step 3: Author Broker Audit Console (`BrokerAudit.jsx`), CmsContentTable(), STATUS_BADGE (+81 more)
+### Community 708 - "BrokerProperties.jsx"
+Cohesion: 0.08
+Nodes (57): 1.1 Architectural Strengths, 3. Field Verification Matrix, Property 1: `070739d6-9fa5-4297-906d-d57034daac54`, Property 2: `330e8ef6-f9ae-4cb9-9aff-0d48be3d2fd3`, Property 3: `8230e25e-db5f-49e6-9edd-13a84351b905`, Property 4: `0e52d08c-ece7-429d-b85f-2b63662adc30`, Property 5: `2508da67-08a2-4fdd-bde2-ea49567f2c8c`, Property 6: `35bef646-dc64-4537-9b20-a9f521eddb51` (+49 more)
 
 ### Community 709 - "Agent Security & Robust Handover Implementation Report"
 Cohesion: 0.22
@@ -3410,45 +3407,45 @@ Nodes (4): 1. UI Component Architecture & Token Strategy, 2. Interactive Pattern
 Cohesion: 0.33
 Nodes (5): 1. Overview & User Intent, 2. Key Architecture & Deliverables, A. Dedicated Component (`components/ui/buttons/ViewPropertyButton.jsx`), B. Consoles & Cards Integrated, View Property Contrast Capsule Button Implementation
 
-### Community 715 - "Global Constraints"
-Cohesion: 0.22
-Nodes (8): Agent Management Module Implementation Plan, Global Constraints, Task 1: Database Migration & Schema Extension, Task 3: Agent Registration Service with Document Attachment, Task 4: Credential Review Dossier & RBAC Gate Enforcement, Task 5: Frontend Dedicated Agent Registration Page (`/register/agent`), Task 6: Frontend Broker Portal — Invite Modal, Pending Invitations Tab & Credential Dossier, Task 7: End-to-End System Verification & Audit
+### Community 715 - "3. Core UI Components & Guards (Part 2)"
+Cohesion: 0.20
+Nodes (9): 1. System Overview, 3.1 `LoginForm`, 3.2 `RegisterForm`, 3.4 `PermissionGate`, 3.5 `SessionTimeoutModal`, 3.6 `MfaChallengeModal`, 3. Core UI Components & Guards (Part 2), 4. Architectural Directory Mapping (+1 more)
 
-### Community 716 - "menubar (Radix `Menubar` → Base UI `Menubar` + `Menu`)"
-Cohesion: 0.38
-Nodes (7): Data attributes / CSS variables, Menu → Menu.Root, menubar (Radix `Menubar` → Base UI `Menubar` + `Menu`), Portal / Content / Arrow / Item / Group / Label / CheckboxItem / RadioGroup / RadioItem / ItemIndicator / Separator / Sub / SubTrigger / SubContent, Root → Menubar, Trigger → Menu.Trigger, Menubar()
+### Community 716 - "Feature Specification: Comprehensive User Management Module"
+Cohesion: 0.20
+Nodes (10): Executive Overview, Feature Specification: Comprehensive User Management Module, Functional Requirements, Key Entities, Success Criteria, User Scenarios & Testing *(mandatory)*, User Story 1 - Role Assignment & Privilege Enforcement (Priority: P1) 🎯 MVP, User Story 2 - Account Suspension & Security Kill Switch (Priority: P2) (+2 more)
+
+### Community 717 - "4. End-to-End System Flows"
+Cohesion: 0.22
+Nodes (9): 4. End-to-End System Flows, Flow 1: Authentication & Session Creation Flow, Flow 2: Authenticated API Request Validation Pipeline, Flow 3: Client Inactivity, Countdown Warning & Server Session Extension, Flow 4: Informational Presence Heartbeat Flow, Flow 5: Serialized Token Refresh Rotation with Ceiling Preservation, Flow 6: Multi-Device Inspection & Remote Device Revocation, Flow 7: Cross-Tab Session Synchronization & Sensitive Cache Sanitization (+1 more)
 
 ### Community 718 - "Global Constraints"
-Cohesion: 0.22
-Nodes (8): Broker Interface & Supabase Schema Integration Implementation Plan, Global Constraints, Task 1: Data Contracts, DTO Adapter & Service Integration, Task 2: Status Badge & Workflow Primitives, Task 3: Broker Inventory Workspace & Approval Queue, Task 4: High-Velocity Quick Edit Drawer, Task 5: 5-Accordion Split-Screen Studio & Dual-Mode Live Preview, Task 6: Full Verification, Regression Testing & Production Build
+Cohesion: 0.25
+Nodes (7): Broker Interface & Supabase Schema Integration Implementation Plan, Global Constraints, Task 2: Status Badge & Workflow Primitives, Task 3: Broker Inventory Workspace & Approval Queue, Task 4: High-Velocity Quick Edit Drawer, Task 5: 5-Accordion Split-Screen Studio & Dual-Mode Live Preview, Task 6: Full Verification, Regression Testing & Production Build
 
-### Community 719 - "Module 02: Property Listing Module"
-Cohesion: 0.22
-Nodes (9): Module 02: Property Listing Module, Table: `public.properties`, Table: `public.property_confidential`, Table: `public.property_media`, Table: `public.property_rooms`, Table: `public.subdivision_lots`, Table: `public.subdivision_map_versions`, Table: `public.subdivision_plans` (+1 more)
-
-### Community 720 - "05-database/INDEX.md"
-Cohesion: 0.12
-Nodes (12): 1. Executive Summary, 3. Skills Applied, 4.1 Backend TypeScript Compilation, 4.2 Backend Session Regression Test Suite (TDD), 4.3 Functional E2E Verification Suite, 4.4 Frontend Production Build, 4. Test & Build Verification Evidence, 5. Migration Status & Next Steps (+4 more)
+### Community 720 - "Session Database Integration — Implementation & Verification Report"
+Cohesion: 0.20
+Nodes (9): 1. Executive Summary, 3. Skills Applied, 4.1 Backend TypeScript Compilation, 4.2 Backend Session Regression Test Suite (TDD), 4.3 Functional E2E Verification Suite, 4.4 Frontend Production Build, 4. Test & Build Verification Evidence, 5. Migration Status & Next Steps (+1 more)
 
 ### Community 721 - "AgentInquiryDetail.jsx"
 Cohesion: 0.05
-Nodes (58): Step 5: Map Component Recipes to Variants, Component Structure → [composition.md](./rules/composition.md), Workflow, 8.1 Section-by-Section High-UX Micro-Interactions (`shadcn/ui` + Framer Motion), 8. High-UX Standards for All Components & Pages, 5.1.2 shadcn/ui Component Refactoring Mapping, 5.4.2 shadcn/ui Component Refactoring Mapping, Global Constraints (+50 more)
+Nodes (55): Step 5: Map Component Recipes to Variants, FieldSet + FieldLegend for grouping related fields, Component Structure → [composition.md](./rules/composition.md), Forms & Inputs → [forms.md](./rules/forms.md), Workflow, 8.1 Section-by-Section High-UX Micro-Interactions (`shadcn/ui` + Framer Motion), 5.1.2 shadcn/ui Component Refactoring Mapping, 5.4.2 shadcn/ui Component Refactoring Mapping (+47 more)
 
-### Community 722 - "3. Core UI Components & Guards (Part 2)"
-Cohesion: 0.12
-Nodes (16): 1. System Overview, 2.1 `loginWithCredentials(identity, password)`, 2.2 `registerUser(payload)`, 2.4 `refreshSession()`, 2.5 `validateSession()`, 2.6 `hasRole(user, requiredRole)`, 2.7 `can(user, permission)` / `hasPermission(user, permission)`, 2. Core Module Functions (Part 1) (+8 more)
+### Community 722 - "OtpService"
+Cohesion: 0.29
+Nodes (6): 1. Executive Summary, 2.1 Backend Layer (`backend/src/`), 2.2 Frontend Layer (`frontend/src/`), 2. Technical Architecture & Layer Implementations, 3. Verification Evidence, Client Self-Registration with In-Place Email OTP Verification Report
 
 ### Community 724 - "Global Constraints"
-Cohesion: 0.29
-Nodes (6): Global Constraints, Property Listing Form Modernization Implementation Plan, Task 1: Update `propertyService.js` and Vitest Unit Tests, Task 2: Refactor `BrokerCreateListings.jsx` to 7 Logical Sections with Subtype Reactivity, Task 3: Mount Agent Create Route in `App.jsx`, Task 4: Post-Implementation Verification & Regression Testing
+Cohesion: 0.33
+Nodes (5): Global Constraints, Property Listing Form Modernization Implementation Plan, Task 2: Refactor `BrokerCreateListings.jsx` to 7 Logical Sections with Subtype Reactivity, Task 3: Mount Agent Create Route in `App.jsx`, Task 4: Post-Implementation Verification & Regression Testing
 
-### Community 726 - "colorize.md"
-Cohesion: 0.25
-Nodes (7): Apply at system scale, Audit before choosing, Choose a strategy, Contrast and perception, Live-mode signature params, Verify, Visitor mode
+### Community 726 - "src/index.ts"
+Cohesion: 0.18
+Nodes (10): cors@^2.8.6, helmet@^8.3.0, morgan@^1.11.0, app, errorHandler(), apiRateLimiter, router, cors (+2 more)
 
-### Community 727 - "2. Executed Test Journeys & Results"
-Cohesion: 0.20
-Nodes (10): 1. Executive Summary, 2. Executed Test Journeys & Results, 3. Requirements Traceability Matrix, 4. Verification Conclusion, Journey 1: Authentication & Session Hydration, Journey 2: Agent Dashboard & Regulatory Credential Watchdog, Journey 3: Assigned Properties & Alignment Option A Flow, Journey 4: Strict Broker Gate (INV-01) Listing Proposal Wizard (+2 more)
+### Community 727 - "2. Subsystem Specifications (Backend Only)"
+Cohesion: 0.22
+Nodes (8): 1. Architectural Overview & Boundary Isolation, 2.1 Google Auth Service & Endpoint (`POST /api/auth/google`), 2.2 Google Drive Service & Endpoints (`/api/drive/*`), 2.4 WhatsApp ("wattsup") Cloud API & Webhook (`/api/whatsapp/*`), 2.5 Google Maps Platform Gateway (`/api/maps/*`), 2. Subsystem Specifications (Backend Only), 3. Security, Configuration & Mock Resilience, Backend Services Architecture: Google Services & WhatsApp Integration Specification
 
 ### Community 728 - "Subdivision Map Editor & Intake Studio Integration Record (Phases 5 & 6)"
 Cohesion: 0.25
@@ -3458,25 +3455,25 @@ Nodes (7): 1. Overview & Delivered Capabilities, 2. Verification Evidence, 3. Re
 Cohesion: 0.22
 Nodes (7): `search` — Search registries, detect_domain(), search(), 3-Tier Architecture, 5.1.6 Component Specification: PropertyFilterToolbar (`PropertyFilterToolbar.jsx`), Design Token Adherence, Props Interface
 
-### Community 730 - "Human Shelter Realty — Master Database Schema Specification"
-Cohesion: 0.33
-Nodes (6): 1. Revision & Schema Update History, 2. High-Level Entity Relationship Diagram (ERD), 4. Row-Level Security (RLS) Policy Registry, 5. Migration File Traceability Index, 6. Schema Maintenance Guidelines, Human Shelter Realty — Master Database Schema Specification
+### Community 730 - "PropertyDetailModal.jsx"
+Cohesion: 0.39
+Nodes (4): ActionConsole(), InspectionScheduleModal(), PropertyDetailModal(), useViewingList()
 
-### Community 731 - "2. Delivered Behavior"
+### Community 731 - "bubble.jsx"
+Cohesion: 0.39
+Nodes (7): Message surfaces use Bubble, Bubble(), BubbleContent(), BubbleGroup(), BubbleReactions(), bubbleReactionsVariants, bubbleVariants
+
+### Community 732 - "Calendar & Appointment Scheduling in Agent Management — `/learn` Technical Reference"
 Cohesion: 0.25
-Nodes (7): 1. Overview & Context, 2.1 Dual-Workspace Calendar (`AgentScheduleCalendar.jsx`), 2.2 Clean Single-Row Filter Command Bar (`BrokerAgents.jsx`), 2.3 Consistent Modern SaaS KPI Cards (`BrokerAgents.jsx` & `AgentScheduleCalendar.jsx`), 2. Delivered Behavior, 3. Verification Evidence, Dual-Workspace Calendar Interface & Clean Single-Row Filter Command Bar
-
-### Community 732 - "docs/README.md"
-Cohesion: 0.11
-Nodes (13): Module 02: AI Chat Concierge, Module 02: AI Chat Concierge, 1. Document Registry & Change History, 2. Instructions for AI Agents & Developers, AI Inquiry Assisted Module — Master Index, Agent & Contributor Guidelines, Human Shelter Realty — Master Documentation Portal, Master System Specifications (Single-Source Documents) (+5 more)
+Nodes (7): 1. Purpose and Architectural Consolidation, 2. Stakeholder Capabilities & Permissions Matrix, 3. Time Zone, Duration, Buffer & Conflict Engine, 4. Calendar Views & Status Visual Language, 5. Lifecycle Workflows: Reminders, Blocked Overlaps & Agent Departure, 6. Key Files & Verification Suites, Calendar & Appointment Scheduling in Agent Management — `/learn` Technical Reference
 
 ### Community 733 - "scroll-area"
 Cohesion: 0.22
 Nodes (9): Base UI only props worth knowing, CSS variables, Data attributes, scroll-area, ScrollArea.Corner → ScrollArea.Corner, ScrollArea.Root → ScrollArea.Root, ScrollArea.Viewport → ScrollArea.Viewport, ScrollAreaScrollbar → ScrollArea.Scrollbar (+1 more)
 
-### Community 734 - "Agent Management Email Service & Lifecycle Notification Report"
-Cohesion: 0.33
-Nodes (5): 3.1 Static Checks, 3.2 Unit & Integration Tests, 3. Verification & Static Checks, 4. Structured Manual Testing Table, Agent Management Email Service & Lifecycle Notification Report
+### Community 734 - "5.3 Database Schema & Persistence"
+Cohesion: 0.25
+Nodes (8): RegisterAgentInput, 5.1 REST API Contracts, 5.2 Zod Validation Schemas, 5.3 Database Schema & Persistence, 5. Interfaces and Data Contracts, Extended Agent Compliance Columns on `public.profiles`, Row Level Security (RLS) Policies on `public.agent_invitations`, Table: `public.agent_invitations`
 
 ### Community 735 - "Global Constraints"
 Cohesion: 0.25
@@ -3490,13 +3487,13 @@ Nodes (6): Global Constraints, Property Type Selection Page & Minimalist Intake 
 Cohesion: 0.33
 Nodes (5): Content Quality, Feature Readiness, Notes, Requirement Completeness, Specification Quality Checklist: Inquiry Messaging Inbox
 
-### Community 738 - "Backend Type Safety & Service Contracts Verification Report"
-Cohesion: 0.33
-Nodes (5): 1. Executive Summary, 4. Verification Evidence, Backend Type Safety & Service Contracts Verification Report, Full Backend Vitest Execution, TypeScript Compiler Check
+### Community 738 - "Global Constraints"
+Cohesion: 0.25
+Nodes (7): Agent Management Module Implementation Plan, Global Constraints, Task 1: Database Migration & Schema Extension, Task 3: Agent Registration Service with Document Attachment, Task 5: Frontend Dedicated Agent Registration Page (`/register/agent`), Task 6: Frontend Broker Portal — Invite Modal, Pending Invitations Tab & Credential Dossier, Task 7: End-to-End System Verification & Audit
 
-### Community 739 - "Phase 2 — Finalize and Review the Integration Design"
-Cohesion: 0.33
-Nodes (6): A. Stable Session Identity, B. Fields and Invariants, C. Activity, Refresh, and Presence, D. Database Access and Concurrency, E. Transition Existing Sessions, Phase 2 — Finalize and Review the Integration Design
+### Community 739 - "Global Constraints"
+Cohesion: 0.29
+Nodes (6): Global Constraints, Property Listings Mockup Redesign Implementation Plan, Task 1: Enhance `DataTable.jsx` with Numbered Pagination & Multi-Action Cell Support, Task 2: Refactor `SearchAndFilterBar.jsx` for Mockup Toolbar Alignment, Task 4: Polish `DashboardHeader.jsx` & `DashboardSidebar.jsx` Chrome, Task 5: End-to-End Visual & Functional Verification
 
 ### Community 740 - "2. Functional Layers & shadcn Component Mapping"
 Cohesion: 0.29
@@ -3510,37 +3507,37 @@ Nodes (6): 1. Context & Objectives, 2. Delivered Behavior & Enhancements, 3.1 St
 Cohesion: 0.50
 Nodes (3): Comps, Directions, Persuade and Experience
 
-### Community 744 - "Button"
-Cohesion: 0.05
-Nodes (42): Buttons inside inputs use InputGroup + InputGroupAddon, Contents, Forms & Inputs, InputGroup requires InputGroupInput/InputGroupTextarea, Option sets (2–7 choices) use ToggleGroup, Environment Readiness & Existing State, Explicit Approval Boundaries (AGENTS.md Section 9), Global Constraints & Boundaries (+34 more)
+### Community 744 - "1. Overview & Delivered Capabilities"
+Cohesion: 0.33
+Nodes (5): 1. Overview & Delivered Capabilities, 2. Verification Summary, A. Playwright E2E Suite (`frontend/e2e/broker-create-listings-map.spec.ts`), B. Vitest Unit & Integration Suites, Verification Record: Broker Create Listings Map E2E & Agent Property Detail Bug Resolution
 
 ### Community 745 - "Global Constraints"
 Cohesion: 0.17
 Nodes (11): Global Constraints, Map Configuration Cleanup & uMap Layer Engine Implementation Plan, Task 1: Type Contracts & Philippine District GeoJSON Fixtures, Task 3: Build MapLayerControl Component, Task 4: Modernize PropertyMap (Cleanup + uMap Multi-Layer Engine), Task 5: End-to-End Verification in PropertiesPage & Quality Assurance, BasemapConfig, BasemapId (+3 more)
 
-### Community 746 - "Phase 3 — Design UI/UX, Data, and Contracts"
-Cohesion: 0.25
-Nodes (8): API and Event Contracts, Broker Screens, Client Experience, Critical Rules, Data Design, Phase 3 — Design UI/UX, Data, and Contracts, Sales Agent Screens, UI/UX Design
+### Community 746 - "Button"
+Cohesion: 0.14
+Nodes (17): Buttons inside inputs use InputGroup + InputGroupAddon, Contents, Forms & Inputs, InputGroup requires InputGroupInput/InputGroupTextarea, Option sets (2–7 choices) use ToggleGroup, Task 1: Static "In Progress" Architectural Hero Visual Anchor, Task 5: Home Page Integration & Sentinel Handoff (`Home.jsx`), Implementation Tasks (+9 more)
 
-### Community 747 - "requireAuth"
+### Community 747 - "express"
 Cohesion: 0.07
-Nodes (40): sendMessage(), DashboardController, MailController, authUserCache, requireRole(), validateBody(), validateQuery(), router (+32 more)
+Nodes (37): AdminController, DashboardController, MailController, ValuationController, authUserCache, invalidateAuthCache(), requireRole(), router (+29 more)
 
 ### Community 748 - "form"
 Cohesion: 0.25
 Nodes (8): form, Form.Control → Field.Control, Form.Field → Field.Root, Form.Label → Field.Label, Form.Message → Field.Error, Form.Root → Form, Form.Submit → (none), Form.ValidityState → Field.Validity
 
-### Community 749 - "Calendar & Appointment Scheduling in Agent Management — `/learn` Technical Reference"
-Cohesion: 0.25
-Nodes (7): 1. Purpose and Architectural Consolidation, 2. Stakeholder Capabilities & Permissions Matrix, 3. Time Zone, Duration, Buffer & Conflict Engine, 4. Calendar Views & Status Visual Language, 5. Lifecycle Workflows: Reminders, Blocked Overlaps & Agent Departure, 6. Key Files & Verification Suites, Calendar & Appointment Scheduling in Agent Management — `/learn` Technical Reference
+### Community 749 - "Change Record: Subdivision Map Editor Executive Header Redesign & Common Industry Labels"
+Cohesion: 0.33
+Nodes (5): 1. Overview, 2. Terminology Standardization, 3. Visual & Functional Architecture, 4. Verification Evidence, Change Record: Subdivision Map Editor Executive Header Redesign & Common Industry Labels
 
-### Community 750 - "cn"
-Cohesion: 0.04
-Nodes (58): Field validation and disabled states, Forms use FieldGroup + Field, Component Selection, Use Components, Not Custom Markup → [composition.md](./rules/composition.md), 7.1 Bento Grid Anatomy & Space Utilization, 7.2 `shadcn/ui` Composition Rules for Bento Tiles, 7.3 KPI Card Standard (`KpiCard` — No-Pill & Status-Colored Icon Design), 7. Portal Bento Layout (Broker, Agent & Admin) & `shadcn/ui` Standard (+50 more)
+### Community 750 - "breadcrumb.jsx"
+Cohesion: 0.10
+Nodes (15): Accordion, Base vs Radix, Button / trigger as non-button element (base only), Composition: asChild (radix) vs render (base), Contents, Select, Select — multiple selection and object values (base only), Slider (+7 more)
 
-### Community 751 - "04-sales-and-reports/INDEX.md"
-Cohesion: 0.25
-Nodes (6): 1. Overview, 2. Implemented Capabilities, Sales and Report Module — Technical Reference, 1. Document Registry & Change History, 2. Instructions for AI Agents & Developers, Sales and Report Module — Master Index
+### Community 751 - "docs/README.md"
+Cohesion: 0.08
+Nodes (20): 1. Revision & Schema Update History, 2. High-Level Entity Relationship Diagram (ERD), 4. Row-Level Security (RLS) Policy Registry, 5. Migration File Traceability Index, 6. Schema Maintenance Guidelines, Human Shelter Realty — Master Database Schema Specification, 1. Overview, 2. Implemented Capabilities (+12 more)
 
 ### Community 752 - "display-misc.md"
 Cohesion: 0.29
@@ -3550,17 +3547,21 @@ Nodes (6): AccessibleIcon (radix `AccessibleIcon.Root`: `label` required), Aspec
 Cohesion: 0.29
 Nodes (7): avatar, Avatar.Fallback → Avatar.Fallback, Avatar.Image → Avatar.Image, Avatar.Root → Avatar.Root, Base UI only props worth knowing, CSS variables, Data attributes
 
-### Community 754 - "Verification Record: Broker Map Refactoring & Cadastral Split-View Integration"
-Cohesion: 0.33
-Nodes (5): 2. Verification Summary, 3. Compliance & Standards, A. Automated Unit & Integration Tests (100% Passed), B. End-to-End Playwright MCP Verification, Verification Record: Broker Map Refactoring & Cadastral Split-View Integration
-
-### Community 755 - "8. Phase 5: Live Interactive E2E Verification via Playwright MCP"
+### Community 754 - "4.2 Standard API Request/Response Payloads"
 Cohesion: 0.40
-Nodes (5): 8. Phase 5: Live Interactive E2E Verification via Playwright MCP, Task 5.1: Live Playwright MCP Client Profile Verification, Task 5.2: Live Playwright MCP Sales Agent Profile & Licensing Verification, Task 5.3: Live Playwright MCP Broker Profile Verification, Task 5.4: Automated Test Scripts & Build Checks
+Nodes (5): 4.1 RESTful API Endpoint Surface, 4.2 Standard API Request/Response Payloads, 4. External Interface Requirements & API Contracts, Ingest Property (`POST /api/properties`), Submit Edit Proposal (`POST /api/properties/:id/edit-requests`)
+
+### Community 755 - "Verification Record: Module 02 Property Listing UI Refactoring to shadcn/ui"
+Cohesion: 0.29
+Nodes (6): 1. Scope & Objective, 2. Invariant Compliance Audit, 3. Unit & Component Test Evidence, 4. End-to-End Playwright Verification, 6. Conclusion, Verification Record: Module 02 Property Listing UI Refactoring to shadcn/ui
 
 ### Community 756 - "Progress.Indicator → Progress.Indicator"
 Cohesion: 0.33
 Nodes (6): Base UI only props worth knowing, CSS variables, Data attributes, progress, Progress.Indicator → Progress.Indicator, Progress.Root → Progress.Root
+
+### Community 759 - "Property Listing Module shadcn/ui Refactoring Implementation Plan"
+Cohesion: 0.40
+Nodes (4): Environment Readiness & Existing State, Explicit Approval Boundaries (AGENTS.md Section 9), Global Constraints & Boundaries, Property Listing Module shadcn/ui Refactoring Implementation Plan
 
 ### Community 760 - "4. TypeScript Architecture Verification (`.agents/skills/mastering-typescript`)"
 Cohesion: 0.40
@@ -3570,17 +3571,13 @@ Nodes (5): 4.1 Canonical Schema v1.0 Model Diagram, 4.2 Shared TypeScript Interf
 Cohesion: 0.40
 Nodes (5): Base UI only props worth knowing, CSS variables, Data attributes, separator, Separator.Root → Separator
 
-### Community 762 - "Command guidance"
+### Community 762 - "button-group.jsx"
 Cohesion: 0.50
-Nodes (3): Command guidance, No-argument routing: the context-aware menu, Workflow questions
+Nodes (3): ButtonGroup(), ButtonGroupSeparator(), buttonGroupVariants
 
-### Community 763 - "pagination.jsx"
-Cohesion: 0.32
-Nodes (4): Pagination(), PaginationLink(), PaginationNext(), PaginationPrevious()
-
-### Community 764 - "Agent Management — Calendar & Appointment Scheduling Design Specification"
-Cohesion: 0.40
-Nodes (4): 1. Objective & Module Scope, 2. Requirements (`REQ-CAL-01` – `REQ-CAL-13`), Agent Management — Calendar & Appointment Scheduling Design Specification, Module Capabilities
+### Community 763 - "Component Selection"
+Cohesion: 0.06
+Nodes (18): Field validation and disabled states, Component Selection, @base-ui/react@^1.9.0, InputOTP(), NativeSelect(), Pagination(), PaginationLink(), PaginationNext() (+10 more)
 
 ### Community 765 - "(new) Fieldset.Root and Fieldset.Legend"
 Cohesion: 0.50
@@ -3590,57 +3587,29 @@ Nodes (4): Base UI only props worth knowing (form-wide), CSS variables, Data att
 Cohesion: 0.25
 Nodes (7): 1. Executive Summary, 2. Affected Files & Changes, 3. Verification Evidence, Automated Unit & Component Tests, Minimal Google Map Interface for Public Properties Verification Record, Playwright MCP Zoom & Inspection Diagnosis & Resolution, Production Build Validation
 
-### Community 768 - "Global Constraints"
-Cohesion: 0.29
-Nodes (6): Broker Property Listings Defects Fix Implementation Plan, Global Constraints, Task 2: Frontend Normalization Service (`propertyService.js`), Task 3: BrokerProperties Presentation & Data-Mapping UI Corrections, Task 4: Full Test Suite Verification, Task 5: End-to-End Browser Verification & Report Update
-
-### Community 769 - "Clean Property Filtering Toolbar Redesign & Verification"
-Cohesion: 0.40
-Nodes (4): Clean Property Filtering Toolbar Redesign & Verification, Key Changes, Summary, Verification Evidence
-
 ### Community 770 - "Broker Portal Bento Layout & shadcn/ui Refactoring Plan"
-Cohesion: 0.25
-Nodes (7): Broker Pages Bento Mapping, Broker Portal Bento Layout & shadcn/ui Refactoring Plan, Execution Tasks, Global Constraints, Wave 1: Executive, Sales, Reports, Audit, Notifications & Profile, Wave 3: Agents & Team Management, Wave 4: Properties, Forms & Map Studios
-
-### Community 771 - "12. AI implementation phases"
-Cohesion: 0.29
-Nodes (7): 12. AI implementation phases, Phase 1 — Read-only discovery, Phase 2 — Finalize requirements, Phase 3 — Design UI/UX, data, and contracts, Phase 4 — Implement a vertical slice, then complete scope, Phase 5 — Verify all module functions, Phase 6 — /learn: what was built
-
-### Community 772 - "Change Record: Contrast Teal & Coral Pill Button & Sidebar Redesign"
-Cohesion: 0.50
-Nodes (3): 1. Overview & Business Context, 3. Verification & Testing Evidence, Change Record: Contrast Teal & Coral Pill Button & Sidebar Redesign
-
-### Community 774 - "1. Overview & Delivered Capabilities"
-Cohesion: 0.40
-Nodes (4): 2. Verification Summary, A. Playwright E2E Suite (`frontend/e2e/broker-create-listings-map.spec.ts`), B. Vitest Unit & Integration Suites, Verification Record: Broker Create Listings Map E2E & Agent Property Detail Bug Resolution
-
-### Community 776 - "9. Web session handling"
-Cohesion: 0.33
-Nodes (6): 9.1 Separate session concepts, 9.2 Authentication lifecycle, 9.3 Refresh, disconnect, and reconnect, 9.4 Realtime access, 9. Web session handling, Components
-
-### Community 784 - "overrides"
-Cohesion: 0.67
-Nodes (3): overrides, axios, quill
+Cohesion: 0.18
+Nodes (9): Broker Pages Bento Mapping, Broker Portal Bento Layout & shadcn/ui Refactoring Plan, Execution Tasks, Global Constraints, Manual Verification Table, Wave 1: Executive, Sales, Reports, Audit, Notifications & Profile, Wave 3: Agents & Team Management, Wave 4: Properties, Forms & Map Studios (+1 more)
 
 ## Knowledge Gaps
 - **6 isolated node(s):** `RFC-6455`, `node`, `RESO_BASE_URL`, `RESO_CLIENT_ID`, `RESO_CLIENT_SECRET` (+1 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 5701 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **73 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 5699 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **72 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `react` connect `react` to `Button`, `Card`, `frontend/package.json`, `Component Selection`, `sidebar.jsx`, `App.jsx`, `Home.jsx`, `AgentScheduleCalendar.jsx`, `button.jsx`, `item.jsx`, `CadastralLocationPicker`, `AuthGuard`, `useResponsiveColumns`, `chart.jsx`, `GooglePropertyMap`, `lucide-react`, `ui/index.js`, `InquiryConversationPanel.jsx`, `CmsPublicSections.jsx`, `The Design System Page`, `PropertyMap.jsx`, `sessionCoordinator.js`, `AnalyticsMetricCard.jsx`, `usePropertyFilterEngine`, `CreateListingModal.jsx`, `@tabler/icons-react`, `carousel.jsx`, `context-menu.jsx`, `breadcrumb.jsx`, `ui/index.js`, `AgentInquiryDetail.jsx`, `BrokerProperties.jsx`, `LiveCmsEditor.jsx`, `AboutPage.jsx`, `main.jsx`, `input-otp.jsx`, `StreetViewModal`, `Skeleton`, `services/apiClient.js`, `cn`, `highlighter.jsx`, `code-block.jsx`, `LoginPage.jsx`, `pagination.jsx`, `bubble.jsx`?**
-  _High betweenness centrality (0.038) - this node is a cross-community bridge._
+- **Why does `react` connect `react` to `Badge`, `lucide-react`, `frontend/package.json`, `Assistant activity uses Trace`, `questionnaire.jsx`, `InquiryMessagingWorkspace.jsx`, `sidebar.jsx`, `App.jsx`, `SubdivisionVectorCanvas`, `ui/index.js`, `StatusBadge`, `item.jsx`, `1. Revision & Update History`, `useAuth`, `useResponsiveColumns`, `chart.jsx`, `DashboardLayout.jsx`, `AgentInquiryDetail.jsx`, `InquiryConversationPanel.jsx`, `services/apiClient.js`, `The Design System Page`, `Skeleton`, `BrokerAudit.jsx`, `propertyTypeConfig.js`, `AnalyticsMetricCard.jsx`, `Home.jsx`, `propertyService.js`, `PropertyCard.jsx`, `useAuth`, `carousel.jsx`, `context-menu.jsx`, `BrokerProperties.jsx`, `GooglePropertyMap`, `AgentInquiryDetail.jsx`, `LiveCmsEditor.jsx`, `bubble.jsx`, `PropertyDetailModal.jsx`, `propertyCoordinates.js`, `CmsPublicSections.jsx`, `Button`, `react-router-dom`, `main.jsx`, `breadcrumb.jsx`, `highlighter.jsx`, `StreetViewModal`, `code-block.jsx`, `Component Selection`?**
+  _High betweenness centrality (0.042) - this node is a cross-community bridge._
 - **What connects `RFC-6455`, `node`, `RESO_BASE_URL` to the rest of the system?**
   _6 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `Button` be split into smaller, more focused modules?**
-  _Cohesion score 0.07524221809936095 - nodes in this community are weakly interconnected._
-- **Why does `useAuth()` connect `react` to `Button`, `AuthGuard`, `Property Listing Management Module — Functional Verification & Test Report`, `ui/index.js`, `Card`, `@tabler/icons-react`, `App.jsx`, `3. Verification Evidence`, `Home.jsx`, `BrokerProperties.jsx`, `sessionCoordinator.js`, `LoginPage.jsx`, `LiveCmsEditor.jsx`, `sale.service.ts`, `requireAuth`?**
-  _High betweenness centrality (0.033) - this node is a cross-community bridge._
-- **Should `Card` be split into smaller, more focused modules?**
-  _Cohesion score 0.0802675585284281 - nodes in this community are weakly interconnected._
-- **Why does `ApiResponse` connect `ApiResponse` to `NotificationService`, `AuthenticatedRequest`, `PropertyService`, `SessionService`, `AppointmentService`, `InquiryService`, `WhatsAppService`, `config/index.ts`, `valuation.controller.ts`, `gmail.service.ts`, `agent.routes.ts`, `agentTeam.service.ts`, `AgentService`, `.registerInvitedAgent`, `AgentService`, `InquirySummaryService`, `OtpService`, `property.routes.ts`, `2. Subsystem Specifications (Backend Only)`, `.updateUserStatus`, `property.service.ts`, `requireAuth`, `GoogleDriveService`, `.recordEvent`?**
-  _High betweenness centrality (0.028) - this node is a cross-community bridge._
+- **Should `Badge` be split into smaller, more focused modules?**
+  _Cohesion score 0.07391304347826087 - nodes in this community are weakly interconnected._
+- **Why does `useAuth()` connect `useAuth` to `Badge`, `lucide-react`, `Property Listing Management Module — Functional Verification & Test Report`, `BrokerProperties.jsx`, `InquiryMessagingWorkspace.jsx`, `DashboardLayout.jsx`, `AgentInquiryDetail.jsx`, `App.jsx`, `3. Verification Evidence`, `requireAuth`, `StatusBadge`, `LiveCmsEditor.jsx`, `sale.routes.ts`?**
+  _High betweenness centrality (0.027) - this node is a cross-community bridge._
+- **Should `lucide-react` be split into smaller, more focused modules?**
+  _Cohesion score 0.08484848484848485 - nodes in this community are weakly interconnected._
+- **Why does `1. Revision & Update History` connect `1. Revision & Update History` to `useResponsiveColumns`, `gmail.service.ts`, `ApiResponse`, `AgentInquiryDetail.jsx`, `Subdivision AI Picture Analysis & Vector Polygon Layout Generation (FR-SM-056)`, `ui/index.js`, `docs/README.md`, `StreetViewModal`, `AgentService`, `InvitationService`?**
+  _High betweenness centrality (0.026) - this node is a cross-community bridge._
 - **Should `frontend/package.json` be split into smaller, more focused modules?**
-  _Cohesion score 0.040825285338015806 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.0380517503805175 - nodes in this community are weakly interconnected._
