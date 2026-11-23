@@ -122,6 +122,7 @@ export default function DashboardSidebar({ role = 'broker', onClose }) {
     { to: '/client/saved-properties', label: 'Saved Properties', icon: Bookmark },
     { to: '/client/inquiries', label: 'My Inquiries', icon: MessageSquare, hasUnreadBadge: true },
     { to: '/properties', label: 'Explore Listings', icon: Compass },
+    { to: '/about', label: 'About', icon: Info },
   ];
 
   const settingsPath =

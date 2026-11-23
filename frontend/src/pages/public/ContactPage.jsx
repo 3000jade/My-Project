@@ -37,7 +37,15 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="bg-[#FBFBF9] text-[#141717] font-sans min-h-screen pt-24 pb-24">
+    <div
+      className="text-[#141717] font-sans min-h-screen pt-24 pb-24"
+      style={{
+        backgroundColor: '#F8FAFC',
+        backgroundImage: "url('/images/topographic-bg.svg')",
+        backgroundRepeat: 'repeat',
+        backgroundSize: '600px 600px',
+      }}
+    >
       <main className="max-w-[1200px] mx-auto px-5 md:px-10 lg:px-16 pt-12 md:pt-16">
         
         {/* Header Section */}

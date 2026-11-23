@@ -1,3 +1,63 @@
+export const salesDepartmentPhoto = {
+  title: "Sales Department",
+  subtitle: "36 Years of Service with Credibility — Human Shelter Realty Corp.",
+  image: "/images/staff/sales-department-group.jpg",
+};
+
+export const staffDepartments = [
+  {
+    id: "business-development",
+    label: "Business Development & Growth",
+    shortLabel: "Business Dev",
+    members: [
+      { id: "bd-1", name: "Gina Punzalan", role: "Senior Business Development", image: "/images/staff/gina-punzalan.jpg" },
+      { id: "bd-2", name: "Rawell Belo", role: "Southwest Branch", image: "/images/staff/rawell-belo.jpg" },
+      { id: "bd-3", name: "Imelda Sabanal", role: "Southwest Branch", image: "/images/staff/imelda-sabanal.jpg" },
+      { id: "bd-4", name: "Herbert Villaruel", role: "East Branch", image: "/images/staff/herbert-villaruel.jpg" },
+      { id: "bd-5", name: "Marvin Nepomuceno", role: "East Branch", image: "/images/staff/marvin-nepomuceno.jpg" },
+      { id: "bd-6", name: "Mhai Florido", role: "South Branch", image: "/images/staff/mhai-florido.jpg" },
+      { id: "bd-7", name: "Mariel Rubenica", role: "South Branch", image: "/images/staff/mariel-rubenica.jpg" },
+      { id: "bd-8", name: "Gina Dumalaon", role: "Southwest Branch", image: "/images/staff/gina-dumalaon.jpg" },
+      { id: "bd-9", name: "Maricon De Leon", role: "South Branch", image: "/images/staff/maricon-de-leon.jpg" },
+    ],
+  },
+  {
+    id: "accounting",
+    label: "Accounting Department",
+    shortLabel: "Accounting",
+    members: [
+      { id: "acc-1", name: "Jenita Morisca", role: "Finance Head", image: "/images/staff/jenita-morisca.jpg" },
+      { id: "acc-2", name: "Emelie Crapatanta", role: "Accounting Officer", image: "/images/staff/emelie-crapatanta.jpg" },
+      { id: "acc-3", name: "Rosenda Sepulvida", role: "Accounting Assistant", image: "/images/staff/rosenda-sepulvida.jpg" },
+      { id: "acc-4", name: "Jason Nepomuceno", role: "IT Officer", image: "/images/staff/jason-nepomuceno.jpg" },
+    ],
+  },
+  {
+    id: "marketing",
+    label: "Marketing Department",
+    shortLabel: "Marketing",
+    members: [
+      { id: "mkt-1", name: "Margielyn Bernabe", role: "Marketing Officer (Main)", image: "/images/staff/margielyn-bernabe.jpg" },
+      { id: "mkt-2", name: "Patrick Primavera", role: "IT & Multimedia Officer (Main)", image: "/images/staff/patrick-primavera.jpg" },
+      { id: "mkt-3", name: "Jenzen Capan", role: "Marketing Officer (North)", image: "/images/staff/jenzen-capan.jpg" },
+      { id: "mkt-4", name: "Ara Mae Morallos", role: "Marketing Officer (Southwest)", image: "/images/staff/ara-mae-morallos.jpg" },
+      { id: "mkt-5", name: "Emma Sabanal", role: "Marketing Officer (North)", image: "/images/staff/emma-sabanal.jpg" },
+    ],
+  },
+  {
+    id: "logistics",
+    label: "Logistics Department",
+    shortLabel: "Logistics",
+    members: [
+      { id: "log-1", name: "Salvador Nogot", role: "Company Driver (Main)", image: "/images/staff/salvador-nogot.jpg" },
+      { id: "log-2", name: "Dennis Briones", role: "Company Driver (South)", image: "/images/staff/dennis-briones.jpg" },
+      { id: "log-3", name: "Germel Crapatanta", role: "Utility Personnel", image: "/images/staff/germel-crapatanta.jpg" },
+      { id: "log-4", name: "Lord Gim Diaz", role: "Company Driver (North)", image: "/images/staff/lord-gim-diaz.jpg" },
+      { id: "log-5", name: "Ronnel Dela Cruz", role: "Company Driver (Southwest)", image: "/images/staff/ronnel-dela-cruz.jpg" },
+    ],
+  },
+];
+
 export const leadershipTeam = [
   {
     id: 1,
