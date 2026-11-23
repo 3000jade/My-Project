@@ -8,7 +8,6 @@ import {
   ListingHeroGallery,
   LeadCaptureSection,
   ArchitecturalGallerySection,
-  InstitutionalAuthoritySection,
   NeighborhoodSpotlightsSection,
   PartnersSection,
   ClientStoriesSection,
@@ -127,13 +126,6 @@ export default function Home() {
       <div id="buyer-protection" className="w-full">
         <motion.div {...sectionRevealProps}>
           <BuyerProtectionPromiseSection />
-        </motion.div>
-      </div>
-
-      {/* 7. PERFORMANCE LEDGER: INSTITUTIONAL AUTHORITY */}
-      <div id="performance-ledger" className="w-full">
-        <motion.div {...sectionRevealProps}>
-          <InstitutionalAuthoritySection />
         </motion.div>
       </div>
 

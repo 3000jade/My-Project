@@ -132,7 +132,7 @@ export default function Header() {
         >
           <div className="flex items-center gap-2">
             <Link to="/" className="flex items-center transition-transform hover:scale-105">
-              <img src="https://ui-avatars.com/api/?name=C+N&background=0a0a0a&color=fff&rounded=true" alt="[Company Name] Logo" className="w-10 h-10 shadow-sm" />
+              <img src="/images/human-shelter-logo.webp" alt="Human Shelter Realty Logo" className="h-12 sm:h-14 w-auto object-contain drop-shadow-xs" />
             </Link>
           </div>
           <div className="hidden lg:flex gap-7 xl:gap-9 items-center absolute left-1/2 top-1/2 -translate-y-1/2 -translate-x-1/2 w-max">
@@ -142,8 +142,8 @@ export default function Header() {
             <Link className={`text-[11px] uppercase tracking-widest font-sans nav-link transition-all duration-500 ${getLinkColor('/properties')}`} to="/properties">
               Properties
             </Link>
-            <Link className={`text-[11px] uppercase tracking-widest font-sans nav-link transition-all duration-500 ${getLinkColor('/guides')}`} to="/guides">
-              Guides
+            <Link className={`text-[11px] uppercase tracking-widest font-sans nav-link transition-all duration-500 ${getLinkColor('/about')}`} to="/about">
+              About
             </Link>
             <Link className={`text-[11px] uppercase tracking-widest font-sans nav-link transition-all duration-500 ${getLinkColor('/contact')}`} to="/contact">
               Contact

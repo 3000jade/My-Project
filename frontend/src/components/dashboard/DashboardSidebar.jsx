@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Building2, MessageSquare, Calendar,
-  FileText, X, Bookmark, Compass, User,
+  FileText, X, Bookmark, Compass, User, Info,
   Settings, Shield, PanelLeftClose, PanelLeftOpen, Database
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
@@ -71,6 +71,7 @@ export default function DashboardSidebar({
     { to: '/client/saved-properties', label: 'Saved Properties', icon: Bookmark },
     { to: '/client/inquiries', label: 'My Inquiries', icon: MessageSquare },
     { to: '/properties', label: 'Explore Listings', icon: Compass },
+    { to: '/about', label: 'About', icon: Info },
   ];
 
   const settingsPath = role === 'broker' || role === 'admin' ? '/broker/profile' : role === 'agent' ? '/agent/profile' : '/client/profile';

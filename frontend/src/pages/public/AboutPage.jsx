@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Timeline, Text } from '@mantine/core';
-import { leadershipTeam, journeyMilestones, accolades } from '../../mockData/mockAbout';
+import { salesDepartmentPhoto, staffDepartments } from '../../mockData/mockAbout';
+import { Badge } from '@/components/ui/badge';
 import cmsService from '../../services/cmsService';
 import { LiveEditProvider, LiveEditFloatingBar, LiveEditableText } from '../../components/cms/LiveCmsEditor';
 
@@ -9,10 +9,10 @@ export default function AboutPage() {
   const [cmsAbout, setCmsAbout] = useState(null);
 
   const saveAboutField = async (field, nextValue) => {
-    const fallbackTitle = cmsAbout?.title || 'Crafting the Future of Philippine Luxury.';
+    const fallbackTitle = cmsAbout?.title || 'Selling Homes, Building Dreams.';
     const fallbackSummary =
       cmsAbout?.summary ||
-      'EstateElite stands as the premier architectural and real estate consultancy in the Philippines. We are dedicated curators of exceptional living spaces, blending heritage with modern innovation.';
+      'Since 1989, Human Shelter has been selling homes and building dreams, helping Filipino families find the perfect home for their needs and empowering real estate agents to discover their purpose.';
     if (cmsAbout?.id) {
       const updated = await cmsService.updateContent(cmsAbout.id, { [field]: nextValue });
       setCmsAbout(updated);
@@ -36,7 +36,7 @@ export default function AboutPage() {
       .then((item) => {
         if (mounted && item) setCmsAbout(item);
       })
-      .catch(() => {});
+      .catch(() => { });
     return () => {
       mounted = false;
     };
@@ -52,325 +52,177 @@ export default function AboutPage() {
 
   return (
     <LiveEditProvider>
-      <div className="bg-surface text-on-surface font-body-md min-h-screen">
-      <main className="">
-        {/* Sophisticated Hero Section */}
-        <section className="relative min-h-screen flex items-start pt-32 lg:pt-40 pb-20 max-w-[1560px] mx-auto px-5 md:px-10 lg:px-16 overflow-hidden">
-          <div className="grid lg:grid-cols-2 gap-24 items-start w-full">
-            <motion.div
-              className="z-10"
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, margin: "-100px" }}
-              variants={revealVariants}
-            >
-              <div className="flex items-center gap-4 mb-8">
-                <span className="h-px w-12 bg-[#E07A5F]"></span>
-                <span className="font-sans text-[#E07A5F] font-bold text-[12px] tracking-[0.3em] uppercase">Established 1989</span>
-              </div>
-              <h1 className="font-display text-5xl lg:text-7xl text-primary mb-8 leading-[1.1] font-extrabold tracking-tight">
-                <LiveEditableText
-                  value={cmsAbout?.title || 'Crafting the Future of Philippine Luxury.'}
-                  onSave={(val) => saveAboutField('title', val)}
-                >
-                  {cmsAbout?.title || (
-                    <>
-                      Crafting the Future of <span className="text-[#E07A5F]">Philippine</span> Luxury.
-                    </>
-                  )}
-                </LiveEditableText>
-              </h1>
-              <p className="font-display text-on-surface-variant max-w-xl mb-12 leading-relaxed text-xl opacity-90">
-                <LiveEditableText
-                  value={
-                    cmsAbout?.summary ||
-                    'EstateElite stands as the premier architectural and real estate consultancy in the Philippines. We are dedicated curators of exceptional living spaces, blending heritage with modern innovation.'
-                  }
-                  onSave={(val) => saveAboutField('summary', val)}
-                />
-              </p>
-              {(cmsAbout?.body || cmsAbout?.id) && (
-                <p className="text-base text-on-surface-variant max-w-xl mb-8 leading-relaxed whitespace-pre-line">
-                  <LiveEditableText
-                    value={cmsAbout?.body || ''}
-                    placeholder="Add extra company story text..."
-                    onSave={(val) => saveAboutField('body', val)}
-                  />
-                </p>
-              )}
-              <div className="flex flex-wrap gap-6">
-                <button className="font-sans bg-primary text-white px-10 py-4 rounded-xl font-bold hover:bg-primary/90 hover:shadow-xl transition-all text-[12px] tracking-widest uppercase">
-                  Our Heritage
-                </button>
-                <button className="font-sans text-primary font-bold px-8 py-4 flex items-center gap-3 group hover:bg-surface-container-low rounded-xl transition-all text-[12px] tracking-widest uppercase border border-outline-variant/30">
-                  Global Portfolio
-                  <span className="material-symbols-outlined group-hover:translate-x-2 transition-transform">arrow_right_alt</span>
-                </button>
-              </div>
-            </motion.div>
-
-            <motion.div 
-              className="relative w-full max-w-lg mx-auto -mt-4 lg:-mt-8"
-              initial={{ opacity: 0, scale: 0.95 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              viewport={{ once: true, margin: "-100px" }}
-            >
-              <div className="rounded-[32px] overflow-hidden w-full h-[80vh] shadow-2xl bg-surface-container-high relative border-[12px] border-white/50">
-                <div
-                  className="w-full h-full bg-cover bg-center transition-transform duration-1000 hover:scale-110"
-                  style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuDm3CZzHZRIlWACg2-cllubJnlL97uj0a5kP_KFk1ORg5yHcm8VjBnGwhrFtfGUP_05pB6WbvgAyih6UNwaI8SN-8HQsq03hXvHNOSVnD2_SZTBd3EOdOW8S11q-kYnMuQ3uybW23HI2jEof52geNa6TY6adiiWcB5Z41ITiQ_kcZuxLGjpPBL49k2rztrBilBLhSWwyQjcPbgHdVLMMg08LnqYlFFgRawk5-jKRepxGgZF_bwf6mtLSYxjV_pG95BgoFIVa3UGbSuG')" }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-primary/40 to-transparent"></div>
-              </div>
-              <div className="absolute bottom-6 left-6 lg:bottom-10 lg:-left-6 bg-white/95 p-6 rounded-2xl shadow-2xl border border-outline-variant/30 hidden sm:block backdrop-blur-xl z-20">
-                <div className="text-[#E07A5F] font-display text-5xl mb-1 font-black">35</div>
-                <div className="font-sans text-primary font-bold text-[10px] tracking-[0.15em] uppercase">Years of Legacy</div>
-              </div>
-            </motion.div>
-          </div>
-        </section>
-
-        {/* Narrative Section with Texture */}
-        <section className="min-h-screen flex flex-col justify-center py-20 bg-surface-container-low/50 border-y border-outline-variant/20 relative w-full">
-          <div className="absolute inset-0 opacity-[0.04] bg-[url('https://www.transparenttextures.com/patterns/pinstriped-suit.png')]"></div>
-          <motion.div
-            className="max-w-[1560px] mx-auto px-5 md:px-10 lg:px-16 text-center relative z-10"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
-            variants={revealVariants}
-          >
-            <div className="max-w-4xl mx-auto">
-              <span className="material-symbols-outlined text-[#E07A5F] text-4xl mb-8">format_quote</span>
-              <h2 className="font-display text-primary mb-12 italic leading-tight text-3xl lg:text-4xl font-bold">
-                "We don't just facilitate transactions; we steward legacies through uncompromising market intelligence and architectural vision."
-              </h2>
-              <div className="w-24 h-1 bg-gradient-to-r from-transparent via-[#E07A5F] to-transparent mx-auto mb-12"></div>
-              <p className="font-display text-on-surface-variant max-w-3xl mx-auto text-lg leading-relaxed">
-                Founded with a singular vision to bridge global luxury standards with Philippine real estate,
-                EstateElite has grown into the nation's most trusted advisor for high-net-worth individuals and
-                global investors seeking permanence.
-              </p>
-            </div>
-          </motion.div>
-        </section>
-
-        {/* Vision & Mission Details */}
-        <section className="min-h-screen flex flex-col justify-center py-20 max-w-[1560px] mx-auto px-5 md:px-10 lg:px-16 w-full">
-          <div className="grid md:grid-cols-2 gap-16 lg:gap-32">
-            <motion.div
-              className="p-12 rounded-[2.5rem] bg-white border border-outline-variant/30 shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-500 group"
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, margin: "-100px" }}
-              variants={revealVariants}
-            >
-              <div className="w-16 h-16 rounded-2xl bg-primary/5 flex items-center justify-center mb-10 group-hover:bg-primary transition-colors duration-500">
-                <span className="material-symbols-outlined text-primary text-3xl group-hover:text-white transition-colors">visibility</span>
-              </div>
-              <h3 className="font-display text-primary mb-8 text-3xl font-bold">Global Standards, <br /><span className="text-[#E07A5F]">Local Soul</span></h3>
-              <p className="font-display text-on-surface-variant leading-loose text-lg opacity-80">
-                To be the undisputed bridge between global luxury standards and Philippine real estate, setting the benchmark for ethical advisory and bespoke property acquisition across the archipelago. We honor the heritage of our land while embracing the tech of tomorrow.
-              </p>
-            </motion.div>
-
-            <motion.div
-              className="p-12 rounded-[2.5rem] bg-white border border-outline-variant/30 shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-500 group"
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, margin: "-100px" }}
-              variants={revealVariants}
-              transition={{ delay: 0.2 }}
-            >
-              <div className="w-16 h-16 rounded-2xl bg-[#E07A5F]/5 flex items-center justify-center mb-10 group-hover:bg-[#E07A5F] transition-colors duration-500">
-                <span className="material-symbols-outlined text-[#E07A5F] text-3xl group-hover:text-white transition-colors">diamond</span>
-              </div>
-              <h3 className="font-display text-primary mb-8 text-3xl font-bold">Empowering <br /><span className="text-[#E07A5F]">Legacies</span></h3>
-              <p className="font-display text-on-surface-variant leading-loose text-lg opacity-80">
-                To empower our clients through uncompromising market intelligence, personalized white-glove service, and exclusive access to the nation's most prestigious off-market portfolio. Your legacy is our blueprint for excellence.
-              </p>
-            </motion.div>
-          </div>
-        </section>
-
-        {/* Enhanced Timeline (Mantine Integration) */}
-        <section className="min-h-screen flex flex-col justify-center py-20 bg-surface-container-low/30 border-y border-outline-variant/20 relative overflow-hidden w-full">
-          <div className="max-w-[1560px] mx-auto px-5 md:px-10 lg:px-16 relative z-10">
-            <motion.div
-              className="text-center mb-32"
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, margin: "-100px" }}
-              variants={revealVariants}
-            >
-              <span className="font-sans text-[#E07A5F] font-bold text-[12px] tracking-[0.3em] uppercase mb-4 block">Our Journey</span>
-              <h2 className="text-primary font-display text-5xl mb-6 font-bold">Milestones of Excellence</h2>
-              <p className="text-on-surface-variant font-display max-w-2xl mx-auto text-lg">
-                Shaping the landscape of Philippine high-end living through decades of strategic vision.
-              </p>
-            </motion.div>
-
-            <div className="max-w-3xl mx-auto pl-4 md:pl-0">
-              <Timeline active={journeyMilestones.length} bulletSize={32} lineWidth={2} color="teal">
-                {journeyMilestones.map((milestone, idx) => (
-                  <Timeline.Item
-                    key={milestone.id}
-                    title={<span className="text-2xl font-bold font-display text-primary">{milestone.title}</span>}
-                    bullet={<span className="material-symbols-outlined text-[16px]">{milestone.icon}</span>}
-                    className="pb-16"
-                  >
-                    <motion.div
-                      initial="hidden"
-                      whileInView="visible"
-                      viewport={{ once: true, margin: "-100px" }}
-                      variants={revealVariants}
-                      transition={{ delay: idx * 0.1 }}
-                    >
-                      <Text c="dimmed" size="sm" tt="uppercase" fw={700} tracking={2} mb={12} mt={4} className="font-sans text-[#E07A5F]">
-                        {milestone.year}
-                      </Text>
-                      <Text size="lg" className="font-display leading-relaxed text-gray-600">
-                        {milestone.description}
-                      </Text>
-                    </motion.div>
-                  </Timeline.Item>
-                ))}
-              </Timeline>
-            </div>
-          </div>
-        </section>
-
-        {/* Enhanced Leadership Section */}
-        <section className="min-h-screen flex flex-col justify-center py-20 max-w-[1560px] mx-auto px-5 md:px-10 lg:px-16 w-full">
-          <motion.div
-            className="flex flex-col md:flex-row justify-between items-end mb-24 gap-12"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
-            variants={revealVariants}
-          >
-            <div className="max-w-2xl">
-              <span className="font-sans text-[#E07A5F] font-bold text-[12px] tracking-[0.3em] uppercase mb-4 block">Leadership</span>
-              <h2 className="font-display text-primary text-5xl mb-6 font-bold">The Minds Behind the Legacy</h2>
-              <p className="text-on-surface-variant font-display text-lg">
-                Our leadership combines decades of local heritage with global perspectives to deliver unparalleled advisory excellence.
-              </p>
-            </div>
-            <div className="hidden md:block">
-              <button className="font-sans text-primary font-bold border-b-2 border-primary pb-2 hover:text-[#E07A5F] hover:border-tertiary transition-all flex items-center gap-3 text-[12px] tracking-widest uppercase">
-                View Full Advisory Board
-                <span className="material-symbols-outlined text-sm">north_east</span>
-              </button>
-            </div>
-          </motion.div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12">
-            {leadershipTeam.map((leader, index) => (
+      <div
+        className="text-on-surface font-body-md min-h-screen"
+        style={{
+          backgroundColor: '#F8FAFC',
+          backgroundImage: "url('/images/topographic-bg.svg')",
+          backgroundRepeat: 'repeat',
+          backgroundSize: '600px 600px',
+        }}
+      >
+        <main className="">
+          {/* Sophisticated Hero Section */}
+          <section className="relative pt-32 lg:pt-40 pb-12 max-w-[1560px] mx-auto px-5 md:px-10 lg:px-16 overflow-hidden">
+            <div className="max-w-3xl w-full">
               <motion.div
-                key={leader.id}
-                className="group"
+                className="z-10"
                 initial="hidden"
                 whileInView="visible"
-                viewport={{ once: true, margin: "-50px" }}
+                viewport={{ once: true, margin: "-100px" }}
                 variants={revealVariants}
-                transition={{ delay: index * 0.15 }}
               >
-                <div className="aspect-[3/4] rounded-3xl overflow-hidden mb-8 relative grayscale hover:grayscale-0 transition-all duration-700 bg-surface-container-high shadow-lg group-hover:shadow-2xl">
-                  <div
-                    className="w-full h-full bg-cover bg-center transition-transform duration-1000 group-hover:scale-110"
-                    style={{ backgroundImage: `url('${leader.image}')` }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-8">
-                    <p className="font-display text-white/90 text-sm font-medium leading-relaxed italic">"{leader.quote}"</p>
-                  </div>
+                <div className="flex items-center gap-4 mb-8">
+                  <span className="h-px w-12 bg-[#E07A5F]"></span>
+                  <span className="font-sans text-[#E07A5F] font-bold text-[12px] tracking-[0.2em] uppercase">Established 1989 • 37 Years of Trusted Homeownership in the Philippines</span>
                 </div>
-                <h5 className="font-display text-primary mb-2 text-2xl font-bold">{leader.name}</h5>
-                <p className="font-sans font-bold text-[#E07A5F] text-[10px] tracking-widest uppercase mb-4">{leader.title}</p>
-                <p className="text-on-surface-variant text-sm font-display leading-relaxed opacity-80 line-clamp-3 group-hover:line-clamp-none transition-all">
-                  {leader.description}
+                <h1 className="font-display text-5xl lg:text-7xl text-[#0F766E] mb-8 leading-[1.1] font-extrabold tracking-tight">
+                  <LiveEditableText
+                    value={cmsAbout?.title || 'Selling Homes, Building Dreams.'}
+                    onSave={(val) => saveAboutField('title', val)}
+                  >
+                    {cmsAbout?.title || (
+                      <>
+                        Selling Homes, <span className="text-[#E76F51] italic font-serif block">Building Dreams.</span>
+                      </>
+                    )}
+                  </LiveEditableText>
+                </h1>
+                <p className="font-display text-on-surface-variant max-w-2xl mb-6 leading-relaxed text-xl opacity-90">
+                  <LiveEditableText
+                    value={
+                      cmsAbout?.summary ||
+                      'Since 1989, Human Shelter has been selling homes and building dreams, helping Filipino families find the perfect home for their needs and empowering real estate agents to discover their purpose.'
+                    }
+                    onSave={(val) => saveAboutField('summary', val)}
+                  />
                 </p>
+                {(cmsAbout?.body || cmsAbout?.id) && (
+                  <p className="text-base text-on-surface-variant max-w-2xl mb-6 leading-relaxed whitespace-pre-line">
+                    <LiveEditableText
+                      value={cmsAbout?.body || ''}
+                      placeholder="Add extra company story text..."
+                      onSave={(val) => saveAboutField('body', val)}
+                    />
+                  </p>
+                )}
               </motion.div>
-            ))}
-          </div>
-        </section>
+            </div>
+          </section>
 
-        {/* Improved Immersive CTA & Accolades */}
-        <section className="min-h-screen flex flex-col justify-center py-20 bg-surface-container-low/30 border-t border-outline-variant/20 w-full">
-          <div className="max-w-[1560px] mx-auto px-5 md:px-10 lg:px-16 w-full">
+          {/* Human Shelter Realty Staff Directory */}
+          <section id="our-team" className="py-24 max-w-[1560px] mx-auto px-5 md:px-10 lg:px-16 w-full">
             <motion.div
-              className="text-center mb-24"
+              className="max-w-3xl mb-12"
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true, margin: "-100px" }}
               variants={revealVariants}
             >
-              <span className="font-sans text-[#E07A5F] font-bold text-[12px] tracking-[0.3em] uppercase mb-4 block">Accolades</span>
-              <h2 className="text-primary font-display text-5xl mb-6 font-bold">Accolades &amp; Recognition</h2>
-              <p className="text-on-surface-variant font-display max-w-3xl mx-auto text-lg leading-relaxed">
-                A testament to our unwavering commitment to excellence in Philippine luxury real estate.
+              <span className="font-sans text-[#E07A5F] font-bold text-[12px] tracking-[0.3em] uppercase mb-3 block">
+                Our People
+              </span>
+              <h2 className="font-display text-primary text-4xl lg:text-5xl mb-4 font-bold">
+                Human Shelter Realty Team
+              </h2>
+              <p className="text-on-surface-variant font-display text-lg">
+                Meet the dedicated sales, business development, accounting, marketing, and logistics professionals serving Filipino families across our branches.
               </p>
             </motion.div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {accolades.map((award, index) => (
-                <motion.div
-                  key={award.id}
-                  className="bg-white p-10 rounded-[2rem] border border-outline-variant/30 shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-500 group text-center"
-                  initial="hidden"
-                  whileInView="visible"
-                  viewport={{ once: true, margin: "-50px" }}
-                  variants={revealVariants}
-                  transition={{ delay: index * 0.1 }}
-                >
-                  <div className="w-16 h-16 rounded-full bg-primary/5 flex items-center justify-center mb-8 mx-auto group-hover:bg-primary transition-colors duration-500">
-                    <span className="material-symbols-outlined text-primary text-3xl group-hover:text-white transition-colors">{award.icon}</span>
+
+            {/* Sales Department Group Photo Banner */}
+            <motion.div
+              className="mb-14 rounded-3xl overflow-hidden border border-[#E2E8F0] bg-white shadow-sm"
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-80px" }}
+              variants={revealVariants}
+            >
+              <div className="relative w-full aspect-[16/7] sm:aspect-[21/8] bg-slate-100 overflow-hidden">
+                <img
+                  src={salesDepartmentPhoto.image}
+                  alt="Human Shelter Realty Corp. Sales Department group photograph"
+                  className="w-full h-full object-cover object-center"
+                />
+              </div>
+              <div className="px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 bg-white border-t border-[#E2E8F0]">
+                <div>
+                  <h3 className="font-display text-lg font-bold text-[#1E293B]">
+                    {salesDepartmentPhoto.title}
+                  </h3>
+                  <p className="text-sm text-[#64748B] font-sans">
+                    {salesDepartmentPhoto.subtitle}
+                  </p>
+                </div>
+                <Badge variant="default">Human Shelter Realty Corp.</Badge>
+              </div>
+            </motion.div>
+
+            {/* Stacked Department Sections (Scrollable Directory) */}
+            <div className="space-y-16">
+              {staffDepartments.map((dept) => (
+                <div key={dept.id} id={dept.id} className="space-y-6">
+                  <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#E2E8F0]">
+                    <h3 className="font-display text-2xl sm:text-3xl font-bold text-[#1E293B]">
+                      {dept.label}
+                    </h3>
+                    <Badge variant="outline" className="font-mono text-xs">
+                      {dept.members.length} {dept.members.length === 1 ? 'Member' : 'Members'}
+                    </Badge>
                   </div>
-                  <h4 className="font-display text-primary text-xl font-bold mb-2">{award.title}</h4>
-                  <p className="font-sans text-[#E07A5F] font-bold text-[10px] tracking-widest uppercase mb-4">{award.year}</p>
-                  <p className="text-on-surface-variant text-sm font-display opacity-80">{award.organization}</p>
-                </motion.div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {dept.members.map((member) => {
+                      const initials = member.name
+                        .split(' ')
+                        .map((part) => part[0])
+                        .join('')
+                        .slice(0, 2)
+                        .toUpperCase();
+                      return (
+                        <div
+                          key={member.id}
+                          className="group rounded-2xl overflow-hidden bg-white border border-[#E2E8F0] shadow-xs hover:shadow-md transition-all duration-300"
+                        >
+                          <div className="aspect-square w-full bg-slate-100 overflow-hidden relative">
+                            {member.image ? (
+                              <img
+                                src={member.image}
+                                alt={`${member.name} — ${member.role}`}
+                                loading="lazy"
+                                className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex flex-col items-center justify-center bg-[#F1F5F9] text-[#0F766E] gap-2">
+                                <span className="w-16 h-16 rounded-full bg-[#0F766E]/10 border border-[#0F766E]/20 flex items-center justify-center font-display font-bold text-xl">
+                                  {initials}
+                                </span>
+                                <span className="text-[11px] font-sans text-[#64748B]">
+                                  Photo coming soon
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          <div className="p-4">
+                            <h4 className="font-display text-lg font-bold text-[#1E293B] leading-snug">
+                              {member.name}
+                            </h4>
+                            <p className="font-sans text-xs font-semibold text-[#0F766E] uppercase tracking-wider mt-1">
+                              {member.role}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               ))}
             </div>
-          </div>
-        </section>
+          </section>
 
-        {/* Final CTA Banner */}
-        <section className="min-h-screen flex flex-col justify-center py-20 px-5 md:px-10 lg:px-20 w-full">
-          <motion.div
-            className="max-w-container-max mx-auto bg-primary rounded-[3rem] p-16 lg:p-32 text-center text-white relative overflow-hidden shadow-[0_40px_100px_-20px_rgba(0,86,88,0.4)]"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
-            variants={revealVariants}
-          >
-            <div className="absolute inset-0 opacity-20 mix-blend-overlay">
-              <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDm3CZzHZRIlWACg2-cllubJnlL97uj0a5kP_KFk1ORg5yHcm8VjBnGwhrFtfGUP_05pB6WbvgAyih6UNwaI8SN-8HQsq03hXvHNOSVnD2_SZTBd3EOdOW8S11q-kYnMuQ3uybW23HI2jEof52geNa6TY6adiiWcB5Z41ITiQ_kcZuxLGjpPBL49k2rztrBilBLhSWwyQjcPbgHdVLMMg08LnqYlFFgRawk5-jKRepxGgZF_bwf6mtLSYxjV_pG95BgoFIVa3UGbSuG" className="w-full h-full object-cover" alt="Texture" />
-            </div>
-            <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/95 to-primary/80"></div>
-
-            {/* Decorative Elements */}
-            <div className="absolute top-0 right-0 w-96 h-96 bg-[#E07A5F]/20 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2"></div>
-            <div className="absolute bottom-0 left-0 w-96 h-96 bg-secondary/20 rounded-full blur-[120px] translate-y-1/2 -translate-x-1/2"></div>
-
-            <div className="relative z-10 max-w-4xl mx-auto">
-              <h2 className="font-display text-5xl lg:text-7xl mb-10 font-bold tracking-tight">Secure Your <span className="text-[#E07A5F]-fixed-dim text-white">Legacy.</span></h2>
-              <p className="font-display text-white/90 mb-16 text-xl leading-relaxed max-w-2xl mx-auto">
-                Connect with an EstateElite advisor for a private consultation regarding your domestic or international portfolio. Let us build your future together.
-              </p>
-              <div className="flex flex-col sm:flex-row justify-center gap-8">
-                <button className="font-sans bg-white text-primary px-12 py-5 rounded-xl font-bold hover:bg-surface-container-low hover:shadow-2xl transition-all shadow-lg text-[12px] tracking-[0.2em] uppercase active:scale-95">
-                  Request Consultation
-                </button>
-                <button className="font-sans border-2 border-white/30 text-white px-12 py-5 rounded-xl font-bold hover:bg-white/10 transition-all text-[12px] tracking-[0.2em] uppercase active:scale-95">
-                  Explore Insights
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        </section>
-      </main>
-      <LiveEditFloatingBar />
-    </div>
+        </main>
+        <LiveEditFloatingBar />
+      </div>
     </LiveEditProvider>
   );
 }
