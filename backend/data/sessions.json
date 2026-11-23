@@ -457,6 +457,20 @@
       "updatedAt": 1795384737243,
       "revokedAt": 1795384737243,
       "revokeReason": "user_logout"
+    },
+    {
+      "id": "21087f0f-28cf-4be2-8439-bf263d07d84a",
+      "tokenHash": "261871eb5d0ec4dbb41a99a04e30b9cefef4e38180995526020d84bf1cb13457",
+      "userId": "787d7182-e5d8-4571-861e-05c614bf18ca",
+      "role": "broker",
+      "createdAt": 1795384847393,
+      "lastActiveAt": 1795384852141,
+      "idleExpiresAt": 1795386652141,
+      "absoluteExpiresAt": 1795428047393,
+      "lastHeartbeatAt": 1795384847393,
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+      "ipAddress": "::1",
+      "updatedAt": 1795384852141
     }
   ],
   "disabledAccounts": []
