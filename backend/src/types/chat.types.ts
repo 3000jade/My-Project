@@ -90,6 +90,16 @@ export type ChatHandoffReason =
   | 'legal_tax_or_loan'
   | 'no_matches';
 
+export interface ChatStreamStatusPayload {
+  step: string;
+  label: string;
+}
+
+export interface ChatStreamCallbacks {
+  onStatus?: (status: ChatStreamStatusPayload) => void;
+  onDelta?: (text: string) => void;
+}
+
 export interface ChatResponsePayload {
   message: string;
   cards?: ChatPropertyCard[];
@@ -98,4 +108,5 @@ export interface ChatResponsePayload {
   handoffDraft?: ChatHandoffDraft;
   suggestHandoff?: boolean;
   handoffReason?: ChatHandoffReason;
+  followUpSuggestions?: string[];
 }

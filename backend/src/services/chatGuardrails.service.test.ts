@@ -1,5 +1,43 @@
 import { describe, it, expect } from 'vitest';
-import { evaluateChatGuardrails } from './chatGuardrails.service';
+import {
+  buildFollowUpSuggestions,
+  evaluateChatGuardrails,
+  isTagalogOrTaglish,
+} from './chatGuardrails.service';
+import type { ChatPropertyCard, ChatPropertyDetail } from '../types/chat.types';
+
+function makeCard(id: string, title: string, city = 'Makati'): ChatPropertyCard {
+  return {
+    id,
+    title,
+    city,
+    price: 12000000,
+    formattedPrice: 'PHP 12,000,000',
+    propertyType: 'Condominium',
+    transactionType: 'For Sale',
+    bedrooms: 2,
+    bathrooms: 2,
+    floorArea: 85,
+    lotArea: null,
+    parking: 1,
+    mainImage: null,
+    status: 'Published',
+  };
+}
+
+function makeDetail(id = 'prop-active', title = 'The Residences Makati', city = 'Makati'): ChatPropertyDetail {
+  return {
+    ...makeCard(id, title, city),
+    address: '123 Ayala Ave',
+    subdivisionName: null,
+    buildingName: 'The Residences',
+    associationFee: null,
+    associationFeeFrequency: null,
+    features: ['Swimming Pool'],
+    publicRemarks: null,
+    coordinates: null,
+  };
+}
 
 describe('evaluateChatGuardrails', () => {
   it('triggers handoff for viewing and site-visit requests in English and Tagalog/Taglish', () => {
@@ -61,5 +99,95 @@ describe('evaluateChatGuardrails', () => {
     expect(evaluateChatGuardrails({ userQuery: 'Does this house have a swimming pool?' })).toEqual({
       suggestHandoff: false,
     });
+  });
+});
+
+describe('isTagalogOrTaglish', () => {
+  it('detects Tagalog and Taglish queries and ignores plain English', () => {
+    expect(isTagalogOrTaglish('May 3-bedroom bahay ba kayo sa Alabang?')).toBe(true);
+    expect(isTagalogOrTaglish('Pwede ba mag-viewing bukas sa Makati?')).toBe(true);
+    expect(isTagalogOrTaglish('Show me 2-bedroom condos in Makati under 20M')).toBe(false);
+    expect(isTagalogOrTaglish('')).toBe(false);
+  });
+});
+
+describe('buildFollowUpSuggestions', () => {
+  it('returns 2-3 English chips including a comparison suggestion when 2+ cards are returned', () => {
+    const suggestions = buildFollowUpSuggestions({
+      userQuery: 'Show me 2-bedroom condos in Makati',
+      cards: [makeCard('1', 'Makati Prime Suite'), makeCard('2', 'Ayala Tower Unit')],
+    });
+
+    expect(suggestions.length).toBeGreaterThanOrEqual(2);
+    expect(suggestions.length).toBeLessThanOrEqual(3);
+    expect(suggestions.some((s) => /compare/i.test(s))).toBe(true);
+  });
+
+  it('returns 2-3 Taglish chips when the user asks in Tagalog or Taglish', () => {
+    const suggestions = buildFollowUpSuggestions({
+      userQuery: 'May 3-bedroom bahay ba kayo sa Alabang?',
+      cards: [makeCard('1', 'Alabang Hills Home', 'Muntinlupa'), makeCard('2', 'Ayala Alabang House', 'Muntinlupa')],
+    });
+
+    expect(suggestions.length).toBeGreaterThanOrEqual(2);
+    expect(suggestions.length).toBeLessThanOrEqual(3);
+    expect(suggestions.some((s) => /\b(ikukumpara|malapit|presyo|viewing|bahay|ito|sa|ba|ang|pa|mga)\b/i.test(s))).toBe(
+      true
+    );
+  });
+
+  it('includes "What\'s nearby this property?" when viewing an active listing with no cards returned', () => {
+    const suggestions = buildFollowUpSuggestions({
+      userQuery: 'Tell me more about this listing',
+      activeProperty: makeDetail(),
+      cards: [],
+    });
+
+    expect(suggestions.length).toBeGreaterThanOrEqual(2);
+    expect(suggestions.length).toBeLessThanOrEqual(3);
+    expect(suggestions).toContain("What's nearby this property?");
+  });
+
+  it('returns broader-search and featured suggestions when handoffReason is no_matches', () => {
+    const suggestions = buildFollowUpSuggestions({
+      userQuery: 'Show me 5-bedroom castles in Batanes under 1M',
+      cards: [],
+      suggestHandoff: true,
+      handoffReason: 'no_matches',
+    });
+
+    expect(suggestions.length).toBeGreaterThanOrEqual(2);
+    expect(suggestions.length).toBeLessThanOrEqual(3);
+    expect(suggestions.some((s) => /(broad|other|featured|budget|similar|city|cities)/i.test(s))).toBe(true);
+  });
+
+  it('returns 2-3 contextual next-step chips for comparison and nearby results', () => {
+    const comparisonSuggestions = buildFollowUpSuggestions({
+      userQuery: 'Compare these two condos',
+      comparison: {
+        properties: [
+          { id: '1', title: 'Makati Prime Suite', city: 'Makati', formattedPrice: 'PHP 12,000,000' },
+          { id: '2', title: 'BGC Horizon Flat', city: 'Taguig', formattedPrice: 'PHP 14,500,000' },
+        ],
+        rows: [{ label: 'Price', values: ['PHP 12,000,000', 'PHP 14,500,000'] }],
+      },
+    });
+
+    expect(comparisonSuggestions.length).toBeGreaterThanOrEqual(2);
+    expect(comparisonSuggestions.length).toBeLessThanOrEqual(3);
+
+    const nearbySuggestions = buildFollowUpSuggestions({
+      userQuery: "What's nearby this home?",
+      activeProperty: makeDetail(),
+      nearby: {
+        propertyId: 'prop-active',
+        propertyTitle: 'The Residences Makati',
+        landmarks: [{ category: 'mall', label: 'Greenbelt (0.5 km)' }],
+        commutes: [{ destinationName: 'Makati CBD', distanceText: '1.2 km', durationText: '5 mins' }],
+      },
+    });
+
+    expect(nearbySuggestions.length).toBeGreaterThanOrEqual(2);
+    expect(nearbySuggestions.length).toBeLessThanOrEqual(3);
   });
 });
