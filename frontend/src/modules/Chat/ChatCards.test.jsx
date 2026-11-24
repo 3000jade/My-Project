@@ -444,6 +444,73 @@ describe('ChatPropertyCard', () => {
     expect(screen.queryByText(/bed/i)).toBeNull();
     expect(screen.queryByText(/bath/i)).toBeNull();
   });
+
+  it('omits the compare toggle button when onToggleCompare is not provided', () => {
+    render(<ChatPropertyCard property={sampleProperty} />);
+
+    expect(screen.queryByRole('button', { name: /compare/i })).toBeNull();
+    expect(screen.queryByRole('button', { name: /selected/i })).toBeNull();
+  });
+
+  it('renders + Compare toggle button when onToggleCompare is provided and calls it on click', () => {
+    const onToggleCompare = vi.fn();
+
+    render(
+      <ChatPropertyCard
+        property={sampleProperty}
+        onToggleCompare={onToggleCompare}
+      />
+    );
+
+    const compareBtn = screen.getByRole('button', { name: /\+ compare/i });
+    expect(compareBtn).toHaveAttribute('aria-pressed', 'false');
+    expect(compareBtn).not.toBeDisabled();
+
+    fireEvent.click(compareBtn);
+    expect(onToggleCompare).toHaveBeenCalledTimes(1);
+    expect(onToggleCompare).toHaveBeenCalledWith(sampleProperty);
+  });
+
+  it('renders Selected state when isSelectedForCompare is true and keeps button enabled even when compareDisabled is true', () => {
+    const onToggleCompare = vi.fn();
+
+    render(
+      <ChatPropertyCard
+        property={sampleProperty}
+        isSelectedForCompare
+        compareDisabled
+        onToggleCompare={onToggleCompare}
+      />
+    );
+
+    const selectedBtn = screen.getByRole('button', { name: /selected/i });
+    expect(selectedBtn).toHaveAttribute('aria-pressed', 'true');
+    expect(selectedBtn).not.toBeDisabled();
+    expect(selectedBtn.className).toContain('bg-[#0F766E]');
+
+    fireEvent.click(selectedBtn);
+    expect(onToggleCompare).toHaveBeenCalledWith(sampleProperty);
+  });
+
+  it('disables + Compare button when compareDisabled is true and property is not selected', () => {
+    const onToggleCompare = vi.fn();
+
+    render(
+      <ChatPropertyCard
+        property={sampleProperty}
+        isSelectedForCompare={false}
+        compareDisabled
+        onToggleCompare={onToggleCompare}
+      />
+    );
+
+    const compareBtn = screen.getByRole('button', { name: /\+ compare/i });
+    expect(compareBtn).toHaveAttribute('aria-pressed', 'false');
+    expect(compareBtn).toBeDisabled();
+
+    fireEvent.click(compareBtn);
+    expect(onToggleCompare).not.toHaveBeenCalled();
+  });
 });
 
 describe('ChatComparisonCard', () => {
