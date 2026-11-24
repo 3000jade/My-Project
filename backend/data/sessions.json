@@ -48,13 +48,13 @@
       "userId": "787d7182-e5d8-4571-861e-05c614bf18ca",
       "role": "broker",
       "createdAt": 1795493494035,
-      "lastActiveAt": 1795493843070,
-      "idleExpiresAt": 1795495643070,
+      "lastActiveAt": 1795494724303,
+      "idleExpiresAt": 1795496524303,
       "absoluteExpiresAt": 1795536694035,
       "lastHeartbeatAt": 1795493494035,
       "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.0.0 Safari/537.36",
       "ipAddress": "::1",
-      "updatedAt": 1795493843070
+      "updatedAt": 1795494724303
     }
   ],
   "disabledAccounts": []
