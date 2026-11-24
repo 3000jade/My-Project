@@ -106,7 +106,7 @@ test.describe('Session Management Verification', () => {
     await loginAsBroker(page);
 
     // Open profile menu in header and click Log out
-    await page.getByRole('button', { name: /Broker|Principal Broker/i }).click();
+    await page.getByRole('button', { name: 'User navigation menu' }).click();
     await page.getByRole('menuitem', { name: /Log Out|Sign Out/i }).click();
 
     await page.waitForURL((url) => url.pathname.includes('/login'), { timeout: 15000 });
