@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import cmsService from '@/services/cmsService';
 
 const AWARDS = [
   { 
@@ -50,24 +51,66 @@ const AWARDS_LIST = [
 
 export default function AwardsShowcase() {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [cmsAwards, setCmsAwards] = useState([]);
+
+  useEffect(() => {
+    let mounted = true;
+    cmsService
+      .getPublicContents('award')
+      .then((items) => {
+        if (mounted && Array.isArray(items)) {
+          setCmsAwards(items);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const honorsList =
+    cmsAwards.length > 0
+      ? cmsAwards.map((item) => ({
+          id: item.id,
+          year: item.payload?.year || '',
+          title: item.title,
+          organization: item.payload?.organization || '',
+        }))
+      : AWARDS_LIST;
+
+  const featuredCmsSlides =
+    cmsAwards.length > 0
+      ? cmsAwards
+          .filter((item) => item.media_url && item.payload?.featured !== false)
+          .map((item) => ({
+            id: item.id,
+            type: item.payload?.media_type === 'video' ? 'video' : 'image',
+            src: item.media_url,
+            title: item.title,
+            description: item.summary || item.payload?.organization || '',
+          }))
+      : [];
+
+  const slides = featuredCmsSlides.length > 0 ? featuredCmsSlides : AWARDS;
+  const activeIndex = slides.length > 0 ? currentIndex % slides.length : 0;
 
   const handleNext = () => {
-    setCurrentIndex((prev) => (prev + 1) % AWARDS.length);
+    setCurrentIndex((prev) => (prev + 1) % slides.length);
   };
 
   const handlePrev = () => {
-    setCurrentIndex((prev) => (prev - 1 + AWARDS.length) % AWARDS.length);
+    setCurrentIndex((prev) => (prev - 1 + slides.length) % slides.length);
   };
 
   // Helper to determine position relative to center
   const getIndexOffset = (index) => {
-    const diff = index - currentIndex;
+    const diff = index - activeIndex;
     if (diff === 0) return 0;
-    
+
     // Normalize to handle wrapping
-    if (diff > AWARDS.length / 2) return diff - AWARDS.length;
-    if (diff < -AWARDS.length / 2) return diff + AWARDS.length;
-    
+    if (diff > slides.length / 2) return diff - slides.length;
+    if (diff < -slides.length / 2) return diff + slides.length;
+
     return diff;
   };
 
@@ -95,7 +138,7 @@ export default function AwardsShowcase() {
         />
 
         <AnimatePresence initial={false}>
-          {AWARDS.map((award, index) => {
+          {slides.map((award, index) => {
             const offset = getIndexOffset(index);
             const isCenter = offset === 0;
             const isVisible = Math.abs(offset) <= 1; // Only render center and 1 on each side
@@ -169,12 +212,12 @@ export default function AwardsShowcase() {
 
         {/* Pagination Dots (Inside the container, at the bottom) */}
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3">
-          {AWARDS.map((_, idx) => (
+          {slides.map((slide, idx) => (
             <button
-              key={idx}
+              key={slide.id ?? idx}
               onClick={() => setCurrentIndex(idx)}
               className={`transition-all duration-300 rounded-full ${
-                currentIndex === idx 
+                activeIndex === idx 
                   ? 'w-6 h-2 bg-[#E76F51]' 
                   : 'w-2 h-2 bg-white/50 hover:bg-white/80'
               }`}
@@ -194,7 +237,7 @@ export default function AwardsShowcase() {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {AWARDS_LIST.map((award, idx) => (
+          {honorsList.map((award, idx) => (
             <motion.div 
               key={award.id}
               initial={{ opacity: 0, y: 20 }}
@@ -204,9 +247,11 @@ export default function AwardsShowcase() {
               className="bg-white border border-[#e5e5df] rounded-[14px] p-6 sm:p-8 shadow-[0_4px_20px_rgba(0,0,0,0.02)] hover:shadow-lg hover:border-[#0D4446]/40 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between"
             >
               <div>
-                <span className="inline-block bg-[#0D4446]/10 text-[#0D4446] font-mono text-xs font-bold px-3 py-1 rounded-full mb-4 uppercase tracking-widest">
-                  {award.year}
-                </span>
+                {award.year && (
+                  <span className="inline-block bg-[#0D4446]/10 text-[#0D4446] font-mono text-xs font-bold px-3 py-1 rounded-full mb-4 uppercase tracking-widest">
+                    {award.year}
+                  </span>
+                )}
                 <h4 className="text-lg sm:text-xl font-extrabold text-[#0f1722] leading-tight mb-2">
                   {award.title}
                 </h4>

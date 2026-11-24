@@ -1,12 +1,130 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import cmsService from '@/services/cmsService';
 
 // Simple mocked data for the marquees (we just repeat the same structure)
 const DEVELOPER_MOCKS = Array.from({ length: 8 }, (_, i) => ({ id: `dev-${i}` }));
 const BANK_MOCKS = Array.from({ length: 8 }, (_, i) => ({ id: `bank-${i}` }));
 
+function repeatForMarquee(items, minCount = 6) {
+  if (!Array.isArray(items) || items.length === 0) return [];
+  const repeated = [];
+  while (repeated.length < minCount) {
+    repeated.push(...items);
+  }
+  return repeated;
+}
+
+function getSafeHttpUrl(url) {
+  if (typeof url !== 'string' || !url.trim()) return null;
+  try {
+    const parsed = new URL(url.trim());
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:' ? parsed.href : null;
+  } catch {
+    return null;
+  }
+}
+
+function PartnerMarqueeRow({ title, cmsItems, fallbackMocks, fallbackAlt, animateX, wrapperClassName }) {
+  const hasCms = cmsItems.length > 0;
+  const stripItems = hasCms
+    ? repeatForMarquee(cmsItems, 6)
+    : fallbackMocks;
+  const doubledStrip = [...stripItems, ...stripItems];
+
+  return (
+    <div className={wrapperClassName}>
+      <h3 className="text-lg font-bold text-[#0D4446] mb-6 uppercase tracking-widest pl-2">
+        {title}
+      </h3>
+      <div className="w-full inline-flex flex-nowrap overflow-hidden [mask-image:_linear-gradient(to_right,transparent_0,_black_128px,_black_calc(100%-128px),transparent_100%)]">
+        <motion.div
+          className="flex items-center gap-6 pr-6"
+          animate={{ x: animateX }}
+          transition={{ repeat: Infinity, duration: 25, ease: 'linear' }}
+        >
+          {doubledStrip.map((item, idx) => {
+            if (!hasCms) {
+              return (
+                <div
+                  key={`${item.id}-${idx}`}
+                  className="w-48 h-32 shrink-0 border-2 border-dashed border-[#e5e5df] rounded-[5px] bg-[#FBFBF9] flex items-center justify-center p-4 hover:border-[#0D4446] transition-colors"
+                >
+                  <img
+                    src="/placeholder-logo.jpg"
+                    alt={fallbackAlt}
+                    className="max-w-full max-h-full object-contain opacity-80 mix-blend-multiply"
+                  />
+                </div>
+              );
+            }
+
+            const safeUrl = getSafeHttpUrl(item.payload?.website_url);
+            const cardInner = item.media_url ? (
+              <img
+                src={item.media_url}
+                alt={item.title}
+                className="max-w-full max-h-full object-contain mix-blend-multiply"
+              />
+            ) : (
+              <span className="text-center text-sm font-bold tracking-tight text-[#0D4446] leading-snug line-clamp-2">
+                {item.title}
+              </span>
+            );
+
+            const cardClassName =
+              'w-48 h-32 shrink-0 border border-[#e5e5df] rounded-[5px] bg-[#FBFBF9] flex items-center justify-center p-4 hover:border-[#0D4446] transition-colors';
+
+            if (safeUrl) {
+              return (
+                <a
+                  key={`${item.id}-${idx}`}
+                  href={safeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={item.title}
+                  title={item.title}
+                  className={`${cardClassName} focus-visible:outline-none focus-visible:border-[#0F766E] focus-visible:ring-2 focus-visible:ring-[#0F766E]/20`}
+                >
+                  {cardInner}
+                </a>
+              );
+            }
+
+            return (
+              <div key={`${item.id}-${idx}`} className={cardClassName}>
+                {cardInner}
+              </div>
+            );
+          })}
+        </motion.div>
+      </div>
+    </div>
+  );
+}
+
 export default function PartnersSection() {
+  const [cmsPartners, setCmsPartners] = useState([]);
+
+  useEffect(() => {
+    let mounted = true;
+    cmsService
+      .getPublicContents('partner')
+      .then((items) => {
+        if (mounted && Array.isArray(items)) {
+          setCmsPartners(items);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const developers = cmsPartners.filter((item) => item?.payload?.partner_type !== 'bank');
+  const banks = cmsPartners.filter((item) => item?.payload?.partner_type === 'bank');
+
   return (
     <section
       id="partners-section"
@@ -49,58 +167,24 @@ export default function PartnersSection() {
         </div>
 
         {/* Marquee 1: Partner Developers */}
-        <div className="mb-12">
-          <h3 className="text-lg font-bold text-[#0D4446] mb-6 uppercase tracking-widest pl-2">
-            Partner Developers
-          </h3>
-          <div className="w-full inline-flex flex-nowrap overflow-hidden [mask-image:_linear-gradient(to_right,transparent_0,_black_128px,_black_calc(100%-128px),transparent_100%)]">
-            <motion.div
-              className="flex items-center gap-6 pr-6"
-              animate={{ x: ["0%", "-50%"] }}
-              transition={{ repeat: Infinity, duration: 25, ease: "linear" }}
-            >
-              {[...DEVELOPER_MOCKS, ...DEVELOPER_MOCKS].map((mock, idx) => (
-                <div
-                  key={`dev-mock-${idx}`}
-                  className="w-48 h-32 shrink-0 border-2 border-dashed border-[#e5e5df] rounded-[5px] bg-[#FBFBF9] flex items-center justify-center p-4 hover:border-[#0D4446] transition-colors"
-                >
-                  <img
-                    src="/placeholder-logo.jpg"
-                    alt="Partner Developer Mockup"
-                    className="max-w-full max-h-full object-contain opacity-80 mix-blend-multiply"
-                  />
-                </div>
-              ))}
-            </motion.div>
-          </div>
-        </div>
+        <PartnerMarqueeRow
+          title="Partner Developers"
+          cmsItems={developers}
+          fallbackMocks={DEVELOPER_MOCKS}
+          fallbackAlt="Partner Developer Mockup"
+          animateX={['0%', '-50%']}
+          wrapperClassName="mb-12"
+        />
 
         {/* Marquee 2: Partner Banks */}
-        <div className="mb-16">
-          <h3 className="text-lg font-bold text-[#0D4446] mb-6 uppercase tracking-widest pl-2">
-            Partner Banks
-          </h3>
-          <div className="w-full inline-flex flex-nowrap overflow-hidden [mask-image:_linear-gradient(to_right,transparent_0,_black_128px,_black_calc(100%-128px),transparent_100%)]">
-            <motion.div
-              className="flex items-center gap-6 pr-6"
-              animate={{ x: ["-50%", "0%"] }}
-              transition={{ repeat: Infinity, duration: 25, ease: "linear" }}
-            >
-              {[...BANK_MOCKS, ...BANK_MOCKS].map((mock, idx) => (
-                <div
-                  key={`bank-mock-${idx}`}
-                  className="w-48 h-32 shrink-0 border-2 border-dashed border-[#e5e5df] rounded-[5px] bg-[#FBFBF9] flex items-center justify-center p-4 hover:border-[#0D4446] transition-colors"
-                >
-                  <img
-                    src="/placeholder-logo.jpg"
-                    alt="Partner Bank Mockup"
-                    className="max-w-full max-h-full object-contain opacity-80 mix-blend-multiply"
-                  />
-                </div>
-              ))}
-            </motion.div>
-          </div>
-        </div>
+        <PartnerMarqueeRow
+          title="Partner Banks"
+          cmsItems={banks}
+          fallbackMocks={BANK_MOCKS}
+          fallbackAlt="Partner Bank Mockup"
+          animateX={['-50%', '0%']}
+          wrapperClassName="mb-16"
+        />
 
         {/* Partnership Impact Banner */}
         <div className="bg-white/95 rounded-[5px] border border-[#e5e5df] p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-[0_4px_24px_rgba(0,0,0,0.03)]">
