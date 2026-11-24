@@ -97,8 +97,13 @@ export default function ChatHandoffForm({
       if (attachedProperty?.title) {
         payload.propertyTitle = attachedProperty.title;
       }
-      if (attachedProperty?.price !== null && attachedProperty?.price !== undefined) {
-        payload.propertyPrice = attachedProperty.price;
+      const resolvedPropertyPrice = attachedProperty?.formattedPrice
+        ? String(attachedProperty.formattedPrice)
+        : attachedProperty?.price !== undefined && attachedProperty?.price !== null
+          ? String(attachedProperty.price)
+          : undefined;
+      if (resolvedPropertyPrice !== undefined) {
+        payload.propertyPrice = resolvedPropertyPrice;
       }
 
       const res = await apiClient.post('/inquiries', payload);

@@ -57,6 +57,20 @@ function createMessageId(prefix) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
+function normalizeAttachedProperty(property) {
+  if (!property) return null;
+  const resolvedPrice = property.formattedPrice
+    ? String(property.formattedPrice)
+    : property.price !== undefined && property.price !== null
+      ? String(property.price)
+      : undefined;
+
+  return {
+    ...property,
+    ...(resolvedPrice !== undefined ? { price: resolvedPrice } : {}),
+  };
+}
+
 function ChatWidgetContent({ pathname, onNavigateProperty }) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([INITIAL_GREETING]);
@@ -87,17 +101,9 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
       .then((listing) => {
         if (cancelled) return;
         if (listing?.title) {
-          const numericPrice =
-            typeof listing.price === 'number'
-              ? listing.price
-              : typeof listing.price_raw === 'number' && listing.price_raw > 0
-                ? listing.price_raw
-                : undefined;
-
           setActiveListing({
             ...listing,
             id: listing.id || activePropertyId,
-            ...(numericPrice !== undefined ? { price: numericPrice } : {}),
           });
         } else {
           setActiveListing(null);
@@ -117,7 +123,7 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
   const toggleChat = () => setIsOpen((prev) => !prev);
 
   const openHandoff = (property = null) => {
-    setAttachedProperty(property);
+    setAttachedProperty(normalizeAttachedProperty(property));
     setShowEscalationForm(true);
   };
 
@@ -146,10 +152,13 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
     setIsTyping(true);
 
     try {
-      const apiMessages = updatedMessages.map((msg) => ({
-        role: msg.type === 'ai' ? 'assistant' : 'user',
-        content: msg.text,
-      }));
+      const apiMessages = updatedMessages
+        .map((msg) => ({
+          role: msg.type === 'ai' ? 'assistant' : 'user',
+          content: typeof msg.text === 'string' ? msg.text.trim() : '',
+        }))
+        .filter((msg) => msg.content.length > 0)
+        .slice(-20);
 
       const pageContext = activePropertyId
         ? { route: pathname, propertyId: activePropertyId }

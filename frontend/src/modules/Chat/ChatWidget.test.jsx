@@ -209,7 +209,7 @@ describe('ChatWidget', () => {
           email: 'maria@example.com',
           propertyId: 'prop-101',
           propertyTitle: 'Serendra Two-Bedroom Suite',
-          propertyPrice: 24500000,
+          propertyPrice: 'PHP 24,500,000',
           source: 'ai_chatbot',
           preferredReplyChannel: 'chat',
           consentAccepted: true,
@@ -259,5 +259,61 @@ describe('ChatWidget', () => {
     });
 
     errorSpy.mockRestore();
+  });
+
+  it('caps apiMessages at 20 turns and omits empty-text messages before calling chatService.sendMessage', async () => {
+    let replyCount = 0;
+    chatService.sendMessage
+      .mockResolvedValueOnce({
+        message: '   ',
+        cards: [sampleProperty],
+        comparison: null,
+        nearby: null,
+        handoffDraft: null,
+      })
+      .mockImplementation(async () => {
+        replyCount += 1;
+        return {
+          message: `Reply ${replyCount}`,
+          cards: [],
+          comparison: null,
+          nearby: null,
+          handoffDraft: null,
+        };
+      });
+
+    render(<ChatWidget />);
+    fireEvent.click(screen.getByRole('button', { name: /toggle ai property concierge/i }));
+
+    const input = screen.getByPlaceholderText(/type your message/i);
+
+    for (let i = 1; i <= 12; i += 1) {
+      fireEvent.change(input, { target: { value: `Message ${i}` } });
+      fireEvent.submit(input.closest('form'));
+      await waitFor(() => {
+        expect(chatService.sendMessage).toHaveBeenCalledTimes(i);
+        if (i === 1) {
+          expect(screen.getByText('Serendra Two-Bedroom Suite')).toBeInTheDocument();
+        } else {
+          expect(screen.getByText(`Reply ${i - 1}`)).toBeInTheDocument();
+        }
+      });
+    }
+
+    const secondTurnMessages = chatService.sendMessage.mock.calls[1][0];
+    expect(secondTurnMessages.every((m) => m.content.trim().length > 0)).toBe(true);
+    expect(secondTurnMessages.map((m) => m.content)).toEqual([
+      expect.stringContaining('not a PRC-licensed broker'),
+      'Message 1',
+      'Message 2',
+    ]);
+
+    const lastTurnMessages = chatService.sendMessage.mock.calls[11][0];
+    expect(lastTurnMessages).toHaveLength(20);
+    expect(lastTurnMessages.every((m) => m.content.trim().length > 0)).toBe(true);
+    expect(lastTurnMessages[lastTurnMessages.length - 1]).toEqual({
+      role: 'user',
+      content: 'Message 12',
+    });
   });
 });

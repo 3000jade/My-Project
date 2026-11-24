@@ -162,7 +162,7 @@ describe('ChatHandoffForm', () => {
       phone: '+63 917 888 9999',
       propertyId: 'prop-101',
       propertyTitle: 'Serendra Two-Bedroom Suite',
-      propertyPrice: 24500000,
+      propertyPrice: '24500000',
       message: [
         'Buyer interested in BGC 2BR viewing this weekend.',
         'AI: Second message',
@@ -229,6 +229,62 @@ describe('ChatHandoffForm', () => {
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent(
         'Could not submit your inquiry. Please check your details.'
+      );
+    });
+  });
+
+  it('prefers formattedPrice string and coerces price 0 to "0" for createInquirySchema compatibility', async () => {
+    apiClient.post.mockResolvedValue({ data: { data: { id: 'INQ-PRICE' } } });
+
+    const { unmount } = render(
+      <ChatHandoffForm
+        attachedProperty={{
+          id: 'prop-201',
+          title: 'Formatted Price Condo',
+          price: 24500000,
+          formattedPrice: '₱24,500,000',
+        }}
+      />
+    );
+
+    fireEvent.change(screen.getByLabelText(/full name/i), { target: { value: 'Elena Cruz' } });
+    fireEvent.change(screen.getByLabelText(/email address/i), { target: { value: 'elena@example.com' } });
+    fireEvent.click(screen.getByRole('checkbox', { name: /RA 10173/i }));
+    fireEvent.click(screen.getByRole('button', { name: /request licensed agent/i }));
+
+    await waitFor(() => {
+      expect(apiClient.post).toHaveBeenCalledWith(
+        '/inquiries',
+        expect.objectContaining({
+          propertyPrice: '₱24,500,000',
+        })
+      );
+    });
+
+    unmount();
+    vi.clearAllMocks();
+
+    render(
+      <ChatHandoffForm
+        attachedProperty={{
+          id: 'prop-202',
+          title: 'Zero Price Listing',
+          price: 0,
+        }}
+      />
+    );
+
+    fireEvent.change(screen.getByLabelText(/full name/i), { target: { value: 'Elena Cruz' } });
+    fireEvent.change(screen.getByLabelText(/email address/i), { target: { value: 'elena@example.com' } });
+    fireEvent.click(screen.getByRole('checkbox', { name: /RA 10173/i }));
+    fireEvent.click(screen.getByRole('button', { name: /request licensed agent/i }));
+
+    await waitFor(() => {
+      expect(apiClient.post).toHaveBeenCalledWith(
+        '/inquiries',
+        expect.objectContaining({
+          propertyPrice: '0',
+        })
       );
     });
   });
