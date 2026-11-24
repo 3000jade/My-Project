@@ -11,7 +11,8 @@ import ChatComparisonCard from './ChatComparisonCard';
 import ChatNearbyCard from './ChatNearbyCard';
 import ChatHandoffForm from './ChatHandoffForm';
 
-const PROPERTY_ROUTE_REGEX = /^\/properties\/([^/?#]+)/i;
+const PROPERTY_ROUTE_REGEX = /^\/(?:properties|listing)\/([^/?#]+)/i;
+const MAX_CHAT_MESSAGE_LENGTH = 2000;
 
 const INITIAL_GREETING = {
   id: 'welcome-ra-9646',
@@ -84,7 +85,7 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
 
   const activePropertyId = extractPropertyId(pathname);
   const currentActiveListing =
-    activePropertyId && activeListing?.id === activePropertyId ? activeListing : null;
+    activePropertyId && activeListing?.routePropertyId === activePropertyId ? activeListing : null;
 
   useEffect(() => {
     if (!activePropertyId) {
@@ -97,13 +98,14 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
 
     let cancelled = false;
     propertyService
-      .getPropertyById(activePropertyId)
+      .getPropertyById(activePropertyId, { publicView: 'true' })
       .then((listing) => {
         if (cancelled) return;
         if (listing?.title) {
           setActiveListing({
             ...listing,
             id: listing.id || activePropertyId,
+            routePropertyId: activePropertyId,
           });
         } else {
           setActiveListing(null);
@@ -130,7 +132,12 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
   useEffect(() => {
     if (!isOpen) return;
     const timer = setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      const prefersReducedMotion =
+        typeof window !== 'undefined' &&
+        window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+      messagesEndRef.current?.scrollIntoView({
+        behavior: prefersReducedMotion ? 'auto' : 'smooth',
+      });
     }, 100);
     return () => clearTimeout(timer);
   }, [isOpen, messages, isTyping]);
@@ -138,7 +145,8 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
   const handleSend = async (e, textOverride = null) => {
     if (e) e.preventDefault();
     const rawText = textOverride ?? inputValue;
-    const userText = typeof rawText === 'string' ? rawText.trim() : '';
+    const userText =
+      typeof rawText === 'string' ? rawText.trim().slice(0, MAX_CHAT_MESSAGE_LENGTH) : '';
     if (!userText || isTyping) return;
 
     const newMsg = {
@@ -155,7 +163,10 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
       const apiMessages = updatedMessages
         .map((msg) => ({
           role: msg.type === 'ai' ? 'assistant' : 'user',
-          content: typeof msg.text === 'string' ? msg.text.trim() : '',
+          content:
+            typeof msg.text === 'string'
+              ? msg.text.trim().slice(0, MAX_CHAT_MESSAGE_LENGTH)
+              : '',
         }))
         .filter((msg) => msg.content.length > 0)
         .slice(-20);
@@ -272,7 +283,7 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
 
               {/* Messages Area (MUST preserve data-lenis-prevent="true") */}
               <div
-                className="flex-1 overflow-y-auto p-4 bg-[#F8FAFC] flex flex-col gap-4 custom-scrollbar"
+                className="flex-1 min-h-0 overflow-y-auto p-4 bg-[#F8FAFC] flex flex-col gap-4 custom-scrollbar"
                 data-lenis-prevent="true"
               >
                 {messages.map((msg) => (
@@ -416,6 +427,7 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
                       <Input
                         value={inputValue}
                         onChange={(e) => setInputValue(e.target.value)}
+                        maxLength={MAX_CHAT_MESSAGE_LENGTH}
                         className="flex-1 bg-[#F8FAFC] border-[#E2E8F0] rounded-full px-4 text-sm text-[#1E293B] placeholder:text-[#64748B]"
                         placeholder="Type your message..."
                         type="text"

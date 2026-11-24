@@ -123,7 +123,8 @@ export default function ChatHandoffForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex flex-col gap-2 p-4 bg-[#F8FAFC] border-t border-[#E2E8F0] shrink-0"
+      data-lenis-prevent="true"
+      className="flex flex-col gap-2 p-4 bg-[#F8FAFC] border-t border-[#E2E8F0] min-h-0 max-h-full overflow-y-auto"
     >
       <div className="flex items-center justify-between gap-2">
         <span className="text-xs font-semibold text-[#1E293B]">

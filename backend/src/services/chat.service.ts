@@ -292,6 +292,7 @@ export class ChatService {
       model: params.model,
       messages: params.messages,
       temperature: 0.4,
+      max_tokens: 700,
     };
 
     if (params.includeTools) {
@@ -337,12 +338,12 @@ export class ChatService {
     const defaultModel = isGroq ? 'openai/gpt-oss-120b' : 'grok-2-latest';
     const model = config.aiModel || defaultModel;
 
-    // Defense-in-depth: keep only user/assistant roles and neutralize prompt injection phrases
+    // Defense-in-depth: keep only user/assistant roles and neutralize prompt injection phrases on all client messages
     const sanitizedMessages: OpenAIMessage[] = messages
       .filter((m) => m.role === 'user' || m.role === 'assistant')
       .map((m) => ({
         role: m.role,
-        content: m.role === 'user' ? stripPromptInjectionInstructions(m.content).sanitized : m.content,
+        content: stripPromptInjectionInstructions(m.content).sanitized,
       }));
 
     const latestUserQuery =

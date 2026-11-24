@@ -112,7 +112,9 @@ describe('ChatWidget', () => {
     fireEvent.click(screen.getByRole('button', { name: /toggle ai property concierge/i }));
 
     await waitFor(() => {
-      expect(propertyService.getPropertyById).toHaveBeenCalledWith('prop-42');
+      expect(propertyService.getPropertyById).toHaveBeenCalledWith('prop-42', {
+        publicView: 'true',
+      });
       expect(screen.getByText(/Currently viewing: Makati Sky Penthouse/i)).toBeInTheDocument();
     });
 
@@ -315,5 +317,98 @@ describe('ChatWidget', () => {
       role: 'user',
       content: 'Message 12',
     });
+  });
+
+  it('supports /listing/:id alias and slug/listing-key routes via routePropertyId with publicView=true', async () => {
+    propertyService.getPropertyById.mockResolvedValueOnce({
+      id: 'uuid-999',
+      title: 'BGC Listing Key Condo',
+      price: 19500000,
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/listing/MLS-PH-001']}>
+        <ChatWidget />
+      </MemoryRouter>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /toggle ai property concierge/i }));
+
+    await waitFor(() => {
+      expect(propertyService.getPropertyById).toHaveBeenCalledWith('MLS-PH-001', {
+        publicView: 'true',
+      });
+      expect(screen.getByText(/Currently viewing: BGC Listing Key Condo/i)).toBeInTheDocument();
+    });
+  });
+
+  it('truncates >2,000-character user input and assistant replies to <= 2,000 chars before sending apiMessages', async () => {
+    const longUserInput = 'u'.repeat(2400);
+    const longAssistantReply = 'a'.repeat(2600);
+
+    chatService.sendMessage
+      .mockResolvedValueOnce({
+        message: longAssistantReply,
+        cards: [],
+        comparison: null,
+        nearby: null,
+        handoffDraft: null,
+      })
+      .mockResolvedValueOnce({
+        message: 'Follow-up acknowledged.',
+        cards: [],
+        comparison: null,
+        nearby: null,
+        handoffDraft: null,
+      });
+
+    render(<ChatWidget />);
+    fireEvent.click(screen.getByRole('button', { name: /toggle ai property concierge/i }));
+
+    const input = screen.getByPlaceholderText(/type your message/i);
+    expect(input).toHaveAttribute('maxLength', '2000');
+
+    fireEvent.change(input, { target: { value: longUserInput } });
+    fireEvent.submit(input.closest('form'));
+
+    await waitFor(() => {
+      expect(chatService.sendMessage).toHaveBeenCalledTimes(1);
+    });
+
+    const firstCallMessages = chatService.sendMessage.mock.calls[0][0];
+    expect(firstCallMessages[firstCallMessages.length - 1].content).toHaveLength(2000);
+
+    fireEvent.change(input, { target: { value: 'Follow-up question' } });
+    fireEvent.submit(input.closest('form'));
+
+    await waitFor(() => {
+      expect(chatService.sendMessage).toHaveBeenCalledTimes(2);
+    });
+
+    const secondCallMessages = chatService.sendMessage.mock.calls[1][0];
+    expect(secondCallMessages.every((m) => m.content.length <= 2000)).toBe(true);
+    const resentAssistant = secondCallMessages.find(
+      (m) => m.role === 'assistant' && m.content.startsWith('aaaa')
+    );
+    expect(resentAssistant).toBeDefined();
+    expect(resentAssistant.content).toHaveLength(2000);
+  });
+
+  it('uses auto scroll behavior when prefers-reduced-motion is enabled', async () => {
+    const originalMatchMedia = window.matchMedia;
+    window.matchMedia = vi.fn().mockReturnValue({ matches: true });
+
+    try {
+      render(<ChatWidget />);
+      fireEvent.click(screen.getByRole('button', { name: /toggle ai property concierge/i }));
+
+      await waitFor(() => {
+        expect(window.HTMLElement.prototype.scrollIntoView).toHaveBeenCalledWith({
+          behavior: 'auto',
+        });
+      });
+    } finally {
+      window.matchMedia = originalMatchMedia;
+    }
   });
 });

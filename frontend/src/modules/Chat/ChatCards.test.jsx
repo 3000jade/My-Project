@@ -48,10 +48,14 @@ describe('chatService.sendMessage', () => {
 
     const result = await chatService.sendMessage(messages, pageContext);
 
-    expect(apiClient.post).toHaveBeenCalledWith('/chat', {
-      messages,
-      pageContext,
-    });
+    expect(apiClient.post).toHaveBeenCalledWith(
+      '/chat',
+      {
+        messages,
+        pageContext,
+      },
+      { timeout: 25000 }
+    );
     expect(result).toEqual({
       message: 'Here is a matching home in Taguig.',
       cards: [sampleProperty],
@@ -76,7 +80,7 @@ describe('chatService.sendMessage', () => {
     const messages = [{ role: 'user', content: 'Hello' }];
     const result = await chatService.sendMessage(messages, {});
 
-    expect(apiClient.post).toHaveBeenCalledWith('/chat', { messages });
+    expect(apiClient.post).toHaveBeenCalledWith('/chat', { messages }, { timeout: 25000 });
     expect(result).toEqual({
       message: 'Welcome to Human Shelter Realty.',
       cards: [],
@@ -94,9 +98,13 @@ describe('chatService.sendMessage', () => {
 
     const result = await chatService.sendMessage([{ role: 'user', content: 'Hi' }]);
 
-    expect(apiClient.post).toHaveBeenCalledWith('/chat', {
-      messages: [{ role: 'user', content: 'Hi' }],
-    });
+    expect(apiClient.post).toHaveBeenCalledWith(
+      '/chat',
+      {
+        messages: [{ role: 'user', content: 'Hi' }],
+      },
+      { timeout: 25000 }
+    );
     expect(result).toEqual({
       message: 'Legacy text reply',
       cards: [],
@@ -204,6 +212,8 @@ describe('ChatComparisonCard', () => {
     expect(screen.getByText('Bedrooms')).toBeInTheDocument();
 
     const askPropB = screen.getByRole('button', { name: /ask about one uptown bgc/i });
+    expect(askPropB.className).toContain('max-w-full');
+    expect(askPropB.querySelector('span.truncate')).not.toBeNull();
     fireEvent.click(askPropB);
     expect(onAskAgent).toHaveBeenCalledWith(propB);
   });

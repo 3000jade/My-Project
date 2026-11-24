@@ -72,10 +72,11 @@ export default function ChatComparisonCard({ comparison, onAskAgent }) {
             type="button"
             variant="outline"
             size="sm"
+            className="max-w-full"
             onClick={() => onAskAgent?.(prop)}
           >
-            <MessageSquare data-icon="inline-start" />
-            Ask about {prop.title}
+            <MessageSquare data-icon="inline-start" className="shrink-0" />
+            <span className="truncate">Ask about {prop.title}</span>
           </Button>
         ))}
       </CardFooter>

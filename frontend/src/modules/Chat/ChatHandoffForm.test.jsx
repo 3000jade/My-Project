@@ -103,6 +103,11 @@ describe('ChatHandoffForm', () => {
     fireEvent.change(screen.getByLabelText(/email address/i), { target: { value: 'ana@example.com' } });
 
     const form = container.querySelector('form');
+    expect(form).toHaveAttribute('data-lenis-prevent', 'true');
+    expect(form.className).toContain('min-h-0');
+    expect(form.className).toContain('max-h-full');
+    expect(form.className).toContain('overflow-y-auto');
+    expect(form.className).not.toContain('shrink-0');
     fireEvent.submit(form);
 
     expect(apiClient.post).not.toHaveBeenCalled();

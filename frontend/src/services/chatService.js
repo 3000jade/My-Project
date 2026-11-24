@@ -72,7 +72,7 @@ export const chatService = {
         ? { messages, pageContext: normalizedContext }
         : { messages };
 
-      const response = await apiClient.post('/chat', payload);
+      const response = await apiClient.post('/chat', payload, { timeout: 25000 });
 
       // apiClient interceptor unwraps response.data directly:
       // Backend returns { success: boolean, data: ChatResponsePayload | string, error?: string }
