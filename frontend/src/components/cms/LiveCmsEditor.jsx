@@ -1,8 +1,9 @@
 import React, { createContext, useContext, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Pencil, Check, LayoutGrid } from 'lucide-react';
+import { Pencil, Check, X, LayoutGrid } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { Editable, EditablePreview, EditableInput } from '@/components/ui/editable';
 
 const LiveEditContext = createContext({
@@ -11,16 +12,38 @@ const LiveEditContext = createContext({
   setIsEditing: () => {},
 });
 
-export function LiveEditProvider({ children }) {
+export function useLiveEdit() {
+  return useContext(LiveEditContext);
+}
+
+export function LiveEditProvider({
+  children,
+  defaultEditing = false,
+  editing: controlledEditing,
+  onEditingChange,
+  forceAdmin = false,
+}) {
   const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
-  const [isEditing, setIsEditing] = useState(false);
+  const isAdmin = forceAdmin || user?.role === 'admin';
+  const [internalEditing, setInternalEditing] = useState(defaultEditing);
+
+  const isControlled = controlledEditing !== undefined;
+  const rawEditing = isControlled ? controlledEditing : internalEditing;
+  const setIsEditing = (next) => {
+    const resolved = typeof next === 'function' ? next(rawEditing) : next;
+    if (!isControlled) {
+      setInternalEditing(resolved);
+    }
+    if (onEditingChange) {
+      onEditingChange(resolved);
+    }
+  };
 
   return (
     <LiveEditContext.Provider
       value={{
         isAdmin,
-        isEditing: isAdmin && isEditing,
+        isEditing: isAdmin && rawEditing,
         setIsEditing,
       }}
     >
@@ -63,12 +86,87 @@ export function LiveEditableText({
   onSave,
   placeholder = 'Click to edit...',
   className = '',
+  multiline = false,
+  ariaLabel,
   children,
 }) {
   const { isEditing } = useContext(LiveEditContext);
+  const [isOpen, setIsOpen] = useState(false);
+  const [draft, setDraft] = useState(value || '');
 
   if (!isEditing) {
     return children !== undefined ? children : value;
+  }
+
+  if (multiline) {
+    if (!isOpen) {
+      return (
+        <button
+          type="button"
+          aria-label={ariaLabel || placeholder}
+          onClick={() => {
+            setDraft(value || '');
+            setIsOpen(true);
+          }}
+          className={`block w-full text-left border border-dashed border-[#0F766E]/60 bg-[#CCFBF1]/20 hover:bg-[#CCFBF1]/40 rounded-lg px-2 py-1 transition-colors cursor-pointer ${
+            !value ? 'italic text-[#64748B]' : ''
+          } ${className}`}
+        >
+          {value || placeholder}
+        </button>
+      );
+    }
+
+    const commit = () => {
+      setIsOpen(false);
+      if (onSave && draft !== (value || '')) {
+        onSave(draft);
+      }
+    };
+
+    return (
+      <div className="w-full space-y-2">
+        <Textarea
+          rows={4}
+          autoFocus
+          value={draft}
+          placeholder={placeholder}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              e.preventDefault();
+              setDraft(value || '');
+              setIsOpen(false);
+            }
+          }}
+          className="w-full bg-white text-sm text-[#1E293B]"
+        />
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            size="sm"
+            onClick={commit}
+            className="bg-[#0F766E] hover:bg-[#115E59] text-white h-8 px-3 gap-1"
+          >
+            <Check className="size-3.5" />
+            <span>Save</span>
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              setDraft(value || '');
+              setIsOpen(false);
+            }}
+            className="h-8 px-3 gap-1"
+          >
+            <X className="size-3.5" />
+            <span>Cancel</span>
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -79,9 +177,10 @@ export function LiveEditableText({
       className="w-full"
     >
       <EditablePreview
+        aria-label={ariaLabel || 'Edit value'}
         className={`border border-dashed border-[#0F766E]/60 bg-[#CCFBF1]/20 rounded-lg px-2 py-1 ${className}`}
       />
-      <EditableInput className="w-full min-w-[220px]" />
+      <EditableInput className="w-full min-w-[180px]" />
     </Editable>
   );
 }
