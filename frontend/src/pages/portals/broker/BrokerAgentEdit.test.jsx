@@ -48,9 +48,9 @@ describe('BrokerAgentEdit Component', () => {
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /Edit Agent Profile/i, level: 1 })).toBeInTheDocument();
-      expect(screen.getAllByText('Personal Information').length).toBeGreaterThan(0);
-      expect(screen.getAllByText('Contact Information').length).toBeGreaterThan(0);
-      expect(screen.getAllByText('Professional Licenses').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('Personal Info').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('Contact Info').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('Licenses').length).toBeGreaterThan(0);
       expect(screen.getByDisplayValue('Elena Rossi')).toBeInTheDocument();
     });
   });
@@ -62,7 +62,7 @@ describe('BrokerAgentEdit Component', () => {
       expect(screen.getByDisplayValue('Elena Rossi')).toBeInTheDocument();
     });
 
-    const contactTab = screen.getByRole('button', { name: /Contact Information/i });
+    const contactTab = screen.getByRole('button', { name: /Contact Info/i });
     fireEvent.click(contactTab);
 
     expect(screen.getByDisplayValue('elena@hsr.com')).toBeInTheDocument();

@@ -9,7 +9,6 @@ import {
 } from 'lucide-react';
 import { Search } from 'lucide-react';
 import DashboardModal from '../../../components/dashboard/DashboardModal';
-import AgentScheduleCalendar from '../../../components/dashboard/AgentScheduleCalendar';
 import { agentService } from '../../../services/agentService';
 import { Spinner, Card, CardContent, KpiCard, useToast, Toaster } from '../../../components/ui';
 import { Button } from '../../../components/ui/button';
@@ -461,12 +460,12 @@ export default function BrokerAgentDetail() {
               <div>
                 <div className="flex items-center gap-2.5 flex-wrap">
                   <h1 className="text-xl sm:text-2xl font-bold text-[#1E293B] tracking-tight">
-                    Review Consultant: {agent.name}
+                    {agent.name}
                   </h1>
                   {renderStatusBadge(agent.verification_status)}
-                  {agent.team_name && (
+                  {agent.location_branch && (
                     <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-teal-50 text-[#0F766E] border border-teal-200">
-                      Team: {agent.team_name}
+                      Branch: {agent.location_branch}
                     </span>
                   )}
                 </div>
@@ -482,17 +481,17 @@ export default function BrokerAgentDetail() {
                 {/* 3-Dimensional Lifecycle Status Strip */}
                 <div className="flex items-center flex-wrap gap-2 mt-2.5">
                   <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-[#F8FAFC] text-[#1E293B] border border-[#E2E8F0]">
-                    Membership: <strong className="uppercase">{agent.membership_status || 'active'}</strong>
+                    Account: <strong className="uppercase">{agent.membership_status || 'active'}</strong>
                   </span>
                   <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-[#F8FAFC] text-[#0F766E] border border-[#E2E8F0]">
-                    Onboarding: <strong className="uppercase">{(agent.onboarding_status || 'complete').replace('_', ' ')}</strong>
+                    Profile: <strong className="uppercase">{(agent.onboarding_status || 'complete').replace('_', ' ')}</strong>
                   </span>
                   <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-[#F8FAFC] text-[#1E293B] border border-[#E2E8F0]">
-                    Routing: <strong className="uppercase">{agent.routing_availability || 'available'}</strong>
+                    Leads: <strong className="uppercase">{agent.routing_availability || 'available'}</strong>
                   </span>
                   {agent.can_create_listings && (
                     <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      Direct Listing Creator
+                      Can Create Listings
                     </span>
                   )}
                 </div>
@@ -1433,17 +1432,6 @@ export default function BrokerAgentDetail() {
             ))}
           </div>
         </div>
-      )}
-
-      {/* ========================================================================= */}
-      {activeTab === 'schedule' && (
-        <AgentScheduleCalendar
-          role="broker"
-          fixedAgentId={agent.id}
-          fixedAgentName={agent.name}
-          title={`${agent.name} — Schedule & Appointment Calendar`}
-          subtitle="Manage this consultant's property tours, online consultations, signing dates, and blocked periods."
-        />
       )}
 
       {/* TRANSFER WORK MODAL                                                       */}

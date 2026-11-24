@@ -4,14 +4,19 @@ import {
   LayoutDashboard,
   Building2,
   MessageSquare,
-  Calendar,
-  FileText,
   Bookmark,
   Compass,
-  User,
+  Users,
   Settings,
   Shield,
+  ShieldCheck,
   Database,
+  Globe,
+  BarChart3,
+  BadgeDollarSign,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Calendar,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import AuthContext from '../../context/AuthContext';
@@ -74,7 +79,7 @@ export default function DashboardSidebar({ role = 'broker', onClose }) {
       title: 'Administration',
       items: [
         { to: '/admin/users', label: 'Users & Roles', icon: Shield },
-        { to: '/admin/cms', label: 'Website CMS', icon: FileText },
+        { to: '/admin/cms', label: 'Website CMS', icon: Globe },
         { to: '/admin/data-management', label: 'Data Management', icon: Database },
       ],
     },
@@ -97,14 +102,14 @@ export default function DashboardSidebar({ role = 'broker', onClose }) {
       items: [
         { to: '/broker/properties', label: 'Properties', icon: Building2 },
         { to: '/broker/inquiries', label: 'Inquiries', icon: MessageSquare, hasUnreadBadge: true },
-        { to: '/broker/agents', label: 'Agents', icon: User },
+        { to: '/broker/agents', label: 'Agents', icon: Users },
       ],
     },
     {
       title: 'Analytics & System',
       items: [
-        { to: '/broker/reports', label: 'Reports', icon: FileText },
-        { to: '/broker/audit', label: 'Audit Trail', icon: Shield },
+        { to: '/broker/reports', label: 'Reports', icon: BarChart3 },
+        { to: '/broker/audit', label: 'Audit Trail', icon: ShieldCheck },
       ],
     },
   ];
@@ -114,7 +119,7 @@ export default function DashboardSidebar({ role = 'broker', onClose }) {
     { to: '/agent/properties', label: 'Properties', icon: Building2 },
     { to: '/agent/inquiries', label: 'Inquiries', icon: MessageSquare, hasUnreadBadge: true },
     { to: '/agent/availability', label: 'Schedule & Availability', icon: Calendar },
-    { to: '/agent/sales', label: 'Sales', icon: FileText },
+    { to: '/agent/sales', label: 'Sales', icon: BadgeDollarSign },
   ];
 
   const clientLinks = [
@@ -122,7 +127,6 @@ export default function DashboardSidebar({ role = 'broker', onClose }) {
     { to: '/client/saved-properties', label: 'Saved Properties', icon: Bookmark },
     { to: '/client/inquiries', label: 'My Inquiries', icon: MessageSquare, hasUnreadBadge: true },
     { to: '/properties', label: 'Explore Listings', icon: Compass },
-    { to: '/about', label: 'About', icon: Info },
   ];
 
   const settingsPath =
@@ -159,19 +163,24 @@ export default function DashboardSidebar({ role = 'broker', onClose }) {
       collapsible="icon"
       aria-label="Dashboard Sidebar"
       data-sidebar-theme="deep-teal"
-      className="border-r border-[#0A3D3C] rounded-r-lg [&_[data-slot=sidebar-inner]]:bg-[#032626] [&_[data-slot=sidebar-inner]]:text-white [&_[data-slot=sidebar-inner]]:rounded-r-lg"
+      className="border-r border-[#0A3D3C] [&_[data-slot=sidebar-inner]]:bg-[#032626] [&_[data-slot=sidebar-inner]]:text-white"
     >
       {/* Brand Header */}
-      <SidebarHeader className="h-16 px-4 border-b border-teal-900/60 flex-row items-center justify-between">
+      <SidebarHeader
+        className={cn(
+          'h-16 border-b border-teal-900/60 flex-row items-center gap-2',
+          isCollapsed ? 'px-2 justify-center' : 'px-3 justify-between'
+        )}
+      >
         <Link
           to={role === 'broker' ? '/broker/dashboard' : '/'}
-          className={cn('flex items-center gap-3 min-w-0 group', isCollapsed && 'hidden')}
+          className={cn('flex items-center gap-2.5 min-w-0 group', isCollapsed && 'hidden')}
         >
           <div className="size-8 rounded-md bg-[#0F766E] flex items-center justify-center text-white shadow-xs shrink-0 ring-1 ring-teal-400/30 group-hover:ring-teal-400/60 transition-all">
             <Building2 className="size-4 text-white" />
           </div>
           <div className="truncate min-w-0 text-left">
-            <span className="font-bold text-xs tracking-wider text-white block uppercase truncate group-hover:text-teal-200 transition-colors">
+            <span className="font-bold text-[11px] tracking-normal text-white block uppercase whitespace-nowrap group-hover:text-teal-200 transition-colors">
               HUMAN SHELTER REALTY
             </span>
             <span className="text-[9px] text-teal-300/80 block uppercase tracking-widest truncate font-medium">
@@ -182,17 +191,19 @@ export default function DashboardSidebar({ role = 'broker', onClose }) {
 
         <SidebarTrigger
           className={cn(
-            'hidden md:inline-flex size-8 text-teal-300 hover:text-white hover:bg-white/10 shrink-0',
+            'hidden md:inline-flex size-8 rounded-lg bg-white/5 text-teal-200 hover:text-white hover:bg-white/15 shrink-0',
             isCollapsed && 'mx-auto'
           )}
           aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-        />
+        >
+          {isCollapsed ? <PanelLeftOpen className="size-4" /> : <PanelLeftClose className="size-4" />}
+        </SidebarTrigger>
       </SidebarHeader>
 
       {/* Navigation Groups */}
       <SidebarContent className="px-2 py-3 gap-2 custom-scrollbar" data-lenis-prevent="true">
         {sections.map((section) => (
-          <SidebarGroup key={section.title} className="p-1">
+          <SidebarGroup key={section.title} className="p-0">
             <SidebarGroupLabel className="text-[10px] font-semibold text-teal-300/60 uppercase tracking-wider px-2">
               {section.title}
             </SidebarGroupLabel>
@@ -216,23 +227,24 @@ export default function DashboardSidebar({ role = 'broker', onClose }) {
                       onClick={handleNavClick}
                       render={<NavLink to={link.to} />}
                       className={cn(
-                        'rounded-md text-xs font-medium transition-colors h-10 px-3',
+                        'rounded-lg text-xs font-medium transition-colors h-11 px-3 gap-3 group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0!',
                         isActive
-                          ? 'bg-[#0F766E] text-white font-semibold shadow-xs ring-1 ring-teal-400/20 hover:bg-[#0F766E] hover:text-white data-active:bg-[#0F766E] data-active:text-white'
-                          : 'text-teal-100/75 hover:text-white hover:bg-white/5 active:bg-white/10'
+                          ? 'bg-[#0F766E] text-white font-semibold shadow-xs ring-1 ring-teal-400/25 hover:bg-[#0F766E] hover:text-white data-active:bg-[#0F766E] data-active:text-white'
+                          : 'text-teal-100/80 hover:text-white hover:bg-white/10 active:bg-white/15'
                       )}
                     >
                       <Icon
+                        strokeWidth={isActive ? 2.2 : 1.75}
                         className={cn(
-                          'size-4 shrink-0',
-                          isActive ? 'text-white' : 'text-teal-200/70'
+                          'size-4 shrink-0 transition-transform duration-150 group-hover/menu-button:scale-105 motion-reduce:transition-none',
+                          isActive ? 'text-white' : 'text-teal-200/80 group-hover/menu-button:text-white'
                         )}
                       />
-                      <span className="truncate">{link.label}</span>
+                      <span className="truncate group-data-[collapsible=icon]:hidden">{link.label}</span>
                     </SidebarMenuButton>
 
                     {link.hasUnreadBadge && unreadInquiries > 0 && (
-                      <SidebarMenuBadge className="bg-[#FF6B6B] text-[#1E293B] font-semibold rounded-full px-1.5 text-[10px] tabular-nums">
+                      <SidebarMenuBadge className="bg-[#FF6B6B] text-white font-semibold rounded-full px-1.5 text-[10px] tabular-nums group-data-[collapsible=icon]:hidden">
                         {unreadInquiries}
                       </SidebarMenuBadge>
                     )}
@@ -245,7 +257,7 @@ export default function DashboardSidebar({ role = 'broker', onClose }) {
       </SidebarContent>
 
       {/* Bottom Pinned Settings */}
-      <SidebarFooter className="p-3 border-t border-teal-900/60">
+      <SidebarFooter className="p-2 border-t border-teal-900/60">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
@@ -255,19 +267,20 @@ export default function DashboardSidebar({ role = 'broker', onClose }) {
               aria-label="Settings"
               render={<NavLink to={settingsPath} />}
               className={cn(
-                'rounded-md text-xs font-medium transition-colors h-10 px-3',
+                'rounded-lg text-xs font-medium transition-colors h-11 px-3 gap-3 group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0!',
                 isSettingsActive
-                  ? 'bg-[#0F766E] text-white font-semibold shadow-xs ring-1 ring-teal-400/20 hover:bg-[#0F766E] hover:text-white data-active:bg-[#0F766E] data-active:text-white'
-                  : 'text-teal-100/75 hover:text-white hover:bg-white/5 active:bg-white/10'
+                  ? 'bg-[#0F766E] text-white font-semibold shadow-xs ring-1 ring-teal-400/25 hover:bg-[#0F766E] hover:text-white data-active:bg-[#0F766E] data-active:text-white'
+                  : 'text-teal-100/80 hover:text-white hover:bg-white/10 active:bg-white/15'
               )}
             >
               <Settings
+                strokeWidth={isSettingsActive ? 2.2 : 1.75}
                 className={cn(
-                  'size-4 shrink-0',
-                  isSettingsActive ? 'text-white' : 'text-teal-200/70'
+                  'size-4 shrink-0 transition-transform duration-150 group-hover/menu-button:scale-105 motion-reduce:transition-none',
+                  isSettingsActive ? 'text-white' : 'text-teal-200/80 group-hover/menu-button:text-white'
                 )}
               />
-              <span className="truncate">Settings</span>
+              <span className="truncate group-data-[collapsible=icon]:hidden">Settings</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

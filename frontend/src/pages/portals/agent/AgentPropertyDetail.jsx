@@ -9,9 +9,9 @@ import { useAuth } from '../../../context/AuthContext';
 import { 
   Building2, Clock, CheckCircle2, AlertCircle, 
   Send, X, Sparkles, Bed, Bath, Maximize2, Car, MapPin, 
-  ArrowLeft, Eye, Edit3, Compass
+  ArrowLeft, Eye, Edit3
 } from 'lucide-react';
-import { GooglePropertyMap, StreetViewModal, EnlargedMapModal } from '../../../components/ui/map';
+import { GooglePropertyMap, EnlargedMapModal } from '../../../components/ui/map';
 
 export default function AgentPropertyDetail() {
   const { id } = useParams();
@@ -31,7 +31,6 @@ export default function AgentPropertyDetail() {
   // Assignment Modal State
   const [isAssignmentModalOpen, setIsAssignmentModalOpen] = useState(false);
   const [assignmentModalMode, setAssignmentModalMode] = useState('accept');
-  const [isStreetViewOpen, setIsStreetViewOpen] = useState(false);
   const [isEnlargedMapOpen, setIsEnlargedMapOpen] = useState(false);
 
   // Proposal Form State
@@ -417,14 +416,6 @@ export default function AgentPropertyDetail() {
                   <Maximize2 className="w-3.5 h-3.5" />
                   <span>Enlarge Map</span>
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setIsStreetViewOpen(true)}
-                  className="px-2.5 py-1 bg-white hover:bg-teal-50 border border-[#0F766E] text-[#0F766E] rounded-md text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
-                >
-                  <Compass className="w-3.5 h-3.5" />
-                  <span>360° Street View</span>
-                </button>
               </div>
             </div>
             
@@ -701,15 +692,6 @@ export default function AgentPropertyDetail() {
           setTimeout(() => setSuccessToast(''), 4000);
         }}
       />
-      {/* 360° Street View Modal */}
-      {property && (
-        <StreetViewModal
-          isOpen={isStreetViewOpen}
-          onClose={() => setIsStreetViewOpen(false)}
-          coordinates={{ lat: propLat, lng: propLng }}
-          propertyTitle={property.title || 'Property Frontage'}
-        />
-      )}
       {/* Fullscreen Enlarged Neighborhood Map Modal */}
       {property && (
         <EnlargedMapModal

@@ -11,11 +11,11 @@ import { Alert, AlertDescription } from '../../../components/ui/alert';
 import { cn } from '../../../utils/cn';
 
 const SECTIONS = [
-  { id: 'personal', title: 'Personal Information', icon: User },
-  { id: 'contact', title: 'Contact Information', icon: Mail },
-  { id: 'licenses', title: 'Professional Licenses', icon: Award },
-  { id: 'access', title: 'Role and Access', icon: Shield },
-  { id: 'additional', title: 'Additional Information', icon: FileText }
+  { id: 'personal', title: 'Personal Info', icon: User },
+  { id: 'contact', title: 'Contact Info', icon: Mail },
+  { id: 'licenses', title: 'Licenses', icon: Award },
+  { id: 'access', title: 'Permissions', icon: Shield },
+  { id: 'additional', title: 'Emergency & Notes', icon: FileText }
 ];
 
 export default function BrokerAgentEdit() {
@@ -27,22 +27,29 @@ export default function BrokerAgentEdit() {
   const [error, setError] = useState('');
 
   const { toast } = useToast();
-  const [teams, setTeams] = useState([]);
+  const [branches, setBranches] = useState([]);
   const [formData, setFormData] = useState({
     name: '',
     role: 'Real Estate Agent',
     email: '',
     phone: '',
-    dateOfBirth: '1990-05-15',
-    gender: 'Female',
+    dateOfBirth: '',
+    gender: '',
     avatar: '',
-    location: 'Makati, Metro Manila',
+    branch_id: '',
+    location: 'Metro Manila — Makati HQ',
     prc_license_no: '',
     prc_validity: '',
     dhsud_accreditation_no: '',
     dhsud_validity: '',
-    team_id: '',
     can_create_listings: false,
+    permission_grants: {
+      create_listings: false,
+      edit_listings: true,
+      manage_inquiries: true,
+      manage_appointments: true,
+      view_reports: false,
+    },
     accessTier: 'standard_agent',
     commissionTier: '4.0%',
     experience_years: 5,
@@ -61,12 +68,12 @@ export default function BrokerAgentEdit() {
     async function loadData() {
       setLoading(true);
       try {
-        const [data, teamList] = await Promise.all([
+        const [data, branchList] = await Promise.all([
           agentService.getAgentById(id),
-          (typeof agentService.getTeams === 'function' ? agentService.getTeams() : Promise.resolve([])).catch(() => []),
+          (typeof agentService.getBranches === 'function' ? agentService.getBranches() : Promise.resolve([])).catch(() => []),
         ]);
         if (mounted) {
-          setTeams(Array.isArray(teamList) ? teamList : []);
+          setBranches(Array.isArray(branchList) ? branchList : []);
         }
         if (mounted && data) {
           setFormData(prev => ({
@@ -76,14 +83,23 @@ export default function BrokerAgentEdit() {
             role: data.role || 'Senior Real Estate Agent',
             email: data.email || '',
             phone: data.phone || '',
+            dateOfBirth: data.date_of_birth || '',
+            gender: data.gender || '',
             avatar: data.avatar || '',
-            location: data.location_branch || data.location || 'Makati, Metro Manila',
+            branch_id: data.branch_id || '',
+            location: data.location_branch || data.location || 'Metro Manila — Makati HQ',
             prc_license_no: data.prc_license_no || '',
             prc_validity: data.prc_validity || '2026-12-31',
             dhsud_accreditation_no: data.dhsud_accreditation_no || '',
             dhsud_validity: data.dhsud_validity || '2026-12-31',
-            team_id: data.team_id || '',
             can_create_listings: Boolean(data.can_create_listings),
+            permission_grants: data.permission_grants || {
+              create_listings: Boolean(data.can_create_listings),
+              edit_listings: true,
+              manage_inquiries: true,
+              manage_appointments: true,
+              view_reports: false,
+            },
             accessTier: data.access_tier || 'standard_agent',
             commissionTier: data.commission_tier || '4.0%',
             emergencyContactName: data.emergency_contact_name || '',
@@ -122,8 +138,11 @@ export default function BrokerAgentEdit() {
         dhsud_accreditation_no: formData.dhsud_accreditation_no,
         dhsud_validity: formData.dhsud_validity,
         experience_years: Number(formData.experience_years || 0),
-        team_id: formData.team_id || null,
+        date_of_birth: formData.dateOfBirth || null,
+        gender: formData.gender || null,
+        branch_id: formData.branch_id || null,
         can_create_listings: Boolean(formData.can_create_listings),
+        permission_grants: formData.permission_grants,
         access_tier: formData.accessTier || 'standard_agent',
         commission_tier: formData.commissionTier || null,
         location_branch: formData.location || null,
@@ -169,7 +188,7 @@ export default function BrokerAgentEdit() {
               Edit Agent Profile
             </h1>
             <p className="text-xs sm:text-sm text-[#64748B] mt-0.5">
-              Update the agent's profile, contact details, and regulatory licensing information.
+              Update the agent&apos;s details, licenses, and permissions.
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -290,15 +309,58 @@ export default function BrokerAgentEdit() {
 
                 <div>
                   <label className="block text-xs font-semibold text-[#1E293B] mb-1">
-                    Primary Territory / Desk
+                    Branch Office
+                  </label>
+                  <select
+                    value={formData.branch_id || ''}
+                    onChange={(e) => {
+                      const branchId = e.target.value;
+                      const match = branches.find((b) => String(b.id) === String(branchId));
+                      setFormData((prev) => ({
+                        ...prev,
+                        branch_id: branchId,
+                        location: match ? match.name : prev.location,
+                      }));
+                    }}
+                    className="w-full h-10 px-3.5 bg-white border border-[#E2E8F0] rounded-lg text-xs font-medium text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-[#0F766E] cursor-pointer"
+                  >
+                    <option value="">{formData.location || 'Select branch...'}</option>
+                    {branches.map((b) => (
+                      <option key={b.id} value={b.id}>
+                        {b.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-[#1E293B] mb-1">
+                    Date of Birth (Optional)
                   </label>
                   <input
-                    type="text"
-                    value={formData.location}
-                    onChange={(e) => handleChange('location', e.target.value)}
-                    className="w-full h-10 px-3.5 bg-white border border-[#E2E8F0] rounded-lg text-xs font-medium text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
-                    placeholder="e.g. BGC & Makati Prime"
+                    type="date"
+                    value={formData.dateOfBirth || ''}
+                    onChange={(e) => handleChange('dateOfBirth', e.target.value)}
+                    className="w-full h-10 px-3.5 bg-white border border-[#E2E8F0] rounded-lg text-xs text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-[#1E293B] mb-1">
+                    Gender (Optional)
+                  </label>
+                  <select
+                    value={formData.gender || ''}
+                    onChange={(e) => handleChange('gender', e.target.value)}
+                    className="w-full h-10 px-3.5 bg-white border border-[#E2E8F0] rounded-lg text-xs font-medium text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-[#0F766E] cursor-pointer"
+                  >
+                    <option value="">Not specified</option>
+                    <option value="Female">Female</option>
+                    <option value="Male">Male</option>
+                    <option value="Prefer not to say">Prefer not to say</option>
+                  </select>
                 </div>
               </div>
 
@@ -458,76 +520,69 @@ export default function BrokerAgentEdit() {
           {activeSection === 'access' && (
             <div className="space-y-5">
               <div className="pb-3 border-b border-[#E2E8F0]">
-                <h2 className="text-base font-bold text-[#1E293B]">Role, Team & Access Permissions</h2>
-                <p className="text-xs text-[#64748B]">Configure brokerage team assignment, listing creation privileges, access tier, and commission split.</p>
+                <h2 className="text-base font-bold text-[#1E293B]">Role & Access Permissions</h2>
+                <p className="text-xs text-[#64748B]">Configure listing creation privileges, access tier, and commission split.</p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-[#1E293B] mb-1">
-                    Assigned Brokerage Team
-                  </label>
-                  <select
-                    value={formData.team_id || ''}
-                    onChange={(e) => handleChange('team_id', e.target.value)}
-                    className="w-full h-10 px-3.5 bg-white border border-[#E2E8F0] rounded-lg text-xs font-medium text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
-                  >
-                    <option value="">Unassigned / General Brokerage Pool</option>
-                    {teams.map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-[#1E293B] mb-1">
-                    Access & Seniority Tier
+                    Level
                   </label>
                   <select
                     value={formData.accessTier || 'standard_agent'}
                     onChange={(e) => handleChange('accessTier', e.target.value)}
                     className="w-full h-10 px-3.5 bg-white border border-[#E2E8F0] rounded-lg text-xs font-medium text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
                   >
-                    <option value="standard_agent">Standard Agent</option>
+                    <option value="standard_agent">Agent</option>
                     <option value="senior_agent">Senior Agent</option>
-                    <option value="team_lead">Team Lead / Associate Broker</option>
+                    <option value="team_lead">Associate Broker</option>
                   </select>
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-[#1E293B] mb-1">
-                  Commission Split Rate
-                </label>
-                <select
-                  value={formData.commissionTier}
-                  onChange={(e) => handleChange('commissionTier', e.target.value)}
-                  className="w-full h-10 px-3.5 bg-white border border-[#E2E8F0] rounded-lg text-xs font-medium text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
-                >
-                  <option value="3.0%">Standard 3.0%</option>
-                  <option value="3.5%">Associate 3.5%</option>
-                  <option value="4.0%">Senior 4.0%</option>
-                  <option value="5.0%">Executive 5.0%</option>
-                </select>
-              </div>
-
-              <div className="p-4 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] flex items-center justify-between gap-4">
-                <div>
-                  <p className="text-xs font-bold text-[#1E293B]">
-                    Direct Property Listing Creation Privilege
-                  </p>
-                  <p className="text-[11px] text-[#64748B] mt-0.5">
-                    By default, only Brokers create listings and agents submit edit proposals. Enable this flag to allow this verified agent to create new property listings directly.
-                  </p>
+              <div className="p-4 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] space-y-3">
+                <p className="text-xs font-bold text-[#1E293B]">
+                  Listing Permissions
+                </p>
+                <div className="flex flex-wrap items-center gap-6">
+                  <label className="flex items-center gap-2 text-xs text-[#1E293B] cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(formData.can_create_listings)}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setFormData((prev) => ({
+                          ...prev,
+                          can_create_listings: checked,
+                          permission_grants: {
+                            ...(prev.permission_grants || {}),
+                            create_listings: checked,
+                          },
+                        }));
+                      }}
+                      className="w-4 h-4 accent-[#0F766E] cursor-pointer shrink-0"
+                    />
+                    <span>Create listings</span>
+                  </label>
+                  <label className="flex items-center gap-2 text-xs text-[#1E293B] cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(formData.permission_grants?.edit_listings)}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          permission_grants: {
+                            ...(prev.permission_grants || {}),
+                            edit_listings: e.target.checked,
+                          },
+                        }))
+                      }
+                      className="w-4 h-4 accent-[#0F766E] cursor-pointer shrink-0"
+                    />
+                    <span>Edit listings</span>
+                  </label>
                 </div>
-                <input
-                  type="checkbox"
-                  checked={Boolean(formData.can_create_listings)}
-                  onChange={(e) => handleChange('can_create_listings', e.target.checked)}
-                  className="w-5 h-5 accent-[#0F766E] cursor-pointer shrink-0"
-                />
               </div>
             </div>
           )}

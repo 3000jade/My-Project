@@ -1,6 +1,6 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Button } from '../../components/ui';
+import { Button } from '@/components/ui/button';
 
 export default function UnauthorizedPage() {
   const location = useLocation();
@@ -48,11 +48,11 @@ export default function UnauthorizedPage() {
         </p>
 
         {/* Action Buttons */}
-        <div className="w-full flex flex-col sm:flex-row gap-3 justify-center">
-          <Button variant="primary" size="md" onClick={handleReturnToSafeZone}>
+        <div className="w-full flex flex-col sm:flex-row sm:flex-wrap gap-3 justify-center">
+          <Button variant="default" size="lg" className="min-h-11" onClick={handleReturnToSafeZone}>
             Return to Workspace
           </Button>
-          <Button variant="outline" size="md" onClick={handleSwitchAccount}>
+          <Button variant="outline" size="lg" className="min-h-11" onClick={handleSwitchAccount}>
             Sign in with Another Account
           </Button>
         </div>

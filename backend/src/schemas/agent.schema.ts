@@ -1,5 +1,16 @@
 import { z } from 'zod';
 
+export const createAgentSchema = z.object({
+  name: z.string().min(2, 'Full name is required').max(100),
+  email: z.string().email('Valid email address is required'),
+  phone: z.string().min(7, 'Valid mobile number is required').max(25),
+  branch_id: z.string().nullable().optional(),
+  location_branch: z.string().max(120).nullable().optional(),
+  can_create_listings: z.boolean().optional(),
+  permission_grants: z.record(z.string(), z.boolean()).optional(),
+  prc_license_no: z.string().max(60).optional(),
+});
+
 export const updateAgentStatusSchema = z.object({
   verification_status: z.enum(['VERIFIED', 'PENDING', 'REJECTED', 'SUSPENDED']),
   rejection_remarks: z.string().optional(),
@@ -21,8 +32,12 @@ export const updateAgentProfileSchema = z.object({
   dhsud_accreditation_no: z.string().min(5, 'DHSUD Accreditation is required').optional(),
   dhsud_validity: z.string().optional(),
   experience_years: z.number().int().min(0).max(60).optional(),
+  date_of_birth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD format').nullable().optional(),
+  gender: z.enum(['Male', 'Female', 'Prefer not to say']).nullable().optional(),
+  branch_id: z.string().nullable().optional(),
   team_id: z.string().nullable().optional(),
   can_create_listings: z.boolean().optional(),
+  permission_grants: z.record(z.string(), z.boolean()).optional(),
   access_tier: z.enum(['standard_agent', 'senior_agent', 'team_lead']).optional(),
   commission_tier: z.string().max(100).nullable().optional(),
   location_branch: z.string().max(120).nullable().optional(),

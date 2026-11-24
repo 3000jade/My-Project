@@ -99,7 +99,6 @@ export { default as UnifiedSearchBar } from './search/UnifiedSearchBar';
 export { default as PropertyMap } from './map/PropertyMap';
 export { default as GooglePropertyMap } from './map/GooglePropertyMap';
 export { default as MapLayerControl } from './map/MapLayerControl';
-export { default as StreetViewModal } from './map/StreetViewModal';
 export { default as GooglePlacesSearchInput } from './map/GooglePlacesSearchInput';
 export { default as CadastralLocationPicker } from './map/CadastralLocationPicker';
 export { default as CommuteAnalysisCard } from './map/CommuteAnalysisCard';

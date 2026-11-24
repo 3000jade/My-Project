@@ -46,7 +46,6 @@ const AgentInquiries = lazy(() => import('./pages/portals/agent/AgentInquiries')
 const AgentInquiryDetail = lazy(() => import('./pages/portals/agent/AgentInquiryDetail'));
 const InquiryMessagesPage = lazy(() => import('./pages/portals/InquiryMessagesPage'));
 const AgentAppointments = lazy(() => import('./pages/portals/agent/AgentAppointments'));
-const AgentAvailability = lazy(() => import('./pages/portals/agent/AgentAvailability'));
 const AgentSales = lazy(() => import('./pages/portals/agent/AgentSales'));
 const AgentProfile = lazy(() => import('./pages/portals/agent/AgentProfile'));
 
@@ -59,7 +58,6 @@ const BrokerInquiryDetail = lazy(() => import('./pages/portals/broker/BrokerInqu
 const BrokerAppointments = lazy(() => import('./pages/portals/broker/BrokerAppointments'));
 const BrokerAgents = lazy(() => import('./pages/portals/broker/BrokerAgents'));
 const BrokerAgentDetail = lazy(() => import('./pages/portals/broker/BrokerAgentDetail'));
-const BrokerInviteAgent = lazy(() => import('./pages/portals/broker/BrokerInviteAgent'));
 const BrokerAgentEdit = lazy(() => import('./pages/portals/broker/BrokerAgentEdit'));
 const BrokerSales = lazy(() => import('./pages/portals/broker/BrokerSales'));
 const BrokerReports = lazy(() => import('./pages/portals/broker/BrokerReports'));
@@ -150,7 +148,6 @@ function AppRoutes({ isAppLoading }) {
             <Route path="inquiries/messages/:id" element={<InquiryMessagesPage role="agent" />} />
             <Route path="inquiries/:id" element={<AgentInquiryDetail />} />
             <Route path="appointments" element={<AgentAppointments />} />
-            <Route path="availability" element={<AgentAvailability />} />
             <Route path="sales" element={<AgentSales />} />
             <Route path="profile" element={<AgentProfile />} />
           </Route>
@@ -180,7 +177,7 @@ function AppRoutes({ isAppLoading }) {
             <Route path="appointments" element={<BrokerAppointments />} />
             <Route path="clients" element={<Navigate to="/broker/inquiries" replace />} />
             <Route path="agents" element={<BrokerAgents />} />
-            <Route path="agents/invite" element={<BrokerInviteAgent />} />
+            <Route path="agents/invite" element={<Navigate to="/broker/agents" replace />} />
             <Route path="agents/:id" element={<BrokerAgentDetail />} />
             <Route path="agents/:id/edit" element={<BrokerAgentEdit />} />
             <Route path="sales" element={<BrokerSales />} />
@@ -313,7 +310,7 @@ export default function App() {
     try {
       localStorage.removeItem('hs_theme');
       localStorage.setItem('hs_theme', 'light');
-    } catch {}
+    } catch { }
   }, []);
 
   useEffect(() => {

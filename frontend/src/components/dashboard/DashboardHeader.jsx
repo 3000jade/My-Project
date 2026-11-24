@@ -165,7 +165,7 @@ export default function DashboardHeader({
 
   return (
     <header className="h-16 bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 select-none gap-4">
-      
+
       {/* Left: Mobile Toggle & Global Search Console */}
       <div className="flex items-center gap-3 flex-1 max-w-xl">
         <button
@@ -222,7 +222,7 @@ export default function DashboardHeader({
             {unreadCount > 0 && (
               <span
                 data-testid="notification-unread-badge"
-                className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#FF6B6B] text-[#1E293B] text-[10px] font-bold leading-none inline-flex items-center justify-center ring-2 ring-white tabular-nums"
+                className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#FF6B6B] text-white text-[10px] font-bold leading-none inline-flex items-center justify-center ring-2 ring-white tabular-nums"
               >
                 {badgeLabel}
               </span>
@@ -231,6 +231,7 @@ export default function DashboardHeader({
 
           <PopoverContent
             align="end"
+            positionMethod="fixed"
             className="w-88 sm:w-96 p-0 rounded-xl border border-[#E2E8F0] bg-white shadow-xl overflow-hidden font-sans"
           >
             {/* Header: Title + Mark all read + All / Unread Tabs */}
@@ -264,7 +265,7 @@ export default function DashboardHeader({
             </div>
 
             {/* Notification List */}
-            <div className="max-h-80 overflow-y-auto divide-y divide-[#E2E8F0]">
+            <div className="max-h-80 overflow-y-auto overscroll-contain divide-y divide-[#E2E8F0]" data-lenis-prevent="true">
               {visibleNotifications.length === 0 ? (
                 <Empty className="p-6">
                   <EmptyHeader>

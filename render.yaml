@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: human-shelter-realty-api
+    runtime: node
+    plan: free
+    region: singapore
+    branch: main
+    autoDeploy: false
+    buildCommand: npm install --prefix backend && npm run build:backend
+    startCommand: npm run start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: CORS_ORIGIN
+        sync: false
+      - key: JWT_SECRET
+        sync: false

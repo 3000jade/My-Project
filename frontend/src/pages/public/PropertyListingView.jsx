@@ -40,7 +40,6 @@ import PublicAgentProfileModal from '../../components/ui/modals/PublicAgentProfi
 import ShareListingModal from '../../components/ui/modals/ShareListingModal';
 import {
   GooglePropertyMap,
-  StreetViewModal,
   CommuteAnalysisCard,
   EnlargedMapModal,
   PropertyBrochureGallery,
@@ -118,7 +117,6 @@ export default function PropertyListingView() {
     return !findLocalProperty(id);
   });
   const [loadError, setLoadError] = useState(null);
-  const [isStreetViewOpen, setIsStreetViewOpen] = useState(false);
   const [isEnlargedMapOpen, setIsEnlargedMapOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('sec-details');
 
@@ -397,6 +395,29 @@ export default function PropertyListingView() {
   const rawMapPrivacy = custom.mapPinPrivacy || 'Exact Location';
   const isGeneralAreaOnly =
     rawMapPrivacy === 'General Area Only' || rawMapPrivacy === 'Approximate Area (250m)';
+
+  const displayAddress = useMemo(() => {
+    if (!isGeneralAreaOnly) return fullAddress;
+    if (!property) return 'Metro Manila, Philippines';
+    const rawParts = [
+      property.barangay || property.location?.barangay
+        ? `Brgy. ${(property.barangay || property.location?.barangay || '').replace(/^brgy\.?\s*/i, '')}`
+        : null,
+      city,
+      province,
+      'Philippines',
+    ].filter(Boolean);
+    const seen = new Set();
+    const parts = [];
+    for (const part of rawParts) {
+      const normalized = String(part).trim().toLowerCase();
+      if (normalized && !seen.has(normalized)) {
+        seen.add(normalized);
+        parts.push(String(part).trim());
+      }
+    }
+    return parts.length > 0 ? parts.join(', ') : locationHeader;
+  }, [isGeneralAreaOnly, fullAddress, property, city, province, locationHeader]);
 
   const [geocodedCoords, setGeocodedCoords] = useState(null);
   const baseCoords = useMemo(
@@ -1025,7 +1046,7 @@ export default function PropertyListingView() {
                   propertyCategory={propertyCategory}
                   title={propertyTitle}
                   tagline={propertyTagline}
-                  fullAddress={fullAddress}
+                  fullAddress={displayAddress}
                   isVacantLot={isVacantLot}
                   bedrooms={bedrooms}
                   bathrooms={bathrooms}
@@ -1148,7 +1169,7 @@ export default function PropertyListingView() {
                             className="min-h-11 px-4 rounded-lg text-xs normal-case tracking-normal"
                           >
                             <Compass data-icon="inline-start" className="text-[#0F766E]" />
-                            360Â° Street View
+                            360° Street View
                           </Button>
                         </div>
                       }
@@ -1216,7 +1237,9 @@ export default function PropertyListingView() {
                         selectedPropertyId={property?.id}
                         singlePropertyMode={true}
                         showControls={false}
-                        onOpenStreetView={() => setIsStreetViewOpen(true)}
+                        initialZoom={isGeneralAreaOnly ? 14 : 16}
+                        lockZoom={isGeneralAreaOnly}
+                        generalAreaOnly={isGeneralAreaOnly}
                       />
                     </div>
 
@@ -1651,13 +1674,6 @@ export default function PropertyListingView() {
         }}
       />
 
-      <StreetViewModal
-        isOpen={isStreetViewOpen}
-        coordinates={propertyCoords}
-        propertyTitle={propertyTitle}
-        onClose={() => setIsStreetViewOpen(false)}
-      />
-
       <EnlargedMapModal
         isOpen={isEnlargedMapOpen}
         onClose={() => setIsEnlargedMapOpen(false)}
@@ -1676,7 +1692,7 @@ export default function PropertyListingView() {
                 id,
                 title: propertyTitle,
                 formattedPrice: formattedPriceDisplay,
-                address: fullAddress,
+                address: displayAddress,
                 coverImage: photos?.[0],
               }
             : null

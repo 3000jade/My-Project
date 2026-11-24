@@ -17,6 +17,10 @@ export interface UserProfileData {
   dhsud_validity: string;
   firm_name: string;
   experience_years: number;
+  date_of_birth?: string | null;
+  gender?: string | null;
+  emergency_contact_name?: string | null;
+  emergency_contact_phone?: string | null;
   preferred_location?: string;
   investment_budget?: string;
   notification_preferences?: Record<string, boolean>;
@@ -215,6 +219,10 @@ export class ProfileService {
             dhsud_accreditation_no: updatedData.dhsud_accreditation_no,
             dhsud_validity: updatedData.dhsud_validity,
             experience_years: updatedData.experience_years,
+            date_of_birth: updatedData.date_of_birth ?? null,
+            gender: updatedData.gender ?? null,
+            emergency_contact_name: updatedData.emergency_contact_name ?? null,
+            emergency_contact_phone: updatedData.emergency_contact_phone ?? null,
             notification_preferences: updatedData.notification_preferences,
             ui_preferences: updatedData.ui_preferences,
             updated_at: updatedData.updated_at,

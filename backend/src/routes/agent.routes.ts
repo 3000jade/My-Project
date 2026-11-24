@@ -4,6 +4,7 @@ import { requireAuth } from '../middleware/auth.middleware';
 import { requireRole } from '../middleware/role.middleware';
 import { validateBody, validateQuery } from '../middleware/validate.middleware';
 import {
+  createAgentSchema,
   updateAgentStatusSchema,
   updateAgentProfileSchema,
   queryAgentSchema,
@@ -23,7 +24,8 @@ router.get('/public/:id', AgentController.getPublicById);
 // 2. Sales Agent Self-Service Endpoint
 router.get('/me', requireAuth, AgentController.getMyProfile);
 
-// 3. Brokerage Teams Management (Brokers & Admins, read access for authenticated agents)
+// 3. Brokerage Teams & Branches Management (Brokers & Admins, read access for authenticated agents)
+router.get('/branches', requireAuth, requireRole(['agent', 'broker', 'admin']), AgentController.listBranches);
 router.get('/teams', requireAuth, requireRole(['agent', 'broker', 'admin']), AgentController.listTeams);
 router.post('/teams', requireAuth, requireRole(['broker', 'admin']), validateBody(createTeamSchema), AgentController.createTeam);
 router.put('/teams/:teamId', requireAuth, requireRole(['broker', 'admin']), validateBody(updateTeamSchema), AgentController.updateTeam);
@@ -34,8 +36,9 @@ router.get('/audit-events', requireAuth, requireRole(['broker', 'admin']), Agent
 router.get('/performance/summary', requireAuth, requireRole(['broker', 'admin']), AgentController.getPerformance);
 router.post('/transfers/:transferId/retry', requireAuth, requireRole(['broker', 'admin']), AgentController.retryTransfer);
 
-// 5. Authenticated administrative agent directory (Brokers & Admins)
+// 5. Authenticated administrative agent directory & direct creation (Brokers & Admins)
 router.get('/', requireAuth, requireRole(['broker', 'admin']), validateQuery(queryAgentSchema), AgentController.list);
+router.post('/', requireAuth, requireRole(['broker', 'admin']), validateBody(createAgentSchema), AgentController.create);
 
 // 6. Single Agent Sub-Resources
 router.get('/:id/availability', requireAuth, requireRole(['agent', 'broker', 'admin']), AgentController.getAvailability);
