@@ -229,7 +229,7 @@ test.describe('AI Property Agent (V2) — High-UX Streaming Browser E2E', () => 
 
     // Verify Crisp White header, RA 9646 badge, active listing banner, and Welcome View
     await expect(chat.getByRole('heading', { name: 'AI Property Concierge' })).toBeVisible();
-    await expect(chat.getByText('RA 9646')).toBeVisible();
+    await expect(chat.getByText('RA 9646', { exact: true })).toBeVisible();
     await expect(chat.getByText(/Currently viewing: Alabang Courtyard Villa/i)).toBeVisible();
     await expect(chat.getByText(/How can I help you find your next home\?/i)).toBeVisible();
 
@@ -315,9 +315,12 @@ test.describe('AI Property Agent (V2) — High-UX Streaming Browser E2E', () => 
 
     const panel = page.getByTestId('chat-widget-panel');
     await expect(panel).toBeVisible();
-    const box = await panel.boundingBox();
-    expect(box?.width).toBeGreaterThanOrEqual(370);
-    expect(box?.height).toBeGreaterThanOrEqual(660);
+    await expect
+      .poll(async () => (await panel.boundingBox())?.width ?? 0)
+      .toBeGreaterThanOrEqual(370);
+    await expect
+      .poll(async () => (await panel.boundingBox())?.height ?? 0)
+      .toBeGreaterThanOrEqual(660);
 
     await expect(page.getByText(/How can I help you find your next home\?/i)).toBeVisible();
 

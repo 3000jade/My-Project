@@ -213,14 +213,20 @@ describe('ChatWidget', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /what's nearby\?/i }));
 
-    // Trigger live status event -> Trace shimmer appears
+    // Initial connecting status renders immediately inside role="status" before first SSE status frame
+    const initialStatus = screen.getByRole('status');
+    expect(initialStatus).toHaveTextContent('Connecting to AI Concierge...');
+
+    // Trigger live status event -> Trace shimmer updates
     await act(async () => {
       triggerStatus({ step: 'nearby', label: 'Looking up nearby schools, malls & drive times...' });
     });
 
     const traceLine = container.querySelector('[data-slot="trace-line"][data-status="running"]');
     expect(traceLine).not.toBeNull();
-    expect(screen.getByText('Looking up nearby schools, malls & drive times...')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Looking up nearby schools, malls & drive times...'
+    );
 
     // Stream delta chunk -> formatted via ChatMessageText
     await act(async () => {
@@ -310,6 +316,71 @@ describe('ChatWidget', () => {
     });
     expect(screen.getByText('Partial reply words')).toBeInTheDocument();
     expect(screen.queryByText(/temporarily unavailable/i)).not.toBeInTheDocument();
+  });
+
+  it('does not delete a new stream placeholder when a late AbortError rejects from a previously stopped stream', async () => {
+    let rejectFirstStream;
+    let triggerSecondDelta;
+    let resolveSecondStream;
+
+    chatService.streamMessage
+      .mockImplementationOnce(() => new Promise((_resolve, reject) => {
+        rejectFirstStream = reject;
+      }))
+      .mockImplementationOnce((_messages, _pageContext, { onDelta, onResult }) => {
+        triggerSecondDelta = onDelta;
+        return new Promise((resolve) => {
+          resolveSecondStream = () => {
+            const payload = {
+              message: 'Second stream survived late abort.',
+              cards: [],
+              comparison: null,
+              nearby: null,
+              handoffDraft: null,
+              suggestHandoff: false,
+              handoffReason: null,
+              followUpSuggestions: [],
+            };
+            onResult?.(payload);
+            resolve(payload);
+          };
+        });
+      });
+
+    render(<ChatWidget />);
+    fireEvent.click(screen.getByRole('button', { name: /toggle ai property concierge/i }));
+
+    const input = screen.getByRole('textbox');
+    fireEvent.change(input, { target: { value: 'First prompt' } });
+    fireEvent.submit(input.closest('form'));
+
+    // Stop Stream 1 before it rejects, then immediately send Stream 2
+    fireEvent.click(screen.getByRole('button', { name: /stop generating/i }));
+
+    fireEvent.change(input, { target: { value: 'Second prompt' } });
+    fireEvent.submit(input.closest('form'));
+
+    // Stream 2 placeholder is active with initial status
+    expect(screen.getByRole('status')).toHaveTextContent('Connecting to AI Concierge...');
+
+    // Late AbortError from Stream 1 arrives while Stream 2 is still empty & streaming
+    await act(async () => {
+      const abortErr = new Error('The operation was aborted.');
+      abortErr.name = 'AbortError';
+      rejectFirstStream(abortErr);
+    });
+
+    // Stream 2's status & placeholder must still be intact
+    expect(screen.getByRole('status')).toHaveTextContent('Connecting to AI Concierge...');
+
+    await act(async () => {
+      triggerSecondDelta('Second stream ');
+      resolveSecondStream();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Second stream survived late abort.')).toBeInTheDocument();
+    });
   });
 
   it('supports 1-tap + Compare bar on property cards and launches side-by-side comparison when Compare Selected is clicked', async () => {

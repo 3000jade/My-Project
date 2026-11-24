@@ -102,9 +102,10 @@ function getPreferredScrollBehavior() {
   return prefersReducedMotion ? 'auto' : 'smooth';
 }
 
-function finalizeStreamingMessages(prevMessages) {
+function finalizeStreamingMessage(prevMessages, targetId = null) {
   return prevMessages.reduce((acc, msg) => {
-    if (!msg.isStreaming) {
+    const shouldFinalize = targetId ? msg.id === targetId && msg.isStreaming : msg.isStreaming;
+    if (!shouldFinalize) {
       acc.push(msg);
       return acc;
     }
@@ -132,6 +133,7 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
   const messagesContainerRef = useRef(null);
   const messagesEndRef = useRef(null);
   const abortControllerRef = useRef(null);
+  const activeStreamMsgIdRef = useRef(null);
 
   const activePropertyId = extractPropertyId(pathname);
   const currentActiveListing =
@@ -180,6 +182,14 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
 
   useEffect(() => {
     if (!isOpen || !isNearBottom) return;
+    if (isStreaming) {
+      const container = messagesContainerRef.current;
+      if (container) {
+        container.scrollTop = container.scrollHeight;
+      }
+      messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
+      return;
+    }
     const timer = setTimeout(() => {
       messagesEndRef.current?.scrollIntoView({
         behavior: getPreferredScrollBehavior(),
@@ -198,6 +208,7 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
   const handleNewChat = () => {
     abortControllerRef.current?.abort();
     abortControllerRef.current = null;
+    activeStreamMsgIdRef.current = null;
     setMessages([]);
     setInputValue('');
     setIsStreaming(false);
@@ -210,11 +221,13 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
   };
 
   const handleStop = () => {
+    const targetId = activeStreamMsgIdRef.current;
     abortControllerRef.current?.abort();
     abortControllerRef.current = null;
+    activeStreamMsgIdRef.current = null;
     setIsStreaming(false);
     setActiveStatus('');
-    setMessages((prev) => finalizeStreamingMessages(prev));
+    setMessages((prev) => finalizeStreamingMessage(prev, targetId));
   };
 
   const handleMessagesScroll = () => {
@@ -298,11 +311,12 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
 
     const controller = new AbortController();
     abortControllerRef.current = controller;
+    activeStreamMsgIdRef.current = aiMsgId;
 
     setMessages((prev) => [...prev, userMsg, aiPlaceholder]);
     setInputValue('');
     setIsStreaming(true);
-    setActiveStatus('');
+    setActiveStatus('Connecting to AI Concierge...');
     setIsNearBottom(true);
 
     let resultApplied = false;
@@ -368,7 +382,7 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
       }
     } catch (error) {
       if (error?.name === 'AbortError' || controller.signal.aborted) {
-        setMessages((prev) => finalizeStreamingMessages(prev));
+        setMessages((prev) => finalizeStreamingMessage(prev, aiMsgId));
         return;
       }
 
@@ -397,6 +411,7 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
     } finally {
       if (abortControllerRef.current === controller) {
         abortControllerRef.current = null;
+        activeStreamMsgIdRef.current = null;
         setIsStreaming(false);
         setActiveStatus('');
       }
@@ -551,7 +566,11 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
                           ) : (
                             <div className="flex flex-col gap-2 flex-1 min-w-0 max-w-[85%]">
                               {msg.isStreaming && activeStatus && (
-                                <div className="px-4 py-2 rounded-xl rounded-tl-sm bg-white border border-[#E2E8F0] shadow-xs">
+                                <div
+                                  role="status"
+                                  aria-live="polite"
+                                  className="px-4 py-2 rounded-xl rounded-tl-sm bg-white border border-[#E2E8F0] shadow-xs"
+                                >
                                   <Trace>
                                     <TraceLine status="running">
                                       <TraceIcon>
