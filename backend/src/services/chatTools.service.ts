@@ -111,7 +111,7 @@ export function projectToChatCard(p: any): ChatPropertyCard {
 }
 
 /**
- * Fetches a single published property in visitor mode and returns a sanitized ChatPropertyDetail.
+ * Fetches a single published property in public client mode and returns a sanitized ChatPropertyDetail.
  */
 export async function getPublishedPropertyForChat(
   propertyId: string
@@ -119,7 +119,7 @@ export async function getPublishedPropertyForChat(
   const cleanId = typeof propertyId === 'string' ? propertyId.trim() : '';
   if (!cleanId) return null;
 
-  const prop = await PropertyService.findPropertyById(cleanId, undefined, 'visitor', undefined);
+  const prop = await PropertyService.findPropertyById(cleanId, undefined, 'client', undefined);
   if (!prop || !isVisitorPublicListing(prop)) return null;
 
   const rawFeatures = [
@@ -158,7 +158,7 @@ export async function getPublishedPropertyForChat(
 }
 
 /**
- * Searches published properties in visitor mode and returns up to 3 visitor-safe cards.
+ * Searches published properties in public client mode and returns up to 3 visitor-safe cards.
  */
 export async function searchPublishedPropertiesForChat(
   filters: SearchPropertiesToolInput
@@ -179,7 +179,7 @@ export async function searchPublishedPropertiesForChat(
   if (filters.baths !== undefined) query.baths = filters.baths;
   if (filters.sortBy !== undefined) query.sortBy = filters.sortBy;
 
-  const result = await PropertyService.findProperties(query, 'visitor', undefined);
+  const result = await PropertyService.findProperties(query, 'client', undefined);
   const rawList = Array.isArray(result?.properties) ? result.properties : [];
   const publicList = rawList.filter(isVisitorPublicListing);
   const filteredOutCount = rawList.length - publicList.length;

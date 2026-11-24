@@ -99,7 +99,7 @@ describe('chatTools.service', () => {
   });
 
   describe('getPublishedPropertyForChat', () => {
-    it('calls PropertyService.findPropertyById in visitor mode and returns sanitized ChatPropertyDetail', async () => {
+    it('calls PropertyService.findPropertyById in public client mode and returns sanitized ChatPropertyDetail', async () => {
       const manyFeatures = Array.from({ length: 15 }, (_, i) => `Feature ${i + 1}`);
       manyFeatures.push('Feature 1', 'Feature 2'); // duplicates
       const longRemarks = 'A'.repeat(750);
@@ -115,7 +115,7 @@ describe('chatTools.service', () => {
 
       const detail = await getPublishedPropertyForChat('  prop-101  ');
 
-      expect(spy).toHaveBeenCalledWith('prop-101', undefined, 'visitor', undefined);
+      expect(spy).toHaveBeenCalledWith('prop-101', undefined, 'client', undefined);
       expect(detail).not.toBeNull();
       expect(detail!.id).toBe('prop-101');
       expect(detail!.address).toBe('5th Ave, BGC');
@@ -167,12 +167,12 @@ describe('chatTools.service', () => {
       expect(spy).not.toHaveBeenCalled();
 
       expect(await getPublishedPropertyForChat('missing-id')).toBeNull();
-      expect(spy).toHaveBeenCalledWith('missing-id', undefined, 'visitor', undefined);
+      expect(spy).toHaveBeenCalledWith('missing-id', undefined, 'client', undefined);
     });
   });
 
   describe('searchPublishedPropertiesForChat', () => {
-    it('forwards filters in visitor mode with page=1, limit=3, filters drafts, and caps at 3 cards', async () => {
+    it('forwards filters in public client mode with page=1, limit=3, filters drafts, and caps at 3 cards', async () => {
       const props = [
         makePublishedProperty({ id: 'p1', title: 'Unit 1' }),
         makePublishedProperty({ id: 'p2', title: 'Draft Unit', standardStatus: 'Draft' }),
@@ -207,7 +207,7 @@ describe('chatTools.service', () => {
           page: 1,
           limit: 3,
         }),
-        'visitor',
+        'client',
         undefined
       );
 
