@@ -82,10 +82,20 @@ export interface ChatHandoffDraft {
   summary: string;
 }
 
+export type ChatHandoffReason =
+  | 'viewing_request'
+  | 'price_negotiation'
+  | 'investment_roi'
+  | 'safety_or_flood'
+  | 'legal_tax_or_loan'
+  | 'no_matches';
+
 export interface ChatResponsePayload {
   message: string;
   cards?: ChatPropertyCard[];
   comparison?: ChatComparisonTable;
   nearby?: ChatNearbySummary;
   handoffDraft?: ChatHandoffDraft;
+  suggestHandoff?: boolean;
+  handoffReason?: ChatHandoffReason;
 }

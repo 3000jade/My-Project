@@ -394,6 +394,51 @@ describe('ChatWidget', () => {
     expect(resentAssistant.content).toHaveLength(2000);
   });
 
+  it('renders an inline Connect to Licensed Agent button when suggestHandoff is true and opens handoff with active listing', async () => {
+    propertyService.getPropertyById.mockResolvedValueOnce({
+      id: 'prop-42',
+      title: 'Alabang Courtyard Villa',
+      formattedPrice: '₱28,000,000',
+    });
+    chatService.sendMessage.mockResolvedValueOnce({
+      message: 'A PRC-licensed agent can verify flood history and schedule your site visit.',
+      cards: [],
+      comparison: null,
+      nearby: null,
+      handoffDraft: {
+        propertyId: 'prop-42',
+        propertyTitle: 'Alabang Courtyard Villa',
+        propertyPrice: '₱28,000,000',
+        summary: 'Visitor asked about flood risk and viewing.',
+      },
+      suggestHandoff: true,
+      handoffReason: 'safety_or_flood',
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/properties/prop-42']}>
+        <ChatWidget />
+      </MemoryRouter>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /toggle ai property concierge/i }));
+    await waitFor(() => {
+      expect(screen.getByText(/Currently viewing: Alabang Courtyard Villa/i)).toBeInTheDocument();
+    });
+
+    const input = screen.getByPlaceholderText(/type your message/i);
+    fireEvent.change(input, { target: { value: 'Binabaha ba dito pag bagyo?' } });
+    fireEvent.submit(input.closest('form'));
+
+    const inlineCta = await screen.findByRole('button', { name: /connect to licensed agent/i });
+    expect(inlineCta).toHaveClass('bg-[#FF6B6B]', 'text-[#1E293B]');
+    expect(inlineCta).not.toHaveClass('text-white');
+
+    fireEvent.click(inlineCta);
+    expect(screen.getByRole('button', { name: /request licensed agent/i })).toBeInTheDocument();
+    expect(screen.getByText(/Property: Alabang Courtyard Villa/i)).toBeInTheDocument();
+  });
+
   it('uses auto scroll behavior when prefers-reduced-motion is enabled', async () => {
     const originalMatchMedia = window.matchMedia;
     window.matchMedia = vi.fn().mockReturnValue({ matches: true });

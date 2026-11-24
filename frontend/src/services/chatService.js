@@ -15,6 +15,8 @@ function normalizeChatResponse(raw) {
       comparison: null,
       nearby: null,
       handoffDraft: null,
+      suggestHandoff: false,
+      handoffReason: null,
     };
   }
 
@@ -24,6 +26,8 @@ function normalizeChatResponse(raw) {
     comparison: raw?.comparison ?? null,
     nearby: raw?.nearby ?? null,
     handoffDraft: raw?.handoffDraft ?? null,
+    suggestHandoff: Boolean(raw?.suggestHandoff),
+    handoffReason: typeof raw?.handoffReason === 'string' ? raw.handoffReason : null,
   };
 }
 

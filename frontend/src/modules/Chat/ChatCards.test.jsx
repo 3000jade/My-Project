@@ -62,6 +62,8 @@ describe('chatService.sendMessage', () => {
       comparison: null,
       nearby: null,
       handoffDraft: null,
+      suggestHandoff: false,
+      handoffReason: null,
     });
   });
 
@@ -87,6 +89,8 @@ describe('chatService.sendMessage', () => {
       comparison: null,
       nearby: null,
       handoffDraft: { summary: 'General inquiry' },
+      suggestHandoff: false,
+      handoffReason: null,
     });
   });
 
@@ -111,6 +115,8 @@ describe('chatService.sendMessage', () => {
       comparison: null,
       nearby: null,
       handoffDraft: null,
+      suggestHandoff: false,
+      handoffReason: null,
     });
   });
 });

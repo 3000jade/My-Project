@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useInRouterContext, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, MotionConfig } from 'framer-motion';
-import { Bot, MapPin, MessageCircle, Send, X } from 'lucide-react';
+import { Bot, MapPin, MessageCircle, Send, UserCheck, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { chatService } from '../../services/chatService';
@@ -42,6 +42,8 @@ function normalizeReply(aiResponse) {
       comparison: null,
       nearby: null,
       handoffDraft: null,
+      suggestHandoff: false,
+      handoffReason: null,
     };
   }
 
@@ -51,6 +53,8 @@ function normalizeReply(aiResponse) {
     comparison: aiResponse?.comparison ?? null,
     nearby: aiResponse?.nearby ?? null,
     handoffDraft: aiResponse?.handoffDraft ?? null,
+    suggestHandoff: Boolean(aiResponse?.suggestHandoff),
+    handoffReason: typeof aiResponse?.handoffReason === 'string' ? aiResponse.handoffReason : null,
   };
 }
 
@@ -194,6 +198,8 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
           cards: normalized.cards,
           comparison: normalized.comparison,
           nearby: normalized.nearby,
+          suggestHandoff: normalized.suggestHandoff,
+          handoffReason: normalized.handoffReason,
         },
       ]);
     } catch (error) {
@@ -332,6 +338,19 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
                         )}
 
                         {msg.nearby && <ChatNearbyCard nearby={msg.nearby} />}
+
+                        {msg.suggestHandoff && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openHandoff(msg.cards?.[0] ?? currentActiveListing ?? null)}
+                            className="self-start min-h-10 px-4 bg-[#FF6B6B] text-[#1E293B] hover:bg-[#EE5A5A] hover:text-[#1E293B] font-semibold normal-case tracking-normal text-xs shadow-xs"
+                          >
+                            <UserCheck data-icon="inline-start" />
+                            Connect to Licensed Agent
+                          </Button>
+                        )}
                       </div>
                     )}
                   </motion.div>
