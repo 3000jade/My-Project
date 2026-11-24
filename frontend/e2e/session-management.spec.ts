@@ -110,8 +110,7 @@ test.describe('Session Management Verification', () => {
     await page.getByRole('menuitem', { name: /Log Out|Sign Out/i }).click();
 
     await page.waitForURL((url) => url.pathname.includes('/login'), { timeout: 15000 });
-    const tokenAfter = await page.evaluate(() => localStorage.getItem('cp_auth_token'));
-    expect(tokenAfter).toBeNull();
+    await expect.poll(() => page.evaluate(() => localStorage.getItem('cp_auth_token'))).toBeNull();
 
     // Protected route must redirect back to /login
     await page.goto('/broker/dashboard');
