@@ -36,6 +36,15 @@ const cmsService = {
   async deleteContent(id) {
     await apiClient.delete(`/cms/admin/contents/${id}`);
   },
+
+  async uploadMedia(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await apiClient.post('/cms/admin/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return res?.data ?? res;
+  },
 };
 
 export default cmsService;
