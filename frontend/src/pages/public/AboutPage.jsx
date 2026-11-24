@@ -1,12 +1,50 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { salesDepartmentPhoto, staffDepartments } from '../../mockData/mockAbout';
 import { Badge } from '@/components/ui/badge';
 import cmsService from '../../services/cmsService';
 import { LiveEditProvider, LiveEditFloatingBar, LiveEditableText } from '../../components/cms/LiveCmsEditor';
 
+function groupStaffByDepartment(items) {
+  if (!Array.isArray(items) || items.length === 0) return [];
+  const groups = [];
+  const byLabel = new Map();
+  const usedIds = new Set();
+
+  for (const item of items) {
+    const label = item?.payload?.department?.trim() || 'Our Team';
+    let group = byLabel.get(label);
+    if (!group) {
+      const baseId =
+        label
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '') || 'department';
+      let id = baseId;
+      let suffix = 2;
+      while (usedIds.has(id)) {
+        id = `${baseId}-${suffix}`;
+        suffix += 1;
+      }
+      usedIds.add(id);
+      group = { id, label, members: [] };
+      byLabel.set(label, group);
+      groups.push(group);
+    }
+    group.members.push({
+      id: item.id,
+      name: item.title || '',
+      role: item?.payload?.role || '',
+      image: item?.media_url || '',
+    });
+  }
+
+  return groups;
+}
+
 export default function AboutPage() {
   const [cmsAbout, setCmsAbout] = useState(null);
+  const [cmsStaff, setCmsStaff] = useState([]);
 
   const saveAboutField = async (field, nextValue) => {
     const fallbackTitle = cmsAbout?.title || 'Selling Homes, Building Dreams.';
@@ -36,11 +74,22 @@ export default function AboutPage() {
       .then((item) => {
         if (mounted && item) setCmsAbout(item);
       })
-      .catch(() => { });
+      .catch(() => {});
+
+    cmsService
+      .getPublicContents('staff')
+      .then((items) => {
+        if (mounted && Array.isArray(items)) setCmsStaff(items);
+      })
+      .catch(() => {});
+
     return () => {
       mounted = false;
     };
   }, []);
+
+  const cmsDepartments = useMemo(() => groupStaffByDepartment(cmsStaff), [cmsStaff]);
+  const activeDepartments = cmsDepartments.length > 0 ? cmsDepartments : staffDepartments;
   const revealVariants = {
     hidden: { opacity: 0, y: 50 },
     visible: {
@@ -160,7 +209,7 @@ export default function AboutPage() {
 
             {/* Stacked Department Sections (Scrollable Directory) */}
             <div className="space-y-16">
-              {staffDepartments.map((dept) => (
+              {activeDepartments.map((dept) => (
                 <div key={dept.id} id={dept.id} className="space-y-6">
                   <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#E2E8F0]">
                     <h3 className="font-display text-2xl sm:text-3xl font-bold text-[#1E293B]">
@@ -173,8 +222,10 @@ export default function AboutPage() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {dept.members.map((member) => {
-                      const initials = member.name
-                        .split(' ')
+                      const initials = (member.name || '')
+                        .trim()
+                        .split(/\s+/)
+                        .filter(Boolean)
                         .map((part) => part[0])
                         .join('')
                         .slice(0, 2)
