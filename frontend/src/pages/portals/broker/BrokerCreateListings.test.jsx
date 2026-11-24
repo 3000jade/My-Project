@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
@@ -378,7 +378,7 @@ describe('BrokerCreateListings - 5-Step Flow, Auto Ref Code, Multi-Bank & Sticky
     expect(propertyService.createProperty).not.toHaveBeenCalled();
   });
 
-  it('shows Saved — Pending Agent Confirmation instead of Listing Published when broker publishes as self-handled or pending agent', async () => {
+  it('shows Saved â€” Pending Agent Confirmation instead of Listing Published when broker publishes as self-handled or pending agent', async () => {
     propertyService.createProperty.mockClear();
     propertyService.createProperty.mockResolvedValue({ id: 'prop-pending-confirm' });
     // Draft save returns Draft Saved modal, and verify no false Listing Published on Draft save

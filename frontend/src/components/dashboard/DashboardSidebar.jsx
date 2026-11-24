@@ -16,6 +16,7 @@ import {
   BadgeDollarSign,
   PanelLeftClose,
   PanelLeftOpen,
+  Calendar,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import AuthContext from '../../context/AuthContext';
@@ -117,6 +118,7 @@ export default function DashboardSidebar({ role = 'broker', onClose }) {
     { to: '/agent/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/agent/properties', label: 'Properties', icon: Building2 },
     { to: '/agent/inquiries', label: 'Inquiries', icon: MessageSquare, hasUnreadBadge: true },
+    { to: '/agent/availability', label: 'Schedule & Availability', icon: Calendar },
     { to: '/agent/sales', label: 'Sales', icon: BadgeDollarSign },
   ];
 

@@ -287,7 +287,15 @@ export default function PropertiesPage() {
   }, []);
 
   return (
-    <div className="bg-[#F8FAFC] h-screen overflow-hidden w-full flex flex-col">
+    <div
+      className="h-screen overflow-hidden w-full flex flex-col"
+      style={{
+        backgroundColor: '#F8FAFC',
+        backgroundImage: "url('/images/topographic-bg.svg')",
+        backgroundRepeat: 'repeat',
+        backgroundSize: '600px 600px',
+      }}
+    >
       {/* Top spacing below fixed navigation header */}
       <div
         className={`shrink-0 transition-all duration-300 ease-in-out ${isHeaderVisible ? 'h-16 md:h-20' : 'h-0'

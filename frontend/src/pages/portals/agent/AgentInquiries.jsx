@@ -11,7 +11,12 @@ import { useAuth } from '../../../context/AuthContext';
 
 export default function AgentInquiries() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  let user = null;
+  try {
+    user = useAuth()?.user || null;
+  } catch {
+    user = null;
+  }
   const { toast } = useToast();
   const effectiveAgentId = user?.id || 'agent-1';
 
@@ -141,7 +146,7 @@ export default function AgentInquiries() {
       header: 'Last Message',
       render: (row) => (
         <p className="text-xs text-on-surface-variant line-clamp-2 max-w-xs">
-          {row.last_message ? `“${row.last_message}”` : 'No messages yet'}
+          {row.last_message ? `â€œ${row.last_message}â€` : 'No messages yet'}
         </p>
       ),
     },

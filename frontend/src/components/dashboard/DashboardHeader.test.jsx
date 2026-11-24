@@ -1,9 +1,10 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import DashboardHeader from './DashboardHeader';
 import { useAuth } from '../../context/AuthContext';
+import { notificationService } from '../../services/notificationService';
 
 vi.mock('../../context/AuthContext', () => ({
   useAuth: vi.fn(),
@@ -15,6 +16,8 @@ vi.mock('../../services/notificationService', () => ({
     markAsRead: vi.fn().mockResolvedValue({}),
     markAllAsRead: vi.fn().mockResolvedValue({}),
   },
+  formatNotificationTime: vi.fn(() => 'Just now'),
+  getNotificationTargetPath: vi.fn(() => '/broker/inquiries'),
 }));
 
 describe('DashboardHeader User Display Name & Fallbacks', () => {
@@ -150,5 +153,34 @@ describe('DashboardHeader User Display Name & Fallbacks', () => {
 
     expect(screen.getByText('Administrator')).toBeInTheDocument();
     expect(screen.queryByText('Principal Broker')).not.toBeInTheDocument();
+  });
+
+  it('shows 9+ unread badge on bell and All / Unread tabs inside popover', async () => {
+    const manyUnread = Array.from({ length: 11 }, (_, idx) => ({
+      id: `notif-${idx}`,
+      title: `New inquiry #${idx + 1}`,
+      message: 'Buyer asked a question',
+      type: 'inquiry',
+      is_read: false,
+      created_at: new Date().toISOString(),
+    }));
+    notificationService.getNotifications.mockResolvedValueOnce(manyUnread);
+    useAuth.mockReturnValue({
+      user: { id: 'user-1', email: 'broker@pt.com', role: 'broker', fullName: 'Broker' },
+      logout: mockLogout,
+    });
+
+    render(
+      <MemoryRouter>
+        <DashboardHeader role="broker" />
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByTestId('notification-unread-badge')).toHaveTextContent('9+');
+
+    fireEvent.click(screen.getByRole('button', { name: /Notifications \(11 unread\)/i }));
+    expect(await screen.findByRole('tab', { name: /All \(11\)/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Unread \(11\)/i })).toBeInTheDocument();
+    expect(screen.queryByText('Recent Activity')).not.toBeInTheDocument();
   });
 });

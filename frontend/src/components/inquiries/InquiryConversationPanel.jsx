@@ -83,6 +83,21 @@ function formatFileSize(bytes) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+function formatMessageTimestamp(raw) {
+  if (!raw) return 'Recent';
+  const str = String(raw).trim();
+  if (!/\d{4}-\d{2}-\d{2}/.test(str)) return str;
+  const parsed = new Date(str);
+  if (Number.isNaN(parsed.getTime())) return str;
+
+  const yyyy = parsed.getFullYear();
+  const mm = String(parsed.getMonth() + 1).padStart(2, '0');
+  const dd = String(parsed.getDate()).padStart(2, '0');
+  const day = parsed.toLocaleDateString('en-US', { weekday: 'short' });
+  const time = parsed.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  return `${yyyy}-${mm}-${dd} (${day}) • ${time}`;
+}
+
 export default function InquiryConversationPanel({
   inquiry,
   viewerRole = 'agent', // 'broker' | 'agent' | 'client'
@@ -238,7 +253,7 @@ export default function InquiryConversationPanel({
                         <MessageSquare className="size-3.5 text-primary" />
                       </MarkerIcon>
                       <MarkerContent>
-                        Inquiry started {inquiry.created_at || 'recently'}
+                        Inquiry started {inquiry.created_at ? formatMessageTimestamp(inquiry.created_at) : 'recently'}
                       </MarkerContent>
                     </Marker>
                   </MessageScrollerItem>
@@ -294,7 +309,7 @@ export default function InquiryConversationPanel({
                                     {senderLabel}
                                   </span>
                                   <span className="tabular-nums">
-                                    {msg.timestamp || 'Recent'}
+                                    {formatMessageTimestamp(msg.timestamp || msg.created_at)}
                                   </span>
                                 </MessageHeader>
 

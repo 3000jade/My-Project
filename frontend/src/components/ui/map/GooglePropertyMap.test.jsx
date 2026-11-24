@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+﻿import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
@@ -62,7 +62,7 @@ describe('GooglePropertyMap component (Minimal Interactive Interface with Regula
 
     // Verify individual price pins at default zoom 15
     expect(marker1.className).toContain('#0F766E');
-    expect(marker1.textContent).toContain('₱45M');
+    expect(marker1.textContent).toContain('â‚±45M');
 
     // Verify HUD controls and manual zoom controls
     expect(screen.getByText('Street')).toBeDefined();
@@ -268,7 +268,7 @@ describe('GooglePropertyMap Multi-Property Pinpoint & MultiUnitDrawer', () => {
       title: 'One Serendra Unit 10A',
       building_name: 'One Serendra',
       price_raw: 28000000,
-      price: '₱28,000,000',
+      price: 'â‚±28,000,000',
       currency: 'PHP',
       city: 'Taguig',
       latitude: 14.5512,
@@ -282,7 +282,7 @@ describe('GooglePropertyMap Multi-Property Pinpoint & MultiUnitDrawer', () => {
       title: 'One Serendra Unit 24C',
       building_name: 'One Serendra',
       price_raw: 45000000,
-      price: '₱45,000,000',
+      price: 'â‚±45,000,000',
       currency: 'PHP',
       city: 'Taguig',
       latitude: 14.5512,
@@ -295,7 +295,7 @@ describe('GooglePropertyMap Multi-Property Pinpoint & MultiUnitDrawer', () => {
       id: 'single-lot',
       title: 'Ayala Alabang Lot',
       price_raw: 80000000,
-      price: '₱80,000,000',
+      price: 'â‚±80,000,000',
       currency: 'PHP',
       city: 'Muntinlupa',
       latitude: 14.4239,
@@ -344,15 +344,15 @@ describe('GooglePropertyMap Multi-Property Pinpoint & MultiUnitDrawer', () => {
 
     const marikinaPin = screen.getByTestId('area-cluster-marikina');
     const makatiPin = screen.getByTestId('area-cluster-makati');
-    expect(marikinaPin.textContent).toContain('Marikina · 2');
-    expect(makatiPin.textContent).toContain('Makati · 1');
+    expect(marikinaPin.textContent).toContain('Marikina Â· 2');
+    expect(makatiPin.textContent).toContain('Makati Â· 1');
     expect(screen.queryByTestId('map-marker-m1')).toBeNull();
 
     fireEvent.click(marikinaPin);
     const m1Pin = screen.getByTestId('map-marker-m1');
     const m2Pin = screen.getByTestId('map-marker-m2');
-    expect(m1Pin.textContent).toContain('₱8.5M');
-    expect(m2Pin.textContent).toContain('₱9.5M');
+    expect(m1Pin.textContent).toContain('â‚±8.5M');
+    expect(m2Pin.textContent).toContain('â‚±9.5M');
   });
 
   it('locks zoom controls and omits 360° Street View when lockZoom is true', () => {

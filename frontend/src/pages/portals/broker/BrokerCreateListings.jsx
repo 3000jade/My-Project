@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+﻿import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, Link, useParams, useLocation } from 'react-router-dom';
 import { MotionConfig, motion, AnimatePresence } from 'framer-motion';
 import {
@@ -465,7 +465,7 @@ export default function BrokerCreateListings() {
     if (formData.city_psgc_code || formData.city) {
       setLocationNotice({
         type: 'info',
-        message: 'Region changed — city and barangay were cleared so they stay matched.',
+        message: 'Region changed â€” city and barangay were cleared so they stay matched.',
       });
       setTimeout(() => setLocationNotice(null), 5000);
     }
@@ -1430,7 +1430,7 @@ export default function BrokerCreateListings() {
             savedStatusType === 'Draft'
               ? 'Draft Saved'
               : savedStatusType === 'Pending Confirmation'
-                ? 'Saved — Pending Agent Confirmation'
+                ? 'Saved â€” Pending Agent Confirmation'
                 : savedStatusType === 'Pending Approval'
                   ? 'Submitted for Review'
                   : 'Listing Published'

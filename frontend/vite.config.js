@@ -31,7 +31,7 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (!id.includes('node_modules')) return;
-          if (id.includes('leaflet') || id.includes('@geoman-io') || id.includes('@googlemaps')) return 'vendor-maps';
+          if ((id.includes('leaflet') && !id.includes('geoman')) || id.includes('@googlemaps')) return 'vendor-maps';
           if (id.includes('@mantine')) return 'vendor-mantine';
           if (id.includes('framer-motion') || id.includes('gsap')) return 'vendor-motion';
           if (id.includes('quill')) return 'vendor-editor';
