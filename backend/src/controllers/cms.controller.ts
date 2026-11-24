@@ -1,8 +1,16 @@
 import { Request, Response } from 'express';
 import { CmsService } from '../services/cms.service';
+import { GoogleDriveService } from '../services/googleDrive.service';
 import { cmsContentTypeEnum } from '../schemas/cms.schema';
 import type { AuthenticatedRequest } from '../middleware/auth.middleware';
 import type { ApiResponse } from '../types/api';
+
+const ALLOWED_CMS_IMAGE_TYPES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+]);
 
 function ok<T>(res: Response<ApiResponse>, data: T, message: string, status = 200) {
   res.status(status).json({
@@ -90,6 +98,45 @@ export class CmsController {
       ok(res, null, 'Content item deleted.');
     } catch (err) {
       fail(res, err, 400);
+    }
+  }
+
+  public static async uploadMedia(req: AuthenticatedRequest, res: Response<ApiResponse>): Promise<void> {
+    try {
+      const file = req.file;
+      if (!file) {
+        fail(res, new Error('Please attach an image file to upload.'), 400);
+        return;
+      }
+
+      if (!ALLOWED_CMS_IMAGE_TYPES.has(file.mimetype)) {
+        fail(
+          res,
+          new Error('Unsupported file type. Please upload a JPG, PNG, WebP, or GIF image.'),
+          400
+        );
+        return;
+      }
+
+      const uploaded = await GoogleDriveService.uploadListingFile('cms-media', file, 'Photos');
+      const uploadedWithProxy = uploaded as typeof uploaded & { proxyUrl?: string };
+      const url =
+        uploadedWithProxy.proxyUrl ||
+        uploaded.directImageUrl ||
+        `/api/drive/media/${uploaded.fileId}`;
+
+      ok(
+        res,
+        {
+          url,
+          fileId: uploaded.fileId,
+          fileName: uploaded.fileName || file.originalname,
+        },
+        'CMS image uploaded.',
+        201
+      );
+    } catch (err) {
+      fail(res, err);
     }
   }
 }
