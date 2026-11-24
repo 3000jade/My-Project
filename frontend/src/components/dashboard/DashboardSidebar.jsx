@@ -11,16 +11,13 @@ import {
   Shield,
   ShieldCheck,
   Database,
-<<<<<<< HEAD
   Info,
-=======
   Globe,
   BarChart3,
   BadgeDollarSign,
   PanelLeftClose,
   PanelLeftOpen,
   Calendar,
->>>>>>> property-tech-v3.0
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import AuthContext from '../../context/AuthContext';
