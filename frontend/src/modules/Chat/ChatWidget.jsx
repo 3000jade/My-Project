@@ -1,367 +1,493 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { IconMessageCircle2, IconX, IconSend, IconRobot } from '@tabler/icons-react';
-
+import { useState, useEffect, useRef } from 'react';
+import { useInRouterContext, useLocation, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence, MotionConfig } from 'framer-motion';
+import { Bot, MapPin, MessageCircle, Send, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { chatService } from '../../services/chatService';
+import { propertyService } from '../../services/propertyService';
+import ChatPropertyCard from './ChatPropertyCard';
+import ChatComparisonCard from './ChatComparisonCard';
+import ChatNearbyCard from './ChatNearbyCard';
+import ChatHandoffForm from './ChatHandoffForm';
 
-import apiClient from '../../services/apiClient';
+const PROPERTY_ROUTE_REGEX = /^\/properties\/([^/?#]+)/i;
 
-export default function ChatWidget() {
+const INITIAL_GREETING = {
+  id: 'welcome-ra-9646',
+  type: 'ai',
+  text: "I am Human Shelter Realty's AI Property Concierge (not a PRC-licensed broker). How can I help you explore our published properties today?",
+  cards: [],
+  comparison: null,
+  nearby: null,
+};
+
+function extractPropertyId(pathname) {
+  if (typeof pathname !== 'string') return null;
+  const match = pathname.match(PROPERTY_ROUTE_REGEX);
+  if (!match?.[1]) return null;
+  try {
+    return decodeURIComponent(match[1]);
+  } catch {
+    return match[1];
+  }
+}
+
+function normalizeReply(aiResponse) {
+  if (typeof aiResponse === 'string') {
+    return {
+      message: aiResponse,
+      cards: [],
+      comparison: null,
+      nearby: null,
+      handoffDraft: null,
+    };
+  }
+
+  return {
+    message: typeof aiResponse?.message === 'string' ? aiResponse.message : '',
+    cards: Array.isArray(aiResponse?.cards) ? aiResponse.cards : [],
+    comparison: aiResponse?.comparison ?? null,
+    nearby: aiResponse?.nearby ?? null,
+    handoffDraft: aiResponse?.handoffDraft ?? null,
+  };
+}
+
+function createMessageId(prefix) {
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+}
+
+function ChatWidgetContent({ pathname, onNavigateProperty }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      type: 'ai',
-      text: "I am Human Shelter Realty's AI Property Concierge (not a PRC-licensed broker). How can I help you explore our published properties today?",
-    },
-  ]);
+  const [messages, setMessages] = useState([INITIAL_GREETING]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [showEscalationForm, setShowEscalationForm] = useState(false);
-  const [escalationForm, setEscalationForm] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    consentAccepted: false,
-  });
-  const [escalationStatus, setEscalationStatus] = useState('idle');
-  const [escalationError, setEscalationError] = useState('');
+  const [attachedProperty, setAttachedProperty] = useState(null);
+  const [latestHandoffSummary, setLatestHandoffSummary] = useState('');
+  const [activeListing, setActiveListing] = useState(null);
   const messagesEndRef = useRef(null);
 
-  const handleEscalateSubmit = async (e) => {
-    e.preventDefault();
-    if (!escalationForm.consentAccepted) {
-      setEscalationError('Please accept the Data Privacy Act (RA 10173) notice to continue.');
+  const activePropertyId = extractPropertyId(pathname);
+  const currentActiveListing =
+    activePropertyId && activeListing?.id === activePropertyId ? activeListing : null;
+
+  useEffect(() => {
+    if (!activePropertyId) {
+      setActiveListing(null);
       return;
     }
-    setEscalationStatus('submitting');
-    setEscalationError('');
-    try {
-      const recentContext = messages
-        .slice(-4)
-        .map((m) => `${m.type === 'user' ? 'Visitor' : 'AI'}: ${m.text}`)
-        .join('\n');
-      const res = await apiClient.post('/inquiries', {
-        name: escalationForm.name.trim(),
-        email: escalationForm.email.trim(),
-        phone: escalationForm.phone.trim() || undefined,
-        message: recentContext || 'Visitor requested a licensed agent via AI Concierge.',
-        source: 'ai_chatbot',
-        preferredReplyChannel: 'chat',
-        consentAccepted: true,
-      });
-      const refId = res?.data?.data?.id || res?.data?.id || 'submitted';
-      setEscalationStatus('success');
-      setShowEscalationForm(false);
-      setEscalationForm({ name: '', email: '', phone: '', consentAccepted: false });
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now(),
-          type: 'ai',
-          text: `Thank you! Your inquiry (${refId}) has been routed to a PRC-licensed agent.`,
-        },
-      ]);
-    } catch (err) {
-      setEscalationStatus('error');
-      setEscalationError(
-        err?.response?.data?.error || 'Could not submit your inquiry. Please check your details.'
-      );
+    if (!isOpen) {
+      return;
     }
-  };
 
-  const toggleChat = () => setIsOpen(!isOpen);
+    let cancelled = false;
+    propertyService
+      .getPropertyById(activePropertyId)
+      .then((listing) => {
+        if (cancelled) return;
+        if (listing?.title) {
+          const numericPrice =
+            typeof listing.price === 'number'
+              ? listing.price
+              : typeof listing.price_raw === 'number' && listing.price_raw > 0
+                ? listing.price_raw
+                : undefined;
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+          setActiveListing({
+            ...listing,
+            id: listing.id || activePropertyId,
+            ...(numericPrice !== undefined ? { price: numericPrice } : {}),
+          });
+        } else {
+          setActiveListing(null);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setActiveListing(null);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activePropertyId, isOpen]);
+
+  const toggleChat = () => setIsOpen((prev) => !prev);
+
+  const openHandoff = (property = null) => {
+    setAttachedProperty(property);
+    setShowEscalationForm(true);
   };
 
   useEffect(() => {
-    if (isOpen) {
-      setTimeout(scrollToBottom, 100);
-    }
+    if (!isOpen) return;
+    const timer = setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+    return () => clearTimeout(timer);
   }, [isOpen, messages, isTyping]);
 
   const handleSend = async (e, textOverride = null) => {
     if (e) e.preventDefault();
-    const userText = textOverride || inputValue;
-    if (!userText.trim()) return;
+    const rawText = textOverride ?? inputValue;
+    const userText = typeof rawText === 'string' ? rawText.trim() : '';
+    if (!userText || isTyping) return;
 
-    const newMsg = { id: Date.now(), type: 'user', text: userText };
+    const newMsg = {
+      id: createMessageId('user'),
+      type: 'user',
+      text: userText,
+    };
     const updatedMessages = [...messages, newMsg];
     setMessages(updatedMessages);
     setInputValue('');
     setIsTyping(true);
 
     try {
-      // Map messages to the format expected by the backend
-      const apiMessages = updatedMessages.map(msg => ({
+      const apiMessages = updatedMessages.map((msg) => ({
         role: msg.type === 'ai' ? 'assistant' : 'user',
-        content: msg.text
+        content: msg.text,
       }));
 
-      // Call the backend service (which calls Grok API)
-      const aiResponseText = await chatService.sendMessage(apiMessages);
+      const pageContext = activePropertyId
+        ? { route: pathname, propertyId: activePropertyId }
+        : { route: pathname };
 
-      setMessages(prev => [...prev, {
-        id: Date.now(),
-        type: 'ai',
-        text: aiResponseText
-      }]);
+      const aiResponse = await chatService.sendMessage(apiMessages, pageContext);
+      const normalized = normalizeReply(aiResponse);
+
+      if (
+        typeof normalized.handoffDraft?.summary === 'string' &&
+        normalized.handoffDraft.summary.trim()
+      ) {
+        setLatestHandoffSummary(normalized.handoffDraft.summary.trim());
+      }
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: createMessageId('ai'),
+          type: 'ai',
+          text: normalized.message,
+          cards: normalized.cards,
+          comparison: normalized.comparison,
+          nearby: normalized.nearby,
+        },
+      ]);
     } catch (error) {
-      console.error("Chat error:", error);
-      setMessages(prev => [...prev, {
-        id: Date.now(),
-        type: 'ai',
-        text: "I apologize, but I am currently experiencing technical difficulties. Please try again later."
-      }]);
+      console.error('Chat error:', error);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: createMessageId('err'),
+          type: 'ai',
+          text: 'The AI Property Concierge is temporarily unavailable right now. You can still reach a licensed agent by clicking "Connect to Agent" below.',
+          cards: [],
+          comparison: null,
+          nearby: null,
+        },
+      ]);
     } finally {
       setIsTyping(false);
     }
   };
 
+  const quickActions = activePropertyId
+    ? [
+        { label: "What's nearby?", isAgent: false },
+        { label: 'Compare similar', isAgent: false },
+        { label: 'Ask Agent', isAgent: true },
+      ]
+    : [
+        { label: 'Search by budget', isAgent: false },
+        { label: 'Featured homes', isAgent: false },
+        { label: 'Connect to Agent', isAgent: true },
+      ];
+
   return (
-    <div className="fixed bottom-6 right-6 md:bottom-10 md:right-10 z-[60] flex flex-col items-end pointer-events-none" id="ai-chat">
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20, transformOrigin: 'bottom right' }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="w-[380px] md:w-[440px] mb-4 bg-white shadow-[0_20px_40px_-15px_rgba(0,0,0,0.2)] rounded-2xl overflow-hidden border border-[#E2E8F0] flex flex-col pointer-events-auto"
-            style={{ height: '550px', maxHeight: '75vh' }}
-          >
-            {/* Header */}
-            <div className="bg-[#0F766E] p-4 flex justify-between items-center text-white shrink-0 shadow-sm relative z-10">
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/20 backdrop-blur-sm shadow-inner">
-                    <IconRobot size={22} className="text-white drop-shadow-md" />
-                  </div>
-                  <div className="absolute bottom-0 right-0 w-3 h-3 bg-[#4ADE80] border-2 border-[#0F766E] rounded-full animate-pulse shadow-sm"></div>
-                </div>
-                <div>
-                  <h3 className="font-display font-bold text-[15px] leading-tight tracking-wide">AI Property Concierge</h3>
-                  <p className="text-[10px] font-sans text-white/85 uppercase tracking-widest mt-0.5">Automated Assistant · RA 9646</p>
-                </div>
-              </div>
-              <button 
-                onClick={toggleChat}
-                aria-label="Close chat"
-                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors border border-transparent hover:border-white/20"
-              >
-                <IconX size={18} />
-              </button>
-            </div>
-
-            {/* Messages Area (MUST have data-lenis-prevent="true"!) */}
-            <div className="flex-1 overflow-y-auto p-4 bg-[#F9F9F8] space-y-4 custom-scrollbar" data-lenis-prevent="true">
-              {messages.map((msg) => (
-                <motion.div 
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  key={msg.id} 
-                  className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'} gap-2`}
-                >
-                  {msg.type === 'ai' && (
-                    <div className="w-7 h-7 rounded-full bg-[#174849]/10 flex items-center justify-center shrink-0 mt-1 border border-[#174849]/20 shadow-sm">
-                      <IconRobot size={14} className="text-[#174849]" />
-                    </div>
-                  )}
-                  <div 
-                    className={`p-3.5 rounded-2xl max-w-[80%] font-sans text-[13px] leading-relaxed shadow-sm ${
-                      msg.type === 'user' 
-                        ? 'bg-[#266F71] text-white rounded-tr-sm' 
-                        : 'bg-white text-[#1B1C1A] border border-[#E5E7EB] rounded-tl-sm'
-                    }`}
-                  >
-                    {msg.text}
-                  </div>
-                </motion.div>
-              ))}
-
-              {isTyping && (
-                <motion.div 
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="flex justify-start gap-2"
-                >
-                  <div className="w-7 h-7 rounded-full bg-[#174849]/10 flex items-center justify-center shrink-0 mt-1 border border-[#174849]/20 shadow-sm">
-                    <IconRobot size={14} className="text-[#174849]" />
-                  </div>
-                  <div className="px-4 py-3.5 rounded-2xl bg-white border border-[#E5E7EB] rounded-tl-sm shadow-sm flex items-center gap-1.5 h-[46px]">
-                    <motion.div animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 0.8, delay: 0 }} className="w-1.5 h-1.5 bg-[#266F71]/60 rounded-full" />
-                    <motion.div animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 0.8, delay: 0.15 }} className="w-1.5 h-1.5 bg-[#266F71]/60 rounded-full" />
-                    <motion.div animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 0.8, delay: 0.3 }} className="w-1.5 h-1.5 bg-[#266F71]/60 rounded-full" />
-                  </div>
-                </motion.div>
-              )}
-              <div ref={messagesEndRef} />
-            </div>
-
-            {/* Escalation Form or Quick Selectors */}
-            {showEscalationForm ? (
-              <form
-                onSubmit={handleEscalateSubmit}
-                className="px-4 py-3 bg-[#F8FAFC] border-t border-[#E2E8F0] space-y-2 shrink-0"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-[#1E293B]">
-                    Connect to Licensed Agent
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setShowEscalationForm(false)}
-                    className="text-xs text-[#64748B] hover:text-[#1E293B]"
-                  >
-                    Cancel
-                  </button>
-                </div>
-                <input
-                  type="text"
-                  required
-                  placeholder="Full name"
-                  value={escalationForm.name}
-                  onChange={(e) =>
-                    setEscalationForm((f) => ({ ...f, name: e.target.value }))
-                  }
-                  className="w-full px-3 py-1.5 text-xs bg-white border border-[#E2E8F0] rounded-lg text-[#1E293B] focus:border-[#0F766E] outline-none"
-                />
-                <div className="grid grid-cols-2 gap-2">
-                  <input
-                    type="email"
-                    required
-                    placeholder="Email address"
-                    value={escalationForm.email}
-                    onChange={(e) =>
-                      setEscalationForm((f) => ({ ...f, email: e.target.value }))
-                    }
-                    className="w-full px-3 py-1.5 text-xs bg-white border border-[#E2E8F0] rounded-lg text-[#1E293B] focus:border-[#0F766E] outline-none"
-                  />
-                  <input
-                    type="tel"
-                    placeholder="Phone (optional)"
-                    value={escalationForm.phone}
-                    onChange={(e) =>
-                      setEscalationForm((f) => ({ ...f, phone: e.target.value }))
-                    }
-                    className="w-full px-3 py-1.5 text-xs bg-white border border-[#E2E8F0] rounded-lg text-[#1E293B] focus:border-[#0F766E] outline-none"
-                  />
-                </div>
-                <label className="flex items-start gap-2 text-[11px] text-[#64748B] cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={escalationForm.consentAccepted}
-                    onChange={(e) =>
-                      setEscalationForm((f) => ({
-                        ...f,
-                        consentAccepted: e.target.checked,
-                      }))
-                    }
-                    className="mt-0.5 accent-[#0F766E]"
-                  />
-                  <span>
-                    I consent to Human Shelter Realty processing my contact details under the Data Privacy Act (RA 10173) so a licensed agent can respond.
-                  </span>
-                </label>
-                {escalationError && (
-                  <p className="text-[11px] text-red-600">{escalationError}</p>
-                )}
-                <button
-                  type="submit"
-                  disabled={!escalationForm.consentAccepted || escalationStatus === 'submitting'}
-                  className="w-full py-2 rounded-lg bg-[#FF6B6B] text-[#1E293B] font-semibold text-xs disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
-                >
-                  {escalationStatus === 'submitting' ? 'Sending...' : 'Request Licensed Agent'}
-                </button>
-              </form>
-            ) : (
-              <>
-                {/* Quick Selectors */}
-                <div className="px-4 py-2.5 bg-white border-t border-[#E2E8F0] grid grid-cols-3 gap-1.5 shrink-0">
-                  {['Show Penthouses', 'Price of Forbes', 'Contact Agent'].map((suggestion) => (
-                    <button 
-                      key={suggestion}
-                      onClick={() =>
-                        suggestion === 'Contact Agent'
-                          ? setShowEscalationForm(true)
-                          : handleSend(null, suggestion)
-                      }
-                      className={
-                        suggestion === 'Contact Agent'
-                          ? 'w-full h-full px-1 py-1.5 rounded-lg bg-[#FF6B6B] text-[#1E293B] text-[9.5px] font-sans font-bold uppercase tracking-widest hover:opacity-90 transition-all shadow-sm flex items-center justify-center text-center leading-tight'
-                          : 'w-full h-full px-1 py-1.5 rounded-lg border border-[#0F766E]/30 text-[#0F766E] text-[9.5px] font-sans font-bold uppercase tracking-widest hover:bg-[#0F766E] hover:text-white transition-all shadow-sm flex items-center justify-center text-center leading-tight'
-                      }
-                    >
-                      {suggestion}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Input Area */}
-                <div className="p-4 bg-white border-t border-[#E2E8F0] shrink-0 relative z-10">
-                  <form onSubmit={handleSend} className="flex gap-2 relative">
-                    <input
-                      value={inputValue}
-                      onChange={(e) => setInputValue(e.target.value)}
-                      className="flex-1 bg-[#F8FAFC] border border-[#E2E8F0] focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] rounded-full text-sm font-sans pl-5 pr-12 py-3 outline-none transition-all text-[#1E293B] placeholder:text-[#64748B]"
-                      placeholder="Type your message..."
-                      type="text"
-                    />
-                    <button 
-                      type="submit"
-                      disabled={!inputValue.trim()}
-                      aria-label="Send message"
-                      className="absolute right-1.5 top-1.5 bottom-1.5 w-9 bg-[#0F766E] disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-full flex items-center justify-center hover:bg-[#115E59] transition-colors shadow-sm"
-                    >
-                      <IconSend size={16} className="ml-0.5" />
-                    </button>
-                  </form>
-                </div>
-              </>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <motion.button
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        aria-label="Toggle AI Property Concierge"
-        className="pointer-events-auto bg-[#0F766E] hover:bg-[#115E59] text-white w-14 h-14 md:w-16 md:h-16 rounded-full shadow-[0_8px_20px_rgba(15,118,110,0.35)] flex items-center justify-center relative group overflow-hidden border border-white/20"
-        onClick={toggleChat}
+    <MotionConfig reducedMotion="user">
+      <div
+        className="fixed bottom-6 right-6 md:bottom-8 md:right-8 z-50 flex flex-col items-end pointer-events-none"
+        id="ai-chat"
       >
-        <AnimatePresence mode="wait">
-          {isOpen ? (
+        <AnimatePresence>
+          {isOpen && (
             <motion.div
-              key="close"
-              initial={{ rotate: -90, opacity: 0 }}
-              animate={{ rotate: 0, opacity: 1 }}
-              exit={{ rotate: 90, opacity: 0 }}
-              transition={{ duration: 0.2 }}
+              initial={{ opacity: 0, scale: 0.9, y: 20, transformOrigin: 'bottom right' }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="w-96 md:w-md max-w-[calc(100vw-2rem)] h-136 max-h-[75vh] mb-4 bg-white shadow-xl rounded-xl overflow-hidden border border-[#E2E8F0] flex flex-col pointer-events-auto"
             >
-              <IconX size={28} />
-            </motion.div>
-          ) : (
-            <motion.div
-              key="chat"
-              initial={{ rotate: 90, opacity: 0 }}
-              animate={{ rotate: 0, opacity: 1 }}
-              exit={{ rotate: -90, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-            >
-              <IconMessageCircle2 size={30} />
+              {/* Header */}
+              <div className="bg-[#0F766E] p-4 flex justify-between items-center gap-2 text-white shrink-0 relative z-10">
+                <div className="flex items-center gap-4 min-w-0">
+                  <div className="relative shrink-0">
+                    <div className="size-10 rounded-full bg-white/10 flex items-center justify-center border border-white/20">
+                      <Bot className="size-5 text-white" />
+                    </div>
+                    <div className="absolute bottom-0 right-0 size-3 bg-emerald-400 border-2 border-[#0F766E] rounded-full motion-safe:animate-pulse" />
+                  </div>
+                  <div className="flex flex-col gap-1 min-w-0">
+                    <h3 className="font-display font-bold text-sm leading-tight tracking-wide truncate">
+                      AI Property Concierge
+                    </h3>
+                    <p className="text-xs font-sans text-white/90 uppercase tracking-wider truncate">
+                      Automated Assistant · RA 9646
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={toggleChat}
+                  aria-label="Close chat"
+                  className="size-8 rounded-full bg-white/10 text-white hover:bg-white/20 hover:text-white focus-visible:ring-white shrink-0"
+                >
+                  <X className="size-4" />
+                </Button>
+              </div>
+
+              {/* Active Listing Context Strip */}
+              {currentActiveListing?.title && (
+                <div className="px-4 py-2 bg-[#F1F5F9] border-b border-[#E2E8F0] flex items-center gap-2 text-xs text-[#1E293B] shrink-0">
+                  <MapPin className="size-4 shrink-0 text-[#0F766E]" />
+                  <span className="truncate font-medium">
+                    Currently viewing: {currentActiveListing.title}
+                  </span>
+                </div>
+              )}
+
+              {/* Messages Area (MUST preserve data-lenis-prevent="true") */}
+              <div
+                className="flex-1 overflow-y-auto p-4 bg-[#F8FAFC] flex flex-col gap-4 custom-scrollbar"
+                data-lenis-prevent="true"
+              >
+                {messages.map((msg) => (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    key={msg.id}
+                    className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'} gap-2`}
+                  >
+                    {msg.type === 'ai' && (
+                      <div className="size-8 rounded-full bg-[#CCFBF1] flex items-center justify-center shrink-0 mt-1 border border-[#0F766E]/20">
+                        <Bot className="size-4 text-[#0F766E]" />
+                      </div>
+                    )}
+
+                    {msg.type === 'user' ? (
+                      <div className="px-4 py-2 rounded-xl rounded-tr-sm max-w-[85%] bg-[#0F766E] text-white font-sans text-sm leading-relaxed shadow-xs break-words">
+                        {msg.text}
+                      </div>
+                    ) : (
+                      <div className="flex flex-col gap-2 flex-1 min-w-0 max-w-[85%]">
+                        {msg.text && (
+                          <div className="px-4 py-2 rounded-xl rounded-tl-sm bg-white text-[#1E293B] border border-[#E2E8F0] font-sans text-sm leading-relaxed shadow-xs break-words">
+                            {msg.text}
+                          </div>
+                        )}
+
+                        {Array.isArray(msg.cards) && msg.cards.length > 0 && (
+                          <div className="flex flex-col gap-2 min-w-0">
+                            {msg.cards.map((prop) => (
+                              <ChatPropertyCard
+                                key={prop.id}
+                                property={prop}
+                                onAskAgent={(selected) => openHandoff(selected)}
+                                onNavigate={onNavigateProperty}
+                              />
+                            ))}
+                          </div>
+                        )}
+
+                        {msg.comparison && (
+                          <ChatComparisonCard
+                            comparison={msg.comparison}
+                            onAskAgent={(selected) => openHandoff(selected)}
+                          />
+                        )}
+
+                        {msg.nearby && <ChatNearbyCard nearby={msg.nearby} />}
+                      </div>
+                    )}
+                  </motion.div>
+                ))}
+
+                {isTyping && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="flex justify-start gap-2"
+                  >
+                    <div className="size-8 rounded-full bg-[#CCFBF1] flex items-center justify-center shrink-0 mt-1 border border-[#0F766E]/20">
+                      <Bot className="size-4 text-[#0F766E]" />
+                    </div>
+                    <div className="px-4 py-2 rounded-xl rounded-tl-sm bg-white border border-[#E2E8F0] shadow-xs flex items-center gap-2 h-10">
+                      <motion.div
+                        animate={{ y: [0, -4, 0] }}
+                        transition={{ repeat: Infinity, duration: 0.8, delay: 0 }}
+                        className="size-2 bg-[#0F766E]/60 rounded-full"
+                      />
+                      <motion.div
+                        animate={{ y: [0, -4, 0] }}
+                        transition={{ repeat: Infinity, duration: 0.8, delay: 0.15 }}
+                        className="size-2 bg-[#0F766E]/60 rounded-full"
+                      />
+                      <motion.div
+                        animate={{ y: [0, -4, 0] }}
+                        transition={{ repeat: Infinity, duration: 0.8, delay: 0.3 }}
+                        className="size-2 bg-[#0F766E]/60 rounded-full"
+                      />
+                    </div>
+                  </motion.div>
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+
+              {/* Handoff Form or Quick Actions + Composer */}
+              {showEscalationForm ? (
+                <ChatHandoffForm
+                  attachedProperty={attachedProperty}
+                  handoffSummary={latestHandoffSummary}
+                  recentMessages={messages}
+                  onCancel={() => {
+                    setShowEscalationForm(false);
+                    setAttachedProperty(null);
+                  }}
+                  onSuccess={(refId) => {
+                    setShowEscalationForm(false);
+                    setAttachedProperty(null);
+                    setMessages((prev) => [
+                      ...prev,
+                      {
+                        id: createMessageId('handoff'),
+                        type: 'ai',
+                        text: `Thank you! Your inquiry (${refId}) has been routed to a PRC-licensed agent.`,
+                        cards: [],
+                        comparison: null,
+                        nearby: null,
+                      },
+                    ]);
+                  }}
+                />
+              ) : (
+                <>
+                  {/* Adaptive Quick Actions */}
+                  <div className="px-4 py-2 bg-white border-t border-[#E2E8F0] grid grid-cols-3 gap-2 shrink-0">
+                    {quickActions.map((action) => (
+                      <Button
+                        key={action.label}
+                        type="button"
+                        variant={action.isAgent ? 'ghost' : 'outline'}
+                        size="sm"
+                        onClick={() =>
+                          action.isAgent
+                            ? openHandoff(activePropertyId ? currentActiveListing : null)
+                            : handleSend(null, action.label)
+                        }
+                        className={
+                          action.isAgent
+                            ? 'w-full h-auto min-h-10 px-2 py-2 rounded-lg bg-[#FF6B6B] text-[#1E293B] hover:bg-[#EE5A5A] text-xs font-semibold normal-case tracking-normal whitespace-normal text-center leading-tight'
+                            : 'w-full h-auto min-h-10 px-2 py-2 rounded-lg border-[#0F766E]/30 text-[#0F766E] hover:bg-[#0F766E] hover:text-white text-xs font-semibold normal-case tracking-normal whitespace-normal text-center leading-tight'
+                        }
+                      >
+                        {action.label}
+                      </Button>
+                    ))}
+                  </div>
+
+                  {/* Input Area */}
+                  <div className="p-4 bg-white border-t border-[#E2E8F0] shrink-0 relative z-10">
+                    <form onSubmit={handleSend} className="flex items-center gap-2">
+                      <Input
+                        value={inputValue}
+                        onChange={(e) => setInputValue(e.target.value)}
+                        className="flex-1 bg-[#F8FAFC] border-[#E2E8F0] rounded-full px-4 text-sm text-[#1E293B] placeholder:text-[#64748B]"
+                        placeholder="Type your message..."
+                        type="text"
+                      />
+                      <Button
+                        type="submit"
+                        disabled={!inputValue.trim() || isTyping}
+                        aria-label="Send message"
+                        size="icon"
+                        className="size-10 rounded-full shrink-0"
+                      >
+                        <Send className="size-4" />
+                      </Button>
+                    </form>
+                  </div>
+                </>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
-        
-        {/* Pulse Ring effect */}
-        {!isOpen && (
-          <div className="absolute inset-0 rounded-full border-2 border-white/40 animate-ping opacity-20 group-hover:opacity-40" style={{ animationDuration: '3s' }}></div>
-        )}
-      </motion.button>
-    </div>
+
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          aria-label="Toggle AI Property Concierge"
+          className="pointer-events-auto bg-[#0F766E] hover:bg-[#115E59] text-white size-14 md:size-16 rounded-full shadow-md flex items-center justify-center relative group overflow-hidden border border-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0F766E] focus-visible:ring-offset-2"
+          onClick={toggleChat}
+        >
+          <AnimatePresence mode="wait">
+            {isOpen ? (
+              <motion.div
+                key="close"
+                initial={{ rotate: -90, opacity: 0 }}
+                animate={{ rotate: 0, opacity: 1 }}
+                exit={{ rotate: 90, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <X className="size-6" />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="chat"
+                initial={{ rotate: 90, opacity: 0 }}
+                animate={{ rotate: 0, opacity: 1 }}
+                exit={{ rotate: -90, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <MessageCircle className="size-6" />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {!isOpen && (
+            <div className="absolute inset-0 rounded-full border-2 border-white/40 motion-safe:animate-ping opacity-20 group-hover:opacity-40" />
+          )}
+        </motion.button>
+      </div>
+    </MotionConfig>
   );
+}
+
+function ChatWidgetWithRouter() {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  return (
+    <ChatWidgetContent
+      pathname={location.pathname}
+      onNavigateProperty={(prop) => {
+        if (prop?.id) {
+          navigate(`/properties/${prop.id}`);
+        }
+      }}
+    />
+  );
+}
+
+export default function ChatWidget() {
+  const inRouter = useInRouterContext();
+  if (inRouter) {
+    return <ChatWidgetWithRouter />;
+  }
+  return <ChatWidgetContent pathname="/" onNavigateProperty={undefined} />;
 }
