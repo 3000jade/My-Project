@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import ChatWidget from './ChatWidget';
 import { chatService } from '../../services/chatService';
@@ -9,6 +9,7 @@ import apiClient from '../../services/apiClient';
 vi.mock('../../services/chatService', () => ({
   chatService: {
     sendMessage: vi.fn(),
+    streamMessage: vi.fn(),
   },
 }));
 
@@ -58,52 +59,144 @@ const secondProperty = {
   status: 'published',
 };
 
+function mockStreamSuccess(payload, { statusLabel = null, chunks = [] } = {}) {
+  return async (_messages, _pageContext, { onStatus, onDelta, onResult } = {}) => {
+    if (statusLabel) {
+      onStatus?.({ step: 'tool', label: statusLabel });
+    }
+    for (const chunk of chunks) {
+      onDelta?.(chunk);
+    }
+    const normalized = {
+      cards: [],
+      comparison: null,
+      nearby: null,
+      handoffDraft: null,
+      suggestHandoff: false,
+      handoffReason: null,
+      followUpSuggestions: [],
+      ...payload,
+    };
+    onResult?.(normalized);
+    return normalized;
+  };
+}
+
 describe('ChatWidget', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     window.HTMLElement.prototype.scrollIntoView = vi.fn();
   });
 
-  it('renders the RA 9646 disclosure, lenis scroll guard, and general quick actions outside a Router', () => {
+  it('renders the Crisp White header, RA 9646 badge, ChatWelcomeView, lenis guard, and calm footer outside a Router', () => {
     const { container } = render(<ChatWidget />);
     fireEvent.click(screen.getByRole('button', { name: /toggle ai property concierge/i }));
 
-    expect(screen.getByText('AI Property Concierge')).toBeInTheDocument();
-    expect(screen.getByText(/Automated Assistant · RA 9646/i)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'AI Property Concierge' })).toBeInTheDocument();
+    expect(screen.getByText('RA 9646')).toBeInTheDocument();
+    expect(screen.getByText(/How can I help you find your next home\?/i)).toBeInTheDocument();
     expect(screen.getByText(/not a PRC-licensed broker/i)).toBeInTheDocument();
     expect(container.querySelector('[data-lenis-prevent="true"]')).not.toBeNull();
 
-    expect(screen.getByRole('button', { name: /search by budget/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /featured homes/i })).toBeInTheDocument();
+    // Header actions: New chat, Expand chat, Close chat
+    expect(screen.getByRole('button', { name: /new chat/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /expand chat/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /close chat/i })).toBeInTheDocument();
 
-    const connectBtn = screen.getByRole('button', { name: /connect to agent/i });
-    expect(connectBtn.className).toContain('bg-[#FF6B6B]');
-    expect(connectBtn.className).toContain('text-[#1E293B]');
-    expect(connectBtn.className).not.toContain('text-white');
+    // General welcome prompt tiles
+    expect(screen.getByRole('button', { name: /homes under ₱20m/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /featured homes/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /condos in makati or bgc/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /how buying works/i })).toBeInTheDocument();
+
+    // Calm footer handoff link
+    expect(screen.getByRole('button', { name: /talk to a licensed agent/i })).toBeInTheDocument();
   });
 
-  it('detects /properties/:id routes, shows Currently viewing banner, forwards pageContext, and renders nearby card', async () => {
+  it('expands and collapses the desktop side panel and resets to ChatWelcomeView on New chat', async () => {
+    chatService.streamMessage.mockImplementationOnce(
+      mockStreamSuccess({
+        message: 'Here are featured published homes.',
+        followUpSuggestions: ['Filter under ₱15M'],
+      })
+    );
+
+    render(<ChatWidget />);
+    fireEvent.click(screen.getByRole('button', { name: /toggle ai property concierge/i }));
+
+    const panel = screen.getByTestId('chat-widget-panel');
+    expect(panel.className).toContain('fixed');
+    expect(panel.className).toContain('inset-0');
+    expect(panel.className).toContain('sm:w-96');
+    expect(panel.className).not.toContain('sm:w-xl');
+
+    fireEvent.click(screen.getByRole('button', { name: /expand chat/i }));
+    expect(panel.className).toContain('sm:fixed');
+    expect(panel.className).toContain('sm:w-xl');
+    expect(screen.getByRole('button', { name: /collapse chat/i })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /collapse chat/i }));
+    expect(panel.className).toContain('sm:static');
+    expect(panel.className).toContain('sm:w-96');
+
+    // Send a prompt from ChatWelcomeView
+    fireEvent.click(screen.getByRole('button', { name: /featured homes/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Here are featured published homes.')).toBeInTheDocument();
+    });
+    expect(screen.queryByText(/How can I help you find your next home\?/i)).not.toBeInTheDocument();
+
+    // Click New chat -> returns cleanly to ChatWelcomeView
+    fireEvent.click(screen.getByRole('button', { name: /new chat/i }));
+    expect(screen.getByText(/How can I help you find your next home\?/i)).toBeInTheDocument();
+    expect(screen.queryByText('Here are featured published homes.')).not.toBeInTheDocument();
+  });
+
+  it('shows live Trace shimmer during streaming, streams formatted text, renders nearby card, and triggers 1-tap follow-up chips', async () => {
     propertyService.getPropertyById.mockResolvedValueOnce({
       id: 'prop-42',
       title: 'Makati Sky Penthouse',
       price: 32000000,
     });
 
-    chatService.sendMessage.mockResolvedValueOnce({
-      message: 'Here are the landmarks near Makati Sky Penthouse.',
-      cards: [],
-      comparison: null,
-      nearby: {
-        propertyId: 'prop-42',
-        propertyTitle: 'Makati Sky Penthouse',
-        landmarks: [{ category: 'mall', label: 'Greenbelt 5' }],
-        commutes: [{ destinationName: 'BGC', durationText: '15 mins', distanceText: '4.1 km' }],
-        unavailable: false,
-      },
-      handoffDraft: null,
-    });
+    let triggerStatus;
+    let triggerDelta;
+    let resolveFirstStream;
 
-    render(
+    chatService.streamMessage
+      .mockImplementationOnce((_messages, _pageContext, { onStatus, onDelta, onResult }) => {
+        triggerStatus = onStatus;
+        triggerDelta = onDelta;
+        return new Promise((resolve) => {
+          resolveFirstStream = () => {
+            const payload = {
+              message: 'Here are **nearby** landmarks for Makati Sky Penthouse.\n- Greenbelt 5',
+              cards: [],
+              comparison: null,
+              nearby: {
+                propertyId: 'prop-42',
+                propertyTitle: 'Makati Sky Penthouse',
+                landmarks: [{ category: 'mall', label: 'Greenbelt 5' }],
+                commutes: [{ destinationName: 'BGC', durationText: '15 mins', distanceText: '4.1 km' }],
+                unavailable: false,
+              },
+              handoffDraft: null,
+              followUpSuggestions: ['Compare similar homes', 'Ask about monthly dues'],
+            };
+            onResult?.(payload);
+            resolve(payload);
+          };
+        });
+      })
+      .mockImplementationOnce(
+        mockStreamSuccess({
+          message: 'Association dues are verified by the assigned licensed broker.',
+          followUpSuggestions: [],
+        })
+      );
+
+    const { container } = render(
       <MemoryRouter initialEntries={['/properties/prop-42']}>
         <ChatWidget />
       </MemoryRouter>
@@ -118,41 +211,211 @@ describe('ChatWidget', () => {
       expect(screen.getByText(/Currently viewing: Makati Sky Penthouse/i)).toBeInTheDocument();
     });
 
-    expect(screen.getByRole('button', { name: /compare similar/i })).toBeInTheDocument();
-    const askAgentQuickBtn = screen.getByRole('button', { name: /^ask agent$/i });
-    expect(askAgentQuickBtn.className).toContain('bg-[#FF6B6B]');
-    expect(askAgentQuickBtn.className).toContain('text-[#1E293B]');
-    expect(askAgentQuickBtn.className).not.toContain('text-white');
-
     fireEvent.click(screen.getByRole('button', { name: /what's nearby\?/i }));
 
+    // Trigger live status event -> Trace shimmer appears
+    await act(async () => {
+      triggerStatus({ step: 'nearby', label: 'Looking up nearby schools, malls & drive times...' });
+    });
+
+    const traceLine = container.querySelector('[data-slot="trace-line"][data-status="running"]');
+    expect(traceLine).not.toBeNull();
+    expect(screen.getByText('Looking up nearby schools, malls & drive times...')).toBeInTheDocument();
+
+    // Stream delta chunk -> formatted via ChatMessageText
+    await act(async () => {
+      triggerDelta('Here are **nearby** landmarks');
+    });
+    expect(screen.getByText('nearby').tagName).toBe('STRONG');
+
+    // Finalize first stream
+    await act(async () => {
+      resolveFirstStream();
+    });
+
     await waitFor(() => {
-      expect(chatService.sendMessage).toHaveBeenCalledWith(
-        expect.arrayContaining([
-          expect.objectContaining({ role: 'user', content: "What's nearby?" }),
-        ]),
-        { route: '/properties/prop-42', propertyId: 'prop-42' }
-      );
       expect(screen.getByText('Nearby Makati Sky Penthouse')).toBeInTheDocument();
-      expect(screen.getByText('Greenbelt 5')).toBeInTheDocument();
+      expect(screen.getAllByText('Greenbelt 5').length).toBeGreaterThanOrEqual(1);
       expect(screen.getByText('BGC')).toBeInTheDocument();
       expect(screen.getByText(/15 mins/)).toBeInTheDocument();
     });
+
+    // Trace disappears once finalized
+    expect(container.querySelector('[data-slot="trace-line"]')).toBeNull();
+
+    // Follow-up chips appear under latest finalized AI message
+    const duesChip = screen.getByRole('button', { name: 'Ask about monthly dues' });
+    expect(duesChip).toBeInTheDocument();
+
+    fireEvent.click(duesChip);
+
+    await waitFor(() => {
+      expect(chatService.streamMessage).toHaveBeenCalledTimes(2);
+      expect(chatService.streamMessage.mock.calls[1][0]).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ role: 'user', content: 'Ask about monthly dues' }),
+        ])
+      );
+      expect(chatService.streamMessage.mock.calls[1][1]).toEqual({
+        route: '/properties/prop-42',
+        propertyId: 'prop-42',
+      });
+      expect(
+        screen.getByText('Association dues are verified by the assigned licensed broker.')
+      ).toBeInTheDocument();
+    });
   });
 
-  it('renders HTML/script payloads from AI responses as harmless plain text', async () => {
-    chatService.sendMessage.mockResolvedValueOnce({
-      message: '<script>window.__xss=1</script>Hello buyer',
-      cards: [],
-      comparison: null,
-      nearby: null,
-      handoffDraft: null,
+  it('aborts an active stream when Stop generating is clicked, preserving streamed words and re-enabling input', async () => {
+    let capturedSignal;
+    let triggerDelta;
+    let rejectStream;
+
+    chatService.streamMessage.mockImplementationOnce((_messages, _pageContext, { onStatus, onDelta, signal }) => {
+      capturedSignal = signal;
+      triggerDelta = onDelta;
+      onStatus?.({ step: 'writing', label: 'Writing your reply...' });
+      return new Promise((_resolve, reject) => {
+        rejectStream = reject;
+      });
     });
 
     render(<ChatWidget />);
     fireEvent.click(screen.getByRole('button', { name: /toggle ai property concierge/i }));
 
-    const input = screen.getByPlaceholderText(/type your message/i);
+    const input = screen.getByRole('textbox');
+    fireEvent.change(input, { target: { value: 'Show Taguig homes' } });
+    fireEvent.submit(input.closest('form'));
+
+    await act(async () => {
+      triggerDelta('Partial reply words');
+    });
+
+    const stopBtn = screen.getByRole('button', { name: /stop generating/i });
+    expect(stopBtn).toBeInTheDocument();
+
+    fireEvent.click(stopBtn);
+
+    expect(capturedSignal.aborted).toBe(true);
+
+    // Simulate stream rejecting with AbortError after abort
+    await act(async () => {
+      const abortErr = new Error('The operation was aborted.');
+      abortErr.name = 'AbortError';
+      rejectStream(abortErr);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /send message/i })).toBeInTheDocument();
+    });
+    expect(screen.getByText('Partial reply words')).toBeInTheDocument();
+    expect(screen.queryByText(/temporarily unavailable/i)).not.toBeInTheDocument();
+  });
+
+  it('supports 1-tap + Compare bar on property cards and launches side-by-side comparison when Compare Selected is clicked', async () => {
+    chatService.streamMessage
+      .mockImplementationOnce(
+        mockStreamSuccess({
+          message: 'Here are two Taguig condos.',
+          cards: [sampleProperty, secondProperty],
+        })
+      )
+      .mockImplementationOnce(
+        mockStreamSuccess({
+          message: 'Here is the side-by-side comparison.',
+          comparison: {
+            properties: [sampleProperty, secondProperty],
+            rows: [{ label: 'Price', values: ['PHP 24,500,000', 'PHP 18,000,000'] }],
+          },
+        })
+      );
+
+    render(<ChatWidget />);
+    fireEvent.click(screen.getByRole('button', { name: /toggle ai property concierge/i }));
+
+    const input = screen.getByRole('textbox');
+    fireEvent.change(input, { target: { value: 'Condos in Taguig' } });
+    fireEvent.submit(input.closest('form'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Serendra Two-Bedroom Suite')).toBeInTheDocument();
+      expect(screen.getByText('One Uptown Residence')).toBeInTheDocument();
+    });
+
+    const compareButtons = screen.getAllByRole('button', { name: /\+ compare/i });
+    expect(compareButtons).toHaveLength(2);
+
+    // Select first property -> bar shows 1 selected, Compare Selected (1) disabled
+    fireEvent.click(compareButtons[0]);
+    const compareNowOne = screen.getByRole('button', { name: /compare selected \(1\)/i });
+    expect(compareNowOne).toBeDisabled();
+
+    // Select second property -> Compare Selected (2) enabled
+    fireEvent.click(screen.getByRole('button', { name: /\+ compare/i }));
+    const compareNowTwo = screen.getByRole('button', { name: /compare selected \(2\)/i });
+    expect(compareNowTwo).toBeEnabled();
+
+    fireEvent.click(compareNowTwo);
+
+    await waitFor(() => {
+      expect(chatService.streamMessage).toHaveBeenCalledTimes(2);
+      const sentMessages = chatService.streamMessage.mock.calls[1][0];
+      expect(sentMessages[sentMessages.length - 1].content).toBe(
+        'Compare these properties side by side: Serendra Two-Bedroom Suite (ID: prop-101), One Uptown Residence (ID: prop-102)'
+      );
+      expect(screen.getByText('Side-by-Side Comparison')).toBeInTheDocument();
+    });
+
+    // Compare bar clears after submission
+    expect(screen.queryByRole('button', { name: /compare selected/i })).not.toBeInTheDocument();
+  });
+
+  it('shows Jump to latest when scrolled up and scrolls back to bottom on click', async () => {
+    chatService.streamMessage.mockImplementationOnce(
+      mockStreamSuccess({
+        message: 'Here are the listings you requested.',
+      })
+    );
+
+    const { container } = render(<ChatWidget />);
+    fireEvent.click(screen.getByRole('button', { name: /toggle ai property concierge/i }));
+
+    const input = screen.getByRole('textbox');
+    fireEvent.change(input, { target: { value: 'Show homes' } });
+    fireEvent.submit(input.closest('form'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Here are the listings you requested.')).toBeInTheDocument();
+    });
+
+    const scrollArea = container.querySelector('[data-lenis-prevent="true"]');
+    Object.defineProperty(scrollArea, 'scrollHeight', { value: 1000, configurable: true });
+    Object.defineProperty(scrollArea, 'clientHeight', { value: 300, configurable: true });
+    Object.defineProperty(scrollArea, 'scrollTop', { value: 100, configurable: true, writable: true });
+
+    fireEvent.scroll(scrollArea);
+
+    const jumpBtn = screen.getByRole('button', { name: /jump to latest/i });
+    expect(jumpBtn).toBeInTheDocument();
+
+    window.HTMLElement.prototype.scrollIntoView.mockClear();
+    fireEvent.click(jumpBtn);
+
+    expect(window.HTMLElement.prototype.scrollIntoView).toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: /jump to latest/i })).not.toBeInTheDocument();
+  });
+
+  it('renders HTML/script payloads from AI responses as harmless plain text', async () => {
+    chatService.streamMessage.mockImplementationOnce(
+      mockStreamSuccess({
+        message: '<script>window.__xss=1</script>Hello buyer',
+      })
+    );
+
+    render(<ChatWidget />);
+    fireEvent.click(screen.getByRole('button', { name: /toggle ai property concierge/i }));
+
+    const input = screen.getByRole('textbox');
     fireEvent.change(input, { target: { value: 'Hi' } });
     fireEvent.submit(input.closest('form'));
 
@@ -163,24 +426,25 @@ describe('ChatWidget', () => {
   });
 
   it('renders property and comparison cards and routes card-triggered handoff with attached property, summary, and RA 10173 consent', async () => {
-    chatService.sendMessage.mockResolvedValueOnce({
-      message: 'Here are matching condos in Taguig.',
-      cards: [sampleProperty],
-      comparison: {
-        properties: [sampleProperty, secondProperty],
-        rows: [{ label: 'Price', values: ['PHP 24,500,000', 'PHP 18,000,000'] }],
-      },
-      nearby: null,
-      handoffDraft: {
-        summary: 'Buyer wants a 2BR condo in BGC under 25M.',
-      },
-    });
+    chatService.streamMessage.mockImplementationOnce(
+      mockStreamSuccess({
+        message: 'Here are matching condos in Taguig.',
+        cards: [sampleProperty],
+        comparison: {
+          properties: [sampleProperty, secondProperty],
+          rows: [{ label: 'Price', values: ['PHP 24,500,000', 'PHP 18,000,000'] }],
+        },
+        handoffDraft: {
+          summary: 'Buyer wants a 2BR condo in BGC under 25M.',
+        },
+      })
+    );
     apiClient.post.mockResolvedValueOnce({ data: { data: { id: 'INQ-9001' } } });
 
     render(<ChatWidget />);
     fireEvent.click(screen.getByRole('button', { name: /toggle ai property concierge/i }));
 
-    const input = screen.getByPlaceholderText(/type your message/i);
+    const input = screen.getByRole('textbox');
     fireEvent.change(input, { target: { value: '2BR condo in BGC' } });
     fireEvent.submit(input.closest('form'));
 
@@ -222,25 +486,25 @@ describe('ChatWidget', () => {
     });
   });
 
-  it('keeps ChatHandoffForm reachable when chatService.sendMessage fails', async () => {
+  it('keeps ChatHandoffForm reachable via Talk to a Licensed Agent when chatService.streamMessage fails', async () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    chatService.sendMessage.mockRejectedValueOnce(new Error('Upstream timeout'));
+    chatService.streamMessage.mockRejectedValueOnce(new Error('Upstream timeout'));
     apiClient.post.mockResolvedValueOnce({ data: { data: { id: 'INQ-FALLBACK' } } });
 
     render(<ChatWidget />);
     fireEvent.click(screen.getByRole('button', { name: /toggle ai property concierge/i }));
 
-    const input = screen.getByPlaceholderText(/type your message/i);
+    const input = screen.getByRole('textbox');
     fireEvent.change(input, { target: { value: 'Help me find a house' } });
     fireEvent.submit(input.closest('form'));
 
     await waitFor(() => {
       const fallbackMsg = screen.getByText(/temporarily unavailable/i);
       expect(fallbackMsg).toBeInTheDocument();
-      expect(fallbackMsg).toHaveTextContent(/Connect to Agent/i);
+      expect(fallbackMsg).toHaveTextContent(/Talk to a Licensed Agent/i);
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /connect to agent/i }));
+    fireEvent.click(screen.getByRole('button', { name: /talk to a licensed agent/i }));
 
     fireEvent.change(screen.getByLabelText(/full name/i), { target: { value: 'Jose Rizal' } });
     fireEvent.change(screen.getByLabelText(/email address/i), { target: { value: 'jose@example.com' } });
@@ -263,37 +527,41 @@ describe('ChatWidget', () => {
     errorSpy.mockRestore();
   });
 
-  it('caps apiMessages at 20 turns and omits empty-text messages before calling chatService.sendMessage', async () => {
+  it('caps apiMessages at 20 turns and omits empty-text messages before calling chatService.streamMessage', async () => {
     let replyCount = 0;
-    chatService.sendMessage
-      .mockResolvedValueOnce({
-        message: '   ',
-        cards: [sampleProperty],
-        comparison: null,
-        nearby: null,
-        handoffDraft: null,
-      })
-      .mockImplementation(async () => {
+    chatService.streamMessage
+      .mockImplementationOnce(
+        mockStreamSuccess({
+          message: '   ',
+          cards: [sampleProperty],
+        })
+      )
+      .mockImplementation(async (_messages, _pageContext, { onResult } = {}) => {
         replyCount += 1;
-        return {
+        const payload = {
           message: `Reply ${replyCount}`,
           cards: [],
           comparison: null,
           nearby: null,
           handoffDraft: null,
+          suggestHandoff: false,
+          handoffReason: null,
+          followUpSuggestions: [],
         };
+        onResult?.(payload);
+        return payload;
       });
 
     render(<ChatWidget />);
     fireEvent.click(screen.getByRole('button', { name: /toggle ai property concierge/i }));
 
-    const input = screen.getByPlaceholderText(/type your message/i);
+    const input = screen.getByRole('textbox');
 
     for (let i = 1; i <= 12; i += 1) {
       fireEvent.change(input, { target: { value: `Message ${i}` } });
       fireEvent.submit(input.closest('form'));
       await waitFor(() => {
-        expect(chatService.sendMessage).toHaveBeenCalledTimes(i);
+        expect(chatService.streamMessage).toHaveBeenCalledTimes(i);
         if (i === 1) {
           expect(screen.getByText('Serendra Two-Bedroom Suite')).toBeInTheDocument();
         } else {
@@ -302,15 +570,11 @@ describe('ChatWidget', () => {
       });
     }
 
-    const secondTurnMessages = chatService.sendMessage.mock.calls[1][0];
+    const secondTurnMessages = chatService.streamMessage.mock.calls[1][0];
     expect(secondTurnMessages.every((m) => m.content.trim().length > 0)).toBe(true);
-    expect(secondTurnMessages.map((m) => m.content)).toEqual([
-      expect.stringContaining('not a PRC-licensed broker'),
-      'Message 1',
-      'Message 2',
-    ]);
+    expect(secondTurnMessages.map((m) => m.content)).toEqual(['Message 1', 'Message 2']);
 
-    const lastTurnMessages = chatService.sendMessage.mock.calls[11][0];
+    const lastTurnMessages = chatService.streamMessage.mock.calls[11][0];
     expect(lastTurnMessages).toHaveLength(20);
     expect(lastTurnMessages.every((m) => m.content.trim().length > 0)).toBe(true);
     expect(lastTurnMessages[lastTurnMessages.length - 1]).toEqual({
@@ -346,46 +610,42 @@ describe('ChatWidget', () => {
     const longUserInput = 'u'.repeat(2400);
     const longAssistantReply = 'a'.repeat(2600);
 
-    chatService.sendMessage
-      .mockResolvedValueOnce({
-        message: longAssistantReply,
-        cards: [],
-        comparison: null,
-        nearby: null,
-        handoffDraft: null,
-      })
-      .mockResolvedValueOnce({
-        message: 'Follow-up acknowledged.',
-        cards: [],
-        comparison: null,
-        nearby: null,
-        handoffDraft: null,
-      });
+    chatService.streamMessage
+      .mockImplementationOnce(
+        mockStreamSuccess({
+          message: longAssistantReply,
+        })
+      )
+      .mockImplementationOnce(
+        mockStreamSuccess({
+          message: 'Follow-up acknowledged.',
+        })
+      );
 
     render(<ChatWidget />);
     fireEvent.click(screen.getByRole('button', { name: /toggle ai property concierge/i }));
 
-    const input = screen.getByPlaceholderText(/type your message/i);
+    const input = screen.getByRole('textbox');
     expect(input).toHaveAttribute('maxLength', '2000');
 
     fireEvent.change(input, { target: { value: longUserInput } });
     fireEvent.submit(input.closest('form'));
 
     await waitFor(() => {
-      expect(chatService.sendMessage).toHaveBeenCalledTimes(1);
+      expect(chatService.streamMessage).toHaveBeenCalledTimes(1);
     });
 
-    const firstCallMessages = chatService.sendMessage.mock.calls[0][0];
+    const firstCallMessages = chatService.streamMessage.mock.calls[0][0];
     expect(firstCallMessages[firstCallMessages.length - 1].content).toHaveLength(2000);
 
     fireEvent.change(input, { target: { value: 'Follow-up question' } });
     fireEvent.submit(input.closest('form'));
 
     await waitFor(() => {
-      expect(chatService.sendMessage).toHaveBeenCalledTimes(2);
+      expect(chatService.streamMessage).toHaveBeenCalledTimes(2);
     });
 
-    const secondCallMessages = chatService.sendMessage.mock.calls[1][0];
+    const secondCallMessages = chatService.streamMessage.mock.calls[1][0];
     expect(secondCallMessages.every((m) => m.content.length <= 2000)).toBe(true);
     const resentAssistant = secondCallMessages.find(
       (m) => m.role === 'assistant' && m.content.startsWith('aaaa')
@@ -394,26 +654,25 @@ describe('ChatWidget', () => {
     expect(resentAssistant.content).toHaveLength(2000);
   });
 
-  it('renders an inline Connect to Licensed Agent button when suggestHandoff is true and opens handoff with active listing', async () => {
+  it('renders an inline Connect to Licensed Agent button with dark ink on coral when suggestHandoff is true', async () => {
     propertyService.getPropertyById.mockResolvedValueOnce({
       id: 'prop-42',
       title: 'Alabang Courtyard Villa',
       formattedPrice: '₱28,000,000',
     });
-    chatService.sendMessage.mockResolvedValueOnce({
-      message: 'A PRC-licensed agent can verify flood history and schedule your site visit.',
-      cards: [],
-      comparison: null,
-      nearby: null,
-      handoffDraft: {
-        propertyId: 'prop-42',
-        propertyTitle: 'Alabang Courtyard Villa',
-        propertyPrice: '₱28,000,000',
-        summary: 'Visitor asked about flood risk and viewing.',
-      },
-      suggestHandoff: true,
-      handoffReason: 'safety_or_flood',
-    });
+    chatService.streamMessage.mockImplementationOnce(
+      mockStreamSuccess({
+        message: 'A PRC-licensed agent can verify flood history and schedule your site visit.',
+        handoffDraft: {
+          propertyId: 'prop-42',
+          propertyTitle: 'Alabang Courtyard Villa',
+          propertyPrice: '₱28,000,000',
+          summary: 'Visitor asked about flood risk and viewing.',
+        },
+        suggestHandoff: true,
+        handoffReason: 'safety_or_flood',
+      })
+    );
 
     render(
       <MemoryRouter initialEntries={['/properties/prop-42']}>
@@ -426,7 +685,7 @@ describe('ChatWidget', () => {
       expect(screen.getByText(/Currently viewing: Alabang Courtyard Villa/i)).toBeInTheDocument();
     });
 
-    const input = screen.getByPlaceholderText(/type your message/i);
+    const input = screen.getByRole('textbox');
     fireEvent.change(input, { target: { value: 'Binabaha ba dito pag bagyo?' } });
     fireEvent.submit(input.closest('form'));
 
