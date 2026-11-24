@@ -116,6 +116,7 @@ notes/
 scratch/
 artifacts/
 .superpowers/
+.worktrees/
 scripts/
 upload_args.json
 backend/backend_infrastructure_summary.txt
