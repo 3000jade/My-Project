@@ -29,6 +29,8 @@ async function runMigrations() {
       'communication_audit_session_migration.sql',
       'user_sessions_migration.sql',
       'cleanup_unused_property_columns_migration.sql',
+      'cms_content_migration.sql',
+      'cms_expand_content_types_migration.sql',
     ];
 
     for (const file of files) {
