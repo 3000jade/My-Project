@@ -1,48 +1,6 @@
 {
   "sessions": [
     {
-      "id": "37cafee9-d239-4675-8c6d-77951a71825d",
-      "tokenHash": "17c059553e760ea23bc1548f60adedab36d8be5ebed2ccdfc3ad103ab6dcabfa",
-      "userId": "e59ef10a-2963-4de4-a330-fbce2e0f284a",
-      "role": "agent",
-      "createdAt": 1795347004700,
-      "lastActiveAt": 1795350915699,
-      "idleExpiresAt": 1795352715699,
-      "absoluteExpiresAt": 1795390204700,
-      "lastHeartbeatAt": 1795347004700,
-      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
-      "ipAddress": "::1",
-      "updatedAt": 1795350915699
-    },
-    {
-      "id": "6b96436b-4075-4e8d-aa03-f9486b1b99bd",
-      "tokenHash": "5fdfd49c310e91c69333bf68040be6aed21a1d9924a55c688a2e421e9c14039f",
-      "userId": "e59ef10a-2963-4de4-a330-fbce2e0f284a",
-      "role": "agent",
-      "createdAt": 1795358324050,
-      "lastActiveAt": 1795358460181,
-      "idleExpiresAt": 1795360260181,
-      "absoluteExpiresAt": 1795401524050,
-      "lastHeartbeatAt": 1795358324050,
-      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
-      "ipAddress": "::1",
-      "updatedAt": 1795358460181
-    },
-    {
-      "id": "306863e3-130f-44b6-a3bc-2425db198785",
-      "tokenHash": "811a4802b4af520f08b58d19cfc2bbb00c99bab33a73666d571619ac51c82509",
-      "userId": "e59ef10a-2963-4de4-a330-fbce2e0f284a",
-      "role": "agent",
-      "createdAt": 1795358462078,
-      "lastActiveAt": 1795359800517,
-      "idleExpiresAt": 1795361600517,
-      "absoluteExpiresAt": 1795401662078,
-      "lastHeartbeatAt": 1795358462078,
-      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
-      "ipAddress": "::1",
-      "updatedAt": 1795359800517
-    },
-    {
       "id": "724f01ad-4d00-4a97-93af-0f83f973c2e5",
       "tokenHash": "703d54fd2d1655ede4d331cd0e86df88401db2e95139ca6ec3200acc47eb9a16",
       "userId": "787d7182-e5d8-4571-861e-05c614bf18ca",
@@ -83,6 +41,34 @@
       "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
       "ipAddress": "::1",
       "updatedAt": 1795471206309
+    },
+    {
+      "id": "a8290f13-fa96-4779-8920-67d0d3e8f682",
+      "tokenHash": "834d64dcc0202da1dbe317ebe13011393d5a1910f5462c2a8c23c735330523c5",
+      "userId": "787d7182-e5d8-4571-861e-05c614bf18ca",
+      "role": "broker",
+      "createdAt": 1795493494035,
+      "lastActiveAt": 1795495068476,
+      "idleExpiresAt": 1795496868476,
+      "absoluteExpiresAt": 1795536694035,
+      "lastHeartbeatAt": 1795493494035,
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.0.0 Safari/537.36",
+      "ipAddress": "::1",
+      "updatedAt": 1795495068476
+    },
+    {
+      "id": "de8692bc-1987-479a-8095-9b23a09a93ab",
+      "tokenHash": "4bb4b126b8e23bdcff8d829dd03d2c0c9eb9022706d2a551b0e1305d160baac1",
+      "userId": "787d7182-e5d8-4571-861e-05c614bf18ca",
+      "role": "broker",
+      "createdAt": 1795495070153,
+      "lastActiveAt": 1795495073827,
+      "idleExpiresAt": 1795496873827,
+      "absoluteExpiresAt": 1795538270153,
+      "lastHeartbeatAt": 1795495070153,
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.0.0 Safari/537.36",
+      "ipAddress": "::1",
+      "updatedAt": 1795495073827
     }
   ],
   "disabledAccounts": []
