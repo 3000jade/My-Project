@@ -8,6 +8,8 @@ import type {
   ChatPropertyCard,
   ChatPropertyDetail,
   ChatResponsePayload,
+  ChatStreamCallbacks,
+  ChatStreamStatusPayload,
 } from '../types/chat.types';
 import {
   comparePublishedPropertiesForChat,
@@ -17,7 +19,7 @@ import {
   type SearchPropertiesToolInput,
 } from './chatTools.service';
 import { stripPromptInjectionInstructions } from './inquirySummary.service';
-import { evaluateChatGuardrails } from './chatGuardrails.service';
+import { buildFollowUpSuggestions, evaluateChatGuardrails } from './chatGuardrails.service';
 import logger from '../utils/logger';
 
 export const MAX_TOOL_ROUNDS = 3;
@@ -25,6 +27,15 @@ export const REQUEST_TIMEOUT_MS = 20000;
 
 const DEFAULT_FALLBACK_MESSAGE =
   'I apologize, but I am unable to process your request at this moment. Please try again or click "Connect to Licensed Agent" for assistance.';
+
+const STREAM_STATUS = {
+  activeListing: { step: 'active_listing', label: "Checking the home you're viewing..." },
+  currentProperty: { step: 'current_property', label: 'Checking property details...' },
+  searchProperties: { step: 'search_properties', label: 'Searching published homes...' },
+  compareProperties: { step: 'compare_properties', label: 'Comparing properties side by side...' },
+  nearbyLookup: { step: 'nearby_lookup', label: 'Looking up nearby schools, malls & drive times...' },
+  writingReply: { step: 'writing_reply', label: 'Writing your reply...' },
+} as const satisfies Record<string, ChatStreamStatusPayload>;
 
 const BASE_SYSTEM_PROMPT = `You are the AI Property Concierge for Human Shelter Realty, a Philippine real estate platform.
 Disclosure (RA 9646): You are an automated AI assistant, not a PRC-licensed real estate broker or accredited salesperson.
@@ -72,6 +83,29 @@ interface OpenAIChatCompletionResponse {
       tool_calls?: OpenAIToolCall[];
     };
   }>;
+}
+
+interface OpenAIStreamChunk {
+  choices?: Array<{
+    delta?: {
+      content?: string | null;
+      tool_calls?: Array<{
+        index?: number;
+        id?: string;
+        type?: 'function';
+        function?: {
+          name?: string;
+          arguments?: string;
+        };
+      }>;
+    };
+  }>;
+}
+
+interface CompletionResult {
+  content: string | null;
+  toolCalls: OpenAIToolCall[];
+  streamedDeltas: boolean;
 }
 
 const CHAT_TOOLS = [
@@ -278,6 +312,30 @@ function buildHandoffDraft(
   };
 }
 
+function createAbortError(message = 'Chat request aborted.'): Error {
+  const err = new Error(message);
+  err.name = 'AbortError';
+  return err;
+}
+
+function emitChunkedDeltas(
+  text: string,
+  onDelta: ((chunk: string) => void) | undefined,
+  signal: AbortSignal
+): void {
+  if (!onDelta || !text || signal.aborted) return;
+  const tokens = text.match(/\S+\s*/g);
+  if (!tokens || tokens.length === 0) {
+    onDelta(text);
+    return;
+  }
+  const WORDS_PER_CHUNK = 3;
+  for (let i = 0; i < tokens.length; i += WORDS_PER_CHUNK) {
+    if (signal.aborted) break;
+    onDelta(tokens.slice(i, i + WORDS_PER_CHUNK).join(''));
+  }
+}
+
 class UpstreamHttpError extends Error {
   public readonly status: number;
   public readonly providerName: string;
@@ -331,9 +389,163 @@ export class ChatService {
     return (await response.json()) as OpenAIChatCompletionResponse;
   }
 
-  async generateChatResponse(
+  private async requestStreamingCompletion(params: {
+    apiUrl: string;
+    apiKey: string;
+    providerName: string;
+    model: string;
+    messages: OpenAIMessage[];
+    includeTools: boolean;
+    signal: AbortSignal;
+    onDelta?: (text: string) => void;
+    onFirstContentDelta?: () => void;
+  }): Promise<CompletionResult> {
+    const bodyPayload: Record<string, unknown> = {
+      model: params.model,
+      messages: params.messages,
+      temperature: 0.4,
+      max_tokens: 700,
+      stream: true,
+    };
+
+    if (params.includeTools) {
+      bodyPayload.tools = CHAT_TOOLS;
+      bodyPayload.tool_choice = 'auto';
+    }
+
+    const response = await fetch(params.apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${params.apiKey}`,
+      },
+      body: JSON.stringify(bodyPayload),
+      signal: params.signal,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      logger.error(`[ChatService] ${params.providerName} API Error (${response.status}):`, errorText);
+      throw new UpstreamHttpError(params.providerName, response.status);
+    }
+
+    const contentType = response.headers?.get?.('content-type')?.toLowerCase() ?? '';
+    const isEventStream = contentType.includes('text/event-stream') && Boolean(response.body?.getReader);
+
+    if (!isEventStream) {
+      const jsonData = (await response.json()) as OpenAIChatCompletionResponse;
+      const assistantMsg = jsonData.choices?.[0]?.message;
+      const toolCalls = Array.isArray(assistantMsg?.tool_calls) ? assistantMsg.tool_calls : [];
+      return {
+        content: assistantMsg?.content ?? null,
+        toolCalls,
+        streamedDeltas: false,
+      };
+    }
+
+    const reader = response.body!.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let accumulatedContent = '';
+    let streamedDeltas = false;
+    let firstDeltaNotified = false;
+    const toolCallsByIndex = new Map<number, OpenAIToolCall>();
+
+    const processLine = (rawLine: string) => {
+      const line = rawLine.trim();
+      if (!line.startsWith('data:')) return;
+      const dataPayload = line.slice(5).trim();
+      if (!dataPayload || dataPayload === '[DONE]') return;
+
+      let parsed: OpenAIStreamChunk;
+      try {
+        parsed = JSON.parse(dataPayload) as OpenAIStreamChunk;
+      } catch {
+        return;
+      }
+
+      const delta = parsed.choices?.[0]?.delta;
+      if (!delta) return;
+
+      if (typeof delta.content === 'string' && delta.content.length > 0) {
+        accumulatedContent += delta.content;
+        if (!firstDeltaNotified) {
+          firstDeltaNotified = true;
+          params.onFirstContentDelta?.();
+        }
+        if (!params.signal.aborted) {
+          streamedDeltas = true;
+          params.onDelta?.(delta.content);
+        }
+      }
+
+      if (Array.isArray(delta.tool_calls)) {
+        for (const tc of delta.tool_calls) {
+          const idx = typeof tc.index === 'number' ? tc.index : 0;
+          const existing = toolCallsByIndex.get(idx) ?? {
+            id: '',
+            type: 'function' as const,
+            function: { name: '', arguments: '' },
+          };
+          if (typeof tc.id === 'string' && tc.id) {
+            existing.id = tc.id;
+          }
+          if (typeof tc.function?.name === 'string' && tc.function.name) {
+            existing.function.name += tc.function.name;
+          }
+          if (typeof tc.function?.arguments === 'string' && tc.function.arguments) {
+            existing.function.arguments += tc.function.arguments;
+          }
+          toolCallsByIndex.set(idx, existing);
+        }
+      }
+    };
+
+    try {
+      while (true) {
+        if (params.signal.aborted) {
+          await reader.cancel().catch(() => {});
+          throw createAbortError();
+        }
+        const { done, value } = await reader.read();
+        if (done) break;
+        if (value) {
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split(/\r?\n/);
+          buffer = lines.pop() ?? '';
+          for (const line of lines) {
+            processLine(line);
+          }
+        }
+      }
+
+      buffer += decoder.decode();
+      if (buffer.trim()) {
+        for (const line of buffer.split(/\r?\n/)) {
+          processLine(line);
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
+
+    const orderedToolCalls = [...toolCallsByIndex.entries()]
+      .sort(([a], [b]) => a - b)
+      .map(([, tc]) => tc)
+      .filter((tc) => Boolean(tc.function.name));
+
+    return {
+      content: accumulatedContent.length > 0 ? accumulatedContent : null,
+      toolCalls: orderedToolCalls,
+      streamedDeltas,
+    };
+  }
+
+  private async runChatOrchestration(
     messages: ChatMessageInput[],
-    pageContext?: ChatPageContext
+    pageContext?: ChatPageContext,
+    callbacks?: ChatStreamCallbacks,
+    externalSignal?: AbortSignal
   ): Promise<ChatResponsePayload> {
     const groqKey = config.groqApiKey || (config.xaiApiKey?.startsWith('gsk_') ? config.xaiApiKey : '');
     const isGroq = Boolean(groqKey);
@@ -364,6 +576,31 @@ export class ChatService {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
+    const onExternalAbort = () => {
+      controller.abort();
+    };
+    if (externalSignal) {
+      if (externalSignal.aborted) {
+        controller.abort();
+      } else {
+        externalSignal.addEventListener('abort', onExternalAbort, { once: true });
+      }
+    }
+
+    const emitStatus = (status: ChatStreamStatusPayload) => {
+      if (!controller.signal.aborted) {
+        callbacks?.onStatus?.(status);
+      }
+    };
+    const emitDelta = callbacks?.onDelta
+      ? (text: string) => {
+          if (!controller.signal.aborted) {
+            callbacks.onDelta?.(text);
+          }
+        }
+      : undefined;
+    const shouldStream = Boolean(emitDelta);
+
     // Verified server-side hydration buckets (never populated from LLM text)
     let activeProperty: ChatPropertyDetail | null = null;
     let lookedUpProperty: ChatPropertyDetail | null = null;
@@ -373,13 +610,22 @@ export class ChatService {
     let hadEmptySearch = false;
 
     try {
+      if (controller.signal.aborted) {
+        throw createAbortError();
+      }
+
       const requestedPropertyId = toOptionalTrimmedString(pageContext?.propertyId);
       if (requestedPropertyId) {
+        emitStatus(STREAM_STATUS.activeListing);
         try {
           activeProperty = await getPublishedPropertyForChat(requestedPropertyId);
         } catch (err: any) {
           logger.warn('[ChatService] Failed to pre-fetch active listing:', err?.message || err);
         }
+      }
+
+      if (controller.signal.aborted) {
+        throw createAbortError();
       }
 
       const conversationMessages: OpenAIMessage[] = [
@@ -393,17 +639,72 @@ export class ChatService {
       let finalMessage: string | null = null;
 
       for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
-        let data: OpenAIChatCompletionResponse;
+        if (controller.signal.aborted) {
+          throw createAbortError();
+        }
+
+        let roundResult: CompletionResult;
+        let writingStatusEmitted = false;
+        const emitWritingStatusOnce = () => {
+          if (!writingStatusEmitted) {
+            writingStatusEmitted = true;
+            emitStatus(STREAM_STATUS.writingReply);
+          }
+        };
+
         try {
-          data = await this.requestCompletion({
-            apiUrl,
-            apiKey,
-            providerName,
-            model,
-            messages: conversationMessages,
-            includeTools: true,
-            signal: controller.signal,
-          });
+          if (round > 0 && shouldStream) {
+            try {
+              roundResult = await this.requestStreamingCompletion({
+                apiUrl,
+                apiKey,
+                providerName,
+                model,
+                messages: conversationMessages,
+                includeTools: true,
+                signal: controller.signal,
+                onDelta: emitDelta,
+                onFirstContentDelta: emitWritingStatusOnce,
+              });
+            } catch (streamErr) {
+              if (streamErr instanceof UpstreamHttpError && streamErr.status === 400) {
+                logger.warn('[ChatService] Streaming with tools rejected (400); retrying round without stream.');
+                const data = await this.requestCompletion({
+                  apiUrl,
+                  apiKey,
+                  providerName,
+                  model,
+                  messages: conversationMessages,
+                  includeTools: true,
+                  signal: controller.signal,
+                });
+                const assistantMsg = data.choices?.[0]?.message;
+                roundResult = {
+                  content: assistantMsg?.content ?? null,
+                  toolCalls: Array.isArray(assistantMsg?.tool_calls) ? assistantMsg.tool_calls : [],
+                  streamedDeltas: false,
+                };
+              } else {
+                throw streamErr;
+              }
+            }
+          } else {
+            const data = await this.requestCompletion({
+              apiUrl,
+              apiKey,
+              providerName,
+              model,
+              messages: conversationMessages,
+              includeTools: true,
+              signal: controller.signal,
+            });
+            const assistantMsg = data.choices?.[0]?.message;
+            roundResult = {
+              content: assistantMsg?.content ?? null,
+              toolCalls: Array.isArray(assistantMsg?.tool_calls) ? assistantMsg.tool_calls : [],
+              streamedDeltas: false,
+            };
+          }
         } catch (err) {
           // Graceful fallback: if round 0 returns HTTP 400 (model/provider rejects tool calling),
           // run a single-pass grounded search and complete without tools.
@@ -412,6 +713,7 @@ export class ChatService {
               '[ChatService] Round 0 returned HTTP 400 (tool calling rejected); falling back to single-pass grounded search.'
             );
 
+            emitStatus(STREAM_STATUS.searchProperties);
             let fallbackCards: ChatPropertyCard[] = [];
             try {
               const searchResult = await searchPublishedPropertiesForChat({
@@ -428,6 +730,10 @@ export class ChatService {
               logger.warn('[ChatService] Single-pass fallback search failed:', searchErr?.message || searchErr);
             }
 
+            if (controller.signal.aborted) {
+              throw createAbortError();
+            }
+
             const fallbackMessages: OpenAIMessage[] = [
               {
                 role: 'system',
@@ -436,40 +742,60 @@ export class ChatService {
               ...sanitizedMessages,
             ];
 
-            const fallbackData = await this.requestCompletion({
-              apiUrl,
-              apiKey,
-              providerName,
-              model,
-              messages: fallbackMessages,
-              includeTools: false,
-              signal: controller.signal,
-            });
-
-            finalMessage = fallbackData.choices?.[0]?.message?.content?.trim() || DEFAULT_FALLBACK_MESSAGE;
+            emitStatus(STREAM_STATUS.writingReply);
+            if (shouldStream) {
+              const fallbackStream = await this.requestStreamingCompletion({
+                apiUrl,
+                apiKey,
+                providerName,
+                model,
+                messages: fallbackMessages,
+                includeTools: false,
+                signal: controller.signal,
+                onDelta: emitDelta,
+              });
+              finalMessage = fallbackStream.content?.trim() || DEFAULT_FALLBACK_MESSAGE;
+              if (!fallbackStream.streamedDeltas || !fallbackStream.content?.trim()) {
+                emitChunkedDeltas(finalMessage, emitDelta, controller.signal);
+              }
+            } else {
+              const fallbackData = await this.requestCompletion({
+                apiUrl,
+                apiKey,
+                providerName,
+                model,
+                messages: fallbackMessages,
+                includeTools: false,
+                signal: controller.signal,
+              });
+              finalMessage = fallbackData.choices?.[0]?.message?.content?.trim() || DEFAULT_FALLBACK_MESSAGE;
+            }
             break;
           }
 
           throw err;
         }
 
-        const assistantMsg = data.choices?.[0]?.message;
-        const toolCalls = Array.isArray(assistantMsg?.tool_calls) ? assistantMsg.tool_calls : [];
+        const { toolCalls } = roundResult;
 
         if (toolCalls.length === 0) {
-          finalMessage = assistantMsg?.content?.trim() || DEFAULT_FALLBACK_MESSAGE;
+          finalMessage = roundResult.content?.trim() || DEFAULT_FALLBACK_MESSAGE;
+          if (shouldStream && (!roundResult.streamedDeltas || !roundResult.content?.trim())) {
+            emitWritingStatusOnce();
+            emitChunkedDeltas(finalMessage, emitDelta, controller.signal);
+          }
           break;
         }
 
         conversationMessages.push({
           role: 'assistant',
-          content: assistantMsg?.content ?? null,
+          content: roundResult.content ?? null,
           tool_calls: toolCalls,
         });
 
         for (const toolCall of toolCalls) {
           if (controller.signal.aborted) {
-            throw new Error('Chat request timed out.');
+            throw createAbortError('Chat request timed out.');
           }
           const toolName = toolCall.function?.name;
           const args = parseToolArgs(toolCall.function?.arguments);
@@ -479,6 +805,7 @@ export class ChatService {
             if (!args) {
               toolOutput = { error: 'Invalid tool arguments JSON.' };
             } else if (toolName === 'get_current_property') {
+              emitStatus(STREAM_STATUS.currentProperty);
               const targetId = toOptionalTrimmedString(args.propertyId) || activeProperty?.id || requestedPropertyId;
               if (!targetId) {
                 toolOutput = { error: 'No property ID provided and no active listing in page context.' };
@@ -494,6 +821,7 @@ export class ChatService {
                 }
               }
             } else if (toolName === 'search_properties') {
+              emitStatus(STREAM_STATUS.searchProperties);
               const filters = sanitizeSearchToolInput(args);
               const searchRes = await searchPublishedPropertiesForChat(filters);
               if (searchRes.cards.length > 0) {
@@ -504,6 +832,7 @@ export class ChatService {
               }
               toolOutput = searchRes;
             } else if (toolName === 'compare_properties') {
+              emitStatus(STREAM_STATUS.compareProperties);
               const rawIds = Array.isArray(args.propertyIds)
                 ? args.propertyIds.filter((id): id is string => typeof id === 'string')
                 : [];
@@ -515,6 +844,7 @@ export class ChatService {
                 toolOutput = { error: 'At least 2 published properties are required for comparison.' };
               }
             } else if (toolName === 'get_nearby_and_commute') {
+              emitStatus(STREAM_STATUS.nearbyLookup);
               const targetId = toOptionalTrimmedString(args.propertyId) || activeProperty?.id || requestedPropertyId;
               if (!targetId) {
                 toolOutput = { error: 'No property ID provided and no active listing in page context.' };
@@ -546,16 +876,37 @@ export class ChatService {
 
       // If all MAX_TOOL_ROUNDS rounds returned tool_calls, run one final synthesis pass without tools
       if (finalMessage === null) {
-        const synthesisData = await this.requestCompletion({
-          apiUrl,
-          apiKey,
-          providerName,
-          model,
-          messages: conversationMessages,
-          includeTools: false,
-          signal: controller.signal,
-        });
-        finalMessage = synthesisData.choices?.[0]?.message?.content?.trim() || DEFAULT_FALLBACK_MESSAGE;
+        if (controller.signal.aborted) {
+          throw createAbortError();
+        }
+        emitStatus(STREAM_STATUS.writingReply);
+        if (shouldStream) {
+          const synthesisStream = await this.requestStreamingCompletion({
+            apiUrl,
+            apiKey,
+            providerName,
+            model,
+            messages: conversationMessages,
+            includeTools: false,
+            signal: controller.signal,
+            onDelta: emitDelta,
+          });
+          finalMessage = synthesisStream.content?.trim() || DEFAULT_FALLBACK_MESSAGE;
+          if (!synthesisStream.streamedDeltas || !synthesisStream.content?.trim()) {
+            emitChunkedDeltas(finalMessage, emitDelta, controller.signal);
+          }
+        } else {
+          const synthesisData = await this.requestCompletion({
+            apiUrl,
+            apiKey,
+            providerName,
+            model,
+            messages: conversationMessages,
+            includeTools: false,
+            signal: controller.signal,
+          });
+          finalMessage = synthesisData.choices?.[0]?.message?.content?.trim() || DEFAULT_FALLBACK_MESSAGE;
+        }
       }
 
       const primaryProperty = activeProperty ?? lookedUpProperty ?? hydratedCards?.[0] ?? null;
@@ -564,10 +915,20 @@ export class ChatService {
         userQuery: latestUserQuery,
         hadEmptySearch: hadEmptySearch && (!hydratedCards || hydratedCards.length === 0),
       });
+      const followUpSuggestions = buildFollowUpSuggestions({
+        userQuery: latestUserQuery,
+        activeProperty,
+        cards: hydratedCards,
+        comparison: hydratedComparison,
+        nearby: hydratedNearby,
+        suggestHandoff: guardrailDecision.suggestHandoff,
+        handoffReason: guardrailDecision.handoffReason,
+      });
 
       const payload: ChatResponsePayload = {
         message: finalMessage,
         handoffDraft,
+        followUpSuggestions,
       };
 
       if (guardrailDecision.suggestHandoff) {
@@ -587,11 +948,33 @@ export class ChatService {
 
       return payload;
     } catch (error) {
+      if (externalSignal?.aborted) {
+        throw error instanceof Error && error.name === 'AbortError' ? error : createAbortError();
+      }
       logger.error('[ChatService] Upstream completion failed:', error);
       throw error;
     } finally {
       clearTimeout(timeoutId);
+      if (externalSignal) {
+        externalSignal.removeEventListener('abort', onExternalAbort);
+      }
     }
+  }
+
+  async generateChatResponse(
+    messages: ChatMessageInput[],
+    pageContext?: ChatPageContext
+  ): Promise<ChatResponsePayload> {
+    return this.runChatOrchestration(messages, pageContext);
+  }
+
+  async generateChatResponseStream(
+    messages: ChatMessageInput[],
+    pageContext?: ChatPageContext,
+    callbacks?: ChatStreamCallbacks,
+    externalSignal?: AbortSignal
+  ): Promise<ChatResponsePayload> {
+    return this.runChatOrchestration(messages, pageContext, callbacks, externalSignal);
   }
 }
 

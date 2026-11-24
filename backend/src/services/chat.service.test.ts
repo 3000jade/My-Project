@@ -1,14 +1,16 @@
+import { EventEmitter } from 'events';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import type {
   ChatComparisonTable,
   ChatNearbySummary,
   ChatPropertyCard,
   ChatPropertyDetail,
+  ChatStreamStatusPayload,
 } from '../types/chat.types';
 import config from '../config/index';
 import * as chatTools from './chatTools.service';
 import { ChatService } from './chat.service';
-import { sendMessage } from '../controllers/chat.controller';
+import { sendMessage, sendMessageStream } from '../controllers/chat.controller';
 
 const VERIFIED_CARD: ChatPropertyCard = {
   id: 'prop-101',
@@ -67,8 +69,29 @@ function makeFetchJsonResponse(body: unknown, status = 200) {
   return {
     ok: status >= 200 && status < 300,
     status,
+    headers: new Headers({ 'content-type': 'application/json' }),
     json: async () => body,
     text: async () => (typeof body === 'string' ? body : JSON.stringify(body)),
+  } as unknown as Response;
+}
+
+function makeFetchSseResponse(chunks: string[], status = 200) {
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      for (const chunk of chunks) {
+        controller.enqueue(encoder.encode(chunk));
+      }
+      controller.close();
+    },
+  });
+
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    headers: new Headers({ 'content-type': 'text/event-stream; charset=utf-8' }),
+    body: stream,
+    text: async () => chunks.join(''),
   } as unknown as Response;
 }
 
@@ -177,6 +200,8 @@ describe('ChatService (Tool-Assisted Orchestrator)', () => {
       })
     );
     expect(result.handoffDraft?.summary).toContain('3 bedroom condos in Taguig');
+    expect(Array.isArray(result.followUpSuggestions)).toBe(true);
+    expect(result.followUpSuggestions!.length).toBeGreaterThanOrEqual(2);
   });
 
   it('auto-loads active pageContext.propertyId into <active_listing> and hydrates nearby and comparison', async () => {
@@ -465,5 +490,413 @@ describe('ChatController.sendMessage', () => {
     expect(body.success).toBe(false);
     expect(JSON.stringify(body)).not.toContain('gsk_secret_999');
     expect(JSON.stringify(body)).not.toContain('api.groq.com');
+  });
+});
+
+describe('ChatService.generateChatResponseStream', () => {
+  const originalGroqKey = config.groqApiKey;
+  const originalXaiKey = config.xaiApiKey;
+  const originalAiModel = config.aiModel;
+  let service: ChatService;
+
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    config.groqApiKey = 'gsk_test_key_12345';
+    config.xaiApiKey = '';
+    config.aiModel = 'test-model';
+    service = new ChatService();
+  });
+
+  afterEach(() => {
+    config.groqApiKey = originalGroqKey;
+    config.xaiApiKey = originalXaiKey;
+    config.aiModel = originalAiModel;
+    vi.unstubAllGlobals();
+  });
+
+  it('emits live status events, streams OpenAI SSE delta chunks, and returns verified cards and followUpSuggestions', async () => {
+    vi.spyOn(chatTools, 'getPublishedPropertyForChat').mockResolvedValue(VERIFIED_DETAIL);
+    vi.spyOn(chatTools, 'searchPublishedPropertiesForChat').mockResolvedValue({
+      cards: [VERIFIED_CARD],
+      totalMatches: 1,
+    });
+
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        makeFetchJsonResponse({
+          choices: [
+            {
+              message: {
+                role: 'assistant',
+                content: null,
+                tool_calls: [
+                  {
+                    id: 'call_search_stream',
+                    type: 'function',
+                    function: {
+                      name: 'search_properties',
+                      arguments: JSON.stringify({ city: 'Taguig' }),
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        })
+      )
+      .mockResolvedValueOnce(
+        makeFetchSseResponse([
+          'data: {"choices":[{"delta":{"content":"Here is "}}]}\n\n',
+          'data: {"choices":[{"delta":{"content":"The Horizon "}}]}\n\n',
+          'data: {"choices":[{"delta":{"content":"Residence."}}]}\n\ndata: [DONE]\n\n',
+        ])
+      );
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    const statuses: ChatStreamStatusPayload[] = [];
+    const deltas: string[] = [];
+
+    const result = await service.generateChatResponseStream(
+      [{ role: 'user', content: 'Show me condos in Taguig' }],
+      { route: '/properties/prop-101', propertyId: 'prop-101' },
+      {
+        onStatus: (s) => statuses.push(s),
+        onDelta: (t) => deltas.push(t),
+      }
+    );
+
+    expect(statuses).toEqual([
+      { step: 'active_listing', label: "Checking the home you're viewing..." },
+      { step: 'search_properties', label: 'Searching published homes...' },
+      { step: 'writing_reply', label: 'Writing your reply...' },
+    ]);
+    expect(deltas).toEqual(['Here is ', 'The Horizon ', 'Residence.']);
+
+    const round1Body = JSON.parse(fetchMock.mock.calls[1][1].body);
+    expect(round1Body.stream).toBe(true);
+
+    expect(result.message).toBe('Here is The Horizon Residence.');
+    expect(result.cards).toEqual([VERIFIED_CARD]);
+    expect(Array.isArray(result.followUpSuggestions)).toBe(true);
+    expect(result.followUpSuggestions!.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('emits tool-specific status events for get_current_property, compare_properties, and get_nearby_and_commute', async () => {
+    vi.spyOn(chatTools, 'getPublishedPropertyForChat').mockResolvedValue(VERIFIED_DETAIL);
+    vi.spyOn(chatTools, 'comparePublishedPropertiesForChat').mockResolvedValue(VERIFIED_COMPARISON);
+    vi.spyOn(chatTools, 'getPropertyNearbyForChat').mockResolvedValue(VERIFIED_NEARBY);
+
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        makeFetchJsonResponse({
+          choices: [
+            {
+              message: {
+                role: 'assistant',
+                content: null,
+                tool_calls: [
+                  {
+                    id: 'call_cur',
+                    type: 'function',
+                    function: { name: 'get_current_property', arguments: JSON.stringify({ propertyId: 'prop-101' }) },
+                  },
+                  {
+                    id: 'call_cmp',
+                    type: 'function',
+                    function: {
+                      name: 'compare_properties',
+                      arguments: JSON.stringify({ propertyIds: ['prop-101', 'prop-202'] }),
+                    },
+                  },
+                  {
+                    id: 'call_near',
+                    type: 'function',
+                    function: { name: 'get_nearby_and_commute', arguments: JSON.stringify({ propertyId: 'prop-101' }) },
+                  },
+                ],
+              },
+            },
+          ],
+        })
+      )
+      .mockResolvedValueOnce(
+        makeFetchSseResponse([
+          'data: {"choices":[{"delta":{"content":"All checked."}}]}\n\ndata: [DONE]\n\n',
+        ])
+      );
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    const statuses: ChatStreamStatusPayload[] = [];
+    const result = await service.generateChatResponseStream(
+      [{ role: 'user', content: 'Compare and check nearby' }],
+      undefined,
+      { onStatus: (s) => statuses.push(s), onDelta: () => {} }
+    );
+
+    expect(statuses).toEqual([
+      { step: 'current_property', label: 'Checking property details...' },
+      { step: 'compare_properties', label: 'Comparing properties side by side...' },
+      { step: 'nearby_lookup', label: 'Looking up nearby schools, malls & drive times...' },
+      { step: 'writing_reply', label: 'Writing your reply...' },
+    ]);
+    expect(result.comparison).toEqual(VERIFIED_COMPARISON);
+    expect(result.nearby).toEqual(VERIFIED_NEARBY);
+  });
+
+  it('emits writing_reply and tidy word-group delta chunks when round-0 returns direct content without tools', async () => {
+    const fetchMock = vi.fn().mockResolvedValueOnce(
+      makeFetchJsonResponse({
+        choices: [
+          {
+            message: {
+              role: 'assistant',
+              content: 'Welcome to Human Shelter Realty! Tell me your preferred city or budget.',
+            },
+          },
+        ],
+      })
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const statuses: ChatStreamStatusPayload[] = [];
+    const deltas: string[] = [];
+
+    const result = await service.generateChatResponseStream(
+      [{ role: 'user', content: 'Hello!' }],
+      undefined,
+      {
+        onStatus: (s) => statuses.push(s),
+        onDelta: (t) => deltas.push(t),
+      }
+    );
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(statuses).toEqual([{ step: 'writing_reply', label: 'Writing your reply...' }]);
+    expect(deltas.length).toBeGreaterThan(1);
+    expect(deltas.join('')).toBe('Welcome to Human Shelter Realty! Tell me your preferred city or budget.');
+    expect(result.message).toBe('Welcome to Human Shelter Realty! Tell me your preferred city or budget.');
+    expect(result.followUpSuggestions!.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('gracefully falls back to reading JSON if upstream ignores stream=true on round-0 HTTP 400 fallback', async () => {
+    vi.spyOn(chatTools, 'searchPublishedPropertiesForChat').mockResolvedValue({
+      cards: [VERIFIED_CARD],
+      totalMatches: 1,
+    });
+
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(makeFetchJsonResponse('Tools not supported', 400))
+      .mockResolvedValueOnce(
+        makeFetchJsonResponse({
+          choices: [
+            {
+              message: {
+                role: 'assistant',
+                content: 'The Horizon Residence is available in Taguig.',
+              },
+            },
+          ],
+        })
+      );
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    const statuses: ChatStreamStatusPayload[] = [];
+    const deltas: string[] = [];
+
+    const result = await service.generateChatResponseStream(
+      [{ role: 'user', content: 'Condos in Taguig' }],
+      undefined,
+      {
+        onStatus: (s) => statuses.push(s),
+        onDelta: (t) => deltas.push(t),
+      }
+    );
+
+    const fallbackBody = JSON.parse(fetchMock.mock.calls[1][1].body);
+    expect(fallbackBody.tools).toBeUndefined();
+    expect(fallbackBody.stream).toBe(true);
+    expect(statuses).toEqual([
+      { step: 'search_properties', label: 'Searching published homes...' },
+      { step: 'writing_reply', label: 'Writing your reply...' },
+    ]);
+    expect(deltas.join('')).toBe('The Horizon Residence is available in Taguig.');
+    expect(result.cards).toEqual([VERIFIED_CARD]);
+  });
+
+  it('links externalSignal abort to internal AbortController and removes the listener in finally', async () => {
+    const externalController = new AbortController();
+    const removeSpy = vi.spyOn(externalController.signal, 'removeEventListener');
+
+    const fetchMock = vi.fn().mockImplementation((_url: string, init: RequestInit) => {
+      return new Promise((_resolve, reject) => {
+        const signal = init.signal;
+        if (signal?.aborted) {
+          const err = new Error('Aborted');
+          err.name = 'AbortError';
+          reject(err);
+          return;
+        }
+        signal?.addEventListener('abort', () => {
+          const err = new Error('Aborted');
+          err.name = 'AbortError';
+          reject(err);
+        });
+      });
+    });
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    const pending = service.generateChatResponseStream(
+      [{ role: 'user', content: 'Search Makati condos' }],
+      undefined,
+      { onDelta: () => {} },
+      externalController.signal
+    );
+
+    externalController.abort();
+
+    await expect(pending).rejects.toMatchObject({ name: 'AbortError' });
+    expect(removeSpy).toHaveBeenCalledWith('abort', expect.any(Function));
+  });
+});
+
+describe('ChatController.sendMessageStream', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  function createMockSseRes() {
+    const headers: Record<string, string> = {};
+    const chunks: string[] = [];
+    const res: any = {
+      writableEnded: false,
+      setHeader: vi.fn((name: string, value: string) => {
+        headers[name.toLowerCase()] = value;
+      }),
+      flushHeaders: vi.fn(),
+      write: vi.fn((chunk: string) => {
+        chunks.push(chunk);
+        return true;
+      }),
+      end: vi.fn(() => {
+        res.writableEnded = true;
+      }),
+      status: vi.fn(),
+      json: vi.fn(),
+    };
+    res.status.mockReturnValue(res);
+    return { res, headers, chunks };
+  }
+
+  it('sets SSE headers and formats status, delta, result, and done events', async () => {
+    const mockPayload = {
+      message: 'Verified stream reply',
+      cards: [VERIFIED_CARD],
+      followUpSuggestions: ["What's nearby this property?", 'Show similar properties in this city'],
+    };
+
+    const streamSpy = vi
+      .spyOn(ChatService.prototype, 'generateChatResponseStream')
+      .mockImplementation(async (_messages, _pageContext, callbacks) => {
+        callbacks?.onStatus?.({ step: 'search_properties', label: 'Searching published homes...' });
+        callbacks?.onDelta?.('Verified ');
+        callbacks?.onDelta?.('stream reply');
+        return mockPayload;
+      });
+
+    const req = Object.assign(new EventEmitter(), {
+      body: {
+        messages: [{ role: 'user', content: 'Show condos' }],
+        pageContext: { route: '/properties', propertyId: 'prop-101' },
+      },
+    }) as any;
+
+    const { res, headers, chunks } = createMockSseRes();
+
+    await sendMessageStream(req, res);
+
+    expect(headers['content-type']).toBe('text/event-stream; charset=utf-8');
+    expect(headers['cache-control']).toBe('no-cache, no-transform');
+    expect(headers['connection']).toBe('keep-alive');
+    expect(headers['x-accel-buffering']).toBe('no');
+    expect(res.flushHeaders).toHaveBeenCalledTimes(1);
+
+    expect(streamSpy).toHaveBeenCalledWith(
+      [{ role: 'user', content: 'Show condos' }],
+      { route: '/properties', propertyId: 'prop-101' },
+      expect.objectContaining({
+        onStatus: expect.any(Function),
+        onDelta: expect.any(Function),
+      }),
+      expect.any(AbortSignal)
+    );
+
+    const output = chunks.join('');
+    expect(output).toContain(
+      'event: status\ndata: {"step":"search_properties","label":"Searching published homes..."}\n\n'
+    );
+    expect(output).toContain('event: delta\ndata: {"text":"Verified "}\n\n');
+    expect(output).toContain('event: delta\ndata: {"text":"stream reply"}\n\n');
+    expect(output).toContain(`event: result\ndata: ${JSON.stringify(mockPayload)}\n\n`);
+    expect(output).toContain('event: done\ndata: {}\n\n');
+    expect(res.end).toHaveBeenCalledTimes(1);
+  });
+
+  it('aborts the stream signal when client closes connection before writableEnded', async () => {
+    let capturedSignal: AbortSignal | undefined;
+
+    vi.spyOn(ChatService.prototype, 'generateChatResponseStream').mockImplementation(
+      async (_messages, _pageContext, _callbacks, signal) => {
+        capturedSignal = signal;
+        return await new Promise((_resolve, reject) => {
+          signal?.addEventListener('abort', () => {
+            const err = new Error('Client closed');
+            err.name = 'AbortError';
+            reject(err);
+          });
+        });
+      }
+    );
+
+    const req = Object.assign(new EventEmitter(), {
+      body: { messages: [{ role: 'user', content: 'Hello' }] },
+    }) as any;
+    const { res, chunks } = createMockSseRes();
+
+    const pending = sendMessageStream(req, res);
+    req.emit('close');
+    await pending;
+
+    expect(capturedSignal?.aborted).toBe(true);
+    expect(chunks.join('')).not.toContain('event: error');
+    expect(res.end).toHaveBeenCalledTimes(1);
+  });
+
+  it('emits masked event: error and event: done on upstream failure without leaking secrets', async () => {
+    vi.spyOn(ChatService.prototype, 'generateChatResponseStream').mockRejectedValue(
+      new Error('Groq API https://api.groq.com failed with Bearer gsk_secret_999')
+    );
+
+    const req = Object.assign(new EventEmitter(), {
+      body: { messages: [{ role: 'user', content: 'Hello' }] },
+    }) as any;
+    const { res, chunks } = createMockSseRes();
+
+    await sendMessageStream(req, res);
+
+    const output = chunks.join('');
+    expect(output).toContain(
+      'event: error\ndata: {"error":"Unable to process chat request right now. Please try again or connect with a licensed agent."}\n\n'
+    );
+    expect(output).toContain('event: done\ndata: {}\n\n');
+    expect(output).not.toContain('gsk_secret_999');
+    expect(output).not.toContain('api.groq.com');
+    expect(res.end).toHaveBeenCalledTimes(1);
   });
 });
