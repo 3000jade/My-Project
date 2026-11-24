@@ -1,11 +1,30 @@
 import { useState, useEffect, useRef } from 'react';
 import { useInRouterContext, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, MotionConfig } from 'framer-motion';
-import { Bot, MapPin, MessageCircle, Send, UserCheck, X } from 'lucide-react';
+import {
+  ArrowDown,
+  Bot,
+  GitCompareArrows,
+  Loader2,
+  MapPin,
+  Maximize2,
+  MessageCircle,
+  Minimize2,
+  RotateCcw,
+  Send,
+  Square,
+  UserCheck,
+  X,
+} from 'lucide-react';
+import { cn } from '@/utils/cn';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Trace, TraceLine, TraceIcon, TraceTitle } from '@/components/ui/trace';
 import { chatService } from '../../services/chatService';
 import { propertyService } from '../../services/propertyService';
+import ChatMessageText from './ChatMessageText';
+import ChatWelcomeView from './ChatWelcomeView';
 import ChatPropertyCard from './ChatPropertyCard';
 import ChatComparisonCard from './ChatComparisonCard';
 import ChatNearbyCard from './ChatNearbyCard';
@@ -13,15 +32,8 @@ import ChatHandoffForm from './ChatHandoffForm';
 
 const PROPERTY_ROUTE_REGEX = /^\/(?:properties|listing)\/([^/?#]+)/i;
 const MAX_CHAT_MESSAGE_LENGTH = 2000;
-
-const INITIAL_GREETING = {
-  id: 'welcome-ra-9646',
-  type: 'ai',
-  text: "I am Human Shelter Realty's AI Property Concierge (not a PRC-licensed broker). How can I help you explore our published properties today?",
-  cards: [],
-  comparison: null,
-  nearby: null,
-};
+const MAX_COMPARE_SELECTION = 3;
+const SCROLL_NEAR_BOTTOM_THRESHOLD = 48;
 
 function extractPropertyId(pathname) {
   if (typeof pathname !== 'string') return null;
@@ -44,6 +56,7 @@ function normalizeReply(aiResponse) {
       handoffDraft: null,
       suggestHandoff: false,
       handoffReason: null,
+      followUpSuggestions: [],
     };
   }
 
@@ -55,6 +68,12 @@ function normalizeReply(aiResponse) {
     handoffDraft: aiResponse?.handoffDraft ?? null,
     suggestHandoff: Boolean(aiResponse?.suggestHandoff),
     handoffReason: typeof aiResponse?.handoffReason === 'string' ? aiResponse.handoffReason : null,
+    followUpSuggestions: Array.isArray(aiResponse?.followUpSuggestions)
+      ? aiResponse.followUpSuggestions
+          .filter((item) => typeof item === 'string' && item.trim())
+          .map((item) => item.trim())
+          .slice(0, 3)
+      : [],
   };
 }
 
@@ -76,20 +95,55 @@ function normalizeAttachedProperty(property) {
   };
 }
 
+function getPreferredScrollBehavior() {
+  const prefersReducedMotion =
+    typeof window !== 'undefined' &&
+    window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+  return prefersReducedMotion ? 'auto' : 'smooth';
+}
+
+function finalizeStreamingMessage(prevMessages, targetId = null) {
+  return prevMessages.reduce((acc, msg) => {
+    const shouldFinalize = targetId ? msg.id === targetId && msg.isStreaming : msg.isStreaming;
+    if (!shouldFinalize) {
+      acc.push(msg);
+      return acc;
+    }
+    if (typeof msg.text === 'string' && msg.text.trim().length > 0) {
+      acc.push({ ...msg, isStreaming: false });
+    }
+    return acc;
+  }, []);
+}
+
 function ChatWidgetContent({ pathname, onNavigateProperty }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState([INITIAL_GREETING]);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [activeStatus, setActiveStatus] = useState('');
+  const [selectedCompare, setSelectedCompare] = useState([]);
+  const [isNearBottom, setIsNearBottom] = useState(true);
   const [showEscalationForm, setShowEscalationForm] = useState(false);
   const [attachedProperty, setAttachedProperty] = useState(null);
   const [latestHandoffSummary, setLatestHandoffSummary] = useState('');
   const [activeListing, setActiveListing] = useState(null);
+
+  const messagesContainerRef = useRef(null);
   const messagesEndRef = useRef(null);
+  const abortControllerRef = useRef(null);
+  const activeStreamMsgIdRef = useRef(null);
 
   const activePropertyId = extractPropertyId(pathname);
   const currentActiveListing =
     activePropertyId && activeListing?.routePropertyId === activePropertyId ? activeListing : null;
+
+  useEffect(() => {
+    return () => {
+      abortControllerRef.current?.abort();
+    };
+  }, []);
 
   useEffect(() => {
     if (!activePropertyId) {
@@ -126,6 +180,24 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
     };
   }, [activePropertyId, isOpen]);
 
+  useEffect(() => {
+    if (!isOpen || !isNearBottom) return;
+    if (isStreaming) {
+      const container = messagesContainerRef.current;
+      if (container) {
+        container.scrollTop = container.scrollHeight;
+      }
+      messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
+      return;
+    }
+    const timer = setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({
+        behavior: getPreferredScrollBehavior(),
+      });
+    }, 60);
+    return () => clearTimeout(timer);
+  }, [isOpen, messages, isStreaming, activeStatus, isNearBottom]);
+
   const toggleChat = () => setIsOpen((prev) => !prev);
 
   const openHandoff = (property = null) => {
@@ -133,54 +205,126 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
     setShowEscalationForm(true);
   };
 
-  useEffect(() => {
-    if (!isOpen) return;
-    const timer = setTimeout(() => {
-      const prefersReducedMotion =
-        typeof window !== 'undefined' &&
-        window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
-      messagesEndRef.current?.scrollIntoView({
-        behavior: prefersReducedMotion ? 'auto' : 'smooth',
-      });
-    }, 100);
-    return () => clearTimeout(timer);
-  }, [isOpen, messages, isTyping]);
+  const handleNewChat = () => {
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = null;
+    activeStreamMsgIdRef.current = null;
+    setMessages([]);
+    setInputValue('');
+    setIsStreaming(false);
+    setActiveStatus('');
+    setSelectedCompare([]);
+    setShowEscalationForm(false);
+    setAttachedProperty(null);
+    setLatestHandoffSummary('');
+    setIsNearBottom(true);
+  };
+
+  const handleStop = () => {
+    const targetId = activeStreamMsgIdRef.current;
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = null;
+    activeStreamMsgIdRef.current = null;
+    setIsStreaming(false);
+    setActiveStatus('');
+    setMessages((prev) => finalizeStreamingMessage(prev, targetId));
+  };
+
+  const handleMessagesScroll = () => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+    const distanceFromBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight;
+    setIsNearBottom(distanceFromBottom <= SCROLL_NEAR_BOTTOM_THRESHOLD);
+  };
+
+  const scrollToLatest = () => {
+    setIsNearBottom(true);
+    messagesEndRef.current?.scrollIntoView({
+      behavior: getPreferredScrollBehavior(),
+    });
+  };
+
+  const handleToggleCompare = (property) => {
+    if (!property?.id) return;
+    setSelectedCompare((prev) => {
+      const exists = prev.some((item) => item.id === property.id);
+      if (exists) {
+        return prev.filter((item) => item.id !== property.id);
+      }
+      if (prev.length >= MAX_COMPARE_SELECTION) {
+        return prev;
+      }
+      return [...prev, { id: property.id, title: property.title || property.id }];
+    });
+  };
+
+  const handleCompareSelected = () => {
+    if (selectedCompare.length < 2 || isStreaming) return;
+    const summaryList = selectedCompare
+      .map((prop) => `${prop.title} (ID: ${prop.id})`)
+      .join(', ');
+    setSelectedCompare([]);
+    handleSend(null, `Compare these properties side by side: ${summaryList}`);
+  };
 
   const handleSend = async (e, textOverride = null) => {
     if (e) e.preventDefault();
     const rawText = textOverride ?? inputValue;
     const userText =
       typeof rawText === 'string' ? rawText.trim().slice(0, MAX_CHAT_MESSAGE_LENGTH) : '';
-    if (!userText || isTyping) return;
+    if (!userText || isStreaming) return;
 
-    const newMsg = {
+    const userMsg = {
       id: createMessageId('user'),
       type: 'user',
       text: userText,
     };
-    const updatedMessages = [...messages, newMsg];
-    setMessages(updatedMessages);
+    const aiMsgId = createMessageId('ai');
+    const aiPlaceholder = {
+      id: aiMsgId,
+      type: 'ai',
+      text: '',
+      cards: [],
+      comparison: null,
+      nearby: null,
+      suggestHandoff: false,
+      handoffReason: null,
+      followUpSuggestions: [],
+      isStreaming: true,
+    };
+
+    const apiMessages = [...messages, userMsg]
+      .map((msg) => ({
+        role: msg.type === 'ai' ? 'assistant' : 'user',
+        content:
+          typeof msg.text === 'string'
+            ? msg.text.trim().slice(0, MAX_CHAT_MESSAGE_LENGTH)
+            : '',
+      }))
+      .filter((msg) => msg.content.length > 0)
+      .slice(-20);
+
+    const pageContext = activePropertyId
+      ? { route: pathname, propertyId: activePropertyId }
+      : { route: pathname };
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+    activeStreamMsgIdRef.current = aiMsgId;
+
+    setMessages((prev) => [...prev, userMsg, aiPlaceholder]);
     setInputValue('');
-    setIsTyping(true);
+    setIsStreaming(true);
+    setActiveStatus('Connecting to AI Concierge...');
+    setIsNearBottom(true);
 
-    try {
-      const apiMessages = updatedMessages
-        .map((msg) => ({
-          role: msg.type === 'ai' ? 'assistant' : 'user',
-          content:
-            typeof msg.text === 'string'
-              ? msg.text.trim().slice(0, MAX_CHAT_MESSAGE_LENGTH)
-              : '',
-        }))
-        .filter((msg) => msg.content.length > 0)
-        .slice(-20);
+    let resultApplied = false;
 
-      const pageContext = activePropertyId
-        ? { route: pathname, propertyId: activePropertyId }
-        : { route: pathname };
-
-      const aiResponse = await chatService.sendMessage(apiMessages, pageContext);
-      const normalized = normalizeReply(aiResponse);
+    const applyFinalResult = (rawResponse) => {
+      if (abortControllerRef.current !== controller) return;
+      resultApplied = true;
+      const normalized = normalizeReply(rawResponse);
 
       if (
         typeof normalized.handoffDraft?.summary === 'string' &&
@@ -189,48 +333,90 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
         setLatestHandoffSummary(normalized.handoffDraft.summary.trim());
       }
 
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: createMessageId('ai'),
-          type: 'ai',
-          text: normalized.message,
-          cards: normalized.cards,
-          comparison: normalized.comparison,
-          nearby: normalized.nearby,
-          suggestHandoff: normalized.suggestHandoff,
-          handoffReason: normalized.handoffReason,
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === aiMsgId
+            ? {
+                ...msg,
+                text: normalized.message || msg.text,
+                cards: normalized.cards,
+                comparison: normalized.comparison,
+                nearby: normalized.nearby,
+                suggestHandoff: normalized.suggestHandoff,
+                handoffReason: normalized.handoffReason,
+                followUpSuggestions: normalized.followUpSuggestions,
+                isStreaming: false,
+              }
+            : msg
+        )
+      );
+    };
+
+    try {
+      const finalResponse = await chatService.streamMessage(apiMessages, pageContext, {
+        signal: controller.signal,
+        onStatus: (statusEvent) => {
+          if (abortControllerRef.current !== controller) return;
+          const label = typeof statusEvent === 'string' ? statusEvent : statusEvent?.label;
+          if (typeof label === 'string' && label.trim()) {
+            setActiveStatus(label.trim());
+          }
         },
-      ]);
+        onDelta: (chunk) => {
+          if (abortControllerRef.current !== controller || typeof chunk !== 'string' || !chunk) {
+            return;
+          }
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === aiMsgId ? { ...msg, text: `${msg.text}${chunk}` } : msg
+            )
+          );
+        },
+        onResult: (payload) => {
+          applyFinalResult(payload);
+        },
+      });
+
+      if (!resultApplied && finalResponse !== undefined) {
+        applyFinalResult(finalResponse);
+      }
     } catch (error) {
+      if (error?.name === 'AbortError' || controller.signal.aborted) {
+        setMessages((prev) => finalizeStreamingMessage(prev, aiMsgId));
+        return;
+      }
+
+      if (abortControllerRef.current !== controller) {
+        return;
+      }
+
       console.error('Chat error:', error);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: createMessageId('err'),
-          type: 'ai',
-          text: 'The AI Property Concierge is temporarily unavailable right now. You can still reach a licensed agent by clicking "Connect to Agent" below.',
-          cards: [],
-          comparison: null,
-          nearby: null,
-        },
-      ]);
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === aiMsgId
+            ? {
+                ...msg,
+                text: 'The AI Property Concierge is temporarily unavailable right now. You can still reach a licensed agent by clicking "Talk to a Licensed Agent" below.',
+                cards: [],
+                comparison: null,
+                nearby: null,
+                suggestHandoff: false,
+                handoffReason: null,
+                followUpSuggestions: [],
+                isStreaming: false,
+              }
+            : msg
+        )
+      );
     } finally {
-      setIsTyping(false);
+      if (abortControllerRef.current === controller) {
+        abortControllerRef.current = null;
+        activeStreamMsgIdRef.current = null;
+        setIsStreaming(false);
+        setActiveStatus('');
+      }
     }
   };
-
-  const quickActions = activePropertyId
-    ? [
-        { label: "What's nearby?", isAgent: false },
-        { label: 'Compare similar', isAgent: false },
-        { label: 'Ask Agent', isAgent: true },
-      ]
-    : [
-        { label: 'Search by budget', isAgent: false },
-        { label: 'Featured homes', isAgent: false },
-        { label: 'Connect to Agent', isAgent: true },
-      ];
 
   return (
     <MotionConfig reducedMotion="user">
@@ -241,40 +427,76 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
         <AnimatePresence>
           {isOpen && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20, transformOrigin: 'bottom right' }}
+              data-testid="chat-widget-panel"
+              initial={{ opacity: 0, scale: 0.96, y: 16, transformOrigin: 'bottom right' }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="w-96 md:w-md max-w-[calc(100vw-2rem)] h-136 max-h-[75vh] mb-4 bg-white shadow-xl rounded-xl overflow-hidden border border-[#E2E8F0] flex flex-col pointer-events-auto"
+              exit={{ opacity: 0, scale: 0.96, y: 16 }}
+              transition={{ type: 'spring', damping: 28, stiffness: 260 }}
+              className={cn(
+                'fixed inset-0 z-10 w-full h-full rounded-none bg-white shadow-xl overflow-hidden border border-[#E2E8F0] flex flex-col pointer-events-auto',
+                isExpanded
+                  ? 'sm:fixed sm:inset-y-4 sm:right-4 sm:inset-x-auto sm:w-xl sm:max-w-[calc(100vw-2rem)] sm:h-auto sm:max-h-none sm:mb-0 sm:rounded-xl'
+                  : 'sm:static sm:w-96 md:w-md sm:max-w-[calc(100vw-2rem)] sm:h-140 sm:max-h-[80vh] sm:mb-4 sm:rounded-xl'
+              )}
             >
-              {/* Header */}
-              <div className="bg-[#0F766E] p-4 flex justify-between items-center gap-2 text-white shrink-0 relative z-10">
-                <div className="flex items-center gap-4 min-w-0">
+              {/* Crisp White Architectural Header */}
+              <div className="bg-white border-b border-[#E2E8F0] p-4 flex items-center justify-between gap-2 text-[#1E293B] shrink-0 relative z-10">
+                <div className="flex items-center gap-2 min-w-0">
                   <div className="relative shrink-0">
-                    <div className="size-10 rounded-full bg-white/10 flex items-center justify-center border border-white/20">
-                      <Bot className="size-5 text-white" />
+                    <div className="size-10 rounded-full bg-[#0F766E] text-white flex items-center justify-center">
+                      <Bot className="size-5" aria-hidden="true" />
                     </div>
-                    <div className="absolute bottom-0 right-0 size-3 bg-emerald-400 border-2 border-[#0F766E] rounded-full motion-safe:animate-pulse" />
+                    <div className="absolute bottom-0 right-0 size-3 bg-emerald-500 border-2 border-white rounded-full motion-safe:animate-pulse" />
                   </div>
-                  <div className="flex flex-col gap-1 min-w-0">
-                    <h3 className="font-display font-bold text-sm leading-tight tracking-wide truncate">
+                  <div className="flex flex-col items-start gap-1 min-w-0">
+                    <h3 className="font-display font-semibold text-sm leading-tight text-[#1E293B] truncate max-w-full">
                       AI Property Concierge
                     </h3>
-                    <p className="text-xs font-sans text-white/90 uppercase tracking-wider truncate">
-                      Automated Assistant · RA 9646
-                    </p>
+                    <Badge variant="secondary" className="w-fit">
+                      RA 9646
+                    </Badge>
                   </div>
                 </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={toggleChat}
-                  aria-label="Close chat"
-                  className="size-8 rounded-full bg-white/10 text-white hover:bg-white/20 hover:text-white focus-visible:ring-white shrink-0"
-                >
-                  <X className="size-4" />
-                </Button>
+
+                <div className="flex items-center gap-1 shrink-0">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleNewChat}
+                    aria-label="New chat"
+                    title="New chat"
+                    className="size-11 sm:size-10 rounded-lg text-[#64748B] hover:text-[#1E293B]"
+                  >
+                    <RotateCcw className="size-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setIsExpanded((prev) => !prev)}
+                    aria-label={isExpanded ? 'Collapse chat' : 'Expand chat'}
+                    title={isExpanded ? 'Collapse chat' : 'Expand chat'}
+                    className="hidden sm:inline-flex size-11 sm:size-10 rounded-lg text-[#64748B] hover:text-[#1E293B]"
+                  >
+                    {isExpanded ? (
+                      <Minimize2 className="size-4" />
+                    ) : (
+                      <Maximize2 className="size-4" />
+                    )}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={toggleChat}
+                    aria-label="Close chat"
+                    title="Close chat"
+                    className="size-11 sm:size-10 rounded-lg text-[#64748B] hover:text-[#1E293B]"
+                  >
+                    <X className="size-4" />
+                  </Button>
+                </div>
               </div>
 
               {/* Active Listing Context Strip */}
@@ -287,108 +509,175 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
                 </div>
               )}
 
-              {/* Messages Area (MUST preserve data-lenis-prevent="true") */}
-              <div
-                className="flex-1 min-h-0 overflow-y-auto p-4 bg-[#F8FAFC] flex flex-col gap-4 custom-scrollbar"
-                data-lenis-prevent="true"
-              >
-                {messages.map((msg) => (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    key={msg.id}
-                    className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'} gap-2`}
-                  >
-                    {msg.type === 'ai' && (
-                      <div className="size-8 rounded-full bg-[#CCFBF1] flex items-center justify-center shrink-0 mt-1 border border-[#0F766E]/20">
-                        <Bot className="size-4 text-[#0F766E]" />
-                      </div>
-                    )}
+              {/* Messages Canvas (MUST preserve data-lenis-prevent="true") */}
+              <div className="relative flex-1 min-h-0 flex flex-col bg-[#F8FAFC]">
+                <div
+                  ref={messagesContainerRef}
+                  onScroll={handleMessagesScroll}
+                  className="flex-1 min-h-0 overflow-y-auto p-4 flex flex-col gap-4 custom-scrollbar"
+                  data-lenis-prevent="true"
+                >
+                  {messages.length === 0 ? (
+                    <ChatWelcomeView
+                      activeListing={currentActiveListing}
+                      onSelectPrompt={(prompt) => handleSend(null, prompt)}
+                      onAskAgent={(prop) => openHandoff(prop)}
+                    />
+                  ) : (
+                    messages.map((msg, idx) => {
+                      const hasVisibleAiContent =
+                        Boolean(msg.text && msg.text.trim()) ||
+                        (msg.isStreaming && Boolean(activeStatus)) ||
+                        (Array.isArray(msg.cards) && msg.cards.length > 0) ||
+                        Boolean(msg.comparison) ||
+                        Boolean(msg.nearby) ||
+                        Boolean(msg.suggestHandoff);
 
-                    {msg.type === 'user' ? (
-                      <div className="px-4 py-2 rounded-xl rounded-tr-sm max-w-[85%] bg-[#0F766E] text-white font-sans text-sm leading-relaxed shadow-xs break-words">
-                        {msg.text}
-                      </div>
-                    ) : (
-                      <div className="flex flex-col gap-2 flex-1 min-w-0 max-w-[85%]">
-                        {msg.text && (
-                          <div className="px-4 py-2 rounded-xl rounded-tl-sm bg-white text-[#1E293B] border border-[#E2E8F0] font-sans text-sm leading-relaxed shadow-xs break-words">
-                            {msg.text}
-                          </div>
-                        )}
+                      if (msg.type === 'ai' && !hasVisibleAiContent) {
+                        return null;
+                      }
 
-                        {Array.isArray(msg.cards) && msg.cards.length > 0 && (
-                          <div className="flex flex-col gap-2 min-w-0">
-                            {msg.cards.map((prop) => (
-                              <ChatPropertyCard
-                                key={prop.id}
-                                property={prop}
-                                onAskAgent={(selected) => openHandoff(selected)}
-                                onNavigate={onNavigateProperty}
-                              />
-                            ))}
-                          </div>
-                        )}
+                      const isLatestFinalizedAi =
+                        !isStreaming &&
+                        msg.type === 'ai' &&
+                        !msg.isStreaming &&
+                        idx === messages.length - 1;
 
-                        {msg.comparison && (
-                          <ChatComparisonCard
-                            comparison={msg.comparison}
-                            onAskAgent={(selected) => openHandoff(selected)}
-                          />
-                        )}
+                      return (
+                        <motion.div
+                          initial={{ opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          key={msg.id}
+                          className={cn(
+                            'flex gap-2',
+                            msg.type === 'user' ? 'justify-end' : 'justify-start'
+                          )}
+                        >
+                          {msg.type === 'ai' && (
+                            <div className="size-8 rounded-full bg-[#CCFBF1] flex items-center justify-center shrink-0 mt-1 border border-[#0F766E]/20">
+                              <Bot className="size-4 text-[#0F766E]" aria-hidden="true" />
+                            </div>
+                          )}
 
-                        {msg.nearby && <ChatNearbyCard nearby={msg.nearby} />}
+                          {msg.type === 'user' ? (
+                            <div className="px-4 py-2 rounded-xl rounded-tr-sm max-w-[85%] bg-[#0F766E] text-white font-sans text-sm leading-relaxed shadow-xs break-words">
+                              {msg.text}
+                            </div>
+                          ) : (
+                            <div className="flex flex-col gap-2 flex-1 min-w-0 max-w-[85%]">
+                              {msg.isStreaming && activeStatus && (
+                                <div
+                                  role="status"
+                                  aria-live="polite"
+                                  className="px-4 py-2 rounded-xl rounded-tl-sm bg-white border border-[#E2E8F0] shadow-xs"
+                                >
+                                  <Trace>
+                                    <TraceLine status="running">
+                                      <TraceIcon>
+                                        <Loader2 className="motion-safe:animate-spin text-[#0F766E]" />
+                                      </TraceIcon>
+                                      <TraceTitle className="text-xs text-[#64748B]">
+                                        {activeStatus}
+                                      </TraceTitle>
+                                    </TraceLine>
+                                  </Trace>
+                                </div>
+                              )}
 
-                        {msg.suggestHandoff && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => openHandoff(msg.cards?.[0] ?? currentActiveListing ?? null)}
-                            className="self-start min-h-10 px-4 bg-[#FF6B6B] text-[#1E293B] hover:bg-[#EE5A5A] hover:text-[#1E293B] font-semibold normal-case tracking-normal text-xs shadow-xs"
-                          >
-                            <UserCheck data-icon="inline-start" />
-                            Connect to Licensed Agent
-                          </Button>
-                        )}
-                      </div>
-                    )}
-                  </motion.div>
-                ))}
+                              {msg.text && msg.text.trim() && (
+                                <div className="px-4 py-2 rounded-xl rounded-tl-sm bg-white text-[#1E293B] border border-[#E2E8F0] font-sans text-sm leading-relaxed shadow-xs break-words">
+                                  <ChatMessageText text={msg.text} />
+                                </div>
+                              )}
 
-                {isTyping && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="flex justify-start gap-2"
-                  >
-                    <div className="size-8 rounded-full bg-[#CCFBF1] flex items-center justify-center shrink-0 mt-1 border border-[#0F766E]/20">
-                      <Bot className="size-4 text-[#0F766E]" />
-                    </div>
-                    <div className="px-4 py-2 rounded-xl rounded-tl-sm bg-white border border-[#E2E8F0] shadow-xs flex items-center gap-2 h-10">
-                      <motion.div
-                        animate={{ y: [0, -4, 0] }}
-                        transition={{ repeat: Infinity, duration: 0.8, delay: 0 }}
-                        className="size-2 bg-[#0F766E]/60 rounded-full"
-                      />
-                      <motion.div
-                        animate={{ y: [0, -4, 0] }}
-                        transition={{ repeat: Infinity, duration: 0.8, delay: 0.15 }}
-                        className="size-2 bg-[#0F766E]/60 rounded-full"
-                      />
-                      <motion.div
-                        animate={{ y: [0, -4, 0] }}
-                        transition={{ repeat: Infinity, duration: 0.8, delay: 0.3 }}
-                        className="size-2 bg-[#0F766E]/60 rounded-full"
-                      />
-                    </div>
-                  </motion.div>
+                              {Array.isArray(msg.cards) && msg.cards.length > 0 && (
+                                <div className="flex flex-col gap-2 min-w-0">
+                                  {msg.cards.map((prop) => (
+                                    <ChatPropertyCard
+                                      key={prop.id}
+                                      property={prop}
+                                      onAskAgent={(selected) => openHandoff(selected)}
+                                      onNavigate={onNavigateProperty}
+                                      isSelectedForCompare={selectedCompare.some(
+                                        (item) => item.id === prop.id
+                                      )}
+                                      compareDisabled={
+                                        selectedCompare.length >= MAX_COMPARE_SELECTION
+                                      }
+                                      onToggleCompare={handleToggleCompare}
+                                    />
+                                  ))}
+                                </div>
+                              )}
+
+                              {msg.comparison && (
+                                <ChatComparisonCard
+                                  comparison={msg.comparison}
+                                  onAskAgent={(selected) => openHandoff(selected)}
+                                />
+                              )}
+
+                              {msg.nearby && <ChatNearbyCard nearby={msg.nearby} />}
+
+                              {msg.suggestHandoff && (
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() =>
+                                    openHandoff(msg.cards?.[0] ?? currentActiveListing ?? null)
+                                  }
+                                  className="self-start min-h-11 sm:min-h-8 px-4 bg-[#FF6B6B] text-[#1E293B] hover:bg-[#EE5A5A] hover:text-[#1E293B] font-semibold normal-case tracking-normal text-xs shadow-xs"
+                                >
+                                  <UserCheck data-icon="inline-start" />
+                                  Connect to Licensed Agent
+                                </Button>
+                              )}
+
+                              {isLatestFinalizedAi &&
+                                Array.isArray(msg.followUpSuggestions) &&
+                                msg.followUpSuggestions.length > 0 && (
+                                  <div className="flex flex-wrap gap-2 pt-1">
+                                    {msg.followUpSuggestions.map((chip) => (
+                                      <Button
+                                        key={chip}
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handleSend(null, chip)}
+                                        className="rounded-full normal-case tracking-normal font-medium text-xs h-auto min-h-11 sm:min-h-8 px-4 py-1 whitespace-normal text-left border-[#E2E8F0] text-[#1E293B] hover:border-[#0F766E] hover:text-[#0F766E]"
+                                      >
+                                        {chip}
+                                      </Button>
+                                    ))}
+                                  </div>
+                                )}
+                            </div>
+                          )}
+                        </motion.div>
+                      );
+                    })
+                  )}
+                  <div ref={messagesEndRef} />
+                </div>
+
+                {!isNearBottom && messages.length > 0 && !showEscalationForm && (
+                  <div className="absolute bottom-2 inset-x-0 flex justify-center pointer-events-none z-10">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={scrollToLatest}
+                      className="pointer-events-auto min-h-11 sm:min-h-0 rounded-full shadow-md bg-white text-[#1E293B] border-[#E2E8F0] normal-case tracking-normal text-xs"
+                    >
+                      <ArrowDown data-icon="inline-start" />
+                      Jump to latest
+                    </Button>
+                  </div>
                 )}
-                <div ref={messagesEndRef} />
               </div>
 
-              {/* Handoff Form or Quick Actions + Composer */}
+              {/* Handoff Form or Compare Bar + Composer + Calm Footer */}
               {showEscalationForm ? (
                 <ChatHandoffForm
                   attachedProperty={attachedProperty}
@@ -410,57 +699,103 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
                         cards: [],
                         comparison: null,
                         nearby: null,
+                        followUpSuggestions: [],
                       },
                     ]);
                   }}
                 />
               ) : (
                 <>
-                  {/* Adaptive Quick Actions */}
-                  <div className="px-4 py-2 bg-white border-t border-[#E2E8F0] grid grid-cols-3 gap-2 shrink-0">
-                    {quickActions.map((action) => (
-                      <Button
-                        key={action.label}
-                        type="button"
-                        variant={action.isAgent ? 'ghost' : 'outline'}
-                        size="sm"
-                        onClick={() =>
-                          action.isAgent
-                            ? openHandoff(activePropertyId ? currentActiveListing : null)
-                            : handleSend(null, action.label)
-                        }
-                        className={
-                          action.isAgent
-                            ? 'w-full h-auto min-h-10 px-2 py-2 rounded-lg bg-[#FF6B6B] text-[#1E293B] hover:bg-[#EE5A5A] text-xs font-semibold normal-case tracking-normal whitespace-normal text-center leading-tight'
-                            : 'w-full h-auto min-h-10 px-2 py-2 rounded-lg border-[#0F766E]/30 text-[#0F766E] hover:bg-[#0F766E] hover:text-white text-xs font-semibold normal-case tracking-normal whitespace-normal text-center leading-tight'
-                        }
-                      >
-                        {action.label}
-                      </Button>
-                    ))}
-                  </div>
+                  {/* Sticky + Compare Picker Bar */}
+                  {selectedCompare.length > 0 && (
+                    <div className="px-4 py-2 bg-[#F8FAFC] border-t border-[#E2E8F0] flex items-center justify-between gap-2 shrink-0">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Badge variant="default" className="shrink-0">
+                          {selectedCompare.length} selected
+                        </Badge>
+                        <span className="text-xs text-[#64748B] truncate">
+                          {selectedCompare.length < 2
+                            ? 'Select 1 more to compare'
+                            : 'Ready to compare'}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setSelectedCompare([])}
+                          className="min-h-11 sm:min-h-0 normal-case tracking-normal text-xs text-[#64748B] hover:text-[#1E293B]"
+                        >
+                          Clear
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="default"
+                          size="sm"
+                          disabled={selectedCompare.length < 2 || isStreaming}
+                          onClick={handleCompareSelected}
+                          className="min-h-11 sm:min-h-0 normal-case tracking-normal text-xs"
+                        >
+                          <GitCompareArrows data-icon="inline-start" />
+                          Compare Selected ({selectedCompare.length})
+                        </Button>
+                      </div>
+                    </div>
+                  )}
 
-                  {/* Input Area */}
+                  {/* Rounded Input Composer */}
                   <div className="p-4 bg-white border-t border-[#E2E8F0] shrink-0 relative z-10">
                     <form onSubmit={handleSend} className="flex items-center gap-2">
                       <Input
                         value={inputValue}
                         onChange={(e) => setInputValue(e.target.value)}
                         maxLength={MAX_CHAT_MESSAGE_LENGTH}
+                        aria-label="Message AI Property Concierge"
                         className="flex-1 bg-[#F8FAFC] border-[#E2E8F0] rounded-full px-4 text-sm text-[#1E293B] placeholder:text-[#64748B]"
-                        placeholder="Type your message..."
+                        placeholder="Ask about homes, prices, or areas..."
                         type="text"
                       />
-                      <Button
-                        type="submit"
-                        disabled={!inputValue.trim() || isTyping}
-                        aria-label="Send message"
-                        size="icon"
-                        className="size-10 rounded-full shrink-0"
-                      >
-                        <Send className="size-4" />
-                      </Button>
+                      {isStreaming ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={handleStop}
+                          aria-label="Stop generating"
+                          className="size-11 sm:size-10 rounded-full shrink-0 border-[#E2E8F0] text-[#1E293B] hover:bg-[#F1F5F9]"
+                        >
+                          <Square className="size-4 fill-current" />
+                        </Button>
+                      ) : (
+                        <Button
+                          type="submit"
+                          disabled={!inputValue.trim()}
+                          aria-label="Send message"
+                          size="icon"
+                          className="size-11 sm:size-10 rounded-full shrink-0"
+                        >
+                          <Send className="size-4" />
+                        </Button>
+                      )}
                     </form>
+                  </div>
+
+                  {/* Slim Calm Footer Strip */}
+                  <div className="px-4 py-2 bg-white border-t border-[#E2E8F0] flex items-center justify-between gap-2 shrink-0">
+                    <span className="text-xs text-[#64748B] truncate">
+                      AI Concierge · Not a PRC broker
+                    </span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => openHandoff(currentActiveListing)}
+                      className="min-h-11 sm:min-h-0 shrink-0 normal-case tracking-normal text-xs font-medium text-[#0F766E] hover:bg-[#CCFBF1]/40 hover:text-[#115E59]"
+                    >
+                      <UserCheck data-icon="inline-start" />
+                      Talk to a Licensed Agent
+                    </Button>
                   </div>
                 </>
               )}

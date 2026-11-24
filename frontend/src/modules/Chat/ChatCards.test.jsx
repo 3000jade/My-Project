@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import apiClient from '../../services/apiClient';
 import { chatService } from '../../services/chatService';
@@ -64,6 +64,7 @@ describe('chatService.sendMessage', () => {
       handoffDraft: null,
       suggestHandoff: false,
       handoffReason: null,
+      followUpSuggestions: [],
     });
   });
 
@@ -91,6 +92,7 @@ describe('chatService.sendMessage', () => {
       handoffDraft: { summary: 'General inquiry' },
       suggestHandoff: false,
       handoffReason: null,
+      followUpSuggestions: [],
     });
   });
 
@@ -117,7 +119,387 @@ describe('chatService.sendMessage', () => {
       handoffDraft: null,
       suggestHandoff: false,
       handoffReason: null,
+      followUpSuggestions: [],
     });
+  });
+
+  it('sanitizes followUpSuggestions by trimming strings and filtering invalid or empty entries', async () => {
+    apiClient.post.mockResolvedValueOnce({
+      success: true,
+      data: {
+        message: 'Here are your Taguig condos.',
+        followUpSuggestions: ['  Compare these two  ', '', '   ', null, 42, 'Check nearby schools'],
+      },
+    });
+
+    const result = await chatService.sendMessage([{ role: 'user', content: 'Taguig condos' }]);
+
+    expect(result.followUpSuggestions).toEqual(['Compare these two', 'Check nearby schools']);
+  });
+});
+
+function createSseStreamResponse(chunks, { ok = true, status = 200, contentType = null, readerSpies = null } = {}) {
+  const encoder = new TextEncoder();
+  let index = 0;
+
+  return {
+    ok,
+    status,
+    ...(contentType !== null
+      ? {
+          headers: {
+            get: (name) => (name.toLowerCase() === 'content-type' ? contentType : null),
+          },
+        }
+      : {}),
+    body: {
+      getReader() {
+        return {
+          async read() {
+            if (index >= chunks.length) {
+              return { done: true, value: undefined };
+            }
+            const next = chunks[index++];
+            if (next instanceof Error) {
+              throw next;
+            }
+            return { done: false, value: encoder.encode(next) };
+          },
+          releaseLock: readerSpies?.releaseLock ?? vi.fn(),
+          cancel: readerSpies?.cancel ?? vi.fn(),
+        };
+      },
+    },
+  };
+}
+
+describe('chatService.streamMessage', () => {
+  const originalFetch = globalThis.fetch;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    localStorage.clear();
+    delete apiClient.defaults;
+  });
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+    localStorage.clear();
+    delete apiClient.defaults;
+  });
+
+  it('parses SSE frames across partial chunks and CRLF boundaries, forwarding auth token and pageContext', async () => {
+    localStorage.setItem('cp_auth_token', 'jwt-token-123');
+    apiClient.defaults = { baseURL: 'http://localhost:5000/api/' };
+
+    const chunks = [
+      'event: status\r\ndata: {"phase":"searching","label":"Searching listings..."}\r',
+      '\n\r\nevent: delta\ndata: {"text":"Here is "}\n\n',
+      'event: delta\ndata: {"text":"Serendra."}\n\n',
+      'event: result\ndata: {"message":"Here is Serendra.","cards":[],"followUpSuggestions":["  Book a tour  ",""]}\n\n',
+      'event: done\ndata: {}\n\n',
+    ];
+
+    globalThis.fetch = vi.fn().mockResolvedValueOnce(createSseStreamResponse(chunks));
+
+    const onStatus = vi.fn();
+    const onDelta = vi.fn();
+    const onResult = vi.fn();
+
+    const messages = [{ role: 'user', content: 'Show me Serendra' }];
+    const pageContext = { route: '/properties/prop-101', propertyId: 'prop-101' };
+
+    const result = await chatService.streamMessage(messages, pageContext, {
+      onStatus,
+      onDelta,
+      onResult,
+    });
+
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      'http://localhost:5000/api/chat/stream',
+      expect.objectContaining({
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'text/event-stream',
+          Authorization: 'Bearer jwt-token-123',
+        },
+        body: JSON.stringify({ messages, pageContext }),
+      })
+    );
+
+    expect(onStatus).toHaveBeenCalledWith({ phase: 'searching', label: 'Searching listings...' });
+    expect(onDelta).toHaveBeenNthCalledWith(1, 'Here is ');
+    expect(onDelta).toHaveBeenNthCalledWith(2, 'Serendra.');
+    expect(result).toEqual({
+      message: 'Here is Serendra.',
+      cards: [],
+      comparison: null,
+      nearby: null,
+      handoffDraft: null,
+      suggestHandoff: false,
+      handoffReason: null,
+      followUpSuggestions: ['Book a tour'],
+    });
+    expect(onResult).toHaveBeenCalledWith(result);
+    expect(apiClient.post).not.toHaveBeenCalled();
+  });
+
+  it('falls back once to sendMessage and calls onResult when fetch fails before any delta or result', async () => {
+    globalThis.fetch = vi.fn().mockRejectedValueOnce(new Error('Network offline'));
+    apiClient.post.mockResolvedValueOnce({
+      success: true,
+      data: {
+        message: 'Fallback reply',
+        followUpSuggestions: ['Ask an agent'],
+      },
+    });
+
+    const onResult = vi.fn();
+    const messages = [{ role: 'user', content: 'Hello' }];
+
+    const result = await chatService.streamMessage(messages, undefined, { onResult });
+
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      '/api/chat/stream',
+      expect.objectContaining({
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'text/event-stream',
+        },
+      })
+    );
+    expect(apiClient.post).toHaveBeenCalledTimes(1);
+    expect(apiClient.post).toHaveBeenCalledWith('/chat', { messages }, { timeout: 25000 });
+    expect(result).toEqual({
+      message: 'Fallback reply',
+      cards: [],
+      comparison: null,
+      nearby: null,
+      handoffDraft: null,
+      suggestHandoff: false,
+      handoffReason: null,
+      followUpSuggestions: ['Ask an agent'],
+    });
+    expect(onResult).toHaveBeenCalledWith(result);
+  });
+
+  it('falls back once to sendMessage when stream returns non-OK HTTP status', async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValueOnce(createSseStreamResponse([], { ok: false, status: 502 }));
+    apiClient.post.mockResolvedValueOnce({
+      success: true,
+      data: 'Recovered via POST /chat',
+    });
+
+    const onResult = vi.fn();
+    const result = await chatService.streamMessage(
+      [{ role: 'user', content: 'Condos in Makati' }],
+      undefined,
+      { onResult }
+    );
+
+    expect(apiClient.post).toHaveBeenCalledTimes(1);
+    expect(result.message).toBe('Recovered via POST /chat');
+    expect(onResult).toHaveBeenCalledWith(result);
+  });
+
+  it('falls back once to sendMessage when stream read fails before any delta or result arrives', async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValueOnce(
+        createSseStreamResponse([
+          'event: status\ndata: {"label":"Checking..."}\n\n',
+          new Error('Stream disconnected'),
+        ])
+      );
+    apiClient.post.mockResolvedValueOnce({
+      success: true,
+      data: { message: 'Recovered after early drop' },
+    });
+
+    const onResult = vi.fn();
+    const result = await chatService.streamMessage([{ role: 'user', content: 'Hi' }], undefined, {
+      onResult,
+    });
+
+    expect(apiClient.post).toHaveBeenCalledTimes(1);
+    expect(result.message).toBe('Recovered after early drop');
+    expect(onResult).toHaveBeenCalledWith(result);
+  });
+
+  it('re-throws AbortError immediately and NEVER triggers sendMessage fallback', async () => {
+    const controller = new AbortController();
+    const abortErr = new Error('Aborted by user');
+    abortErr.name = 'AbortError';
+
+    globalThis.fetch = vi.fn().mockImplementationOnce(() => {
+      controller.abort();
+      return Promise.reject(abortErr);
+    });
+
+    const onResult = vi.fn();
+
+    await expect(
+      chatService.streamMessage([{ role: 'user', content: 'Stop me' }], undefined, {
+        signal: controller.signal,
+        onResult,
+      })
+    ).rejects.toMatchObject({ name: 'AbortError' });
+
+    expect(apiClient.post).not.toHaveBeenCalled();
+    expect(onResult).not.toHaveBeenCalled();
+  });
+
+  it('throws when an SSE error event arrives without falling back to sendMessage and cancels the reader before releasing lock', async () => {
+    const callOrder = [];
+    const readerSpies = {
+      cancel: vi.fn(() => {
+        callOrder.push('cancel');
+        return Promise.resolve();
+      }),
+      releaseLock: vi.fn(() => {
+        callOrder.push('releaseLock');
+      }),
+    };
+
+    globalThis.fetch = vi.fn().mockResolvedValueOnce(
+      createSseStreamResponse(
+        [
+          'event: error\ndata: {"error":"Assistant temporarily unavailable"}\n\n',
+          'event: done\ndata: {}\n\n',
+        ],
+        { readerSpies }
+      )
+    );
+
+    await expect(
+      chatService.streamMessage([{ role: 'user', content: 'Trigger error' }])
+    ).rejects.toThrow('Assistant temporarily unavailable');
+
+    expect(apiClient.post).not.toHaveBeenCalled();
+    expect(readerSpies.cancel).toHaveBeenCalledTimes(1);
+    expect(readerSpies.releaseLock).toHaveBeenCalledTimes(1);
+    expect(callOrder).toEqual(['cancel', 'releaseLock']);
+  });
+
+  it('falls back to sendMessage when stream responds with a non-SSE text/html content-type', async () => {
+    globalThis.fetch = vi.fn().mockResolvedValueOnce(
+      createSseStreamResponse(['<!doctype html><html></html>'], {
+        ok: true,
+        status: 200,
+        contentType: 'text/html; charset=utf-8',
+      })
+    );
+    apiClient.post.mockResolvedValueOnce({
+      success: true,
+      data: { message: 'Recovered from HTML SPA fallback' },
+    });
+
+    const onResult = vi.fn();
+    const result = await chatService.streamMessage(
+      [{ role: 'user', content: 'Show homes' }],
+      undefined,
+      { onResult }
+    );
+
+    expect(apiClient.post).toHaveBeenCalledTimes(1);
+    expect(result.message).toBe('Recovered from HTML SPA fallback');
+    expect(onResult).toHaveBeenCalledWith(result);
+  });
+
+  it('does NOT trigger sendMessage fallback on HTTP 429 or 400 responses', async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValueOnce(createSseStreamResponse([], { ok: false, status: 429 }))
+      .mockResolvedValueOnce(createSseStreamResponse([], { ok: false, status: 400 }));
+
+    await expect(
+      chatService.streamMessage([{ role: 'user', content: 'Too fast' }])
+    ).rejects.toMatchObject({ status: 429 });
+
+    await expect(
+      chatService.streamMessage([{ role: 'user', content: 'Invalid payload' }])
+    ).rejects.toMatchObject({ status: 400 });
+
+    expect(apiClient.post).not.toHaveBeenCalled();
+  });
+
+  it('forwards AbortSignal to sendMessage fallback and skips onResult if aborted before completion', async () => {
+    const controller = new AbortController();
+    globalThis.fetch = vi.fn().mockRejectedValueOnce(new Error('Stream failed'));
+    apiClient.post.mockResolvedValueOnce({
+      success: true,
+      data: { message: 'Fallback reply with signal' },
+    });
+
+    const onResult = vi.fn();
+    const messages = [{ role: 'user', content: 'Hello' }];
+
+    const result = await chatService.streamMessage(messages, undefined, {
+      signal: controller.signal,
+      onResult,
+    });
+
+    expect(apiClient.post).toHaveBeenCalledWith(
+      '/chat',
+      { messages },
+      { timeout: 25000, signal: controller.signal }
+    );
+    expect(result.message).toBe('Fallback reply with signal');
+    expect(onResult).toHaveBeenCalledWith(result);
+
+    // Abort mid-fallback -> must throw AbortError and NOT invoke onResult
+    const lateController = new AbortController();
+    const onLateResult = vi.fn();
+    globalThis.fetch = vi.fn().mockRejectedValueOnce(new Error('Stream failed'));
+    apiClient.post.mockImplementationOnce(async () => {
+      lateController.abort();
+      return { success: true, data: { message: 'Too late' } };
+    });
+
+    await expect(
+      chatService.streamMessage(messages, undefined, {
+        signal: lateController.signal,
+        onResult: onLateResult,
+      })
+    ).rejects.toMatchObject({ name: 'AbortError' });
+    expect(onLateResult).not.toHaveBeenCalled();
+  });
+
+  it('exposes defaults.baseURL on the real apiClient module', async () => {
+    const actualApiClient = await vi.importActual('../../services/apiClient');
+    expect(actualApiClient.default.defaults?.baseURL).toMatch(/\/api$/);
+  });
+
+  it('returns normalized accumulated delta text when stream completes without a result event', async () => {
+    globalThis.fetch = vi.fn().mockResolvedValueOnce(
+      createSseStreamResponse([
+        'event: delta\ndata: {"text":"Hello "}\n\n',
+        'event: delta\ndata: {"text":"from BGC!"}\n\n',
+        'event: done\ndata: {}\n\n',
+      ])
+    );
+
+    const onDelta = vi.fn();
+    const result = await chatService.streamMessage([{ role: 'user', content: 'Hi' }], undefined, {
+      onDelta,
+    });
+
+    expect(onDelta).toHaveBeenCalledTimes(2);
+    expect(result).toEqual({
+      message: 'Hello from BGC!',
+      cards: [],
+      comparison: null,
+      nearby: null,
+      handoffDraft: null,
+      suggestHandoff: false,
+      handoffReason: null,
+      followUpSuggestions: [],
+    });
+    expect(apiClient.post).not.toHaveBeenCalled();
   });
 });
 
@@ -174,6 +556,73 @@ describe('ChatPropertyCard', () => {
     expect(screen.queryByRole('img')).toBeNull();
     expect(screen.queryByText(/bed/i)).toBeNull();
     expect(screen.queryByText(/bath/i)).toBeNull();
+  });
+
+  it('omits the compare toggle button when onToggleCompare is not provided', () => {
+    render(<ChatPropertyCard property={sampleProperty} />);
+
+    expect(screen.queryByRole('button', { name: /compare/i })).toBeNull();
+    expect(screen.queryByRole('button', { name: /selected/i })).toBeNull();
+  });
+
+  it('renders + Compare toggle button when onToggleCompare is provided and calls it on click', () => {
+    const onToggleCompare = vi.fn();
+
+    render(
+      <ChatPropertyCard
+        property={sampleProperty}
+        onToggleCompare={onToggleCompare}
+      />
+    );
+
+    const compareBtn = screen.getByRole('button', { name: /\+ compare/i });
+    expect(compareBtn).toHaveAttribute('aria-pressed', 'false');
+    expect(compareBtn).not.toBeDisabled();
+
+    fireEvent.click(compareBtn);
+    expect(onToggleCompare).toHaveBeenCalledTimes(1);
+    expect(onToggleCompare).toHaveBeenCalledWith(sampleProperty);
+  });
+
+  it('renders Selected state when isSelectedForCompare is true and keeps button enabled even when compareDisabled is true', () => {
+    const onToggleCompare = vi.fn();
+
+    render(
+      <ChatPropertyCard
+        property={sampleProperty}
+        isSelectedForCompare
+        compareDisabled
+        onToggleCompare={onToggleCompare}
+      />
+    );
+
+    const selectedBtn = screen.getByRole('button', { name: /selected/i });
+    expect(selectedBtn).toHaveAttribute('aria-pressed', 'true');
+    expect(selectedBtn).not.toBeDisabled();
+    expect(selectedBtn.className).toContain('bg-[#0F766E]');
+
+    fireEvent.click(selectedBtn);
+    expect(onToggleCompare).toHaveBeenCalledWith(sampleProperty);
+  });
+
+  it('disables + Compare button when compareDisabled is true and property is not selected', () => {
+    const onToggleCompare = vi.fn();
+
+    render(
+      <ChatPropertyCard
+        property={sampleProperty}
+        isSelectedForCompare={false}
+        compareDisabled
+        onToggleCompare={onToggleCompare}
+      />
+    );
+
+    const compareBtn = screen.getByRole('button', { name: /\+ compare/i });
+    expect(compareBtn).toHaveAttribute('aria-pressed', 'false');
+    expect(compareBtn).toBeDisabled();
+
+    fireEvent.click(compareBtn);
+    expect(onToggleCompare).not.toHaveBeenCalled();
   });
 });
 

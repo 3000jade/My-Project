@@ -1,4 +1,12 @@
-import { MapPin, Bed, Bath, ExternalLink, MessageSquare } from 'lucide-react';
+import {
+  MapPin,
+  Bed,
+  Bath,
+  ExternalLink,
+  MessageSquare,
+  Check,
+  GitCompareArrows,
+} from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -10,8 +18,18 @@ import { Button } from '@/components/ui/button';
  * @param {object} props.property
  * @param {(property: object) => void} [props.onAskAgent]
  * @param {(property: object) => void} [props.onNavigate]
+ * @param {boolean} [props.isSelectedForCompare]
+ * @param {boolean} [props.compareDisabled]
+ * @param {(property: object) => void} [props.onToggleCompare]
  */
-export default function ChatPropertyCard({ property, onAskAgent, onNavigate }) {
+export default function ChatPropertyCard({
+  property,
+  onAskAgent,
+  onNavigate,
+  isSelectedForCompare = false,
+  compareDisabled = false,
+  onToggleCompare,
+}) {
   if (!property) {
     return null;
   }
@@ -87,7 +105,7 @@ export default function ChatPropertyCard({ property, onAskAgent, onNavigate }) {
       </CardContent>
 
       <CardFooter className="flex flex-wrap gap-2 p-4 pt-0">
-        <Button asChild variant="outline" size="sm">
+        <Button asChild variant="outline" size="sm" className="min-h-11 sm:min-h-0">
           <a
             href={`/properties/${property.id}`}
             onClick={(e) => {
@@ -106,12 +124,36 @@ export default function ChatPropertyCard({ property, onAskAgent, onNavigate }) {
           type="button"
           variant="ghost"
           size="sm"
-          className="bg-[#FF6B6B] text-[#1E293B] hover:bg-[#EE5A5A] font-semibold"
+          className="min-h-11 sm:min-h-0 bg-[#FF6B6B] text-[#1E293B] hover:bg-[#EE5A5A] font-semibold"
           onClick={() => onAskAgent?.(property)}
         >
           <MessageSquare data-icon="inline-start" />
           Ask Agent
         </Button>
+
+        {typeof onToggleCompare === 'function' && (
+          <Button
+            type="button"
+            variant={isSelectedForCompare ? 'default' : 'outline'}
+            size="sm"
+            className="min-h-11 sm:min-h-0"
+            aria-pressed={Boolean(isSelectedForCompare)}
+            disabled={Boolean(compareDisabled && !isSelectedForCompare)}
+            onClick={() => onToggleCompare(property)}
+          >
+            {isSelectedForCompare ? (
+              <>
+                <Check data-icon="inline-start" />
+                Selected
+              </>
+            ) : (
+              <>
+                <GitCompareArrows data-icon="inline-start" />
+                + Compare
+              </>
+            )}
+          </Button>
+        )}
       </CardFooter>
     </Card>
   );

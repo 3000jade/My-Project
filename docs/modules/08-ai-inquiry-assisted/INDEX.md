@@ -1,8 +1,8 @@
 ---
 module: 08-ai-inquiry-assisted
 title: AI Inquiry Assisted Module
-last_updated: 2026-11-24
-total_documents: 3
+last_updated: 2026-11-25
+total_documents: 4
 ---
 
 # AI Inquiry Assisted Module — Master Index
@@ -22,6 +22,7 @@ All updates and technical reports for this module are ordered chronologically by
 | `2026-09-14` | [2026-09-14-ai-chat-concierge-spec.md](./2026-09-14-ai-chat-concierge-spec.md) | Ai Chat Concierge Spec |
 | `2026-10-18` | [2026-10-18-session-database-integration-ai-workflow.md](./2026-10-18-session-database-integration-ai-workflow.md) | Session Database Integration Ai Workflow |
 | `2026-11-24` | [2026-11-24-ai-property-agent-design.md](../../superpowers/specs/2026-11-24-ai-property-agent-design.md) | AI Property Agent V1 Design & Implementation Plan |
+| `2026-11-24` | [2026-11-24-high-ux-ai-chat-design.md](../../superpowers/specs/2026-11-24-high-ux-ai-chat-design.md) | High-UX AI Chat & Live Streaming (V2) Design Specification |
 
 ---
 

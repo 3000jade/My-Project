@@ -97,6 +97,8 @@ axiosInstance.interceptors.response.use(
 );
 
 export const apiClient = {
+  defaults: axiosInstance.defaults,
+
   getToken() {
     try {
       return localStorage.getItem('cp_auth_token');
