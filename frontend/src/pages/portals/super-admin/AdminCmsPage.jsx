@@ -183,18 +183,21 @@ export default function AdminCmsPage() {
           value={publishedCount}
           icon={CheckCircle2}
           statusVariant="success"
+          loading={loading}
         />
         <KpiCard
           title="Drafts Pending"
           value={draftCount}
           icon={FileEdit}
           statusVariant="warning"
+          loading={loading}
         />
         <KpiCard
           title="Active Sections"
           value={`${activeSectionsCount} / ${CMS_TABS.length}`}
           icon={Layers}
           statusVariant="primary"
+          loading={loading}
         />
       </div>
 

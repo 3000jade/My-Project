@@ -66,7 +66,7 @@ export default function CmsDeleteDialog({
               }
             }}
           >
-            {isDeleting && <Loader2 className="size-4 animate-spin" data-icon="inline-start" />}
+            {isDeleting && <Loader2 className="size-4 animate-spin motion-reduce:animate-none" data-icon="inline-start" />}
             <span>Delete Permanently</span>
           </AlertDialogAction>
         </AlertDialogFooter>

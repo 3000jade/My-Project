@@ -101,7 +101,7 @@ export default function CmsMediaField({
           className="h-10 shrink-0"
         >
           {isUploading ? (
-            <Loader2 className="size-4 animate-spin" data-icon="inline-start" />
+            <Loader2 className="size-4 animate-spin motion-reduce:animate-none" data-icon="inline-start" />
           ) : (
             <Upload className="size-4" data-icon="inline-start" />
           )}

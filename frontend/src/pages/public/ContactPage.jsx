@@ -19,7 +19,7 @@ function safeHttpUrl(url) {
 function safeMediaUrl(url) {
   if (typeof url !== 'string' || !url.trim()) return null;
   const trimmed = url.trim();
-  if (trimmed.startsWith('/')) return trimmed;
+  if (trimmed.startsWith('/') && !trimmed.startsWith('//')) return trimmed;
   return safeHttpUrl(trimmed);
 }
 

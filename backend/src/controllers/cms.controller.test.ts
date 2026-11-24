@@ -82,7 +82,8 @@ describe('CmsController.uploadMedia', () => {
       fileName: 'logo.png',
       mimeType: 'image/png',
       size: 2048,
-      proxyUrl: '/api/drive/media/drive-abc',
+      directImageUrl: 'https://lh3.googleusercontent.com/d/drive-abc',
+      thumbnailUrl: 'https://drive.google.com/thumbnail?id=drive-abc&sz=w1600',
     } as any);
 
     const req = { file } as AuthenticatedRequest;

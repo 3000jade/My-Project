@@ -122,8 +122,7 @@ export class CmsController {
       const uploadedWithProxy = uploaded as typeof uploaded & { proxyUrl?: string };
       const url =
         uploadedWithProxy.proxyUrl ||
-        uploaded.directImageUrl ||
-        `/api/drive/media/${uploaded.fileId}`;
+        (uploaded.fileId ? `/api/drive/media/${uploaded.fileId}` : uploaded.directImageUrl);
 
       ok(
         res,
