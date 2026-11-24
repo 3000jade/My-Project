@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, Link, useParams, useLocation } from 'react-router-dom';
 import { MotionConfig, motion, AnimatePresence } from 'framer-motion';
 import {
@@ -1124,9 +1124,6 @@ export default function BrokerCreateListings() {
                 <ArrowLeft className="size-4" />
                 Back to Listings
               </Link>
-              <h1 className="text-2xl md:text-3xl font-bold text-[#1E293B]">
-                {isEditing ? 'Edit Property Listing' : 'Create Property Listing'}
-              </h1>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">

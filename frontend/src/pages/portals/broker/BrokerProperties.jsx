@@ -1419,19 +1419,8 @@ export default function BrokerProperties() {
         </div>
       )}
 
-      {/* Header Section Matching Mockup */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl sm:text-[36px] font-bold font-display text-[#1E293B] tracking-tight leading-tight">
-            Property Listings
-          </h1>
-          <p className="text-xs text-[#64748B] mt-0.5">
-            Manage and organize your property listings.
-          </p>
-        </div>
-
-        {/* Action Button Cluster */}
-        <div className="flex flex-wrap lg:flex-nowrap items-center gap-2 sm:gap-2.5 w-full lg:w-auto">
+      {/* Action Button Cluster */}
+      <div className="flex flex-wrap lg:flex-nowrap items-center justify-end gap-2 sm:gap-2.5 w-full">
           {/* Segmented View Mode Controls */}
           <div className="inline-flex items-center p-1 bg-slate-100 rounded-lg border border-[#E2E8F0]" role="group" aria-label="View switcher">
             <button
@@ -1493,7 +1482,6 @@ export default function BrokerProperties() {
             <span className="font-medium">Add New Property</span>
           </Link>
         </div>
-      </div>
 
       {/* Property Filter & Search Toolbar */}
       <PropertyFilterToolbar

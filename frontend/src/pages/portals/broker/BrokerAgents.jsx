@@ -634,17 +634,8 @@ export default function BrokerAgents() {
 
   return (
     <div className="flex flex-col gap-6 w-full min-w-0 max-w-full">
-      {/* Page Title & Action Cluster Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl sm:text-[36px] font-bold font-display text-[#1E293B] tracking-tight leading-tight">
-            Agents
-          </h1>
-          <p className="text-xs sm:text-sm text-[#64748B] mt-0.5">
-            Manage agents, review licenses, and send invites.
-          </p>
-        </div>
-        <div className="flex flex-wrap lg:flex-nowrap items-center gap-2 w-full lg:w-auto">
+      {/* Action Cluster Header */}
+      <div className="flex flex-wrap lg:flex-nowrap items-center justify-end gap-2 w-full">
           <Button
             type="button"
             onClick={() => setAddAgentModalOpen(true)}
@@ -675,7 +666,6 @@ export default function BrokerAgents() {
             <span className="hidden xs:inline">Export</span>
           </Button>
         </div>
-      </div>
 
       {/* Sub-Tabs: Agent Roster vs Invitations Ledger (Screen 8) */}
       <div className="flex items-center gap-4 sm:gap-6 mt-4 border-b border-[#E2E8F0] text-xs font-semibold overflow-x-auto scrollbar-none whitespace-nowrap">

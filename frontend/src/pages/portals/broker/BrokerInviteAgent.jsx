@@ -141,19 +141,11 @@ export default function BrokerInviteAgent() {
           <span className="text-[#1E293B] font-semibold">Invite Agent</span>
         </div>
 
-        {/* Page Title */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-[#1E293B] tracking-tight">
-              Invite Agent
-            </h1>
-            <p className="text-xs sm:text-sm text-[#64748B] mt-0.5">
-              Send a single-use onboarding invitation to a licensed real estate agent.
-            </p>
-          </div>
+        {/* Back Action */}
+        <div className="flex items-center justify-end">
           <Link
             to="/broker/agents"
-            className="h-9 px-3.5 bg-white hover:bg-slate-50 text-[#1E293B] border border-[#E2E8F0] rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-2xs self-start sm:self-auto"
+            className="h-9 px-3.5 bg-white hover:bg-slate-50 text-[#1E293B] border border-[#E2E8F0] rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-2xs"
           >
             <ArrowLeft className="w-3.5 h-3.5 text-[#64748B]" />
             <span>Cancel</span>

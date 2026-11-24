@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, createContext, useContext, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import DashboardSidebar from './DashboardSidebar';
 import DashboardHeader from './DashboardHeader';
@@ -7,6 +7,20 @@ import { useAuth } from '../../context/AuthContext';
 import { DashboardPageSkeleton } from './skeletons';
 import { SidebarProvider, SidebarInset, useSidebar } from '@/components/ui/sidebar';
 import { TooltipProvider } from '@/components/ui/tooltip';
+
+export const DashboardTitleContext = createContext({
+  pageTitle: null,
+  setPageTitle: () => {},
+});
+
+export function useDashboardHeaderTitle(title) {
+  const { setPageTitle } = useContext(DashboardTitleContext);
+  React.useEffect(() => {
+    if (!title) return;
+    setPageTitle(title);
+    return () => setPageTitle(null);
+  }, [title, setPageTitle]);
+}
 
 function DashboardLayoutContent({ role, title }) {
   const { density } = useDashboardDensity();
@@ -42,14 +56,17 @@ function DashboardLayoutContent({ role, title }) {
 export default function DashboardLayout({ role = 'broker', title = 'Property Listings' }) {
   const { user } = useAuth();
   const effectiveRole = user?.role === 'admin' ? 'admin' : role;
+  const [pageTitle, setPageTitle] = useState(null);
 
   return (
     <DashboardThemeProvider role={effectiveRole}>
-      <TooltipProvider>
-        <SidebarProvider>
-          <DashboardLayoutContent role={effectiveRole} title={title} />
-        </SidebarProvider>
-      </TooltipProvider>
+      <DashboardTitleContext.Provider value={{ pageTitle, setPageTitle }}>
+        <TooltipProvider>
+          <SidebarProvider>
+            <DashboardLayoutContent role={effectiveRole} title={title} />
+          </SidebarProvider>
+        </TooltipProvider>
+      </DashboardTitleContext.Provider>
     </DashboardThemeProvider>
   );
 }

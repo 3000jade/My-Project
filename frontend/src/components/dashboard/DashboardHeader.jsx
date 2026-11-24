@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useContext } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import {
   Bell,
   Search,
@@ -26,6 +26,7 @@ import {
   getNotificationTargetPath,
 } from '../../services/notificationService';
 import { useAuth } from '../../context/AuthContext';
+import { DashboardTitleContext } from './DashboardLayout';
 import { cn } from '@/utils/cn';
 import {
   DropdownMenu,
@@ -44,12 +45,54 @@ import {
   EmptyDescription,
 } from '@/components/ui/empty';
 
+const ROUTE_TITLES = [
+  ['/broker/dashboard', 'Dashboard'],
+  ['/broker/properties/new', 'Create Property Listing'],
+  ['/broker/properties/create', 'Create Property Listing'],
+  ['/broker/properties', 'Property Listings'],
+  ['/broker/inquiries', 'Inquiries'],
+  ['/broker/agents/invite', 'Invite Agent'],
+  ['/broker/agents', 'Agents'],
+  ['/broker/reports', 'Reports'],
+  ['/broker/audit', 'Audit Trail'],
+  ['/broker/sales', 'Sales'],
+  ['/broker/notifications', 'Notifications'],
+  ['/broker/profile', 'Profile'],
+  ['/agent/dashboard', 'Dashboard'],
+  ['/agent/properties', 'Properties'],
+  ['/agent/inquiries', 'Inquiries'],
+  ['/agent/availability', 'Schedule & Availability'],
+  ['/agent/sales', 'Sales'],
+  ['/agent/profile', 'Profile'],
+  ['/client/dashboard', 'Dashboard'],
+  ['/client/saved-properties', 'Saved Properties'],
+  ['/client/inquiries', 'My Inquiries'],
+  ['/client/profile', 'Profile'],
+  ['/admin/cms', 'Content Management'],
+  ['/admin/users', 'Users & Access'],
+  ['/admin/data-management', 'Data Management'],
+];
+
+function getRouteTitle(pathname) {
+  if (pathname.startsWith('/broker/properties/') && pathname.endsWith('/edit')) {
+    return 'Edit Property Listing';
+  }
+  if (pathname.startsWith('/broker/agents/') && pathname.endsWith('/edit')) {
+    return 'Edit Agent Profile';
+  }
+  return ROUTE_TITLES.find(([prefix]) => pathname.startsWith(prefix))?.[1];
+}
+
 export default function DashboardHeader({
   role = 'broker',
+  title = 'Dashboard',
   onMenuClick,
 }) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { pageTitle } = useContext(DashboardTitleContext);
   const { user, logout } = useAuth();
+  const resolvedTitle = pageTitle || getRouteTitle(location.pathname) || title;
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifFilter, setNotifFilter] = useState('ALL'); // 'ALL' | 'UNREAD'
   const [notifications, setNotifications] = useState([]);
@@ -166,8 +209,8 @@ export default function DashboardHeader({
   return (
     <header className="h-16 bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 select-none gap-4">
 
-      {/* Left: Mobile Toggle & Global Search Console */}
-      <div className="flex items-center gap-3 flex-1 max-w-xl">
+      {/* Left: Mobile Toggle, Inline Page Title & Global Search */}
+      <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
         <button
           onClick={onMenuClick}
           className="md:hidden p-2 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors shrink-0"
@@ -176,8 +219,16 @@ export default function DashboardHeader({
           <Menu className="w-5 h-5" />
         </button>
 
+        {resolvedTitle && (
+          <h1 className="text-lg sm:text-xl font-bold text-[#1E293B] tracking-tight truncate shrink-0">
+            {resolvedTitle}
+          </h1>
+        )}
+
+        <span className="hidden sm:block h-5 w-px bg-[#E2E8F0] shrink-0" aria-hidden="true" />
+
         {/* Global Search Console with Clear Button and Keyboard Shortcut */}
-        <div className="relative w-full">
+        <div className="relative w-full max-w-md min-w-0">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
           <input
             type="text"

@@ -86,15 +86,7 @@ export default function AdminCmsPage() {
 
   return (
     <div className="flex flex-col gap-6 font-sans w-full min-w-0 max-w-full p-4 md:p-6 lg:p-8 bg-[#F8FAFC] min-h-screen">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-[28px] font-bold tracking-tight text-[#1E293B]">
-            Corporation Content Management
-          </h1>
-          <p className="text-sm text-[#64748B] mt-1">
-            Publish company pages, buying guides, FAQs, and hero banners.
-          </p>
-        </div>
+      <div className="flex items-center justify-end">
 
         <Button
           type="button"

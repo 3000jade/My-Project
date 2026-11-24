@@ -181,16 +181,8 @@ export default function BrokerAgentEdit() {
       <Toaster position="top-right" />
 
       <div>
-        {/* Page Title */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-[#1E293B] tracking-tight">
-              Edit Agent Profile
-            </h1>
-            <p className="text-xs sm:text-sm text-[#64748B] mt-0.5">
-              Update the agent&apos;s details, licenses, and permissions.
-            </p>
-          </div>
+        {/* Action Buttons */}
+        <div className="flex items-center justify-end gap-2">
           <div className="flex items-center gap-2">
             <Button asChild variant="outline" className="h-11 px-4 bg-white border-[#E2E8F0] text-[#1E293B] gap-1.5 normal-case">
               <Link to={`/broker/agents/${id}`}>
