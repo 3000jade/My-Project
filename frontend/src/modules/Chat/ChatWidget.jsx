@@ -466,7 +466,7 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
                     onClick={handleNewChat}
                     aria-label="New chat"
                     title="New chat"
-                    className="size-10 rounded-lg text-[#64748B] hover:text-[#1E293B]"
+                    className="size-11 sm:size-10 rounded-lg text-[#64748B] hover:text-[#1E293B]"
                   >
                     <RotateCcw className="size-4" />
                   </Button>
@@ -477,7 +477,7 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
                     onClick={() => setIsExpanded((prev) => !prev)}
                     aria-label={isExpanded ? 'Collapse chat' : 'Expand chat'}
                     title={isExpanded ? 'Collapse chat' : 'Expand chat'}
-                    className="hidden sm:inline-flex size-10 rounded-lg text-[#64748B] hover:text-[#1E293B]"
+                    className="hidden sm:inline-flex size-11 sm:size-10 rounded-lg text-[#64748B] hover:text-[#1E293B]"
                   >
                     {isExpanded ? (
                       <Minimize2 className="size-4" />
@@ -492,7 +492,7 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
                     onClick={toggleChat}
                     aria-label="Close chat"
                     title="Close chat"
-                    className="size-10 rounded-lg text-[#64748B] hover:text-[#1E293B]"
+                    className="size-11 sm:size-10 rounded-lg text-[#64748B] hover:text-[#1E293B]"
                   >
                     <X className="size-4" />
                   </Button>
@@ -627,7 +627,7 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
                                   onClick={() =>
                                     openHandoff(msg.cards?.[0] ?? currentActiveListing ?? null)
                                   }
-                                  className="self-start min-h-10 px-4 bg-[#FF6B6B] text-[#1E293B] hover:bg-[#EE5A5A] hover:text-[#1E293B] font-semibold normal-case tracking-normal text-xs shadow-xs"
+                                  className="self-start min-h-11 sm:min-h-8 px-4 bg-[#FF6B6B] text-[#1E293B] hover:bg-[#EE5A5A] hover:text-[#1E293B] font-semibold normal-case tracking-normal text-xs shadow-xs"
                                 >
                                   <UserCheck data-icon="inline-start" />
                                   Connect to Licensed Agent
@@ -645,7 +645,7 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
                                         variant="outline"
                                         size="sm"
                                         onClick={() => handleSend(null, chip)}
-                                        className="rounded-full normal-case tracking-normal font-medium text-xs h-auto min-h-8 px-4 py-1 whitespace-normal text-left border-[#E2E8F0] text-[#1E293B] hover:border-[#0F766E] hover:text-[#0F766E]"
+                                        className="rounded-full normal-case tracking-normal font-medium text-xs h-auto min-h-11 sm:min-h-8 px-4 py-1 whitespace-normal text-left border-[#E2E8F0] text-[#1E293B] hover:border-[#0F766E] hover:text-[#0F766E]"
                                       >
                                         {chip}
                                       </Button>
@@ -668,7 +668,7 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
                       variant="outline"
                       size="sm"
                       onClick={scrollToLatest}
-                      className="pointer-events-auto rounded-full shadow-md bg-white text-[#1E293B] border-[#E2E8F0] normal-case tracking-normal text-xs"
+                      className="pointer-events-auto min-h-11 sm:min-h-0 rounded-full shadow-md bg-white text-[#1E293B] border-[#E2E8F0] normal-case tracking-normal text-xs"
                     >
                       <ArrowDown data-icon="inline-start" />
                       Jump to latest
@@ -725,7 +725,7 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
                           variant="ghost"
                           size="sm"
                           onClick={() => setSelectedCompare([])}
-                          className="normal-case tracking-normal text-xs text-[#64748B] hover:text-[#1E293B]"
+                          className="min-h-11 sm:min-h-0 normal-case tracking-normal text-xs text-[#64748B] hover:text-[#1E293B]"
                         >
                           Clear
                         </Button>
@@ -735,7 +735,7 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
                           size="sm"
                           disabled={selectedCompare.length < 2 || isStreaming}
                           onClick={handleCompareSelected}
-                          className="normal-case tracking-normal text-xs"
+                          className="min-h-11 sm:min-h-0 normal-case tracking-normal text-xs"
                         >
                           <GitCompareArrows data-icon="inline-start" />
                           Compare Selected ({selectedCompare.length})
@@ -763,7 +763,7 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
                           size="icon"
                           onClick={handleStop}
                           aria-label="Stop generating"
-                          className="size-10 rounded-full shrink-0 border-[#E2E8F0] text-[#1E293B] hover:bg-[#F1F5F9]"
+                          className="size-11 sm:size-10 rounded-full shrink-0 border-[#E2E8F0] text-[#1E293B] hover:bg-[#F1F5F9]"
                         >
                           <Square className="size-4 fill-current" />
                         </Button>
@@ -773,7 +773,7 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
                           disabled={!inputValue.trim()}
                           aria-label="Send message"
                           size="icon"
-                          className="size-10 rounded-full shrink-0"
+                          className="size-11 sm:size-10 rounded-full shrink-0"
                         >
                           <Send className="size-4" />
                         </Button>
@@ -791,7 +791,7 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
                       variant="ghost"
                       size="sm"
                       onClick={() => openHandoff(currentActiveListing)}
-                      className="shrink-0 normal-case tracking-normal text-xs font-medium text-[#0F766E] hover:bg-[#CCFBF1]/40 hover:text-[#115E59]"
+                      className="min-h-11 sm:min-h-0 shrink-0 normal-case tracking-normal text-xs font-medium text-[#0F766E] hover:bg-[#CCFBF1]/40 hover:text-[#115E59]"
                     >
                       <UserCheck data-icon="inline-start" />
                       Talk to a Licensed Agent

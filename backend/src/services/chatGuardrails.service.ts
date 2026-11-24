@@ -88,7 +88,7 @@ export function evaluateChatGuardrails(input: ChatGuardrailInput): ChatGuardrail
 }
 
 const STRONG_TAGALOG_REGEX =
-  /\b(bahay|lupa|magkano|pwede|puwede|meron|mayroon|kayo|ninyo|niyo|namin|kami|po|opo|saan|paano|kailan|ilang|malapit|dito|riyan|doon|yung|ung|mga|tawad|baha|binabaha|bumabaha|bahain|ligtas|titulo|buwis|kikitain|tataas|tripping|pasyal|tingnan|naghahanap|hanap|ikukumpara|kumpara|bukas|presyo|wala|naman|kasi|kailangan|gusto)\b/i;
+  /\b(bahay|lupa|magkano|pwede|puwede|meron|mayroon|kayo|ninyo|niyo|namin|kami|po|opo|saan|paano|kailan|ilang|malapit|dito|riyan|doon|yung|ung|mga|tawad|baha|binabaha|bumabaha|bahain|ligtas|titulo|buwis|kikitain|tataas|tripping|pasyal|tingnan|naghahanap|hanap|ikukumpara|ikumpara|kumpara|bukas|presyo|wala|naman|kasi|kailangan|gusto)\b/i;
 
 const LIGHT_TAGALOG_REGEX = /\b(ba|ang|ng|sa|ito|iyan|iyon|na|pa|may)\b/gi;
 
@@ -188,7 +188,7 @@ export function buildFollowUpSuggestions(input: ChatFollowUpInput): string[] {
     return finalizeSuggestions(
       taglish
         ? [
-            'Ikukumpara ang top 2 properties side by side',
+            'Ikumpara ang top 2 properties side by side',
             'Ano ang malapit sa unang property?',
             'I-filter ayon sa presyo o ibang lugar',
           ]

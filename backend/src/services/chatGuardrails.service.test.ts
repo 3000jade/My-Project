@@ -131,7 +131,8 @@ describe('buildFollowUpSuggestions', () => {
 
     expect(suggestions.length).toBeGreaterThanOrEqual(2);
     expect(suggestions.length).toBeLessThanOrEqual(3);
-    expect(suggestions.some((s) => /\b(ikukumpara|malapit|presyo|viewing|bahay|ito|sa|ba|ang|pa|mga)\b/i.test(s))).toBe(
+    expect(suggestions).toContain('Ikumpara ang top 2 properties side by side');
+    expect(suggestions.some((s) => /\b(ikumpara|malapit|presyo|viewing|bahay|ito|sa|ba|ang|pa|mga)\b/i.test(s))).toBe(
       true
     );
   });

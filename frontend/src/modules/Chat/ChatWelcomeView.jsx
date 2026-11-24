@@ -88,14 +88,14 @@ export default function ChatWelcomeView({ activeListing = null, onSelectPrompt, 
 
   return (
     <Card className="w-full min-w-0 bg-white border-[#E2E8F0] shadow-xs rounded-xl">
-      <CardHeader className="flex flex-col gap-2 p-4 pb-2">
-        <div className="flex items-center justify-between gap-2">
+      <CardHeader className="flex flex-col gap-2 space-y-0 p-4 pb-2">
+        <div className="flex items-center justify-between gap-2 min-w-0">
           <div className="size-10 shrink-0 rounded-xl bg-[#CCFBF1] text-[#0F766E] flex items-center justify-center">
             <Bot className="size-5" aria-hidden="true" />
           </div>
           {hasActiveListing && (
-            <Badge variant="default" className="max-w-full truncate">
-              {activeListing.title}
+            <Badge variant="default" className="max-w-full min-w-0">
+              <span className="truncate">{activeListing.title}</span>
             </Badge>
           )}
         </div>

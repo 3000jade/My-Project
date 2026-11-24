@@ -105,7 +105,7 @@ export default function ChatPropertyCard({
       </CardContent>
 
       <CardFooter className="flex flex-wrap gap-2 p-4 pt-0">
-        <Button asChild variant="outline" size="sm">
+        <Button asChild variant="outline" size="sm" className="min-h-11 sm:min-h-0">
           <a
             href={`/properties/${property.id}`}
             onClick={(e) => {
@@ -124,7 +124,7 @@ export default function ChatPropertyCard({
           type="button"
           variant="ghost"
           size="sm"
-          className="bg-[#FF6B6B] text-[#1E293B] hover:bg-[#EE5A5A] font-semibold"
+          className="min-h-11 sm:min-h-0 bg-[#FF6B6B] text-[#1E293B] hover:bg-[#EE5A5A] font-semibold"
           onClick={() => onAskAgent?.(property)}
         >
           <MessageSquare data-icon="inline-start" />
@@ -136,6 +136,7 @@ export default function ChatPropertyCard({
             type="button"
             variant={isSelectedForCompare ? 'default' : 'outline'}
             size="sm"
+            className="min-h-11 sm:min-h-0"
             aria-pressed={Boolean(isSelectedForCompare)}
             disabled={Boolean(compareDisabled && !isSelectedForCompare)}
             onClick={() => onToggleCompare(property)}

@@ -71,6 +71,12 @@ describe('ChatWelcomeView', () => {
       />
     );
 
+    const listingBadgeText = screen.getByText(sampleListing.title);
+    expect(listingBadgeText).toBeInTheDocument();
+    expect(listingBadgeText.className).toContain('truncate');
+    expect(listingBadgeText.parentElement.className).toContain('min-w-0');
+    expect(listingBadgeText.parentElement.className).toContain('max-w-full');
+
     const expectedListingPrompts = [
       { label: "What's nearby?", prompt: "What's nearby this property?" },
       { label: 'Compare similar homes', prompt: 'Compare this home with similar published listings' },

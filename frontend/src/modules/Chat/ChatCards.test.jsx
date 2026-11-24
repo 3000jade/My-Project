@@ -138,13 +138,20 @@ describe('chatService.sendMessage', () => {
   });
 });
 
-function createSseStreamResponse(chunks, { ok = true, status = 200 } = {}) {
+function createSseStreamResponse(chunks, { ok = true, status = 200, contentType = null, readerSpies = null } = {}) {
   const encoder = new TextEncoder();
   let index = 0;
 
   return {
     ok,
     status,
+    ...(contentType !== null
+      ? {
+          headers: {
+            get: (name) => (name.toLowerCase() === 'content-type' ? contentType : null),
+          },
+        }
+      : {}),
     body: {
       getReader() {
         return {
@@ -158,8 +165,8 @@ function createSseStreamResponse(chunks, { ok = true, status = 200 } = {}) {
             }
             return { done: false, value: encoder.encode(next) };
           },
-          releaseLock: vi.fn(),
-          cancel: vi.fn(),
+          releaseLock: readerSpies?.releaseLock ?? vi.fn(),
+          cancel: readerSpies?.cancel ?? vi.fn(),
         };
       },
     },
@@ -346,12 +353,26 @@ describe('chatService.streamMessage', () => {
     expect(onResult).not.toHaveBeenCalled();
   });
 
-  it('throws when an SSE error event arrives without falling back to sendMessage', async () => {
+  it('throws when an SSE error event arrives without falling back to sendMessage and cancels the reader before releasing lock', async () => {
+    const callOrder = [];
+    const readerSpies = {
+      cancel: vi.fn(() => {
+        callOrder.push('cancel');
+        return Promise.resolve();
+      }),
+      releaseLock: vi.fn(() => {
+        callOrder.push('releaseLock');
+      }),
+    };
+
     globalThis.fetch = vi.fn().mockResolvedValueOnce(
-      createSseStreamResponse([
-        'event: error\ndata: {"error":"Assistant temporarily unavailable"}\n\n',
-        'event: done\ndata: {}\n\n',
-      ])
+      createSseStreamResponse(
+        [
+          'event: error\ndata: {"error":"Assistant temporarily unavailable"}\n\n',
+          'event: done\ndata: {}\n\n',
+        ],
+        { readerSpies }
+      )
     );
 
     await expect(
@@ -359,6 +380,98 @@ describe('chatService.streamMessage', () => {
     ).rejects.toThrow('Assistant temporarily unavailable');
 
     expect(apiClient.post).not.toHaveBeenCalled();
+    expect(readerSpies.cancel).toHaveBeenCalledTimes(1);
+    expect(readerSpies.releaseLock).toHaveBeenCalledTimes(1);
+    expect(callOrder).toEqual(['cancel', 'releaseLock']);
+  });
+
+  it('falls back to sendMessage when stream responds with a non-SSE text/html content-type', async () => {
+    globalThis.fetch = vi.fn().mockResolvedValueOnce(
+      createSseStreamResponse(['<!doctype html><html></html>'], {
+        ok: true,
+        status: 200,
+        contentType: 'text/html; charset=utf-8',
+      })
+    );
+    apiClient.post.mockResolvedValueOnce({
+      success: true,
+      data: { message: 'Recovered from HTML SPA fallback' },
+    });
+
+    const onResult = vi.fn();
+    const result = await chatService.streamMessage(
+      [{ role: 'user', content: 'Show homes' }],
+      undefined,
+      { onResult }
+    );
+
+    expect(apiClient.post).toHaveBeenCalledTimes(1);
+    expect(result.message).toBe('Recovered from HTML SPA fallback');
+    expect(onResult).toHaveBeenCalledWith(result);
+  });
+
+  it('does NOT trigger sendMessage fallback on HTTP 429 or 400 responses', async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValueOnce(createSseStreamResponse([], { ok: false, status: 429 }))
+      .mockResolvedValueOnce(createSseStreamResponse([], { ok: false, status: 400 }));
+
+    await expect(
+      chatService.streamMessage([{ role: 'user', content: 'Too fast' }])
+    ).rejects.toMatchObject({ status: 429 });
+
+    await expect(
+      chatService.streamMessage([{ role: 'user', content: 'Invalid payload' }])
+    ).rejects.toMatchObject({ status: 400 });
+
+    expect(apiClient.post).not.toHaveBeenCalled();
+  });
+
+  it('forwards AbortSignal to sendMessage fallback and skips onResult if aborted before completion', async () => {
+    const controller = new AbortController();
+    globalThis.fetch = vi.fn().mockRejectedValueOnce(new Error('Stream failed'));
+    apiClient.post.mockResolvedValueOnce({
+      success: true,
+      data: { message: 'Fallback reply with signal' },
+    });
+
+    const onResult = vi.fn();
+    const messages = [{ role: 'user', content: 'Hello' }];
+
+    const result = await chatService.streamMessage(messages, undefined, {
+      signal: controller.signal,
+      onResult,
+    });
+
+    expect(apiClient.post).toHaveBeenCalledWith(
+      '/chat',
+      { messages },
+      { timeout: 25000, signal: controller.signal }
+    );
+    expect(result.message).toBe('Fallback reply with signal');
+    expect(onResult).toHaveBeenCalledWith(result);
+
+    // Abort mid-fallback -> must throw AbortError and NOT invoke onResult
+    const lateController = new AbortController();
+    const onLateResult = vi.fn();
+    globalThis.fetch = vi.fn().mockRejectedValueOnce(new Error('Stream failed'));
+    apiClient.post.mockImplementationOnce(async () => {
+      lateController.abort();
+      return { success: true, data: { message: 'Too late' } };
+    });
+
+    await expect(
+      chatService.streamMessage(messages, undefined, {
+        signal: lateController.signal,
+        onResult: onLateResult,
+      })
+    ).rejects.toMatchObject({ name: 'AbortError' });
+    expect(onLateResult).not.toHaveBeenCalled();
+  });
+
+  it('exposes defaults.baseURL on the real apiClient module', async () => {
+    const actualApiClient = await vi.importActual('../../services/apiClient');
+    expect(actualApiClient.default.defaults?.baseURL).toMatch(/\/api$/);
   });
 
   it('returns normalized accumulated delta text when stream completes without a result event', async () => {

@@ -96,16 +96,22 @@ export const chatService = {
    *
    * @param {Array<{role: string, content: string}>} messages
    * @param {{ route?: string, propertyId?: string }} [pageContext]
+   * @param {{ signal?: AbortSignal }} [options]
    * @returns {Promise<{ message: string, cards: Array, comparison: object | null, nearby: object | null, handoffDraft: object | null }>}
    */
-  async sendMessage(messages, pageContext) {
+  async sendMessage(messages, pageContext, options = {}) {
     try {
       const normalizedContext = buildPageContext(pageContext);
       const payload = normalizedContext
         ? { messages, pageContext: normalizedContext }
         : { messages };
 
-      const response = await apiClient.post('/chat', payload, { timeout: 25000 });
+      const requestConfig = {
+        timeout: 25000,
+        ...(options?.signal ? { signal: options.signal } : {}),
+      };
+
+      const response = await apiClient.post('/chat', payload, requestConfig);
 
       // apiClient interceptor unwraps response.data directly:
       // Backend returns { success: boolean, data: ChatResponsePayload | string, error?: string }
@@ -234,7 +240,22 @@ export const chatService = {
         signal,
       });
 
-      if (!response?.ok || !response.body || typeof response.body.getReader !== 'function') {
+      if (!response?.ok) {
+        const status = response?.status;
+        const err = new Error(`Stream request failed with status ${status ?? 'unknown'}`);
+        err.status = status;
+        if (status === 400 || status === 429) {
+          err.noFallback = true;
+        }
+        throw err;
+      }
+
+      const contentType = response.headers?.get?.('content-type');
+      if (contentType && !contentType.toLowerCase().includes('text/event-stream')) {
+        throw new Error(`Unexpected stream content-type: ${contentType}`);
+      }
+
+      if (!response.body || typeof response.body.getReader !== 'function') {
         throw new Error(`Stream request failed with status ${response?.status ?? 'unknown'}`);
       }
 
@@ -290,12 +311,15 @@ export const chatService = {
         throw error?.name === 'AbortError' ? error : createAbortError();
       }
 
-      if (sseError && error === sseError) {
+      if ((sseError && error === sseError) || error?.noFallback) {
         throw error;
       }
 
       if (!receivedDeltaOrResult) {
-        const fallback = await chatService.sendMessage(messages, pageContext);
+        const fallback = await chatService.sendMessage(messages, pageContext, { signal });
+        if (signal?.aborted) {
+          throw createAbortError();
+        }
         onResult?.(fallback);
         return fallback;
       }
@@ -303,6 +327,13 @@ export const chatService = {
       throw error;
     } finally {
       if (reader) {
+        if (sseError) {
+          try {
+            await Promise.resolve(reader?.cancel?.()).catch(() => {});
+          } catch {
+            // Ignore cancel errors
+          }
+        }
         try {
           reader.releaseLock?.();
         } catch {
