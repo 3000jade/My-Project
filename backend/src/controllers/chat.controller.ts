@@ -4,7 +4,7 @@ import logger from '../utils/logger';
 
 export const sendMessage = async (req: Request, res: Response) => {
   try {
-    const { messages } = req.body || {};
+    const { messages, pageContext } = req.body || {};
     if (!Array.isArray(messages)) {
       return res.status(400).json({
         success: false,
@@ -12,13 +12,12 @@ export const sendMessage = async (req: Request, res: Response) => {
         timestamp: new Date().toISOString(),
       });
     }
-    const aiResponseText = await chatService.generateChatResponse(messages);
+
+    const responsePayload = await chatService.generateChatResponse(messages, pageContext);
 
     return res.json({
       success: true,
-      data: {
-        message: aiResponseText,
-      },
+      data: responsePayload,
       timestamp: new Date().toISOString(),
     });
   } catch (error: any) {
