@@ -337,9 +337,9 @@ export class AdminController {
       }
 
       if (status === 'SUSPENDED') {
-        SessionService.disableUserAccount(id, 'account_disabled');
+        await SessionService.disableUserAccountAsync(id, 'account_disabled');
       } else if (status === 'VERIFIED') {
-        SessionService.enableUserAccount(id);
+        await SessionService.enableUserAccountAsync(id);
       }
       invalidateAuthCache(id);
 

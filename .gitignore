@@ -35,7 +35,8 @@ out/
 !**/.env.example
 config.json
 
-# 4. Logs & Debugging
+# 4. Logs, Sessions & Debugging
+backend/data/sessions*.json
 logs/
 **/logs/
 *.log

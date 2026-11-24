@@ -479,12 +479,15 @@ export class SessionService {
     }
 
     if (!isHeartbeat) {
+      const shouldPersist = nowMs - (session.updatedAt || session.createdAt || 0) >= 60_000;
       const idleLimit = IDLE_TIMEOUT_MS[session.role] || IDLE_TIMEOUT_MS.client;
       session.lastActiveAt = nowMs;
       session.idleExpiresAt = Math.min(session.absoluteExpiresAt, nowMs + idleLimit);
-      session.updatedAt = nowMs;
-      this.saveToPersistence();
-      void this.syncSessionToDatabase(session);
+      if (shouldPersist) {
+        session.updatedAt = nowMs;
+        this.saveToPersistence();
+        void this.syncSessionToDatabase(session);
+      }
     }
 
     presenceStore.set(session.userId, nowMs);
@@ -496,6 +499,9 @@ export class SessionService {
     nowMs: number = Date.now(),
     isHeartbeat: boolean = false
   ) {
+    if (!this.findSession(identifier)) {
+      await this.hydrateSessionFromDb(identifier);
+    }
     return this.validateSession(identifier, nowMs, isHeartbeat);
   }
 
@@ -541,6 +547,9 @@ export class SessionService {
   }
 
   public static async extendSessionAsync(identifier: string, nowMs: number = Date.now()) {
+    if (!this.findSession(identifier)) {
+      await this.hydrateSessionFromDb(identifier);
+    }
     return this.extendSession(identifier, nowMs);
   }
 
@@ -611,6 +620,9 @@ export class SessionService {
     nowMs: number = Date.now(),
     recordActivity: boolean = false
   ) {
+    if (!this.findSession(oldToken)) {
+      await this.hydrateSessionFromDb(oldToken);
+    }
     return this.rotateSession(oldToken, newToken, userId, role, nowMs, recordActivity);
   }
 
@@ -659,6 +671,26 @@ export class SessionService {
     currentToken?: string,
     nowMs: number = Date.now()
   ): Promise<SessionListDTO[]> {
+    if (isSupabaseConfigured && supabaseAdmin && userId) {
+      try {
+        const { data } = await supabaseAdmin
+          .from('user_sessions')
+          .select('*')
+          .eq('user_id', userId)
+          .is('revoked_at', null);
+        if (Array.isArray(data)) {
+          for (const row of data) {
+            if (row?.id && !sessionsById.has(row.id)) {
+              const record = this.mapDbRowToRecord(row);
+              sessionsById.set(record.id, record);
+              if (record.tokenHash) sessionsByTokenHash.set(record.tokenHash, record);
+            }
+          }
+        }
+      } catch {
+        // Fallback to local store
+      }
+    }
     return this.getUserSessions(userId, currentToken, nowMs);
   }
 
@@ -696,6 +728,9 @@ export class SessionService {
     userId: string,
     nowMs: number = Date.now()
   ): Promise<boolean> {
+    if (!this.findSession(identifier)) {
+      await this.hydrateSessionFromDb(identifier);
+    }
     return this.recordHeartbeat(identifier, userId, nowMs);
   }
 
@@ -790,6 +825,12 @@ export class SessionService {
     reason?: string,
     nowMs: number = Date.now()
   ): Promise<boolean> {
+    const targetId = typeof sessionIdOrOptions === 'object' && sessionIdOrOptions !== null
+      ? sessionIdOrOptions.sessionId
+      : sessionIdOrOptions;
+    if (targetId && !this.findSession(targetId)) {
+      await this.hydrateSessionFromDb(targetId);
+    }
     return this.revokeSession(sessionIdOrOptions, requestingUserIdOrReason, reason, nowMs);
   }
 
@@ -834,7 +875,28 @@ export class SessionService {
     reason: RevokeReason = 'all_device_revocation',
     nowMs: number = Date.now()
   ): Promise<number> {
-    return this.revokeAllUserSessions(userId, reason, nowMs);
+    const localCount = this.revokeAllUserSessions(userId, reason, nowMs);
+    if (isSupabaseConfigured && supabaseAdmin && userId) {
+      try {
+        const isoNow = new Date(nowMs).toISOString();
+        const { data } = await supabaseAdmin
+          .from('user_sessions')
+          .update({
+            revoked_at: isoNow,
+            revoke_reason: reason,
+            updated_at: isoNow,
+          })
+          .eq('user_id', userId)
+          .is('revoked_at', null)
+          .select('id');
+        if (Array.isArray(data) && data.length > localCount) {
+          return data.length;
+        }
+      } catch {
+        // Local revocation count still returned
+      }
+    }
+    return localCount;
   }
 
   /**
@@ -848,7 +910,10 @@ export class SessionService {
   }
 
   public static async disableUserAccountAsync(userId: string, reason: RevokeReason = 'account_disabled'): Promise<void> {
-    this.disableUserAccount(userId, reason);
+    const safeReason: RevokeReason = VALID_REVOKE_REASONS.includes(reason) ? reason : 'account_disabled';
+    await this.revokeAllUserSessionsAsync(userId, safeReason);
+    disabledAccounts.add(userId);
+    this.saveToPersistence();
   }
 
   /**

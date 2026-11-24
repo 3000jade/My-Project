@@ -432,6 +432,7 @@ export class AuthController {
           reason: 'user_logout',
         });
       }
+      if (userId) invalidateAuthCache(userId);
       await AuthService.signOut(token);
 
       res.status(200).json({
@@ -811,6 +812,7 @@ export class AuthController {
         requestingUserId,
         reason: 'user_manual_revoke',
       });
+      if (revoked && requestingUserId) invalidateAuthCache(requestingUserId);
 
       res.status(200).json({
         success: revoked,
@@ -842,6 +844,7 @@ export class AuthController {
     }
 
     const revokedCount = await SessionService.revokeAllUserSessionsAsync(userId, 'all_device_revocation');
+    invalidateAuthCache(userId);
     res.status(200).json({
       success: true,
       data: { revokedCount },

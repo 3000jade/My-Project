@@ -56,10 +56,17 @@ export default function SessionWatcher() {
       lastActivityRef.current = now;
       if (now - lastServerSyncRef.current >= SERVER_SYNC_INTERVAL_MS && !isExtendingRef.current) {
         lastServerSyncRef.current = now;
-        Promise.resolve(authService.extendSession?.()).catch(() => {});
+        Promise.resolve(authService.extendSession?.())
+          .then(() => {
+            sessionCoordinator.broadcastSessionEvent('SESSION_EXTENDED', {
+              userId: user?.id,
+              timestamp: now,
+            });
+          })
+          .catch(() => {});
       }
     }
-  }, [isModalOpen, SERVER_SYNC_INTERVAL_MS]);
+  }, [isModalOpen, SERVER_SYNC_INTERVAL_MS, user?.id]);
 
   // Extend session: hits backend server extension endpoint and updates local timestamp
   const handleExtendSession = async () => {

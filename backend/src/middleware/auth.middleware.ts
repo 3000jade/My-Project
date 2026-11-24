@@ -79,6 +79,14 @@ export const requireAuth = async (
         });
         return;
       }
+      if (String(cached.user.verification_status || '').toUpperCase() === 'SUSPENDED') {
+        res.status(403).json({
+          success: false,
+          error: 'Forbidden: Account is suspended.',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
       req.user = { ...cached.user };
       next();
       return;
@@ -116,6 +124,17 @@ export const requireAuth = async (
       res.status(401).json({
         success: false,
         error: 'Unauthorized: Session identity mismatch.',
+        timestamp: new Date().toISOString(),
+      });
+      return;
+    }
+
+    if (String(profile.verification_status || '').toUpperCase() === 'SUSPENDED') {
+      await SessionService.disableUserAccountAsync(data.user.id, 'account_disabled');
+      invalidateAuthCache(data.user.id);
+      res.status(403).json({
+        success: false,
+        error: 'Forbidden: Account is suspended.',
         timestamp: new Date().toISOString(),
       });
       return;
