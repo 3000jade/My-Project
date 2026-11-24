@@ -2,13 +2,10 @@ import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
 import {
-  IconMessages,
-  IconArrowRight,
   IconSearch,
   IconMapPin,
   IconHome,
-  IconCoin,
-  IconShieldCheck
+  IconCoin
 } from '@tabler/icons-react';
 import houseHeroSvg from '../../../assets/House_Herosection.svg';
 
@@ -196,93 +193,18 @@ export default function ListingHeroGallery({
         />
       </motion.div>
 
-      {/* ─── ARCHITECTURAL FROSTED GLASS MONOLITH (Authentic & Immersive Exhibition Plate) ─── */}
+      {/* ─── CENTERED QUICK PROPERTY SEARCH BAR ─── */}
       <motion.div
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         style={{ y: yHeadlineText }}
         transition={{ duration: 0.8, ease: [0.32, 0.72, 0, 1] }}
-        className="relative z-20 w-full max-w-[1560px] mx-auto px-4 sm:px-6 md:px-10 lg:px-16 flex flex-col items-start justify-start pt-1 md:pt-2 will-change-transform"
+        className="relative z-20 w-full max-w-[1560px] mx-auto px-4 sm:px-6 md:px-10 lg:px-16 flex flex-col items-center justify-center pt-16 sm:pt-24 md:pt-32 will-change-transform"
       >
-        <div className="relative w-full max-w-xl lg:max-w-2xl rounded-[22px] p-6 sm:p-7 md:p-8 bg-white/20 backdrop-blur-md border border-white/40 shadow-[inset_0_1px_2px_rgba(255,255,255,0.7),0_12px_36px_rgba(13,68,70,0.06)] transition-all">
-
-          {/* Architectural Drafting Corner Crosshairs */}
-          <div className="absolute top-3 left-3 text-[13px] font-mono leading-none text-[#0D4446]/40 select-none pointer-events-none">⌜</div>
-          <div className="absolute top-3 right-3 text-[13px] font-mono leading-none text-[#0D4446]/40 select-none pointer-events-none">⌝</div>
-          <div className="absolute bottom-3 left-3 text-[13px] font-mono leading-none text-[#0D4446]/40 select-none pointer-events-none">⌞</div>
-          <div className="absolute bottom-3 right-3 text-[13px] font-mono leading-none text-[#0D4446]/40 select-none pointer-events-none">⌟</div>
-
-          {/* Trust Badge Top Eyebrow */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/45 text-[#0D4446] border border-white/60 shadow-xs text-xs font-semibold tracking-wide mb-3 backdrop-blur-sm">
-            <IconShieldCheck size={16} stroke={2.5} className="text-[#0D4446]" />
-            <span>37 Years of Trusted Homeownership in the Philippines</span>
-          </div>
-
-          {/* Editorial Modernist H1 Display */}
-          <h1 className="text-3xl sm:text-4xl md:text-[44px] lg:text-[48px] font-extrabold leading-[1.08] tracking-[-0.03em] mb-3.5 font-display">
-            <span className="text-[#0D4446] block drop-shadow-xs">
-              Selling Homes,
-            </span>
-            <span className="text-[#E76F51] block italic font-serif drop-shadow-xs">
-              Building Dreams.
-            </span>
-          </h1>
-
-          {/* Architectural Subtle Hairline Accent */}
-          <div className="w-full h-px bg-gradient-to-r from-[#0D4446]/20 via-[#0D4446]/10 to-transparent my-3 sm:my-3.5" />
-
-          {/* Narrative Sub-headline paragraph */}
-          <div className="max-w-[560px]">
-            <p className="text-[14px] sm:text-[15px] md:text-[16px] text-[#141717] font-sans font-medium leading-[1.6] tracking-[-0.01em]">
-              For over 37 years, Human Shelter has helped thousands of Filipino families turn their dream of homeownership into reality. From affordable starter homes to mid-cost master-planned communities, we make your journey secure, transparent, and joyful.
-            </p>
-          </div>
-
-          {/* ─── SECONDARY CONVERSATION & EXPLORATION ACTIONS ─── */}
-          <div className="mt-4 sm:mt-5 flex flex-wrap items-center justify-between gap-3.5 z-30 pt-3.5 border-t border-[#0D4446]/10">
-            <button
-              type="button"
-              aria-label="Consult with an agent"
-              onClick={onConsultAgent}
-              className="btn-shine premium-btn shine-md h-[46px] px-5 sm:px-6 rounded-full bg-[#187A7E] hover:bg-[#136669] text-white font-sans text-[12px] sm:text-[13px] font-bold tracking-wider uppercase inline-flex items-center gap-2.5 shadow-[0_4px_16px_rgba(24,122,126,0.28)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] transition-all duration-300 ease-out cursor-pointer group shrink-0"
-            >
-              {/* Live Advisor Beacon */}
-              <span className="relative flex h-2.5 w-2.5 shrink-0">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400"></span>
-              </span>
-
-              <IconMessages
-                size={18}
-                stroke={2}
-                className="shrink-0 group-hover:scale-110 transition-transform duration-300"
-              />
-
-              <span>Consult with an agent</span>
-            </button>
-
-            <button
-              type="button"
-              aria-label="View properties"
-              onClick={onViewProperties}
-              className="inline-flex items-center gap-2 font-sans text-[13px] sm:text-[14px] font-bold text-[#145E61] hover:text-[#E76F51] transition-all duration-300 cursor-pointer group"
-            >
-              <span className="border-b border-[#145E61]/40 group-hover:border-[#E76F51] pb-0.5 transition-colors duration-300">
-                View properties
-              </span>
-              <IconArrowRight
-                size={16}
-                stroke={2.5}
-                className="transition-transform duration-300 group-hover:translate-x-1"
-              />
-            </button>
-          </div>
-        </div>
-
         {/* ─── INTEGRATED QUICK SEARCH BAR (Sheer Transparent Glass Chassis) ─── */}
         <form
           onSubmit={handleSearchSubmit}
-          className="mt-3 sm:mt-3.5 w-full max-w-xl lg:max-w-2xl p-2.5 sm:p-3 rounded-[18px] bg-white/25 backdrop-blur-md border border-white/40 shadow-[inset_0_1px_2px_rgba(255,255,255,0.7),0_10px_28px_rgba(13,68,70,0.05)] grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center z-30"
+          className="w-full max-w-xl lg:max-w-2xl p-2.5 sm:p-3 rounded-[18px] bg-white/25 backdrop-blur-md border border-white/40 shadow-[inset_0_1px_2px_rgba(255,255,255,0.7),0_10px_28px_rgba(13,68,70,0.05)] grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center z-30"
         >
           {/* Location Select */}
           <div className="sm:col-span-6 relative flex items-center">
@@ -351,7 +273,7 @@ export default function ListingHeroGallery({
         animate={{ opacity: 1, y: 0 }}
         style={{ y: yHeroHouse, scale: scaleHeroHouse }}
         transition={{ duration: 1, delay: 0.15, ease: [0.32, 0.72, 0, 1] }}
-        className="relative z-10 w-full flex justify-center items-center mx-auto leading-none -mt-32 sm:-mt-44 md:-mt-56 lg:-mt-72 pointer-events-none origin-center will-change-transform"
+        className="relative z-10 w-full flex justify-center items-center mx-auto leading-none -mt-8 sm:-mt-16 md:-mt-24 lg:-mt-32 pointer-events-none origin-center will-change-transform"
       >
         <div className="relative w-full flex justify-center items-center">
           <img
