@@ -774,8 +774,9 @@ describe('ChatController.sendMessageStream', () => {
   function createMockSseRes() {
     const headers: Record<string, string> = {};
     const chunks: string[] = [];
-    const res: any = {
+    const res: any = Object.assign(new EventEmitter(), {
       writableEnded: false,
+      destroyed: false,
       setHeader: vi.fn((name: string, value: string) => {
         headers[name.toLowerCase()] = value;
       }),
@@ -789,7 +790,7 @@ describe('ChatController.sendMessageStream', () => {
       }),
       status: vi.fn(),
       json: vi.fn(),
-    };
+    });
     res.status.mockReturnValue(res);
     return { res, headers, chunks };
   }
@@ -876,6 +877,58 @@ describe('ChatController.sendMessageStream', () => {
     expect(capturedSignal?.aborted).toBe(true);
     expect(chunks.join('')).not.toContain('event: error');
     expect(res.end).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not abort when req emits close with req.complete=true, and aborts when res emits close', async () => {
+    let capturedSignal: AbortSignal | undefined;
+    let resolveStream!: (value: any) => void;
+
+    vi.spyOn(ChatService.prototype, 'generateChatResponseStream').mockImplementation(
+      async (_messages, _pageContext, callbacks, signal) => {
+        capturedSignal = signal;
+        callbacks?.onDelta?.('Streaming safely...');
+        return await new Promise((resolve, reject) => {
+          resolveStream = resolve;
+          signal?.addEventListener('abort', () => {
+            const err = new Error('Response closed');
+            err.name = 'AbortError';
+            reject(err);
+          });
+        });
+      }
+    );
+
+    // Case 1: POST body finished reading (req.complete = true) -> req 'close' must NOT abort
+    const req1 = Object.assign(new EventEmitter(), {
+      complete: true,
+      body: { messages: [{ role: 'user', content: 'Hello' }] },
+    }) as any;
+    const { res: res1, chunks: chunks1 } = createMockSseRes();
+
+    const pending1 = sendMessageStream(req1, res1);
+    req1.emit('close');
+    expect(capturedSignal?.aborted).toBe(false);
+
+    resolveStream({ message: 'Streaming safely...', followUpSuggestions: ['Show featured homes'] });
+    await pending1;
+
+    expect(chunks1.join('')).toContain('event: result\n');
+    expect(chunks1.join('')).toContain('event: done\ndata: {}\n\n');
+
+    // Case 2: Actual client disconnect on res 'close' -> MUST abort
+    const req2 = Object.assign(new EventEmitter(), {
+      complete: true,
+      body: { messages: [{ role: 'user', content: 'Hello again' }] },
+    }) as any;
+    const { res: res2, chunks: chunks2 } = createMockSseRes();
+
+    const pending2 = sendMessageStream(req2, res2);
+    res2.emit('close');
+    await pending2;
+
+    expect(capturedSignal?.aborted).toBe(true);
+    expect(chunks2.join('')).not.toContain('event: error');
+    expect(res2.end).toHaveBeenCalledTimes(1);
   });
 
   it('emits masked event: error and event: done on upstream failure without leaking secrets', async () => {

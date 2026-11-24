@@ -6,7 +6,7 @@ const MASKED_CHAT_ERROR_MESSAGE =
   'Unable to process chat request right now. Please try again or connect with a licensed agent.';
 
 function writeSseEvent(res: Response, eventName: string, data: unknown): void {
-  if (res.writableEnded) return;
+  if (res.writableEnded || res.destroyed) return;
   res.write(`event: ${eventName}\ndata: ${JSON.stringify(data)}\n\n`);
 }
 
@@ -56,13 +56,18 @@ export const sendMessageStream = async (req: Request, res: Response) => {
   res.flushHeaders?.();
 
   const abortController = new AbortController();
-  const handleClientClose = () => {
+  const handleReqClose = () => {
+    if (!req.complete && !res.writableEnded) {
+      abortController.abort();
+    }
+  };
+  const handleResClose = () => {
     if (!res.writableEnded) {
       abortController.abort();
     }
   };
-  req.on?.('close', handleClientClose);
-  res.on?.('close', handleClientClose);
+  req.on?.('close', handleReqClose);
+  res.on?.('close', handleResClose);
 
   try {
     const responsePayload = await chatService.generateChatResponseStream(
@@ -91,8 +96,8 @@ export const sendMessageStream = async (req: Request, res: Response) => {
       writeSseEvent(res, 'done', {});
     }
   } finally {
-    req.off?.('close', handleClientClose);
-    res.off?.('close', handleClientClose);
+    req.off?.('close', handleReqClose);
+    res.off?.('close', handleResClose);
     if (!res.writableEnded) {
       res.end();
     }
