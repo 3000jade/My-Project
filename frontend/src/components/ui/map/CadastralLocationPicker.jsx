@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import '@geoman-io/leaflet-geoman-free';
 import '@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css';
 
 // Google Maps Base Tile Layers (No API key required)
@@ -140,7 +139,18 @@ export default function CadastralLocationPicker({
   useEffect(() => {
     if (!containerRef.current || mapInstanceRef.current) return;
 
-    const map = L.map(containerRef.current, {
+    let cancelled = false;
+    let resizeObserver = null;
+
+    const initMap = async () => {
+      // Geoman's UMD bundle expects global L before module evaluation
+      if (!readOnly && enableDrawing && !L.PM) {
+        globalThis.L = L;
+        await import('@geoman-io/leaflet-geoman-free');
+      }
+      if (cancelled || !containerRef.current || mapInstanceRef.current) return;
+
+      const map = L.map(containerRef.current, {
       center: initialCenter,
       zoom: 16,
       zoomControl: false,
@@ -265,7 +275,6 @@ export default function CadastralLocationPicker({
     setMapReady(true);
 
     // ResizeObserver: auto-invalidates size when listing wizard steps unhide
-    let resizeObserver = null;
     if (typeof ResizeObserver !== 'undefined' && containerRef.current) {
       resizeObserver = new ResizeObserver(() => {
         if (mapInstanceRef.current) {
@@ -281,13 +290,19 @@ export default function CadastralLocationPicker({
         mapInstanceRef.current.invalidateSize();
       }
     }, 250);
+    };
+
+    initMap();
 
     return () => {
+      cancelled = true;
       if (resizeObserver) {
         resizeObserver.disconnect();
       }
-      map.remove();
-      mapInstanceRef.current = null;
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
       tileLayerRef.current = null;
       pinMarkerRef.current = null;
       polygonLayerRef.current = null;

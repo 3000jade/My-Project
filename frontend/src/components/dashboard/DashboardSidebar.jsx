@@ -12,6 +12,7 @@ import {
   Settings,
   Shield,
   Database,
+  Info,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import AuthContext from '../../context/AuthContext';
