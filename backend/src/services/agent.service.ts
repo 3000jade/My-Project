@@ -36,12 +36,16 @@ export interface AgentItem {
   license_status?: LicenseValidityState;
   brokerage_id?: string;
   brokerage_name?: string;
+  branch_id?: string | null;
   team_id?: string | null;
   team_name?: string | null;
   can_create_listings?: boolean;
+  permission_grants?: Record<string, boolean>;
   access_tier?: AccessTier;
   commission_tier?: string | null;
   location_branch?: string | null;
+  date_of_birth?: string | null;
+  gender?: string | null;
   emergency_contact_name?: string | null;
   emergency_contact_phone?: string | null;
   internal_notes?: string | null;
@@ -219,10 +223,10 @@ export class AgentService {
       (vStatus === 'VERIFIED'
         ? 'complete'
         : vStatus === 'REJECTED'
-        ? 'rejected'
-        : !raw.prc_license_no || !raw.dhsud_accreditation_no
-        ? 'incomplete_profile'
-        : 'pending_review');
+          ? 'rejected'
+          : !raw.prc_license_no || !raw.dhsud_accreditation_no
+            ? 'incomplete_profile'
+            : 'pending_review');
 
     let routingAvailability: RoutingAvailability =
       raw.routing_availability ||
@@ -254,17 +258,29 @@ export class AgentService {
       routing_availability: routingAvailability,
       brokerage_id: raw.brokerage_id || v2Meta.brokerage_id || DEFAULT_BROKERAGE_ID,
       brokerage_name: raw.brokerage_name || v2Meta.brokerage_name || 'Human Shelter Realty',
+      branch_id: raw.branch_id !== undefined ? raw.branch_id : v2Meta.branch_id ?? null,
       team_id: raw.team_id !== undefined ? raw.team_id : v2Meta.team_id ?? null,
       team_name: raw.team_name !== undefined ? raw.team_name : v2Meta.team_name ?? null,
       can_create_listings:
         raw.can_create_listings !== undefined
           ? Boolean(raw.can_create_listings)
           : v2Meta.can_create_listings !== undefined
-          ? Boolean(v2Meta.can_create_listings)
-          : false,
+            ? Boolean(v2Meta.can_create_listings)
+            : false,
+      permission_grants: raw.permission_grants || v2Meta.permission_grants || {
+        create_listings: Boolean(
+          raw.can_create_listings !== undefined ? raw.can_create_listings : v2Meta.can_create_listings
+        ),
+        edit_listings: true,
+        manage_inquiries: true,
+        manage_appointments: true,
+        view_reports: false,
+      },
       access_tier: raw.access_tier || v2Meta.access_tier || 'standard_agent',
       commission_tier: raw.commission_tier !== undefined ? raw.commission_tier : v2Meta.commission_tier ?? null,
       location_branch: raw.location_branch !== undefined ? raw.location_branch : v2Meta.location_branch ?? null,
+      date_of_birth: raw.date_of_birth !== undefined ? raw.date_of_birth : v2Meta.date_of_birth ?? null,
+      gender: raw.gender !== undefined ? raw.gender : v2Meta.gender ?? null,
       emergency_contact_name:
         raw.emergency_contact_name !== undefined ? raw.emergency_contact_name : v2Meta.emergency_contact_name ?? null,
       emergency_contact_phone:
@@ -320,12 +336,16 @@ export class AgentService {
       routing_availability: agent.routing_availability,
       brokerage_id: agent.brokerage_id || DEFAULT_BROKERAGE_ID,
       brokerage_name: agent.brokerage_name || 'Human Shelter Realty',
+      branch_id: agent.branch_id ?? null,
       team_id: agent.team_id ?? null,
       team_name: agent.team_name ?? null,
       can_create_listings: Boolean(agent.can_create_listings),
+      permission_grants: agent.permission_grants || {},
       access_tier: agent.access_tier || 'standard_agent',
       commission_tier: agent.commission_tier ?? null,
       location_branch: agent.location_branch ?? null,
+      date_of_birth: agent.date_of_birth ?? null,
+      gender: agent.gender ?? null,
       emergency_contact_name: agent.emergency_contact_name ?? null,
       emergency_contact_phone: agent.emergency_contact_phone ?? null,
       internal_notes: agent.internal_notes ?? null,
@@ -533,11 +553,14 @@ export class AgentService {
       onboarding_status: p.onboarding_status,
       routing_availability: p.routing_availability,
       brokerage_id: p.brokerage_id,
+      branch_id: p.branch_id ?? null,
       team_id: p.team_id,
       can_create_listings: p.can_create_listings,
       access_tier: p.access_tier,
       commission_tier: p.commission_tier,
       location_branch: p.location_branch,
+      date_of_birth: p.date_of_birth ?? null,
+      gender: p.gender ?? null,
       emergency_contact_name: p.emergency_contact_name,
       emergency_contact_phone: p.emergency_contact_phone,
       internal_notes: p.internal_notes,
@@ -568,6 +591,196 @@ export class AgentService {
    */
   public static resetStore(): void {
     localAgentsState.length = 0;
+  }
+
+  /**
+   * List active branches for a brokerage (Supabase-backed with static fallback)
+   */
+  public static async listBranches(brokerageId: string = DEFAULT_BROKERAGE_ID) {
+    const fallbackBranches = [
+      { id: '00000000-0000-0000-0000-000000000201', brokerage_id: brokerageId, name: 'Metro Manila — Makati HQ', city: 'Makati City', status: 'active' },
+      { id: '00000000-0000-0000-0000-000000000202', brokerage_id: brokerageId, name: 'BGC Taguig Office', city: 'Taguig City', status: 'active' },
+      { id: '00000000-0000-0000-0000-000000000203', brokerage_id: brokerageId, name: 'Alabang South Office', city: 'Muntinlupa City', status: 'active' },
+    ];
+
+    if (!isSupabaseConfigured) return fallbackBranches;
+
+    try {
+      const { data, error } = await supabaseAdmin
+        .from('branches')
+        .select('id, brokerage_id, name, city, address, status')
+        .eq('brokerage_id', brokerageId)
+        .eq('status', 'active')
+        .order('name', { ascending: true });
+
+      if (error || !data || data.length === 0) return fallbackBranches;
+      return data;
+    } catch {
+      return fallbackBranches;
+    }
+  }
+
+  /**
+   * Directly create an agent account, profile, brokerage membership, and initial permissions
+   */
+  public static async createAgent(
+    input: {
+      name: string;
+      email: string;
+      phone: string;
+      branch_id?: string | null;
+      location_branch?: string | null;
+      can_create_listings?: boolean;
+      permission_grants?: Record<string, boolean>;
+      prc_license_no?: string;
+    },
+    actor?: { id: string; role: string; brokerage_id?: string }
+  ): Promise<AgentItem> {
+    const cleanEmail = input.email.trim().toLowerCase();
+    const brokerageId = actor?.brokerage_id || DEFAULT_BROKERAGE_ID;
+    const nowIso = new Date().toISOString();
+    const canCreateListings = Boolean(input.can_create_listings || input.permission_grants?.create_listings);
+    const canEditListings = Boolean(
+      input.permission_grants?.edit_listings !== undefined
+        ? input.permission_grants.edit_listings
+        : canCreateListings
+    );
+
+    let agentId = `agent-${Date.now()}`;
+
+    if (isSupabaseConfigured) {
+      const { data: existingProfile } = await supabaseAdmin
+        .from('profiles')
+        .select('id')
+        .eq('email', cleanEmail)
+        .maybeSingle();
+
+      if (existingProfile) {
+        throw new Error('An account with this email already exists.');
+      }
+
+      const tempPassword = `HSR-${Math.random().toString(36).slice(2, 10)}!A1`;
+      const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
+        email: cleanEmail,
+        password: tempPassword,
+        email_confirm: true,
+        user_metadata: { full_name: input.name.trim(), role: 'agent' },
+      });
+
+      if (authError || !authUser?.user?.id) {
+        throw new Error(authError?.message || 'Failed to create agent authentication account.');
+      }
+      agentId = authUser.user.id;
+
+      const { error: profileError } = await supabaseAdmin
+        .from('profiles')
+        .upsert({
+          id: agentId,
+          email: cleanEmail,
+          full_name: input.name.trim(),
+          phone: input.phone.trim(),
+          role: 'agent',
+          brokerage_id: brokerageId,
+          branch_id: input.branch_id || null,
+          location_branch: input.location_branch || 'Metro Manila — Makati HQ',
+          access_tier: 'standard_agent',
+          can_create_listings: canCreateListings,
+          prc_license_no: input.prc_license_no?.trim() || null,
+          verification_status: 'PENDING',
+          membership_status: 'active',
+          onboarding_status: 'incomplete',
+          routing_availability: 'paused',
+          updated_at: nowIso,
+        });
+
+      if (profileError) {
+        throw new Error(`Database error creating agent profile: ${profileError.message}`);
+      }
+
+      await supabaseAdmin.from('brokerage_memberships').upsert({
+        brokerage_id: brokerageId,
+        agent_id: agentId,
+        branch_id: input.branch_id || null,
+        membership_status: 'active',
+        onboarding_status: 'incomplete',
+        routing_availability: 'paused',
+        can_create_listings: canCreateListings,
+        access_tier: 'standard_agent',
+        location_branch: input.location_branch || 'Metro Manila — Makati HQ',
+        invited_by: actor?.id || null,
+      });
+
+      await supabaseAdmin.from('agent_permission_grants').upsert(
+        [
+          {
+            brokerage_id: brokerageId,
+            agent_id: agentId,
+            permission_key: 'create_listings',
+            granted: canCreateListings,
+            granted_by: actor?.id || null,
+            updated_at: nowIso,
+          },
+          {
+            brokerage_id: brokerageId,
+            agent_id: agentId,
+            permission_key: 'edit_listings',
+            granted: canEditListings,
+            granted_by: actor?.id || null,
+            updated_at: nowIso,
+          },
+        ],
+        { onConflict: 'brokerage_id,agent_id,permission_key' }
+      );
+    }
+
+    const createdItem = this.enrichAgentDimensions({
+      id: agentId,
+      name: input.name.trim(),
+      role: 'agent',
+      email: cleanEmail,
+      phone: input.phone.trim(),
+      brokerage_id: brokerageId,
+      branch_id: input.branch_id || null,
+      location_branch: input.location_branch || 'Metro Manila — Makati HQ',
+      access_tier: 'standard_agent',
+      can_create_listings: canCreateListings,
+      permission_grants: {
+        create_listings: canCreateListings,
+        edit_listings: canEditListings,
+      },
+      prc_license_no: input.prc_license_no?.trim() || null,
+      verification_status: 'PENDING',
+      membership_status: 'active',
+      onboarding_status: 'incomplete',
+      routing_availability: 'paused',
+      created_at: nowIso,
+      assigned_properties_count: 0,
+      active_inquiries_count: 0,
+      upcoming_appointments_count: 0,
+      recorded_sales_count: 0,
+      total_sales_value: 0,
+    });
+
+    if (!isSupabaseConfigured) {
+      if (localAgentsState.some((a) => a.email.toLowerCase() === cleanEmail)) {
+        throw new Error('An account with this email already exists.');
+      }
+      localAgentsState.unshift(createdItem);
+    }
+
+    if (actor) {
+      AgentEligibilityService.recordLocalAuditEvent({
+        actor_id: actor.id,
+        target_id: agentId,
+        brokerage_id: brokerageId,
+        event_type: 'AGENT_CREATED',
+        prior_status: 'NONE',
+        new_status: 'PENDING',
+        reason: 'Agent created directly by broker',
+      });
+    }
+
+    return createdItem;
   }
 
   /**
@@ -772,15 +985,15 @@ export class AgentService {
     details?:
       | string
       | {
-          rejection_remarks?: string;
-          suspension_reason?: string;
-          suspension_notes?: string;
-          membership_status?: MembershipStatus;
-          onboarding_status?: OnboardingStatus;
-          routing_availability?: RoutingAvailability;
-          departed_at?: string;
-          departure_reason?: string;
-        },
+        rejection_remarks?: string;
+        suspension_reason?: string;
+        suspension_notes?: string;
+        membership_status?: MembershipStatus;
+        onboarding_status?: OnboardingStatus;
+        routing_availability?: RoutingAvailability;
+        departed_at?: string;
+        departure_reason?: string;
+      },
     actorId?: string
   ): Promise<AgentItem | null> {
     const agent = await this.getAgentById(id);
@@ -882,10 +1095,10 @@ export class AgentService {
           status === 'VERIFIED'
             ? `${enriched.name} has been verified and activated for brokerage operations.`
             : status === 'REJECTED'
-            ? `${enriched.name}'s credentials require revision: ${rejectionRemarks || 'See remarks'}.`
-            : status === 'SUSPENDED'
-            ? `${enriched.name}'s account was placed on ${enriched.membership_status}: ${agent.suspension_reason}.`
-            : `${enriched.name} was returned to pending review.`,
+              ? `${enriched.name}'s credentials require revision: ${rejectionRemarks || 'See remarks'}.`
+              : status === 'SUSPENDED'
+                ? `${enriched.name}'s account was placed on ${enriched.membership_status}: ${agent.suspension_reason}.`
+                : `${enriched.name} was returned to pending review.`,
         type: 'verification',
         related_record: id,
         role: 'agent',
@@ -925,8 +1138,12 @@ export class AgentService {
       dhsud_accreditation_no: string;
       dhsud_validity: string;
       experience_years: number;
+      date_of_birth: string | null;
+      gender: string | null;
+      branch_id: string | null;
       team_id: string | null;
       can_create_listings: boolean;
+      permission_grants: Record<string, boolean>;
       access_tier: AccessTier;
       commission_tier: string | null;
       location_branch: string | null;
@@ -952,11 +1169,22 @@ export class AgentService {
       agent.dhsud_accreditation_no = profileData.dhsud_accreditation_no;
     if (profileData.dhsud_validity !== undefined) agent.dhsud_validity = profileData.dhsud_validity;
     if (profileData.experience_years !== undefined) agent.experience_years = profileData.experience_years;
+    if (profileData.date_of_birth !== undefined) agent.date_of_birth = profileData.date_of_birth;
+    if (profileData.gender !== undefined) agent.gender = profileData.gender;
+    if (profileData.emergency_contact_name !== undefined) {
+      agent.emergency_contact_name = profileData.emergency_contact_name;
+    }
+    if (profileData.emergency_contact_phone !== undefined) {
+      agent.emergency_contact_phone = profileData.emergency_contact_phone;
+    }
     if (profileData.routing_availability !== undefined)
       agent.routing_availability = profileData.routing_availability;
 
     // Broker/Admin-only internal governance & permission fields
     if (isBrokerOrAdmin) {
+      if (profileData.branch_id !== undefined) {
+        agent.branch_id = profileData.branch_id;
+      }
       if (profileData.team_id !== undefined) {
         agent.team_id = profileData.team_id;
         const resolvedTeam = profileData.team_id
@@ -964,8 +1192,21 @@ export class AgentService {
           : null;
         agent.team_name = resolvedTeam ? resolvedTeam.name : null;
       }
+      if (profileData.permission_grants !== undefined) {
+        agent.permission_grants = {
+          ...(agent.permission_grants || {}),
+          ...profileData.permission_grants,
+        };
+        if (profileData.permission_grants.create_listings !== undefined) {
+          agent.can_create_listings = Boolean(profileData.permission_grants.create_listings);
+        }
+      }
       if (profileData.can_create_listings !== undefined) {
         agent.can_create_listings = Boolean(profileData.can_create_listings);
+        agent.permission_grants = {
+          ...(agent.permission_grants || {}),
+          create_listings: Boolean(profileData.can_create_listings),
+        };
       }
       if (profileData.access_tier !== undefined) {
         agent.access_tier = profileData.access_tier;
@@ -975,12 +1216,6 @@ export class AgentService {
       }
       if (profileData.location_branch !== undefined) {
         agent.location_branch = profileData.location_branch;
-      }
-      if (profileData.emergency_contact_name !== undefined) {
-        agent.emergency_contact_name = profileData.emergency_contact_name;
-      }
-      if (profileData.emergency_contact_phone !== undefined) {
-        agent.emergency_contact_phone = profileData.emergency_contact_phone;
       }
       if (profileData.internal_notes !== undefined) {
         agent.internal_notes = profileData.internal_notes;
@@ -1023,6 +1258,13 @@ export class AgentService {
             dhsud_accreditation_no: enriched.dhsud_accreditation_no,
             dhsud_validity: enriched.dhsud_validity,
             experience_years: enriched.experience_years,
+            date_of_birth: enriched.date_of_birth ?? null,
+            gender: enriched.gender ?? null,
+            branch_id: enriched.branch_id ?? null,
+            location_branch: enriched.location_branch ?? null,
+            emergency_contact_name: enriched.emergency_contact_name ?? null,
+            emergency_contact_phone: enriched.emergency_contact_phone ?? null,
+            can_create_listings: Boolean(enriched.can_create_listings),
             verification_status: enriched.verification_status,
             rejection_remarks: enriched.rejection_remarks || null,
             supporting_documents: docsWithMeta,
@@ -1031,6 +1273,22 @@ export class AgentService {
           .eq('id', id)
           .select()
           .single();
+
+        if (!error && isBrokerOrAdmin && profileData.permission_grants) {
+          const rows = Object.entries(profileData.permission_grants).map(([permission_key, granted]) => ({
+            brokerage_id: enriched.brokerage_id || DEFAULT_BROKERAGE_ID,
+            agent_id: id,
+            permission_key,
+            granted: Boolean(granted),
+            granted_by: actor?.id || null,
+            updated_at: new Date().toISOString(),
+          }));
+          if (rows.length > 0) {
+            await supabaseAdmin
+              .from('agent_permission_grants')
+              .upsert(rows, { onConflict: 'brokerage_id,agent_id,permission_key' });
+          }
+        }
 
         if (error) {
           if (error.code === '22P02' || error.message?.includes('invalid input syntax')) {

@@ -18,7 +18,7 @@ function DashboardLayoutContent({ role, title }) {
       data-dashboard-density={density}
       className="flex min-h-screen w-full bg-[#F8FAFC] text-[#1E293B] font-sans antialiased transition-[font-size] duration-150"
     >
-      {/* Smart Soft Teal Sidebar Navigation */}
+      {/* Smart Deep Forest Teal Sidebar Navigation */}
       <DashboardSidebar role={role} />
 
       {/* Main Content Area */}

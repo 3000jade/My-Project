@@ -28,7 +28,6 @@ export default function BrokerInviteAgent() {
   const [error, setError] = useState('');
   const [successResult, setSuccessResult] = useState(null);
   const [copiedLink, setCopiedLink] = useState(false);
-  const [teams, setTeams] = useState([]);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -43,18 +42,11 @@ export default function BrokerInviteAgent() {
     prcValidity: '',
     dhsudNo: '',
     dhsudValidity: '',
-    teamId: '',
     canCreateListings: false,
     accessTier: 'standard',
     commissionTier: '3%',
     message: ''
   });
-
-  useEffect(() => {
-    agentService.getTeams().then((data) => {
-      if (Array.isArray(data)) setTeams(data);
-    }).catch(() => {});
-  }, []);
 
   const handleChange = (field, val) => {
     setFormData(prev => ({ ...prev, [field]: val }));
@@ -100,7 +92,6 @@ export default function BrokerInviteAgent() {
         phone: formData.phone,
         role: formData.role === 'Associate Broker' ? 'broker' : 'agent',
         brokerAgency: formData.brokerAgency,
-        teamId: formData.teamId || undefined,
         canCreateListings: Boolean(formData.canCreateListings),
         accessTier: formData.accessTier,
         commissionTier: formData.commissionTier,
@@ -610,22 +601,6 @@ export default function BrokerInviteAgent() {
                       <option value="3.5%">Associate 3.5% Gross Commission</option>
                       <option value="4%">Senior 4.0% Gross Commission</option>
                       <option value="5%">Executive 5.0% Gross Commission</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-[#1E293B] mb-1">
-                      Team Assignment (Optional)
-                    </label>
-                    <select
-                      value={formData.teamId}
-                      onChange={(e) => handleChange('teamId', e.target.value)}
-                      className="w-full h-10 px-3.5 bg-white border border-[#E2E8F0] rounded-lg text-xs font-medium text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
-                    >
-                      <option value="">General Roster (No Team)</option>
-                      {teams.map((t) => (
-                        <option key={t.id} value={t.id}>{t.name}</option>
-                      ))}
                     </select>
                   </div>
                 </div>

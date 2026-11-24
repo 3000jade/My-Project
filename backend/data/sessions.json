@@ -1,6 +1,23 @@
 {
   "sessions": [
     {
+<<<<<<< HEAD
+=======
+      "id": "3ce8877c-fdec-44a4-8091-ce7f5b366e49",
+      "tokenHash": "1e5d36a81256789bdfded4bbd290dc4311982b2e22da5a2439df4f7360dc4a43",
+      "userId": "787d7182-e5d8-4571-861e-05c614bf18ca",
+      "role": "broker",
+      "createdAt": 1795374666493,
+      "lastActiveAt": 1795376799417,
+      "idleExpiresAt": 1795378599417,
+      "absoluteExpiresAt": 1795417866493,
+      "lastHeartbeatAt": 1795374666493,
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36 OPR/139.0.0.0",
+      "ipAddress": "::1",
+      "updatedAt": 1795376799417
+    },
+    {
+>>>>>>> property-tech-v3.0
       "id": "724f01ad-4d00-4a97-93af-0f83f973c2e5",
       "tokenHash": "703d54fd2d1655ede4d331cd0e86df88401db2e95139ca6ec3200acc47eb9a16",
       "userId": "787d7182-e5d8-4571-861e-05c614bf18ca",
@@ -26,6 +43,7 @@
       "lastHeartbeatAt": 1795462478994,
       "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36 OPR/139.0.0.0",
       "ipAddress": "::1",
+<<<<<<< HEAD
       "updatedAt": 1795360295789
     },
     {
@@ -41,6 +59,9 @@
       "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
       "ipAddress": "::1",
       "updatedAt": 1795471206309
+=======
+      "updatedAt": 1795467418590
+>>>>>>> property-tech-v3.0
     },
     {
       "id": "a8290f13-fa96-4779-8920-67d0d3e8f682",
@@ -48,13 +69,22 @@
       "userId": "787d7182-e5d8-4571-861e-05c614bf18ca",
       "role": "broker",
       "createdAt": 1795493494035,
+<<<<<<< HEAD
       "lastActiveAt": 1795495068476,
       "idleExpiresAt": 1795496868476,
+=======
+      "lastActiveAt": 1795494724303,
+      "idleExpiresAt": 1795496524303,
+>>>>>>> property-tech-v3.0
       "absoluteExpiresAt": 1795536694035,
       "lastHeartbeatAt": 1795493494035,
       "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.0.0 Safari/537.36",
       "ipAddress": "::1",
+<<<<<<< HEAD
       "updatedAt": 1795495068476
+=======
+      "updatedAt": 1795494724303
+>>>>>>> property-tech-v3.0
     },
     {
       "id": "de8692bc-1987-479a-8095-9b23a09a93ab",
@@ -62,13 +92,22 @@
       "userId": "787d7182-e5d8-4571-861e-05c614bf18ca",
       "role": "broker",
       "createdAt": 1795495070153,
+<<<<<<< HEAD
       "lastActiveAt": 1795495073827,
       "idleExpiresAt": 1795496873827,
+=======
+      "lastActiveAt": 1795495417514,
+      "idleExpiresAt": 1795497217514,
+>>>>>>> property-tech-v3.0
       "absoluteExpiresAt": 1795538270153,
       "lastHeartbeatAt": 1795495070153,
       "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.0.0 Safari/537.36",
       "ipAddress": "::1",
+<<<<<<< HEAD
       "updatedAt": 1795495073827
+=======
+      "updatedAt": 1795495417514
+>>>>>>> property-tech-v3.0
     }
   ],
   "disabledAccounts": []

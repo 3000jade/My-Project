@@ -79,7 +79,7 @@ export default function LoginPage() {
       const isRoleAllowed =
         userRole === 'admin' ||
         (userRole === 'agent' && validReturn.startsWith('/agent')) ||
-        (userRole === 'broker' && (validReturn.startsWith('/broker') || validReturn.startsWith('/agent'))) ||
+        (userRole === 'broker' && validReturn.startsWith('/broker')) ||
         (userRole === 'client' && validReturn.startsWith('/client'));
 
       if (isRoleAllowed) {

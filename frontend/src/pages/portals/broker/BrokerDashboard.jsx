@@ -328,7 +328,7 @@ export default function BrokerDashboard() {
                           description="Invite sales agents to assign listings and track client inquiries."
                           action={
                             <Button asChild variant="coral" size="sm">
-                              <Link to="/broker/agents/invite">Invite New Agent</Link>
+                              <Link to="/broker/agents">Add Agent</Link>
                             </Button>
                           }
                         />

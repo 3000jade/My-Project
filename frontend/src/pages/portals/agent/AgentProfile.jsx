@@ -34,6 +34,10 @@ const TRACKED_KEYS = [
   'phone',
   'bio',
   'experience_years',
+  'date_of_birth',
+  'gender',
+  'emergency_contact_name',
+  'emergency_contact_phone',
   'prc_license_no',
   'prc_validity',
   'dhsud_accreditation_no',
@@ -119,6 +123,10 @@ export default function AgentProfile() {
         phone: nextDraft.phone,
         bio: nextDraft.bio,
         experience_years: Number(nextDraft.experience_years || 0),
+        date_of_birth: nextDraft.date_of_birth || null,
+        gender: nextDraft.gender || null,
+        emergency_contact_name: nextDraft.emergency_contact_name || null,
+        emergency_contact_phone: nextDraft.emergency_contact_phone || null,
         prc_license_no: nextDraft.prc_license_no,
         prc_validity: nextDraft.prc_validity,
         dhsud_accreditation_no: nextDraft.dhsud_accreditation_no,
@@ -221,35 +229,97 @@ export default function AgentProfile() {
   );
 
   const identityExtraFields = (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <Field>
-        <FieldLabel htmlFor="agent-experience" className="text-sm font-medium text-on-surface">
-          Years of Experience
-        </FieldLabel>
-        <Input
-          id="agent-experience"
-          type="number"
-          min={0}
-          max={70}
-          value={draft.experience_years ?? 0}
-          onChange={(e) => setDraft((prev) => ({ ...prev, experience_years: e.target.value }))}
-          onFocus={() => setFocusedSection('identity')}
-          onBlur={() => setFocusedSection(null)}
-          className="h-11 bg-surface border-outline text-on-surface rounded-lg font-mono"
-        />
-      </Field>
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Field>
+          <FieldLabel htmlFor="agent-experience" className="text-sm font-medium text-on-surface">
+            Years of Experience
+          </FieldLabel>
+          <Input
+            id="agent-experience"
+            type="number"
+            min={0}
+            max={70}
+            value={draft.experience_years ?? 0}
+            onChange={(e) => setDraft((prev) => ({ ...prev, experience_years: e.target.value }))}
+            onFocus={() => setFocusedSection('identity')}
+            onBlur={() => setFocusedSection(null)}
+            className="h-11 bg-surface border-outline text-on-surface rounded-lg font-mono"
+          />
+        </Field>
 
-      <Field>
-        <FieldLabel className="text-sm font-medium text-on-surface">
-          Assigned Team &amp; Branch
-        </FieldLabel>
-        <div className="h-11 px-3 rounded-lg bg-surface-variant border border-outline flex items-center gap-2 text-sm text-on-surface-variant">
-          <Building2 className="size-4 text-primary shrink-0" />
-          <span className="truncate">
-            {draft.team_name || 'Advisory'} • {draft.location_branch || 'Metro Manila'}
-          </span>
-        </div>
-      </Field>
+        <Field>
+          <FieldLabel className="text-sm font-medium text-on-surface">
+            Branch Office
+          </FieldLabel>
+          <div className="h-11 px-3 rounded-lg bg-surface-variant border border-outline flex items-center gap-2 text-sm text-on-surface-variant">
+            <Building2 className="size-4 text-primary shrink-0" />
+            <span className="truncate">
+              {draft.location_branch || 'Metro Manila — Makati HQ'}
+            </span>
+          </div>
+        </Field>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-outline">
+        <Field>
+          <FieldLabel htmlFor="agent-dob" className="text-sm font-medium text-on-surface">
+            Date of Birth (Private HR)
+          </FieldLabel>
+          <Input
+            id="agent-dob"
+            type="date"
+            value={draft.date_of_birth || ''}
+            onChange={(e) => setDraft((prev) => ({ ...prev, date_of_birth: e.target.value }))}
+            className="h-11 bg-surface border-outline text-on-surface rounded-lg font-mono"
+          />
+        </Field>
+
+        <Field>
+          <FieldLabel htmlFor="agent-gender" className="text-sm font-medium text-on-surface">
+            Gender (Private HR)
+          </FieldLabel>
+          <select
+            id="agent-gender"
+            value={draft.gender || ''}
+            onChange={(e) => setDraft((prev) => ({ ...prev, gender: e.target.value }))}
+            className="h-11 w-full px-3 rounded-lg bg-surface border border-outline text-sm text-on-surface focus:outline-none focus:ring-1 focus:ring-primary"
+          >
+            <option value="">Not specified</option>
+            <option value="Female">Female</option>
+            <option value="Male">Male</option>
+            <option value="Prefer not to say">Prefer not to say</option>
+          </select>
+        </Field>
+
+        <Field>
+          <FieldLabel htmlFor="agent-emergency-name" className="text-sm font-medium text-on-surface">
+            Emergency Contact Name (Private)
+          </FieldLabel>
+          <Input
+            id="agent-emergency-name"
+            type="text"
+            placeholder="e.g. Maria Rossi (Spouse)"
+            value={draft.emergency_contact_name || ''}
+            onChange={(e) => setDraft((prev) => ({ ...prev, emergency_contact_name: e.target.value }))}
+            className="h-11 bg-surface border-outline text-on-surface rounded-lg"
+          />
+        </Field>
+
+        <Field>
+          <FieldLabel htmlFor="agent-emergency-phone" className="text-sm font-medium text-on-surface">
+            Emergency Contact Phone (Private)
+          </FieldLabel>
+          <Input
+            id="agent-emergency-phone"
+            type="tel"
+            placeholder="+63 917 000 0000"
+            value={draft.emergency_contact_phone || ''}
+            onChange={(e) => setDraft((prev) => ({ ...prev, emergency_contact_phone: e.target.value }))}
+            className="h-11 bg-surface border-outline text-on-surface rounded-lg font-mono"
+          />
+        </Field>
+      </div>
     </div>
   );
 

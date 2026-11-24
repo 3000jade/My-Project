@@ -95,6 +95,24 @@ export interface AgentAvailabilityScheduleDTO {
   updated_at?: string;
 }
 
+export type AgentPermissionKey =
+  | 'create_listings'
+  | 'edit_listings'
+  | 'manage_inquiries'
+  | 'manage_appointments'
+  | 'view_reports';
+
+export type AgentPermissionGrantsMap = Partial<Record<AgentPermissionKey, boolean>>;
+
+export interface AgentBranchDTO {
+  id: string;
+  brokerage_id: string;
+  name: string;
+  city?: string | null;
+  address?: string | null;
+  status: 'active' | 'inactive';
+}
+
 export interface AgentProfileDTO {
   id: string;
   name: string;
@@ -102,14 +120,18 @@ export interface AgentProfileDTO {
   email: string;
   phone?: string | null;
   avatar?: string | null;
+  date_of_birth?: string | null;
+  gender?: string | null;
   brokerage_id?: string | null;
   brokerage_name?: string | null;
+  branch_id?: string | null;
   team_id?: string | null;
   team_name?: string | null;
   membership_status?: MembershipStatus;
   onboarding_status?: OnboardingStatus;
   routing_availability?: RoutingAvailability;
   can_create_listings?: boolean;
+  permission_grants?: AgentPermissionGrantsMap;
   access_tier?: string | null;
   commission_tier?: string | null;
   location_branch?: string | null;

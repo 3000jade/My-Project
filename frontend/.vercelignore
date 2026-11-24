@@ -1,0 +1,10 @@
+.env
+.env.*
+*.env
+node_modules
+dist
+e2e
+*.test.js
+*.test.jsx
+playwright-report
+test-results
