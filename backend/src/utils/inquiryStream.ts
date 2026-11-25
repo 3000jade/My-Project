@@ -20,6 +20,7 @@ const visitorSubscribers = new Map<string, Set<Response>>();
 
 const VISITOR_SAFE_EVENTS = new Set([
   'message',
+  'inquiry:message',
   'agent_reassigned',
   'fallback_offline',
   'chat_closed',

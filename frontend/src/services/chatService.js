@@ -419,10 +419,12 @@ export const chatService = {
       }
     };
 
-    es.addEventListener('message', (evt) => {
+    const handleIncomingMessage = (evt) => {
       const data = parseData(evt);
       if (data) onMessage?.(data);
-    });
+    };
+    es.addEventListener('message', handleIncomingMessage);
+    es.addEventListener('inquiry:message', handleIncomingMessage);
     es.addEventListener('agent_reassigned', (evt) => {
       const data = parseData(evt);
       if (data) onAgentReassigned?.(data);

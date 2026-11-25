@@ -5,17 +5,17 @@ import { supabase } from '../config/supabase';
 import { SessionService } from '../services/session.service';
 import { LiveAgentRoutingService } from '../services/liveAgentRouting.service';
 import { InquiryService } from '../services/inquiry.service';
-import { subscribeVisitorInquiryStream } from '../utils/inquiryStream';
+import { publishInquiryEvent, subscribeVisitorInquiryStream } from '../utils/inquiryStream';
 
 const LIVE_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
 
 function getLiveChatSigningSecret(): string {
-  return (
-    process.env.SESSION_SECRET ||
-    config.supabaseServiceRoleKey ||
-    config.supabaseAnonKey ||
-    'hsr-live-chat-dev-secret'
-  );
+  const configured = process.env.SESSION_SECRET || config.supabaseServiceRoleKey;
+  if (configured) return configured;
+  if (config.isProduction) {
+    throw new Error('SESSION_SECRET or SUPABASE_SERVICE_ROLE_KEY is required in production.');
+  }
+  return config.supabaseAnonKey || 'hsr-live-chat-dev-secret';
 }
 
 export function signLiveChatToken(inquiryId: string, email: string): string {
@@ -230,6 +230,13 @@ export async function startLiveHandoff(req: Request, res: Response): Promise<voi
 
     if (chosenAgent) {
       LiveAgentRoutingService.scheduleAutoPass(inquiry.id, chosenAgent.id, routingContext);
+      publishInquiryEvent('inquiry:assigned', {
+        inquiryId: inquiry.id,
+        agentId: chosenAgent.id,
+        source: 'ai_chatbot_live',
+        clientName: inquiry.name,
+        propertyTitle: inquiry.propertyTitle,
+      });
     }
 
     const liveChatToken = authUser ? undefined : signLiveChatToken(inquiry.id, String(email));

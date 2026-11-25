@@ -953,6 +953,22 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
                 )}
               </div>
 
+              {/* Live Chat Context Strip */}
+              {liveSession && (
+                <div
+                  className={cn(
+                    'py-2 bg-emerald-50/70 border-b border-emerald-200 text-xs text-emerald-800 shrink-0',
+                    expandedPaddingX
+                  )}
+                >
+                  <div className={cn('flex items-center justify-between gap-2', expandedInnerClass)}>
+                    <span className="truncate font-medium">
+                      Connected with {liveSession.agent?.name || 'Licensed Agent'} · Typically replies in under 2 minutes
+                    </span>
+                  </div>
+                </div>
+              )}
+
               {/* Live Reconnect Banner */}
               {liveSession && liveConnectionState === 'reconnecting' && (
                 <div className="px-4 py-1.5 bg-amber-50 border-b border-amber-200 text-xs text-amber-800 shrink-0">
@@ -962,7 +978,11 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
 
               {/* Carousel -> Handoff Form -> Standard Composer */}
               {livePanelState === 'carousel' && !showEscalationForm ? (
-                <div
+                <motion.div
+                  key="live-carousel"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.18 }}
                   className={
                     isExpanded
                       ? 'bg-[#F8FAFC] shrink-0 min-h-0 max-h-full overflow-y-auto'
@@ -1000,9 +1020,13 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
                       }}
                     />
                   </div>
-                </div>
+                </motion.div>
               ) : showEscalationForm ? (
-                <div
+                <motion.div
+                  key="handoff-form"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.18 }}
                   className={
                     isExpanded
                       ? 'bg-[#F8FAFC] shrink-0 min-h-0 max-h-full overflow-y-auto'
@@ -1083,9 +1107,15 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
                       }}
                     />
                   </div>
-                </div>
+                </motion.div>
               ) : (
-                <>
+                <motion.div
+                  key="composer"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.15 }}
+                  className="contents"
+                >
                   {/* Sticky + Compare Picker Bar */}
                   {selectedCompare.length > 0 && (
                     <div
@@ -1209,7 +1239,7 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
                       </Button>
                     </div>
                   </div>
-                </>
+                </motion.div>
               )}
             </motion.div>
           )}

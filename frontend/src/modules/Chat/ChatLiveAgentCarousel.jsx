@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { motion, MotionConfig } from 'framer-motion';
 import {
   ChevronLeft,
   ChevronRight,
@@ -74,23 +75,32 @@ export default function ChatLiveAgentCarousel({
   };
 
   return (
-    <div
-      data-testid="live-agent-carousel-panel"
-      className="flex flex-col gap-4 p-4 bg-[#F8FAFC] border-t border-[#E2E8F0]"
-    >
-      {/* Header + Side-by-Side Carousel Arrows */}
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 min-w-0">
-          <h3 className="text-sm font-semibold text-[#1E293B] truncate">
-            Available Agents
-          </h3>
-          {!isLoading && agents.length > 0 && (
-            <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5 shrink-0">
-              <span className="size-2 rounded-full bg-[#10B981]" aria-hidden="true" />
-              {agents.length} online
-            </span>
-          )}
-        </div>
+    <MotionConfig reducedMotion="user">
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2, ease: 'easeOut' }}
+        data-testid="live-agent-carousel-panel"
+        className="flex flex-col gap-4 p-4 bg-[#F8FAFC] border-t border-[#E2E8F0]"
+      >
+        {/* Header + Side-by-Side Carousel Arrows */}
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex flex-col gap-1 min-w-0">
+            <div className="flex items-center gap-2 min-w-0">
+              <h3 className="text-sm font-semibold text-[#1E293B] truncate">
+                Available Agents
+              </h3>
+              {!isLoading && agents.length > 0 && (
+                <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5 shrink-0">
+                  <span className="size-2 rounded-full bg-[#10B981]" aria-hidden="true" />
+                  {agents.length} online
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-[#64748B]">
+              Pick a specialist or let us match you right away
+            </p>
+          </div>
 
         <div className="flex items-center gap-2 shrink-0">
           <Button
@@ -152,11 +162,16 @@ export default function ChatLiveAgentCarousel({
           data-lenis-prevent="true"
           className="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth motion-reduce:scroll-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
-          {agents.map((agent) => (
-            <Card
+          {agents.map((agent, idx) => (
+            <motion.div
               key={agent.id}
-              className={`${cardWidthClass} shrink-0 snap-center sm:snap-start rounded-xl border border-[#E2E8F0] bg-white shadow-xs hover:shadow-md transition-shadow motion-reduce:transition-none`}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2, delay: Math.min(idx * 0.05, 0.2) }}
+              whileHover={{ y: -2 }}
+              className={`${cardWidthClass} shrink-0 snap-center sm:snap-start`}
             >
+              <Card className="h-full rounded-xl border border-[#E2E8F0] bg-white shadow-xs hover:shadow-md transition-shadow motion-reduce:transition-none">
               <CardContent className="p-4 flex flex-col gap-4">
                 {/* Top Identity Row */}
                 <div className="flex items-start gap-3">
@@ -215,6 +230,7 @@ export default function ChatLiveAgentCarousel({
                 </Button>
               </CardContent>
             </Card>
+            </motion.div>
           ))}
         </div>
       )}
@@ -258,6 +274,7 @@ export default function ChatLiveAgentCarousel({
           Leave a Message
         </Button>
       </div>
-    </div>
+      </motion.div>
+    </MotionConfig>
   );
 }
