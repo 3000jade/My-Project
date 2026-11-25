@@ -315,9 +315,9 @@ export class LiveAgentRoutingService {
         await InquiryService.assignAgent(
           inquiryId,
           nextAgent.id,
-          'Auto-passed after 2 minutes without agent reply.',
           'system',
-          'Live Routing'
+          'Live Routing',
+          'Auto-passed after 2 minutes without agent reply.'
         );
       } catch (err: any) {
         logger.warn(`[LiveAgentRoutingService] Auto-pass assignAgent warning: ${err.message}`);

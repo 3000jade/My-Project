@@ -4,6 +4,7 @@ import { AgentTeamService } from '../services/agentTeam.service';
 import { AgentAvailabilityService } from '../services/agentAvailability.service';
 import { AgentTransferService } from '../services/agentTransfer.service';
 import { AgentEligibilityService } from '../services/agentEligibility.service';
+import { AgentPresenceService } from '../services/agentPresence.service';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
 import type { ApiResponse } from '../types/api';
 
@@ -777,6 +778,29 @@ export class AgentController {
         timestamp: new Date().toISOString(),
       });
     }
+  }
+
+  /**
+   * POST /api/agents/me/presence
+   * Quiet 30-second portal heartbeat marking the signed-in agent as online
+   */
+  public static async pingPresence(req: AuthenticatedRequest, res: Response<ApiResponse>): Promise<void> {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        error: 'Authentication required.',
+        timestamp: new Date().toISOString(),
+      });
+      return;
+    }
+
+    AgentPresenceService.markOnline(String(userId));
+    res.status(200).json({
+      success: true,
+      data: { online: true },
+      timestamp: new Date().toISOString(),
+    });
   }
 }
 

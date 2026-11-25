@@ -23,6 +23,7 @@ router.get('/public/:id', AgentController.getPublicById);
 
 // 2. Sales Agent Self-Service Endpoint
 router.get('/me', requireAuth, AgentController.getMyProfile);
+router.post('/me/presence', requireAuth, requireRole(['agent', 'broker', 'admin']), AgentController.pingPresence);
 
 // 3. Brokerage Teams & Branches Management (Brokers & Admins, read access for authenticated agents)
 router.get('/branches', requireAuth, requireRole(['agent', 'broker', 'admin']), AgentController.listBranches);
