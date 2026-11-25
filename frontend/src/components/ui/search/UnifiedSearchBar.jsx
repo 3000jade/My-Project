@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, MotionConfig } from 'framer-motion';
 import {
   Search,
   MapPin,
@@ -12,6 +12,10 @@ import {
   X,
   ChevronDown,
   ChevronUp,
+  Tag,
+  KeyRound,
+  Clock,
+  AlertCircle,
 } from 'lucide-react';
 import {
   Select,
@@ -22,23 +26,38 @@ import {
 } from '../select';
 import { Popover, PopoverContent, PopoverTrigger } from '../popover';
 import { mapsService } from '../../../services/mapsService';
+import { formatCompactPhp } from '../../../hooks/usePropertyFilterEngine';
 
-const PRICE_PRESETS = [
-  { label: '< ₱5M', min: null, max: 5000000 },
-  { label: '₱5M - ₱15M', min: 5000000, max: 15000000 },
-  { label: '₱15M - ₱50M', min: 15000000, max: 50000000 },
-  { label: '> ₱50M', min: 50000000, max: null },
+const SALE_PRICE_PRESETS = [
+  { label: 'Under ₱5M', min: null, max: 5000000 },
+  { label: '₱5M – ₱15M', min: 5000000, max: 15000000 },
+  { label: '₱15M – ₱50M', min: 15000000, max: 50000000 },
+  { label: 'Over ₱50M', min: 50000000, max: null },
+];
+
+const RENT_PRICE_PRESETS = [
+  { label: 'Under ₱25K/mo', min: null, max: 25000 },
+  { label: '₱25K – ₱60K/mo', min: 25000, max: 60000 },
+  { label: '₱60K – ₱150K/mo', min: 60000, max: 150000 },
+  { label: 'Over ₱150K/mo', min: 150000, max: null },
+];
+
+const TRANSACTION_OPTIONS = [
+  { value: 'All', label: 'All', icon: LayoutGrid },
+  { value: 'For Sale', label: 'For Sale', icon: Tag },
+  { value: 'For Rent', label: 'For Rent', icon: KeyRound },
+  { value: 'Pre-Selling', label: 'Pre-Selling', icon: Clock },
 ];
 
 const PROPERTY_TYPE_OPTIONS = [
-  { value: 'All', label: 'All Property Types' },
-  { value: 'House', label: 'House' },
+  { value: 'All', label: 'All Home Types' },
+  { value: 'House', label: 'House & Lot' },
   { value: 'Condominium', label: 'Condominium' },
   { value: 'Townhouse', label: 'Townhouse' },
-  { value: 'Lot', label: 'Lot' },
+  { value: 'Lot', label: 'Lot Only' },
 ];
 
-const BED_OPTIONS = ['Any', 'Studio', '1', '2', '3', '4+'];
+const BED_OPTIONS = ['Any', 'Studio', '1', '2', '3', '4+', '5+'];
 
 const FOCUS_RING =
   'focus-visible:outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 motion-reduce:transition-none';
@@ -189,11 +208,17 @@ export default function UnifiedSearchBar({
     }
   };
 
+  const isRentMode = (filters.transactionType || 'All') === 'For Rent';
+  const activePricePresets = isRentMode ? RENT_PRICE_PRESETS : SALE_PRICE_PRESETS;
+  const isPriceRangeInvalid = Boolean(
+    filters.minPrice && filters.maxPrice && Number(filters.minPrice) > Number(filters.maxPrice)
+  );
+
   const getPriceLabel = () => {
-    if (!filters.minPrice && !filters.maxPrice) return 'Price Range';
-    if (filters.minPrice && !filters.maxPrice) return `> ₱${(filters.minPrice / 1000000).toFixed(0)}M`;
-    if (!filters.minPrice && filters.maxPrice) return `< ₱${(filters.maxPrice / 1000000).toFixed(0)}M`;
-    return `₱${(filters.minPrice / 1000000).toFixed(0)}M - ₱${(filters.maxPrice / 1000000).toFixed(0)}M`;
+    if (!filters.minPrice && !filters.maxPrice) return isRentMode ? 'Monthly Rent' : 'Price';
+    if (filters.minPrice && !filters.maxPrice) return `From ${formatCompactPhp(filters.minPrice)}`;
+    if (!filters.minPrice && filters.maxPrice) return `Up to ${formatCompactPhp(filters.maxPrice)}`;
+    return `${formatCompactPhp(filters.minPrice)} – ${formatCompactPhp(filters.maxPrice)}`;
   };
 
   const selectedPropertyType = filters.propertyType || 'All';
@@ -204,6 +229,7 @@ export default function UnifiedSearchBar({
   const hasBedFilter = Boolean(filters.beds && filters.beds !== 'Any');
 
   return (
+    <MotionConfig reducedMotion="user">
     <div
       className={`w-full transition-colors font-sans ${isSticky
         ? 'bg-surface/95 backdrop-blur-md shadow-xs border-b border-outline py-3 px-4 md:px-6'
@@ -214,19 +240,27 @@ export default function UnifiedSearchBar({
       <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2 flex-wrap xl:flex-nowrap">
         {/* Transaction Mode Segmented Pill */}
         <div className="flex items-center bg-surface-variant p-1 rounded-lg border border-outline self-start lg:self-auto shrink-0 h-11 max-w-full overflow-x-auto no-scrollbar">
-          {['All', 'For Sale', 'For Rent', 'Pre-Selling'].map((type) => {
-            const isSelected = (filters.transactionType || 'All') === type;
+          {TRANSACTION_OPTIONS.map(({ value, label, icon: Icon }) => {
+            const isSelected = (filters.transactionType || 'All') === value;
             return (
               <button
-                key={type}
+                key={value}
                 type="button"
-                onClick={() => setFilter('transactionType', type)}
-                className={`px-3 h-9 rounded-md text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap ${FOCUS_RING} ${isSelected
-                  ? 'bg-primary text-white shadow-xs'
+                onClick={() => setFilter('transactionType', value)}
+                className={`relative px-3 h-9 rounded-md text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${FOCUS_RING} ${isSelected
+                  ? 'text-white'
                   : 'text-on-surface-variant hover:text-primary'
                 }`}
               >
-                {type}
+                {isSelected && (
+                  <motion.span
+                    layoutId="public-transaction-pill"
+                    transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+                    className="absolute inset-0 rounded-md bg-primary shadow-xs"
+                  />
+                )}
+                <Icon className="relative z-10 size-3.5 shrink-0" aria-hidden="true" />
+                <span className="relative z-10">{label}</span>
               </button>
             );
           })}
@@ -409,9 +443,14 @@ export default function UnifiedSearchBar({
                   className="w-80 rounded-xl border border-outline bg-surface p-4 text-on-surface shadow-md ring-0 gap-3"
                 >
                   <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-semibold uppercase tracking-wider text-primary">
-                      Price Budget (PHP)
-                    </h4>
+                    <div>
+                      <h4 className="text-xs font-semibold uppercase tracking-wider text-primary">
+                        {isRentMode ? 'Monthly Rent (PHP)' : 'Budget Range (PHP)'}
+                      </h4>
+                      <p className="text-xs text-on-surface-variant mt-0.5">
+                        {isRentMode ? 'Set your monthly rental budget' : 'Enter min/max or pick a quick range'}
+                      </p>
+                    </div>
                     {hasPriceFilter && (
                       <button
                         type="button"
@@ -428,49 +467,73 @@ export default function UnifiedSearchBar({
 
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="text-xs font-medium uppercase tracking-wider text-on-surface-variant block mb-1">
+                      <label htmlFor="filter-min-price" className="text-xs font-medium uppercase tracking-wider text-on-surface-variant block mb-1">
                         Min Price
                       </label>
                       <input
+                        id="filter-min-price"
                         type="number"
+                        min="0"
                         placeholder="₱ 0"
                         value={filters.minPrice || ''}
                         onChange={(e) => setFilter('minPrice', e.target.value ? Number(e.target.value) : null)}
-                        className={`w-full h-10 px-3 bg-surface border border-outline rounded-lg text-sm font-medium text-on-surface placeholder:text-on-surface-variant tabular-nums ${FOCUS_RING}`}
+                        className={`w-full h-10 px-3 bg-surface border rounded-lg text-sm font-medium text-on-surface placeholder:text-on-surface-variant tabular-nums ${FOCUS_RING} ${
+                          isPriceRangeInvalid ? 'border-red-600' : 'border-outline'
+                        }`}
                       />
                     </div>
                     <div>
-                      <label className="text-xs font-medium uppercase tracking-wider text-on-surface-variant block mb-1">
+                      <label htmlFor="filter-max-price" className="text-xs font-medium uppercase tracking-wider text-on-surface-variant block mb-1">
                         Max Price
                       </label>
                       <input
+                        id="filter-max-price"
                         type="number"
+                        min="0"
                         placeholder="Any"
                         value={filters.maxPrice || ''}
                         onChange={(e) => setFilter('maxPrice', e.target.value ? Number(e.target.value) : null)}
-                        className={`w-full h-10 px-3 bg-surface border border-outline rounded-lg text-sm font-medium text-on-surface placeholder:text-on-surface-variant tabular-nums ${FOCUS_RING}`}
+                        className={`w-full h-10 px-3 bg-surface border rounded-lg text-sm font-medium text-on-surface placeholder:text-on-surface-variant tabular-nums ${FOCUS_RING} ${
+                          isPriceRangeInvalid ? 'border-red-600' : 'border-outline'
+                        }`}
                       />
                     </div>
                   </div>
+
+                  {isPriceRangeInvalid && (
+                    <div role="alert" className="flex items-center gap-1.5 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                      <AlertCircle className="size-3.5 shrink-0" aria-hidden="true" />
+                      <span>Min price cannot be higher than max price.</span>
+                    </div>
+                  )}
 
                   <div className="space-y-2 pt-2 border-t border-outline">
                     <span className="text-xs font-medium uppercase tracking-wider text-on-surface-variant block">
                       Quick Select
                     </span>
                     <div className="grid grid-cols-2 gap-2">
-                      {PRICE_PRESETS.map((p) => (
-                        <button
-                          key={p.label}
-                          type="button"
-                          onClick={() => {
-                            setFilter('minPrice', p.min);
-                            setFilter('maxPrice', p.max);
-                          }}
-                          className={`min-h-10 py-2 px-3 bg-surface-variant hover:bg-tertiary-container hover:text-primary rounded-lg text-xs font-semibold text-on-surface transition-colors text-center border border-outline cursor-pointer tabular-nums ${FOCUS_RING}`}
-                        >
-                          {p.label}
-                        </button>
-                      ))}
+                      {activePricePresets.map((p) => {
+                        const isPresetActive =
+                          (filters.minPrice ?? null) === p.min && (filters.maxPrice ?? null) === p.max;
+                        return (
+                          <motion.button
+                            key={p.label}
+                            type="button"
+                            whileTap={{ scale: 0.97 }}
+                            onClick={() => {
+                              setFilter('minPrice', p.min);
+                              setFilter('maxPrice', p.max);
+                            }}
+                            className={`min-h-10 py-2 px-3 rounded-lg text-xs font-semibold transition-colors text-center border cursor-pointer tabular-nums ${FOCUS_RING} ${
+                              isPresetActive
+                                ? 'bg-primary text-white border-primary shadow-xs'
+                                : 'bg-surface-variant hover:bg-tertiary-container hover:text-primary text-on-surface border-outline'
+                            }`}
+                          >
+                            {p.label}
+                          </motion.button>
+                        );
+                      })}
                     </div>
                   </div>
                 </PopoverContent>
@@ -635,44 +698,58 @@ export default function UnifiedSearchBar({
       </div>
 
       {/* Lower Row: Dynamic Database Location Scroller */}
-      {!isCollapsed && (
-        <div className="flex items-center gap-2 pt-3 mt-3 border-t border-outline overflow-x-auto no-scrollbar">
-          <div className="flex items-center gap-1 text-xs font-medium text-on-surface-variant uppercase tracking-wider shrink-0">
-            <MapPin className="size-3.5 text-primary" />
-            <span>Location:</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => handleLocationClick({ name: 'All Locations' })}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors border cursor-pointer ${FOCUS_RING} ${
-                !activeLocation
-                  ? 'bg-primary text-white border-primary shadow-xs'
-                  : 'bg-surface-variant text-on-surface border-outline hover:border-outline-variant'
-              }`}
-            >
-              All Locations
-            </button>
-            {availableLocations.map((loc) => {
-              const isSelected = activeLocation.toLowerCase() === loc.name.toLowerCase();
-              return (
-                <button
-                  key={loc.name}
+      <AnimatePresence initial={false}>
+        {!isCollapsed && (
+          <motion.div
+            key="location-row"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            className="overflow-hidden"
+          >
+            <div className="flex items-center gap-2 pt-3 mt-3 border-t border-outline overflow-x-auto no-scrollbar">
+              <div className="flex items-center gap-1 text-xs font-medium text-on-surface-variant uppercase tracking-wider shrink-0">
+                <MapPin className="size-3.5 text-primary" />
+                <span>Location:</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <motion.button
                   type="button"
-                  onClick={() => handleLocationClick(loc)}
+                  whileTap={{ scale: 0.96 }}
+                  onClick={() => handleLocationClick({ name: 'All Locations' })}
                   className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors border cursor-pointer ${FOCUS_RING} ${
-                    isSelected
+                    !activeLocation
                       ? 'bg-primary text-white border-primary shadow-xs'
                       : 'bg-surface-variant text-on-surface border-outline hover:border-outline-variant'
                   }`}
                 >
-                  {loc.name}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
+                  All Locations
+                </motion.button>
+                {availableLocations.map((loc) => {
+                  const isSelected = activeLocation.toLowerCase() === loc.name.toLowerCase();
+                  return (
+                    <motion.button
+                      key={loc.name}
+                      type="button"
+                      whileTap={{ scale: 0.96 }}
+                      onClick={() => handleLocationClick(loc)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors border cursor-pointer ${FOCUS_RING} ${
+                        isSelected
+                          ? 'bg-primary text-white border-primary shadow-xs'
+                          : 'bg-surface-variant text-on-surface border-outline hover:border-outline-variant'
+                      }`}
+                    >
+                      {loc.name}
+                    </motion.button>
+                  );
+                })}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
+    </MotionConfig>
   );
 }

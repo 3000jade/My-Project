@@ -1,59 +1,57 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import cmsService from '@/services/cmsService';
-import NoImagePlaceholder from '../NoImagePlaceholder';
 
 const AWARDS = [
   { 
     id: 1, 
     type: 'image', 
     src: null, 
-    title: 'Best Luxury Brokerage 2025',
-    description: 'Awarded for exceptional service in high-end real estate.'
+    title: 'Slide 1',
+    description: 'Short description.'
   },
   { 
     id: 2, 
     type: 'video', 
     src: null, 
-    title: 'Innovation in PropTech',
-    description: 'Recognized for our advanced digital platform.'
+    title: 'Slide 2',
+    description: 'Short description.'
   },
   { 
     id: 3, 
     type: 'image', 
     src: null, 
-    title: 'Top Sales Performance',
-    description: 'Highest volume of completed transactions in Q4.'
+    title: 'Slide 3',
+    description: 'Short description.'
   },
   { 
     id: 4, 
     type: 'image', 
     src: null, 
-    title: 'Excellence in Design',
-    description: 'Award for the most intuitive UI/UX in real estate.'
+    title: 'Slide 4',
+    description: 'Short description.'
   },
   { 
     id: 5, 
     type: 'video', 
     src: null, 
-    title: 'Community Impact Award',
-    description: 'For outstanding contributions to local housing development.'
+    title: 'Slide 5',
+    description: 'Short description.'
   },
 ];
 
 const AWARDS_LIST = [
-  { id: 1, year: '2025', title: 'Top Luxury Brokerage Firm', organization: 'Asian Real Estate Awards' },
-  { id: 2, year: '2024', title: 'Innovation in PropTech', organization: 'Global Tech Innovators' },
-  { id: 3, year: '2024', title: 'Excellence in Sustainable Architecture', organization: 'Green Building Council' },
-  { id: 4, year: '2023', title: 'Highest Transaction Volume', organization: 'National Real Estate Board' },
-  { id: 5, year: '2023', title: 'Community Impact Award', organization: 'Urban Development Authority' },
-  { id: 6, year: '2022', title: 'Best User Experience Design', organization: 'Webby Awards' },
+  { id: 1, year: '20XX', title: 'Item 1', organization: 'Organization' },
+  { id: 2, year: '20XX', title: 'Item 2', organization: 'Organization' },
+  { id: 3, year: '20XX', title: 'Item 3', organization: 'Organization' },
+  { id: 4, year: '20XX', title: 'Item 4', organization: 'Organization' },
+  { id: 5, year: '20XX', title: 'Item 5', organization: 'Organization' },
+  { id: 6, year: '20XX', title: 'Item 6', organization: 'Organization' },
 ];
 
 export default function AwardsShowcase() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [cmsAwards, setCmsAwards] = useState([]);
-  const [failedSlides, setFailedSlides] = useState({});
 
   useEffect(() => {
     let mounted = true;
@@ -120,10 +118,10 @@ export default function AwardsShowcase() {
     <section className="py-20 bg-white border-t border-[#E2E8F0] overflow-hidden text-[#1E293B]">
       <div className="max-w-[1560px] mx-auto px-5 md:px-10 lg:px-16 text-center mb-12">
         <h2 className="text-3xl md:text-4xl font-display font-extrabold text-[#1E293B] mb-4 uppercase tracking-tight">
-          Awards & Achievements
+          Section Title
         </h2>
         <p className="text-[#64748B] max-w-2xl mx-auto text-sm md:text-base">
-          Highlighting our industry recognitions, milestones, and the exceptional moments that define our commitment to excellence.
+          Section description.
         </p>
       </div>
 
@@ -150,7 +148,7 @@ export default function AwardsShowcase() {
             return (
               <motion.div
                 key={award.id}
-                className="absolute w-[85%] sm:w-[75%] lg:w-[65%] h-full rounded-[24px] md:rounded-[32px] overflow-hidden shadow-2xl bg-black"
+                className="absolute w-[85%] sm:w-[75%] lg:w-[65%] h-full rounded-[24px] md:rounded-[32px] overflow-hidden shadow-lg bg-white border border-[#E2E8F0]"
                 initial={{ 
                   x: offset * 100 + "%", 
                   scale: 0.8, 
@@ -173,30 +171,15 @@ export default function AwardsShowcase() {
                   transformOrigin: 'center center'
                 }}
               >
-                {!award.src || failedSlides[award.id] ? (
-                  <NoImagePlaceholder
-                    variant="dark"
-                    label={award.type === 'video' ? 'No video available' : 'No image available'}
-                    className="w-full h-full pb-20"
-                  />
-                ) : award.type === 'video' ? (
-                  <video
-                    src={award.src}
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    onError={() => setFailedSlides((prev) => ({ ...prev, [award.id]: true }))}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <img
-                    src={award.src}
-                    alt={award.title}
-                    onError={() => setFailedSlides((prev) => ({ ...prev, [award.id]: true }))}
-                    className="w-full h-full object-cover"
-                  />
-                )}
+                <div
+                  role="img"
+                  aria-label={award.title}
+                  className="w-full h-full bg-white flex items-center justify-center pb-20"
+                >
+                  <span className="text-sm font-medium text-[#94A3B8] uppercase tracking-wide">
+                    Image
+                  </span>
+                </div>
                 
                 {/* Center Content Overlay */}
                 {isCenter && (
@@ -204,13 +187,13 @@ export default function AwardsShowcase() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3, duration: 0.5 }}
-                    className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-6 md:p-10 text-white"
+                    className="absolute inset-0 bg-gradient-to-t from-white via-white/70 to-transparent flex flex-col justify-end p-6 md:p-10 text-[#1E293B]"
                   >
                     <span className="w-10 h-1 bg-[#E76F51] mb-4" />
                     <h3 className="text-xl md:text-3xl font-display font-bold mb-2">
                       {award.title}
                     </h3>
-                    <p className="text-sm md:text-base text-white/80 max-w-lg font-sans">
+                    <p className="text-sm md:text-base text-[#64748B] max-w-lg font-sans">
                       {award.description}
                     </p>
                   </motion.div>
@@ -229,7 +212,7 @@ export default function AwardsShowcase() {
               className={`transition-all duration-300 rounded-full ${
                 activeIndex === idx 
                   ? 'w-6 h-2 bg-[#E76F51]' 
-                  : 'w-2 h-2 bg-white/50 hover:bg-white/80'
+                  : 'w-2 h-2 bg-[#CBD5E1] hover:bg-[#94A3B8]'
               }`}
               aria-label={`Go to slide ${idx + 1}`}
             />
@@ -242,7 +225,7 @@ export default function AwardsShowcase() {
         <div className="flex items-center gap-3 mb-10">
           <span className="w-6 h-[2px] bg-[#0F766E]" />
           <h3 className="text-sm font-bold tracking-[0.25em] text-[#0F766E] uppercase">
-            Historical Honors
+            Subtitle
           </h3>
         </div>
         

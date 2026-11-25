@@ -44,13 +44,13 @@ export default function LeadCaptureSection() {
             {/* Left Narrative */}
             <div className="lg:col-span-5 space-y-6">
               <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#0F766E] font-sans">
-                PRIVATE RESERVATION
+                SUBTITLE
               </span>
               <h2 className="text-3xl md:text-4xl font-semibold text-[#1E293B] tracking-tight font-sans">
-                Schedule a Private Walkthrough
+                Section Title
               </h2>
               <p className="text-[#64748B] text-sm font-sans leading-relaxed">
-                Experience this extraordinary sanctuary firsthand. Select your preferred date and format for a confidential private tour with senior listing advisory.
+                Section description.
               </p>
 
               <div className="space-y-4 pt-2 font-sans text-xs">
@@ -58,19 +58,19 @@ export default function LeadCaptureSection() {
                   <div className="w-8 h-8 rounded-full bg-[#0F766E]/10 text-[#0F766E] flex items-center justify-center flex-shrink-0">
                     <span className="material-symbols-outlined text-[18px]">verified_user</span>
                   </div>
-                  <span className="font-semibold">100% Confidential Discovery Call</span>
+                  <span className="font-semibold">Highlight 1</span>
                 </div>
                 <div className="flex items-center gap-3 text-[#1E293B]">
                   <div className="w-8 h-8 rounded-full bg-[#0F766E]/10 text-[#0F766E] flex items-center justify-center flex-shrink-0">
                     <span className="material-symbols-outlined text-[18px]">key</span>
                   </div>
-                  <span className="font-semibold">Access to Off-Market Portfolio Dossiers</span>
+                  <span className="font-semibold">Highlight 2</span>
                 </div>
                 <div className="flex items-center gap-3 text-[#1E293B]">
                   <div className="w-8 h-8 rounded-full bg-[#0F766E]/10 text-[#0F766E] flex items-center justify-center flex-shrink-0">
                     <span className="material-symbols-outlined text-[18px]">support_agent</span>
                   </div>
-                  <span className="font-semibold">Dedicated 24/7 Elite Advisory Concierge</span>
+                  <span className="font-semibold">Highlight 3</span>
                 </div>
               </div>
             </div>
@@ -82,9 +82,9 @@ export default function LeadCaptureSection() {
                   <div className="w-16 h-16 rounded-full bg-[#0D4446]/10 text-[#0D4446] flex items-center justify-center mx-auto">
                     <span className="material-symbols-outlined text-3xl">check_circle</span>
                   </div>
-                  <h3 className="text-2xl font-semibold text-[#141717] font-sans">Tour Request Received</h3>
+                  <h3 className="text-2xl font-semibold text-[#141717] font-sans">Request Received</h3>
                   <p className="text-sm text-[#5C6768] font-sans max-w-md mx-auto">
-                    Thank you, {name}. A senior advisor from our private client team will reach out within 2 hours to confirm your walkthrough schedule.
+                    Thank you, {name}.
                   </p>
                 </div>
               ) : (

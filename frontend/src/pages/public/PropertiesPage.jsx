@@ -2,7 +2,20 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { SlidersHorizontal, X } from 'lucide-react';
+import {
+  SlidersHorizontal,
+  X,
+  Search,
+  MapPin,
+  Home,
+  Banknote,
+  BedDouble,
+  Bath,
+  Car,
+  Sofa,
+  Landmark,
+  Tag,
+} from 'lucide-react';
 
 import {
   UnifiedSearchBar,
@@ -12,7 +25,7 @@ import {
   FilterEmptyState,
   Button
 } from '../../components/ui';
-import { usePropertyFilterEngine } from '../../hooks/usePropertyFilterEngine';
+import { usePropertyFilterEngine, formatCompactPhp } from '../../hooks/usePropertyFilterEngine';
 import { propertyService } from '../../services/propertyService';
 import { getPropertyCoordinates } from '../../utils/propertyCoordinates';
 
@@ -76,7 +89,6 @@ export default function PropertiesPage() {
   const [hoveredPropertyId, setHoveredPropertyId] = useState(null);
   const [targetDistrict, setTargetDistrict] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [showActiveFilters, setShowActiveFilters] = useState(false);
 
   const [properties, setProperties] = useState([]);
   const [totalAvailable, setTotalAvailable] = useState(0);
@@ -96,7 +108,7 @@ export default function PropertiesPage() {
     return () => window.removeEventListener('header-visibility', handleHeaderVisibility);
   }, []);
 
-  // Hook-driven unified filter engine
+  // Hook-driven unified filter engine (skip strict client keyword re-filtering since Postgres runs fuzzy/FTS search)
   const {
     filteredProperties,
     facets,
@@ -107,7 +119,7 @@ export default function PropertiesPage() {
     setFilter,
     clearFilters,
     clearSpecificFilter
-  } = usePropertyFilterEngine(properties);
+  } = usePropertyFilterEngine(properties, { skipClientKeywordFilter: true });
 
   useEffect(() => {
     let cancelled = false;
@@ -153,14 +165,19 @@ export default function PropertiesPage() {
           const parsedBaths = Number(String(debouncedFilters.baths).replace(/[^0-9]/g, ''));
           if (parsedBaths > 0) params.baths = parsedBaths;
         }
-        if (debouncedFilters.mapBounds) {
-          params.north = debouncedFilters.mapBounds.north;
-          params.south = debouncedFilters.mapBounds.south;
-          params.east = debouncedFilters.mapBounds.east;
-          params.west = debouncedFilters.mapBounds.west;
+        if (debouncedFilters.parking && debouncedFilters.parking !== 'Any') {
+          const parsedParking = Number(String(debouncedFilters.parking).replace(/[^0-9]/g, ''));
+          if (parsedParking > 0) params.parking = parsedParking;
+        }
+        if (debouncedFilters.furnishing && debouncedFilters.furnishing !== 'Any') {
+          params.furnishing = debouncedFilters.furnishing;
+        }
+        if (Array.isArray(debouncedFilters.banks) && debouncedFilters.banks.length > 0) {
+          params.banks = debouncedFilters.banks.join(',');
         }
 
         lastParamsRef.current = params;
+        setDisplayLimit(8);
         const res = await propertyService.getProperties({ ...params, page: 1 });
         if (!cancelled && res && res.data) {
           setProperties(res.data);
@@ -203,8 +220,9 @@ export default function PropertiesPage() {
       setFilter('propertyType', typeParam);
     }
     if (locationParam) {
-      setFilter('keyword', locationParam);
-    } else if (searchParam) {
+      setFilter('location', locationParam);
+    }
+    if (searchParam) {
       setFilter('keyword', searchParam);
     }
 
@@ -227,29 +245,10 @@ export default function PropertiesPage() {
     }
   }, [searchParams, setFilter]);
 
-  // When switching to Grid View, clear geographic map bounding box restriction
-  useEffect(() => {
-    if (viewMode === 'grid') {
-      setFilter('mapBounds', null);
-    }
-  }, [viewMode, setFilter]);
-
   const [displayLimit, setDisplayLimit] = useState(8);
 
-  // Sorting
-  const sortedProperties = [...filteredProperties].sort((a, b) => {
-    if (sortBy === 'Price: High to Low') {
-      const priceA = a.price_raw || Number(String(a.price || '').replace(/[^0-9.-]+/g, '')) || 0;
-      const priceB = b.price_raw || Number(String(b.price || '').replace(/[^0-9.-]+/g, '')) || 0;
-      return priceB - priceA;
-    }
-    if (sortBy === 'Price: Low to High') {
-      const priceA = a.price_raw || Number(String(a.price || '').replace(/[^0-9.-]+/g, '')) || 0;
-      const priceB = b.price_raw || Number(String(b.price || '').replace(/[^0-9.-]+/g, '')) || 0;
-      return priceA - priceB;
-    }
-    return 0;
-  });
+  // Preserve server sort order (already sorted by price_asc / price_desc / relevance / newest)
+  const sortedProperties = filteredProperties;
 
   const displayedProperties = sortedProperties.slice(0, displayLimit);
 
@@ -417,57 +416,108 @@ export default function PropertiesPage() {
           />
         </div>
 
-        {/* Active Filter Chips Ribbon (only rendered when filters are active) */}
-        {activeFilterCount > 0 && (
-          <div className="shrink-0 flex items-center gap-2 py-1 mb-2 overflow-x-auto no-scrollbar">
-            <div className="flex items-center gap-1.5 text-xs font-semibold font-sans uppercase tracking-wider text-primary shrink-0 mr-1">
-              <SlidersHorizontal className="size-3.5" />
-              <span>Filtered ({activeFilterCount})</span>
-            </div>
+        {/* Active Filter Chips Ribbon (animated enter/exit, icons, everyday labels) */}
+        <AnimatePresence initial={false}>
+          {activeFilterCount > 0 && (
+            <motion.div
+              key="active-filter-ribbon"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.18 }}
+              className="shrink-0 overflow-hidden"
+            >
+              <div className="flex items-center gap-2 py-1 mb-2 overflow-x-auto no-scrollbar">
+                <div className="flex items-center gap-1.5 text-xs font-semibold font-sans uppercase tracking-wider text-primary shrink-0 mr-1">
+                  <SlidersHorizontal className="size-3.5" aria-hidden="true" />
+                  <span>Active ({activeFilterCount})</span>
+                </div>
 
-            <div className="flex items-center gap-1.5 shrink-0">
-              {Object.entries(filters).map(([key, value]) => {
-                if (!value || value === '' || value === 'Any' || key === 'mapBounds') return null;
-                if (Array.isArray(value) && value.length === 0) return null;
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <AnimatePresence initial={false}>
+                    {Object.entries(filters).flatMap(([key, value]) => {
+                      if (!value || value === '' || value === 'Any') return [];
+                      if (key === 'transactionType' && value === 'All') return [];
+                      if (Array.isArray(value)) {
+                        return value.map((item) => ({
+                          chipKey: `${key}-${item}`,
+                          filterKey: key,
+                          itemValue: item,
+                          label: item,
+                          icon: Landmark,
+                        }));
+                      }
 
-                let displayValue = String(value);
-                if (key === 'minPrice') displayValue = `> ₱${(value / 1000000).toFixed(0)}M`;
-                else if (key === 'maxPrice') displayValue = `< ₱${(value / 1000000).toFixed(0)}M`;
-                else if (key === 'keyword') displayValue = `"${value}"`;
-                else if (key === 'propertyType') displayValue = `Type: ${value}`;
-                else if (key === 'location' || key === 'district') displayValue = `Location: ${value}`;
-                else if (key === 'beds') displayValue = `${value} Beds`;
-                else if (key === 'baths') displayValue = `${value} Baths`;
+                      let label = String(value);
+                      let ChipIcon = Tag;
+                      if (key === 'minPrice') {
+                        label = `From ${formatCompactPhp(value)}`;
+                        ChipIcon = Banknote;
+                      } else if (key === 'maxPrice') {
+                        label = `Up to ${formatCompactPhp(value)}`;
+                        ChipIcon = Banknote;
+                      } else if (key === 'keyword') {
+                        label = `"${value}"`;
+                        ChipIcon = Search;
+                      } else if (key === 'propertyType') {
+                        label = value;
+                        ChipIcon = Home;
+                      } else if (key === 'location' || key === 'district') {
+                        label = value;
+                        ChipIcon = MapPin;
+                      } else if (key === 'beds') {
+                        label = value === 'Studio' ? 'Studio' : `${value} Beds`;
+                        ChipIcon = BedDouble;
+                      } else if (key === 'baths') {
+                        label = `${value} Baths`;
+                        ChipIcon = Bath;
+                      } else if (key === 'parking') {
+                        label = `${value} Parking`;
+                        ChipIcon = Car;
+                      } else if (key === 'furnishing') {
+                        label = value === 'None' ? 'Unfurnished' : value;
+                        ChipIcon = Sofa;
+                      } else if (key === 'transactionType') {
+                        label = value;
+                        ChipIcon = Tag;
+                      }
 
-                if (!displayValue || displayValue.trim() === '') return null;
-
-                return (
-                  <div
-                    key={key}
-                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-tertiary-container text-primary rounded-full text-xs font-semibold font-sans border border-primary/20 transition-colors shrink-0"
+                      return [{ chipKey: key, filterKey: key, itemValue: null, label, icon: ChipIcon }];
+                    }).map(({ chipKey, filterKey, itemValue, label, icon: ChipIcon }) => (
+                      <motion.div
+                        key={chipKey}
+                        layout
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                        transition={{ duration: 0.15 }}
+                        className="inline-flex items-center gap-1.5 px-3 py-1 bg-tertiary-container text-primary rounded-full text-xs font-semibold font-sans border border-primary/20 transition-colors shrink-0"
+                      >
+                        <ChipIcon className="size-3 shrink-0" aria-hidden="true" />
+                        <span>{label}</span>
+                        <button
+                          type="button"
+                          aria-label={`Remove ${label}`}
+                          onClick={() => clearSpecificFilter(filterKey, itemValue)}
+                          className="hover:text-red-600 cursor-pointer flex items-center justify-center transition-colors rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
+                        >
+                          <X className="size-3.5" />
+                        </button>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                  <button
+                    type="button"
+                    onClick={clearFilters}
+                    className="text-xs font-semibold text-on-surface-variant hover:text-on-surface uppercase tracking-wider cursor-pointer ml-1 transition-colors shrink-0 rounded-sm px-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
                   >
-                    <span>{displayValue}</span>
-                    <button
-                      type="button"
-                      aria-label={`Remove ${displayValue}`}
-                      onClick={() => clearSpecificFilter(key)}
-                      className="hover:text-red-600 cursor-pointer flex items-center justify-center transition-colors rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
-                    >
-                      <X className="size-3.5" />
-                    </button>
-                  </div>
-                );
-              })}
-              <button
-                type="button"
-                onClick={clearFilters}
-                className="text-xs font-semibold text-on-surface-variant hover:text-on-surface uppercase tracking-wider cursor-pointer ml-1 transition-colors shrink-0 rounded-sm px-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
-              >
-                Clear All
-              </button>
-            </div>
-          </div>
-        )}
+                    Reset All
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Results Area */}
         {isLoading ? (

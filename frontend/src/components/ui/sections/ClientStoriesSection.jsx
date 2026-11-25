@@ -3,21 +3,21 @@ import { motion } from 'framer-motion';
 const STORIES = [
   {
     id: 1,
-    quote: "They handled the due diligence with incredible rigor. For the first time, buying in Manila felt completely stress-free.",
-    author: "M. & T. Villanueva",
-    location: "Acquired in Forbes Park",
+    quote: "Client quote goes here.",
+    author: "Client 1",
+    location: "Subtitle",
   },
   {
     id: 2,
-    quote: "We didn't have to view twenty properties. They understood exactly what we wanted and found our sanctuary in just three tours.",
-    author: "Sarah L.",
-    location: "Acquired in Dasmariñas Village",
+    quote: "Client quote goes here.",
+    author: "Client 2",
+    location: "Subtitle",
   },
   {
     id: 3,
-    quote: "From securing the clean title to the final handover, the level of professionalism was unlike any brokerage we've worked with.",
-    author: "The Reyes Family",
-    location: "Acquired in BGC",
+    quote: "Client quote goes here.",
+    author: "Client 3",
+    location: "Subtitle",
   }
 ];
 
@@ -31,12 +31,12 @@ export default function ClientStoriesSection() {
           <div className="flex items-center gap-3 mb-4 justify-center">
             <span className="w-6 h-[2px] bg-[#CCFBF1]" />
             <span className="text-xs font-bold tracking-[0.25em] text-[#CCFBF1] uppercase font-sans">
-              Client Stories
+              Subtitle
             </span>
             <span className="w-6 h-[2px] bg-[#CCFBF1]" />
           </div>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold text-white tracking-tight font-sans max-w-2xl">
-            Real Relationships, Real Results
+            Section Title
           </h2>
         </div>
 

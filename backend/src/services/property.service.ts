@@ -26,6 +26,9 @@ export interface PropertyFilterQuery {
   maxPrice?: number;
   beds?: number | string;
   baths?: number;
+  furnishing?: string;
+  parking?: number;
+  banks?: string[];
   north?: number;
   south?: number;
   east?: number;
@@ -637,6 +640,9 @@ export class PropertyService {
             p_sort_by: sortOrder,
             p_limit: limit,
             p_offset: from,
+            p_furnishing: query.furnishing || null,
+            p_parking: query.parking ?? null,
+            p_banks: Array.isArray(query.banks) && query.banks.length > 0 ? query.banks : null,
           });
           if (!rpcError && Array.isArray(rpcData)) {
             data = rpcData.map((r: any) => r.row_data).filter(Boolean);
@@ -710,6 +716,12 @@ export class PropertyService {
           }
           if (query.baths) {
             dbQuery = dbQuery.gte('bathrooms_total_integer', query.baths);
+          }
+          if (query.furnishing && query.furnishing !== 'Any') {
+            dbQuery = dbQuery.ilike('furnishing', query.furnishing);
+          }
+          if (query.parking !== undefined && Number.isFinite(Number(query.parking))) {
+            dbQuery = dbQuery.gte('parking_total', Number(query.parking));
           }
           if (query.search) {
             const cleanSearch = String(query.search).replace(/[,()'"%]/g, ' ').replace(/\s+/g, ' ').trim();
@@ -935,6 +947,24 @@ export class PropertyService {
     }
     if (query.baths) {
       filtered = filtered.filter((p) => ((p.specs?.bathroomsTotalInteger ?? p.specs?.baths ?? 0) >= Number(query.baths)));
+    }
+    if (query.furnishing && query.furnishing !== 'Any') {
+      const fTarget = query.furnishing.toLowerCase();
+      filtered = filtered.filter((p) => String(p.furnishing || '').toLowerCase() === fTarget);
+    }
+    if (query.parking !== undefined && Number.isFinite(Number(query.parking))) {
+      filtered = filtered.filter((p) => ((p.specs?.parkingTotal ?? 0) >= Number(query.parking)));
+    }
+    if (Array.isArray(query.banks) && query.banks.length > 0) {
+      const wantedBanks = query.banks.map((b) => b.toLowerCase());
+      filtered = filtered.filter((p) => {
+        const banks = Array.isArray((p.customResoAttributes as any)?.partneredBanks)
+          ? (p.customResoAttributes as any).partneredBanks
+          : [];
+        return banks.some((b: any) =>
+          wantedBanks.includes(String(typeof b === 'string' ? b : b?.bankName || '').toLowerCase())
+        );
+      });
     }
     if (query.search) {
       const q = query.search.toLowerCase();

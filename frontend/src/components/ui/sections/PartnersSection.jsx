@@ -49,36 +49,26 @@ function PartnerMarqueeRow({ title, cmsItems, fallbackMocks, fallbackAlt, animat
               return (
                 <div
                   key={`${item.id}-${idx}`}
-                  className="w-48 h-32 shrink-0 border-2 border-dashed border-[#e5e5df] rounded-[5px] bg-[#FBFBF9] flex items-center justify-center p-4 hover:border-[#0D4446] transition-colors"
+                  role="img"
+                  aria-label={fallbackAlt}
+                  className="w-48 h-32 shrink-0 border border-[#E2E8F0] rounded-[5px] bg-white flex items-center justify-center p-4 hover:border-[#0D4446] transition-colors"
                 >
-                  <img
-                    src="/placeholder-logo.webp"
-                    alt={fallbackAlt}
-                    loading="lazy"
-                    decoding="async"
-                    className="max-w-full max-h-full object-contain opacity-80 mix-blend-multiply"
-                  />
+                  <span className="text-xs font-medium text-[#94A3B8] uppercase tracking-wide">
+                    Logo
+                  </span>
                 </div>
               );
             }
 
             const safeUrl = getSafeHttpUrl(item.payload?.website_url);
-            const cardInner = item.media_url ? (
-              <img
-                src={item.media_url}
-                alt={item.title}
-                loading="lazy"
-                decoding="async"
-                className="max-w-full max-h-full object-contain mix-blend-multiply"
-              />
-            ) : (
-              <span className="text-center text-sm font-bold tracking-tight text-[#0D4446] leading-snug line-clamp-2">
-                {item.title}
+            const cardInner = (
+              <span className="text-xs font-medium text-[#94A3B8] uppercase tracking-wide">
+                Logo
               </span>
             );
 
             const cardClassName =
-              'w-48 h-32 shrink-0 border border-[#e5e5df] rounded-[5px] bg-[#FBFBF9] flex items-center justify-center p-4 hover:border-[#0D4446] transition-colors';
+              'w-48 h-32 shrink-0 border border-[#E2E8F0] rounded-[5px] bg-white flex items-center justify-center p-4 hover:border-[#0D4446] transition-colors';
 
             if (safeUrl) {
               return (
@@ -142,14 +132,14 @@ export default function PartnersSection() {
             <div className="flex items-center gap-3">
               <span className="w-6 h-[2px] bg-[#0F766E]" />
               <span className="text-xs font-bold tracking-[0.25em] text-[#0F766E] uppercase">
-                Collaboration &amp; Network
+                Subtitle
               </span>
             </div>
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#1E293B] tracking-tight leading-tight">
-              Our Trusted Industry Partners
+              Section Title
             </h2>
             <p className="text-sm sm:text-base text-[#64748B] font-normal leading-relaxed">
-              We collaborate exclusively with the Philippines' most respected real estate developers and premier wealth management banks to guarantee authentic, title-verified transactions.
+              Section description.
             </p>
           </div>
           
@@ -166,20 +156,20 @@ export default function PartnersSection() {
 
         {/* Marquee 1: Partner Developers */}
         <PartnerMarqueeRow
-          title="Partner Developers"
+          title="Group 1"
           cmsItems={developers}
           fallbackMocks={DEVELOPER_MOCKS}
-          fallbackAlt="Partner Developer Mockup"
+          fallbackAlt="Partner logo"
           animateX={['0%', '-50%']}
           wrapperClassName="mb-12"
         />
 
         {/* Marquee 2: Partner Banks */}
         <PartnerMarqueeRow
-          title="Partner Banks"
+          title="Group 2"
           cmsItems={banks}
           fallbackMocks={BANK_MOCKS}
-          fallbackAlt="Partner Bank Mockup"
+          fallbackAlt="Partner logo"
           animateX={['-50%', '0%']}
           wrapperClassName="mb-16"
         />
@@ -194,10 +184,10 @@ export default function PartnersSection() {
             </span>
             <div>
               <h4 className="font-bold text-sm sm:text-base text-[#0f1722]">
-                Are You a Licensed Real Estate Developer or Advisory Firm?
+                Banner Title
               </h4>
               <p className="text-xs sm:text-[13px] text-[#5a6472] mt-0.5">
-                Join our curated national network of accredited institutional partners and reach qualified luxury homebuyers.
+                Banner description.
               </p>
             </div>
           </div>

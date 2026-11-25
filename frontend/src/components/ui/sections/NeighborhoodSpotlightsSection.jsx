@@ -5,10 +5,8 @@ import {
   IconHome, 
   IconBuildingSkyscraper, 
   IconHome2, 
-  IconBuildingStore,
-  IconShieldCheck
+  IconBuildingStore
 } from '@tabler/icons-react';
-import NoImagePlaceholder from '../NoImagePlaceholder';
 
 const PROPERTY_CATEGORIES = [
   { id: 'all', title: 'All Properties', icon: null },
@@ -21,57 +19,57 @@ const PROPERTY_CATEGORIES = [
 const NEIGHBORHOOD_STORIES = [
   {
     id: 'cavite',
-    tag: 'South Suburbs',
-    name: 'Cavite Growth Corridor',
-    location: 'Bacoor, Imus, Dasma, Gen. Trias',
-    tagline: 'Spacious Family Living Near Expressways',
-    description: 'The prime residential choice for suburban Filipino families. Enjoy spacious house-and-lot properties, top Cavite schools, and rapid connectivity via CAVITEX, CALAX, and MCX.',
+    tag: 'Label',
+    name: 'Location 1',
+    location: 'Subtitle',
+    tagline: 'Subtitle',
+    description: 'Short description.',
     image: null,
-    stats: '₱1.8M – ₱12M Homes',
+    stats: 'Summary',
     supportedTypes: ['house-and-lot', 'townhouse', 'duplex']
   },
   {
     id: 'laguna',
-    tag: 'Eco-City Hub',
-    name: 'Laguna Green Corridors',
-    location: 'Santa Rosa, Biñan, Nuvali, Calamba',
-    tagline: 'Master-Planned Nature & Modern Subdivisions',
-    description: 'The booming Lion City of the South. Featuring sprawling green subdivisions, top universities, commercial lifestyle parks, and peaceful family environments.',
+    tag: 'Label',
+    name: 'Location 2',
+    location: 'Subtitle',
+    tagline: 'Subtitle',
+    description: 'Short description.',
     image: null,
-    stats: '₱2.8M – ₱28M Homes',
+    stats: 'Summary',
     supportedTypes: ['house-and-lot', 'townhouse', 'duplex']
   },
   {
     id: 'antipolo',
-    tag: 'Eastern Haven',
-    name: 'Antipolo & Rizal Ridge',
-    location: 'Antipolo City, Taytay, Cainta',
-    tagline: 'Fresh Mountain Air & Relaxed Townhouse Enclaves',
-    description: 'Elevated green hills with cooler temperatures, scenic sunrise vistas, and multi-level modern townhouses just minutes away from Ortigas East and LRT-2.',
+    tag: 'Label',
+    name: 'Location 3',
+    location: 'Subtitle',
+    tagline: 'Subtitle',
+    description: 'Short description.',
     image: null,
-    stats: '₱2.2M – ₱15M Homes',
+    stats: 'Summary',
     supportedTypes: ['house-and-lot', 'townhouse']
   },
   {
     id: 'taguig-bgc',
-    tag: 'Global Metropolis',
-    name: 'Taguig & BGC Metropolis',
-    location: 'Bonifacio Global City, ARCA South',
-    tagline: 'Walk-to-Work Urban High-Rise Living',
-    description: 'A master-planned world-class urban core offering secure condominiums, multinational headquarters, walkable pedestrian parks, and premier international hospitals.',
+    tag: 'Label',
+    name: 'Location 4',
+    location: 'Subtitle',
+    tagline: 'Subtitle',
+    description: 'Short description.',
     image: null,
-    stats: '₱4.5M – ₱85M Condos',
+    stats: 'Summary',
     supportedTypes: ['condominium']
   },
   {
     id: 'quezon-city',
-    tag: 'University & Media Hub',
-    name: 'Quezon City Enclaves',
-    location: 'Katipunan, New Manila, Fairview',
-    tagline: 'Premier Academic Institutions & Quiet Villages',
-    description: 'The educational heart of Metro Manila, home to the country’s top universities (UP, Ateneo), leading medical complexes, and quiet gated family residential communities.',
+    tag: 'Label',
+    name: 'Location 5',
+    location: 'Subtitle',
+    tagline: 'Subtitle',
+    description: 'Short description.',
     image: null,
-    stats: '₱3.5M – ₱35M Estates',
+    stats: 'Summary',
     supportedTypes: ['condominium']
   }
 ];
@@ -79,7 +77,6 @@ const NEIGHBORHOOD_STORIES = [
 export default function NeighborhoodSpotlightsSection() {
   const [activeId, setActiveId] = useState('cavite');
   const [activeFilter, setActiveFilter] = useState('all');
-  const [failedImages, setFailedImages] = useState({});
   const navigate = useNavigate();
 
   const filteredNeighborhoods = NEIGHBORHOOD_STORIES.filter(hood => 
@@ -105,14 +102,14 @@ export default function NeighborhoodSpotlightsSection() {
           <div className="flex items-center gap-3">
             <span className="w-6 h-[2px] bg-[#0F766E]" />
             <span className="text-xs font-bold tracking-[0.25em] text-[#0F766E] uppercase">
-              Where We Operate
+              Subtitle
             </span>
           </div>
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#1E293B] tracking-tight leading-tight">
-            Explore Properties & Neighborhoods
+            Section Title
           </h2>
           <p className="text-sm sm:text-base text-[#64748B] font-normal leading-relaxed pt-1">
-            Explore the most prestigious residential enclaves across Metro Manila. Select a property type to discover curated communities that offer unparalleled lifestyles for your family.
+            Section description.
           </p>
         </div>
 
@@ -162,42 +159,30 @@ export default function NeighborhoodSpotlightsSection() {
                       }
                     }}
                     onMouseEnter={() => setActiveId(hood.id)}
-                    className={`group relative rounded-[5px] border border-[#D1D5DB] overflow-hidden cursor-pointer transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] select-none flex flex-col justify-between bg-slate-100 ${isActive
-                        ? 'flex-[3.5] lg:flex-[4] shadow-[0_20px_40px_rgba(0,0,0,0.18)] border-[#141717]'
-                        : 'flex-[1] shadow-[0_8px_30px_rgba(0,0,0,0.06)] hover:shadow-[0_16px_32px_rgba(0,0,0,0.12)] hover:border-[#141717]'
+                    className={`group relative rounded-[5px] border border-[#D1D5DB] overflow-hidden cursor-pointer transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] select-none flex flex-col justify-between bg-white ${isActive
+                        ? 'flex-[3.5] lg:flex-[4] shadow-[0_20px_40px_rgba(0,0,0,0.08)] border-[#141717]'
+                        : 'flex-[1] shadow-[0_8px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_16px_32px_rgba(0,0,0,0.08)] hover:border-[#141717]'
                       }`}
                   >
-                    {/* Architecture Photography or House Placeholder */}
-                    {!hood.image || failedImages[hood.id] ? (
-                      <NoImagePlaceholder
-                        variant="dark"
-                        compact={!isActive}
-                        className="absolute inset-0 w-full h-full pb-16"
-                      />
-                    ) : (
-                      <img
-                        src={hood.image}
-                        alt={hood.name}
-                        onError={() => setFailedImages((prev) => ({ ...prev, [hood.id]: true }))}
-                        className={`absolute inset-0 w-full h-full object-cover transition-transform duration-1000 ease-out ${isActive ? 'scale-105' : 'scale-100 brightness-95 group-hover:brightness-100'
-                          }`}
-                      />
-                    )}
-
-                    {/* Dark Vignette for crisp white text contrast */}
+                    {/* White Image Box */}
                     <div
-                      className={`absolute inset-0 transition-opacity duration-500 pointer-events-none ${isActive
-                          ? 'bg-gradient-to-t from-black/80 via-black/25 to-transparent'
-                          : 'bg-gradient-to-t from-black/70 via-black/20 to-transparent'
-                        }`}
-                    />
+                      role="img"
+                      aria-label={hood.name}
+                      className="absolute inset-0 w-full h-full bg-white flex items-center justify-center"
+                    >
+                      {isActive && (
+                        <span className="text-xs font-medium text-[#94A3B8] tracking-wide uppercase">
+                          Image
+                        </span>
+                      )}
+                    </div>
 
                     {/* ACTIVE EXPANDED STATE — Title on Left, View Properties on Lower Right */}
                     {isActive ? (
                       <div className="relative z-10 w-full h-full p-6 sm:p-8 md:p-10 flex flex-col justify-end">
                         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 w-full">
                           <div>
-                            <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight text-white leading-tight font-sans drop-shadow-lg">
+                            <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight text-[#1E293B] leading-tight font-sans">
                               {hood.name}
                             </h3>
                           </div>
@@ -205,7 +190,7 @@ export default function NeighborhoodSpotlightsSection() {
                           {/* Lower Right: View Properties Button with 30° Angled Arrow */}
                           <div className="shrink-0 mb-1">
                             <div
-                              className="inline-flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full bg-white/95 text-[#0D4446] backdrop-blur-md shadow-lg border border-white/70 group-hover:bg-white group-hover:shadow-2xl transition-all duration-300 cursor-pointer"
+                              className="inline-flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full bg-[#F8FAFC] text-[#0D4446] shadow-xs border border-[#E2E8F0] group-hover:bg-white group-hover:shadow-md transition-all duration-300 cursor-pointer"
                               title="View properties"
                             >
                               <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider font-sans whitespace-nowrap">
@@ -237,11 +222,11 @@ export default function NeighborhoodSpotlightsSection() {
                     ) : (
                       /* COLLAPSED INACTIVE STRIP — Vertical Title with 30° Angled Arrow at Lower Section */
                       <div className="relative z-10 w-full h-full p-4 flex flex-col justify-end items-center gap-4">
-                        <div className="[writing-mode:vertical-rl] rotate-180 text-white/90 group-hover:text-white font-bold text-xs sm:text-sm uppercase tracking-[0.25em] whitespace-nowrap drop-shadow-md select-none transition-colors">
+                        <div className="[writing-mode:vertical-rl] rotate-180 text-[#64748B] group-hover:text-[#1E293B] font-bold text-xs sm:text-sm uppercase tracking-[0.25em] whitespace-nowrap select-none transition-colors">
                           {hood.name}
                         </div>
                         <div
-                          className="w-7 h-7 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white/90 group-hover:bg-white group-hover:text-[#0D4446] transition-all duration-300 shadow-xs mb-2"
+                          className="w-7 h-7 rounded-full bg-[#F1F5F9] border border-[#E2E8F0] flex items-center justify-center text-[#0D4446] group-hover:bg-[#0D4446] group-hover:text-white transition-all duration-300 shadow-xs mb-2"
                           title={`View properties in ${hood.name}`}
                         >
                           <span

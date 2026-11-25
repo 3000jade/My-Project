@@ -88,10 +88,10 @@ export function CmsPublicCollectionsAndFaqs() {
       <div className="max-w-3xl mx-auto space-y-6">
         <div className="text-center">
           <h2 className="text-2xl sm:text-[28px] font-bold tracking-tight text-[#1E293B]">
-            Frequently Asked Questions
+            Section Title
           </h2>
           <p className="text-sm text-[#64748B] mt-1">
-            Quick answers about buying, viewing, and reserving properties.
+            Section description.
           </p>
         </div>
 

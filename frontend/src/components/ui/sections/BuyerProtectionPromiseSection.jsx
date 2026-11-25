@@ -15,78 +15,78 @@ const BUYERS_GUIDE_STEPS = [
   {
     id: 'platform-search',
     number: '01',
-    badge: 'Smart Discovery',
-    title: 'Platform Search & Discovery',
-    shortDesc: 'Leverage our advanced filters, saved searches, and real-time alerts to find your perfect property.',
-    extendedDesc: 'Start your journey by utilizing Human Shelter’s advanced search algorithms. Filter properties by location, type, price range, bedrooms, and specific amenities. Create custom saved searches to receive real-time email alerts for price drops and new listings. We empower you to interpret listing details like a pro—from virtual tours and floor plans to analyzing HOA/maintenance fees and days on market.',
+    badge: 'Step Label',
+    title: 'Step 1',
+    shortDesc: 'Short summary for step 1.',
+    extendedDesc: 'Detailed description for step 1.',
     stats: [
-      { label: 'Search Filters', value: '50+' },
-      { label: 'Alert Speed', value: 'Real-time' }
+      { label: 'Metric 1', value: '--' },
+      { label: 'Metric 2', value: '--' }
     ],
     icon: IconSearch
   },
   {
     id: 'financial-prep',
     number: '02',
-    badge: 'Budget Mastery',
-    title: 'Financial Preparation & Budgeting',
-    shortDesc: 'Determine your true affordability and secure mortgage pre-approval before touring.',
-    extendedDesc: 'Knowing your budget is crucial. We help you calculate true affordability beyond the listing price—factoring in closing costs, property taxes, insurance, and maintenance. Use our integrated mortgage and payment calculators to estimate monthly costs, and learn the critical difference between getting pre-qualified versus pre-approved so you can shop with verified confidence.',
+    badge: 'Step Label',
+    title: 'Step 2',
+    shortDesc: 'Short summary for step 2.',
+    extendedDesc: 'Detailed description for step 2.',
     stats: [
-      { label: 'Integrated Calcs', value: '100%' },
-      { label: 'Hidden Fees', value: 'Zero' }
+      { label: 'Metric 1', value: '--' },
+      { label: 'Metric 2', value: '--' }
     ],
     icon: IconCalculator
   },
   {
     id: 'evaluation-inquiry',
     number: '03',
-    badge: 'Smart Inquiry',
-    title: 'The Evaluation & Inquiry Process',
-    shortDesc: 'Spot red flags in listings and safely contact agents directly through our platform.',
-    extendedDesc: 'Learn to spot red flags and green flags in online listing photos and descriptions before committing your time. When you are ready, safely contact listing agents or sellers directly through our secure platform messaging. We even provide you with a list of recommended, hard-hitting questions to ask before booking a tour so you have all the leverage.',
+    badge: 'Step Label',
+    title: 'Step 3',
+    shortDesc: 'Short summary for step 3.',
+    extendedDesc: 'Detailed description for step 3.',
     stats: [
-      { label: 'Verified Agents', value: '100%' },
-      { label: 'Secure Messages', value: 'E2E' }
+      { label: 'Metric 1', value: '--' },
+      { label: 'Metric 2', value: '--' }
     ],
     icon: IconMessageCircle
   },
   {
     id: 'viewings-checklist',
     number: '04',
-    badge: 'Thorough Inspection',
-    title: 'In-Person & Virtual Viewings',
-    shortDesc: 'Inspect structural conditions and evaluate the neighborhood with our curated diligence checklist.',
-    extendedDesc: 'During open houses or private viewings, rely on our curated checklist to inspect key items: structural condition, natural light, neighborhood noise, and storage space. Beyond the property lines, we guide your neighborhood diligence—evaluating transit access, school ratings, walkability, and checking municipal records for future zoning developments.',
+    badge: 'Step Label',
+    title: 'Step 4',
+    shortDesc: 'Short summary for step 4.',
+    extendedDesc: 'Detailed description for step 4.',
     stats: [
-      { label: 'Tour Checklist', value: '25-Pt' },
-      { label: 'Zoning Checks', value: 'Vital' }
+      { label: 'Metric 1', value: '--' },
+      { label: 'Metric 2', value: '--' }
     ],
     icon: IconEye
   },
   {
     id: 'offer-closing',
     number: '05',
-    badge: 'Secure Acquisition',
-    title: 'Making an Offer to Closing',
-    shortDesc: 'Craft competitive offers, navigate inspections, and conquer the closing process.',
-    extendedDesc: 'Crafting a competitive offer requires strategy. We guide you through the intricacies of contingencies, earnest money, and offer price strategies. Once accepted, we break down the home inspection and appraisal process so there are no surprises. Finally, we provide a step-by-step summary of the closing process, ensuring your keys are turned over smoothly.',
+    badge: 'Step Label',
+    title: 'Step 5',
+    shortDesc: 'Short summary for step 5.',
+    extendedDesc: 'Detailed description for step 5.',
     stats: [
-      { label: 'Closing Success', value: '99%' },
-      { label: 'Offer Strategy', value: 'Data-led' }
+      { label: 'Metric 1', value: '--' },
+      { label: 'Metric 2', value: '--' }
     ],
     icon: IconHomeDollar
   },
   {
     id: 'safety-fraud',
     number: '06',
-    badge: 'Total Protection',
-    title: 'Buyer Safety & Fraud Prevention',
-    shortDesc: 'Recognize common scams and keep your personal financial data completely secure.',
-    extendedDesc: 'Your security is paramount. We train you to recognize common online property scams, including wire fraud, duplicate listings, and unverified sellers. Our platform utilizes bank-grade encryption, and we provide stringent best practices for keeping your personal and financial data locked down while using the site. Peace of mind is our ultimate amenity.',
+    badge: 'Step Label',
+    title: 'Step 6',
+    shortDesc: 'Short summary for step 6.',
+    extendedDesc: 'Detailed description for step 6.',
     stats: [
-      { label: 'Data Security', value: '256-bit' },
-      { label: 'Fraud Prevention', value: 'Active' }
+      { label: 'Metric 1', value: '--' },
+      { label: 'Metric 2', value: '--' }
     ],
     icon: IconShieldCheck
   }
@@ -108,15 +108,15 @@ export default function BuyerProtectionPromiseSection() {
           <div className="flex items-center justify-center gap-3 mb-4">
             <span className="w-6 h-[2px] bg-[#0F766E]" />
             <span className="text-xs font-bold tracking-[0.25em] text-[#0F766E] uppercase">
-              Buy With Human Shelter
+              Subtitle
             </span>
             <span className="w-6 h-[2px] bg-[#0F766E]" />
           </div>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#1E293B] tracking-tight leading-tight font-display mb-6">
-            The 6-Step Homebuyer's Guide
+            Section Title
           </h2>
           <p className="text-base sm:text-lg text-[#64748B] font-normal leading-relaxed">
-            Acquiring your dream property shouldn't be daunting. Our comprehensive guide walks you through the entire journey—from maximizing search filters and evaluating red flags, to crafting winning offers and avoiding real estate fraud.
+            Section description.
           </p>
         </div>
 
@@ -217,13 +217,13 @@ export default function BuyerProtectionPromiseSection() {
           </div>
           <div className="space-y-2 text-center lg:text-left relative z-10">
             <div className="text-xs font-mono uppercase tracking-[0.2em] text-[#CCFBF1] font-bold">
-              Secure Your Dream Property
+              Subtitle
             </div>
             <h4 className="text-2xl sm:text-3xl font-bold font-display mb-2">
-              Ready to Start Your Home Search?
+              Banner Title
             </h4>
             <p className="text-sm sm:text-base text-white/85 max-w-2xl">
-              Talk directly with a licensed Human Shelter broker today to get pre-qualified and start viewing exclusive listings that match your criteria.
+              Banner description.
             </p>
           </div>
 
