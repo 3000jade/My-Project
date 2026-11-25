@@ -135,6 +135,8 @@ export interface AgentProfileDTO {
   access_tier?: string | null;
   commission_tier?: string | null;
   location_branch?: string | null;
+  service_areas?: string[];
+  property_specialties?: string[];
   emergency_contact_name?: string | null;
   emergency_contact_phone?: string | null;
   internal_notes?: string | null;

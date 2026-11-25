@@ -190,6 +190,16 @@ export class AgentAvailabilityService {
     return updated;
   }
 
+  private static readonly MANILA_DAYS = [
+    'sunday',
+    'monday',
+    'tuesday',
+    'wednesday',
+    'thursday',
+    'friday',
+    'saturday',
+  ] as const;
+
   /**
    * Check whether an agent's schedule & blackout dates allow receiving a new lead at `now`
    */
@@ -197,7 +207,7 @@ export class AgentAvailabilityService {
     schedule: AgentAvailabilityScheduleDTO,
     activeInquiriesCount: number = 0,
     now: Date = new Date()
-  ): { available: boolean; reason?: 'UNAVAILABLE' | 'BLACKOUT_DATE' | 'CAPACITY_REACHED' } {
+  ): { available: boolean; reason?: 'UNAVAILABLE' | 'BLACKOUT_DATE' | 'CAPACITY_REACHED' | 'OUTSIDE_SCHEDULE' } {
     if (schedule.routing_availability !== 'available') {
       return { available: false, reason: 'UNAVAILABLE' };
     }
@@ -207,7 +217,8 @@ export class AgentAvailabilityService {
     }
 
     // Check blackout dates in Asia/Manila (UTC+8)
-    const manilaIsoDate = new Date(now.getTime() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const manilaDate = new Date(now.getTime() + 8 * 60 * 60 * 1000);
+    const manilaIsoDate = manilaDate.toISOString().slice(0, 10);
     if (Array.isArray(schedule.blackout_dates)) {
       for (const blackout of schedule.blackout_dates) {
         if (
@@ -218,6 +229,23 @@ export class AgentAvailabilityService {
         ) {
           return { available: false, reason: 'BLACKOUT_DATE' };
         }
+      }
+    }
+
+    const dayKey = AgentAvailabilityService.MANILA_DAYS[manilaDate.getUTCDay()];
+    const dayWindow = schedule.weekly_schedule?.[dayKey];
+    if (dayWindow) {
+      if (!dayWindow.enabled) {
+        return { available: false, reason: 'OUTSIDE_SCHEDULE' };
+      }
+      const hh = String(manilaDate.getUTCHours()).padStart(2, '0');
+      const mm = String(manilaDate.getUTCMinutes()).padStart(2, '0');
+      const currentHHMM = `${hh}:${mm}`;
+      if (dayWindow.start && currentHHMM < dayWindow.start) {
+        return { available: false, reason: 'OUTSIDE_SCHEDULE' };
+      }
+      if (dayWindow.end && currentHHMM > dayWindow.end) {
+        return { available: false, reason: 'OUTSIDE_SCHEDULE' };
       }
     }
 

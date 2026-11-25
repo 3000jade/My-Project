@@ -17,6 +17,7 @@ export type EligibilityFailureReason =
   | 'EXPIRED_CREDENTIAL'
   | 'INCOMPLETE_CREDENTIAL'
   | 'UNAVAILABLE'
+  | 'OUTSIDE_SCHEDULE'
   | 'BLACKOUT_DATE'
   | 'CAPACITY_REACHED'
   | 'DEPARTED'
