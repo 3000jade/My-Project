@@ -10,6 +10,11 @@ vi.mock('../../services/chatService', () => ({
   chatService: {
     sendMessage: vi.fn(),
     streamMessage: vi.fn(),
+    getLiveAgents: vi.fn(),
+    startLiveHandoff: vi.fn(),
+    getLiveMessages: vi.fn(),
+    sendLiveMessage: vi.fn(),
+    subscribeLiveChat: vi.fn(() => () => {}),
   },
 }));
 
@@ -90,12 +95,12 @@ describe('ChatWidget', () => {
 
   it('renders the Crisp White header, RA 9646 badge, ChatWelcomeView, lenis guard, and calm footer outside a Router', () => {
     const { container } = render(<ChatWidget />);
-    fireEvent.click(screen.getByRole('button', { name: /toggle ai property concierge/i }));
+    fireEvent.click(screen.getByRole('button', { name: /toggle ai assistant/i }));
 
-    expect(screen.getByRole('heading', { name: 'AI Property Concierge' })).toBeInTheDocument();
-    expect(screen.getByText('RA 9646')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'AI Assistant' })).toBeInTheDocument();
+    expect(screen.getByText('Automated')).toBeInTheDocument();
     expect(screen.getByText(/How can I help you find your next home\?/i)).toBeInTheDocument();
-    expect(screen.getByText(/not a PRC-licensed broker/i)).toBeInTheDocument();
+    expect(screen.getByText(/not a licensed real estate broker/i)).toBeInTheDocument();
     expect(container.querySelector('[data-lenis-prevent="true"]')).not.toBeNull();
 
     // Header actions: New chat, Expand chat, Close chat
@@ -110,7 +115,7 @@ describe('ChatWidget', () => {
     expect(screen.getByRole('button', { name: /how buying works/i })).toBeInTheDocument();
 
     // Calm footer handoff link
-    expect(screen.getByRole('button', { name: /talk to a licensed agent/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /talk to an agent/i })).toBeInTheDocument();
   });
 
   it('expands and collapses the desktop side panel and resets to ChatWelcomeView on New chat', async () => {
@@ -122,7 +127,7 @@ describe('ChatWidget', () => {
     );
 
     render(<ChatWidget />);
-    fireEvent.click(screen.getByRole('button', { name: /toggle ai property concierge/i }));
+    fireEvent.click(screen.getByRole('button', { name: /toggle ai assistant/i }));
 
     const panel = screen.getByTestId('chat-widget-panel');
     expect(panel.className).toContain('fixed');
@@ -132,7 +137,11 @@ describe('ChatWidget', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /expand chat/i }));
     expect(panel.className).toContain('sm:fixed');
-    expect(panel.className).toContain('sm:w-xl');
+    expect(panel.className).toContain('sm:inset-0');
+    expect(panel.className).toContain('sm:w-full');
+    expect(panel.className).toContain('sm:h-full');
+    expect(panel.className).toContain('sm:rounded-none');
+    expect(panel.className).not.toContain('sm:w-xl');
     expect(screen.getByRole('button', { name: /collapse chat/i })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /collapse chat/i }));
@@ -202,7 +211,7 @@ describe('ChatWidget', () => {
       </MemoryRouter>
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /toggle ai property concierge/i }));
+    fireEvent.click(screen.getByRole('button', { name: /toggle ai assistant/i }));
 
     await waitFor(() => {
       expect(propertyService.getPropertyById).toHaveBeenCalledWith('prop-42', {
@@ -215,7 +224,7 @@ describe('ChatWidget', () => {
 
     // Initial connecting status renders immediately inside role="status" before first SSE status frame
     const initialStatus = screen.getByRole('status');
-    expect(initialStatus).toHaveTextContent('Connecting to AI Concierge...');
+    expect(initialStatus).toHaveTextContent('Connecting...');
 
     // Trigger live status event -> Trace shimmer updates
     await act(async () => {
@@ -287,7 +296,7 @@ describe('ChatWidget', () => {
     });
 
     render(<ChatWidget />);
-    fireEvent.click(screen.getByRole('button', { name: /toggle ai property concierge/i }));
+    fireEvent.click(screen.getByRole('button', { name: /toggle ai assistant/i }));
 
     const input = screen.getByRole('textbox');
     fireEvent.change(input, { target: { value: 'Show Taguig homes' } });
@@ -348,7 +357,7 @@ describe('ChatWidget', () => {
       });
 
     render(<ChatWidget />);
-    fireEvent.click(screen.getByRole('button', { name: /toggle ai property concierge/i }));
+    fireEvent.click(screen.getByRole('button', { name: /toggle ai assistant/i }));
 
     const input = screen.getByRole('textbox');
     fireEvent.change(input, { target: { value: 'First prompt' } });
@@ -361,7 +370,7 @@ describe('ChatWidget', () => {
     fireEvent.submit(input.closest('form'));
 
     // Stream 2 placeholder is active with initial status
-    expect(screen.getByRole('status')).toHaveTextContent('Connecting to AI Concierge...');
+    expect(screen.getByRole('status')).toHaveTextContent('Connecting...');
 
     // Late AbortError from Stream 1 arrives while Stream 2 is still empty & streaming
     await act(async () => {
@@ -371,7 +380,7 @@ describe('ChatWidget', () => {
     });
 
     // Stream 2's status & placeholder must still be intact
-    expect(screen.getByRole('status')).toHaveTextContent('Connecting to AI Concierge...');
+    expect(screen.getByRole('status')).toHaveTextContent('Connecting...');
 
     await act(async () => {
       triggerSecondDelta('Second stream ');
@@ -402,7 +411,7 @@ describe('ChatWidget', () => {
       );
 
     render(<ChatWidget />);
-    fireEvent.click(screen.getByRole('button', { name: /toggle ai property concierge/i }));
+    fireEvent.click(screen.getByRole('button', { name: /toggle ai assistant/i }));
 
     const input = screen.getByRole('textbox');
     fireEvent.change(input, { target: { value: 'Condos in Taguig' } });
@@ -434,7 +443,7 @@ describe('ChatWidget', () => {
       expect(sentMessages[sentMessages.length - 1].content).toBe(
         'Compare these properties side by side: Serendra Two-Bedroom Suite (ID: prop-101), One Uptown Residence (ID: prop-102)'
       );
-      expect(screen.getByText('Side-by-Side Comparison')).toBeInTheDocument();
+      expect(screen.getByText('Compare Properties')).toBeInTheDocument();
     });
 
     // Compare bar clears after submission
@@ -449,7 +458,7 @@ describe('ChatWidget', () => {
     );
 
     const { container } = render(<ChatWidget />);
-    fireEvent.click(screen.getByRole('button', { name: /toggle ai property concierge/i }));
+    fireEvent.click(screen.getByRole('button', { name: /toggle ai assistant/i }));
 
     const input = screen.getByRole('textbox');
     fireEvent.change(input, { target: { value: 'Show homes' } });
@@ -484,7 +493,7 @@ describe('ChatWidget', () => {
     );
 
     render(<ChatWidget />);
-    fireEvent.click(screen.getByRole('button', { name: /toggle ai property concierge/i }));
+    fireEvent.click(screen.getByRole('button', { name: /toggle ai assistant/i }));
 
     const input = screen.getByRole('textbox');
     fireEvent.change(input, { target: { value: 'Hi' } });
@@ -513,7 +522,7 @@ describe('ChatWidget', () => {
     apiClient.post.mockResolvedValueOnce({ data: { data: { id: 'INQ-9001' } } });
 
     render(<ChatWidget />);
-    fireEvent.click(screen.getByRole('button', { name: /toggle ai property concierge/i }));
+    fireEvent.click(screen.getByRole('button', { name: /toggle ai assistant/i }));
 
     const input = screen.getByRole('textbox');
     fireEvent.change(input, { target: { value: '2BR condo in BGC' } });
@@ -521,19 +530,19 @@ describe('ChatWidget', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Here are matching condos in Taguig.')).toBeInTheDocument();
-      expect(screen.getByText('Side-by-Side Comparison')).toBeInTheDocument();
+      expect(screen.getByText('Compare Properties')).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByRole('button', { name: /^ask agent$/i }));
 
     expect(screen.getByText('Property: Serendra Two-Bedroom Suite')).toBeInTheDocument();
 
-    const submitBtn = screen.getByRole('button', { name: /request licensed agent/i });
+    const submitBtn = screen.getByRole('button', { name: /contact an agent/i });
     expect(submitBtn).toBeDisabled();
 
     fireEvent.change(screen.getByLabelText(/full name/i), { target: { value: 'Maria Santos' } });
     fireEvent.change(screen.getByLabelText(/email address/i), { target: { value: 'maria@example.com' } });
-    fireEvent.click(screen.getByRole('checkbox', { name: /RA 10173/i }));
+    fireEvent.click(screen.getByRole('checkbox', { name: /data privacy act/i }));
 
     expect(submitBtn).toBeEnabled();
     fireEvent.click(submitBtn);
@@ -563,7 +572,7 @@ describe('ChatWidget', () => {
     apiClient.post.mockResolvedValueOnce({ data: { data: { id: 'INQ-FALLBACK' } } });
 
     render(<ChatWidget />);
-    fireEvent.click(screen.getByRole('button', { name: /toggle ai property concierge/i }));
+    fireEvent.click(screen.getByRole('button', { name: /toggle ai assistant/i }));
 
     const input = screen.getByRole('textbox');
     fireEvent.change(input, { target: { value: 'Help me find a house' } });
@@ -572,15 +581,15 @@ describe('ChatWidget', () => {
     await waitFor(() => {
       const fallbackMsg = screen.getByText(/temporarily unavailable/i);
       expect(fallbackMsg).toBeInTheDocument();
-      expect(fallbackMsg).toHaveTextContent(/Talk to a Licensed Agent/i);
+      expect(fallbackMsg).toHaveTextContent(/Talk to an Agent/i);
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /talk to a licensed agent/i }));
+    fireEvent.click(screen.getByRole('button', { name: /talk to an agent/i }));
 
     fireEvent.change(screen.getByLabelText(/full name/i), { target: { value: 'Jose Rizal' } });
     fireEvent.change(screen.getByLabelText(/email address/i), { target: { value: 'jose@example.com' } });
-    fireEvent.click(screen.getByRole('checkbox', { name: /RA 10173/i }));
-    fireEvent.click(screen.getByRole('button', { name: /request licensed agent/i }));
+    fireEvent.click(screen.getByRole('checkbox', { name: /data privacy act/i }));
+    fireEvent.click(screen.getByRole('button', { name: /contact an agent/i }));
 
     await waitFor(() => {
       expect(apiClient.post).toHaveBeenCalledWith(
@@ -624,7 +633,7 @@ describe('ChatWidget', () => {
       });
 
     render(<ChatWidget />);
-    fireEvent.click(screen.getByRole('button', { name: /toggle ai property concierge/i }));
+    fireEvent.click(screen.getByRole('button', { name: /toggle ai assistant/i }));
 
     const input = screen.getByRole('textbox');
 
@@ -667,7 +676,7 @@ describe('ChatWidget', () => {
       </MemoryRouter>
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /toggle ai property concierge/i }));
+    fireEvent.click(screen.getByRole('button', { name: /toggle ai assistant/i }));
 
     await waitFor(() => {
       expect(propertyService.getPropertyById).toHaveBeenCalledWith('MLS-PH-001', {
@@ -694,7 +703,7 @@ describe('ChatWidget', () => {
       );
 
     render(<ChatWidget />);
-    fireEvent.click(screen.getByRole('button', { name: /toggle ai property concierge/i }));
+    fireEvent.click(screen.getByRole('button', { name: /toggle ai assistant/i }));
 
     const input = screen.getByRole('textbox');
     expect(input).toHaveAttribute('maxLength', '2000');
@@ -751,7 +760,7 @@ describe('ChatWidget', () => {
       </MemoryRouter>
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /toggle ai property concierge/i }));
+    fireEvent.click(screen.getByRole('button', { name: /toggle ai assistant/i }));
     await waitFor(() => {
       expect(screen.getByText(/Currently viewing: Alabang Courtyard Villa/i)).toBeInTheDocument();
     });
@@ -760,12 +769,14 @@ describe('ChatWidget', () => {
     fireEvent.change(input, { target: { value: 'Binabaha ba dito pag bagyo?' } });
     fireEvent.submit(input.closest('form'));
 
-    const inlineCta = await screen.findByRole('button', { name: /connect to licensed agent/i });
-    expect(inlineCta).toHaveClass('bg-[#FF6B6B]', 'text-[#1E293B]');
-    expect(inlineCta).not.toHaveClass('text-white');
+    const inlineCtas = await screen.findAllByRole('button', { name: /talk to an agent/i });
+    const inlineCta = inlineCtas.find((btn) => btn.className.includes('bg-[#FF8559]'));
+    expect(inlineCta).toBeDefined();
+    expect(inlineCta).toHaveClass('bg-[#FF8559]', 'text-white');
+    expect(inlineCta).not.toHaveClass('text-[#1E293B]');
 
     fireEvent.click(inlineCta);
-    expect(screen.getByRole('button', { name: /request licensed agent/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /contact an agent/i })).toBeInTheDocument();
     expect(screen.getByText(/Property: Alabang Courtyard Villa/i)).toBeInTheDocument();
   });
 
@@ -775,7 +786,7 @@ describe('ChatWidget', () => {
 
     try {
       render(<ChatWidget />);
-      fireEvent.click(screen.getByRole('button', { name: /toggle ai property concierge/i }));
+      fireEvent.click(screen.getByRole('button', { name: /toggle ai assistant/i }));
 
       await waitFor(() => {
         expect(window.HTMLElement.prototype.scrollIntoView).toHaveBeenCalledWith({
@@ -785,5 +796,97 @@ describe('ChatWidget', () => {
     } finally {
       window.matchMedia = originalMatchMedia;
     }
+  });
+
+  it('shows Live Agent Carousel when agents are online and switches into Live Chat mode after consent', async () => {
+    chatService.getLiveAgents.mockResolvedValueOnce({
+      agents: [
+        {
+          id: 'a1',
+          name: 'Elena Rossi',
+          avatar: null,
+          verified: true,
+          online: true,
+          matchReason: 'Listing Agent',
+          areas: ['BGC'],
+          specialties: ['Condominium'],
+          isListingAgent: true,
+        },
+      ],
+      onlineCount: 1,
+    });
+    chatService.subscribeLiveChat.mockImplementation(() => () => {});
+    chatService.getLiveMessages.mockResolvedValueOnce({ messages: [] });
+    chatService.sendLiveMessage.mockResolvedValueOnce({
+      id: 'live-msg-1',
+      sender: 'client',
+      sender_name: 'Carlos Reyes',
+      content: 'Hi Elena, is the unit still available?',
+    });
+
+    apiClient.post.mockResolvedValueOnce({
+      success: true,
+      data: {
+        inquiryId: 'inq-live-99',
+        referenceCode: 'INQ-LIVE-99',
+        agent: { id: 'a1', name: 'Elena Rossi' },
+        liveChatToken: 'guest-tok-99',
+        messages: [],
+      },
+    });
+
+    render(<ChatWidget />);
+    fireEvent.click(screen.getByRole('button', { name: /toggle ai assistant/i }));
+    fireEvent.click(screen.getByRole('button', { name: /talk to an agent/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Available Agents')).toBeInTheDocument();
+      expect(screen.getByText('Elena Rossi')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Chat Now/i }));
+
+    fireEvent.change(screen.getByLabelText(/full name/i), { target: { value: 'Carlos Reyes' } });
+    fireEvent.change(screen.getByLabelText(/email address/i), { target: { value: 'carlos@example.com' } });
+    fireEvent.click(screen.getByRole('checkbox', { name: /data privacy act/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Start Live Chat/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/Live Chat · Elena Rossi/i)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /End Chat/i })).toBeInTheDocument();
+    });
+
+    const input = screen.getByRole('textbox');
+    fireEvent.change(input, { target: { value: 'Hi Elena, is the unit still available?' } });
+    fireEvent.submit(input.closest('form'));
+
+    await waitFor(() => {
+      expect(chatService.sendLiveMessage).toHaveBeenCalledWith(
+        'inq-live-99',
+        'Hi Elena, is the unit still available?',
+        'guest-tok-99',
+        expect.any(String)
+      );
+      expect(chatService.streamMessage).not.toHaveBeenCalled();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /End Chat/i }));
+    await waitFor(() => {
+      expect(screen.getByText('AI Assistant')).toBeInTheDocument();
+    });
+  });
+
+  it('skips carousel and opens Leave a Message form when zero agents are online', async () => {
+    chatService.getLiveAgents.mockResolvedValueOnce({ agents: [], onlineCount: 0 });
+
+    render(<ChatWidget />);
+    fireEvent.click(screen.getByRole('button', { name: /toggle ai assistant/i }));
+    fireEvent.click(screen.getByRole('button', { name: /talk to an agent/i }));
+
+    await waitFor(() => {
+      expect(screen.queryByText('Available Agents')).not.toBeInTheDocument();
+      expect(screen.getByText(/All agents are currently offline/i)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /contact an agent/i })).toBeInTheDocument();
+    });
   });
 });

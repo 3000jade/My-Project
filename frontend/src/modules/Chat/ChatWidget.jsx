@@ -29,8 +29,10 @@ import ChatPropertyCard from './ChatPropertyCard';
 import ChatComparisonCard from './ChatComparisonCard';
 import ChatNearbyCard from './ChatNearbyCard';
 import ChatHandoffForm from './ChatHandoffForm';
+import ChatLiveAgentCarousel from './ChatLiveAgentCarousel';
 
 const PROPERTY_ROUTE_REGEX = /^\/(?:properties|listing)\/([^/?#]+)/i;
+const LIVE_SESSION_STORAGE_KEY = 'hsr_live_chat_session';
 const MAX_CHAT_MESSAGE_LENGTH = 2000;
 const MAX_COMPARE_SELECTION = 3;
 const SCROLL_NEAR_BOTTOM_THRESHOLD = 48;
@@ -126,6 +128,20 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
   const [selectedCompare, setSelectedCompare] = useState([]);
   const [isNearBottom, setIsNearBottom] = useState(true);
   const [showEscalationForm, setShowEscalationForm] = useState(false);
+  const [livePanelState, setLivePanelState] = useState('idle');
+  const [liveAgents, setLiveAgents] = useState([]);
+  const [isLoadingAgents, setIsLoadingAgents] = useState(false);
+  const [selectedLiveAgent, setSelectedLiveAgent] = useState(null);
+  const [offlineNotice, setOfflineNotice] = useState('');
+  const [liveConnectionState, setLiveConnectionState] = useState('connected');
+  const [liveSession, setLiveSession] = useState(() => {
+    try {
+      const raw = typeof window !== 'undefined' ? window.sessionStorage?.getItem(LIVE_SESSION_STORAGE_KEY) : null;
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  });
   const [attachedProperty, setAttachedProperty] = useState(null);
   const [latestHandoffSummary, setLatestHandoffSummary] = useState('');
   const [activeListing, setActiveListing] = useState(null);
@@ -198,11 +214,181 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
     return () => clearTimeout(timer);
   }, [isOpen, messages, isStreaming, activeStatus, isNearBottom]);
 
+  useEffect(() => {
+    if (!liveSession?.inquiryId) return;
+
+    let cancelled = false;
+    setLiveConnectionState('connected');
+
+    if (typeof chatService.getLiveMessages === 'function') {
+      Promise.resolve(
+        chatService.getLiveMessages(liveSession.inquiryId, liveSession.liveChatToken)
+      )
+        .then((res) => {
+          if (cancelled || !Array.isArray(res?.messages)) return;
+          setMessages((prev) => {
+            const existingIds = new Set(prev.map((m) => m.id));
+            const incoming = res.messages
+              .filter((m) => !existingIds.has(m.id))
+              .map((m) => ({
+                id: m.id,
+                type: m.sender === 'client' ? 'user' : 'ai',
+                senderName: m.sender_name,
+                text: m.content,
+                cards: [],
+                comparison: null,
+                nearby: null,
+                followUpSuggestions: [],
+              }));
+            return incoming.length ? [...prev, ...incoming] : prev;
+          });
+        })
+        .catch(() => {});
+    }
+
+    const unsubscribe =
+      typeof chatService.subscribeLiveChat === 'function'
+        ? chatService.subscribeLiveChat(liveSession.inquiryId, liveSession.liveChatToken, {
+            onMessage: (payload) => {
+              if (cancelled || !payload?.message) return;
+              const m = payload.message;
+              setLiveConnectionState('connected');
+              setMessages((prev) => {
+                if (prev.some((existing) => existing.id === m.id)) return prev;
+                return [
+                  ...prev,
+                  {
+                    id: m.id || createMessageId('live'),
+                    type: m.sender === 'client' ? 'user' : 'ai',
+                    senderName: m.sender_name,
+                    text: m.content,
+                    cards: [],
+                    comparison: null,
+                    nearby: null,
+                    followUpSuggestions: [],
+                  },
+                ];
+              });
+            },
+            onAgentReassigned: (payload) => {
+              if (cancelled) return;
+              if (payload?.agent) {
+                setLiveSession((prev) => {
+                  const next = prev ? { ...prev, agent: payload.agent } : prev;
+                  try {
+                    window.sessionStorage?.setItem(LIVE_SESSION_STORAGE_KEY, JSON.stringify(next));
+                  } catch {
+                    // ignore
+                  }
+                  return next;
+                });
+              }
+              if (payload?.message) {
+                setMessages((prev) => [
+                  ...prev,
+                  {
+                    id: createMessageId('reassign'),
+                    type: 'ai',
+                    text: payload.message,
+                    cards: [],
+                    comparison: null,
+                    nearby: null,
+                    followUpSuggestions: [],
+                  },
+                ]);
+              }
+            },
+            onFallbackOffline: (payload) => {
+              if (cancelled) return;
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: createMessageId('offline'),
+                  type: 'ai',
+                  text:
+                    payload?.message ||
+                    'Our agents are currently assisting other clients. Your conversation is saved and an agent will reach out shortly.',
+                  cards: [],
+                  comparison: null,
+                  nearby: null,
+                  followUpSuggestions: [],
+                },
+              ]);
+            },
+            onError: () => {
+              if (!cancelled) setLiveConnectionState('reconnecting');
+            },
+          })
+        : () => {};
+
+    return () => {
+      cancelled = true;
+      unsubscribe?.();
+    };
+  }, [liveSession?.inquiryId, liveSession?.liveChatToken]);
+
   const toggleChat = () => setIsOpen((prev) => !prev);
 
+  const handleEndLiveChat = () => {
+    setLiveSession(null);
+    setLivePanelState('idle');
+    setShowEscalationForm(false);
+    setSelectedLiveAgent(null);
+    setOfflineNotice('');
+    try {
+      window.sessionStorage?.removeItem(LIVE_SESSION_STORAGE_KEY);
+    } catch {
+      // ignore
+    }
+  };
+
   const openHandoff = (property = null) => {
-    setAttachedProperty(normalizeAttachedProperty(property));
-    setShowEscalationForm(true);
+    const normalizedProp = normalizeAttachedProperty(property);
+    setAttachedProperty(normalizedProp);
+    setOfflineNotice('');
+    setSelectedLiveAgent(null);
+
+    if (typeof chatService.getLiveAgents !== 'function') {
+      setLivePanelState('handoff_offline');
+      setShowEscalationForm(true);
+      return;
+    }
+
+    const maybePromise = chatService.getLiveAgents({
+      propertyId: normalizedProp?.id || activePropertyId || undefined,
+      city: normalizedProp?.city,
+      propertyType: normalizedProp?.propertyType,
+    });
+
+    if (!maybePromise || typeof maybePromise.then !== 'function') {
+      setLivePanelState('handoff_offline');
+      setShowEscalationForm(true);
+      return;
+    }
+
+    setLivePanelState('carousel');
+    setIsLoadingAgents(true);
+    setShowEscalationForm(false);
+
+    maybePromise
+      .then((res) => {
+        const list = Array.isArray(res?.agents) ? res.agents : [];
+        setLiveAgents(list);
+        if (list.length === 0) {
+          setOfflineNotice('All agents are currently offline. Leave a message and an agent will reply shortly.');
+          setLivePanelState('handoff_offline');
+          setShowEscalationForm(true);
+        }
+      })
+      .catch(() => {
+        setLiveAgents([]);
+        setOfflineNotice('');
+        setLivePanelState('handoff_offline');
+        setShowEscalationForm(true);
+      })
+      .finally(() => {
+        setIsLoadingAgents(false);
+      });
   };
 
   const handleNewChat = () => {
@@ -275,6 +461,41 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
       typeof rawText === 'string' ? rawText.trim().slice(0, MAX_CHAT_MESSAGE_LENGTH) : '';
     if (!userText || isStreaming) return;
 
+    if (liveSession?.inquiryId && !textOverride) {
+      const requestId = createMessageId('req');
+      const userMsg = {
+        id: createMessageId('user'),
+        type: 'user',
+        text: userText,
+      };
+      setMessages((prev) => [...prev, userMsg]);
+      setInputValue('');
+      setIsNearBottom(true);
+
+      try {
+        await chatService.sendLiveMessage(
+          liveSession.inquiryId,
+          userText,
+          liveSession.liveChatToken,
+          requestId
+        );
+      } catch {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: createMessageId('live-err'),
+            type: 'ai',
+            text: 'Could not send your message. Please check your connection and try again.',
+            cards: [],
+            comparison: null,
+            nearby: null,
+            followUpSuggestions: [],
+          },
+        ]);
+      }
+      return;
+    }
+
     const userMsg = {
       id: createMessageId('user'),
       type: 'user',
@@ -316,7 +537,7 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
     setMessages((prev) => [...prev, userMsg, aiPlaceholder]);
     setInputValue('');
     setIsStreaming(true);
-    setActiveStatus('Connecting to AI Concierge...');
+    setActiveStatus('Connecting...');
     setIsNearBottom(true);
 
     let resultApplied = false;
@@ -396,7 +617,7 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
           msg.id === aiMsgId
             ? {
                 ...msg,
-                text: 'The AI Property Concierge is temporarily unavailable right now. You can still reach a licensed agent by clicking "Talk to a Licensed Agent" below.',
+                text: 'The AI Assistant is temporarily unavailable right now. You can still reach an agent by clicking "Talk to an Agent" below.',
                 cards: [],
                 comparison: null,
                 nearby: null,
@@ -418,6 +639,9 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
     }
   };
 
+  const expandedInnerClass = isExpanded ? 'w-full md:max-w-3xl lg:max-w-4xl mx-auto' : 'w-full';
+  const expandedPaddingX = isExpanded ? 'px-4 md:px-6 lg:px-8' : 'px-4';
+
   return (
     <MotionConfig reducedMotion="user">
       <div
@@ -435,77 +659,105 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
               className={cn(
                 'fixed inset-0 z-10 w-full h-full rounded-none bg-white shadow-xl overflow-hidden border border-[#E2E8F0] flex flex-col pointer-events-auto',
                 isExpanded
-                  ? 'sm:fixed sm:inset-y-4 sm:right-4 sm:inset-x-auto sm:w-xl sm:max-w-[calc(100vw-2rem)] sm:h-auto sm:max-h-none sm:mb-0 sm:rounded-xl'
+                  ? 'sm:fixed sm:inset-0 sm:w-full sm:h-full sm:max-w-none sm:max-h-none sm:mb-0 sm:rounded-none border-0'
                   : 'sm:static sm:w-96 md:w-md sm:max-w-[calc(100vw-2rem)] sm:h-140 sm:max-h-[80vh] sm:mb-4 sm:rounded-xl'
               )}
             >
-              {/* Crisp White Architectural Header */}
-              <div className="bg-white border-b border-[#E2E8F0] p-4 flex items-center justify-between gap-2 text-[#1E293B] shrink-0 relative z-10">
-                <div className="flex items-center gap-2 min-w-0">
-                  <div className="relative shrink-0">
-                    <div className="size-10 rounded-full bg-[#0F766E] text-white flex items-center justify-center">
-                      <Bot className="size-5" aria-hidden="true" />
+              {/* Teal Brand Header */}
+              <div
+                className={cn(
+                  'bg-[#0F766E] border-b border-[#115E59] py-4 text-white shrink-0 relative z-10',
+                  expandedPaddingX
+                )}
+              >
+                <div className={cn('flex items-center justify-between gap-2', expandedInnerClass)}>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="relative shrink-0">
+                      <div className="size-10 rounded-full bg-white/15 text-white border border-white/25 flex items-center justify-center">
+                        <Bot className="size-5" aria-hidden="true" />
+                      </div>
+                      <div className="absolute bottom-0 right-0 size-3 bg-emerald-400 border-2 border-[#0F766E] rounded-full motion-safe:animate-pulse" />
                     </div>
-                    <div className="absolute bottom-0 right-0 size-3 bg-emerald-500 border-2 border-white rounded-full motion-safe:animate-pulse" />
+                    <div className="flex flex-col items-start gap-1 min-w-0">
+                      <h3 className="font-display font-semibold text-sm leading-tight text-white truncate max-w-full">
+                        {liveSession
+                          ? `Live Chat · ${liveSession.agent?.name || 'Licensed Agent'}`
+                          : 'AI Assistant'}
+                      </h3>
+                      <Badge variant="secondary" className="w-fit bg-[#CCFBF1] text-[#0F766E] border-transparent">
+                        {liveSession ? 'Online' : 'Automated'}
+                      </Badge>
+                    </div>
                   </div>
-                  <div className="flex flex-col items-start gap-1 min-w-0">
-                    <h3 className="font-display font-semibold text-sm leading-tight text-[#1E293B] truncate max-w-full">
-                      AI Property Concierge
-                    </h3>
-                    <Badge variant="secondary" className="w-fit">
-                      RA 9646
-                    </Badge>
-                  </div>
-                </div>
 
-                <div className="flex items-center gap-1 shrink-0">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleNewChat}
-                    aria-label="New chat"
-                    title="New chat"
-                    className="size-11 sm:size-10 rounded-lg text-[#64748B] hover:text-[#1E293B]"
-                  >
-                    <RotateCcw className="size-4" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setIsExpanded((prev) => !prev)}
-                    aria-label={isExpanded ? 'Collapse chat' : 'Expand chat'}
-                    title={isExpanded ? 'Collapse chat' : 'Expand chat'}
-                    className="hidden sm:inline-flex size-11 sm:size-10 rounded-lg text-[#64748B] hover:text-[#1E293B]"
-                  >
-                    {isExpanded ? (
-                      <Minimize2 className="size-4" />
+                  <div className="flex items-center gap-1 shrink-0">
+                    {liveSession ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleEndLiveChat}
+                        className="min-h-11 sm:min-h-9 rounded-lg text-white hover:text-white hover:bg-white/15 text-xs font-semibold"
+                      >
+                        End Chat
+                      </Button>
                     ) : (
-                      <Maximize2 className="size-4" />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleNewChat}
+                        aria-label="New chat"
+                        title="New chat"
+                        className="size-11 sm:size-10 rounded-lg text-white/80 hover:text-white hover:bg-white/15"
+                      >
+                        <RotateCcw className="size-4" />
+                      </Button>
                     )}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={toggleChat}
-                    aria-label="Close chat"
-                    title="Close chat"
-                    className="size-11 sm:size-10 rounded-lg text-[#64748B] hover:text-[#1E293B]"
-                  >
-                    <X className="size-4" />
-                  </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setIsExpanded((prev) => !prev)}
+                      aria-label={isExpanded ? 'Collapse chat' : 'Expand chat'}
+                      title={isExpanded ? 'Collapse chat' : 'Expand chat'}
+                      className="hidden sm:inline-flex size-11 sm:size-10 rounded-lg text-white/80 hover:text-white hover:bg-white/15"
+                    >
+                      {isExpanded ? (
+                        <Minimize2 className="size-4" />
+                      ) : (
+                        <Maximize2 className="size-4" />
+                      )}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={toggleChat}
+                      aria-label="Close chat"
+                      title="Close chat"
+                      className="size-11 sm:size-10 rounded-lg text-white/80 hover:text-white hover:bg-white/15"
+                    >
+                      <X className="size-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
 
               {/* Active Listing Context Strip */}
               {currentActiveListing?.title && (
-                <div className="px-4 py-2 bg-[#F1F5F9] border-b border-[#E2E8F0] flex items-center gap-2 text-xs text-[#1E293B] shrink-0">
-                  <MapPin className="size-4 shrink-0 text-[#0F766E]" />
-                  <span className="truncate font-medium">
-                    Currently viewing: {currentActiveListing.title}
-                  </span>
+                <div
+                  className={cn(
+                    'py-2 bg-[#CCFBF1]/40 border-b border-[#0F766E]/20 text-xs text-[#1E293B] shrink-0',
+                    expandedPaddingX
+                  )}
+                >
+                  <div className={cn('flex items-center gap-2', expandedInnerClass)}>
+                    <MapPin className="size-4 shrink-0 text-[#0F766E]" />
+                    <span className="truncate font-medium">
+                      Currently viewing: {currentActiveListing.title}
+                    </span>
+                  </div>
                 </div>
               )}
 
@@ -514,9 +766,20 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
                 <div
                   ref={messagesContainerRef}
                   onScroll={handleMessagesScroll}
-                  className="flex-1 min-h-0 overflow-y-auto p-4 flex flex-col gap-4 custom-scrollbar"
+                  className={cn(
+                    'flex-1 min-h-0 overflow-y-auto py-4 flex flex-col custom-scrollbar',
+                    expandedPaddingX,
+                    messages.length === 0 ? 'justify-center' : ''
+                  )}
                   data-lenis-prevent="true"
                 >
+                  <div
+                    className={cn(
+                      'flex flex-col',
+                      expandedInnerClass,
+                      messages.length === 0 ? '' : 'gap-4'
+                    )}
+                  >
                   {messages.length === 0 ? (
                     <ChatWelcomeView
                       activeListing={currentActiveListing}
@@ -560,7 +823,12 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
                           )}
 
                           {msg.type === 'user' ? (
-                            <div className="px-4 py-2 rounded-xl rounded-tr-sm max-w-[85%] bg-[#0F766E] text-white font-sans text-sm leading-relaxed shadow-xs break-words">
+                            <div
+                              className={cn(
+                                'px-4 py-2 rounded-xl rounded-tr-sm bg-[#0F766E] text-white font-sans text-sm leading-relaxed shadow-xs break-words',
+                                isExpanded ? 'max-w-[85%] md:max-w-[75%]' : 'max-w-[85%]'
+                              )}
+                            >
                               {msg.text}
                             </div>
                           ) : (
@@ -591,7 +859,14 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
                               )}
 
                               {Array.isArray(msg.cards) && msg.cards.length > 0 && (
-                                <div className="flex flex-col gap-2 min-w-0">
+                                <div
+                                  className={cn(
+                                    'min-w-0',
+                                    isExpanded
+                                      ? 'grid grid-cols-1 md:grid-cols-2 gap-4'
+                                      : 'flex flex-col gap-2'
+                                  )}
+                                >
                                   {msg.cards.map((prop) => (
                                     <ChatPropertyCard
                                       key={prop.id}
@@ -627,10 +902,10 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
                                   onClick={() =>
                                     openHandoff(msg.cards?.[0] ?? currentActiveListing ?? null)
                                   }
-                                  className="self-start min-h-11 sm:min-h-8 px-4 bg-[#FF6B6B] text-[#1E293B] hover:bg-[#EE5A5A] hover:text-[#1E293B] font-semibold normal-case tracking-normal text-xs shadow-xs"
+                                  className="self-start min-h-11 sm:min-h-8 px-4 bg-[#FF8559] text-white hover:bg-[#F07144] hover:text-white font-semibold normal-case tracking-normal text-xs shadow-xs"
                                 >
                                   <UserCheck data-icon="inline-start" />
-                                  Connect to Licensed Agent
+                                  Talk to an Agent
                                 </Button>
                               )}
 
@@ -645,7 +920,7 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
                                         variant="outline"
                                         size="sm"
                                         onClick={() => handleSend(null, chip)}
-                                        className="rounded-full normal-case tracking-normal font-medium text-xs h-auto min-h-11 sm:min-h-8 px-4 py-1 whitespace-normal text-left border-[#E2E8F0] text-[#1E293B] hover:border-[#0F766E] hover:text-[#0F766E]"
+                                        className="rounded-full normal-case tracking-normal font-medium text-xs h-auto min-h-11 sm:min-h-8 px-4 py-1 whitespace-normal text-left border-[#E2E8F0] text-[#1E293B] hover:border-[#0F766E] hover:bg-[#CCFBF1]/30 hover:text-[#0F766E]"
                                       >
                                         {chip}
                                       </Button>
@@ -659,6 +934,7 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
                     })
                   )}
                   <div ref={messagesEndRef} />
+                  </div>
                 </div>
 
                 {!isNearBottom && messages.length > 0 && !showEscalationForm && (
@@ -677,82 +953,206 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
                 )}
               </div>
 
-              {/* Handoff Form or Compare Bar + Composer + Calm Footer */}
-              {showEscalationForm ? (
-                <ChatHandoffForm
-                  attachedProperty={attachedProperty}
-                  handoffSummary={latestHandoffSummary}
-                  recentMessages={messages}
-                  onCancel={() => {
-                    setShowEscalationForm(false);
-                    setAttachedProperty(null);
-                  }}
-                  onSuccess={(refId) => {
-                    setShowEscalationForm(false);
-                    setAttachedProperty(null);
-                    setMessages((prev) => [
-                      ...prev,
-                      {
-                        id: createMessageId('handoff'),
-                        type: 'ai',
-                        text: `Thank you! Your inquiry (${refId}) has been routed to a PRC-licensed agent.`,
-                        cards: [],
-                        comparison: null,
-                        nearby: null,
-                        followUpSuggestions: [],
-                      },
-                    ]);
-                  }}
-                />
+              {/* Live Reconnect Banner */}
+              {liveSession && liveConnectionState === 'reconnecting' && (
+                <div className="px-4 py-1.5 bg-amber-50 border-b border-amber-200 text-xs text-amber-800 shrink-0">
+                  Reconnecting to live chat...
+                </div>
+              )}
+
+              {/* Carousel -> Handoff Form -> Standard Composer */}
+              {livePanelState === 'carousel' && !showEscalationForm ? (
+                <div
+                  className={
+                    isExpanded
+                      ? 'bg-[#F8FAFC] shrink-0 min-h-0 max-h-full overflow-y-auto'
+                      : 'contents'
+                  }
+                >
+                  <div
+                    className={
+                      isExpanded ? cn(expandedInnerClass, 'md:px-2 lg:px-4') : 'contents'
+                    }
+                  >
+                    <ChatLiveAgentCarousel
+                      agents={liveAgents}
+                      isLoading={isLoadingAgents}
+                      isExpanded={isExpanded}
+                      onSelectAgent={(agent) => {
+                        setSelectedLiveAgent(agent);
+                        setLivePanelState('handoff_live');
+                        setShowEscalationForm(true);
+                      }}
+                      onBestMatch={() => {
+                        setSelectedLiveAgent(liveAgents[0] || null);
+                        setLivePanelState('handoff_live');
+                        setShowEscalationForm(true);
+                      }}
+                      onLeaveMessage={() => {
+                        setSelectedLiveAgent(null);
+                        setOfflineNotice('');
+                        setLivePanelState('handoff_offline');
+                        setShowEscalationForm(true);
+                      }}
+                      onCancel={() => {
+                        setLivePanelState('idle');
+                        setAttachedProperty(null);
+                      }}
+                    />
+                  </div>
+                </div>
+              ) : showEscalationForm ? (
+                <div
+                  className={
+                    isExpanded
+                      ? 'bg-[#F8FAFC] shrink-0 min-h-0 max-h-full overflow-y-auto'
+                      : 'contents'
+                  }
+                >
+                  <div
+                    className={
+                      isExpanded ? cn(expandedInnerClass, 'md:px-2 lg:px-4') : 'contents'
+                    }
+                  >
+                    <ChatHandoffForm
+                      mode={livePanelState === 'handoff_live' ? 'live' : 'offline'}
+                      selectedAgent={selectedLiveAgent}
+                      offlineNotice={offlineNotice}
+                      attachedProperty={attachedProperty}
+                      handoffSummary={latestHandoffSummary}
+                      recentMessages={messages}
+                      onCancel={() => {
+                        setShowEscalationForm(false);
+                        setLivePanelState('idle');
+                        setSelectedLiveAgent(null);
+                        setOfflineNotice('');
+                        setAttachedProperty(null);
+                      }}
+                      onLiveConnected={(sessionData) => {
+                        setShowEscalationForm(false);
+                        setLivePanelState('idle');
+                        setSelectedLiveAgent(null);
+                        setAttachedProperty(null);
+                        const nextSession = {
+                          inquiryId: sessionData.inquiryId,
+                          referenceCode: sessionData.referenceCode,
+                          agent: sessionData.agent,
+                          liveChatToken: sessionData.liveChatToken,
+                        };
+                        setLiveSession(nextSession);
+                        try {
+                          window.sessionStorage?.setItem(
+                            LIVE_SESSION_STORAGE_KEY,
+                            JSON.stringify(nextSession)
+                          );
+                        } catch {
+                          // ignore
+                        }
+                        setMessages((prev) => [
+                          ...prev,
+                          {
+                            id: createMessageId('live-connected'),
+                            type: 'ai',
+                            text: sessionData.agent?.name
+                              ? `You are now connected with ${sessionData.agent.name} (Ref: ${sessionData.referenceCode || sessionData.inquiryId}).`
+                              : `Your live chat request is saved (Ref: ${sessionData.referenceCode || sessionData.inquiryId}).`,
+                            cards: [],
+                            comparison: null,
+                            nearby: null,
+                            followUpSuggestions: [],
+                          },
+                        ]);
+                      }}
+                      onSuccess={(refId) => {
+                        setShowEscalationForm(false);
+                        setLivePanelState('idle');
+                        setOfflineNotice('');
+                        setAttachedProperty(null);
+                        setMessages((prev) => [
+                          ...prev,
+                          {
+                            id: createMessageId('handoff'),
+                            type: 'ai',
+                            text: `Thank you! Your message (${refId}) has been sent to an agent.`,
+                            cards: [],
+                            comparison: null,
+                            nearby: null,
+                            followUpSuggestions: [],
+                          },
+                        ]);
+                      }}
+                    />
+                  </div>
+                </div>
               ) : (
                 <>
                   {/* Sticky + Compare Picker Bar */}
                   {selectedCompare.length > 0 && (
-                    <div className="px-4 py-2 bg-[#F8FAFC] border-t border-[#E2E8F0] flex items-center justify-between gap-2 shrink-0">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <Badge variant="default" className="shrink-0">
-                          {selectedCompare.length} selected
-                        </Badge>
-                        <span className="text-xs text-[#64748B] truncate">
-                          {selectedCompare.length < 2
-                            ? 'Select 1 more to compare'
-                            : 'Ready to compare'}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setSelectedCompare([])}
-                          className="min-h-11 sm:min-h-0 normal-case tracking-normal text-xs text-[#64748B] hover:text-[#1E293B]"
-                        >
-                          Clear
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="default"
-                          size="sm"
-                          disabled={selectedCompare.length < 2 || isStreaming}
-                          onClick={handleCompareSelected}
-                          className="min-h-11 sm:min-h-0 normal-case tracking-normal text-xs"
-                        >
-                          <GitCompareArrows data-icon="inline-start" />
-                          Compare Selected ({selectedCompare.length})
-                        </Button>
+                    <div
+                      className={cn(
+                        'py-2 bg-[#CCFBF1]/30 border-t border-[#0F766E]/20 shrink-0',
+                        expandedPaddingX
+                      )}
+                    >
+                      <div
+                        className={cn(
+                          'flex items-center justify-between gap-2',
+                          expandedInnerClass
+                        )}
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Badge variant="default" className="shrink-0">
+                            {selectedCompare.length} selected
+                          </Badge>
+                          <span className="text-xs text-[#64748B] truncate">
+                            {selectedCompare.length < 2
+                              ? 'Select 1 more to compare'
+                              : 'Ready to compare'}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSelectedCompare([])}
+                            className="min-h-11 sm:min-h-0 normal-case tracking-normal text-xs text-[#64748B] hover:text-[#1E293B]"
+                          >
+                            Clear
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="default"
+                            size="sm"
+                            disabled={selectedCompare.length < 2 || isStreaming}
+                            onClick={handleCompareSelected}
+                            className="min-h-11 sm:min-h-0 normal-case tracking-normal text-xs"
+                          >
+                            <GitCompareArrows data-icon="inline-start" />
+                            Compare Selected ({selectedCompare.length})
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   )}
 
                   {/* Rounded Input Composer */}
-                  <div className="p-4 bg-white border-t border-[#E2E8F0] shrink-0 relative z-10">
-                    <form onSubmit={handleSend} className="flex items-center gap-2">
+                  <div
+                    className={cn(
+                      'py-4 bg-white border-t border-[#E2E8F0] shrink-0 relative z-10',
+                      expandedPaddingX
+                    )}
+                  >
+                    <form
+                      onSubmit={handleSend}
+                      className={cn('flex items-center gap-2', expandedInnerClass)}
+                    >
                       <Input
                         value={inputValue}
                         onChange={(e) => setInputValue(e.target.value)}
                         maxLength={MAX_CHAT_MESSAGE_LENGTH}
-                        aria-label="Message AI Property Concierge"
-                        className="flex-1 bg-[#F8FAFC] border-[#E2E8F0] rounded-full px-4 text-sm text-[#1E293B] placeholder:text-[#64748B]"
+                        aria-label="Message AI Assistant"
+                        className="flex-1 bg-[#F8FAFC] border-[#E2E8F0] rounded-full px-4 text-sm text-[#1E293B] placeholder:text-[#64748B] focus-visible:border-[#0F766E] focus-visible:ring-2 focus-visible:ring-[#0F766E]/20"
                         placeholder="Ask about homes, prices, or areas..."
                         type="text"
                       />
@@ -773,7 +1173,7 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
                           disabled={!inputValue.trim()}
                           aria-label="Send message"
                           size="icon"
-                          className="size-11 sm:size-10 rounded-full shrink-0"
+                          className="size-11 sm:size-10 rounded-full shrink-0 bg-[#0F766E] hover:bg-[#115E59] text-white"
                         >
                           <Send className="size-4" />
                         </Button>
@@ -781,21 +1181,33 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
                     </form>
                   </div>
 
-                  {/* Slim Calm Footer Strip */}
-                  <div className="px-4 py-2 bg-white border-t border-[#E2E8F0] flex items-center justify-between gap-2 shrink-0">
-                    <span className="text-xs text-[#64748B] truncate">
-                      AI Concierge · Not a PRC broker
-                    </span>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => openHandoff(currentActiveListing)}
-                      className="min-h-11 sm:min-h-0 shrink-0 normal-case tracking-normal text-xs font-medium text-[#0F766E] hover:bg-[#CCFBF1]/40 hover:text-[#115E59]"
+                  {/* Slim Footer Strip with Coral Agent CTA */}
+                  <div
+                    className={cn(
+                      'py-2 bg-white border-t border-[#E2E8F0] shrink-0',
+                      expandedPaddingX
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        'flex items-center justify-between gap-2',
+                        expandedInnerClass
+                      )}
                     >
-                      <UserCheck data-icon="inline-start" />
-                      Talk to a Licensed Agent
-                    </Button>
+                      <span className="text-xs text-[#64748B] truncate">
+                        AI Assistant · Not a licensed broker
+                      </span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openHandoff(currentActiveListing)}
+                        className="min-h-11 sm:min-h-0 shrink-0 normal-case tracking-normal text-xs font-semibold bg-[#FF8559] text-white hover:bg-[#F07144] hover:text-white shadow-xs"
+                      >
+                        <UserCheck data-icon="inline-start" />
+                        Talk to an Agent
+                      </Button>
+                    </div>
                   </div>
                 </>
               )}
@@ -806,8 +1218,8 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          aria-label="Toggle AI Property Concierge"
-          className="pointer-events-auto bg-[#0F766E] hover:bg-[#115E59] text-white size-14 md:size-16 rounded-full shadow-md flex items-center justify-center relative group overflow-hidden border border-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0F766E] focus-visible:ring-offset-2"
+          aria-label="Toggle AI Assistant"
+          className="pointer-events-auto bg-[#0F766E] hover:bg-[#115E59] text-white size-14 md:size-16 rounded-full shadow-md flex items-center justify-center relative group border border-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0F766E] focus-visible:ring-offset-2"
           onClick={toggleChat}
         >
           <AnimatePresence mode="wait">
@@ -835,7 +1247,13 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
           </AnimatePresence>
 
           {!isOpen && (
-            <div className="absolute inset-0 rounded-full border-2 border-white/40 motion-safe:animate-ping opacity-20 group-hover:opacity-40" />
+            <>
+              <div className="absolute inset-0 rounded-full border-2 border-white/40 motion-safe:animate-ping opacity-20 group-hover:opacity-40 pointer-events-none" />
+              <span
+                aria-hidden="true"
+                className="absolute top-0 right-0 size-3.5 rounded-full bg-[#FF8559] ring-2 ring-white pointer-events-none"
+              />
+            </>
           )}
         </motion.button>
       </div>
