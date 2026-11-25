@@ -3,17 +3,15 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useLenis } from 'lenis/react';
 
-// Specialized Section Components
-import {
-  ListingHeroGallery,
-  LeadCaptureSection,
-  ArchitecturalGallerySection,
-  NeighborhoodSpotlightsSection,
-  PartnersSection,
-  ClientStoriesSection,
-  BuyerProtectionPromiseSection,
-  AwardsShowcase,
-} from '../../components/ui';
+// Specialized Section Components (direct imports to avoid dragging maps/editor from the UI barrel)
+import ListingHeroGallery from '../../components/ui/sections/ListingHeroGallery';
+import LeadCaptureSection from '../../components/ui/sections/LeadCaptureSection';
+import ArchitecturalGallerySection from '../../components/ui/sections/ArchitecturalGallerySection';
+import NeighborhoodSpotlightsSection from '../../components/ui/sections/NeighborhoodSpotlightsSection';
+import PartnersSection from '../../components/ui/sections/PartnersSection';
+import ClientStoriesSection from '../../components/ui/sections/ClientStoriesSection';
+import BuyerProtectionPromiseSection from '../../components/ui/sections/BuyerProtectionPromiseSection';
+import AwardsShowcase from '../../components/ui/sections/AwardsShowcase';
 import { CmsPublicBanner, CmsPublicCollectionsAndFaqs } from '../../components/cms/CmsPublicSections';
 import { LiveEditProvider, LiveEditFloatingBar } from '../../components/cms/LiveCmsEditor';
 

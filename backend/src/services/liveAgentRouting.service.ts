@@ -215,17 +215,15 @@ export class LiveAgentRoutingService {
 
     if (resolvedContext.propertyId && (!resolvedContext.listingAgentId || !resolvedContext.city || !resolvedContext.propertyType)) {
       try {
-        const property = await PropertyService.getPropertyById(resolvedContext.propertyId, {
-          publicView: true,
-        });
+        const property = await PropertyService.findPropertyById(resolvedContext.propertyId, undefined, 'client');
         if (property) {
           resolvedContext.listingAgentId =
-            resolvedContext.listingAgentId || property.agentId || property.agent_id || undefined;
-          resolvedContext.city = resolvedContext.city || property.city || undefined;
+            resolvedContext.listingAgentId || property.agentId || property.listAgentKey || undefined;
+          resolvedContext.city = resolvedContext.city || property.location?.city || undefined;
           resolvedContext.district =
-            resolvedContext.district || property.district || property.neighborhood || undefined;
+            resolvedContext.district || property.location?.barangay || property.location?.subdivisionName || undefined;
           resolvedContext.propertyType =
-            resolvedContext.propertyType || property.propertyType || property.property_type || undefined;
+            resolvedContext.propertyType || property.specs?.propertyType || undefined;
         }
       } catch {
         // Proceed gracefully with provided context
@@ -236,19 +234,19 @@ export class LiveAgentRoutingService {
 
     // Enrich agents without explicit tags using their assigned published properties
     try {
-      const properties = await PropertyService.listProperties({ status: 'published' });
+      const { properties } = await PropertyService.listProperties({ standardStatus: 'Active', limit: 250 }, 'client');
       const propMap = new Map<string, { areas: Set<string>; types: Set<string> }>();
       for (const prop of properties) {
-        const ownerId = prop.agentId || prop.agent_id;
+        const ownerId = prop.agentId || prop.listAgentKey;
         if (!ownerId) continue;
         if (!propMap.has(ownerId)) {
           propMap.set(ownerId, { areas: new Set(), types: new Set() });
         }
         const entry = propMap.get(ownerId)!;
-        if (prop.city) entry.areas.add(prop.city);
-        if (prop.district) entry.areas.add(prop.district);
-        if (prop.propertyType || prop.property_type) {
-          entry.types.add(prop.propertyType || prop.property_type);
+        if (prop.location?.city) entry.areas.add(prop.location.city);
+        if (prop.location?.barangay) entry.areas.add(prop.location.barangay);
+        if (prop.specs?.propertyType) {
+          entry.types.add(prop.specs.propertyType);
         }
       }
       for (const agent of agents) {

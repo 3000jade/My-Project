@@ -2,12 +2,11 @@ import { useState, useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
-import { PageLoader } from './components/ui';
+import Home from './pages/public/Home';
 import { ReactLenis, useLenis } from 'lenis/react';
 import { AuthProvider } from './context/AuthContext';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 
-const Home = lazy(() => import('./pages/public/Home'));
 const ChatWidget = lazy(() => import('./modules/Chat/ChatWidget'));
 
 const DevAgentation = import.meta.env.DEV
@@ -114,8 +113,19 @@ function ScrollToTop() {
   return null;
 }
 
-function AppRoutes({ isAppLoading, onLoaderComplete }) {
+function AppRoutes() {
   const location = useLocation();
+  const [chatReady, setChatReady] = useState(false);
+
+  // Defer ChatWidget chunk download until the browser is idle so it doesn't compete with initial paint
+  useEffect(() => {
+    if ('requestIdleCallback' in window) {
+      const id = window.requestIdleCallback(() => setChatReady(true), { timeout: 2000 });
+      return () => window.cancelIdleCallback(id);
+    }
+    const timer = setTimeout(() => setChatReady(true), 2000);
+    return () => clearTimeout(timer);
+  }, []);
   const isDashboardRoute =
     location.pathname.startsWith('/agent') ||
     location.pathname.startsWith('/broker') ||
@@ -257,64 +267,55 @@ function AppRoutes({ isAppLoading, onLoaderComplete }) {
     location.pathname === '/properties' ||
     location.pathname === '/properties/';
 
+  const publicRoutes = (
+    <Suspense fallback={<div className="min-h-[60vh] bg-transparent" />}>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/properties" element={<PropertiesPage />} />
+        <Route path="/properties/:id" element={<PropertyListingView />} />
+        <Route path="/listing/:id" element={<PropertyListingView />} />
+        <Route path="/subdivisions/:id/map" element={<PublicSubdivisionMap />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/guides" element={<GuidesPage />} />
+        <Route path="/guides/:slug" element={<GuidesPage />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/register/agent" element={<AgentRegisterPage />} />
+        <Route path="/registration-form" element={<RegisterPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
+        <Route path="/unauthorized" element={<UnauthorizedPage />} />
+        {import.meta.env.DEV && <Route path="/demo-api" element={<DemoApiPage />} />}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Suspense>
+  );
+
   // Client Application Structure
   return (
     <div className="bg-[#FBFBF9] text-[#141717] min-h-screen">
       {!isAuthRoute && <Header />}
       <main>
-        <Suspense fallback={<div className="min-h-[60vh] bg-transparent" />}>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/properties" element={<PropertiesPage />} />
-            <Route path="/properties/:id" element={<PropertyListingView />} />
-            <Route path="/listing/:id" element={<PropertyListingView />} />
-            <Route path="/subdivisions/:id/map" element={<PublicSubdivisionMap />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/guides" element={<GuidesPage />} />
-            <Route path="/guides/:slug" element={<GuidesPage />} />
-            <Route path="/contact" element={<ContactPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route path="/register/agent" element={<AgentRegisterPage />} />
-            <Route path="/registration-form" element={<RegisterPage />} />
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-            <Route path="/reset-password" element={<ResetPasswordPage />} />
-            <Route path="/verify-email" element={<VerifyEmailPage />} />
-            <Route path="/unauthorized" element={<UnauthorizedPage />} />
-            {import.meta.env.DEV && <Route path="/demo-api" element={<DemoApiPage />} />}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Suspense>
+        {/* Only load Google's GSI script on auth pages where Google Sign-In is rendered */}
+        {isAuthRoute ? (
+          <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>{publicRoutes}</GoogleOAuthProvider>
+        ) : (
+          publicRoutes
+        )}
       </main>
-      {!isAuthRoute && (
+      {!isAuthRoute && chatReady && (
         <Suspense fallback={null}>
           <ChatWidget />
         </Suspense>
       )}
       {!hideFooter && <Footer />}
-      {location.pathname === '/' && (
-        <PageLoader isLoading={isAppLoading} onComplete={onLoaderComplete} />
-      )}
     </div>
   );
 }
 
 export default function App() {
-  const [isAppLoading, setIsAppLoading] = useState(() => {
-    try {
-      return window.location.pathname === '/' && !sessionStorage.getItem('hsr_loader_seen');
-    } catch {
-      return false;
-    }
-  });
-
-  const handleLoaderComplete = () => {
-    setIsAppLoading(false);
-    try {
-      sessionStorage.setItem('hsr_loader_seen', '1');
-    } catch { }
-  };
-
   // Permanently enforce light theme across documentElement and remove dark class
   useEffect(() => {
     document.documentElement.classList.remove('dark');
@@ -325,32 +326,20 @@ export default function App() {
     } catch { }
   }, []);
 
-  useEffect(() => {
-    if (!isAppLoading) return;
-    // Safety fallback so the site never stays stuck if video autoplay or loading stalls
-    const timer = setTimeout(() => {
-      handleLoaderComplete();
-    }, 4800);
-
-    return () => clearTimeout(timer);
-  }, [isAppLoading]);
-
   return (
     <ReactLenis root options={{ lerp: 0.08, smoothWheel: true }}>
-      <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-        <Router>
-          <ScrollToTop />
-          <AuthProvider>
-            <SessionWatcher />
-            <AppRoutes isAppLoading={isAppLoading} onLoaderComplete={handleLoaderComplete} />
-          </AuthProvider>
-          {import.meta.env.DEV && (
-            <Suspense fallback={null}>
-              <DevAgentation />
-            </Suspense>
-          )}
-        </Router>
-      </GoogleOAuthProvider>
+      <Router>
+        <ScrollToTop />
+        <AuthProvider>
+          <SessionWatcher />
+          <AppRoutes />
+        </AuthProvider>
+        {import.meta.env.DEV && (
+          <Suspense fallback={null}>
+            <DevAgentation />
+          </Suspense>
+        )}
+      </Router>
     </ReactLenis>
   );
 }

@@ -1,8 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@fontsource-variable/geist";
 @import "@fontsource-variable/figtree";
 
 @theme {
@@ -332,7 +330,7 @@
   background-color: #FFFFFF;
   background-image:
     linear-gradient(rgba(255, 255, 255, 0.68), rgba(255, 255, 255, 0.68)),
-    url('/images/textures/watercolor-coral-white.jpg');
+    url('/images/textures/watercolor-coral-white.webp');
   background-repeat: no-repeat;
   background-size: cover;
   background-position: center;
@@ -342,7 +340,7 @@
   background-color: #0F766E;
   background-image:
     linear-gradient(rgba(15, 118, 110, 0.84), rgba(15, 118, 110, 0.88)),
-    url('/images/textures/watercolor-coral-teal.jpg');
+    url('/images/textures/watercolor-coral-teal.webp');
   background-repeat: no-repeat;
   background-size: cover;
   background-position: center;
@@ -352,7 +350,7 @@
   background-color: #FFFFFF;
   background-image:
     linear-gradient(rgba(255, 133, 89, 0.2), rgba(255, 255, 255, 0.35)),
-    url('/images/textures/watercolor-coral-white.jpg');
+    url('/images/textures/watercolor-coral-white.webp');
   background-repeat: no-repeat;
   background-size: cover;
   background-position: center;

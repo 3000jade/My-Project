@@ -77,12 +77,11 @@ async function resolveOptionalJwtUser(
   if (!bearer) return null;
 
   try {
-    const localSession = SessionService.verifySessionToken(bearer);
-    if (localSession?.userId) {
+    const sessionCheck = await SessionService.validateSessionAsync(bearer);
+    if (sessionCheck.valid && sessionCheck.session?.userId) {
       return {
-        id: String(localSession.userId),
-        role: String(localSession.role || 'client').toLowerCase(),
-        email: localSession.email,
+        id: String(sessionCheck.session.userId),
+        role: String(sessionCheck.session.role || 'client').toLowerCase(),
       };
     }
 

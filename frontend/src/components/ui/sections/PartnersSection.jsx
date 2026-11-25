@@ -52,8 +52,10 @@ function PartnerMarqueeRow({ title, cmsItems, fallbackMocks, fallbackAlt, animat
                   className="w-48 h-32 shrink-0 border-2 border-dashed border-[#e5e5df] rounded-[5px] bg-[#FBFBF9] flex items-center justify-center p-4 hover:border-[#0D4446] transition-colors"
                 >
                   <img
-                    src="/placeholder-logo.jpg"
+                    src="/placeholder-logo.webp"
                     alt={fallbackAlt}
+                    loading="lazy"
+                    decoding="async"
                     className="max-w-full max-h-full object-contain opacity-80 mix-blend-multiply"
                   />
                 </div>
@@ -65,6 +67,8 @@ function PartnerMarqueeRow({ title, cmsItems, fallbackMocks, fallbackAlt, animat
               <img
                 src={item.media_url}
                 alt={item.title}
+                loading="lazy"
+                decoding="async"
                 className="max-w-full max-h-full object-contain mix-blend-multiply"
               />
             ) : (
