@@ -93,11 +93,11 @@ describe('ChatHandoffForm', () => {
   it('keeps submit disabled until RA 10173 consent is ticked and shows validation error if submitted without consent', () => {
     const { container } = render(<ChatHandoffForm />);
 
-    const submitBtn = screen.getByRole('button', { name: /request licensed agent/i });
+    const submitBtn = screen.getByRole('button', { name: /contact an agent/i });
     expect(submitBtn).toBeDisabled();
-    expect(submitBtn.className).toContain('bg-[#FF6B6B]');
-    expect(submitBtn.className).toContain('text-[#1E293B]');
-    expect(submitBtn.className).not.toContain('text-white');
+    expect(submitBtn.className).toContain('bg-[#FF8559]');
+    expect(submitBtn.className).toContain('text-white');
+    expect(submitBtn.className).not.toContain('text-[#1E293B]');
 
     fireEvent.change(screen.getByLabelText(/full name/i), { target: { value: 'Ana Reyes' } });
     fireEvent.change(screen.getByLabelText(/email address/i), { target: { value: 'ana@example.com' } });
@@ -111,9 +111,9 @@ describe('ChatHandoffForm', () => {
     fireEvent.submit(form);
 
     expect(apiClient.post).not.toHaveBeenCalled();
-    expect(screen.getByRole('alert')).toHaveTextContent(/RA 10173/i);
+    expect(screen.getByRole('alert')).toHaveTextContent(/privacy notice/i);
 
-    const consentCheckbox = screen.getByRole('checkbox', { name: /RA 10173/i });
+    const consentCheckbox = screen.getByRole('checkbox', { name: /data privacy act/i });
     fireEvent.click(consentCheckbox);
 
     expect(submitBtn).toBeEnabled();
@@ -151,9 +151,9 @@ describe('ChatHandoffForm', () => {
     fireEvent.change(screen.getByLabelText(/full name/i), { target: { value: 'Carlos Mendoza' } });
     fireEvent.change(screen.getByLabelText(/email address/i), { target: { value: 'carlos@example.com' } });
     fireEvent.change(screen.getByLabelText(/phone/i), { target: { value: '+63 917 888 9999' } });
-    fireEvent.click(screen.getByRole('checkbox', { name: /RA 10173/i }));
+    fireEvent.click(screen.getByRole('checkbox', { name: /data privacy act/i }));
 
-    fireEvent.click(screen.getByRole('button', { name: /request licensed agent/i }));
+    fireEvent.click(screen.getByRole('button', { name: /contact an agent/i }));
 
     await waitFor(() => {
       expect(apiClient.post).toHaveBeenCalledTimes(1);
@@ -193,14 +193,14 @@ describe('ChatHandoffForm', () => {
 
     fireEvent.change(screen.getByLabelText(/full name/i), { target: { value: 'Liza Tan' } });
     fireEvent.change(screen.getByLabelText(/email address/i), { target: { value: 'liza@example.com' } });
-    fireEvent.click(screen.getByRole('checkbox', { name: /RA 10173/i }));
-    fireEvent.click(screen.getByRole('button', { name: /request licensed agent/i }));
+    fireEvent.click(screen.getByRole('checkbox', { name: /data privacy act/i }));
+    fireEvent.click(screen.getByRole('button', { name: /contact an agent/i }));
 
     await waitFor(() => {
       expect(apiClient.post).toHaveBeenCalledWith('/inquiries', {
         name: 'Liza Tan',
         email: 'liza@example.com',
-        message: 'Visitor requested a licensed agent via AI Concierge.',
+        message: 'Visitor requested an agent via AI Assistant.',
         source: 'ai_chatbot',
         preferredReplyChannel: 'chat',
         consentAccepted: true,
@@ -221,15 +221,15 @@ describe('ChatHandoffForm', () => {
 
     fireEvent.change(screen.getByLabelText(/full name/i), { target: { value: 'Test User' } });
     fireEvent.change(screen.getByLabelText(/email address/i), { target: { value: 'test@example.com' } });
-    fireEvent.click(screen.getByRole('checkbox', { name: /RA 10173/i }));
-    fireEvent.click(screen.getByRole('button', { name: /request licensed agent/i }));
+    fireEvent.click(screen.getByRole('checkbox', { name: /data privacy act/i }));
+    fireEvent.click(screen.getByRole('button', { name: /contact an agent/i }));
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent('Please provide a valid email address.');
     });
 
     apiClient.post.mockRejectedValueOnce(new Error('Network down'));
-    fireEvent.click(screen.getByRole('button', { name: /request licensed agent/i }));
+    fireEvent.click(screen.getByRole('button', { name: /contact an agent/i }));
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent(
@@ -254,8 +254,8 @@ describe('ChatHandoffForm', () => {
 
     fireEvent.change(screen.getByLabelText(/full name/i), { target: { value: 'Elena Cruz' } });
     fireEvent.change(screen.getByLabelText(/email address/i), { target: { value: 'elena@example.com' } });
-    fireEvent.click(screen.getByRole('checkbox', { name: /RA 10173/i }));
-    fireEvent.click(screen.getByRole('button', { name: /request licensed agent/i }));
+    fireEvent.click(screen.getByRole('checkbox', { name: /data privacy act/i }));
+    fireEvent.click(screen.getByRole('button', { name: /contact an agent/i }));
 
     await waitFor(() => {
       expect(apiClient.post).toHaveBeenCalledWith(
@@ -281,14 +281,61 @@ describe('ChatHandoffForm', () => {
 
     fireEvent.change(screen.getByLabelText(/full name/i), { target: { value: 'Elena Cruz' } });
     fireEvent.change(screen.getByLabelText(/email address/i), { target: { value: 'elena@example.com' } });
-    fireEvent.click(screen.getByRole('checkbox', { name: /RA 10173/i }));
-    fireEvent.click(screen.getByRole('button', { name: /request licensed agent/i }));
+    fireEvent.click(screen.getByRole('checkbox', { name: /data privacy act/i }));
+    fireEvent.click(screen.getByRole('button', { name: /contact an agent/i }));
 
     await waitFor(() => {
       expect(apiClient.post).toHaveBeenCalledWith(
         '/inquiries',
         expect.objectContaining({
           propertyPrice: '0',
+        })
+      );
+    });
+  });
+
+  it('starts a live chat session when mode="live" with a selected agent', async () => {
+    const onLiveConnected = vi.fn();
+    apiClient.post.mockResolvedValueOnce({
+      success: true,
+      data: {
+        inquiryId: 'inq-live-1',
+        referenceCode: 'INQ-LIVE-1',
+        agent: { id: 'a1', name: 'Elena Rossi' },
+        liveChatToken: 'tok-abc',
+        messages: [],
+      },
+    });
+
+    render(
+      <ChatHandoffForm
+        mode="live"
+        selectedAgent={{ id: 'a1', name: 'Elena Rossi', matchReason: 'Listing Agent' }}
+        onLiveConnected={onLiveConnected}
+      />
+    );
+
+    expect(screen.getByText(/Chat with Elena Rossi/i)).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/full name/i), { target: { value: 'Carlos Reyes' } });
+    fireEvent.change(screen.getByLabelText(/email address/i), { target: { value: 'carlos@example.com' } });
+    fireEvent.click(screen.getByRole('checkbox', { name: /data privacy act/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Start Live Chat/i }));
+
+    await waitFor(() => {
+      expect(apiClient.post).toHaveBeenCalledWith(
+        '/chat/live-handoff',
+        expect.objectContaining({
+          name: 'Carlos Reyes',
+          email: 'carlos@example.com',
+          selectedAgentId: 'a1',
+          consentAccepted: true,
+        })
+      );
+      expect(onLiveConnected).toHaveBeenCalledWith(
+        expect.objectContaining({
+          inquiryId: 'inq-live-1',
+          liveChatToken: 'tok-abc',
         })
       );
     });

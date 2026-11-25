@@ -4,6 +4,7 @@ import DashboardSidebar from './DashboardSidebar';
 import DashboardHeader from './DashboardHeader';
 import { DashboardThemeProvider, useDashboardDensity } from '../../context/DashboardThemeContext';
 import { useAuth } from '../../context/AuthContext';
+import apiClient from '../../services/apiClient';
 import { DashboardPageSkeleton } from './skeletons';
 import { SidebarProvider, SidebarInset, useSidebar } from '@/components/ui/sidebar';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -25,6 +26,19 @@ export function useDashboardHeaderTitle(title) {
 function DashboardLayoutContent({ role, title }) {
   const { density } = useDashboardDensity();
   const { toggleSidebar } = useSidebar();
+
+  React.useEffect(() => {
+    if (role !== 'agent') return;
+
+    const ping = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+      apiClient.post('/agents/me/presence').catch(() => {});
+    };
+
+    ping();
+    const timer = setInterval(ping, 30_000);
+    return () => clearInterval(timer);
+  }, [role]);
 
   return (
     <div
@@ -62,7 +76,7 @@ export default function DashboardLayout({ role = 'broker', title = 'Property Lis
     <DashboardThemeProvider role={effectiveRole}>
       <DashboardTitleContext.Provider value={{ pageTitle, setPageTitle }}>
         <TooltipProvider>
-          <SidebarProvider>
+          <SidebarProvider style={{ '--sidebar-width': '18rem', '--sidebar-width-icon': '4rem' }}>
             <DashboardLayoutContent role={effectiveRole} title={title} />
           </SidebarProvider>
         </TooltipProvider>

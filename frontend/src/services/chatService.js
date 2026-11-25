@@ -342,6 +342,103 @@ export const chatService = {
       }
     }
   },
+
+  /**
+   * Fetch ranked online, eligible licensed agents for the carousel.
+   */
+  async getLiveAgents({ propertyId, city, district, propertyType } = {}) {
+    const params = {};
+    if (propertyId) params.propertyId = propertyId;
+    if (city) params.city = city;
+    if (district) params.district = district;
+    if (propertyType) params.propertyType = propertyType;
+
+    const res = await apiClient.get('/chat/live-agents', { params });
+    const data = res?.data?.data || res?.data || {};
+    return {
+      agents: Array.isArray(data.agents) ? data.agents : [],
+      onlineCount: Number(data.onlineCount) || 0,
+    };
+  },
+
+  /**
+   * Start a consent-gated live chat session with a selected or best-match agent.
+   */
+  async startLiveHandoff(payload) {
+    const res = await apiClient.post('/chat/live-handoff', payload);
+    return res?.data?.data || res?.data || res;
+  },
+
+  /**
+   * Fetch live chat message history for recovery or reconnect.
+   */
+  async getLiveMessages(inquiryId, liveChatToken) {
+    const headers = liveChatToken ? { 'X-Live-Chat-Token': liveChatToken } : undefined;
+    const res = await apiClient.get(`/chat/live/${encodeURIComponent(inquiryId)}/messages`, {
+      headers,
+    });
+    return res?.data?.data || res?.data || res;
+  },
+
+  /**
+   * Send a visitor message in live agent mode.
+   */
+  async sendLiveMessage(inquiryId, content, liveChatToken, requestId) {
+    const headers = liveChatToken ? { 'X-Live-Chat-Token': liveChatToken } : undefined;
+    const res = await apiClient.post(
+      `/chat/live/${encodeURIComponent(inquiryId)}/messages`,
+      { content, requestId },
+      { headers }
+    );
+    return res?.data?.data || res?.data || res;
+  },
+
+  /**
+   * Subscribe to visitor-scoped SSE events for an active live chat inquiry.
+   * Returns a cleanup function.
+   */
+  subscribeLiveChat(inquiryId, liveChatToken, { onMessage, onAgentReassigned, onFallbackOffline, onError } = {}) {
+    if (!inquiryId || typeof window === 'undefined' || typeof EventSource === 'undefined') {
+      return () => {};
+    }
+
+    const baseUrl = getApiBaseUrl();
+    const authToken = getOptionalAuthToken();
+    const qs = new URLSearchParams();
+    if (liveChatToken) qs.set('token', liveChatToken);
+    if (authToken) qs.set('authToken', authToken);
+
+    const url = `${baseUrl}/chat/live/${encodeURIComponent(inquiryId)}/stream?${qs.toString()}`;
+    const es = new EventSource(url);
+
+    const parseData = (evt) => {
+      try {
+        return JSON.parse(evt.data);
+      } catch {
+        return null;
+      }
+    };
+
+    es.addEventListener('message', (evt) => {
+      const data = parseData(evt);
+      if (data) onMessage?.(data);
+    });
+    es.addEventListener('agent_reassigned', (evt) => {
+      const data = parseData(evt);
+      if (data) onAgentReassigned?.(data);
+    });
+    es.addEventListener('fallback_offline', (evt) => {
+      const data = parseData(evt);
+      if (data) onFallbackOffline?.(data);
+    });
+    es.onerror = () => {
+      onError?.();
+    };
+
+    return () => {
+      es.close();
+    };
+  },
 };
 
 export default chatService;

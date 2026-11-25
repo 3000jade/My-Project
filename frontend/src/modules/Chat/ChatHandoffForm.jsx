@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from 'react';
-import { Building2, Send } from 'lucide-react';
+import { Building2, Send, UserCheck } from 'lucide-react';
 import AuthContext from '../../context/AuthContext';
 import apiClient from '../../services/apiClient';
 import { Button } from '@/components/ui/button';
@@ -23,7 +23,7 @@ function buildInquiryMessage(handoffSummary, recentMessages) {
     .join('\n');
 
   const combined = [summaryText, formattedLines].filter(Boolean).join('\n');
-  return combined || 'Visitor requested a licensed agent via AI Concierge.';
+  return combined || 'Visitor requested an agent via AI Assistant.';
 }
 
 /**
@@ -40,8 +40,12 @@ export default function ChatHandoffForm({
   attachedProperty = null,
   handoffSummary = '',
   recentMessages = [],
+  mode = 'offline',
+  selectedAgent = null,
+  offlineNotice = '',
   onCancel,
   onSuccess,
+  onLiveConnected,
 }) {
   const auth = useContext(AuthContext);
   const authUser = auth?.user;
@@ -70,7 +74,7 @@ export default function ChatHandoffForm({
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!consentAccepted) {
-      setError('Please accept the Data Privacy Act (RA 10173) notice to continue.');
+      setError('Please agree to the privacy notice to continue.');
       return;
     }
 
@@ -106,9 +110,24 @@ export default function ChatHandoffForm({
         payload.propertyPrice = resolvedPropertyPrice;
       }
 
-      const res = await apiClient.post('/inquiries', payload);
-      const refId = res?.data?.data?.id || res?.data?.id || res?.id || 'submitted';
-      onSuccess?.(refId);
+      if (mode === 'live') {
+        if (selectedAgent?.id) {
+          payload.selectedAgentId = selectedAgent.id;
+        }
+        if (attachedProperty?.city) {
+          payload.city = attachedProperty.city;
+        }
+        if (attachedProperty?.propertyType) {
+          payload.propertyType = attachedProperty.propertyType;
+        }
+        const res = await apiClient.post('/chat/live-handoff', payload);
+        const sessionData = res?.data?.data || res?.data || res;
+        onLiveConnected?.(sessionData);
+      } else {
+        const res = await apiClient.post('/inquiries', payload);
+        const refId = res?.data?.data?.id || res?.data?.id || res?.id || 'submitted';
+        onSuccess?.(refId);
+      }
     } catch (err) {
       setError(
         err?.response?.data?.error ||
@@ -127,8 +146,15 @@ export default function ChatHandoffForm({
       className="flex flex-col gap-2 p-4 bg-[#F8FAFC] border-t border-[#E2E8F0] min-h-0 max-h-full overflow-y-auto"
     >
       <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-semibold text-[#1E293B]">
-          Connect to Licensed Agent
+        <span className="flex items-center gap-2 text-xs font-semibold text-[#1E293B]">
+          <UserCheck className="size-4 text-[#0F766E]" aria-hidden="true" />
+          {mode === 'live'
+            ? selectedAgent?.name
+              ? `Chat with ${selectedAgent.name}`
+              : 'Start Live Chat'
+            : offlineNotice
+              ? 'Leave a Message'
+              : 'Talk to an Agent'}
         </span>
         {onCancel && (
           <Button type="button" variant="ghost" size="sm" onClick={onCancel}>
@@ -136,6 +162,12 @@ export default function ChatHandoffForm({
           </Button>
         )}
       </div>
+
+      {offlineNotice && mode !== 'live' && (
+        <Alert className="p-2 bg-amber-50 border-amber-200 text-amber-800">
+          <AlertDescription className="text-xs">{offlineNotice}</AlertDescription>
+        </Alert>
+      )}
 
       {attachedProperty?.title && (
         <div className="flex items-center">
@@ -200,7 +232,7 @@ export default function ChatHandoffForm({
           htmlFor="handoff-consent"
           className="text-xs text-[#64748B] leading-relaxed cursor-pointer select-none"
         >
-          I consent to Human Shelter Realty processing my contact details under the Data Privacy Act (RA 10173) so a licensed agent can respond.
+          I agree to let Human Shelter Realty use my contact details so an agent can reply to me (Data Privacy Act).
         </label>
       </div>
 
@@ -215,10 +247,14 @@ export default function ChatHandoffForm({
         variant="ghost"
         loading={isSubmitting}
         disabled={!consentAccepted || isSubmitting}
-        className="w-full min-h-11 bg-[#FF6B6B] text-[#1E293B] hover:bg-[#EE5A5A] font-semibold"
+        className="w-full min-h-11 bg-[#FF8559] text-white hover:bg-[#F07144] hover:text-white font-semibold"
       >
         <Send data-icon="inline-start" />
-        {isSubmitting ? 'Sending...' : 'Request Licensed Agent'}
+        {isSubmitting
+          ? 'Connecting...'
+          : mode === 'live'
+            ? 'Start Live Chat'
+            : 'Contact an Agent'}
       </Button>
     </form>
   );
