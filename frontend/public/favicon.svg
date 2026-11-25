@@ -5,17 +5,17 @@
       <stop offset="100%" stop-color="#115E59"/>
     </linearGradient>
   </defs>
-  <rect width="64" height="64" rx="16" fill="url(#hsr-grad)"/>
+  <rect x="1" y="1" width="62" height="62" rx="15" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="2"/>
   
   <!-- Chimney -->
   <path d="M41 19H46V28L41 24V19Z" fill="#14B8A6"/>
   <!-- Roof Overhang -->
-  <path d="M32 14L13 29.5L16.5 32.5L32 20L47.5 32.5L51 29.5L32 14Z" fill="#2DD4BF"/>
+  <path d="M32 14L13 29.5L16.5 32.5L32 20L47.5 32.5L51 29.5L32 14Z" fill="#14B8A6"/>
   <!-- Main House Body -->
-  <path d="M18 30V47C18 48.6569 19.3431 50 21 50H43C44.6569 50 46 48.6569 46 47V30L32 19L18 30Z" fill="#FFFFFF"/>
+  <path d="M18 30V47C18 48.6569 19.3431 50 21 50H43C44.6569 50 46 48.6569 46 47V30L32 19L18 30Z" fill="url(#hsr-grad)"/>
   <!-- Arched Doorway -->
-  <path d="M28 50V38C28 36.3431 29.3431 35 31 35H33C34.6569 35 36 36.3431 36 38V50H28Z" fill="#0F766E"/>
+  <path d="M28 50V38C28 36.3431 29.3431 35 31 35H33C34.6569 35 36 36.3431 36 38V50H28Z" fill="#FFFFFF"/>
   <!-- Accent Windows -->
-  <rect x="22" y="27" width="6" height="6" rx="1" fill="#0F766E" fill-opacity="0.85"/>
-  <rect x="36" y="27" width="6" height="6" rx="1" fill="#0F766E" fill-opacity="0.85"/>
+  <rect x="22" y="27" width="6" height="6" rx="1" fill="#FFFFFF" fill-opacity="0.92"/>
+  <rect x="36" y="27" width="6" height="6" rx="1" fill="#FFFFFF" fill-opacity="0.92"/>
 </svg>

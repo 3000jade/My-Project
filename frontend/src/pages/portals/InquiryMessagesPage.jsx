@@ -183,10 +183,10 @@ export default function InquiryMessagesPage({ role = 'agent' }) {
   // Rung 3: Unread count in document title
   useEffect(() => {
     if (typeof document === 'undefined') return;
-    const baseTitle = 'Inquiry Messages — Human Shelter Realty';
+    const baseTitle = 'Inquiry Messages | Human Shelter';
     document.title = unreadIds.length > 0 ? `(${unreadIds.length}) ${baseTitle}` : baseTitle;
     return () => {
-      document.title = 'Human Shelter Realty';
+      document.title = 'Human Shelter';
     };
   }, [unreadIds.length]);
 
