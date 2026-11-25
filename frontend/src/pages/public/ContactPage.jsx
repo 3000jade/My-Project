@@ -53,9 +53,12 @@ export default function ContactPage() {
 
     let mounted = true;
     cmsService
-      .getPublicContentBySlug('page', 'contact-us')
-      .then((item) => {
-        if (mounted && item) setCmsContact(item);
+      .getPublicContents('page')
+      .then((items) => {
+        const match = Array.isArray(items)
+          ? items.find((item) => item?.slug === 'contact-us')
+          : null;
+        if (mounted && match) setCmsContact(match);
       })
       .catch(() => {});
 

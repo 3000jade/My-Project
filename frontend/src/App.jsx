@@ -113,9 +113,61 @@ function ScrollToTop() {
   return null;
 }
 
+const ROUTE_TITLES = [
+  ['/', 'Home'],
+  ['/properties', 'Properties'],
+  ['/about', 'About'],
+  ['/guides', 'Guides'],
+  ['/contact', 'Contact'],
+  ['/login', 'Sign In'],
+  ['/register/agent', 'Agent Registration'],
+  ['/register', 'Register'],
+  ['/registration-form', 'Register'],
+  ['/forgot-password', 'Forgot Password'],
+  ['/reset-password', 'Reset Password'],
+  ['/verify-email', 'Verify Email'],
+  ['/unauthorized', 'Unauthorized'],
+  ['/demo-api', 'Demo API'],
+  ['/admin/users', 'Users'],
+  ['/admin/cms', 'Website CMS'],
+  ['/admin/data-management', 'Data Management'],
+];
+
+function getPageTitle(pathname) {
+  const clean = pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname;
+  const exact = ROUTE_TITLES.find(([path]) => path === clean);
+  if (exact) return `${exact[1]} | Human Shelter`;
+  if (/^\/(properties|listing)\/[^/]+$/.test(clean)) return 'Property Details | Human Shelter';
+  if (/^\/guides\/[^/]+$/.test(clean)) return 'Guides | Human Shelter';
+  if (/^\/subdivisions\/[^/]+\/map$/.test(clean)) return 'Subdivision Map | Human Shelter';
+  if (/\/dashboard$/.test(clean)) return 'Dashboard | Human Shelter';
+  if (/\/properties\/(create|new)$/.test(clean)) return 'Create Listing | Human Shelter';
+  if (/\/properties\/[^/]+\/edit$/.test(clean)) return 'Edit Listing | Human Shelter';
+  if (/\/properties\/(location-map|map)$/.test(clean)) return 'Location Map | Human Shelter';
+  if (/\/properties\/[^/]+$/.test(clean)) return 'Property Details | Human Shelter';
+  if (/\/properties$/.test(clean)) return 'Properties | Human Shelter';
+  if (/\/inquiries\/messages/.test(clean)) return 'Inquiry Messages | Human Shelter';
+  if (/\/inquiries\/[^/]+$/.test(clean)) return 'Inquiry Details | Human Shelter';
+  if (/\/inquiries$/.test(clean)) return 'Inquiries | Human Shelter';
+  if (/\/agents\/[^/]+/.test(clean)) return 'Agent Details | Human Shelter';
+  if (/\/agents$/.test(clean)) return 'Agents | Human Shelter';
+  if (/\/sales$/.test(clean)) return 'Sales | Human Shelter';
+  if (/\/audit$/.test(clean)) return 'Audit | Human Shelter';
+  if (/\/notifications$/.test(clean)) return 'Notifications | Human Shelter';
+  if (/\/profile$/.test(clean)) return 'Profile | Human Shelter';
+  if (/\/saved-properties$/.test(clean)) return 'Saved Properties | Human Shelter';
+  if (/\/subdivisions\/[^/]+\/inventory$/.test(clean)) return 'Subdivision Inventory | Human Shelter';
+  if (/\/subdivisions\/[^/]+\/editor$/.test(clean)) return 'Subdivision Map Editor | Human Shelter';
+  return 'Human Shelter';
+}
+
 function AppRoutes() {
   const location = useLocation();
   const [chatReady, setChatReady] = useState(false);
+
+  useEffect(() => {
+    document.title = getPageTitle(location.pathname);
+  }, [location.pathname]);
 
   // Defer ChatWidget chunk download until the browser is idle so it doesn't compete with initial paint
   useEffect(() => {
@@ -268,7 +320,7 @@ function AppRoutes() {
     location.pathname === '/properties/';
 
   const publicRoutes = (
-    <Suspense fallback={<div className="min-h-[60vh] bg-transparent" />}>
+    <Suspense fallback={<div className="min-h-screen bg-[#F8FAFC]" />}>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/properties" element={<PropertiesPage />} />

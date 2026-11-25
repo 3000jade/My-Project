@@ -39,6 +39,7 @@ export class CmsController {
         return;
       }
       const items = await CmsService.listPublicContents(parsed.data);
+      res.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
       ok(res, { items }, 'Public content loaded.');
     } catch (err) {
       fail(res, err);
@@ -58,6 +59,7 @@ export class CmsController {
         fail(res, new Error('Published content not found.'), 404);
         return;
       }
+      res.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
       ok(res, { item }, 'Public content loaded.');
     } catch (err) {
       fail(res, err);
