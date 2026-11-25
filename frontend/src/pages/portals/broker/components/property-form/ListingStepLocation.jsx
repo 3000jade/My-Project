@@ -17,6 +17,7 @@ import {
   GraduationCap,
   Cross,
   ShoppingBag,
+  Info,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -37,7 +38,18 @@ import LocationPinMap from './LocationPinMap';
 import { isStrataFamily } from './propertyTypeConfig';
 
 const ADDRESS_MAX = 160;
-const SHOW_ON_MAP_OPTIONS = ['Exact Location', 'General Area Only'];
+const SHOW_ON_MAP_OPTIONS = [
+  {
+    value: 'Exact Location',
+    label: 'Exact Pin & Street',
+    effect: 'Buyers see the exact map pin and full street address on the public listing.',
+  },
+  {
+    value: 'General Area Only',
+    label: 'Neighborhood Only (Hide Street)',
+    effect: 'Hides the street address on the public listing and shows only the barangay, city, and approximate area.',
+  },
+];
 
 const Req = () => <span className="text-[#FF8559]" aria-hidden="true">*</span>;
 
@@ -349,6 +361,24 @@ export default function ListingStepLocation({
 
             {/* Isolated Map Container (z-index: 0 per DESIGN.md) */}
             <div className="rounded-xl overflow-hidden border border-[#E2E8F0] isolate z-0 relative">
+              <div
+                aria-live="polite"
+                className="pointer-events-none absolute top-3 left-3 z-10 inline-flex items-center gap-2 rounded-full bg-white/95 px-3 py-1.5 text-xs font-semibold text-[#1E293B] border border-[#E2E8F0] shadow-xs"
+              >
+                <span
+                  className={cn(
+                    'size-2.5 rounded-full shrink-0',
+                    showOnMapMode === 'General Area Only'
+                      ? 'border-2 border-[#0F766E] bg-[#CCFBF1]'
+                      : 'bg-[#0F766E]'
+                  )}
+                />
+                <span>
+                  {showOnMapMode === 'General Area Only'
+                    ? 'Approximate Area (250m)'
+                    : 'Exact Pin'}
+                </span>
+              </div>
               {renderMap?.()}
             </div>
 
@@ -386,16 +416,16 @@ export default function ListingStepLocation({
             <Field>
               <FieldLabel className="text-sm font-semibold text-[#1E293B] flex items-center gap-1.5">
                 <MapPin className="size-4 text-[#0F766E]" />
-                Show on Map
+                Public Map Visibility
               </FieldLabel>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-1.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl">
                 {SHOW_ON_MAP_OPTIONS.map((option) => {
-                  const active = showOnMapMode === option;
+                  const active = showOnMapMode === option.value;
                   return (
                     <button
-                      key={option}
+                      key={option.value}
                       type="button"
-                      onClick={() => updateField({ mapPinPrivacy: option })}
+                      onClick={() => updateField({ mapPinPrivacy: option.value })}
                       className={cn(
                         'relative min-h-11 px-3 py-2 rounded-lg text-sm font-semibold transition-colors cursor-pointer',
                         active ? 'text-white' : 'text-[#475569] hover:text-[#1E293B]'
@@ -408,11 +438,17 @@ export default function ListingStepLocation({
                           className="absolute inset-0 rounded-lg bg-[#0F766E] shadow-xs"
                         />
                       )}
-                      <span className="relative z-10">{option}</span>
+                      <span className="relative z-10">{option.label}</span>
                     </button>
                   );
                 })}
               </div>
+              <p className="mt-1.5 text-xs text-[#64748B] flex items-start gap-1.5">
+                <Info className="size-3.5 text-[#0F766E] shrink-0 mt-0.5" aria-hidden="true" />
+                <span>
+                  {SHOW_ON_MAP_OPTIONS.find((o) => o.value === showOnMapMode)?.effect}
+                </span>
+              </p>
             </Field>
           </FieldGroup>
         </CardContent>

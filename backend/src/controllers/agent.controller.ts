@@ -6,6 +6,7 @@ import { AgentTransferService } from '../services/agentTransfer.service';
 import { AgentEligibilityService } from '../services/agentEligibility.service';
 import { AgentPresenceService } from '../services/agentPresence.service';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
+import { isSupabaseConfigured } from '../config/supabase';
 import type { ApiResponse } from '../types/api';
 
 const DEFAULT_BROKERAGE_ID = '00000000-0000-0000-0000-000000000001';
@@ -82,7 +83,11 @@ export class AgentController {
         return;
       }
 
-      const agent = await AgentService.getAgentById(userId);
+      let agent = await AgentService.getAgentById(userId);
+      if (!agent && !isSupabaseConfigured && process.env.NODE_ENV !== 'production') {
+        const mockAgents = AgentService.getLocalAgents();
+        agent = mockAgents.find((a) => a.email === req.user?.email) || mockAgents[0] || null;
+      }
       if (!agent) {
         res.status(404).json({
           success: false,
@@ -387,28 +392,6 @@ export class AgentController {
       res.status(400).json({
         success: false,
         error: err.message || 'Error resubmitting credentials.',
-        timestamp: new Date().toISOString(),
-      });
-    }
-  }
-
-  /**
-   * GET /api/agents/branches
-   */
-  public static async listBranches(req: Request, res: Response<ApiResponse>): Promise<void> {
-    try {
-      const brokerageId = (req.query.brokerage_id as string) || DEFAULT_BROKERAGE_ID;
-      const branches = await AgentService.listBranches(brokerageId);
-      res.status(200).json({
-        success: true,
-        data: branches,
-        message: 'Branches retrieved successfully.',
-        timestamp: new Date().toISOString(),
-      });
-    } catch (err: any) {
-      res.status(500).json({
-        success: false,
-        error: err.message || 'Error retrieving branches.',
         timestamp: new Date().toISOString(),
       });
     }

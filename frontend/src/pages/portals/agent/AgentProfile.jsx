@@ -1,11 +1,16 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Link, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   Award,
   CheckCircle2,
   Clock,
-  Building2,
   AlertTriangle,
+  Home,
+  LogOut,
+  LayoutDashboard,
+  ArrowRight,
+  ShieldCheck,
 } from 'lucide-react';
 import { ProfileCardStudio } from '@/components/profile';
 import { profileService } from '@/services/profileService';
@@ -24,12 +29,25 @@ import {
   useToast,
   Toaster,
 } from '@/components/ui';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { FieldGroup, Field, FieldLabel } from '@/components/ui/field';
 import { cn } from '@/utils/cn';
 
 const TRACKED_KEYS = [
   'name',
+  'first_name',
+  'middle_name',
+  'last_name',
+  'display_name',
   'avatar',
   'phone',
   'bio',
@@ -40,11 +58,11 @@ const TRACKED_KEYS = [
   'emergency_contact_phone',
   'prc_license_no',
   'prc_validity',
-  'dhsud_accreditation_no',
-  'dhsud_validity',
 ];
 
 export default function AgentProfile() {
+  const navigate = useNavigate();
+  const prefersReducedMotion = useReducedMotion();
   const { toast } = useToast();
   let auth = null;
   try {
@@ -52,13 +70,28 @@ export default function AgentProfile() {
   } catch {
     // Handled gracefully when rendered in isolated test runners
   }
+  const logout = auth?.logout;
   const [agent, setAgent] = useState({});
   const [draft, setDraft] = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('identity');
   const [focusedSection, setFocusedSection] = useState(null);
+
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    try {
+      if (logout) {
+        await logout();
+      }
+    } catch (err) {
+      console.warn('Logout error:', err.message);
+    } finally {
+      navigate('/login');
+    }
+  };
 
   const loadProfile = useCallback(async () => {
     setLoading(true);
@@ -98,17 +131,23 @@ export default function AgentProfile() {
   const credentialsChanged = useMemo(
     () =>
       String(draft.prc_license_no ?? '') !== String(agent.prc_license_no ?? '') ||
-      String(draft.prc_validity ?? '') !== String(agent.prc_validity ?? '') ||
-      String(draft.dhsud_accreditation_no ?? '') !== String(agent.dhsud_accreditation_no ?? '') ||
-      String(draft.dhsud_validity ?? '') !== String(agent.dhsud_validity ?? ''),
+      String(draft.prc_validity ?? '') !== String(agent.prc_validity ?? ''),
     [draft, agent]
   );
 
   const handleSave = async (nextDraft) => {
     setSaving(true);
     try {
+      const displayName =
+        nextDraft.display_name ||
+        nextDraft.name ||
+        [nextDraft.first_name, nextDraft.middle_name, nextDraft.last_name].filter(Boolean).join(' ').trim();
       const payload = {
-        name: nextDraft.name,
+        name: displayName,
+        first_name: nextDraft.first_name ?? '',
+        middle_name: nextDraft.middle_name ?? '',
+        last_name: nextDraft.last_name ?? '',
+        display_name: displayName,
         avatar: nextDraft.avatar ?? '',
         phone: nextDraft.phone ?? '',
         bio: nextDraft.bio ?? '',
@@ -124,8 +163,6 @@ export default function AgentProfile() {
       if (credentialsChanged) {
         if (nextDraft.prc_license_no) payload.prc_license_no = nextDraft.prc_license_no;
         if (nextDraft.prc_validity !== undefined) payload.prc_validity = nextDraft.prc_validity;
-        if (nextDraft.dhsud_accreditation_no) payload.dhsud_accreditation_no = nextDraft.dhsud_accreditation_no;
-        if (nextDraft.dhsud_validity !== undefined) payload.dhsud_validity = nextDraft.dhsud_validity;
       }
 
       const targetId = agent.id || auth?.user?.id;
@@ -146,7 +183,7 @@ export default function AgentProfile() {
       toast({
         title: credentialsChanged ? 'Credentials Queued for Review' : 'Profile Saved',
         description: credentialsChanged
-          ? 'Your updated PRC/DHSUD details were submitted for Principal Broker verification.'
+          ? 'Your updated PRC license details were submitted for Principal Broker verification.'
           : 'Your public advisor card is now up to date.',
         variant: 'success',
       });
@@ -173,58 +210,40 @@ export default function AgentProfile() {
 
   const completeness = computeAgentCompleteness(draft);
 
-  const topBanner = (
-    <Card className="bg-surface border border-outline rounded-xl shadow-xs">
-      <CardHeader className="pb-4 border-b border-outline">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2 flex-wrap">
-            <CardTitle className="text-base font-semibold text-on-surface">
-              Onboarding &amp; Readiness
-            </CardTitle>
-            <Badge variant="default" className="font-mono text-xs">
-              {completeness.percent}% Complete
-            </Badge>
-          </div>
-          <div className="flex items-center flex-wrap gap-2">
-            <Badge variant="success" className="text-xs">
-              {(draft.membership_status || 'active').toUpperCase()}
-            </Badge>
-            <Badge variant="secondary" className="text-xs">
-              Routing: {(draft.routing_availability || 'available').toUpperCase()}
-            </Badge>
-          </div>
-        </div>
-        <CardDescription className="text-xs text-on-surface-variant">
-          {completeness.isComplete
-            ? 'All required profile and regulatory items are complete.'
-            : `Complete ${completeness.missingFields.length} remaining item(s) to stay fully eligible.`}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="pt-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-          {(completeness.checklist || []).map((item) => (
-            <button
-              key={item.key}
-              type="button"
-              onClick={() => handleChecklistJump(item.key)}
-              className={cn(
-                'min-h-11 px-3 py-2 rounded-lg border text-xs flex items-center gap-2 text-left transition-colors cursor-pointer',
-                item.completed
-                  ? 'bg-background border-outline text-on-surface hover:bg-surface-variant'
-                  : 'bg-amber-50 border-amber-200 text-amber-800 hover:bg-amber-100/70'
-              )}
-            >
-              {item.completed ? (
-                <CheckCircle2 className="size-4 text-emerald-600 shrink-0" />
-              ) : (
-                <Clock className="size-4 text-amber-600 shrink-0" />
-              )}
-              <span className="font-medium truncate">{item.label}</span>
-            </button>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+  const readinessChecklist = (
+    <div className="flex flex-col gap-2 pt-2 border-t border-outline">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-xs font-semibold text-on-surface">
+          Onboarding &amp; Readiness
+        </span>
+        <Badge variant={completeness.isComplete ? 'success' : 'secondary'} className="font-mono text-xs">
+          {completeness.percent}%
+        </Badge>
+      </div>
+      <div className="flex flex-col gap-1">
+        {(completeness.checklist || []).map((item) => (
+          <Button
+            key={item.key}
+            type="button"
+            variant="ghost"
+            onClick={() => handleChecklistJump(item.key)}
+            className={cn(
+              'h-auto min-h-9 px-2 py-1.5 justify-start gap-2 rounded-lg text-xs font-medium text-left normal-case tracking-normal',
+              item.completed
+                ? 'text-on-surface-variant hover:bg-surface-variant'
+                : 'text-amber-800 bg-amber-50/70 hover:bg-amber-100/70'
+            )}
+          >
+            {item.completed ? (
+              <CheckCircle2 className="size-3.5 text-emerald-600 shrink-0" />
+            ) : (
+              <Clock className="size-3.5 text-amber-600 shrink-0" />
+            )}
+            <span className="truncate">{item.label}</span>
+          </Button>
+        ))}
+      </div>
+    </div>
   );
 
   const identityExtraFields = (
@@ -246,18 +265,6 @@ export default function AgentProfile() {
             className="h-11 bg-surface border-outline text-on-surface rounded-lg font-mono"
           />
         </Field>
-
-        <Field>
-          <FieldLabel className="text-sm font-medium text-on-surface">
-            Branch Office
-          </FieldLabel>
-          <div className="h-11 px-3 rounded-lg bg-surface-variant border border-outline flex items-center gap-2 text-sm text-on-surface-variant">
-            <Building2 className="size-4 text-primary shrink-0" />
-            <span className="truncate">
-              {draft.location_branch || 'Metro Manila — Makati HQ'}
-            </span>
-          </div>
-        </Field>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-outline">
@@ -278,17 +285,28 @@ export default function AgentProfile() {
           <FieldLabel htmlFor="agent-gender" className="text-sm font-medium text-on-surface">
             Gender (Private HR)
           </FieldLabel>
-          <select
-            id="agent-gender"
-            value={draft.gender || ''}
-            onChange={(e) => setDraft((prev) => ({ ...prev, gender: e.target.value }))}
-            className="h-11 w-full px-3 rounded-lg bg-surface border border-outline text-sm text-on-surface focus:outline-none focus:ring-1 focus:ring-primary"
+          <Select
+            value={draft.gender || '__unspecified__'}
+            onValueChange={(val) =>
+              setDraft((prev) => ({ ...prev, gender: val === '__unspecified__' ? '' : val }))
+            }
           >
-            <option value="">Not specified</option>
-            <option value="Female">Female</option>
-            <option value="Male">Male</option>
-            <option value="Prefer not to say">Prefer not to say</option>
-          </select>
+            <SelectTrigger
+              id="agent-gender"
+              aria-label="Gender"
+              className="h-11 data-[size=default]:h-11 w-full px-3 rounded-lg bg-surface border border-outline text-sm text-on-surface focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
+            >
+              <SelectValue placeholder="Not specified" />
+            </SelectTrigger>
+            <SelectContent alignItemWithTrigger={false} className="w-(--anchor-width) bg-surface border border-outline">
+              <SelectGroup>
+                <SelectItem value="__unspecified__">Not specified</SelectItem>
+                <SelectItem value="Female">Female</SelectItem>
+                <SelectItem value="Male">Male</SelectItem>
+                <SelectItem value="Prefer not to say">Prefer not to say</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
         </Field>
 
         <Field>
@@ -326,32 +344,33 @@ export default function AgentProfile() {
     () => [
       {
         id: 'credentials',
-        label: 'PRC & DHSUD',
+        label: 'PRC License',
         icon: Award,
         content: (
           <Card className="bg-surface border border-outline rounded-xl shadow-xs">
-            <CardHeader className="pb-4 border-b border-outline">
-              <CardTitle className="text-xl font-semibold text-on-surface">
-                Philippine Regulatory Licenses
+            <CardHeader className="p-5 pb-4 border-b border-outline">
+              <CardTitle className="text-base font-semibold text-on-surface flex items-center gap-2">
+                <ShieldCheck className="size-5 text-primary" />
+                PRC Salesperson License
               </CardTitle>
               <CardDescription className="text-sm text-on-surface-variant">
-                Your license numbers stay verified by your Principal Broker. Expiry dates are never shown on your public card.
+                Your PRC license stays verified by your Principal Broker. Expiry dates are never shown on your public card.
               </CardDescription>
             </CardHeader>
-            <CardContent className="pt-6 flex flex-col gap-5">
+            <CardContent className="p-5 flex flex-col gap-5">
               <AnimatePresence>
                 {credentialsChanged && (
                   <motion.div
-                    initial={{ opacity: 0, height: 0 }}
+                    initial={prefersReducedMotion ? false : { opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.2 }}
+                    exit={prefersReducedMotion ? undefined : { opacity: 0, height: 0 }}
+                    transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}
                   >
                     <Alert variant="warning">
                       <AlertTriangle className="size-4" />
                       <AlertTitle>Broker Review Will Be Queued</AlertTitle>
                       <AlertDescription>
-                        Saving changes to PRC or DHSUD numbers sends them to your Principal Broker for verification while keeping your current card live.
+                        Saving changes to your PRC license sends them to your Principal Broker for verification while keeping your current card live.
                       </AlertDescription>
                     </Alert>
                   </motion.div>
@@ -394,41 +413,6 @@ export default function AgentProfile() {
                       className="h-11 bg-surface border-outline text-on-surface rounded-lg font-mono"
                     />
                   </Field>
-
-                  <Field>
-                    <FieldLabel htmlFor="agent-dhsud-no" className="text-sm font-medium text-on-surface">
-                      DHSUD Accreditation No.
-                    </FieldLabel>
-                    <Input
-                      id="agent-dhsud-no"
-                      type="text"
-                      value={draft.dhsud_accreditation_no || ''}
-                      onChange={(e) =>
-                        setDraft((prev) => ({ ...prev, dhsud_accreditation_no: e.target.value }))
-                      }
-                      onFocus={() => setFocusedSection('credentials')}
-                      onBlur={() => setFocusedSection(null)}
-                      placeholder="DHSUD-NCR-AA-2023-0182"
-                      className="h-11 bg-surface border-outline text-on-surface rounded-lg font-mono"
-                    />
-                  </Field>
-
-                  <Field>
-                    <FieldLabel htmlFor="agent-dhsud-validity" className="text-sm font-medium text-on-surface">
-                      DHSUD Expiry Date
-                    </FieldLabel>
-                    <Input
-                      id="agent-dhsud-validity"
-                      type="date"
-                      value={draft.dhsud_validity || ''}
-                      onChange={(e) =>
-                        setDraft((prev) => ({ ...prev, dhsud_validity: e.target.value }))
-                      }
-                      onFocus={() => setFocusedSection('credentials')}
-                      onBlur={() => setFocusedSection(null)}
-                      className="h-11 bg-surface border-outline text-on-surface rounded-lg font-mono"
-                    />
-                  </Field>
                 </div>
               </FieldGroup>
             </CardContent>
@@ -436,20 +420,92 @@ export default function AgentProfile() {
         ),
       },
     ],
-    [draft, credentialsChanged]
+    [draft, credentialsChanged, prefersReducedMotion]
+  );
+
+  const securityExtraContent = (
+    <Card className="bg-surface border border-outline rounded-xl shadow-xs">
+      <CardHeader className="p-5 pb-4 border-b border-outline">
+        <CardTitle className="text-base font-semibold text-on-surface">
+          Quick Navigation &amp; Session
+        </CardTitle>
+        <CardDescription className="text-xs text-on-surface-variant">
+          Jump to public or agent views, or sign out of this session.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="p-5 flex flex-col gap-3">
+        <Link
+          to="/"
+          className="h-11 px-4 rounded-lg bg-background hover:bg-surface-variant text-on-surface text-xs font-medium flex items-center justify-between border border-outline transition-colors"
+        >
+          <span className="flex items-center gap-2">
+            <Home className="size-4 text-primary" />
+            Public Home Page
+          </span>
+          <ArrowRight className="size-4 text-on-surface-variant" />
+        </Link>
+
+        <Link
+          to="/agent/dashboard"
+          className="h-11 px-4 rounded-lg bg-background hover:bg-surface-variant text-on-surface text-xs font-medium flex items-center justify-between border border-outline transition-colors"
+        >
+          <span className="flex items-center gap-2">
+            <LayoutDashboard className="size-4 text-primary" />
+            Agent Dashboard
+          </span>
+          <ArrowRight className="size-4 text-on-surface-variant" />
+        </Link>
+
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handleLogout}
+          disabled={loggingOut}
+          className="w-full h-11 bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200 normal-case"
+        >
+          <LogOut data-icon="inline-start" className="text-rose-600" />
+          {loggingOut ? 'Signing out...' : 'Sign Out of Session'}
+        </Button>
+      </CardContent>
+    </Card>
   );
 
   return (
-    <>
+    <div data-testid="agent-profile-portal" className="w-full min-w-0">
       <Toaster />
       <ProfileCardStudio
+        layout="master-detail"
         role="agent"
         title="Agent Profile & Public Card Studio"
-        subtitle="Edit your advisor profile, PRC/DHSUD licenses, and preview your public card in real time."
+        subtitle="Edit your advisor profile, PRC license, and preview your public card in real time."
         breadcrumbs={[
           { label: 'Dashboard', to: '/agent/dashboard' },
           { label: 'Profile' },
         ]}
+        headerActions={
+          <>
+            <Button
+              asChild
+              variant="outline"
+              className="h-11 px-4 border-outline bg-surface text-on-surface normal-case"
+            >
+              <Link to="/" title="Return to Public Site">
+                <Home data-icon="inline-start" className="text-on-surface-variant" />
+                Home Page
+              </Link>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleLogout}
+              disabled={loggingOut}
+              className="h-11 px-4 bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200 normal-case"
+            >
+              <LogOut data-icon="inline-start" className="text-rose-600" />
+              {loggingOut ? 'Signing out...' : 'Logout'}
+            </Button>
+          </>
+        }
         profile={agent}
         draft={draft}
         onDraftChange={setDraft}
@@ -461,15 +517,16 @@ export default function AgentProfile() {
         error={error}
         isDirty={isDirty}
         credentialsPendingReview={credentialsChanged || agent.onboarding_status === 'pending_review'}
-        topBanner={topBanner}
+        identityCardExtra={readinessChecklist}
         identityExtraFields={identityExtraFields}
         extraTabs={extraTabs}
+        securityExtraContent={securityExtraContent}
         activeTab={activeTab}
         onTabChange={setActiveTab}
         focusedSection={focusedSection}
         onFocusSection={setFocusedSection}
         testId="agent-profile-studio"
       />
-    </>
+    </div>
   );
 }

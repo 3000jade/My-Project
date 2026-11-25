@@ -31,6 +31,7 @@ const ForgotPasswordPage = lazy(() => import('./pages/auth/ForgotPasswordPage'))
 const ResetPasswordPage = lazy(() => import('./pages/auth/ResetPasswordPage'));
 const VerifyEmailPage = lazy(() => import('./pages/auth/VerifyEmailPage'));
 const UnauthorizedPage = lazy(() => import('./pages/public/UnauthorizedPage'));
+const UnderDevelopmentPage = lazy(() => import('./pages/public/UnderDevelopmentPage'));
 const DemoApiPage = lazy(() => import('./pages/public/DemoApiPage'));
 const PublicSubdivisionMap = lazy(() => import('./pages/public/PublicSubdivisionMap'));
 
@@ -131,6 +132,7 @@ const ROUTE_TITLES = [
   ['/reset-password', 'Reset Password'],
   ['/verify-email', 'Verify Email'],
   ['/unauthorized', 'Unauthorized'],
+  ['/under-development', 'Under Development'],
   ['/demo-api', 'Demo API'],
   ['/admin/users', 'Users'],
   ['/admin/cms', 'Website CMS'],
@@ -347,6 +349,7 @@ function AppRoutes() {
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/verify-email" element={<VerifyEmailPage />} />
         <Route path="/unauthorized" element={<UnauthorizedPage />} />
+        <Route path="/under-development" element={<UnderDevelopmentPage />} />
         {import.meta.env.DEV && <Route path="/demo-api" element={<DemoApiPage />} />}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

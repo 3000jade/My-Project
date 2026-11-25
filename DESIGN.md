@@ -227,3 +227,26 @@ Every component and page across Public, Client, Agent, Broker, and Admin views m
 3. **Ergonomics:** Place primary mobile editor actions (Save, Undo/Redo, Done) in a thumb-zone sticky footer (`sticky bottom-0`) with at most one solid Primary CTA (`Section 6.6`). Never rely solely on hover tooltips or desktop keyboard shortcuts—expose visible labels or `aria-label`s and on-screen Undo/Redo buttons.
 4. **Bulk Tools & Safety Guardrails:** Multi-select workflows (`selectedIds`) expose a contextual bulk bar (`N selected`, `Select All`, `Clear`). Any destructive or overwriting bulk action (Bulk Delete, Bulk Archive, Bulk Status Change) must open a confirmation `Dialog` showing the exact affected count before applying, paired with an Undo toast for reversible local edits.
 5. **Sample Data & Interactive State:** Empty editors and complex workspaces may offer a one-tap **Load Sample** preset (plus a **Reset** confirmation) backed by static local fixtures—never mutating live records—so interactive workflows can be previewed and tested immediately.
+
+---
+
+## 10. Ready-Made Building Blocks & Automated Guardrails
+
+To make these design rules effortless to follow and catch mistakes early, reuse the shared building blocks and run `npm run lint` in `frontend/`:
+
+1. **Common Labels & Necessary Context ([`frontend/src/constants/uiLabels.js`](frontend/src/constants/uiLabels.js)):**
+   - Import `ACTION_LABELS` (`Save Changes`, `Cancel`, `Delete`, `Search`, `Retry`, `Sign In`, etc.) and `STATUS_LABELS` (`Available`, `Pending Review`, `Reserved`, `Sold`, `Rented`, `Draft`, `Archived`).
+   - Use `getPriceLabel(transactionType)` and `getListingContextFlags(propertyType)` so labels stay plain-English and irrelevant fields stay hidden.
+2. **High-UX Motion Presets ([`frontend/src/lib/motion.js`](frontend/src/lib/motion.js)):**
+   - Wrap motion trees in `<AppMotionProvider>` (`<MotionConfig reducedMotion="user">`).
+   - Reuse `fadeSlideReveal` (`220ms`), `tapFeedback` (`150ms`), and `stepSpring` (`260ms` spring) — animating only `opacity` and `transform`.
+3. **Responsive 8-Point Layout Wrappers ([`frontend/src/components/ui/layout/LayoutPrimitives.jsx`](frontend/src/components/ui/layout/LayoutPrimitives.jsx)):**
+   - Use `PageContainer` (`variant="public" | "portal"`), `SectionStack` (`gap="4" | "6" | "8"`), `BentoGrid`, `BentoMain`, and `BentoRail` to guarantee `DESIGN.md` breakpoints, `8px` spacing steps, and `min-w-0` overflow safety.
+4. **Automated ESLint Design Guardrails ([`frontend/eslint-rules/design-guardrails.js`](frontend/eslint-rules/design-guardrails.js)):**
+   - `npm run lint` emits non-blocking **warnings** across `frontend/src/**/*.{js,jsx}` for:
+     - `design-guardrails/no-arbitrary-tailwind-values` (e.g., `p-[13px]`, `text-[15px]`)
+     - `design-guardrails/no-unapproved-hex-colors` (colors outside Section 2)
+     - `design-guardrails/no-slash-labels` (e.g., `"Price / Rent"`)
+     - `design-guardrails/no-raw-html-controls` (raw `<button>`, `<input>`, `<select>` outside `components/ui/`)
+     - `design-guardrails/no-unpaired-outline-none` (`outline-none` without `focus-visible:ring-*`)
+     - `design-guardrails/require-reduced-motion-safe` (animations without reduced-motion protection)

@@ -3,13 +3,11 @@ import globals from 'globals'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 import { defineConfig } from 'eslint/config'
+import designGuardrails from './eslint-rules/design-guardrails.js'
 
 export default defineConfig([
   {
-    // Global ignores – only include broker portal UI files
     ignores: [
-      'src/**',
-      '!src/pages/portals/broker/**',
       'dist/',
       'e2e/',
       'public/',
@@ -17,7 +15,24 @@ export default defineConfig([
     ],
   },
   {
-    // Lint broker UI source files
+    files: ['src/**/*.{js,jsx}'],
+    languageOptions: {
+      globals: globals.browser,
+      parserOptions: { ecmaFeatures: { jsx: true } },
+    },
+    plugins: {
+      'design-guardrails': designGuardrails,
+    },
+    rules: {
+      'design-guardrails/no-arbitrary-tailwind-values': 'warn',
+      'design-guardrails/no-unapproved-hex-colors': 'warn',
+      'design-guardrails/no-slash-labels': 'warn',
+      'design-guardrails/no-raw-html-controls': 'warn',
+      'design-guardrails/no-unpaired-outline-none': 'warn',
+      'design-guardrails/require-reduced-motion-safe': 'warn',
+    },
+  },
+  {
     files: ['src/pages/portals/broker/**/*.js', 'src/pages/portals/broker/**/*.jsx'],
     languageOptions: {
       globals: globals.browser,
@@ -29,16 +44,12 @@ export default defineConfig([
       reactRefresh.configs.vite,
     ],
     rules: {
-      // Allow the React import when JSX is used but React identifier is not referenced
       'no-unused-vars': ['error', { args: 'none', varsIgnorePattern: '^React$' }],
-      // Turn off strict hook dependency checking during the refactor
       'react-hooks/exhaustive-deps': 'off',
-      // Turn off set‑state‑in‑effect warnings which can appear in data‑loading patterns
       'react-hooks/set-state-in-effect': 'off',
     },
   },
   {
-    // Test files – relax unused‑vars rule completely
     files: ['src/pages/portals/broker/**/*.test.{js,jsx}'],
     rules: {
       'no-unused-vars': 'off',

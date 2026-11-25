@@ -105,7 +105,7 @@ function formatAuditDate(isoValue) {
   }).format(parsed);
 }
 
-function IdentitySummaryCard({ role, profile, isDirty, onOpenPreview }) {
+function IdentitySummaryCard({ role, profile, isDirty, onOpenPreview, extraContent = null }) {
   const displayName =
     profile.display_name ||
     profile.name ||
@@ -125,27 +125,27 @@ function IdentitySummaryCard({ role, profile, isDirty, onOpenPreview }) {
   const dhsudMeta = LICENSE_BADGE_MAP[dhsudStatus] || LICENSE_BADGE_MAP.NOT_PROVIDED;
 
   return (
-    <div data-testid="identity-summary-banner" className="flex flex-col gap-4 p-4">
-      <div className="flex items-start gap-4 min-w-0">
-        <Avatar className="size-16 shrink-0 border-2 border-primary/20">
+    <div data-testid="identity-summary-banner" className="flex flex-col gap-4 p-6">
+      <div className="flex flex-col items-center text-center gap-3 min-w-0">
+        <Avatar className="size-24 shrink-0 border-2 border-primary/20">
           <AvatarImage src={profile.avatar} alt={displayName} />
-          <AvatarFallback className="bg-tertiary-container text-primary font-bold text-base">
+          <AvatarFallback className="bg-tertiary-container text-primary font-bold text-2xl">
             {initials}
           </AvatarFallback>
         </Avatar>
 
-        <div className="min-w-0 flex-1 flex flex-col gap-1">
-          <h2 className="text-base font-semibold text-on-surface tracking-tight truncate">
+        <div className="min-w-0 w-full flex flex-col items-center gap-1">
+          <h2 className="text-lg font-semibold text-on-surface tracking-tight text-center w-full truncate">
             {displayName}
           </h2>
-          <p className="text-xs text-on-surface-variant flex items-center gap-1.5 min-w-0">
+          <p className="text-xs text-on-surface-variant flex items-center justify-center gap-1.5 min-w-0 max-w-full">
             <Building2 className="size-3.5 text-primary shrink-0" />
             <span className="truncate">
               {profile.firm_name || profile.brokerage_name || 'Human Shelter Realty'}
             </span>
           </p>
           {role !== 'broker' && (
-            <div className="flex items-center gap-2 flex-wrap pt-1">
+            <div className="flex items-center justify-center gap-2 flex-wrap pt-1">
               <Badge variant={verificationMeta.variant} className="text-xs">
                 <ShieldCheck className="size-3.5" />
                 {verificationMeta.label}
@@ -177,19 +177,23 @@ function IdentitySummaryCard({ role, profile, isDirty, onOpenPreview }) {
             </Badge>
           </div>
 
-          <div className="p-2 rounded-lg bg-background border border-outline flex items-center justify-between gap-2 min-w-0">
-            <div className="min-w-0 flex flex-col">
-              <span className="text-xs text-on-surface-variant">DHSUD Reg</span>
-              <span className="text-xs font-medium text-on-surface truncate">
-                {profile.dhsud_accreditation_no || 'Not set'}
-              </span>
+          {role === 'broker' && (
+            <div className="p-2 rounded-lg bg-background border border-outline flex items-center justify-between gap-2 min-w-0">
+              <div className="min-w-0 flex flex-col">
+                <span className="text-xs text-on-surface-variant">DHSUD Reg</span>
+                <span className="text-xs font-medium text-on-surface truncate">
+                  {profile.dhsud_accreditation_no || 'Not set'}
+                </span>
+              </div>
+              <Badge variant={dhsudMeta.variant} className="text-xs shrink-0">
+                {dhsudMeta.label}
+              </Badge>
             </div>
-            <Badge variant={dhsudMeta.variant} className="text-xs shrink-0">
-              {dhsudMeta.label}
-            </Badge>
-          </div>
+          )}
         </div>
       )}
+
+      {extraContent}
 
       <Button
         type="button"
@@ -229,6 +233,7 @@ export default function ProfileCardStudio({
   isDirty = false,
   credentialsPendingReview = false,
   topBanner = null,
+  identityCardExtra = null,
   identityExtraFields = null,
   extraTabs = [],
   securityExtraContent = null,
@@ -378,7 +383,7 @@ export default function ProfileCardStudio({
                 <FieldLabel className="text-sm font-medium text-on-surface">
                   Profile Photo
                 </FieldLabel>
-                <input
+                <Input
                   ref={photoInputRef}
                   type="file"
                   accept="image/jpeg,image/png,image/webp"
@@ -436,7 +441,7 @@ export default function ProfileCardStudio({
                       className="flex-1 sm:flex-initial h-10 min-h-11 px-4 border-outline bg-surface text-on-surface normal-case"
                     >
                       {uploadingPhoto ? (
-                        <Loader2 data-icon="inline-start" className="animate-spin text-primary" />
+                        <Loader2 data-icon="inline-start" className="motion-safe:animate-spin text-primary" />
                       ) : (
                         <Upload data-icon="inline-start" className="text-primary" />
                       )}
@@ -775,15 +780,18 @@ export default function ProfileCardStudio({
               className="w-full min-w-0"
             >
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                {/* Left Profile Card + Vertical Navigation (4 / 12 columns) */}
-                <Card className="lg:col-span-4 min-w-0 lg:sticky lg:top-24 bg-surface border border-outline rounded-xl shadow-xs overflow-hidden">
-                  <IdentitySummaryCard
-                    role={role}
-                    profile={draft}
-                    isDirty={isDirty}
-                    onOpenPreview={() => setPreviewDialogOpen(true)}
-                  />
-                  <div className="border-t border-outline p-2">
+                {/* Left Profile Card + Separate Navigation Card (4 / 12 columns) */}
+                <div className="lg:col-span-4 min-w-0 lg:sticky lg:top-24 flex flex-col gap-6">
+                  <Card className="bg-surface border border-outline rounded-xl shadow-xs overflow-hidden">
+                    <IdentitySummaryCard
+                      role={role}
+                      profile={draft}
+                      isDirty={isDirty}
+                      onOpenPreview={() => setPreviewDialogOpen(true)}
+                      extraContent={identityCardExtra}
+                    />
+                  </Card>
+                  <Card className="bg-surface border border-outline rounded-xl shadow-xs p-2">
                     <TabsList
                       aria-label="Profile sections"
                       className="flex flex-row lg:flex-col items-stretch justify-start w-full h-auto bg-transparent p-0 gap-1 overflow-x-auto"
@@ -817,8 +825,8 @@ export default function ProfileCardStudio({
                         );
                       })}
                     </TabsList>
-                  </div>
-                </Card>
+                  </Card>
+                </div>
 
                 {/* Right Focused Settings Pane (8 / 12 columns) */}
                 <form

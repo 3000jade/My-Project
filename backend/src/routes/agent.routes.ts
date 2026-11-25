@@ -25,8 +25,7 @@ router.get('/public/:id', AgentController.getPublicById);
 router.get('/me', requireAuth, AgentController.getMyProfile);
 router.post('/me/presence', requireAuth, requireRole(['agent', 'broker', 'admin']), AgentController.pingPresence);
 
-// 3. Brokerage Teams & Branches Management (Brokers & Admins, read access for authenticated agents)
-router.get('/branches', requireAuth, requireRole(['agent', 'broker', 'admin']), AgentController.listBranches);
+// 3. Brokerage Teams Management (Brokers & Admins, read access for authenticated agents)
 router.get('/teams', requireAuth, requireRole(['agent', 'broker', 'admin']), AgentController.listTeams);
 router.post('/teams', requireAuth, requireRole(['broker', 'admin']), validateBody(createTeamSchema), AgentController.createTeam);
 router.put('/teams/:teamId', requireAuth, requireRole(['broker', 'admin']), validateBody(updateTeamSchema), AgentController.updateTeam);

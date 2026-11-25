@@ -21,6 +21,10 @@ const DEFAULT_BROKERAGE_ID = '00000000-0000-0000-0000-000000000001';
 export interface AgentItem {
   id: string;
   name: string;
+  first_name?: string;
+  middle_name?: string;
+  last_name?: string;
+  display_name?: string;
   role?: string;
   email: string;
   phone?: string | null;
@@ -36,14 +40,12 @@ export interface AgentItem {
   license_status?: LicenseValidityState;
   brokerage_id?: string;
   brokerage_name?: string;
-  branch_id?: string | null;
   team_id?: string | null;
   team_name?: string | null;
   can_create_listings?: boolean;
   permission_grants?: Record<string, boolean>;
   access_tier?: AccessTier;
   commission_tier?: string | null;
-  location_branch?: string | null;
   date_of_birth?: string | null;
   gender?: string | null;
   emergency_contact_name?: string | null;
@@ -142,14 +144,8 @@ export class AgentService {
         required: true,
       },
       {
-        key: 'dhsud_accreditation_no',
-        label: 'DHSUD Accreditation Number & Expiry',
-        completed: Boolean(agent.dhsud_accreditation_no && agent.dhsud_validity),
-        required: true,
-      },
-      {
         key: 'supporting_documents',
-        label: 'Uploaded PRC / DHSUD Credential Scans',
+        label: 'Uploaded PRC Credential Scan',
         completed: cleanDocs.length > 0,
         required: true,
       },
@@ -161,8 +157,6 @@ export class AgentService {
     if (!agent.bio || !String(agent.bio).trim()) missingFields.push('bio');
     if (!agent.prc_license_no) missingFields.push('prc_license_no');
     if (!agent.prc_validity) missingFields.push('prc_validity');
-    if (!agent.dhsud_accreditation_no) missingFields.push('dhsud_accreditation_no');
-    if (!agent.dhsud_validity) missingFields.push('dhsud_validity');
     if (cleanDocs.length === 0) missingFields.push('supporting_documents');
 
     const completedCount = items.filter((i) => i.completed).length;
@@ -185,19 +179,18 @@ export class AgentService {
    * Compute license validity state (VALID, EXPIRING_SOON within 30 days, EXPIRED, INCOMPLETE)
    */
   public static computeLicenseStatus(agent: Partial<AgentItem>, now: Date = new Date()): LicenseValidityState {
-    if (!agent.prc_license_no || !agent.dhsud_accreditation_no || !agent.prc_validity || !agent.dhsud_validity) {
+    if (!agent.prc_license_no || !agent.prc_validity) {
       return 'INCOMPLETE';
     }
 
     const nowMs = now.getTime();
     const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
     const prcEndMs = AgentEligibilityService.getAsiaManilaEndOfDay(agent.prc_validity);
-    const dhsudEndMs = AgentEligibilityService.getAsiaManilaEndOfDay(agent.dhsud_validity);
 
-    if (nowMs > prcEndMs || nowMs > dhsudEndMs) {
+    if (nowMs > prcEndMs) {
       return 'EXPIRED';
     }
-    if (prcEndMs - nowMs <= thirtyDaysMs || dhsudEndMs - nowMs <= thirtyDaysMs) {
+    if (prcEndMs - nowMs <= thirtyDaysMs) {
       return 'EXPIRING_SOON';
     }
     return 'VALID';
@@ -224,7 +217,7 @@ export class AgentService {
         ? 'complete'
         : vStatus === 'REJECTED'
           ? 'rejected'
-          : !raw.prc_license_no || !raw.dhsud_accreditation_no
+          : !raw.prc_license_no
             ? 'incomplete_profile'
             : 'pending_review');
 
@@ -258,7 +251,6 @@ export class AgentService {
       routing_availability: routingAvailability,
       brokerage_id: raw.brokerage_id || v2Meta.brokerage_id || DEFAULT_BROKERAGE_ID,
       brokerage_name: raw.brokerage_name || v2Meta.brokerage_name || 'Human Shelter Realty',
-      branch_id: raw.branch_id !== undefined ? raw.branch_id : v2Meta.branch_id ?? null,
       team_id: raw.team_id !== undefined ? raw.team_id : v2Meta.team_id ?? null,
       team_name: raw.team_name !== undefined ? raw.team_name : v2Meta.team_name ?? null,
       can_create_listings:
@@ -278,7 +270,6 @@ export class AgentService {
       },
       access_tier: raw.access_tier || v2Meta.access_tier || 'standard_agent',
       commission_tier: raw.commission_tier !== undefined ? raw.commission_tier : v2Meta.commission_tier ?? null,
-      location_branch: raw.location_branch !== undefined ? raw.location_branch : v2Meta.location_branch ?? null,
       date_of_birth: raw.date_of_birth !== undefined ? raw.date_of_birth : v2Meta.date_of_birth ?? null,
       gender: raw.gender !== undefined ? raw.gender : v2Meta.gender ?? null,
       emergency_contact_name:
@@ -336,14 +327,12 @@ export class AgentService {
       routing_availability: agent.routing_availability,
       brokerage_id: agent.brokerage_id || DEFAULT_BROKERAGE_ID,
       brokerage_name: agent.brokerage_name || 'Human Shelter Realty',
-      branch_id: agent.branch_id ?? null,
       team_id: agent.team_id ?? null,
       team_name: agent.team_name ?? null,
       can_create_listings: Boolean(agent.can_create_listings),
       permission_grants: agent.permission_grants || {},
       access_tier: agent.access_tier || 'standard_agent',
       commission_tier: agent.commission_tier ?? null,
-      location_branch: agent.location_branch ?? null,
       date_of_birth: agent.date_of_birth ?? null,
       gender: agent.gender ?? null,
       emergency_contact_name: agent.emergency_contact_name ?? null,
@@ -537,9 +526,15 @@ export class AgentService {
    * Helper to format a profile record into an enriched AgentItem
    */
   private static formatAgentProfile(p: any, aggregates?: Partial<AgentAggregates>): AgentItem {
+    const fullName = p.full_name || 'Licensed Consultant';
+    const parts = String(fullName).trim().split(/\s+/).filter(Boolean);
     return this.enrichAgentDimensions({
       id: p.id,
-      name: p.full_name || 'Licensed Consultant',
+      name: p.display_name || fullName,
+      first_name: p.first_name ?? parts[0] ?? '',
+      middle_name: p.middle_name ?? '',
+      last_name: p.last_name ?? (parts.length > 1 ? parts.slice(1).join(' ') : ''),
+      display_name: p.display_name ?? fullName,
       role: p.role || 'agent',
       email: p.email,
       phone: p.phone || null,
@@ -553,12 +548,10 @@ export class AgentService {
       onboarding_status: p.onboarding_status,
       routing_availability: p.routing_availability,
       brokerage_id: p.brokerage_id,
-      branch_id: p.branch_id ?? null,
       team_id: p.team_id,
       can_create_listings: p.can_create_listings,
       access_tier: p.access_tier,
       commission_tier: p.commission_tier,
-      location_branch: p.location_branch,
       date_of_birth: p.date_of_birth ?? null,
       gender: p.gender ?? null,
       emergency_contact_name: p.emergency_contact_name,
@@ -594,33 +587,6 @@ export class AgentService {
   }
 
   /**
-   * List active branches for a brokerage (Supabase-backed with static fallback)
-   */
-  public static async listBranches(brokerageId: string = DEFAULT_BROKERAGE_ID) {
-    const fallbackBranches = [
-      { id: '00000000-0000-0000-0000-000000000201', brokerage_id: brokerageId, name: 'Metro Manila — Makati HQ', city: 'Makati City', status: 'active' },
-      { id: '00000000-0000-0000-0000-000000000202', brokerage_id: brokerageId, name: 'BGC Taguig Office', city: 'Taguig City', status: 'active' },
-      { id: '00000000-0000-0000-0000-000000000203', brokerage_id: brokerageId, name: 'Alabang South Office', city: 'Muntinlupa City', status: 'active' },
-    ];
-
-    if (!isSupabaseConfigured) return fallbackBranches;
-
-    try {
-      const { data, error } = await supabaseAdmin
-        .from('branches')
-        .select('id, brokerage_id, name, city, address, status')
-        .eq('brokerage_id', brokerageId)
-        .eq('status', 'active')
-        .order('name', { ascending: true });
-
-      if (error || !data || data.length === 0) return fallbackBranches;
-      return data;
-    } catch {
-      return fallbackBranches;
-    }
-  }
-
-  /**
    * Directly create an agent account, profile, brokerage membership, and initial permissions
    */
   public static async createAgent(
@@ -628,8 +594,6 @@ export class AgentService {
       name: string;
       email: string;
       phone: string;
-      branch_id?: string | null;
-      location_branch?: string | null;
       can_create_listings?: boolean;
       permission_grants?: Record<string, boolean>;
       prc_license_no?: string;
@@ -681,8 +645,6 @@ export class AgentService {
           phone: input.phone.trim(),
           role: 'agent',
           brokerage_id: brokerageId,
-          branch_id: input.branch_id || null,
-          location_branch: input.location_branch || 'Metro Manila — Makati HQ',
           access_tier: 'standard_agent',
           can_create_listings: canCreateListings,
           prc_license_no: input.prc_license_no?.trim() || null,
@@ -700,13 +662,11 @@ export class AgentService {
       await supabaseAdmin.from('brokerage_memberships').upsert({
         brokerage_id: brokerageId,
         agent_id: agentId,
-        branch_id: input.branch_id || null,
         membership_status: 'active',
         onboarding_status: 'incomplete',
         routing_availability: 'paused',
         can_create_listings: canCreateListings,
         access_tier: 'standard_agent',
-        location_branch: input.location_branch || 'Metro Manila — Makati HQ',
         invited_by: actor?.id || null,
       });
 
@@ -740,8 +700,6 @@ export class AgentService {
       email: cleanEmail,
       phone: input.phone.trim(),
       brokerage_id: brokerageId,
-      branch_id: input.branch_id || null,
-      location_branch: input.location_branch || 'Metro Manila — Makati HQ',
       access_tier: 'standard_agent',
       can_create_listings: canCreateListings,
       permission_grants: {
@@ -871,8 +829,7 @@ export class AgentService {
           a.name.toLowerCase().includes(q) ||
           a.email.toLowerCase().includes(q) ||
           (a.prc_license_no && a.prc_license_no.toLowerCase().includes(q)) ||
-          (a.team_name && a.team_name.toLowerCase().includes(q)) ||
-          (a.location_branch && a.location_branch.toLowerCase().includes(q))
+          (a.team_name && a.team_name.toLowerCase().includes(q))
       );
     }
 
@@ -1130,6 +1087,10 @@ export class AgentService {
     id: string,
     profileData: Partial<{
       name: string;
+      first_name: string;
+      middle_name: string;
+      last_name: string;
+      display_name: string;
       phone: string;
       bio: string;
       avatar: string;
@@ -1140,13 +1101,11 @@ export class AgentService {
       experience_years: number;
       date_of_birth: string | null;
       gender: string | null;
-      branch_id: string | null;
       team_id: string | null;
       can_create_listings: boolean;
       permission_grants: Record<string, boolean>;
       access_tier: AccessTier;
       commission_tier: string | null;
-      location_branch: string | null;
       emergency_contact_name: string | null;
       emergency_contact_phone: string | null;
       internal_notes: string | null;
@@ -1157,9 +1116,29 @@ export class AgentService {
     const agent = await this.getAgentById(id);
     if (!agent) return null;
 
+    const priorStatus = agent.verification_status;
     const isBrokerOrAdmin = actor ? (actor.role === 'broker' || actor.role === 'admin') : false;
 
-    if (profileData.name !== undefined) agent.name = profileData.name;
+    if (profileData.first_name !== undefined) agent.first_name = profileData.first_name;
+    if (profileData.middle_name !== undefined) agent.middle_name = profileData.middle_name;
+    if (profileData.last_name !== undefined) agent.last_name = profileData.last_name;
+    if (profileData.display_name !== undefined) agent.display_name = profileData.display_name;
+    if (profileData.name !== undefined) {
+      agent.name = profileData.name;
+      if (profileData.display_name === undefined) agent.display_name = profileData.name;
+    } else if (profileData.display_name !== undefined && profileData.display_name) {
+      agent.name = profileData.display_name;
+    } else if (
+      profileData.first_name !== undefined ||
+      profileData.middle_name !== undefined ||
+      profileData.last_name !== undefined
+    ) {
+      const composed = [agent.first_name, agent.middle_name, agent.last_name].filter(Boolean).join(' ').trim();
+      if (composed) {
+        agent.name = composed;
+        if (!agent.display_name) agent.display_name = composed;
+      }
+    }
     if (profileData.phone !== undefined) agent.phone = profileData.phone;
     if (profileData.bio !== undefined) agent.bio = profileData.bio;
     if (profileData.avatar !== undefined) agent.avatar = profileData.avatar;
@@ -1182,9 +1161,6 @@ export class AgentService {
 
     // Broker/Admin-only internal governance & permission fields
     if (isBrokerOrAdmin) {
-      if (profileData.branch_id !== undefined) {
-        agent.branch_id = profileData.branch_id;
-      }
       if (profileData.team_id !== undefined) {
         agent.team_id = profileData.team_id;
         const resolvedTeam = profileData.team_id
@@ -1213,9 +1189,6 @@ export class AgentService {
       }
       if (profileData.commission_tier !== undefined) {
         agent.commission_tier = profileData.commission_tier;
-      }
-      if (profileData.location_branch !== undefined) {
-        agent.location_branch = profileData.location_branch;
       }
       if (profileData.internal_notes !== undefined) {
         agent.internal_notes = profileData.internal_notes;
@@ -1250,18 +1223,20 @@ export class AgentService {
           .from('profiles')
           .update({
             full_name: enriched.name,
+            first_name: enriched.first_name ?? '',
+            middle_name: enriched.middle_name ?? '',
+            last_name: enriched.last_name ?? '',
+            display_name: enriched.display_name ?? enriched.name,
             phone: enriched.phone,
             bio: enriched.bio,
             avatar_url: enriched.avatar,
             prc_license_no: enriched.prc_license_no,
-            prc_validity: enriched.prc_validity,
+            prc_validity: enriched.prc_validity || null,
             dhsud_accreditation_no: enriched.dhsud_accreditation_no,
-            dhsud_validity: enriched.dhsud_validity,
+            dhsud_validity: enriched.dhsud_validity || null,
             experience_years: enriched.experience_years,
-            date_of_birth: enriched.date_of_birth ?? null,
+            date_of_birth: enriched.date_of_birth || null,
             gender: enriched.gender ?? null,
-            branch_id: enriched.branch_id ?? null,
-            location_branch: enriched.location_branch ?? null,
             emergency_contact_name: enriched.emergency_contact_name ?? null,
             emergency_contact_phone: enriched.emergency_contact_phone ?? null,
             can_create_listings: Boolean(enriched.can_create_listings),
@@ -1317,7 +1292,7 @@ export class AgentService {
         target_id: id,
         brokerage_id: enriched.brokerage_id || DEFAULT_BROKERAGE_ID,
         event_type: credentialFieldsChanged ? 'CREDENTIAL_RESUBMITTED' : 'PROFILE_UPDATED',
-        prior_status: enriched.verification_status,
+        prior_status: priorStatus,
         new_status: enriched.verification_status,
         reason: credentialFieldsChanged ? 'License credentials updated' : 'Profile fields updated',
         changed_fields: profileData as Record<string, any>,

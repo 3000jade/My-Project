@@ -66,8 +66,6 @@ export function computeAgentCompleteness(raw = {}) {
   const bio = raw.bio || '';
   const prcNo = raw.prc_license_no || '';
   const prcVal = raw.prc_validity || '';
-  const dhsudNo = raw.dhsud_accreditation_no || '';
-  const dhsudVal = raw.dhsud_validity || '';
   const docs = Array.isArray(raw.supporting_documents)
     ? raw.supporting_documents.filter((d) => !d || d._meta_type !== 'agent_v2_metadata')
     : [];
@@ -88,14 +86,8 @@ export function computeAgentCompleteness(raw = {}) {
       required: true,
     },
     {
-      key: 'dhsud_accreditation_no',
-      label: 'DHSUD Accreditation & Expiry',
-      completed: Boolean(dhsudNo && dhsudVal),
-      required: true,
-    },
-    {
       key: 'supporting_documents',
-      label: 'Uploaded PRC / DHSUD Credential Scans',
+      label: 'Uploaded PRC Credential Scan',
       completed: docs.length > 0,
       required: true,
     },
@@ -161,9 +153,20 @@ export function normalizeAgent(raw = {}) {
     ? raw.supporting_documents.filter((d) => !d || d._meta_type !== 'agent_v2_metadata')
     : [];
 
+  const fullName = raw.name || raw.full_name || '';
+  const nameParts = String(fullName).trim().split(/\s+/).filter(Boolean);
+  const firstName = raw.first_name ?? raw.firstName ?? nameParts[0] ?? '';
+  const middleName = raw.middle_name ?? raw.middleName ?? '';
+  const lastName = raw.last_name ?? raw.lastName ?? (nameParts.length > 1 ? nameParts.slice(1).join(' ') : '');
+  const displayName = raw.display_name ?? raw.displayName ?? fullName;
+
   return {
     id: String(raw.id || ''),
-    name: raw.name || raw.full_name || '',
+    name: displayName || fullName,
+    first_name: firstName,
+    middle_name: middleName,
+    last_name: lastName,
+    display_name: displayName,
     role: raw.role || 'agent',
     email: raw.email || '',
     phone: raw.phone || '',
@@ -179,7 +182,6 @@ export function normalizeAgent(raw = {}) {
     license_status: raw.license_status || evaluateLicenseStatus(prcLicenseNo, prcValidity),
     brokerage_id: raw.brokerage_id || '00000000-0000-0000-0000-000000000001',
     brokerage_name: raw.brokerage_name || 'Human Shelter Realty',
-    branch_id: raw.branch_id || null,
     team_id: raw.team_id || null,
     team_name: raw.team_name || null,
     can_create_listings: Boolean(raw.can_create_listings),
@@ -192,7 +194,6 @@ export function normalizeAgent(raw = {}) {
     },
     access_tier: raw.access_tier || 'standard_agent',
     commission_tier: raw.commission_tier || '',
-    location_branch: raw.location_branch || raw.location || '',
     date_of_birth: raw.date_of_birth || '',
     gender: raw.gender || '',
     emergency_contact_name: raw.emergency_contact_name || '',
@@ -311,13 +312,8 @@ export const agentService = {
   },
 
   /**
-   * Brokerage Branches & Teams
+   * Brokerage Teams
    */
-  async getBranches(params = {}) {
-    const response = await apiClient.get('/agents/branches', { params });
-    return response?.data || response || [];
-  },
-
   async getTeams(params = {}) {
     const response = await apiClient.get('/agents/teams', { params });
     return response?.data || response || [];

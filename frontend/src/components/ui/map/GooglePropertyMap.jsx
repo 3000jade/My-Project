@@ -92,6 +92,7 @@ export default function GooglePropertyMap({
   singlePropertyMode = false,
   interactive = true,
   lockZoom = false,
+  generalAreaOnly = false,
   initialZoom = 15,
   onOpenStreetView,
   forceEmbed = false,
@@ -459,6 +460,11 @@ export default function GooglePropertyMap({
     };
 
     const isTeardrop = zoomMode === 'teardrop';
+    const isApproxPrivacy = (prop) => {
+      if (generalAreaOnly) return true;
+      const p = prop?.mapPinPrivacy || prop?.map_pin_privacy;
+      return p === 'General Area Only' || p === 'Approximate Area (250m)';
+    };
 
     // Render / Update Pins directly per property (no grouping)
     properties.forEach((singleProp) => {
@@ -468,29 +474,87 @@ export default function GooglePropertyMap({
 
       const isSelected = String(singleProp.id) === String(selectedPropertyId);
       const isHovered = String(singleProp.id) === String(hoveredPropertyId);
+      const isApprox = isApproxPrivacy(singleProp);
 
       if (existingMarkers.has(markerId)) {
         const markerObj = existingMarkers.get(markerId);
-        if (
+        if (Boolean(markerObj.isApprox) !== isApprox) {
+          if (markerObj.marker) {
+            if (typeof markerObj.marker.setMap === 'function') markerObj.marker.setMap(null);
+            else if (typeof markerObj.marker.remove === 'function') markerObj.marker.remove();
+          }
+          existingMarkers.delete(markerId);
+        } else if (
           markerObj.isSelected !== isSelected ||
           markerObj.isHovered !== isHovered ||
           markerObj.zoomMode !== zoomMode
         ) {
-          const newEl = createMarkerEl(singleProp, isSelected, isHovered);
+          if (isApprox && markerObj.marker) {
+            const fillOpacity = isSelected || isHovered ? 0.28 : 0.16;
+            if (typeof markerObj.marker.setOptions === 'function') {
+              markerObj.marker.setOptions({ fillOpacity });
+            } else if (typeof markerObj.marker.setStyle === 'function') {
+              markerObj.marker.setStyle({ fillOpacity });
+            }
+          } else {
+            const newEl = createMarkerEl(singleProp, isSelected, isHovered);
 
-          if (markerObj.element) {
-            markerObj.element.className = newEl.className;
-            markerObj.element.innerHTML = newEl.innerHTML;
-          }
-          if (mapEngine === 'leaflet' && markerObj.marker && typeof markerObj.marker.setZIndexOffset === 'function') {
-            markerObj.marker.setZIndexOffset(isSelected ? 2000 : 100);
+            if (markerObj.element) {
+              markerObj.element.className = newEl.className;
+              markerObj.element.innerHTML = newEl.innerHTML;
+            }
+            if (mapEngine === 'leaflet' && markerObj.marker && typeof markerObj.marker.setZIndexOffset === 'function') {
+              markerObj.marker.setZIndexOffset(isSelected ? 2000 : 100);
+            }
           }
 
           markerObj.isSelected = isSelected;
           markerObj.isHovered = isHovered;
           markerObj.zoomMode = zoomMode;
         }
-      } else {
+      }
+
+      if (!existingMarkers.has(markerId)) {
+        if (isApprox) {
+          const fillOpacity = isSelected || isHovered ? 0.28 : 0.16;
+          if (mapEngine === 'google' && googleMapInstanceRef.current && window.google) {
+            const circle = new window.google.maps.Circle({
+              map: googleMapInstanceRef.current,
+              center: { lat: coords.lat, lng: coords.lng },
+              radius: 250,
+              fillColor: '#0F766E',
+              fillOpacity,
+              strokeColor: '#0F766E',
+              strokeOpacity: 0.7,
+              strokeWeight: 2,
+              clickable: !singlePropertyMode,
+            });
+            if (!singlePropertyMode) {
+              circle.addListener('click', () => onSelectPropertyRef.current?.(singleProp));
+              circle.addListener('mouseover', () => onHoverPropertyRef.current?.(singleProp.id));
+              circle.addListener('mouseout', () => onHoverPropertyRef.current?.(null));
+            }
+            existingMarkers.set(markerId, { marker: circle, element: null, isApprox: true, isSelected, isHovered, zoomMode });
+          } else if (mapEngine === 'leaflet' && leafletMapInstanceRef.current) {
+            const circle = L.circle([coords.lat, coords.lng], {
+              radius: 250,
+              color: '#0F766E',
+              weight: 2,
+              opacity: 0.7,
+              fillColor: '#0F766E',
+              fillOpacity,
+              interactive: !singlePropertyMode,
+            }).addTo(leafletMapInstanceRef.current);
+            if (!singlePropertyMode) {
+              circle.on('click', () => onSelectPropertyRef.current?.(singleProp));
+              circle.on('mouseover', () => onHoverPropertyRef.current?.(singleProp.id));
+              circle.on('mouseout', () => onHoverPropertyRef.current?.(null));
+            }
+            existingMarkers.set(markerId, { marker: circle, element: null, isApprox: true, isSelected, isHovered, zoomMode });
+          }
+          return;
+        }
+
         // Create brand new pin
         const element = createMarkerEl(singleProp, isSelected, isHovered);
 
@@ -553,11 +617,11 @@ export default function GooglePropertyMap({
             });
           }
 
-          existingMarkers.set(markerId, { marker, element, isSelected, isHovered, zoomMode });
+          existingMarkers.set(markerId, { marker, element, isApprox: false, isSelected, isHovered, zoomMode });
         }
       }
     });
-  }, [properties, selectedPropertyId, hoveredPropertyId, mapEngine, markerVariant, currentZoom, singlePropertyMode]);
+  }, [properties, selectedPropertyId, hoveredPropertyId, mapEngine, markerVariant, currentZoom, singlePropertyMode, generalAreaOnly]);
 
   // ==========================================
   // 4. AUTO-FIT ALL BOUNDS & DISTRICT NAVIGATION

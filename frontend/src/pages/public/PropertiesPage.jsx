@@ -209,12 +209,16 @@ export default function PropertiesPage() {
   // Sync URL search params into the filter engine
   useEffect(() => {
     const typeParam = searchParams.get('type');
+    const statusParam = searchParams.get('status') || searchParams.get('transactionType');
     const locationParam = searchParams.get('location');
     const budgetParam = searchParams.get('budget');
     const minPriceParam = searchParams.get('minPrice');
     const maxPriceParam = searchParams.get('maxPrice');
     const searchParam = searchParams.get('search');
 
+    if (statusParam) {
+      setFilter('transactionType', statusParam);
+    }
     if (typeParam) {
       setFilter('propertyType', typeParam);
     }

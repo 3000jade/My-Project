@@ -1,13 +1,43 @@
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
+import { motion, useScroll, useTransform, useSpring, useReducedMotion } from 'framer-motion';
+import { Search, Tag, Home, Coins } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
-  IconSearch,
-  IconMapPin,
-  IconHome,
-  IconCoin
-} from '@tabler/icons-react';
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import houseHeroImg from '../../../assets/House_Herosection.webp';
+
+const ALL_VALUE = 'all';
+
+const STATUS_OPTIONS = [
+  { value: ALL_VALUE, label: 'All Property Status' },
+  { value: 'For Sale', label: 'For Sale' },
+  { value: 'For Rent', label: 'For Rent' },
+  { value: 'Pre-Selling', label: 'Pre-Selling' },
+];
+
+const PROPERTY_TYPE_OPTIONS = [
+  { value: ALL_VALUE, label: 'All Property Types' },
+  { value: 'House & Lot', label: 'House & Lot' },
+  { value: 'Condominium', label: 'Condominium' },
+  { value: 'Townhouse', label: 'Townhouse' },
+  { value: 'Commercial', label: 'Commercial' },
+  { value: 'Lot Only', label: 'Lot Only' },
+];
+
+const PRICE_OPTIONS = [
+  { value: ALL_VALUE, label: 'Any Property Price' },
+  { value: 'under-3m', label: 'Under ₱3M' },
+  { value: '3m-8m', label: '₱3M – ₱8M' },
+  { value: 'above-8m', label: '₱8M+' },
+];
 
 export default function ListingHeroGallery({
   onBookTour,
@@ -18,19 +48,23 @@ export default function ListingHeroGallery({
 }) {
   const heroRef = useRef(null);
   const navigate = useNavigate();
+  const shouldReduceMotion = useReducedMotion();
 
-  // Search Bar Local State
-  const [searchLocation, setSearchLocation] = useState('');
-  const [searchType, setSearchType] = useState('');
-  const [searchBudget, setSearchBudget] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [propertyStatus, setPropertyStatus] = useState(ALL_VALUE);
+  const [propertyType, setPropertyType] = useState(ALL_VALUE);
+  const [propertyPrice, setPropertyPrice] = useState(ALL_VALUE);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     const params = new URLSearchParams();
-    if (searchLocation) params.set('location', searchLocation);
-    if (searchType) params.set('type', searchType);
-    if (searchBudget) params.set('budget', searchBudget);
-    navigate(`/properties?${params.toString()}`);
+    const trimmed = searchQuery.trim();
+    if (trimmed) params.set('search', trimmed);
+    if (propertyStatus !== ALL_VALUE) params.set('status', propertyStatus);
+    if (propertyType !== ALL_VALUE) params.set('type', propertyType);
+    if (propertyPrice !== ALL_VALUE) params.set('budget', propertyPrice);
+    const query = params.toString();
+    navigate(query ? `/properties?${query}` : '/properties');
   };
 
   // Parallax motion tracking with Hyper-Depth 2.5x intensity
@@ -54,7 +88,7 @@ export default function ListingHeroGallery({
   const opacitySkyGlow = useTransform(smoothProgress, [0, 0.85], [1, 0.45]);
 
   return (
-    <section ref={heroRef} className="relative w-full bg-white flex flex-col justify-start items-center overflow-hidden pt-20 sm:pt-22 md:pt-24 pb-0 min-h-0 sm:min-h-[85svh] lg:min-h-screen transition-colors duration-500">
+    <section ref={heroRef} className="relative w-full bg-white flex flex-col justify-start items-center overflow-hidden pt-20 sm:pt-22 md:pt-24 pb-0 min-h-0 transition-colors duration-500">
 
       {/* ─── PURE MORNING SKY WITH TEXTURED NATURAL CLOUDS IN THE MIDDLE ─── */}
       <motion.div
@@ -195,74 +229,120 @@ export default function ListingHeroGallery({
 
       {/* ─── CENTERED QUICK PROPERTY SEARCH BAR ─── */}
       <motion.div
-        initial={{ opacity: 0, y: 15 }}
+        initial={shouldReduceMotion ? false : { opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
-        style={{ y: yHeadlineText }}
-        transition={{ duration: 0.8, ease: [0.32, 0.72, 0, 1] }}
+        style={shouldReduceMotion ? undefined : { y: yHeadlineText }}
+        transition={{ duration: shouldReduceMotion ? 0 : 0.8, ease: [0.32, 0.72, 0, 1] }}
         className="relative z-20 w-full max-w-[1440px] mx-auto px-4 sm:px-6 md:px-10 lg:px-16 flex flex-col items-center justify-center pt-4 sm:pt-10 md:pt-14 lg:pt-16 will-change-transform"
       >
-        {/* ─── INTEGRATED QUICK SEARCH BAR (Symmetrical 2x2 Glass Chassis) ─── */}
+        {/* ─── INTEGRATED QUICK SEARCH BAR (35% Glassmorphic + Teal Highlights) ─── */}
         <form
           onSubmit={handleSearchSubmit}
-          className="w-full max-w-xl lg:max-w-2xl p-3 rounded-xl bg-white/30 backdrop-blur-md border border-white/45 shadow-[inset_0_1px_2px_rgba(255,255,255,0.7),0_10px_28px_rgba(13,68,70,0.06)] grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center z-30"
+          aria-label="Search properties"
+          className="w-full max-w-xl lg:max-w-2xl p-3 rounded-xl bg-white/35 backdrop-blur-md shadow-md grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-stretch z-30"
         >
-          {/* Location Select */}
-          <div className="sm:col-span-6 min-w-0 relative flex items-center">
-            <IconMapPin size={18} className="absolute left-3.5 text-[#187A7E] pointer-events-none" />
-            <select
-              value={searchLocation}
-              onChange={(e) => setSearchLocation(e.target.value)}
-              className="w-full h-12 pl-10 pr-8 rounded-lg bg-white/45 hover:bg-white/60 focus:bg-white/85 border border-white/55 text-base sm:text-sm font-medium text-[#141717] focus:outline-none focus-visible:border-[#0F766E] focus-visible:ring-2 focus-visible:ring-[#0F766E]/20 transition-colors cursor-pointer appearance-none shadow-2xs truncate"
-            >
-              <option value="">All Locations (PH)</option>
-              <option value="Cavite">Cavite (Bacoor, Imus, Dasma)</option>
-              <option value="Laguna">Laguna (Santa Rosa, Biñan)</option>
-              <option value="Metro Manila">Metro Manila (Taguig, QC, Makati)</option>
-              <option value="Rizal">Rizal (Antipolo, Taytay)</option>
-              <option value="Batangas">Batangas & South Corridors</option>
-            </select>
+          {/* Search Input */}
+          <div className="sm:col-span-12 min-w-0 relative flex items-center">
+            <Search className="size-4 text-[#0F766E] absolute left-3.5 pointer-events-none shrink-0" aria-hidden="true" />
+            <Input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search location, subdivision, or keyword..."
+              aria-label="Search location, subdivision, or keyword"
+              className="w-full h-12 pl-10 pr-4 rounded-lg bg-white/55 hover:bg-white/75 focus:bg-white/90 border border-[#0F766E]/25 hover:border-[#0F766E]/50 text-sm font-medium text-[#1E293B] placeholder:text-[#64748B] focus-visible:border-[#0F766E] focus-visible:ring-2 focus-visible:ring-[#0F766E]/25 shadow-2xs transition-colors"
+            />
+          </div>
+
+          {/* Property Status Select */}
+          <div className="sm:col-span-6 min-w-0">
+            <Select modal={false} value={propertyStatus} onValueChange={setPropertyStatus}>
+              <SelectTrigger
+                aria-label="Property Status"
+                className="w-full data-[size=default]:h-12 h-12 rounded-lg bg-white/55 hover:bg-white/75 border border-[#0F766E]/25 hover:border-[#0F766E]/50 px-3.5 text-sm font-medium text-[#1E293B] focus-visible:border-[#0F766E] focus-visible:ring-2 focus-visible:ring-[#0F766E]/25 shadow-2xs transition-colors"
+              >
+                <span className="flex items-center gap-2 min-w-0 flex-1 text-left">
+                  <Tag className="size-4 text-[#0F766E] shrink-0" aria-hidden="true" />
+                  <SelectValue placeholder="All Property Status" className="truncate">
+                    {STATUS_OPTIONS.find((o) => o.value === propertyStatus)?.label}
+                  </SelectValue>
+                </span>
+              </SelectTrigger>
+              <SelectContent alignItemWithTrigger={false} className="w-(--anchor-width) rounded-xl bg-white border border-[#0F766E]/25 shadow-md">
+                <SelectGroup>
+                  {STATUS_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Property Type Select */}
-          <div className="sm:col-span-6 min-w-0 relative flex items-center">
-            <IconHome size={18} className="absolute left-3.5 text-[#187A7E] pointer-events-none" />
-            <select
-              value={searchType}
-              onChange={(e) => setSearchType(e.target.value)}
-              className="w-full h-12 pl-10 pr-8 rounded-lg bg-white/45 hover:bg-white/60 focus:bg-white/85 border border-white/55 text-base sm:text-sm font-medium text-[#141717] focus:outline-none focus-visible:border-[#0F766E] focus-visible:ring-2 focus-visible:ring-[#0F766E]/20 transition-colors cursor-pointer appearance-none shadow-2xs truncate"
-            >
-              <option value="">All Property Types</option>
-              <option value="House and Lot">House & Lot</option>
-              <option value="Condominium">Condominium</option>
-              <option value="Townhouse">Townhouse</option>
-              <option value="Duplex">Duplex / Commercial</option>
-            </select>
-          </div>
-
-          {/* Budget Select */}
-          <div className="sm:col-span-6 min-w-0 relative flex items-center">
-            <IconCoin size={18} className="absolute left-3.5 text-[#187A7E] pointer-events-none" />
-            <select
-              value={searchBudget}
-              onChange={(e) => setSearchBudget(e.target.value)}
-              className="w-full h-12 pl-10 pr-8 rounded-lg bg-white/45 hover:bg-white/60 focus:bg-white/85 border border-white/55 text-base sm:text-sm font-medium text-[#141717] focus:outline-none focus-visible:border-[#0F766E] focus-visible:ring-2 focus-visible:ring-[#0F766E]/20 transition-colors cursor-pointer appearance-none shadow-2xs truncate"
-            >
-              <option value="">Any Budget</option>
-              <option value="under-3m">Under ₱3M (Pag-IBIG / Starter)</option>
-              <option value="3m-8m">₱3M - ₱8M (Mid-Cost Family)</option>
-              <option value="above-8m">₱8M+ (Executive / Premium)</option>
-            </select>
-          </div>
-
-          {/* Submit Lighter Coral CTA Button */}
           <div className="sm:col-span-6 min-w-0">
-            <button
+            <Select modal={false} value={propertyType} onValueChange={setPropertyType}>
+              <SelectTrigger
+                aria-label="Property Type"
+                className="w-full data-[size=default]:h-12 h-12 rounded-lg bg-white/55 hover:bg-white/75 border border-[#0F766E]/25 hover:border-[#0F766E]/50 px-3.5 text-sm font-medium text-[#1E293B] focus-visible:border-[#0F766E] focus-visible:ring-2 focus-visible:ring-[#0F766E]/25 shadow-2xs transition-colors"
+              >
+                <span className="flex items-center gap-2 min-w-0 flex-1 text-left">
+                  <Home className="size-4 text-[#0F766E] shrink-0" aria-hidden="true" />
+                  <SelectValue placeholder="All Property Types" className="truncate">
+                    {PROPERTY_TYPE_OPTIONS.find((o) => o.value === propertyType)?.label}
+                  </SelectValue>
+                </span>
+              </SelectTrigger>
+              <SelectContent alignItemWithTrigger={false} className="w-(--anchor-width) rounded-xl bg-white border border-[#0F766E]/25 shadow-md">
+                <SelectGroup>
+                  {PROPERTY_TYPE_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Property Price Select */}
+          <div className="sm:col-span-6 min-w-0">
+            <Select modal={false} value={propertyPrice} onValueChange={setPropertyPrice}>
+              <SelectTrigger
+                aria-label="Property Price"
+                className="w-full data-[size=default]:h-12 h-12 rounded-lg bg-white/55 hover:bg-white/75 border border-[#0F766E]/25 hover:border-[#0F766E]/50 px-3.5 text-sm font-medium text-[#1E293B] focus-visible:border-[#0F766E] focus-visible:ring-2 focus-visible:ring-[#0F766E]/25 shadow-2xs transition-colors"
+              >
+                <span className="flex items-center gap-2 min-w-0 flex-1 text-left">
+                  <Coins className="size-4 text-[#0F766E] shrink-0" aria-hidden="true" />
+                  <SelectValue placeholder="Any Property Price" className="truncate">
+                    {PRICE_OPTIONS.find((o) => o.value === propertyPrice)?.label}
+                  </SelectValue>
+                </span>
+              </SelectTrigger>
+              <SelectContent alignItemWithTrigger={false} className="w-(--anchor-width) rounded-xl bg-white border border-[#0F766E]/25 shadow-md">
+                <SelectGroup>
+                  {PRICE_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Submit Coral CTA Button */}
+          <div className="sm:col-span-6 min-w-0">
+            <Button
               type="submit"
-              className="w-full h-12 px-4 rounded-lg bg-[#FF8559] hover:bg-[#F07144] active:scale-[0.98] text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-[0_4px_16px_rgba(240,122,95,0.32)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0F766E]/30 transition-all cursor-pointer"
+              variant="coral"
+              size="lg"
+              className="w-full h-12 px-4 rounded-lg text-xs font-bold uppercase tracking-wider shadow-sm motion-safe:active:scale-[0.98]"
             >
-              <IconSearch size={16} stroke={2.5} />
+              <Search className="size-4 shrink-0" aria-hidden="true" />
               <span>Find Homes</span>
-            </button>
+            </Button>
           </div>
         </form>
       </motion.div>

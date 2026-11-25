@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const createPropertySchema = z.object({
+const basePropertySchema = z.object({
   title: z
     .string()
     .min(3, 'Title must be at least 3 characters long.')
@@ -25,10 +25,10 @@ export const createPropertySchema = z.object({
   }).optional(),
   location: z
     .object({
-      address: z.string().min(1, 'Address is required.').trim(),
+      address: z.string().trim().optional().default(''),
       buildingName: z.string().trim().nullable().optional(),
       building_name: z.string().trim().nullable().optional(),
-      city: z.string().min(1, 'City is required.').trim(),
+      city: z.string().trim().optional().default(''),
       state: z.string().trim().nullable().optional(),
       stateOrProvince: z.string().trim().nullable().optional(),
       region: z.string().trim().nullable().optional(),
@@ -114,8 +114,27 @@ export const createPropertySchema = z.object({
   isPublished: z.boolean().optional(),
 });
 
+export const createPropertySchema = basePropertySchema.superRefine((data, ctx) => {
+  const isDraft = data.standardStatus === 'Draft' || data.isPublished === false;
+  if (isDraft || !data.location) return;
+  if (!data.location.address) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['location', 'address'],
+      message: 'Address is required.',
+    });
+  }
+  if (!data.location.city) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['location', 'city'],
+      message: 'City is required.',
+    });
+  }
+});
+
 // Partial update schema without .default() on omitted fields so partial PUTs never overwrite existing values
-export const updatePropertySchema = createPropertySchema.partial().extend({
+export const updatePropertySchema = basePropertySchema.partial().extend({
   propertyTypeId: z.number().int().positive().optional(),
   listPriceCurrency: z.enum(['PHP', 'USD', 'EUR', 'GBP', 'SGD', 'JPY']).optional(),
   status: z.enum(['available', 'pending', 'sold']).optional(),

@@ -1234,7 +1234,7 @@ export default function PropertyListingView() {
                       <MapPin className="size-4 text-[#0F766E] shrink-0" />
                       <span>
                         {isGeneralAreaOnly
-                          ? 'Map Pin: General Area Only'
+                          ? 'Map Pin: Approximate Area (250m)'
                           : 'Map Pin: Exact Location'}
                         {region ? ` · ${region}` : ''}
                       </span>
@@ -1716,7 +1716,6 @@ export default function PropertyListingView() {
           experience_years: property?.agent?.experience_years || 6,
           brokerage_name: agent.brokerage || 'Human Shelter Realty',
           team_name: property?.agent?.team_name || 'Luxury Portfolio Division',
-          location_branch: city || 'Metro Manila',
           verification_status: 'VERIFIED',
           prc_verified: true,
           dhsud_verified: true,

@@ -463,11 +463,6 @@ export default function BrokerAgentDetail() {
                     {agent.name}
                   </h1>
                   {renderStatusBadge(agent.verification_status)}
-                  {agent.location_branch && (
-                    <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-teal-50 text-[#0F766E] border border-teal-200">
-                      Branch: {agent.location_branch}
-                    </span>
-                  )}
                 </div>
                 <p className="text-xs sm:text-sm text-[#64748B] mt-0.5 capitalize">
                   {agent.role || 'Agent'} • {

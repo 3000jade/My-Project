@@ -166,7 +166,6 @@ export class LiveAgentRoutingService {
             ...(Array.isArray(agent.service_areas) ? agent.service_areas : []),
             ...(Array.isArray(meta?.service_areas) ? meta.service_areas : []),
             ...(Array.isArray(agent.derivedAreas) ? agent.derivedAreas : []),
-            agent.location_branch,
           ]
             .filter((v): v is string => typeof v === 'string' && v.trim().length > 0)
             .map((v) => v.trim())

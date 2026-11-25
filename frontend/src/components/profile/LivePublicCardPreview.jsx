@@ -186,7 +186,7 @@ export default function LivePublicCardPreview({
                         ? profile.firm_name || 'Human Shelter Realty'
                         : role === 'client'
                           ? profile.preferredLocation || 'Preferred area not set'
-                          : `${profile.brokerage_name || 'Human Shelter Realty'}${profile.location_branch ? ` • ${profile.location_branch}` : ''}`}
+                          : profile.brokerage_name || 'Human Shelter Realty'}
                     </p>
                     <div className="flex items-center gap-2 flex-wrap pt-1">
                       {role !== 'client' && hasPrc && (
@@ -194,7 +194,7 @@ export default function LivePublicCardPreview({
                           PRC Verified
                         </Badge>
                       )}
-                      {role !== 'client' && hasDhsud && (
+                      {role === 'broker' && hasDhsud && (
                         <Badge variant="secondary" className="text-xs">
                           DHSUD Accredited
                         </Badge>
@@ -269,18 +269,10 @@ export default function LivePublicCardPreview({
                       )}
 
                       {role === 'agent' && (
-                        <>
-                          <CardDescription className="text-xs text-on-surface-variant flex items-center gap-1.5 flex-wrap">
-                            <Building2 className="size-3.5 text-primary shrink-0" />
-                            <span>{profile.brokerage_name || 'Human Shelter Realty'}</span>
-                          </CardDescription>
-                          {profile.location_branch && (
-                            <p className="text-xs text-on-surface-variant flex items-center gap-1.5">
-                              <MapPin className="size-3.5 shrink-0" />
-                              <span className="truncate">{profile.location_branch}</span>
-                            </p>
-                          )}
-                        </>
+                        <CardDescription className="text-xs text-on-surface-variant flex items-center gap-1.5 flex-wrap">
+                          <Building2 className="size-3.5 text-primary shrink-0" />
+                          <span>{profile.brokerage_name || 'Human Shelter Realty'}</span>
+                        </CardDescription>
                       )}
 
                       {role === 'client' && (

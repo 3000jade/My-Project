@@ -25,6 +25,8 @@ export const can = (user, permission) => {
 
 export const hasPermission = can;
 
+let inflightValidatePromise = null;
+
 export const authService = {
   /**
    * Smart email-first lookup: returns { status: 'existing' | 'invited_agent' | 'new', email }
@@ -174,27 +176,35 @@ export const authService = {
     const token = apiClient.getToken();
     if (!token) return null;
 
-    try {
-      const response = await apiClient.get('/auth/me');
-      const user = response?.data?.user;
-      const profile = response?.data?.profile;
-      if (!user) return null;
+    if (inflightValidatePromise) return inflightValidatePromise;
 
-      return {
-        ...user,
-        profile: profile || user.profile,
-        fullName:
-          user.fullName ||
-          profile?.full_name ||
-          user.full_name ||
-          user.user_metadata?.full_name ||
-          (user.email ? user.email.split('@')[0] : 'User'),
-      };
-    } catch (err) {
-      // If token is expired or invalid, clear it
-      apiClient.clearToken();
-      return null;
-    }
+    inflightValidatePromise = (async () => {
+      try {
+        const response = await apiClient.get('/auth/me');
+        const user = response?.data?.user;
+        const profile = response?.data?.profile;
+        if (!user) return null;
+
+        return {
+          ...user,
+          profile: profile || user.profile,
+          fullName:
+            user.fullName ||
+            profile?.full_name ||
+            user.full_name ||
+            user.user_metadata?.full_name ||
+            (user.email ? user.email.split('@')[0] : 'User'),
+        };
+      } catch (err) {
+        // If token is expired or invalid, clear it
+        apiClient.clearToken();
+        return null;
+      } finally {
+        inflightValidatePromise = null;
+      }
+    })();
+
+    return inflightValidatePromise;
   },
 
   // Backward compatible alias
@@ -296,6 +306,7 @@ export const authService = {
    * Log out user and clear stored tokens
    */
   async logout() {
+    inflightValidatePromise = null;
     try {
       await apiClient.post('/auth/logout');
     } catch {

@@ -1313,6 +1313,10 @@ export default function BrokerCreateListings() {
                         <LocationPinMap
                           position={mapPosition}
                           zoom={formData.latitude ? 15 : 11}
+                          showApproximateCircle={
+                            formData.mapPinPrivacy === 'General Area Only' ||
+                            formData.mapPinPrivacy === 'Approximate Area (250m)'
+                          }
                           onChange={(pos) => {
                             handleMapPositionChange(pos);
                             handlePinMoved(pos);

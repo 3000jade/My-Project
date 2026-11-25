@@ -27,7 +27,6 @@ export default function BrokerAgentEdit() {
   const [error, setError] = useState('');
 
   const { toast } = useToast();
-  const [branches, setBranches] = useState([]);
   const [formData, setFormData] = useState({
     name: '',
     role: 'Real Estate Agent',
@@ -36,8 +35,6 @@ export default function BrokerAgentEdit() {
     dateOfBirth: '',
     gender: '',
     avatar: '',
-    branch_id: '',
-    location: 'Metro Manila — Makati HQ',
     prc_license_no: '',
     prc_validity: '',
     dhsud_accreditation_no: '',
@@ -68,13 +65,7 @@ export default function BrokerAgentEdit() {
     async function loadData() {
       setLoading(true);
       try {
-        const [data, branchList] = await Promise.all([
-          agentService.getAgentById(id),
-          (typeof agentService.getBranches === 'function' ? agentService.getBranches() : Promise.resolve([])).catch(() => []),
-        ]);
-        if (mounted) {
-          setBranches(Array.isArray(branchList) ? branchList : []);
-        }
+        const data = await agentService.getAgentById(id);
         if (mounted && data) {
           setFormData(prev => ({
             ...prev,
@@ -86,8 +77,6 @@ export default function BrokerAgentEdit() {
             dateOfBirth: data.date_of_birth || '',
             gender: data.gender || '',
             avatar: data.avatar || '',
-            branch_id: data.branch_id || '',
-            location: data.location_branch || data.location || 'Metro Manila — Makati HQ',
             prc_license_no: data.prc_license_no || '',
             prc_validity: data.prc_validity || '2026-12-31',
             dhsud_accreditation_no: data.dhsud_accreditation_no || '',
@@ -140,12 +129,10 @@ export default function BrokerAgentEdit() {
         experience_years: Number(formData.experience_years || 0),
         date_of_birth: formData.dateOfBirth || null,
         gender: formData.gender || null,
-        branch_id: formData.branch_id || null,
         can_create_listings: Boolean(formData.can_create_listings),
         permission_grants: formData.permission_grants,
         access_tier: formData.accessTier || 'standard_agent',
         commission_tier: formData.commissionTier || null,
-        location_branch: formData.location || null,
         emergency_contact_name: formData.emergencyContactName || null,
         emergency_contact_phone: formData.emergencyContactPhone || null,
         internal_notes: formData.internalNotes || null,
@@ -297,32 +284,6 @@ export default function BrokerAgentEdit() {
                     className="w-full h-10 px-3.5 bg-white border border-[#E2E8F0] rounded-lg text-xs text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
                     placeholder="e.g. 5"
                   />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-[#1E293B] mb-1">
-                    Branch Office
-                  </label>
-                  <select
-                    value={formData.branch_id || ''}
-                    onChange={(e) => {
-                      const branchId = e.target.value;
-                      const match = branches.find((b) => String(b.id) === String(branchId));
-                      setFormData((prev) => ({
-                        ...prev,
-                        branch_id: branchId,
-                        location: match ? match.name : prev.location,
-                      }));
-                    }}
-                    className="w-full h-10 px-3.5 bg-white border border-[#E2E8F0] rounded-lg text-xs font-medium text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-[#0F766E] cursor-pointer"
-                  >
-                    <option value="">{formData.location || 'Select branch...'}</option>
-                    {branches.map((b) => (
-                      <option key={b.id} value={b.id}>
-                        {b.name}
-                      </option>
-                    ))}
-                  </select>
                 </div>
               </div>
 

@@ -16,6 +16,9 @@ export const DashboardTitleContext = createContext({
   setPageTitle: () => {},
 });
 
+const PRESENCE_MIN_INTERVAL_MS = 25_000;
+let lastPresencePingAt = 0;
+
 export function useDashboardHeaderTitle(title) {
   const { setPageTitle } = useContext(DashboardTitleContext);
   React.useEffect(() => {
@@ -35,6 +38,9 @@ function DashboardLayoutContent({ role, title }) {
 
     const ping = () => {
       if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+      const now = Date.now();
+      if (now - lastPresencePingAt < PRESENCE_MIN_INTERVAL_MS) return;
+      lastPresencePingAt = now;
       apiClient.post('/agents/me/presence').catch(() => {});
     };
 

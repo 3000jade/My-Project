@@ -104,15 +104,6 @@ export type AgentPermissionKey =
 
 export type AgentPermissionGrantsMap = Partial<Record<AgentPermissionKey, boolean>>;
 
-export interface AgentBranchDTO {
-  id: string;
-  brokerage_id: string;
-  name: string;
-  city?: string | null;
-  address?: string | null;
-  status: 'active' | 'inactive';
-}
-
 export interface AgentProfileDTO {
   id: string;
   name: string;
@@ -124,7 +115,6 @@ export interface AgentProfileDTO {
   gender?: string | null;
   brokerage_id?: string | null;
   brokerage_name?: string | null;
-  branch_id?: string | null;
   team_id?: string | null;
   team_name?: string | null;
   membership_status?: MembershipStatus;
@@ -134,7 +124,6 @@ export interface AgentProfileDTO {
   permission_grants?: AgentPermissionGrantsMap;
   access_tier?: string | null;
   commission_tier?: string | null;
-  location_branch?: string | null;
   service_areas?: string[];
   property_specialties?: string[];
   emergency_contact_name?: string | null;

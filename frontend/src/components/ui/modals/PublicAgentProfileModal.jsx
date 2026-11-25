@@ -94,13 +94,6 @@ export default function PublicAgentProfileModal({
                   </>
                 )}
               </p>
-
-              {agent.location_branch && (
-                <p className="text-xs text-[#64748B] flex items-center gap-1.5">
-                  <MapPin className="w-3.5 h-3.5 text-[#64748B]" />
-                  <span>{agent.location_branch}</span>
-                </p>
-              )}
             </div>
           </div>
 

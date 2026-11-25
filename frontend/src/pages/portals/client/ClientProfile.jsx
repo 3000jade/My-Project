@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Bell } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Bell, Home, LogOut, LayoutDashboard, ArrowRight } from 'lucide-react';
 import { ProfileCardStudio } from '@/components/profile';
 import { clientUserService } from '@/services/clientUserService';
 import { useAuth } from '@/context/AuthContext';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardHeader,
@@ -18,6 +20,10 @@ import { FieldGroup, Field, FieldLabel, FieldContent, FieldDescription } from '@
 
 const TRACKED_KEYS = [
   'name',
+  'first_name',
+  'middle_name',
+  'last_name',
+  'display_name',
   'avatar',
   'phone',
   'bio',
@@ -26,6 +32,7 @@ const TRACKED_KEYS = [
 ];
 
 export default function ClientProfile() {
+  const navigate = useNavigate();
   const { toast } = useToast();
   let auth = null;
   try {
@@ -33,11 +40,13 @@ export default function ClientProfile() {
   } catch {
     // Handled gracefully when rendered in isolated test runners
   }
+  const logout = auth?.logout;
   const [profile, setProfile] = useState({});
   const [draft, setDraft] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
   const [focusedSection, setFocusedSection] = useState(null);
 
   const [notifications, setNotifications] = useState({
@@ -79,8 +88,16 @@ export default function ClientProfile() {
   const handleSave = async (nextDraft) => {
     setSaving(true);
     try {
+      const displayName =
+        nextDraft.display_name ||
+        nextDraft.name ||
+        [nextDraft.first_name, nextDraft.middle_name, nextDraft.last_name].filter(Boolean).join(' ').trim();
       const updated = await clientUserService.updateClientProfile({
-        name: nextDraft.name,
+        name: displayName,
+        first_name: nextDraft.first_name ?? '',
+        middle_name: nextDraft.middle_name ?? '',
+        last_name: nextDraft.last_name ?? '',
+        display_name: displayName,
         avatar: nextDraft.avatar ?? '',
         phone: nextDraft.phone ?? '',
         bio: nextDraft.bio ?? '',
@@ -126,6 +143,19 @@ export default function ClientProfile() {
         description: err.message || 'Could not save alert preference.',
         variant: 'destructive',
       });
+    }
+  };
+
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    try {
+      if (logout) {
+        await logout();
+      }
+    } catch (err) {
+      console.warn('Logout error:', err.message);
+    } finally {
+      navigate('/login');
     }
   };
 
@@ -177,8 +207,8 @@ export default function ClientProfile() {
         icon: Bell,
         content: (
           <Card className="bg-surface border border-outline rounded-xl shadow-xs">
-            <CardHeader className="pb-4 border-b border-outline">
-              <CardTitle className="text-xl font-semibold text-on-surface flex items-center gap-2">
+            <CardHeader className="p-5 pb-4 border-b border-outline">
+              <CardTitle className="text-base font-semibold text-on-surface flex items-center gap-2">
                 <Bell className="size-5 text-primary" />
                 Communication Settings
               </CardTitle>
@@ -186,7 +216,7 @@ export default function ClientProfile() {
                 Choose how we notify you about tour schedules, replies, and price drops.
               </CardDescription>
             </CardHeader>
-            <CardContent className="pt-6">
+            <CardContent className="p-5">
               <FieldGroup className="gap-4">
                 <Field orientation="horizontal" className="p-4 rounded-xl bg-background border border-outline justify-between">
                   <FieldContent>
@@ -250,10 +280,58 @@ export default function ClientProfile() {
     [notifications]
   );
 
+  const securityExtraContent = (
+    <Card className="bg-surface border border-outline rounded-xl shadow-xs">
+      <CardHeader className="p-5 pb-4 border-b border-outline">
+        <CardTitle className="text-base font-semibold text-on-surface">
+          Quick Navigation &amp; Session
+        </CardTitle>
+        <CardDescription className="text-xs text-on-surface-variant">
+          Jump to public or client views, or sign out of this session.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="p-5 flex flex-col gap-3">
+        <Link
+          to="/"
+          className="h-11 px-4 rounded-lg bg-background hover:bg-surface-variant text-on-surface text-xs font-medium flex items-center justify-between border border-outline transition-colors"
+        >
+          <span className="flex items-center gap-2">
+            <Home className="size-4 text-primary" />
+            Public Home Page
+          </span>
+          <ArrowRight className="size-4 text-on-surface-variant" />
+        </Link>
+
+        <Link
+          to="/client/dashboard"
+          className="h-11 px-4 rounded-lg bg-background hover:bg-surface-variant text-on-surface text-xs font-medium flex items-center justify-between border border-outline transition-colors"
+        >
+          <span className="flex items-center gap-2">
+            <LayoutDashboard className="size-4 text-primary" />
+            Client Dashboard
+          </span>
+          <ArrowRight className="size-4 text-on-surface-variant" />
+        </Link>
+
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handleLogout}
+          disabled={loggingOut}
+          className="w-full h-11 bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200 normal-case"
+        >
+          <LogOut data-icon="inline-start" className="text-rose-600" />
+          {loggingOut ? 'Signing out...' : 'Sign Out of Session'}
+        </Button>
+      </CardContent>
+    </Card>
+  );
+
   return (
-    <>
+    <div data-testid="client-profile-portal" className="w-full min-w-0">
       <Toaster />
       <ProfileCardStudio
+        layout="master-detail"
         role="client"
         title="My Profile & Buyer Card Studio"
         subtitle="Update your contact details, target locations, and alert settings while previewing your buyer card."
@@ -261,6 +339,30 @@ export default function ClientProfile() {
           { label: 'Dashboard', to: '/client/dashboard' },
           { label: 'Profile' },
         ]}
+        headerActions={
+          <>
+            <Button
+              asChild
+              variant="outline"
+              className="h-11 px-4 border-outline bg-surface text-on-surface normal-case"
+            >
+              <Link to="/" title="Return to Public Site">
+                <Home data-icon="inline-start" className="text-on-surface-variant" />
+                Home Page
+              </Link>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleLogout}
+              disabled={loggingOut}
+              className="h-11 px-4 bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200 normal-case"
+            >
+              <LogOut data-icon="inline-start" className="text-rose-600" />
+              {loggingOut ? 'Signing out...' : 'Logout'}
+            </Button>
+          </>
+        }
         profile={profile}
         draft={draft}
         onDraftChange={setDraft}
@@ -273,10 +375,11 @@ export default function ClientProfile() {
         isDirty={isDirty}
         identityExtraFields={identityExtraFields}
         extraTabs={extraTabs}
+        securityExtraContent={securityExtraContent}
         focusedSection={focusedSection}
         onFocusSection={setFocusedSection}
         testId="client-profile-studio"
       />
-    </>
+    </div>
   );
 }

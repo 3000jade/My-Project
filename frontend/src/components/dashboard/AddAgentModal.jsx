@@ -16,15 +16,12 @@ import { invitationService } from '../../services/invitationService';
  */
 export default function AddAgentModal({ isOpen, onClose, onInviteSuccess, onCreateSuccess }) {
   const [mode, setMode] = useState('choose'); // 'choose' | 'create' | 'invite'
-  const [branches, setBranches] = useState([]);
 
   // Create Agent state
   const [createForm, setCreateForm] = useState({
     name: '',
     email: '',
     phone: '',
-    branch_id: '',
-    location_branch: 'Metro Manila — Makati HQ',
     access_tier: 'standard_agent',
     can_create_listings: false,
     can_edit_listings: false,
@@ -49,11 +46,6 @@ export default function AddAgentModal({ isOpen, onClose, onInviteSuccess, onCrea
       setInviteSuccess('');
       return;
     }
-    if (typeof agentService.getBranches === 'function') {
-      agentService.getBranches().then((data) => {
-        if (Array.isArray(data)) setBranches(data);
-      }).catch(() => { });
-    }
   }, [isOpen]);
 
   const handleCreateAgent = async (e) => {
@@ -65,8 +57,6 @@ export default function AddAgentModal({ isOpen, onClose, onInviteSuccess, onCrea
         name: createForm.name.trim(),
         email: createForm.email.trim(),
         phone: createForm.phone.trim(),
-        branch_id: createForm.branch_id || null,
-        location_branch: createForm.location_branch || null,
         access_tier: 'standard_agent',
         can_create_listings: Boolean(createForm.can_create_listings),
         permission_grants: {
@@ -79,10 +69,9 @@ export default function AddAgentModal({ isOpen, onClose, onInviteSuccess, onCrea
         name: '',
         email: '',
         phone: '',
-        branch_id: '',
-        location_branch: 'Metro Manila — Makati HQ',
         access_tier: 'standard_agent',
         can_create_listings: false,
+        can_edit_listings: false,
         prc_license_no: '',
       });
       if (onCreateSuccess) {
@@ -337,33 +326,6 @@ export default function AddAgentModal({ isOpen, onClose, onInviteSuccess, onCrea
                 onChange={(e) => setCreateForm((p) => ({ ...p, prc_license_no: e.target.value }))}
                 className="h-10 text-xs font-mono"
               />
-            </Field>
-
-            <Field className="sm:col-span-2">
-              <FieldLabel htmlFor="create-agent-branch" className="text-xs font-semibold text-[#1E293B]">
-                Branch
-              </FieldLabel>
-              <select
-                id="create-agent-branch"
-                value={createForm.branch_id}
-                onChange={(e) => {
-                  const branchId = e.target.value;
-                  const match = branches.find((b) => String(b.id) === String(branchId));
-                  setCreateForm((p) => ({
-                    ...p,
-                    branch_id: branchId,
-                    location_branch: match ? match.name : p.location_branch,
-                  }));
-                }}
-                className="w-full h-10 px-3 bg-white border border-[#E2E8F0] rounded-lg text-xs font-medium text-[#1E293B] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
-              >
-                <option value="">{createForm.location_branch}</option>
-                {branches.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.name}
-                  </option>
-                ))}
-              </select>
             </Field>
           </div>
 

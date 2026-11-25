@@ -19,6 +19,7 @@ export default function LocationPinMap({
   position = [14.5995, 120.9842],
   zoom = 13,
   interactive = true,
+  showApproximateCircle = false,
   onChange,
   extraPins = [],
   className = 'h-72 w-full',
@@ -26,6 +27,7 @@ export default function LocationPinMap({
   const containerRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markerRef = useRef(null);
+  const circleRef = useRef(null);
   const extraMarkersRef = useRef([]);
   const modeRef = useRef(null);
 
@@ -40,6 +42,11 @@ export default function LocationPinMap({
     const cleanup = () => {
       extraMarkersRef.current.forEach((m) => m.setMap ? m.setMap(null) : m.remove?.());
       extraMarkersRef.current = [];
+      if (circleRef.current) {
+        if (circleRef.current.setMap) circleRef.current.setMap(null);
+        else circleRef.current.remove?.();
+        circleRef.current = null;
+      }
       if (markerRef.current) {
         if (markerRef.current.setMap) markerRef.current.setMap(null);
         else markerRef.current.remove?.();
@@ -148,6 +155,54 @@ export default function LocationPinMap({
       map.setView([lat, lng], zoom || map.getZoom());
     }
   }, [lat, lng, zoom]);
+
+  // Render optional 250m privacy circle when Neighborhood Only mode is active
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    const marker = markerRef.current;
+    if (!map) return;
+
+    if (circleRef.current) {
+      if (circleRef.current.setMap) circleRef.current.setMap(null);
+      else circleRef.current.remove?.();
+      circleRef.current = null;
+    }
+
+    if (!showApproximateCircle) {
+      if (marker) {
+        if (marker.setOpacity) marker.setOpacity(1);
+      }
+      return;
+    }
+
+    if (marker && marker.setOpacity) {
+      marker.setOpacity(0.55);
+    }
+
+    if (modeRef.current === 'google' && window.google?.maps) {
+      circleRef.current = new window.google.maps.Circle({
+        map,
+        center: { lat, lng },
+        radius: 250,
+        fillColor: '#0F766E',
+        fillOpacity: 0.16,
+        strokeColor: '#0F766E',
+        strokeOpacity: 0.7,
+        strokeWeight: 2,
+        clickable: false,
+      });
+    } else if (modeRef.current === 'leaflet') {
+      circleRef.current = L.circle([lat, lng], {
+        radius: 250,
+        color: '#0F766E',
+        weight: 2,
+        opacity: 0.7,
+        fillColor: '#0F766E',
+        fillOpacity: 0.16,
+        interactive: false,
+      }).addTo(map);
+    }
+  }, [lat, lng, showApproximateCircle]);
 
   // Render optional secondary pins (Nearby Places)
   useEffect(() => {

@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { User } from '@supabase/supabase-js';
-import { supabase, supabaseAdmin } from '../config/supabase';
+import { supabase, supabaseAdmin, isSupabaseConfigured } from '../config/supabase';
 import { SessionService } from '../services/session.service';
 import type { ApiResponse } from '../types/api';
 
@@ -88,6 +88,20 @@ export const requireAuth = async (
         return;
       }
       req.user = { ...cached.user };
+      next();
+      return;
+    }
+
+    if (!isSupabaseConfigured && process.env.NODE_ENV !== 'production' && token.startsWith('dev-mock-jwt-token-')) {
+      const role = existingSession.role || token.replace('dev-mock-jwt-token-', '') || 'agent';
+      req.user = {
+        id: existingSession.userId,
+        email: `${role}@pt.com`,
+        role,
+        user_metadata: { role, full_name: 'Development User' },
+        app_metadata: { role },
+        verification_status: 'VERIFIED',
+      } as any;
       next();
       return;
     }

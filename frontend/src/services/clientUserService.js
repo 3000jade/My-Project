@@ -55,6 +55,10 @@ export const clientUserService = {
       payload.name = updates.name;
       payload.fullName = updates.name;
     }
+    if (updates.first_name !== undefined) payload.first_name = updates.first_name;
+    if (updates.middle_name !== undefined) payload.middle_name = updates.middle_name;
+    if (updates.last_name !== undefined) payload.last_name = updates.last_name;
+    if (updates.display_name !== undefined) payload.display_name = updates.display_name;
     if (updates.avatar !== undefined) payload.avatar = updates.avatar;
     if (updates.phone !== undefined) payload.phone = updates.phone;
     if (updates.bio !== undefined) payload.bio = updates.bio;
