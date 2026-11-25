@@ -5,6 +5,10 @@ import type { UpdateProfileInput } from '../schemas/profile.schema';
 export interface UserProfileData {
   id: string;
   name: string;
+  first_name?: string;
+  middle_name?: string;
+  last_name?: string;
+  display_name?: string;
   email: string;
   phone: string;
   role: 'admin' | 'broker' | 'agent' | 'client';
@@ -121,9 +125,15 @@ export class ProfileService {
           .single();
 
         if (!error && data) {
+          const fullName = data.full_name ?? '';
+          const parts = String(fullName).trim().split(/\s+/).filter(Boolean);
           return {
             id: data.id,
-            name: data.full_name ?? '',
+            name: data.display_name || fullName,
+            first_name: data.first_name ?? parts[0] ?? '',
+            middle_name: data.middle_name ?? '',
+            last_name: data.last_name ?? (parts.length > 1 ? parts.slice(1).join(' ') : ''),
+            display_name: data.display_name ?? fullName,
             email: data.email ?? '',
             phone: data.phone ?? '',
             role: (data.role as any) || targetRole,
@@ -150,9 +160,11 @@ export class ProfileService {
         }
         if (error) {
           logger.warn('Supabase getProfile error:', error.message);
+          throw new Error(`Failed to load profile from Supabase: ${error.message}`);
         }
       } catch (err: any) {
         logger.warn('Supabase getProfile failed:', err.message);
+        throw err;
       }
     }
 
@@ -179,7 +191,12 @@ export class ProfileService {
       : 'agent') as 'broker' | 'agent' | 'client' | 'admin';
     const current = await this.getProfile(userId, role);
 
-    const updatedName = updates.fullName ?? updates.name ?? current.name;
+    const firstName = updates.first_name ?? current.first_name ?? '';
+    const middleName = updates.middle_name ?? current.middle_name ?? '';
+    const lastName = updates.last_name ?? current.last_name ?? '';
+    const composedName = [firstName, middleName, lastName].filter(Boolean).join(' ').trim();
+    const displayName = updates.display_name ?? updates.fullName ?? updates.name ?? (composedName || current.display_name || current.name);
+    const updatedName = displayName;
     const updatedAvatar = updates.avatar_url ?? updates.avatar ?? current.avatar;
     const updatedLocation = updates.preferred_location ?? updates.preferredLocation ?? current.preferred_location;
     const updatedBudget = updates.investment_budget ?? updates.investmentBudget ?? current.investment_budget;
@@ -199,6 +216,10 @@ export class ProfileService {
     const updatedData: UserProfileData = {
       ...current,
       name: updatedName,
+      first_name: firstName,
+      middle_name: middleName,
+      last_name: lastName,
+      display_name: displayName,
       phone: updates.phone ?? current.phone,
       bio: updates.bio ?? current.bio,
       experience_years: updates.experience_years ?? current.experience_years,
@@ -235,6 +256,10 @@ export class ProfileService {
         .from('profiles')
         .update({
           full_name: updatedData.name,
+          first_name: updatedData.first_name ?? '',
+          middle_name: updatedData.middle_name ?? '',
+          last_name: updatedData.last_name ?? '',
+          display_name: updatedData.display_name ?? updatedData.name,
           phone: updatedData.phone,
           avatar_url: updatedData.avatar,
           bio: updatedData.bio,

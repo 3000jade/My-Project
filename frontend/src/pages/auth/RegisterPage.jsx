@@ -537,6 +537,18 @@ export default function RegisterPage() {
                     }
                   />
 
+                  <p className="text-center text-xs leading-relaxed text-on-surface-variant">
+                    By creating an account, you agree to our{' '}
+                    <Link to="/terms" className="font-medium text-primary hover:underline">
+                      Terms of Service
+                    </Link>{' '}
+                    and{' '}
+                    <Link to="/privacy" className="font-medium text-primary hover:underline">
+                      Privacy Policy
+                    </Link>
+                    .
+                  </p>
+
                   <p className="text-center text-sm text-on-surface-variant pt-4 border-t border-outline">
                     Already have an account?{' '}
                     <Link

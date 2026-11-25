@@ -204,8 +204,8 @@ export default function ContactLiveCanvas({
                 payload: {
                   region: 'Metro Manila',
                   address: '123 Main Street, Metro Manila',
-                  phone: '+63 2 8000 0000',
-                  hours: 'Mon–Sat, 9:00 AM – 6:00 PM',
+                  phone: '+63 917 320 6778',
+                  hours: 'Mon–Fri, 8:30 AM – 5:30 PM',
                   map_url: '',
                   whatsapp_url: '',
                   is_headquarters: offices.length === 0,

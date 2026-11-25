@@ -5,7 +5,6 @@ import {
   LogOut,
   LayoutDashboard,
   Type,
-  CheckCircle2,
   ShieldCheck,
   Loader2,
   ArrowRight,
@@ -32,6 +31,10 @@ import { cn } from '@/utils/cn';
 
 const TRACKED_KEYS = [
   'name',
+  'first_name',
+  'middle_name',
+  'last_name',
+  'display_name',
   'avatar',
   'phone',
   'bio',
@@ -96,10 +99,18 @@ export default function BrokerProfile() {
   const handleSave = async (nextDraft) => {
     setSaving(true);
     try {
+      const displayName =
+        nextDraft.display_name ||
+        nextDraft.name ||
+        [nextDraft.first_name, nextDraft.middle_name, nextDraft.last_name].filter(Boolean).join(' ').trim();
       const updated = await profileService.updateProfile(
         {
-          name: nextDraft.name,
-          fullName: nextDraft.name,
+          name: displayName,
+          fullName: displayName,
+          first_name: nextDraft.first_name ?? '',
+          middle_name: nextDraft.middle_name ?? '',
+          last_name: nextDraft.last_name ?? '',
+          display_name: displayName,
           avatar: nextDraft.avatar ?? '',
           phone: nextDraft.phone ?? '',
           bio: nextDraft.bio ?? '',
@@ -163,7 +174,7 @@ export default function BrokerProfile() {
           onFocus={() => setFocusedSection('identity')}
           onBlur={() => setFocusedSection(null)}
           placeholder="Precision Trust Realty Operations Inc."
-          className="h-11 bg-surface border-outline text-on-surface rounded-lg"
+          className="h-10 bg-surface border-outline text-on-surface rounded-lg"
         />
       </Field>
 
@@ -180,7 +191,7 @@ export default function BrokerProfile() {
           onChange={(e) => setDraft((prev) => ({ ...prev, experience_years: e.target.value }))}
           onFocus={() => setFocusedSection('identity')}
           onBlur={() => setFocusedSection(null)}
-          className="h-11 bg-surface border-outline text-on-surface rounded-lg font-mono"
+          className="h-10 bg-surface border-outline text-on-surface rounded-lg font-mono"
         />
       </Field>
     </div>
@@ -194,8 +205,8 @@ export default function BrokerProfile() {
         icon: Award,
         content: (
           <Card className="bg-surface border border-outline rounded-xl shadow-xs">
-            <CardHeader className="pb-4 border-b border-outline">
-              <CardTitle className="text-xl font-semibold text-on-surface flex items-center gap-2">
+            <CardHeader className="p-5 pb-4 border-b border-outline">
+              <CardTitle className="text-base font-semibold text-on-surface flex items-center gap-2">
                 <ShieldCheck className="size-5 text-primary" />
                 Supervising Broker Accreditations
               </CardTitle>
@@ -203,7 +214,7 @@ export default function BrokerProfile() {
                 Principal PRC and DHSUD registrations. Only verified standing appears on your public card.
               </CardDescription>
             </CardHeader>
-            <CardContent className="pt-6 flex flex-col gap-5">
+            <CardContent className="p-5 flex flex-col gap-5">
               <FieldGroup className="gap-5">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field>
@@ -220,7 +231,7 @@ export default function BrokerProfile() {
                       onFocus={() => setFocusedSection('credentials')}
                       onBlur={() => setFocusedSection(null)}
                       placeholder="PRC-REB-0019582"
-                      className="h-11 bg-surface border-outline text-on-surface rounded-lg font-mono"
+                      className="h-10 bg-surface border-outline text-on-surface rounded-lg font-mono"
                     />
                   </Field>
 
@@ -237,7 +248,7 @@ export default function BrokerProfile() {
                       }
                       onFocus={() => setFocusedSection('credentials')}
                       onBlur={() => setFocusedSection(null)}
-                      className="h-11 bg-surface border-outline text-on-surface rounded-lg font-mono"
+                      className="h-10 bg-surface border-outline text-on-surface rounded-lg font-mono"
                     />
                   </Field>
 
@@ -255,7 +266,7 @@ export default function BrokerProfile() {
                       onFocus={() => setFocusedSection('credentials')}
                       onBlur={() => setFocusedSection(null)}
                       placeholder="DHSUD-NCR-AA-2022-0941"
-                      className="h-11 bg-surface border-outline text-on-surface rounded-lg font-mono"
+                      className="h-10 bg-surface border-outline text-on-surface rounded-lg font-mono"
                     />
                   </Field>
 
@@ -272,7 +283,7 @@ export default function BrokerProfile() {
                       }
                       onFocus={() => setFocusedSection('credentials')}
                       onBlur={() => setFocusedSection(null)}
-                      className="h-11 bg-surface border-outline text-on-surface rounded-lg font-mono"
+                      className="h-10 bg-surface border-outline text-on-surface rounded-lg font-mono"
                     />
                   </Field>
                 </div>
@@ -299,9 +310,9 @@ export default function BrokerProfile() {
             data-testid="typography-density-card"
             className="bg-surface border border-outline rounded-xl shadow-xs"
           >
-            <CardHeader className="pb-4 border-b border-outline flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <CardHeader className="p-5 pb-4 border-b border-outline flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <div>
-                <CardTitle className="text-xl font-semibold text-on-surface flex items-center gap-2">
+                <CardTitle className="text-base font-semibold text-on-surface flex items-center gap-2">
                   <Type className="size-4 text-primary" />
                   Appearance &amp; Typography Density
                 </CardTitle>
@@ -309,15 +320,10 @@ export default function BrokerProfile() {
                   Adjust the base text scale and layout density across the broker command portal.
                 </CardDescription>
               </div>
-              {isSyncing ? (
+              {isSyncing && (
                 <Badge variant="default" className="text-xs">
                   <Loader2 className="size-3.5 animate-spin" />
                   Syncing...
-                </Badge>
-              ) : (
-                <Badge variant="success" className="text-xs">
-                  <CheckCircle2 className="size-3.5" />
-                  Profile Synced
                 </Badge>
               )}
             </CardHeader>

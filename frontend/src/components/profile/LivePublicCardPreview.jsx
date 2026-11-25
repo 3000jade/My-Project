@@ -174,10 +174,12 @@ export default function LivePublicCardPreview({
                       <p className="text-base font-semibold text-on-surface truncate">
                         {displayName}
                       </p>
-                      <Badge variant="success" className="text-xs">
-                        <ShieldCheck className="size-3.5" />
-                        {role === 'client' ? 'Verified Client' : 'Verified'}
-                      </Badge>
+                      {role !== 'broker' && (
+                        <Badge variant="success" className="text-xs">
+                          <ShieldCheck className="size-3.5" />
+                          {role === 'client' ? 'Verified Client' : 'Verified'}
+                        </Badge>
+                      )}
                     </div>
                     <p className="text-xs text-on-surface-variant truncate">
                       {role === 'broker'
@@ -237,20 +239,23 @@ export default function LivePublicCardPreview({
                         <CardTitle className="text-xl font-semibold text-on-surface tracking-tight truncate">
                           {displayName}
                         </CardTitle>
-                        {credentialsPendingReview ? (
-                          <Badge variant="warning" className="text-xs">
-                            <Clock className="size-3.5" />
-                            Review Queued
-                          </Badge>
-                        ) : (
-                          <Badge variant="success" className="text-xs">
-                            <ShieldCheck className="size-3.5" />
-                            {role === 'broker'
-                              ? 'Verified Principal'
-                              : role === 'client'
-                                ? 'Verified Client'
-                                : 'Verified Advisor'}
-                          </Badge>
+                        {role !== 'broker' && (
+                          credentialsPendingReview ? (
+                            <Badge variant="warning" className="text-xs">
+                              <Clock className="size-3.5" />
+                              Review Queued
+                            </Badge>
+                          ) : String(profile.verification_status || 'PENDING').toUpperCase() === 'VERIFIED' ? (
+                            <Badge variant="success" className="text-xs">
+                              <ShieldCheck className="size-3.5" />
+                              {role === 'client' ? 'Verified Client' : 'Verified Advisor'}
+                            </Badge>
+                          ) : (
+                            <Badge variant="warning" className="text-xs">
+                              <Clock className="size-3.5" />
+                              Pending Verification
+                            </Badge>
+                          )
                         )}
                       </div>
 

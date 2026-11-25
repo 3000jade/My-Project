@@ -8,6 +8,10 @@ const optionalUrlOrEmpty = z.union([
 export const updateProfileSchema = z.object({
   fullName: z.string().min(2, 'Full name must be at least 2 characters.').optional(),
   name: z.string().min(2, 'Name must be at least 2 characters.').optional(),
+  first_name: z.string().trim().max(80, 'First name cannot exceed 80 characters.').optional(),
+  middle_name: z.string().trim().max(80, 'Middle name cannot exceed 80 characters.').optional(),
+  last_name: z.string().trim().max(80, 'Last name cannot exceed 80 characters.').optional(),
+  display_name: z.string().trim().max(120, 'Display name cannot exceed 120 characters.').optional(),
   phone: z.union([z.string().min(7, 'Phone must be at least 7 characters.'), z.literal('')]).optional(),
   avatar: optionalUrlOrEmpty,
   avatar_url: optionalUrlOrEmpty,

@@ -154,14 +154,35 @@ export default function BranchDirectory({
               >
                 <CardHeader className="p-6 pb-4 flex flex-col gap-4">
                   {branch.photoUrl && (
-                    <div className="aspect-[16/10] w-full overflow-hidden rounded-lg bg-[#F1F5F9]">
-                      <img
-                        src={branch.photoUrl}
-                        alt={branch.title}
-                        loading="lazy"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
+                    branch.mapUrl ? (
+                      <a
+                        href={branch.mapUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`Open ${branch.title} location in Google Maps`}
+                        className="group/map relative block aspect-[16/10] w-full overflow-hidden rounded-lg bg-[#F1F5F9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0F766E]/20"
+                      >
+                        <img
+                          src={branch.photoUrl}
+                          alt={`Map preview of ${branch.title}`}
+                          loading="lazy"
+                          className="w-full h-full object-cover transition-transform duration-300 group-hover/map:scale-105"
+                        />
+                        <span className="absolute bottom-2 right-2 inline-flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-xs font-medium text-[#1E293B] border border-[#E2E8F0] shadow-xs">
+                          <MapPin className="size-3 text-[#0F766E]" aria-hidden="true" />
+                          <span>Google Maps</span>
+                        </span>
+                      </a>
+                    ) : (
+                      <div className="aspect-[16/10] w-full overflow-hidden rounded-lg bg-[#F1F5F9]">
+                        <img
+                          src={branch.photoUrl}
+                          alt={branch.title}
+                          loading="lazy"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )
                   )}
                   <div className="flex items-start justify-between gap-2">
                     <CardTitle className="text-xl font-semibold tracking-tight text-[#1E293B]">

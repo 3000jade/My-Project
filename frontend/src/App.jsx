@@ -22,6 +22,8 @@ const PropertyListingView = lazy(() => import('./pages/public/PropertyListingVie
 const AboutPage = lazy(() => import('./pages/public/AboutPage'));
 const GuidesPage = lazy(() => import('./pages/public/GuidesPage'));
 const ContactPage = lazy(() => import('./pages/public/ContactPage'));
+const PrivacyPolicyPage = lazy(() => import('./pages/public/PrivacyPolicyPage'));
+const TermsOfServicePage = lazy(() => import('./pages/public/TermsOfServicePage'));
 const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
 const RegisterPage = lazy(() => import('./pages/auth/RegisterPage'));
 const AgentRegisterPage = lazy(() => import('./pages/auth/AgentRegisterPage'));
@@ -119,6 +121,8 @@ const ROUTE_TITLES = [
   ['/about', 'About'],
   ['/guides', 'Guides'],
   ['/contact', 'Contact'],
+  ['/privacy', 'Privacy Policy'],
+  ['/terms', 'Terms of Service'],
   ['/login', 'Sign In'],
   ['/register/agent', 'Agent Registration'],
   ['/register', 'Register'],
@@ -331,6 +335,10 @@ function AppRoutes() {
         <Route path="/guides" element={<GuidesPage />} />
         <Route path="/guides/:slug" element={<GuidesPage />} />
         <Route path="/contact" element={<ContactPage />} />
+        <Route path="/privacy" element={<PrivacyPolicyPage />} />
+        <Route path="/privacy-policy" element={<Navigate to="/privacy" replace />} />
+        <Route path="/terms" element={<TermsOfServicePage />} />
+        <Route path="/terms-of-service" element={<Navigate to="/terms" replace />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/register/agent" element={<AgentRegisterPage />} />

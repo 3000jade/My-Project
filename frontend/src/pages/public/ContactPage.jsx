@@ -10,6 +10,9 @@ import {
   Award,
   Quote,
   ArrowRight,
+  Globe,
+  UserPlus,
+  PlayCircle,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import cmsService from '@/services/cmsService';
@@ -98,7 +101,7 @@ export default function ContactPage() {
 
   const branches = useMemo(() => {
     const normalized = normalizeBranches(offices);
-    return normalized.length > 0 ? normalized : [DEFAULT_CONTACT_CONTENT.fallbackBranch];
+    return normalized.length > 0 ? normalized : DEFAULT_CONTACT_CONTENT.fallbackBranches;
   }, [offices]);
 
   const handleSelectBranchFromDirectory = (branch) => {
@@ -242,6 +245,41 @@ export default function ContactPage() {
                       <span>Meet Our Advisory Team</span>
                       <ArrowRight className="size-4" aria-hidden="true" />
                     </Link>
+
+                    <div className="pt-4 border-t border-[#E2E8F0] flex flex-col gap-2">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-[#64748B]">
+                        Official Web &amp; Media Links
+                      </span>
+                      <div className="flex flex-wrap gap-4">
+                        <a
+                          href={DEFAULT_CONTACT_CONTENT.websiteUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 text-sm font-medium text-[#0F766E] hover:text-[#115E59] min-h-11 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0F766E]/20 rounded-sm"
+                        >
+                          <Globe className="size-4" aria-hidden="true" />
+                          <span>humanshelter.info</span>
+                        </a>
+                        <a
+                          href={DEFAULT_CONTACT_CONTENT.recruitmentUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 text-sm font-medium text-[#0F766E] hover:text-[#115E59] min-h-11 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0F766E]/20 rounded-sm"
+                        >
+                          <UserPlus className="size-4" aria-hidden="true" />
+                          <span>Join Human Shelter</span>
+                        </a>
+                        <a
+                          href={DEFAULT_CONTACT_CONTENT.youtubeUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 text-sm font-medium text-[#0F766E] hover:text-[#115E59] min-h-11 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0F766E]/20 rounded-sm"
+                        >
+                          <PlayCircle className="size-4" aria-hidden="true" />
+                          <span>YouTube</span>
+                        </a>
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
               </div>

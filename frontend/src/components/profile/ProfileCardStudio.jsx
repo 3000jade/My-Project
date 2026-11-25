@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { motion, AnimatePresence, MotionConfig } from 'framer-motion';
 import {
   RefreshCw,
@@ -13,6 +13,10 @@ import {
   Building2,
   ShieldCheck,
   Clock,
+  Camera,
+  Upload,
+  Trash2,
+  Loader2,
 } from 'lucide-react';
 import PageHeader from '@/components/dashboard/PageHeader';
 import { ProfileSkeleton } from '@/components/dashboard/skeletons';
@@ -48,11 +52,27 @@ import {
 import SessionManagementPanel from '@/components/auth/SessionManagementPanel';
 import { evaluateLicenseStatus } from '@/services/agentService';
 import { clientUserService } from '@/services/clientUserService';
+import { driveService } from '@/services/driveService';
 import ChangePasswordDialog from './ChangePasswordDialog';
 import LivePublicCardPreview from './LivePublicCardPreview';
 import { cn } from '@/utils/cn';
 
 const BIO_MAX = 1000;
+const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
+const ALLOWED_AVATAR_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
+function getVerificationBadge(status, role) {
+  const normalized = String(status || 'PENDING').toUpperCase();
+  if (normalized === 'VERIFIED') {
+    return {
+      label: role === 'broker' ? 'Verified Principal' : role === 'client' ? 'Verified Client' : 'Verified',
+      variant: 'success',
+    };
+  }
+  if (normalized === 'REJECTED') return { label: 'Verification Rejected', variant: 'destructive' };
+  if (normalized === 'SUSPENDED') return { label: 'Suspended', variant: 'destructive' };
+  return { label: 'Pending Verification', variant: 'warning' };
+}
 
 const LICENSE_BADGE_MAP = {
   VALID: { label: 'Valid', variant: 'success' },
@@ -85,13 +105,17 @@ function formatAuditDate(isoValue) {
   }).format(parsed);
 }
 
-function IdentitySummaryBanner({ role, profile, isDirty, onOpenPreview }) {
+function IdentitySummaryCard({ role, profile, isDirty, onOpenPreview }) {
   const displayName =
+    profile.display_name ||
     profile.name ||
-    [profile.firstName, profile.lastName].filter(Boolean).join(' ') ||
+    [profile.first_name || profile.firstName, profile.middle_name || profile.middleName, profile.last_name || profile.lastName]
+      .filter(Boolean)
+      .join(' ') ||
     'Principal Broker';
   const initials = getInitials(displayName, role === 'broker' ? 'PB' : 'AG');
 
+  const verificationMeta = role !== 'broker' ? getVerificationBadge(profile.verification_status, role) : null;
   const prcStatus = evaluateLicenseStatus(profile.prc_license_no, profile.prc_validity);
   const dhsudStatus = evaluateLicenseStatus(
     profile.dhsud_accreditation_no,
@@ -101,96 +125,82 @@ function IdentitySummaryBanner({ role, profile, isDirty, onOpenPreview }) {
   const dhsudMeta = LICENSE_BADGE_MAP[dhsudStatus] || LICENSE_BADGE_MAP.NOT_PROVIDED;
 
   return (
-    <Card
-      data-testid="identity-summary-banner"
-      className="bg-surface border border-outline rounded-xl shadow-xs"
-    >
-      <CardContent className="p-5 flex flex-col gap-4">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-4 min-w-0">
-            <Avatar className="size-14 shrink-0 border-2 border-primary/20">
-              <AvatarImage src={profile.avatar} alt={displayName} />
-              <AvatarFallback className="bg-tertiary-container text-primary font-bold text-base">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
+    <div data-testid="identity-summary-banner" className="flex flex-col gap-4 p-4">
+      <div className="flex items-start gap-4 min-w-0">
+        <Avatar className="size-16 shrink-0 border-2 border-primary/20">
+          <AvatarImage src={profile.avatar} alt={displayName} />
+          <AvatarFallback className="bg-tertiary-container text-primary font-bold text-base">
+            {initials}
+          </AvatarFallback>
+        </Avatar>
 
-            <div className="min-w-0 flex flex-col gap-1">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-xl font-semibold text-on-surface tracking-tight truncate">
-                  {displayName}
-                </h2>
-                <Badge variant="success" className="text-xs">
-                  <ShieldCheck className="size-3.5" />
-                  {role === 'broker' ? 'Verified Principal' : 'Verified'}
-                </Badge>
-              </div>
-              <p className="text-xs text-on-surface-variant flex items-center gap-1.5 flex-wrap">
-                <Building2 className="size-3.5 text-primary shrink-0" />
-                <span className="truncate">
-                  {profile.firm_name || profile.brokerage_name || 'Human Shelter Realty'}
-                </span>
-                <span aria-hidden="true">•</span>
-                <span className="inline-flex items-center gap-1 font-mono">
-                  <Clock className="size-3.5 shrink-0" />
-                  Last updated: {formatAuditDate(profile.updated_at)}
-                </span>
-              </p>
+        <div className="min-w-0 flex-1 flex flex-col gap-1">
+          <h2 className="text-base font-semibold text-on-surface tracking-tight truncate">
+            {displayName}
+          </h2>
+          <p className="text-xs text-on-surface-variant flex items-center gap-1.5 min-w-0">
+            <Building2 className="size-3.5 text-primary shrink-0" />
+            <span className="truncate">
+              {profile.firm_name || profile.brokerage_name || 'Human Shelter Realty'}
+            </span>
+          </p>
+          {role !== 'broker' && (
+            <div className="flex items-center gap-2 flex-wrap pt-1">
+              <Badge variant={verificationMeta.variant} className="text-xs">
+                <ShieldCheck className="size-3.5" />
+                {verificationMeta.label}
+              </Badge>
+              <Badge variant={isDirty ? 'warning' : 'success'} className="text-xs">
+                {isDirty ? 'Unsaved Draft' : 'Synced'}
+              </Badge>
             </div>
+          )}
+        </div>
+      </div>
+
+      <p className="text-xs text-on-surface-variant flex items-center gap-1.5">
+        <Clock className="size-3.5 shrink-0" />
+        <span>Last updated: {formatAuditDate(profile.updated_at)}</span>
+      </p>
+
+      {role !== 'client' && (
+        <div className="flex flex-col gap-2 pt-2 border-t border-outline">
+          <div className="p-2 rounded-lg bg-background border border-outline flex items-center justify-between gap-2 min-w-0">
+            <div className="min-w-0 flex flex-col">
+              <span className="text-xs text-on-surface-variant">PRC License</span>
+              <span className="text-xs font-medium text-on-surface truncate">
+                {profile.prc_license_no || 'Not set'}
+              </span>
+            </div>
+            <Badge variant={prcMeta.variant} className="text-xs shrink-0">
+              {prcMeta.label}
+            </Badge>
           </div>
 
-          <div className="flex items-center flex-wrap gap-2 shrink-0">
-            <Badge variant={isDirty ? 'warning' : 'success'} className="text-xs">
-              {isDirty ? 'Unsaved Draft' : 'Synced'}
+          <div className="p-2 rounded-lg bg-background border border-outline flex items-center justify-between gap-2 min-w-0">
+            <div className="min-w-0 flex flex-col">
+              <span className="text-xs text-on-surface-variant">DHSUD Reg</span>
+              <span className="text-xs font-medium text-on-surface truncate">
+                {profile.dhsud_accreditation_no || 'Not set'}
+              </span>
+            </div>
+            <Badge variant={dhsudMeta.variant} className="text-xs shrink-0">
+              {dhsudMeta.label}
             </Badge>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onOpenPreview}
-              className="h-11 px-4 border-outline bg-surface text-on-surface normal-case"
-            >
-              <Eye data-icon="inline-start" className="text-primary" />
-              Preview Public Card
-            </Button>
           </div>
         </div>
+      )}
 
-        {/* Private Portal Compliance & Expiration Strip */}
-        {role !== 'client' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-3 border-t border-outline">
-            <div className="p-3 rounded-lg bg-background border border-outline flex items-center justify-between gap-3 min-w-0">
-              <div className="min-w-0 flex flex-col gap-0.5">
-                <span className="text-xs font-medium text-on-surface-variant">
-                  PRC License &amp; Expiration
-                </span>
-                <span className="text-xs font-mono font-semibold text-on-surface truncate">
-                  {profile.prc_license_no || 'Not set'} • Expires{' '}
-                  {profile.prc_validity || '—'}
-                </span>
-              </div>
-              <Badge variant={prcMeta.variant} className="text-xs shrink-0">
-                {prcMeta.label}
-              </Badge>
-            </div>
-
-            <div className="p-3 rounded-lg bg-background border border-outline flex items-center justify-between gap-3 min-w-0">
-              <div className="min-w-0 flex flex-col gap-0.5">
-                <span className="text-xs font-medium text-on-surface-variant">
-                  DHSUD Reg &amp; Expiration
-                </span>
-                <span className="text-xs font-mono font-semibold text-on-surface truncate">
-                  {profile.dhsud_accreditation_no || 'Not set'} • Expires{' '}
-                  {profile.dhsud_validity || '—'}
-                </span>
-              </div>
-              <Badge variant={dhsudMeta.variant} className="text-xs shrink-0">
-                {dhsudMeta.label}
-              </Badge>
-            </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+      <Button
+        type="button"
+        variant="outline"
+        onClick={onOpenPreview}
+        className="w-full h-10 min-h-11 px-4 border-outline bg-surface text-on-surface normal-case"
+      >
+        <Eye data-icon="inline-start" className="text-primary" />
+        Preview Public Card
+      </Button>
+    </div>
   );
 }
 
@@ -234,6 +244,8 @@ export default function ProfileCardStudio({
   const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false);
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const photoInputRef = useRef(null);
 
   const handlePasswordChange = async (currentPassword, newPassword) => {
     await clientUserService.changePassword(currentPassword, newPassword);
@@ -268,6 +280,75 @@ export default function ProfileCardStudio({
     }
   };
 
+  const handleNamePartChange = (key, value) => {
+    if (!onDraftChange) return;
+    const next = { ...draft, [key]: value };
+    const prevComposed = [draft.first_name, draft.middle_name, draft.last_name]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+    const currentDisplay = String(draft.display_name ?? draft.name ?? '').trim();
+    const nextComposed = [next.first_name, next.middle_name, next.last_name]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+    if (!currentDisplay || currentDisplay === prevComposed) {
+      next.display_name = nextComposed;
+      next.name = nextComposed;
+    }
+    onDraftChange(next);
+  };
+
+  const handleDisplayNameChange = (value) => {
+    if (!onDraftChange) return;
+    onDraftChange({ ...draft, display_name: value, name: value });
+  };
+
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+
+    if (!ALLOWED_AVATAR_TYPES.includes(file.type)) {
+      toast({
+        title: 'Unsupported File Type',
+        description: 'Please upload a JPG, PNG, or WEBP image.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (file.size > MAX_AVATAR_BYTES) {
+      toast({
+        title: 'File Too Large',
+        description: 'Profile photo must be 5 MB or smaller.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setUploadingPhoto(true);
+    try {
+      const uploaded = await driveService.uploadFile(file, 'profiles', 'Photos');
+      const url = uploaded?.directImageUrl;
+      if (!url) throw new Error('Upload succeeded without an image URL.');
+      handleFieldChange('avatar', url);
+      toast({
+        title: 'Photo Uploaded',
+        description: 'Click Save Changes to apply your new profile photo.',
+        variant: 'success',
+      });
+    } catch (err) {
+      toast({
+        title: 'Photo Upload Failed',
+        description: err.message || 'Could not upload profile photo.',
+        variant: 'destructive',
+      });
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (onSave && isDirty && !saving) {
@@ -280,8 +361,8 @@ export default function ProfileCardStudio({
       {/* Tab 1: Common Identity & Card Fields */}
       <TabsContent value="identity" className={isMasterDetail ? 'mt-0' : 'mt-4'}>
         <Card className="bg-surface border border-outline rounded-xl shadow-xs">
-          <CardHeader className="pb-4 border-b border-outline">
-            <CardTitle className="text-xl font-semibold text-on-surface">
+          <CardHeader className="p-5 pb-4 border-b border-outline">
+            <CardTitle className="text-base font-semibold text-on-surface">
               Identity &amp; Card Details
             </CardTitle>
             <CardDescription className="text-sm text-on-surface-variant">
@@ -290,42 +371,167 @@ export default function ProfileCardStudio({
                 : 'Changes appear on your live card preview right away. Save when ready.'}
             </CardDescription>
           </CardHeader>
-          <CardContent className="pt-6">
-            <FieldGroup className="gap-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <CardContent className="p-5">
+            <FieldGroup className="gap-5">
+              {/* Profile Photo Upload Placeholder */}
+              <Field>
+                <FieldLabel className="text-sm font-medium text-on-surface">
+                  Profile Photo
+                </FieldLabel>
+                <input
+                  ref={photoInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={handlePhotoUpload}
+                  className="sr-only"
+                  aria-label="Upload profile photo"
+                />
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-xl border border-dashed border-outline bg-background hover:border-primary/60 transition-colors">
+                  <div className="flex items-center gap-4 min-w-0">
+                    <AnimatePresence mode="wait">
+                      {draft.avatar ? (
+                        <motion.div
+                          key="avatar-img"
+                          initial={{ opacity: 0, scale: 0.92 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.92 }}
+                          transition={{ duration: 0.16 }}
+                        >
+                          <Avatar className="size-16 shrink-0 border border-outline">
+                            <AvatarImage src={draft.avatar} alt={draft.display_name || draft.name || 'Profile'} />
+                            <AvatarFallback className="bg-tertiary-container text-primary font-semibold">
+                              {getInitials(draft.display_name || draft.name, role === 'broker' ? 'PB' : 'AG')}
+                            </AvatarFallback>
+                          </Avatar>
+                        </motion.div>
+                      ) : (
+                        <motion.div
+                          key="avatar-placeholder"
+                          initial={{ opacity: 0, scale: 0.92 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.92 }}
+                          transition={{ duration: 0.16 }}
+                          className="size-16 shrink-0 rounded-full border border-dashed border-outline-variant bg-surface flex items-center justify-center text-on-surface-variant"
+                        >
+                          <Camera className="size-6" />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                    <div className="min-w-0 flex flex-col gap-1">
+                      <span className="text-sm font-medium text-on-surface">
+                        {draft.avatar ? 'Update your profile photo' : 'Upload a profile photo'}
+                      </span>
+                      <span className="text-xs text-on-surface-variant">
+                        JPG, PNG, or WEBP • Max 5 MB
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={uploadingPhoto}
+                      onClick={() => photoInputRef.current?.click()}
+                      className="flex-1 sm:flex-initial h-10 min-h-11 px-4 border-outline bg-surface text-on-surface normal-case"
+                    >
+                      {uploadingPhoto ? (
+                        <Loader2 data-icon="inline-start" className="animate-spin text-primary" />
+                      ) : (
+                        <Upload data-icon="inline-start" className="text-primary" />
+                      )}
+                      {uploadingPhoto ? 'Uploading...' : draft.avatar ? 'Change Photo' : 'Upload Photo'}
+                    </Button>
+                    {draft.avatar && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={uploadingPhoto}
+                        onClick={() => handleFieldChange('avatar', '')}
+                        aria-label="Remove profile photo"
+                        className="h-10 min-h-11 px-3 border-outline bg-surface text-red-600 hover:bg-red-50 normal-case"
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </Field>
+
+              {/* Split Name Fields */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <Field>
-                  <FieldLabel htmlFor="studio-name" className="text-sm font-medium text-on-surface">
-                    Full Name
+                  <FieldLabel htmlFor="studio-first-name" className="text-sm font-medium text-on-surface">
+                    First Name
                   </FieldLabel>
                   <Input
-                    id="studio-name"
+                    id="studio-first-name"
                     type="text"
-                    value={draft.name || ''}
-                    onChange={(e) => handleFieldChange('name', e.target.value)}
+                    value={draft.first_name ?? draft.firstName ?? ''}
+                    onChange={(e) => handleNamePartChange('first_name', e.target.value)}
                     onFocus={() => setFocusedSection('identity')}
                     onBlur={() => setFocusedSection(null)}
-                    placeholder="Enter your full name"
+                    placeholder="First name"
                     required
-                    className="h-11 bg-surface border-outline text-on-surface rounded-lg"
+                    className="h-10 bg-surface border-outline text-on-surface rounded-lg"
                   />
                 </Field>
 
                 <Field>
-                  <FieldLabel htmlFor="studio-avatar" className="text-sm font-medium text-on-surface">
-                    Profile Photo URL
+                  <FieldLabel htmlFor="studio-middle-name" className="text-sm font-medium text-on-surface">
+                    Middle Name
                   </FieldLabel>
                   <Input
-                    id="studio-avatar"
-                    type="url"
-                    value={draft.avatar || ''}
-                    onChange={(e) => handleFieldChange('avatar', e.target.value)}
+                    id="studio-middle-name"
+                    type="text"
+                    value={draft.middle_name ?? draft.middleName ?? ''}
+                    onChange={(e) => handleNamePartChange('middle_name', e.target.value)}
                     onFocus={() => setFocusedSection('identity')}
                     onBlur={() => setFocusedSection(null)}
-                    placeholder="https://..."
-                    className="h-11 bg-surface border-outline text-on-surface rounded-lg"
+                    placeholder="Optional"
+                    className="h-10 bg-surface border-outline text-on-surface rounded-lg"
                   />
                 </Field>
 
+                <Field>
+                  <FieldLabel htmlFor="studio-last-name" className="text-sm font-medium text-on-surface">
+                    Last Name
+                  </FieldLabel>
+                  <Input
+                    id="studio-last-name"
+                    type="text"
+                    value={draft.last_name ?? draft.lastName ?? ''}
+                    onChange={(e) => handleNamePartChange('last_name', e.target.value)}
+                    onFocus={() => setFocusedSection('identity')}
+                    onBlur={() => setFocusedSection(null)}
+                    placeholder="Last name"
+                    required
+                    className="h-10 bg-surface border-outline text-on-surface rounded-lg"
+                  />
+                </Field>
+              </div>
+
+              <Field>
+                <FieldLabel htmlFor="studio-display-name" className="text-sm font-medium text-on-surface">
+                  Displayed Name
+                </FieldLabel>
+                <Input
+                  id="studio-display-name"
+                  type="text"
+                  value={draft.display_name ?? draft.name ?? ''}
+                  onChange={(e) => handleDisplayNameChange(e.target.value)}
+                  onFocus={() => setFocusedSection('identity')}
+                  onBlur={() => setFocusedSection(null)}
+                  placeholder="How your name appears on public cards"
+                  required
+                  className="h-10 bg-surface border-outline text-on-surface rounded-lg"
+                />
+                <FieldDescription className="text-xs text-on-surface-variant">
+                  Shown on your profile card, listings, and portal header
+                </FieldDescription>
+              </Field>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Field>
                   <FieldLabel htmlFor="studio-email" className="text-sm font-medium text-on-surface">
                     Email Address
@@ -337,7 +543,7 @@ export default function ProfileCardStudio({
                     readOnly
                     aria-readonly="true"
                     placeholder="name@company.com"
-                    className="h-11 bg-surface-variant border-outline text-on-surface-variant rounded-lg cursor-not-allowed"
+                    className="h-10 bg-surface-variant border-outline text-on-surface-variant rounded-lg cursor-not-allowed"
                   />
                   <FieldDescription className="text-xs text-on-surface-variant">
                     Account email is managed by authentication
@@ -357,7 +563,7 @@ export default function ProfileCardStudio({
                     onBlur={() => setFocusedSection(null)}
                     placeholder="+63 917 555 0192"
                     required
-                    className="h-11 bg-surface border-outline text-on-surface rounded-lg"
+                    className="h-10 bg-surface border-outline text-on-surface rounded-lg"
                   />
                 </Field>
               </div>
@@ -560,13 +766,6 @@ export default function ProfileCardStudio({
           <ProfileSkeleton layout={layout} />
         ) : isMasterDetail ? (
           <div className="flex flex-col gap-6 w-full min-w-0">
-            <IdentitySummaryBanner
-              role={role}
-              profile={draft}
-              isDirty={isDirty}
-              onOpenPreview={() => setPreviewDialogOpen(true)}
-            />
-
             {topBanner}
 
             <Tabs
@@ -576,47 +775,55 @@ export default function ProfileCardStudio({
               className="w-full min-w-0"
             >
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                {/* Left Vertical Rail (3 / 12 columns) */}
-                <Card className="lg:col-span-3 min-w-0 lg:sticky lg:top-24 bg-surface border border-outline rounded-xl shadow-xs p-2">
-                  <TabsList
-                    aria-label="Profile sections"
-                    className="flex flex-row lg:flex-col items-stretch justify-start w-full h-auto bg-transparent p-0 gap-1 overflow-x-auto"
-                  >
-                    {tabs.map((tab) => {
-                      const Icon = tab.icon;
-                      const isSelected = activeTab === tab.id;
-                      return (
-                        <TabsTrigger
-                          key={tab.id}
-                          value={tab.id}
-                          className="relative h-11 px-3 justify-start rounded-lg text-xs font-semibold normal-case tracking-normal data-[state=active]:bg-transparent data-[state=active]:shadow-none shrink-0"
-                        >
-                          {isSelected && (
-                            <motion.span
-                              layoutId="profile-rail-indicator"
-                              transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                              className="absolute inset-0 rounded-lg bg-tertiary-container/45 border border-primary/25"
-                            />
-                          )}
-                          <span
-                            className={cn(
-                              'relative z-10 flex items-center gap-2.5 w-full',
-                              isSelected ? 'text-primary' : 'text-on-surface-variant'
-                            )}
+                {/* Left Profile Card + Vertical Navigation (4 / 12 columns) */}
+                <Card className="lg:col-span-4 min-w-0 lg:sticky lg:top-24 bg-surface border border-outline rounded-xl shadow-xs overflow-hidden">
+                  <IdentitySummaryCard
+                    role={role}
+                    profile={draft}
+                    isDirty={isDirty}
+                    onOpenPreview={() => setPreviewDialogOpen(true)}
+                  />
+                  <div className="border-t border-outline p-2">
+                    <TabsList
+                      aria-label="Profile sections"
+                      className="flex flex-row lg:flex-col items-stretch justify-start w-full h-auto bg-transparent p-0 gap-1 overflow-x-auto"
+                    >
+                      {tabs.map((tab) => {
+                        const Icon = tab.icon;
+                        const isSelected = activeTab === tab.id;
+                        return (
+                          <TabsTrigger
+                            key={tab.id}
+                            value={tab.id}
+                            className="relative h-10 min-h-11 px-3 justify-start rounded-lg text-xs font-semibold normal-case tracking-normal data-[state=active]:bg-transparent data-[state=active]:shadow-none shrink-0"
                           >
-                            {Icon && <Icon className="size-4 shrink-0" />}
-                            <span className="truncate">{tab.label}</span>
-                          </span>
-                        </TabsTrigger>
-                      );
-                    })}
-                  </TabsList>
+                            {isSelected && (
+                              <motion.span
+                                layoutId="profile-rail-indicator"
+                                transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                                className="absolute inset-0 rounded-lg bg-tertiary-container/45 border border-primary/25"
+                              />
+                            )}
+                            <span
+                              className={cn(
+                                'relative z-10 flex items-center gap-2 w-full',
+                                isSelected ? 'text-primary' : 'text-on-surface-variant'
+                              )}
+                            >
+                              {Icon && <Icon className="size-4 shrink-0" />}
+                              <span className="truncate">{tab.label}</span>
+                            </span>
+                          </TabsTrigger>
+                        );
+                      })}
+                    </TabsList>
+                  </div>
                 </Card>
 
-                {/* Right Focused Settings Pane (9 / 12 columns) */}
+                {/* Right Focused Settings Pane (8 / 12 columns) */}
                 <form
                   onSubmit={handleSubmit}
-                  className="lg:col-span-9 min-w-0 flex flex-col gap-6"
+                  className="lg:col-span-8 min-w-0 flex flex-col gap-6"
                 >
                   {editorPanels}
                   {stickySaveBar}

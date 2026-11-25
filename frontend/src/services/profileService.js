@@ -72,8 +72,10 @@ export function normalizeProfile(raw = {}) {
 
   const name = raw.name ?? raw.full_name ?? '';
   const nameParts = String(name).trim().split(/\s+/).filter(Boolean);
-  const firstName = raw.firstName ?? nameParts[0] ?? '';
-  const lastName = raw.lastName ?? nameParts.slice(1).join(' ') ?? '';
+  const firstName = raw.first_name ?? raw.firstName ?? nameParts[0] ?? '';
+  const middleName = raw.middle_name ?? raw.middleName ?? '';
+  const lastName = raw.last_name ?? raw.lastName ?? nameParts.slice(1).join(' ') ?? '';
+  const displayName = raw.display_name ?? raw.displayName ?? name;
 
   const avatar = raw.avatar ?? raw.avatar_url ?? '';
 
@@ -85,9 +87,15 @@ export function normalizeProfile(raw = {}) {
 
   return {
     id: raw.id ?? '',
-    name,
+    name: displayName || name,
     firstName,
+    middleName,
     lastName,
+    displayName,
+    first_name: firstName,
+    middle_name: middleName,
+    last_name: lastName,
+    display_name: displayName,
     email: raw.email ?? '',
     phone: raw.phone ?? '',
     role: displayRole,
