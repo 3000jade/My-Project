@@ -31,7 +31,7 @@ export function formatPriceBadge(amount, currency = 'PHP') {
 /**
  * Creates an interactive regular SVG teardrop pin for property listings.
  * Displays an elegant brand teal pin (#0F766E) with white inner core, morphing
- * to active coral (#FF6B6B) with slight bounce when selected.
+ * to active coral (#FF8559) with slight bounce when selected.
  * Contains no price text; displays a clean property title tooltip on hover.
  *
  * @param {object} property
@@ -57,7 +57,7 @@ export function createTeardropPinElement(property, options = {}) {
   container.setAttribute('data-property-id', String(property.id || ''));
   container.setAttribute('data-testid', `map-marker-${property.id}`);
 
-  const fillColor = isSelected ? '#FF6B6B' : isHovered ? '#0D9488' : '#0F766E';
+  const fillColor = isSelected ? '#FF8559' : isHovered ? '#0D9488' : '#0F766E';
   const strokeColor = isSelected ? '#E05353' : isHovered ? '#0F766E' : '#0B5953';
   const scaleClass = isSelected
     ? 'scale-125 z-[9999] drop-shadow-xl'
@@ -91,7 +91,7 @@ export function createTeardropPinElement(property, options = {}) {
       <circle cx="14" cy="14" r="5" fill="#FFFFFF" />
       ${
         isSelected
-          ? '<circle cx="14" cy="14" r="2.5" fill="#FF6B6B" class="animate-pulse" />'
+          ? '<circle cx="14" cy="14" r="2.5" fill="#FF8559" class="animate-pulse" />'
           : isHovered
             ? '<circle cx="14" cy="14" r="2.5" fill="#0D9488" class="animate-pulse" />'
             : ''
@@ -166,14 +166,14 @@ export function createMinimalistMarkerElement(property, options = {}) {
     container.className =
       'relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold font-mono cursor-pointer transition-all duration-200 select-none shadow-xl bg-[#0F766E] text-white border border-[#0F766E] scale-110 z-[9999]';
     container.innerHTML = `
-      <span class="beacon-dot w-2 h-2 rounded-full bg-[#FF6B6B] animate-pulse shrink-0"></span>
+      <span class="beacon-dot w-2 h-2 rounded-full bg-[#FF8559] animate-pulse shrink-0"></span>
       <span class="tracking-tight">${priceText}</span>
     `;
   } else {
     container.className =
       'relative flex items-center justify-center cursor-pointer transition-all duration-200 select-none z-20 group hover:scale-125';
     container.innerHTML = `
-      <div class="w-5 h-5 rounded-full bg-white/95 border-2 border-[#0F766E] shadow-md flex items-center justify-center transition-colors group-hover:border-[#FF6B6B] group-hover:bg-[#0F766E]">
+      <div class="w-5 h-5 rounded-full bg-white/95 border-2 border-[#0F766E] shadow-md flex items-center justify-center transition-colors group-hover:border-[#FF8559] group-hover:bg-[#0F766E]">
         <div class="w-2 h-2 rounded-full bg-[#0F766E] group-hover:bg-white transition-colors"></div>
       </div>
       <div class="absolute -top-7 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded bg-slate-900/90 text-white text-[10px] font-mono font-medium shadow-sm pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-150 whitespace-nowrap">
@@ -254,7 +254,7 @@ export function createPriceBadgeElement(property, options = {}) {
   if (isExpanded) {
     container.className = `${baseClasses} bg-[#0F766E] text-white border border-[#0F766E] scale-110 shadow-lg z-[9999]`;
     container.innerHTML = `
-      <span class="beacon-dot w-2 h-2 rounded-full bg-[#FF6B6B] animate-pulse shrink-0"></span>
+      <span class="beacon-dot w-2 h-2 rounded-full bg-[#FF8559] animate-pulse shrink-0"></span>
       <span class="tracking-tight">${priceText}</span>
     `;
   } else {
@@ -306,7 +306,7 @@ export function createPriceBadgeElement(property, options = {}) {
 /**
  * Creates an interactive stacked anchor pin DOM element for multi-unit properties.
  * Adheres strictly to Modern SaaS design tokens:
- * - Teal #0F766E background with Coral #FF6B6B active state
+ * - Teal #0F766E background with Coral #FF8559 active state
  * - Shows unit count pill, price range, and subtle stacking layered effect
  *
  * @param {object} cluster - Anchor cluster object from groupPropertiesByCoordinates
@@ -334,7 +334,7 @@ export function createStackedAnchorMarkerElement(cluster, options = {}) {
   container.setAttribute('data-testid', `stacked-marker-${cluster.id}`);
 
   const bgClass = isSelected
-    ? 'bg-[#FF6B6B] text-white border-[#E05353] shadow-xl scale-110 z-50'
+    ? 'bg-[#FF8559] text-white border-[#E05353] shadow-xl scale-110 z-50'
     : isHovered
       ? 'bg-[#0D9488] text-white border-[#0F766E] shadow-xl scale-105 z-40'
       : 'bg-[#0F766E] text-white border-teal-800/80 shadow-md hover:scale-105 z-30';
@@ -369,7 +369,7 @@ export function createStackedAnchorMarkerElement(cluster, options = {}) {
     </div>
 
     <!-- Pin Tip Pointing Down -->
-    <div class="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent ${isSelected ? 'border-t-[#FF6B6B]' : isHovered ? 'border-t-[#0D9488]' : 'border-t-[#0F766E]'} border-t-[6px] -mt-[1px]"></div>
+    <div class="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent ${isSelected ? 'border-t-[#FF8559]' : isHovered ? 'border-t-[#0D9488]' : 'border-t-[#0F766E]'} border-t-[6px] -mt-[1px]"></div>
   `;
 
   // Click & hover events

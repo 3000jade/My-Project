@@ -39,7 +39,7 @@ import { isStrataFamily } from './propertyTypeConfig';
 const ADDRESS_MAX = 160;
 const SHOW_ON_MAP_OPTIONS = ['Exact Location', 'General Area Only'];
 
-const Req = () => <span className="text-[#FF6B6B]" aria-hidden="true">*</span>;
+const Req = () => <span className="text-[#FF8559]" aria-hidden="true">*</span>;
 
 /**
  * Step 2: Location (Cascading PSGC shadcn Selects, Street, Subdivision/Condo, Google Maps Pin & Show on Map)
@@ -162,7 +162,7 @@ export default function ListingStepLocation({
                   <InputGroupText
                     className={cn(
                       'text-xs tabular-nums',
-                      addressNearLimit ? 'text-[#FF6B6B] font-semibold' : 'text-[#64748B]'
+                      addressNearLimit ? 'text-[#FF8559] font-semibold' : 'text-[#64748B]'
                     )}
                   >
                     {addressValue.length} / {ADDRESS_MAX}

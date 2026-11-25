@@ -113,7 +113,10 @@ export class PropertyController {
    */
   public static async countProperties(req: Request, res: Response) {
     try {
-      const count = await PropertyService.countProperties(req.query);
+      const isPublicView = req.query.publicView === 'true';
+      const userRole = isPublicView ? 'client' : (req as AuthenticatedRequest).user?.role;
+      const userId = (req as AuthenticatedRequest).user?.id;
+      const count = await PropertyService.countProperties(req.query, userRole, userId);
       res.status(200).json({ success: true, count });
     } catch (err: any) {
       res.status(500).json({ success: false, error: err.message || 'Failed to count properties.' });
@@ -273,6 +276,8 @@ export class PropertyController {
     try {
       const propertyId = String(req.params.id);
       const category = (req.body.category as any) || 'Photos';
+      const userId = req.user?.id;
+      const userRole = req.user?.role;
 
       if (!files || files.length === 0) {
         res.status(400).json({
@@ -281,6 +286,40 @@ export class PropertyController {
           timestamp: new Date().toISOString(),
         });
         return;
+      }
+
+      if (propertyId === 'general') {
+        if (userRole === 'agent') {
+          res.status(403).json({
+            success: false,
+            error: 'Forbidden: Agents cannot upload media to general staging folders.',
+            timestamp: new Date().toISOString(),
+          });
+          return;
+        }
+      } else {
+        const property = await PropertyService.findPropertyById(propertyId, undefined, userRole, userId);
+        if (!property) {
+          res.status(404).json({
+            success: false,
+            error: `Property with id '${propertyId}' not found.`,
+            timestamp: new Date().toISOString(),
+          });
+          return;
+        }
+        if (userRole === 'agent') {
+          const assignedAgentId = property.listAgentKey || property.agentId || property.createdBy;
+          if (!assignedAgentId || assignedAgentId !== userId) {
+            res.status(403).json({
+              success: false,
+              error: 'Forbidden: You can only upload media for properties assigned to you.',
+              timestamp: new Date().toISOString(),
+            });
+            return;
+          }
+        } else if (userRole === 'broker') {
+          await PropertyService.assertCanModifyProperty(property, userId, userRole, 'modify');
+        }
       }
 
       const results = [];
@@ -296,7 +335,8 @@ export class PropertyController {
         timestamp: new Date().toISOString(),
       });
     } catch (err: any) {
-      res.status(500).json({
+      const statusCode = err.message?.startsWith('Forbidden') ? 403 : 500;
+      res.status(statusCode).json({
         success: false,
         error: err.message || 'Error uploading media.',
         timestamp: new Date().toISOString(),
@@ -722,7 +762,7 @@ export class PropertyController {
         return;
       }
 
-      const result = await PropertyService.reassignAgent(propertyId, userId, newAgentId);
+      const result = await PropertyService.reassignAgent(propertyId, userId, newAgentId, req.user?.role);
 
       res.status(200).json({
         success: true,
@@ -731,7 +771,7 @@ export class PropertyController {
         timestamp: new Date().toISOString(),
       });
     } catch (err: any) {
-      res.status(400).json({
+      res.status(err.message?.startsWith('Forbidden') ? 403 : 400).json({
         success: false,
         error: err.message || 'Could not reassign property agent.',
         timestamp: new Date().toISOString(),
@@ -752,7 +792,9 @@ export class PropertyController {
       const { recipients, idempotency_key, optional_note } = req.body;
 
       const property: any = await PropertyService.findPropertyById(id, undefined, req.user?.role, req.user?.id);
-      if (!property) {
+      const isPrivileged = req.user?.role === 'broker' || req.user?.role === 'admin';
+      const propStatus = property ? (property.standardStatus ?? property.standard_status) : null;
+      if (!property || (!isPrivileged && propStatus !== 'Active')) {
         res.status(404).json({
           success: false,
           error: `Property with id '${id}' not found.`,

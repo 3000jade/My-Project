@@ -122,9 +122,9 @@ export default function DescriptionEditorModal({
               className={cn(
                 'border text-xs font-semibold tabular-nums',
                 isOverLimit
-                  ? 'bg-[#FFF5F5] text-[#FF6B6B] border-[#FF6B6B]/40'
+                  ? 'bg-[#FFF5F5] text-[#FF8559] border-[#FF8559]/40'
                   : isNearLimit
-                    ? 'bg-[#FFF5F5] text-[#FF6B6B] border-[#FF6B6B]/30'
+                    ? 'bg-[#FFF5F5] text-[#FF8559] border-[#FF8559]/30'
                     : 'bg-[#F0FDFA] text-[#0F766E] border-[#0F766E]/20'
               )}
             >

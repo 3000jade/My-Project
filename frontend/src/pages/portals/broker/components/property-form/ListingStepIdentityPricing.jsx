@@ -101,7 +101,7 @@ const DOWNPAYMENT_TERM_OPTIONS = [
 
 const LOAN_TERM_OPTIONS = ['5 Years', '10 Years', '15 Years', '20 Years', '25 Years'];
 
-const Req = () => <span className="text-[#FF6B6B]" aria-hidden="true">*</span>;
+const Req = () => <span className="text-[#FF8559]" aria-hidden="true">*</span>;
 
 /**
  * Step 1: Basic Details & Pricing
@@ -305,7 +305,7 @@ export default function ListingStepIdentityPricing({
                     <InputGroupText
                       className={cn(
                         'text-xs tabular-nums',
-                        titleNearLimit ? 'text-[#FF6B6B] font-semibold' : 'text-[#64748B]'
+                        titleNearLimit ? 'text-[#FF8559] font-semibold' : 'text-[#64748B]'
                       )}
                     >
                       {titleValue.length} / {TITLE_MAX}
@@ -327,9 +327,9 @@ export default function ListingStepIdentityPricing({
                     variant="outline"
                     aria-label="Remove property description"
                     onClick={() => updateField({ description: '' })}
-                    className="min-h-11 px-3 border-outline bg-surface text-on-surface-variant hover:text-[#FF6B6B] font-semibold rounded-lg cursor-pointer"
+                    className="min-h-11 px-3 border-outline bg-surface text-on-surface-variant hover:text-[#FF8559] font-semibold rounded-lg cursor-pointer"
                   >
-                    <Trash2 data-icon="inline-start" className="text-[#FF6B6B]" />
+                    <Trash2 data-icon="inline-start" className="text-[#FF8559]" />
                     Remove
                   </Button>
                 )}
@@ -596,7 +596,7 @@ export default function ListingStepIdentityPricing({
                             size="icon"
                             aria-label={`Remove ${bank.bankName}`}
                             onClick={() => handleRemovePartneredBank(bank.bankName)}
-                            className="size-9 text-[#64748B] hover:text-[#FF6B6B] cursor-pointer"
+                            className="size-9 text-[#64748B] hover:text-[#FF8559] cursor-pointer"
                           >
                             <Trash2 />
                           </Button>

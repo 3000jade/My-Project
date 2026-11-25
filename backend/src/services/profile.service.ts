@@ -123,34 +123,41 @@ export class ProfileService {
         if (!error && data) {
           return {
             id: data.id,
-            name: data.full_name || fallbackProfile.name,
-            email: data.email || fallbackProfile.email,
-            phone: data.phone || fallbackProfile.phone,
+            name: data.full_name ?? '',
+            email: data.email ?? '',
+            phone: data.phone ?? '',
             role: (data.role as any) || targetRole,
-            avatar: data.avatar_url || fallbackProfile.avatar,
-            avatar_url: data.avatar_url || fallbackProfile.avatar,
-            bio: data.bio || fallbackProfile.bio,
-            prc_license_no: data.prc_license_no || fallbackProfile.prc_license_no,
-            prc_validity: data.prc_validity || fallbackProfile.prc_validity,
-            dhsud_accreditation_no: data.dhsud_accreditation_no || fallbackProfile.dhsud_accreditation_no,
-            dhsud_validity: data.dhsud_validity || fallbackProfile.dhsud_validity,
-            firm_name: data.firm_name || fallbackProfile.firm_name,
-            experience_years: data.experience_years ?? fallbackProfile.experience_years,
-            preferred_location: data.preferred_location || fallbackProfile.preferred_location,
-            investment_budget: data.investment_budget || fallbackProfile.investment_budget,
-            notification_preferences: data.notification_preferences || fallbackProfile.notification_preferences,
-            ui_preferences: data.ui_preferences || fallbackProfile.ui_preferences || { font_size: 'standard' },
-            verification_status: data.verification_status || 'VERIFIED',
+            avatar: data.avatar_url ?? '',
+            avatar_url: data.avatar_url ?? '',
+            bio: data.bio ?? '',
+            prc_license_no: data.prc_license_no ?? '',
+            prc_validity: data.prc_validity ?? '',
+            dhsud_accreditation_no: data.dhsud_accreditation_no ?? '',
+            dhsud_validity: data.dhsud_validity ?? '',
+            firm_name: data.firm_name ?? '',
+            experience_years: data.experience_years ?? 0,
+            date_of_birth: data.date_of_birth ?? null,
+            gender: data.gender ?? null,
+            emergency_contact_name: data.emergency_contact_name ?? null,
+            emergency_contact_phone: data.emergency_contact_phone ?? null,
+            preferred_location: data.preferred_location ?? '',
+            investment_budget: data.investment_budget ?? '',
+            notification_preferences: data.notification_preferences || { email: true, sms: true, priceDrops: true },
+            ui_preferences: data.ui_preferences || { font_size: 'standard' },
+            verification_status: data.verification_status || 'PENDING',
             updated_at: data.updated_at,
           };
         }
+        if (error) {
+          logger.warn('Supabase getProfile error:', error.message);
+        }
       } catch (err: any) {
-        logger.warn('Supabase getProfile failed, using fallback:', err.message);
+        logger.warn('Supabase getProfile failed:', err.message);
       }
     }
 
-    // In-memory fallback
-    if (userId && inMemoryProfiles.has(userId)) {
+    // In-memory fallback (local/test mode when Supabase is not configured)
+    if (!isSupabaseConfigured && userId && inMemoryProfiles.has(userId)) {
       return { ...inMemoryProfiles.get(userId)! };
     }
 
@@ -172,25 +179,46 @@ export class ProfileService {
       : 'agent') as 'broker' | 'agent' | 'client' | 'admin';
     const current = await this.getProfile(userId, role);
 
-    const updatedName = updates.fullName || updates.name || current.name;
-    const updatedAvatar = updates.avatar_url || updates.avatar || current.avatar;
-    const updatedLocation = updates.preferred_location || updates.preferredLocation || current.preferred_location;
-    const updatedBudget = updates.investment_budget || updates.investmentBudget || current.investment_budget;
-    const updatedNotifications = updates.notification_preferences || updates.notificationPreferences || current.notification_preferences;
-    const updatedUiPreferences = updates.ui_preferences || updates.uiPreferences || (
-      updates.font_size_preference 
+    const updatedName = updates.fullName ?? updates.name ?? current.name;
+    const updatedAvatar = updates.avatar_url ?? updates.avatar ?? current.avatar;
+    const updatedLocation = updates.preferred_location ?? updates.preferredLocation ?? current.preferred_location;
+    const updatedBudget = updates.investment_budget ?? updates.investmentBudget ?? current.investment_budget;
+    const updatedNotifications = updates.notification_preferences ?? updates.notificationPreferences ?? current.notification_preferences;
+    const updatedUiPreferences = updates.ui_preferences ?? updates.uiPreferences ?? (
+      updates.font_size_preference
         ? { ...(current.ui_preferences || {}), font_size: updates.font_size_preference }
         : current.ui_preferences || { font_size: 'standard' }
     );
 
-    // Anti-tampering guard: only admin can alter role or verification_status
+    // Anti-tampering guard: only admin can alter role/verification_status;
+    // only brokers/admins can directly edit regulatory license fields via /api/profile
     const finalRole = isAdmin && updates.role ? updates.role : current.role;
     const finalVerificationStatus = isAdmin && updates.verification_status ? updates.verification_status : current.verification_status;
+    const canEditRegulatoryFields = isAdmin || targetRole === 'broker';
 
     const updatedData: UserProfileData = {
       ...current,
-      ...updates,
       name: updatedName,
+      phone: updates.phone ?? current.phone,
+      bio: updates.bio ?? current.bio,
+      experience_years: updates.experience_years ?? current.experience_years,
+      date_of_birth: updates.date_of_birth !== undefined ? updates.date_of_birth : current.date_of_birth ?? null,
+      gender: updates.gender !== undefined ? updates.gender : current.gender ?? null,
+      emergency_contact_name:
+        updates.emergency_contact_name !== undefined
+          ? updates.emergency_contact_name
+          : current.emergency_contact_name ?? null,
+      emergency_contact_phone:
+        updates.emergency_contact_phone !== undefined
+          ? updates.emergency_contact_phone
+          : current.emergency_contact_phone ?? null,
+      firm_name: canEditRegulatoryFields ? (updates.firm_name ?? current.firm_name) : current.firm_name,
+      prc_license_no: canEditRegulatoryFields ? (updates.prc_license_no ?? current.prc_license_no) : current.prc_license_no,
+      prc_validity: canEditRegulatoryFields ? (updates.prc_validity ?? current.prc_validity) : current.prc_validity,
+      dhsud_accreditation_no: canEditRegulatoryFields
+        ? (updates.dhsud_accreditation_no ?? current.dhsud_accreditation_no)
+        : current.dhsud_accreditation_no,
+      dhsud_validity: canEditRegulatoryFields ? (updates.dhsud_validity ?? current.dhsud_validity) : current.dhsud_validity,
       role: finalRole,
       verification_status: finalVerificationStatus,
       avatar: updatedAvatar,
@@ -203,50 +231,46 @@ export class ProfileService {
     };
 
     if (isSupabaseConfigured && userId) {
-      try {
-        const { data, error } = await supabaseAdmin
-          .from('profiles')
-          .update({
-            full_name: updatedData.name,
-            phone: updatedData.phone,
-            avatar_url: updatedData.avatar,
-            bio: updatedData.bio,
-            preferred_location: updatedData.preferred_location,
-            investment_budget: updatedData.investment_budget,
-            firm_name: updatedData.firm_name,
-            prc_license_no: updatedData.prc_license_no,
-            prc_validity: updatedData.prc_validity,
-            dhsud_accreditation_no: updatedData.dhsud_accreditation_no,
-            dhsud_validity: updatedData.dhsud_validity,
-            experience_years: updatedData.experience_years,
-            date_of_birth: updatedData.date_of_birth ?? null,
-            gender: updatedData.gender ?? null,
-            emergency_contact_name: updatedData.emergency_contact_name ?? null,
-            emergency_contact_phone: updatedData.emergency_contact_phone ?? null,
-            notification_preferences: updatedData.notification_preferences,
-            ui_preferences: updatedData.ui_preferences,
-            updated_at: updatedData.updated_at,
-          })
-          .eq('id', userId)
-          .select()
-          .single();
+      const { data, error } = await supabaseAdmin
+        .from('profiles')
+        .update({
+          full_name: updatedData.name,
+          phone: updatedData.phone,
+          avatar_url: updatedData.avatar,
+          bio: updatedData.bio,
+          preferred_location: updatedData.preferred_location,
+          investment_budget: updatedData.investment_budget,
+          firm_name: updatedData.firm_name,
+          prc_license_no: updatedData.prc_license_no,
+          prc_validity: updatedData.prc_validity,
+          dhsud_accreditation_no: updatedData.dhsud_accreditation_no,
+          dhsud_validity: updatedData.dhsud_validity,
+          experience_years: updatedData.experience_years,
+          date_of_birth: updatedData.date_of_birth ?? null,
+          gender: updatedData.gender ?? null,
+          emergency_contact_name: updatedData.emergency_contact_name ?? null,
+          emergency_contact_phone: updatedData.emergency_contact_phone ?? null,
+          notification_preferences: updatedData.notification_preferences,
+          ui_preferences: updatedData.ui_preferences,
+          updated_at: updatedData.updated_at,
+        })
+        .eq('id', userId)
+        .select()
+        .single();
 
-        if (error) {
-          logger.warn('Supabase updateProfile error, fallback to memory:', error.message);
-        } else if (data) {
-          updatedData.updated_at = data.updated_at;
-        }
-      } catch (err: any) {
-        logger.warn('Supabase updateProfile exception:', err.message);
+      if (error) {
+        logger.error('Supabase updateProfile error:', error.message);
+        throw new Error(`Failed to persist profile update: ${error.message}`);
       }
+      if (data?.updated_at) {
+        updatedData.updated_at = data.updated_at;
+      }
+      return updatedData;
     }
 
-    inMemoryProfiles.set(userId, updatedData);
-    if (updatedData.email) {
-      inMemoryProfiles.set(updatedData.email, updatedData);
-    }
-    if (defaultProfiles[targetRole]) {
-      defaultProfiles[targetRole] = { ...updatedData };
+    // Local/test mode without Supabase: store only for this userId (never mutate defaultProfiles)
+    if (userId) {
+      inMemoryProfiles.set(userId, updatedData);
     }
 
     return updatedData;

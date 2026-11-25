@@ -30,15 +30,15 @@ export default function PropertyMediaShowcaseSection({
   return (
     <>
       {areas.length > 0 && (
-        <section id="sec-media" className="scroll-mt-36">
+        <section id="sec-media" className="scroll-mt-44">
           <Card className="bg-white border-[#E2E8F0] rounded-xl shadow-xs">
             <CardHeader className="p-6 pb-4">
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#64748B]">
-                <span className="w-4 h-0.5 bg-[#FF6B6B] rounded-full shrink-0" aria-hidden="true" />
+                <span className="w-4 h-0.5 bg-[#FF8559] rounded-full shrink-0" aria-hidden="true" />
                 <span>Gallery &amp; Video Tours</span>
               </div>
               <CardTitle className="text-xl font-bold text-[#1E293B] tracking-tight">
-                Room Gallery &amp; Videos<span className="text-[#FF6B6B]">.</span>
+                Room Gallery &amp; Videos<span className="text-[#FF8559]">.</span>
               </CardTitle>
               <CardDescription>
                 Photos, room notes, and walkthrough videos organized by area.
@@ -128,15 +128,15 @@ export default function PropertyMediaShowcaseSection({
       )}
 
       {floorPlans.length > 0 && (
-        <section id="sec-floorplan" className="scroll-mt-36">
+        <section id="sec-floorplan" className="scroll-mt-44">
           <Card className="bg-white border-[#E2E8F0] rounded-xl shadow-xs">
             <CardHeader className="p-6 pb-4">
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#64748B]">
-                <span className="w-4 h-0.5 bg-[#FF6B6B] rounded-full shrink-0" aria-hidden="true" />
+                <span className="w-4 h-0.5 bg-[#FF8559] rounded-full shrink-0" aria-hidden="true" />
                 <span>Layout</span>
               </div>
               <CardTitle className="text-xl font-bold text-[#1E293B] tracking-tight">
-                Floor Plan<span className="text-[#FF6B6B]">.</span>
+                Floor Plan<span className="text-[#FF8559]">.</span>
               </CardTitle>
               <CardDescription>Unit layouts or lot cut plans.</CardDescription>
             </CardHeader>

@@ -15,7 +15,7 @@ import { getPropertyCoordinates, DEFAULT_METRO_MANILA_COORDS } from '../../../ut
 /**
  * EnlargedMapModal: Fullscreen interactive map dialog to explore
  * the full scale of active properties across the platform/region,
- * anchored onto the current property with Approved Coral (#FF6B6B) highlighting.
+ * anchored onto the current property with Approved Coral (#FF8559) highlighting.
  */
 export default function EnlargedMapModal({
   isOpen,
@@ -134,8 +134,8 @@ export default function EnlargedMapModal({
               <h1 className="text-sm sm:text-base font-bold text-[#1E293B] truncate">
                 {currentTitle}
               </h1>
-              <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#FF6B6B]/15 text-[#1E293B] border border-[#FF6B6B]/40 shrink-0">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#FF6B6B]"></span>
+              <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#FF8559]/15 text-[#1E293B] border border-[#FF8559]/40 shrink-0">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#FF8559]"></span>
                 Current Property
               </span>
             </div>
@@ -204,7 +204,7 @@ export default function EnlargedMapModal({
         {/* Floating Quick Legend Indicator */}
         <div className="absolute bottom-4 left-4 z-20 hidden sm:flex items-center gap-3 px-3.5 py-2 rounded-xl bg-white/95 backdrop-blur-md border border-[#E2E8F0] shadow-md text-xs">
           <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#FF6B6B] border border-white ring-1 ring-[#FF6B6B]/40"></span>
+            <span className="w-2.5 h-2.5 rounded-full bg-[#FF8559] border border-white ring-1 ring-[#FF8559]/40"></span>
             <span className="font-semibold text-[#1E293B]">Current Property</span>
           </div>
           <div className="h-3 w-px bg-slate-200"></div>

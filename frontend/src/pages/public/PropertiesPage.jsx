@@ -2,18 +2,69 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useVirtualizer } from '@tanstack/react-virtual';
+import { SlidersHorizontal, X } from 'lucide-react';
 
 import {
   UnifiedSearchBar,
   AllFiltersDrawer,
   PropertyCard,
-  PropertyMap,
   GooglePropertyMap,
   FilterEmptyState,
   Button
 } from '../../components/ui';
 import { usePropertyFilterEngine } from '../../hooks/usePropertyFilterEngine';
 import { propertyService } from '../../services/propertyService';
+import { getPropertyCoordinates } from '../../utils/propertyCoordinates';
+
+function extractAvailableLocations(list = []) {
+  const byKey = new Map();
+
+  list.forEach((property) => {
+    const city = (property?.city || property?.location_raw?.city || property?.location?.city || '').trim();
+    const province = (
+      property?.state_or_province ||
+      property?.province ||
+      property?.location_raw?.stateOrProvince ||
+      property?.location?.state ||
+      property?.location?.stateOrProvince ||
+      ''
+    ).trim();
+    const fallbackLoc = typeof property?.location === 'string' ? property.location.trim() : '';
+    const label = city || province || fallbackLoc;
+    if (!label) return;
+
+    const key = label.toLowerCase();
+    const coords = getPropertyCoordinates(property);
+    const hasCoords = Boolean(coords && Number.isFinite(coords.lat) && Number.isFinite(coords.lng));
+
+    if (!byKey.has(key)) {
+      byKey.set(key, {
+        name: label,
+        count: 0,
+        sumLat: 0,
+        sumLng: 0,
+        coordCount: 0,
+      });
+    }
+    const entry = byKey.get(key);
+    entry.count += 1;
+    if (hasCoords) {
+      entry.sumLat += coords.lat;
+      entry.sumLng += coords.lng;
+      entry.coordCount += 1;
+    }
+  });
+
+  return Array.from(byKey.values())
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
+    .map((entry) => ({
+      name: entry.name,
+      count: entry.count,
+      lat: entry.coordCount > 0 ? entry.sumLat / entry.coordCount : null,
+      lng: entry.coordCount > 0 ? entry.sumLng / entry.coordCount : null,
+      zoom: 13,
+    }));
+}
 
 export default function PropertiesPage() {
   const [searchParams] = useSearchParams();
@@ -28,8 +79,13 @@ export default function PropertiesPage() {
   const [showActiveFilters, setShowActiveFilters] = useState(false);
 
   const [properties, setProperties] = useState([]);
+  const [totalAvailable, setTotalAvailable] = useState(0);
+  const [serverPage, setServerPage] = useState(1);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [availableLocations, setAvailableLocations] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const hasLoadedOnceRef = useRef(false);
+  const lastParamsRef = useRef(null);
 
   // Dynamic header visibility listener
   useEffect(() => {
@@ -82,8 +138,13 @@ export default function PropertiesPage() {
         if (debouncedFilters.propertyType && debouncedFilters.propertyType !== 'All') {
           params.propertyType = debouncedFilters.propertyType;
         }
-        if (debouncedFilters.district && debouncedFilters.district !== 'All' && debouncedFilters.district !== 'All Metro Manila') {
-          params.district = debouncedFilters.district;
+        if (
+          debouncedFilters.location &&
+          debouncedFilters.location !== 'All' &&
+          debouncedFilters.location !== 'All Locations' &&
+          debouncedFilters.location !== 'All Metro Manila'
+        ) {
+          params.district = debouncedFilters.location;
         }
         if (debouncedFilters.minPrice) params.minPrice = debouncedFilters.minPrice;
         if (debouncedFilters.maxPrice) params.maxPrice = debouncedFilters.maxPrice;
@@ -99,9 +160,18 @@ export default function PropertiesPage() {
           params.west = debouncedFilters.mapBounds.west;
         }
 
-        const res = await propertyService.getProperties(params);
+        lastParamsRef.current = params;
+        const res = await propertyService.getProperties({ ...params, page: 1 });
         if (!cancelled && res && res.data) {
           setProperties(res.data);
+          setServerPage(1);
+          setTotalAvailable(Number(res.total ?? res.data.length));
+          const extracted = extractAvailableLocations(res.data);
+          if (!params.district) {
+            setAvailableLocations(extracted);
+          } else {
+            setAvailableLocations((prev) => (prev.length > 0 ? prev : extracted));
+          }
         }
       } catch (error) {
         if (!cancelled) {
@@ -214,8 +284,34 @@ export default function PropertiesPage() {
     overscan: 4,
   });
 
-  const handleLoadMore = () => {
-    setDisplayLimit((prev) => Math.min(prev + 6, filteredProperties.length));
+  const hasMoreServerPages = totalAvailable > properties.length;
+
+  const handleLoadMore = async () => {
+    if (displayLimit < filteredProperties.length) {
+      setDisplayLimit((prev) => Math.min(prev + 6, filteredProperties.length));
+      return;
+    }
+    if (hasMoreServerPages && !isLoadingMore && lastParamsRef.current) {
+      setIsLoadingMore(true);
+      try {
+        const nextPage = serverPage + 1;
+        const res = await propertyService.getProperties({ ...lastParamsRef.current, page: nextPage });
+        if (res && Array.isArray(res.data) && res.data.length > 0) {
+          setProperties((prev) => {
+            const seen = new Set(prev.map((p) => String(p.id)));
+            const fresh = res.data.filter((p) => !seen.has(String(p.id)));
+            return [...prev, ...fresh];
+          });
+          setServerPage(nextPage);
+          setTotalAvailable(Number(res.total ?? totalAvailable));
+          setDisplayLimit((prev) => prev + 6);
+        }
+      } catch (err) {
+        console.error('Failed to load next page of properties:', err);
+      } finally {
+        setIsLoadingMore(false);
+      }
+    }
   };
 
   const hoverScrollTimeoutRef = useRef(null);
@@ -304,8 +400,11 @@ export default function PropertiesPage() {
 
       {/* Main Container */}
       <div className="flex-1 w-full px-3 sm:px-4 md:px-5 lg:px-6 flex flex-col overflow-hidden pb-3 min-h-0">
-        {/* Unified Search Bar & Quick District Chips (Non-sticky) */}
-        <div className="shrink-0 pt-2 pb-2 transition-all z-20">
+        {/* Unified Search Bar & Database Location Chips (z-30 so dropdowns never layer behind the z-0 map) */}
+        <div
+          data-testid="search-bar-container"
+          className="relative z-30 shrink-0 pt-2 pb-2 transition-all"
+        >
           <UnifiedSearchBar
             filters={filters}
             setFilter={setFilter}
@@ -313,15 +412,16 @@ export default function PropertiesPage() {
             activeFilterCount={activeFilterCount}
             viewMode={viewMode}
             setViewMode={setViewMode}
-            onFlyToDistrict={(preset) => setTargetDistrict(preset)}
+            availableLocations={availableLocations}
+            onFlyToLocation={(loc) => setTargetDistrict(loc)}
           />
         </div>
 
         {/* Active Filter Chips Ribbon (only rendered when filters are active) */}
         {activeFilterCount > 0 && (
           <div className="shrink-0 flex items-center gap-2 py-1 mb-2 overflow-x-auto no-scrollbar">
-            <div className="flex items-center gap-1.5 text-[10px] font-bold font-sans uppercase tracking-wider text-[#0F766E] shrink-0 mr-1">
-              <span className="material-symbols-outlined text-[14px]">tune</span>
+            <div className="flex items-center gap-1.5 text-xs font-semibold font-sans uppercase tracking-wider text-primary shrink-0 mr-1">
+              <SlidersHorizontal className="size-3.5" />
               <span>Filtered ({activeFilterCount})</span>
             </div>
 
@@ -335,22 +435,34 @@ export default function PropertiesPage() {
                 else if (key === 'maxPrice') displayValue = `< ₱${(value / 1000000).toFixed(0)}M`;
                 else if (key === 'keyword') displayValue = `"${value}"`;
                 else if (key === 'propertyType') displayValue = `Type: ${value}`;
-                else if (key === 'district') displayValue = `District: ${value}`;
+                else if (key === 'location' || key === 'district') displayValue = `Location: ${value}`;
                 else if (key === 'beds') displayValue = `${value} Beds`;
                 else if (key === 'baths') displayValue = `${value} Baths`;
 
                 if (!displayValue || displayValue.trim() === '') return null;
 
                 return (
-                  <div key={key} className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#0F766E]/10 text-[#0F766E] rounded-full text-[10px] font-bold font-sans uppercase tracking-wider border border-[#0F766E]/20 transition-all hover:bg-[#0F766E]/15 shrink-0">
+                  <div
+                    key={key}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-tertiary-container text-primary rounded-full text-xs font-semibold font-sans border border-primary/20 transition-colors shrink-0"
+                  >
                     <span>{displayValue}</span>
-                    <button type="button" onClick={() => clearSpecificFilter(key)} className="hover:text-red-500 cursor-pointer flex items-center justify-center transition-colors">
-                      <span className="material-symbols-outlined text-[13px]">close</span>
+                    <button
+                      type="button"
+                      aria-label={`Remove ${displayValue}`}
+                      onClick={() => clearSpecificFilter(key)}
+                      className="hover:text-red-600 cursor-pointer flex items-center justify-center transition-colors rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
+                    >
+                      <X className="size-3.5" />
                     </button>
                   </div>
                 );
               })}
-              <button type="button" onClick={clearFilters} className="text-[10px] font-bold text-gray-500 hover:text-gray-800 uppercase tracking-widest cursor-pointer ml-1 transition-colors shrink-0">
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="text-xs font-semibold text-on-surface-variant hover:text-on-surface uppercase tracking-wider cursor-pointer ml-1 transition-colors shrink-0 rounded-sm px-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
+              >
                 Clear All
               </button>
             </div>
@@ -423,24 +535,25 @@ export default function PropertiesPage() {
                   </div>
 
                   {/* Pagination / Load More Footer */}
-                  {filteredProperties && displayedProperties.length < filteredProperties.length && (
+                  {filteredProperties && (displayedProperties.length < filteredProperties.length || hasMoreServerPages) && (
                     <div className="flex flex-col items-center justify-center mt-12 mb-16 gap-4">
                       <Button
                         variant="primary"
                         size="lg"
                         icon="expand_more"
+                        disabled={isLoadingMore}
                         onClick={handleLoadMore}
                         className="bg-[#0F766E] hover:bg-[#115E59] text-white shadow-[0_10px_30px_rgba(15,118,110,0.2)] hover:-translate-y-1 transition-all border-none font-bold tracking-widest text-[12px] px-8 cursor-pointer"
                       >
-                        Load More Residences
+                        {isLoadingMore ? 'Loading More...' : 'Load More Residences'}
                       </Button>
                       <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 font-sans">
-                        Showing {displayedProperties.length} of {filteredProperties.length}
+                        Showing {displayedProperties.length} of {Math.max(filteredProperties.length, totalAvailable)}
                       </span>
                     </div>
                   )}
 
-                  {displayedProperties.length === filteredProperties.length && filteredProperties.length > 0 && (
+                  {displayedProperties.length === filteredProperties.length && filteredProperties.length > 0 && !hasMoreServerPages && (
                     <div className="flex justify-center mt-16 mb-16">
                       <div className="inline-flex items-center gap-3 px-6 py-2 bg-gray-50 rounded-full border border-gray-100">
                         <span className="material-symbols-outlined text-[#0F766E] text-sm">check_circle</span>
@@ -462,9 +575,10 @@ export default function PropertiesPage() {
               )}
             </div>
 
-            {/* Right Pane: Interactive Geographical Map Split Plane (RIGHT SIDE) */}
+            {/* Right Pane: Interactive Geographical Map Split Plane (isolated at z-0 per DESIGN.md 5.5) */}
             <div
-              className={`w-full h-full lg:col-span-5 xl:col-span-5 2xl:col-span-5 rounded-2xl sm:rounded-3xl overflow-hidden shadow-lg border border-gray-200/90 z-20 bg-gray-50 ${mobileTab === 'list' ? 'hidden lg:block' : 'block'
+              data-testid="properties-map-container"
+              className={`relative isolate z-0 w-full h-full lg:col-span-5 xl:col-span-5 2xl:col-span-5 rounded-xl overflow-hidden shadow-xs border border-outline bg-background ${mobileTab === 'list' ? 'hidden lg:block' : 'block'
                 }`}
             >
               <GooglePropertyMap
@@ -533,24 +647,25 @@ export default function PropertiesPage() {
               </div>
 
               {/* Pagination / Load More Footer */}
-              {filteredProperties && displayedProperties.length < filteredProperties.length && (
+              {filteredProperties && (displayedProperties.length < filteredProperties.length || hasMoreServerPages) && (
                 <div className="flex flex-col items-center justify-center mt-12 mb-16 gap-4">
                   <Button
                     variant="primary"
                     size="lg"
                     icon="expand_more"
+                    disabled={isLoadingMore}
                     onClick={handleLoadMore}
                     className="bg-[#0F766E] hover:bg-[#115E59] text-white shadow-[0_10px_30px_rgba(15,118,110,0.2)] hover:-translate-y-1 transition-all border-none font-bold tracking-widest text-[12px] px-8 cursor-pointer"
                   >
-                    Load More Residences
+                    {isLoadingMore ? 'Loading More...' : 'Load More Residences'}
                   </Button>
                   <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 font-sans">
-                    Showing {displayedProperties.length} of {filteredProperties.length}
+                    Showing {displayedProperties.length} of {Math.max(filteredProperties.length, totalAvailable)}
                   </span>
                 </div>
               )}
 
-              {displayedProperties.length === filteredProperties.length && filteredProperties.length > 0 && (
+              {displayedProperties.length === filteredProperties.length && filteredProperties.length > 0 && !hasMoreServerPages && (
                 <div className="flex justify-center mt-16 mb-16">
                   <div className="inline-flex items-center gap-3 px-6 py-2 bg-gray-50 rounded-full border border-gray-100">
                     <span className="material-symbols-outlined text-[#0F766E] text-sm">check_circle</span>
@@ -579,7 +694,7 @@ export default function PropertiesPage() {
             <button
               type="button"
               onClick={() => setMobileTab((prev) => (prev === 'list' ? 'map' : 'list'))}
-              className="flex items-center gap-2 px-5 py-3 bg-[#0F766E] hover:bg-[#115E59] text-white rounded-full font-bold text-xs uppercase tracking-wider shadow-xl active:scale-95 transition-all border border-[#FF6B6B]/40 backdrop-blur-md cursor-pointer"
+              className="flex items-center gap-2 px-5 py-3 bg-[#0F766E] hover:bg-[#115E59] text-white rounded-full font-bold text-xs uppercase tracking-wider shadow-xl active:scale-95 transition-all border border-[#FF8559]/40 backdrop-blur-md cursor-pointer"
             >
               <span className="material-symbols-outlined text-[18px]">
                 {mobileTab === 'list' ? 'map' : 'format_list_bulleted'}

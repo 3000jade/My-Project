@@ -53,13 +53,18 @@ export function AuthProvider({ children }) {
 
   const loginWithCredentials = async (email, password, rememberMe) => {
     setError(null);
-    const authData = await authService.loginWithCredentials(email, password, rememberMe);
-    if (user && authData.user && user.id !== authData.user.id) {
-      sessionCoordinator.broadcastSessionEvent('ACCOUNT_SWITCH', { user: authData.user });
+    try {
+      const authData = await authService.loginWithCredentials(email, password, rememberMe);
+      if (user && authData.user && user.id !== authData.user.id) {
+        sessionCoordinator.broadcastSessionEvent('ACCOUNT_SWITCH', { user: authData.user });
+      }
+      setUser(authData.user);
+      setIdleWarning(false);
+      return authData;
+    } catch (err) {
+      setError(err?.message || 'Sign-in failed');
+      throw err;
     }
-    setUser(authData.user);
-    setIdleWarning(false);
-    return authData;
   };
 
   const registerUser = async (payload) => {
@@ -105,11 +110,23 @@ export function AuthProvider({ children }) {
     setIdleWarning(false);
     return authData;
   };
+  const completeRegistration = async (payload) => {
+    setError(null);
+    const authData = await authService.completeRegistration(payload);
+    setUser(authData.user);
+    setIdleWarning(false);
+    return authData;
+  };
   const googleLogin = async (idToken, role = 'agent') => {
     setError(null);
-    const authData = await authService.googleLogin(idToken, role);
-    setUser(authData.user);
-    return authData;
+    try {
+      const authData = await authService.googleLogin(idToken, role);
+      setUser(authData.user);
+      return authData;
+    } catch (err) {
+      setError(err?.message || 'Google sign-in failed');
+      throw err;
+    }
   };
 
   const hasRole = (role) => authHasRole(user, role);
@@ -124,6 +141,7 @@ export function AuthProvider({ children }) {
     loginWithCredentials,
     registerUser,
     verifyRegistrationOtp,
+    completeRegistration,
     logout,
     refreshSession,
     validateSession,

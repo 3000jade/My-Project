@@ -225,7 +225,7 @@ export default function PropertyFilterToolbar({
                 {unifiedFilterCount > 0 && (
                   <Badge
                     variant="coral"
-                    className="bg-[#FF6B6B] text-[#1E293B] border-none px-1.5 py-0 min-w-5 h-5 justify-center tabular-nums"
+                    className="bg-[#FF8559] text-white border-none px-1.5 py-0 min-w-5 h-5 justify-center tabular-nums"
                   >
                     {unifiedFilterCount}
                   </Badge>

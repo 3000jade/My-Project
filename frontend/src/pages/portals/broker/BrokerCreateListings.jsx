@@ -266,7 +266,7 @@ export default function BrokerCreateListings() {
           title: p.title || '',
           description: p.description || p.publicRemarks || '',
           transaction_type: p.transaction_type || p.specs?.transactionType || 'For Sale',
-          propertyCategory: custom.propertyCategory || 'Residential',
+          propertyCategory: p.property_category || p.propertyCategory || custom.propertyCategory || 'Residential',
           property_type: p.property_type || p.type || 'House & Lot',
           property_type_id: p.property_type_id || p.specs?.propertyTypeId || 1,
           propertyStatus: custom.propertyStatus || p.property_condition || 'Ready for Occupancy',
@@ -278,8 +278,8 @@ export default function BrokerCreateListings() {
           customGalleryCategories: Array.isArray(custom.customGalleryCategories) ? custom.customGalleryCategories : [],
           categoryDescriptions: custom.categoryDescriptions || {},
           paymentBreakdown: custom.paymentBreakdown || prev.paymentBreakdown,
-          association_fee: p.association_fee ?? p.associationFee ?? '',
-          associationFee: p.association_fee ?? p.associationFee ?? '',
+          association_fee: p.association_fee ?? p.associationFee ?? custom.associationFee ?? '',
+          associationFee: p.association_fee ?? p.associationFee ?? custom.associationFee ?? '',
           // Location
           region: p.location?.region || p.region || '',
           region_psgc_code: p.location?.region_psgc_code || p.region_psgc_code || '',
@@ -296,16 +296,22 @@ export default function BrokerCreateListings() {
           building_name: p.location?.buildingName || p.building_name || '',
           tower_name: custom.towerName || p.tower_name || '',
           floor_level: custom.floorLevel || p.floor_level || '',
+          unit_number:
+            custom.unitNumber ||
+            custom.canonicalPayload?.propertyDetails?.building?.unitNumber ||
+            p.unit_number ||
+            p.unitNumber ||
+            '',
           latitude: p.location?.coordinates?.lat || p.latitude || '',
           longitude: p.location?.coordinates?.lng || p.longitude || '',
-          mapPinPrivacy: custom.mapPinPrivacy || 'Exact Location',
+          mapPinPrivacy: p.map_pin_privacy || p.mapPinPrivacy || custom.mapPinPrivacy || 'Exact Location',
           // Specs
           lot_size_area: String(p.specs?.lotSizeArea ?? p.lot_size_area ?? ''),
           living_area: String(p.specs?.livingArea ?? p.living_area ?? ''),
           bedrooms_total: String(p.specs?.bedroomsTotal ?? p.bedrooms_total ?? '3'),
           bathrooms_total_integer: String(p.specs?.bathroomsTotalInteger ?? p.bathrooms_total_integer ?? '2'),
           parking_total: String(p.specs?.parkingTotal ?? p.parking_total ?? '1'),
-          furnishing: custom.furnishing || p.furnishing || 'None',
+          furnishing: p.furnishing || custom.furnishing || 'None',
           securityFeatures: Array.isArray(custom.securityFeatures) ? custom.securityFeatures : [],
           amenities: Array.isArray(p.features) ? p.features : p.amenities || [],
           utilities: Array.isArray(custom.utilities) ? custom.utilities : [],
@@ -317,7 +323,16 @@ export default function BrokerCreateListings() {
           assignment_status: p.assignment_status || p.assignmentStatus || custom.assignment_status || '',
           handlerMode: custom.handlerMode || null,
           agentPermissions: custom.agentPermissions || prev.agentPermissions,
-          credentials: custom.credentials || prev.credentials,
+          credentials: {
+            ...prev.credentials,
+            ...(custom.credentials || {}),
+            developer:
+              p.developer_name ||
+              p.developerName ||
+              custom.credentials?.developer ||
+              prev.credentials.developer ||
+              '',
+          },
           status: p.status || 'AVAILABLE',
           standard_status: p.standard_status || p.standardStatus || 'Active',
           is_published: p.is_published !== undefined ? Boolean(p.is_published) : true,
@@ -465,7 +480,7 @@ export default function BrokerCreateListings() {
     if (formData.city_psgc_code || formData.city) {
       setLocationNotice({
         type: 'info',
-        message: 'Region changed â€” city and barangay were cleared so they stay matched.',
+        message: 'Region changed — city and barangay were cleared so they stay matched.',
       });
       setTimeout(() => setLocationNotice(null), 5000);
     }
@@ -1143,7 +1158,7 @@ export default function BrokerCreateListings() {
                   onClick={() => setConfirmResetOpen(true)}
                   className="min-h-11 px-3.5 border-[#E2E8F0] bg-white text-[#1E293B] font-semibold rounded-lg cursor-pointer"
                 >
-                  <RotateCcw className="size-4 mr-1.5 text-[#FF6B6B]" />
+                  <RotateCcw className="size-4 mr-1.5 text-[#FF8559]" />
                   Reset
                 </Button>
               )}
@@ -1214,13 +1229,13 @@ export default function BrokerCreateListings() {
           </Card>
 
           <p className="text-xs text-[#64748B] px-1">
-            <span className="text-[#FF6B6B] font-bold">*</span> Required fields
+            <span className="text-[#FF8559] font-bold">*</span> Required fields
           </p>
 
           {/* Validation / Submission Alert */}
           {submissionError && (
-            <Alert className="bg-white border-[#FF6B6B] rounded-xl">
-              <AlertCircle className="size-4 text-[#FF6B6B]" />
+            <Alert className="bg-white border-[#FF8559] rounded-xl">
+              <AlertCircle className="size-4 text-[#FF8559]" />
               <AlertTitle className="text-[#1E293B] font-bold">
                 {submissionError.title}
               </AlertTitle>
@@ -1233,7 +1248,7 @@ export default function BrokerCreateListings() {
                         key={i}
                         type="button"
                         onClick={() => setCurrentStep(err.step)}
-                        className="px-2.5 py-1 rounded-md bg-[#FFF5F5] border border-[#FF6B6B]/40 text-xs font-semibold text-[#FF6B6B] hover:bg-red-50 cursor-pointer"
+                        className="px-2.5 py-1 rounded-md bg-[#FFF5F5] border border-[#FF8559]/40 text-xs font-semibold text-[#FF8559] hover:bg-red-50 cursor-pointer"
                       >
                         Step {err.step}: {err.field}
                       </button>
@@ -1427,7 +1442,7 @@ export default function BrokerCreateListings() {
             savedStatusType === 'Draft'
               ? 'Draft Saved'
               : savedStatusType === 'Pending Confirmation'
-                ? 'Saved â€” Pending Agent Confirmation'
+                ? 'Saved — Pending Agent Confirmation'
                 : savedStatusType === 'Pending Approval'
                   ? 'Submitted for Review'
                   : 'Listing Published'

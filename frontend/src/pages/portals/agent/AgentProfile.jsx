@@ -8,8 +8,9 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { ProfileCardStudio } from '@/components/profile';
-import { profileService, mockDefaultProfiles } from '@/services/profileService';
+import { profileService } from '@/services/profileService';
 import { agentService, computeAgentCompleteness } from '@/services/agentService';
+import { useAuth } from '@/context/AuthContext';
 import {
   Card,
   CardHeader,
@@ -30,7 +31,6 @@ import { cn } from '@/utils/cn';
 const TRACKED_KEYS = [
   'name',
   'avatar',
-  'email',
   'phone',
   'bio',
   'experience_years',
@@ -44,23 +44,16 @@ const TRACKED_KEYS = [
   'dhsud_validity',
 ];
 
-function buildInitialAgent() {
-  return {
-    ...mockDefaultProfiles.agent,
-    membership_status: 'active',
-    onboarding_status: 'complete',
-    routing_availability: 'available',
-    brokerage_name: 'Human Shelter Realty',
-    team_name: 'Luxury Residential Advisory',
-    location_branch: 'Makati & BGC Prime',
-    completeness: computeAgentCompleteness(mockDefaultProfiles.agent),
-  };
-}
-
 export default function AgentProfile() {
   const { toast } = useToast();
-  const [agent, setAgent] = useState(buildInitialAgent);
-  const [draft, setDraft] = useState(buildInitialAgent);
+  let auth = null;
+  try {
+    auth = useAuth();
+  } catch {
+    // Handled gracefully when rendered in isolated test runners
+  }
+  const [agent, setAgent] = useState({});
+  const [draft, setDraft] = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -80,10 +73,9 @@ export default function AgentProfile() {
 
       if (data) {
         const merged = {
-          ...buildInitialAgent(),
           ...data,
+          completeness: computeAgentCompleteness(data),
         };
-        merged.completeness = computeAgentCompleteness(merged);
         setAgent(merged);
         setDraft(merged);
       }
@@ -117,32 +109,39 @@ export default function AgentProfile() {
     try {
       const payload = {
         name: nextDraft.name,
-        fullName: nextDraft.name,
-        avatar: nextDraft.avatar,
-        email: nextDraft.email,
-        phone: nextDraft.phone,
-        bio: nextDraft.bio,
+        avatar: nextDraft.avatar ?? '',
+        phone: nextDraft.phone ?? '',
+        bio: nextDraft.bio ?? '',
         experience_years: Number(nextDraft.experience_years || 0),
         date_of_birth: nextDraft.date_of_birth || null,
         gender: nextDraft.gender || null,
         emergency_contact_name: nextDraft.emergency_contact_name || null,
         emergency_contact_phone: nextDraft.emergency_contact_phone || null,
-        prc_license_no: nextDraft.prc_license_no,
-        prc_validity: nextDraft.prc_validity,
-        dhsud_accreditation_no: nextDraft.dhsud_accreditation_no,
-        dhsud_validity: nextDraft.dhsud_validity,
       };
 
-      const updated = await profileService.updateProfile(payload, { role: 'agent' });
+      // Only send license fields when actually edited so routine profile updates
+      // do not trigger a verification reset on the backend.
+      if (credentialsChanged) {
+        if (nextDraft.prc_license_no) payload.prc_license_no = nextDraft.prc_license_no;
+        if (nextDraft.prc_validity !== undefined) payload.prc_validity = nextDraft.prc_validity;
+        if (nextDraft.dhsud_accreditation_no) payload.dhsud_accreditation_no = nextDraft.dhsud_accreditation_no;
+        if (nextDraft.dhsud_validity !== undefined) payload.dhsud_validity = nextDraft.dhsud_validity;
+      }
+
+      const targetId = agent.id || auth?.user?.id;
+      const updated = targetId
+        ? await agentService.updateAgentProfile(targetId, payload)
+        : await profileService.updateProfile({ ...payload, fullName: payload.name }, { role: 'agent' });
+
       const nextState = {
         ...agent,
         ...nextDraft,
         ...updated,
-        onboarding_status: credentialsChanged ? 'pending_review' : agent.onboarding_status,
       };
       nextState.completeness = computeAgentCompleteness(nextState);
       setAgent(nextState);
       setDraft(nextState);
+      auth?.validateSession?.().catch(() => {});
 
       toast({
         title: credentialsChanged ? 'Credentials Queued for Review' : 'Profile Saved',

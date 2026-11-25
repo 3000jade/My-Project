@@ -128,12 +128,12 @@ export default function ProposalReviewDrawer({
 
             {/* Title Comparison */}
             <div className={`p-3 rounded-lg border text-xs transition-colors ${
-              isChanged('title') ? 'bg-[#FF6B6B]/5 border-[#FF6B6B]/30' : 'bg-white dark:bg-slate-900 border-[#E2E8F0] dark:border-slate-800'
+              isChanged('title') ? 'bg-[#FF8559]/5 border-[#FF8559]/30' : 'bg-white dark:bg-slate-900 border-[#E2E8F0] dark:border-slate-800'
             }`}>
               <div className="flex items-center justify-between mb-1.5">
                 <span className="font-semibold text-[#64748B] dark:text-slate-400 uppercase text-[10px] tracking-wider">Listing Title</span>
                 {isChanged('title') && (
-                  <span className="text-[10px] font-bold text-[#FF6B6B] bg-[#FF6B6B]/10 px-1.5 py-0.5 rounded">Modified</span>
+                  <span className="text-[10px] font-bold text-[#FF8559] bg-[#FF8559]/10 px-1.5 py-0.5 rounded">Modified</span>
                 )}
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -150,12 +150,12 @@ export default function ProposalReviewDrawer({
 
             {/* Price Comparison */}
             <div className={`p-3 rounded-lg border text-xs transition-colors ${
-              isChanged('price') ? 'bg-[#FF6B6B]/5 border-[#FF6B6B]/30' : 'bg-white dark:bg-slate-900 border-[#E2E8F0] dark:border-slate-800'
+              isChanged('price') ? 'bg-[#FF8559]/5 border-[#FF8559]/30' : 'bg-white dark:bg-slate-900 border-[#E2E8F0] dark:border-slate-800'
             }`}>
               <div className="flex items-center justify-between mb-1.5">
                 <span className="font-semibold text-[#64748B] dark:text-slate-400 uppercase text-[10px] tracking-wider">Valuation Price</span>
                 {isChanged('price') && (
-                  <span className="text-[10px] font-bold text-[#FF6B6B] bg-[#FF6B6B]/10 px-1.5 py-0.5 rounded">Modified</span>
+                  <span className="text-[10px] font-bold text-[#FF8559] bg-[#FF8559]/10 px-1.5 py-0.5 rounded">Modified</span>
                 )}
               </div>
               <div className="grid grid-cols-2 gap-4 font-mono">
@@ -177,7 +177,7 @@ export default function ProposalReviewDrawer({
             {/* Condition & Status Comparison */}
             <div className="grid grid-cols-2 gap-3">
               <div className={`p-3 rounded-lg border text-xs ${
-                isChanged('property_condition') ? 'bg-[#FF6B6B]/5 border-[#FF6B6B]/30' : 'bg-white dark:bg-slate-900 border-[#E2E8F0] dark:border-slate-800'
+                isChanged('property_condition') ? 'bg-[#FF8559]/5 border-[#FF8559]/30' : 'bg-white dark:bg-slate-900 border-[#E2E8F0] dark:border-slate-800'
               }`}>
                 <span className="font-semibold text-[#64748B] dark:text-slate-400 uppercase text-[10px] tracking-wider block mb-1">Condition</span>
                 <p className="text-slate-500 dark:text-slate-400 line-through text-[11px]">{original.property_condition || '—'}</p>
@@ -185,7 +185,7 @@ export default function ProposalReviewDrawer({
               </div>
 
               <div className={`p-3 rounded-lg border text-xs ${
-                isChanged('standard_status') ? 'bg-[#FF6B6B]/5 border-[#FF6B6B]/30' : 'bg-white dark:bg-slate-900 border-[#E2E8F0] dark:border-slate-800'
+                isChanged('standard_status') ? 'bg-[#FF8559]/5 border-[#FF8559]/30' : 'bg-white dark:bg-slate-900 border-[#E2E8F0] dark:border-slate-800'
               }`}>
                 <span className="font-semibold text-[#64748B] dark:text-slate-400 uppercase text-[10px] tracking-wider block mb-1">Publication Status</span>
                 <p className="text-slate-500 dark:text-slate-400 line-through text-[11px]">{original.standard_status || 'Active'}</p>
@@ -196,7 +196,7 @@ export default function ProposalReviewDrawer({
             {/* Specifications Comparison */}
             <div className={`p-3 rounded-lg border text-xs ${
               (isChanged('bedrooms_total') || isChanged('bathrooms_total_integer') || isChanged('living_area')) 
-                ? 'bg-[#FF6B6B]/5 border-[#FF6B6B]/30' 
+                ? 'bg-[#FF8559]/5 border-[#FF8559]/30' 
                 : 'bg-white dark:bg-slate-900 border-[#E2E8F0] dark:border-slate-800'
             }`}>
               <div className="flex items-center justify-between mb-1.5">
@@ -226,7 +226,7 @@ export default function ProposalReviewDrawer({
 
             {/* Narrative Comparison */}
             {isChanged('public_remarks') && (
-              <div className="p-3 rounded-lg border border-[#FF6B6B]/30 bg-[#FF6B6B]/5 text-xs space-y-2">
+              <div className="p-3 rounded-lg border border-[#FF8559]/30 bg-[#FF8559]/5 text-xs space-y-2">
                 <span className="font-semibold text-[#64748B] dark:text-slate-400 uppercase text-[10px] tracking-wider block">
                   Updated Narrative / Public Remarks
                 </span>

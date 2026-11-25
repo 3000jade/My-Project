@@ -38,7 +38,6 @@ export default function AgentDashboard() {
   const metrics = data?.metrics || {};
   const agentAppointments = data?.agentAppointments || [];
   const agentInquiries = data?.agentInquiries || [];
-  const agentSales = data?.agentSales || [];
   const recentActivity = data?.recentActivity || [];
 
   const totalProperties = metrics.totalProperties || 0;
@@ -48,7 +47,6 @@ export default function AgentDashboard() {
   const newInquiries = metrics.newInquiries || 0;
   const unresolvedInquiries = metrics.unresolvedInquiries || 0;
   const upcomingAppointments = metrics.upcomingAppointments || 0;
-  const totalRecordedSalesValue = metrics.totalRecordedSalesValue || 0;
 
   const verificationStatus = (user?.verification_status || 'VERIFIED').toUpperCase();
   const isRejected = verificationStatus === 'REJECTED';
@@ -58,7 +56,7 @@ export default function AgentDashboard() {
     <div className="space-y-6">
       <PageHeader
         title="Agent Workspace & Overview"
-        subtitle="Track assigned property listings, client inquiries, viewing appointments, and sales milestones."
+        subtitle="Track assigned property listings, client inquiries, and viewing appointments."
         actions={
           <div className="flex items-center flex-wrap gap-2.5">
             <button
@@ -186,81 +184,7 @@ export default function AgentDashboard() {
         />
       </div>
 
-      {/* 2. Sales Summary Section */}
-      <div className="bg-white rounded-2xl border border-gray-200/80 p-6 shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-gray-100">
-          <div>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-[#FF6B6B] font-sans">
-              Sales & Pipeline Monitoring
-            </span>
-            <h3 className="text-xl font-display font-bold text-[#1E293B] mt-0.5">
-              Deal Conveyance & Performance
-            </h3>
-            <p className="text-xs text-gray-500 font-sans mt-0.5">
-              Live snapshot of completed and pending transaction milestones.
-            </p>
-          </div>
-          <div className="flex items-center gap-6 bg-[#F8FAFC]/60 px-5 py-3 rounded-xl">
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 font-sans">
-                Total Closed Value
-              </p>
-              <p className="text-xl font-display font-bold text-[#1E293B]">
-                {`₱${(totalRecordedSalesValue / 1000000).toFixed(1)}M`}
-              </p>
-            </div>
-            <div className="w-[1px] h-8 bg-gray-300" />
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 font-sans">
-                Recorded Sales Count
-              </p>
-              <p className="text-xl font-display font-bold text-[#0F766E]">
-                {`${agentSales.length} Deals`}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Recent sales preview */}
-        <div className="mt-5 overflow-x-auto custom-scrollbar">
-          <table className="w-full text-left border-collapse text-sm font-sans">
-            <thead>
-              <tr className="text-[11px] font-bold uppercase tracking-wider text-gray-400 border-b border-gray-100">
-                <th className="pb-3">Property</th>
-                <th className="pb-3">Client</th>
-                <th className="pb-3">Sale Date</th>
-                <th className="pb-3">Property Value</th>
-                <th className="pb-3">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {agentSales.slice(0, 3).map((sale) => (
-                <tr key={sale.id} className="hover:bg-gray-50/50 transition-colors">
-                  <td className="py-3 font-semibold text-[#1E293B]">{sale.property_title}</td>
-                  <td className="py-3 text-gray-600">{sale.client_name}</td>
-                  <td className="py-3 text-gray-500">{sale.sale_date}</td>
-                  <td className="py-3 font-bold text-[#0F766E]">
-                    {`₱${(sale.property_value || 0).toLocaleString()}`}
-                  </td>
-                  <td className="py-3">
-                    <StatusBadge status={sale.status} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <div className="mt-4 pt-3 border-t border-gray-100 flex justify-end">
-          <Link
-            to="/agent/sales"
-            className="text-xs font-bold font-sans uppercase tracking-wider text-[#0F766E] hover:text-[#115E59] transition-colors"
-          >
-            View Full Deal Pipeline & Commissions →
-          </Link>
-        </div>
-      </div>
-
-      {/* 3 & 4. Appointments & Inquiries Two-Column Layout */}
+      {/* 2. Appointments & Inquiries Two-Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Upcoming Appointments */}
         <div className="bg-white rounded-2xl border border-gray-200/80 p-6 shadow-sm flex flex-col">
@@ -274,7 +198,7 @@ export default function AgentDashboard() {
               </p>
             </div>
             <Link
-              to="/agent/appointments"
+              to="/agent/inquiries"
               className="text-xs font-bold text-[#0F766E] uppercase tracking-wider font-sans hover:underline"
             >
               All Appointments

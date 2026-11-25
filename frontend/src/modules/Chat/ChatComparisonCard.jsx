@@ -29,7 +29,7 @@ export default function ChatComparisonCard({ comparison, onAskAgent }) {
     <Card className="w-full min-w-0 overflow-hidden bg-white border-[#E2E8F0] shadow-xs">
       <CardHeader className="p-4 pb-2">
         <CardTitle className="text-sm font-semibold text-[#1E293B]">
-          Side-by-Side Comparison
+          Compare Properties
         </CardTitle>
       </CardHeader>
 

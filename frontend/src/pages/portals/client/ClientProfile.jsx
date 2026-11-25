@@ -1,16 +1,14 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Bell, Lock, Shield } from 'lucide-react';
-import { ProfileCardStudio, ChangePasswordDialog } from '@/components/profile';
+import { Bell } from 'lucide-react';
+import { ProfileCardStudio } from '@/components/profile';
 import { clientUserService } from '@/services/clientUserService';
-import { mockDefaultProfiles } from '@/services/profileService';
+import { useAuth } from '@/context/AuthContext';
 import {
   Card,
   CardHeader,
   CardTitle,
   CardDescription,
   CardContent,
-  Button,
-  Badge,
   useToast,
   Toaster,
 } from '@/components/ui';
@@ -21,7 +19,6 @@ import { FieldGroup, Field, FieldLabel, FieldContent, FieldDescription } from '@
 const TRACKED_KEYS = [
   'name',
   'avatar',
-  'email',
   'phone',
   'bio',
   'preferredLocation',
@@ -30,10 +27,17 @@ const TRACKED_KEYS = [
 
 export default function ClientProfile() {
   const { toast } = useToast();
-  const [profile, setProfile] = useState(mockDefaultProfiles.client);
-  const [draft, setDraft] = useState(mockDefaultProfiles.client);
+  let auth = null;
+  try {
+    auth = useAuth();
+  } catch {
+    // Handled gracefully when rendered in isolated test runners
+  }
+  const [profile, setProfile] = useState({});
+  const [draft, setDraft] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
-  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
   const [focusedSection, setFocusedSection] = useState(null);
 
   const [notifications, setNotifications] = useState({
@@ -43,12 +47,13 @@ export default function ClientProfile() {
   });
 
   const loadProfile = useCallback(async () => {
+    setLoading(true);
+    setError(null);
     try {
       const data = await clientUserService.getClientProfile();
       if (data) {
-        const merged = { ...mockDefaultProfiles.client, ...data };
-        setProfile(merged);
-        setDraft(merged);
+        setProfile(data);
+        setDraft(data);
         setNotifications({
           emailNotifications: data.emailNotifications ?? true,
           smsNotifications: data.smsNotifications ?? true,
@@ -56,7 +61,9 @@ export default function ClientProfile() {
         });
       }
     } catch (err) {
-      console.warn('[ClientProfile] Load error:', err);
+      setError(err.message || 'Failed to load client profile.');
+    } finally {
+      setLoading(false);
     }
   }, []);
 
@@ -72,20 +79,19 @@ export default function ClientProfile() {
   const handleSave = async (nextDraft) => {
     setSaving(true);
     try {
-      const parts = String(nextDraft.name || '').trim().split(/\s+/);
-      const firstName = parts[0] || profile.firstName;
-      const lastName = parts.slice(1).join(' ') || profile.lastName;
-
       const updated = await clientUserService.updateClientProfile({
-        ...nextDraft,
-        firstName,
-        lastName,
         name: nextDraft.name,
+        avatar: nextDraft.avatar ?? '',
+        phone: nextDraft.phone ?? '',
+        bio: nextDraft.bio ?? '',
+        preferredLocation: nextDraft.preferredLocation ?? '',
+        investmentBudget: nextDraft.investmentBudget ?? '',
       });
 
       const nextState = { ...nextDraft, ...updated };
       setProfile(nextState);
       setDraft(nextState);
+      auth?.validateSession?.().catch(() => {});
       toast({
         title: 'Profile Saved',
         description: 'Your buyer card and contact preferences are updated.',
@@ -103,6 +109,7 @@ export default function ClientProfile() {
   };
 
   const handleToggleNotification = async (key, checked) => {
+    const previous = notifications;
     const updated = { ...notifications, [key]: checked };
     setNotifications(updated);
     try {
@@ -113,17 +120,13 @@ export default function ClientProfile() {
         variant: 'success',
       });
     } catch (err) {
-      console.warn('Notification preference toggle failed:', err);
+      setNotifications(previous);
+      toast({
+        title: 'Update Failed',
+        description: err.message || 'Could not save alert preference.',
+        variant: 'destructive',
+      });
     }
-  };
-
-  const handlePasswordChange = async (currentPassword, newPassword) => {
-    await clientUserService.changePassword(currentPassword, newPassword);
-    toast({
-      title: 'Password Updated',
-      description: 'Security passphrase updated successfully.',
-      variant: 'success',
-    });
   };
 
   const identityExtraFields = (
@@ -247,46 +250,6 @@ export default function ClientProfile() {
     [notifications]
   );
 
-  const securityExtraContent = (
-    <Card className="bg-surface border border-outline rounded-xl shadow-xs">
-      <CardHeader className="pb-4 border-b border-outline">
-        <CardTitle className="text-xl font-semibold text-on-surface flex items-center gap-2">
-          <Shield className="size-5 text-primary" />
-          Security &amp; Credentials
-        </CardTitle>
-        <CardDescription className="text-sm text-on-surface-variant">
-          Manage your account passphrase and sign-in protection.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="pt-5 flex flex-col gap-4">
-        <div className="p-4 bg-background rounded-xl border border-outline flex items-center justify-between gap-4">
-          <div className="flex flex-col gap-1">
-            <span className="text-sm font-semibold text-on-surface">Authentication Method</span>
-            <p className="text-xs text-on-surface-variant">
-              Email and Password protected with TLS 1.3 encryption.
-            </p>
-          </div>
-          <Badge variant="success" className="text-xs shrink-0">
-            Active
-          </Badge>
-        </div>
-
-        <div className="flex items-center justify-between gap-4 pt-2 border-t border-outline">
-          <span className="text-sm font-semibold text-on-surface">Change Passphrase</span>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setPasswordModalOpen(true)}
-            className="h-11 px-4 border-outline bg-surface text-on-surface normal-case"
-          >
-            <Lock data-icon="inline-start" className="text-primary" />
-            Update Password
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  );
-
   return (
     <>
       <Toaster />
@@ -304,21 +267,15 @@ export default function ClientProfile() {
         onSave={handleSave}
         onDiscard={() => setDraft(profile)}
         onRefresh={loadProfile}
-        loading={false}
+        loading={loading}
+        error={error}
         saving={saving}
         isDirty={isDirty}
         identityExtraFields={identityExtraFields}
         extraTabs={extraTabs}
-        securityExtraContent={securityExtraContent}
         focusedSection={focusedSection}
         onFocusSection={setFocusedSection}
         testId="client-profile-studio"
-      />
-
-      <ChangePasswordDialog
-        open={passwordModalOpen}
-        onOpenChange={setPasswordModalOpen}
-        onSave={handlePasswordChange}
       />
     </>
   );

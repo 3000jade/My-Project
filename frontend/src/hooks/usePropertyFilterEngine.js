@@ -5,7 +5,7 @@ export function usePropertyFilterEngine(initialProperties = []) {
   const [filters, setFilters] = useState({
     transactionType: 'All',
     keyword: '',
-    district: '',
+    location: '',
     propertyType: '',
     minPrice: null,
     maxPrice: null,
@@ -38,18 +38,24 @@ export function usePropertyFilterEngine(initialProperties = []) {
     // 2. Keyword Search (Location, Name, Address)
     if (activeFilters.keyword && activeFilters.keyword.trim() !== '') {
       const q = activeFilters.keyword.toLowerCase().trim();
-      const searchable = `${property.name || ''} ${property.location || ''} ${property.address || ''} ${property.city || ''} ${property.district || ''} ${property.subdivisionName || ''} ${property.title || ''}`.toLowerCase();
+      const searchable = `${property.name || ''} ${property.location || ''} ${property.address || ''} ${property.city || ''} ${property.barangay || ''} ${property.district || ''} ${property.subdivisionName || ''} ${property.building_name || ''} ${property.buildingName || ''} ${property.developer_name || ''} ${property.developerName || ''} ${property.title || ''}`.toLowerCase();
       if (!searchable.includes(q)) {
         return false;
       }
     }
 
-    // 3. District / Quick Chip
-    if (activeFilters.district && activeFilters.district !== 'All' && activeFilters.district !== 'All Metro Manila') {
-      const d = activeFilters.district.toLowerCase();
-      const subDistricts = d.split('/').map(s => s.trim().toLowerCase());
-      const loc = `${property.location || ''} ${property.city || ''} ${property.district || ''} ${property.address || ''} ${property.subdivisionName || ''}`.toLowerCase();
-      if (!subDistricts.some(sub => loc.includes(sub))) {
+    // 3. Location Quick Chip
+    const activeLocation = activeFilters.location || activeFilters.district || '';
+    if (
+      activeLocation &&
+      activeLocation !== 'All' &&
+      activeLocation !== 'All Locations' &&
+      activeLocation !== 'All Metro Manila'
+    ) {
+      const target = activeLocation.toLowerCase();
+      const subLocations = target.split('/').map(s => s.trim().toLowerCase());
+      const loc = `${property.location || ''} ${property.city || ''} ${property.state_or_province || ''} ${property.province || ''} ${property.district || ''} ${property.address || ''} ${property.subdivisionName || ''}`.toLowerCase();
+      if (!subLocations.some(sub => loc.includes(sub))) {
         return false;
       }
     }
@@ -77,8 +83,9 @@ export function usePropertyFilterEngine(initialProperties = []) {
       const pBeds = property.beds !== undefined ? Number(property.beds) : (property.bedrooms ? Number(property.bedrooms) : 0);
       if (activeFilters.beds === 'Studio') {
         if (pBeds > 1) return false;
-      } else if (activeFilters.beds === '4+' || activeFilters.beds === '5+') {
-        if (pBeds < 4) return false;
+      } else if (String(activeFilters.beds).endsWith('+')) {
+        const minBeds = parseInt(activeFilters.beds, 10);
+        if (Number.isFinite(minBeds) && pBeds < minBeds) return false;
       } else {
         const requiredBeds = Number(activeFilters.beds);
         if (pBeds !== requiredBeds) return false;
@@ -177,7 +184,7 @@ export function usePropertyFilterEngine(initialProperties = []) {
       { key: 'minPrice', label: 'Clear minimum price' },
       { key: 'beds', label: 'Clear bedroom count' },
       { key: 'baths', label: 'Clear bathroom count' },
-      { key: 'district', label: 'Clear district location' },
+      { key: 'location', label: 'Clear location filter' },
       { key: 'keyword', label: 'Clear search keyword' },
       { key: 'mapBounds', label: 'Expand map boundary' },
     ];
@@ -208,7 +215,7 @@ export function usePropertyFilterEngine(initialProperties = []) {
   // Active filter count
   const activeFilterCount = useMemo(() => {
     let count = 0;
-    if (filters.district) count++;
+    if (filters.location) count++;
     if (filters.propertyType) count++;
     if (filters.minPrice || filters.maxPrice) count++;
     if (filters.beds && filters.beds !== 'Any') count++;
@@ -224,7 +231,7 @@ export function usePropertyFilterEngine(initialProperties = []) {
     setFilters({
       transactionType: 'All',
       keyword: '',
-      district: '',
+      location: '',
       propertyType: '',
       minPrice: null,
       maxPrice: null,
@@ -239,7 +246,7 @@ export function usePropertyFilterEngine(initialProperties = []) {
       if (Array.isArray(prev[key])) {
         return { ...prev, [key]: [] };
       }
-      return { ...prev, [key]: key === 'transactionType' ? 'For Sale' : null };
+      return { ...prev, [key]: key === 'transactionType' ? 'All' : null };
     });
   }, []);
 

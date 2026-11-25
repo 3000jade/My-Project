@@ -23,19 +23,19 @@ const STORIES = [
 
 export default function ClientStoriesSection() {
   return (
-    <section className="w-full bg-[#FBFBF9] py-16 md:py-24 border-b border-[#D8DFDF] relative z-20">
+    <section className="w-full home-band-teal py-16 md:py-24 border-b border-white/15 relative z-20 text-white">
       <div className="w-full max-w-[1560px] mx-auto px-5 md:px-10 lg:px-16">
 
         {/* Header */}
         <div className="mb-12 md:mb-16 flex flex-col md:items-center text-center">
           <div className="flex items-center gap-3 mb-4 justify-center">
-            <span className="w-6 h-[2px] bg-[#1b4d4b]" />
-            <span className="text-xs font-bold tracking-[0.25em] text-[#1b4d4b] uppercase font-sans">
+            <span className="w-6 h-[2px] bg-[#CCFBF1]" />
+            <span className="text-xs font-bold tracking-[0.25em] text-[#CCFBF1] uppercase font-sans">
               Client Stories
             </span>
-            <span className="w-6 h-[2px] bg-[#1b4d4b]" />
+            <span className="w-6 h-[2px] bg-[#CCFBF1]" />
           </div>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold text-[#0f1722] tracking-tight font-sans max-w-2xl">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold text-white tracking-tight font-sans max-w-2xl">
             Real Relationships, Real Results
           </h2>
         </div>

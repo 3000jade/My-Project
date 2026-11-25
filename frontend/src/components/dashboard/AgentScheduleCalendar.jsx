@@ -768,7 +768,7 @@ export default function AgentScheduleCalendar({
             <button
               type="button"
               onClick={() => setCreateModalOpen(true)}
-              className="w-full h-10 px-4 bg-[#FF6B6B] hover:bg-[#EE5A5A] text-[#1E293B] font-bold rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-2xs hover:shadow-sm cursor-pointer"
+              className="w-full h-10 px-4 bg-[#FF8559] hover:bg-[#F07144] text-white font-bold rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-2xs hover:shadow-sm cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>New Appointment</span>

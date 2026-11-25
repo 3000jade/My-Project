@@ -179,16 +179,37 @@ export interface AgentInvitationEmailData {
   brokerAgency?: string;
   customMessage?: string;
   invitedByName?: string;
+  logoUrl?: string;
 }
 
 export function buildAgentInvitationEmailHtml(data: AgentInvitationEmailData): string {
   const hours = data.expiresInHours || 72;
-  const greeting = data.candidateName ? `Hello ${data.candidateName},` : 'Hello,';
-  const agency = data.brokerAgency ? `<strong>${data.brokerAgency}</strong>` : '<strong>CP_kerby Luxury Real Estate</strong>';
-  const customMessageBlock = data.customMessage
-    ? `<div style="border-left: 3px solid #0D4446; padding: 14px 18px; background-color: #F4F5F4; border-radius: 0 8px 8px 0; margin-bottom: 24px; font-style: italic; color: #141717; font-size: 14px; line-height: 1.5;">
-        "${data.customMessage}"
-        ${data.invitedByName ? `<div style="margin-top: 8px; font-style: normal; font-weight: 600; font-size: 12px; color: #5C6768;">— ${data.invitedByName}</div>` : ''}
+  const agencyName = data.brokerAgency?.trim() || 'Human Shelter Realty';
+  const safeAgency = escapeHtml(agencyName);
+  const safeName = data.candidateName?.trim() ? escapeHtml(data.candidateName.trim()) : '';
+  const safeEmail = escapeHtml(data.agentEmail);
+  const safeUrl = escapeHtml(data.inviteUrl);
+  const safeMessage = data.customMessage?.trim() ? escapeHtml(data.customMessage.trim()) : '';
+  const safeInvitedBy = data.invitedByName?.trim() ? escapeHtml(data.invitedByName.trim()) : '';
+  const safeLogoUrl = data.logoUrl?.trim() ? escapeHtml(data.logoUrl.trim()) : '';
+
+  const greeting = safeName ? `Hi ${safeName},` : 'Hi there,';
+  const logoHtml = safeLogoUrl
+    ? `<img src="${safeLogoUrl}" alt="${safeAgency}" height="32" style="display: block; height: 32px; width: auto; border: 0;" />`
+    : `<span style="font-size: 14px; line-height: 20px; font-weight: 700; color: #0F766E; letter-spacing: 0.02em;">${safeAgency}</span>`;
+
+  const invitedByRow = safeInvitedBy
+    ? `<tr>
+        <td style="padding: 4px 0; color: #64748B; font-weight: 500; width: 38%;">Invited By</td>
+        <td style="padding: 4px 0; color: #1E293B; font-weight: 600;">${safeInvitedBy}</td>
+      </tr>`
+    : '';
+
+  const customMessageBlock = safeMessage
+    ? `<div style="border-left: 3px solid #0F766E; background-color: #F8FAFC; border-radius: 0 8px 8px 0; padding: 16px; margin-bottom: 16px;">
+        <p style="margin: 0 0 4px 0; font-size: 12px; line-height: 16px; font-weight: 600; color: #0F766E;">Note from your broker</p>
+        <p style="margin: 0; font-size: 14px; line-height: 20px; color: #1E293B;">"${safeMessage}"</p>
+        ${safeInvitedBy ? `<p style="margin: 8px 0 0 0; font-size: 12px; line-height: 16px; font-weight: 500; color: #64748B;">&mdash; ${safeInvitedBy}</p>` : ''}
       </div>`
     : '';
 
@@ -196,51 +217,84 @@ export function buildAgentInvitationEmailHtml(data: AgentInvitationEmailData): s
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Invitation to Join ${data.brokerAgency || 'CP_kerby'} as Licensed Property Consultant</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>You're Invited to Join ${safeAgency}</title>
 </head>
-<body style="margin: 0; padding: 32px 16px; background-color: #FBFBF9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #141717;">
-  <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; background-color: #FFFFFF; border: 1px solid #D8DFDF; border-radius: 14px; overflow: hidden; box-shadow: 0 4px 16px rgba(13, 68, 70, 0.04);">
+<body style="margin: 0; padding: 24px 16px; background-color: #F8FAFC; font-family: 'Figtree', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1E293B;">
+  <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 520px; background-color: #FFFFFF; border: 1px solid #E2E8F0; border-top: 3px solid #0F766E; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.08), 0 1px 2px -1px rgba(0, 0, 0, 0.06);">
     <tr>
-      <td style="padding: 28px 32px; background-color: #0D4446; text-align: left;">
-        <span style="font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #14B8A6; font-weight: 700;">${data.brokerAgency ? data.brokerAgency.toUpperCase() : 'CP_KERBY LUXURY REAL ESTATE'}</span>
-        <h1 style="margin: 6px 0 0 0; color: #FFFFFF; font-size: 22px; font-weight: 700; letter-spacing: -0.02em;">Consultant Onboarding Invitation</h1>
+      <td style="padding: 24px 24px 16px 24px; background-color: #FFFFFF; border-bottom: 1px solid #E2E8F0; text-align: left;">
+        ${logoHtml}
+        <h1 style="margin: 16px 0 0 0; color: #1E293B; font-size: 20px; line-height: 28px; font-weight: 600; letter-spacing: -0.015em;">You're Invited to Join as an Agent</h1>
       </td>
     </tr>
     <tr>
-      <td style="padding: 32px;">
-        <p style="margin: 0 0 16px 0; font-size: 15px; color: #5C6768;">${greeting}</p>
-        <p style="margin: 0 0 20px 0; font-size: 15px; line-height: 1.6; color: #141717;">
-          You have been formally invited to join the ${agency} brokerage network as a licensed real estate consultant.
+      <td style="padding: 24px;">
+        <p style="margin: 0 0 8px 0; font-size: 14px; line-height: 20px; font-weight: 600; color: #1E293B;">${greeting}</p>
+        <p style="margin: 0 0 16px 0; font-size: 14px; line-height: 20px; color: #64748B;">
+          You have been invited to join <strong style="color: #1E293B;">${safeAgency}</strong> as a licensed real estate agent.
         </p>
+
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #F1F5F9; border: 1px solid #E2E8F0; border-radius: 8px; margin-bottom: 16px;">
+          <tr>
+            <td style="padding: 16px;">
+              <p style="margin: 0 0 8px 0; font-size: 12px; line-height: 16px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: #64748B;">Invitation Details</p>
+              <table border="0" cellpadding="0" cellspacing="0" width="100%" style="font-size: 14px; line-height: 20px;">
+                <tr>
+                  <td style="padding: 4px 0; color: #64748B; font-weight: 500; width: 38%;">Agency</td>
+                  <td style="padding: 4px 0; color: #1E293B; font-weight: 600;">${safeAgency}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 4px 0; color: #64748B; font-weight: 500;">Role</td>
+                  <td style="padding: 4px 0; color: #1E293B; font-weight: 600;">Real Estate Agent</td>
+                </tr>
+                <tr>
+                  <td style="padding: 4px 0; color: #64748B; font-weight: 500;">Invited Email</td>
+                  <td style="padding: 4px 0; color: #1E293B; word-break: break-all;">${safeEmail}</td>
+                </tr>
+                ${invitedByRow}
+                <tr>
+                  <td style="padding: 4px 0; color: #64748B; font-weight: 500;">Expires In</td>
+                  <td style="padding: 4px 0; color: #1E293B; font-weight: 600;">${hours} hours</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
 
         ${customMessageBlock}
 
-        <p style="margin: 0 0 24px 0; font-size: 14px; line-height: 1.5; color: #5C6768;">
-          To complete your onboarding, please click the secure link below to submit your PRC license details, DHSUD accreditation, and verification documents. This invitation is valid for <strong>${hours} hours</strong>.
-        </p>
+        <p style="margin: 0 0 8px 0; font-size: 14px; line-height: 20px; font-weight: 600; color: #1E293B;">What you'll need to finish signing up:</p>
+        <ul style="margin: 0 0 24px 0; padding-left: 16px; font-size: 14px; line-height: 20px; color: #64748B;">
+          <li style="margin-bottom: 4px;">PRC license details</li>
+          <li style="margin-bottom: 4px;">DHSUD accreditation</li>
+          <li>Valid ID and verification documents</li>
+        </ul>
 
-        <!-- CTA Button -->
-        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 28px;">
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 24px;">
           <tr>
             <td align="center">
-              <a href="${data.inviteUrl}" style="display: inline-block; padding: 14px 32px; background-color: #E76F51; color: #FFFFFF; text-decoration: none; font-weight: 700; font-size: 14px; letter-spacing: 0.05em; text-transform: uppercase; border-radius: 8px; box-shadow: 0 4px 12px rgba(231, 111, 81, 0.35);">
-                Accept Invitation & Complete Registration
+              <a href="${safeUrl}" style="display: inline-block; height: 44px; line-height: 44px; padding: 0 24px; background-color: #0F766E; color: #FFFFFF; text-decoration: none; font-weight: 600; font-size: 14px; border-radius: 8px;">
+                Accept Invitation
               </a>
             </td>
           </tr>
         </table>
 
-        <p style="margin: 0 0 10px 0; font-size: 12px; color: #8E9A9B;">
-          If the button does not open, copy and paste this secure link into your browser:
+        <p style="margin: 0 0 4px 0; font-size: 12px; line-height: 16px; color: #64748B;">
+          If the button doesn't work, copy and paste this link into your browser:
         </p>
-        <p style="margin: 0 0 24px 0; font-size: 12px; color: #0D4446; word-break: break-all;">
-          ${data.inviteUrl}
+        <p style="margin: 0 0 16px 0; font-size: 12px; line-height: 16px; word-break: break-all;">
+          <a href="${safeUrl}" style="color: #0F766E; text-decoration: underline;">${safeUrl}</a>
+        </p>
+        <p style="margin: 0; font-size: 12px; line-height: 16px; color: #64748B;">
+          Didn't expect this invitation? You can safely ignore this email.
         </p>
       </td>
     </tr>
     <tr>
-      <td style="padding: 20px 32px; background-color: #FBFBF9; border-top: 1px solid #E5EBEB; text-align: center; font-size: 12px; color: #8E9A9B;">
-        ${data.brokerAgency || 'CP_kerby Luxury Architectural Platform'} &bull; Compliance & Broker Operations
+      <td style="padding: 16px 24px; background-color: #F8FAFC; border-top: 1px solid #E2E8F0; text-align: center; font-size: 12px; line-height: 16px; color: #64748B;">
+        ${safeAgency} &bull; Agent Support
       </td>
     </tr>
   </table>

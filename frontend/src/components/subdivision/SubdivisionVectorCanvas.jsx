@@ -858,7 +858,7 @@ export default function SubdivisionVectorCanvas({
                     cx={midpoint.x}
                     cy={midpoint.y}
                     r={4 / zoom + 1.5}
-                    fill="#FF6B6B"
+                    fill="#FF8559"
                     stroke="#FFFFFF"
                     strokeWidth={1.5}
                     onClick={(e) => {
@@ -881,7 +881,7 @@ export default function SubdivisionVectorCanvas({
             <polyline
               points={drawingPoints.map((p) => `${p.x},${p.y}`).join(' ')}
               fill="none"
-              stroke="#FF6B6B"
+              stroke="#FF8559"
               strokeWidth="2"
             />
             {/* Live connecting ray to cursor */}
@@ -891,7 +891,7 @@ export default function SubdivisionVectorCanvas({
                 y1={drawingPoints[drawingPoints.length - 1].y}
                 x2={currentCursorPos.x}
                 y2={currentCursorPos.y}
-                stroke="#FF6B6B"
+                stroke="#FF8559"
                 strokeWidth="1.5"
                 strokeDasharray="4,4"
               />
@@ -903,7 +903,7 @@ export default function SubdivisionVectorCanvas({
                 cx={p.x}
                 cy={p.y}
                 r="4"
-                fill={i === 0 ? '#10B981' : '#FF6B6B'}
+                fill={i === 0 ? '#10B981' : '#FF8559'}
                 stroke="#FFFFFF"
                 strokeWidth="1.5"
                 onClick={() => {
@@ -931,7 +931,7 @@ export default function SubdivisionVectorCanvas({
                 ? 'rgba(15, 118, 110, 0.2)'
                 : 'rgba(255, 107, 107, 0.2)'
             }
-            stroke={activeTool.startsWith('ai') ? '#0F766E' : '#FF6B6B'}
+            stroke={activeTool.startsWith('ai') ? '#0F766E' : '#FF8559'}
             strokeWidth="2"
             strokeDasharray={activeTool.startsWith('ai') ? '4,4' : 'none'}
             className="pointer-events-none"
@@ -946,12 +946,12 @@ export default function SubdivisionVectorCanvas({
               y1={sliceStart.y}
               x2={sliceCurrent.x}
               y2={sliceCurrent.y}
-              stroke="#FF6B6B"
+              stroke="#FF8559"
               strokeWidth="3"
               strokeDasharray="6,4"
             />
-            <circle cx={sliceStart.x} cy={sliceStart.y} r={5} fill="#FF6B6B" />
-            <circle cx={sliceCurrent.x} cy={sliceCurrent.y} r={5} fill="#FF6B6B" />
+            <circle cx={sliceStart.x} cy={sliceStart.y} r={5} fill="#FF8559" />
+            <circle cx={sliceCurrent.x} cy={sliceCurrent.y} r={5} fill="#FF8559" />
           </g>
         )}
       </svg>

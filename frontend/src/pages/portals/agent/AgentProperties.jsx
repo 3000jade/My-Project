@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import PageHeader from '../../../components/dashboard/PageHeader';
 import SearchAndFilterBar from '../../../components/dashboard/SearchAndFilterBar';
@@ -133,14 +133,13 @@ export default function AgentProperties() {
                 )}
               </div>
               <p className="text-xs text-[#64748B]">{formatPropertyAddressHeading(row, 'Metro Manila')}</p>
+              {getAssignedByName(row) && (
+                <p className="text-[11px] text-[#0F766E] font-medium flex items-center gap-1 mt-0.5">
+                  <UserCheck className="w-3 h-3 shrink-0" />
+                  <span>Assigned by {getAssignedByName(row)}</span>
+                </p>
+              )}
             </div>
-            <p className="text-xs text-[#64748B]">{typeof row.location === 'string' ? row.location : row.location?.address || 'Metro Manila'}</p>
-            {getAssignedByName(row) && (
-              <p className="text-[11px] text-[#0F766E] font-medium flex items-center gap-1 mt-0.5">
-                <UserCheck className="w-3 h-3 shrink-0" />
-                <span>Assigned by {getAssignedByName(row)}</span>
-              </p>
-            )}
           </div>
         );
       }
@@ -157,7 +156,7 @@ export default function AgentProperties() {
       header: "Price",
       render: (row) => (
         <span className="font-mono font-bold text-sm text-[#0F766E]">
-          {row.price || (row.price_raw ? `â‚±${row.price_raw.toLocaleString()}` : 'Price on Request')}
+          {row.price || (row.price_raw ? `₱${row.price_raw.toLocaleString()}` : 'Price on Request')}
         </span>
       )
     },
@@ -169,7 +168,7 @@ export default function AgentProperties() {
         const area = row.living_area ?? row.livingArea ?? row.sqm ?? row.specs?.livingArea;
         return (
           <span className="text-xs font-mono text-slate-500">
-            {beds} Beds â€¢ {baths} Baths â€¢ {area ? `${area} sqm` : 'â€”'}
+            {beds} Beds • {baths} Baths • {area ? `${area} sqm` : '—'}
           </span>
         );
       }
@@ -244,15 +243,6 @@ export default function AgentProperties() {
       <PageHeader
         title="Assigned Properties"
         subtitle="Review your exclusive property inventory. To make changes, submit an edit proposal for broker review."
-        actions={
-          <Link
-            to="/agent/properties/new"
-            className={buttonVariants({ variant: 'default', size: 'default' })}
-          >
-            <span className="material-symbols-outlined text-[16px]">add</span>
-            <span>Propose New Listing</span>
-          </Link>
-        }
       />
 
       {/* New Assigned Properties Inbox */}
@@ -297,7 +287,7 @@ export default function AgentProperties() {
                     </Link>
                     <p className="text-xs text-[#64748B] flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
                       <span>{typeof item.location === 'string' ? item.location : item.location?.address || 'Metro Manila'}</span>
-                      <span>â€¢</span>
+                      <span>•</span>
                       <span className="font-medium text-[#0F766E]">Assigned by {assigner}</span>
                     </p>
                   </div>
@@ -369,18 +359,16 @@ export default function AgentProperties() {
           <div className="flex items-center h-[46px] bg-white border border-[#CBD5E1] rounded-lg p-1 gap-1 shadow-2xs">
             <button
               onClick={() => setViewMode('grid')}
-              className={`h-full px-3 rounded-md flex items-center justify-center transition-colors cursor-pointer ${
-                viewMode === 'grid' ? 'bg-[#0F766E] text-white shadow-2xs' : 'text-slate-500 hover:text-slate-800'
-              }`}
+              className={`h-full px-3 rounded-md flex items-center justify-center transition-colors cursor-pointer ${viewMode === 'grid' ? 'bg-[#0F766E] text-white shadow-2xs' : 'text-slate-500 hover:text-slate-800'
+                }`}
               title="Grid View"
             >
               <span className="material-symbols-outlined text-[18px]">grid_view</span>
             </button>
             <button
               onClick={() => setViewMode('table')}
-              className={`h-full px-3 rounded-md flex items-center justify-center transition-colors cursor-pointer ${
-                viewMode === 'table' ? 'bg-[#0F766E] text-white shadow-2xs' : 'text-slate-500 hover:text-slate-800'
-              }`}
+              className={`h-full px-3 rounded-md flex items-center justify-center transition-colors cursor-pointer ${viewMode === 'table' ? 'bg-[#0F766E] text-white shadow-2xs' : 'text-slate-500 hover:text-slate-800'
+                }`}
               title="Table View"
             >
               <span className="material-symbols-outlined text-[18px]">table_rows</span>
@@ -454,7 +442,7 @@ export default function AgentProperties() {
                       {item.is_published ? 'Published' : 'Draft / Unlisted'}
                     </span>
                     <span className="text-base font-bold font-mono text-[#0F766E]">
-                      {item.price || (item.price_raw ? `â‚±${item.price_raw.toLocaleString()}` : 'Price on Request')}
+                      {item.price || (item.price_raw ? `₱${item.price_raw.toLocaleString()}` : 'Price on Request')}
                     </span>
                   </div>
                   <h3 className="font-semibold text-base text-[#1E293B] line-clamp-1 group-hover:text-[#0F766E] transition-colors">
@@ -474,10 +462,10 @@ export default function AgentProperties() {
 
                 <div className="pt-3 border-t border-[#E2E8F0] flex items-center justify-between text-xs font-mono text-[#64748B]">
                   <span>{item.bedrooms ?? item.specs?.beds ?? 0} Beds</span>
-                  <span>â€¢</span>
+                  <span>•</span>
                   <span>{item.bathrooms ?? item.specs?.baths ?? 0} Baths</span>
-                  <span>â€¢</span>
-                  <span>{item.sqm || (item.specs?.livingArea ? `${item.specs.livingArea} sqm` : 'â€”')}</span>
+                  <span>•</span>
+                  <span>{item.sqm || (item.specs?.livingArea ? `${item.specs.livingArea} sqm` : '—')}</span>
                 </div>
 
                 <div className="pt-2 flex items-center gap-2">

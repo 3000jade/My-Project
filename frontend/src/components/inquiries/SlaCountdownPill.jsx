@@ -36,7 +36,7 @@ export default function SlaCountdownPill({
 
   if (isOverdue) {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#FF6B6B]/20 text-[#1E293B] border border-[#FF6B6B]">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#FF8559]/20 text-[#1E293B] border border-[#FF8559]">
         <AlertTriangle className="w-3 h-3 text-rose-600" />
         <span>SLA Overdue</span>
       </span>

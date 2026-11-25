@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import PageHeader from '../../../components/dashboard/PageHeader';
+import BrokerAudit from './BrokerAudit';
 import {
   Card,
   CardHeader,
@@ -45,6 +46,11 @@ import {
 
 export default function BrokerNotifications() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') === 'audit' ? 'audit' : 'notifications';
+  const handleTabChange = (next) => {
+    setSearchParams(next === 'audit' ? { tab: 'audit' } : {}, { replace: true });
+  };
   const { toast } = useToast();
   const [notifications, setNotifications] = useState([]);
   const [filter, setFilter] = useState('ALL'); // 'ALL' | 'UNREAD' | 'READ'
@@ -127,6 +133,23 @@ export default function BrokerNotifications() {
   return (
     <div className="flex flex-col gap-6 w-full min-w-0 max-w-full font-sans" data-testid="broker-notifications-portal">
       <Toaster />
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+        <TabsList className="bg-white dark:bg-slate-900 border border-[#E2E8F0] dark:border-slate-800 p-1 h-auto">
+          <TabsTrigger value="notifications" className="text-xs font-semibold px-4 py-2 gap-1.5">
+            <Bell className="size-3.5" />
+            <span>Notifications</span>
+          </TabsTrigger>
+          <TabsTrigger value="audit" className="text-xs font-semibold px-4 py-2 gap-1.5">
+            <ShieldCheck className="size-3.5" />
+            <span>Audit Trail</span>
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      {activeTab === 'audit' ? (
+        <BrokerAudit />
+      ) : (
+        <>
       <PageHeader
         title="Notifications & System Alerts"
         subtitle="Operational event feed for client inquiries, agent accreditation filings, and transaction milestones."
@@ -246,7 +269,7 @@ export default function BrokerNotifications() {
                     navigate(getNotificationTargetPath(item, 'broker'));
                   }}
                   className={`border border-[#E2E8F0] dark:border-slate-800 shadow-xs transition-colors overflow-hidden cursor-pointer ${
-                    !item.is_read ? 'bg-[#FF6B6B]/5 dark:bg-rose-950/20' : 'bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                    !item.is_read ? 'bg-[#FF8559]/5 dark:bg-rose-950/20' : 'bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/60'
                   }`}
                 >
                   <CardContent className="p-5 flex items-start justify-between gap-4">
@@ -254,7 +277,7 @@ export default function BrokerNotifications() {
                       <div
                         className={`size-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
                           !item.is_read
-                            ? 'bg-[#FF6B6B]/15 text-[#FF6B6B]'
+                            ? 'bg-[#FF8559]/15 text-[#FF8559]'
                             : 'bg-[#0F766E]/10 text-[#0F766E] dark:text-teal-400'
                         }`}
                       >
@@ -264,7 +287,7 @@ export default function BrokerNotifications() {
                         <div className="flex items-center gap-2">
                           <h4 className="font-bold text-sm text-[#1E293B] dark:text-slate-100">{item.title}</h4>
                           {!item.is_read && (
-                            <span className="size-2 rounded-full bg-[#FF6B6B]" aria-label="Unread alert" />
+                            <span className="size-2 rounded-full bg-[#FF8559]" aria-label="Unread alert" />
                           )}
                         </div>
                         <p className="text-xs text-[#64748B] dark:text-slate-300 leading-relaxed max-w-xl">
@@ -341,6 +364,8 @@ export default function BrokerNotifications() {
           </Card>
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 import crypto from 'crypto';
 import { supabaseAdmin, isSupabaseConfigured } from '../config/supabase';
@@ -37,7 +38,7 @@ const SESSION_RETENTION_MS = 24 * 60 * 60 * 1000; // Prune revoked/expired sessi
 const DATA_DIR = path.resolve(__dirname, '../../data');
 const WORKER_SUFFIX = process.env.VITEST_POOL_ID || process.env.VITEST_WORKER_ID;
 const SESSIONS_FILE = WORKER_SUFFIX
-  ? path.join(DATA_DIR, `sessions.test-${WORKER_SUFFIX}.json`)
+  ? path.join(os.tmpdir(), `cp-kerby-sessions.test-${WORKER_SUFFIX}.json`)
   : path.join(DATA_DIR, 'sessions.json');
 
 // In-memory indexed stores

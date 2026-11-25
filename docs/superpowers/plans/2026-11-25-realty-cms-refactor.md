@@ -1659,3 +1659,4 @@ Expected: All tests PASS and both `backend` and `frontend` builds succeed with z
 git add frontend/src/pages/public/AboutPage.jsx frontend/src/pages/public/ContactPage.jsx frontend/src/pages/public/AboutAndContactCms.test.jsx
 git commit -m "feat(cms): connect About Us staff directory and Contact page branches to CMS"
 ```
+

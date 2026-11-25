@@ -89,134 +89,132 @@ export default function InquiryFilterToolbar({
       >
         {/* Search Input with "/" Shortcut */}
         <InputGroup
-          className={`h-10 rounded-lg border border-outline bg-surface ${
-            layout === 'inline' ? 'flex-1 min-w-0' : ''
-          }`}
+          className={`h-10 rounded-lg border border-outline bg-surface ${layout === 'inline' ? 'flex-1 min-w-0' : ''
+            }`}
         >
-        <InputGroupAddon align="inline-start">
-          <Search className="size-4 text-on-surface-variant" />
-        </InputGroupAddon>
-        <InputGroupInput
-          ref={searchInputRef}
-          type="text"
-          value={searchValue}
-          onChange={(e) => onSearchChange && onSearchChange(e.target.value)}
-          placeholder={searchPlaceholder}
-          aria-label="Search inquiries"
-          className="text-sm text-on-surface"
-        />
-        <InputGroupAddon align="inline-end">
-          {searchValue ? (
-            <InputGroupButton
-              type="button"
-              size="icon-xs"
-              onClick={() => onSearchChange && onSearchChange('')}
-              aria-label="Clear search"
-            >
-              <X className="size-3.5" />
-            </InputGroupButton>
-          ) : (
-            <Kbd>/</Kbd>
-          )}
-        </InputGroupAddon>
-      </InputGroup>
-
-      {/* Filters Popover + Sort Controls */}
-      {(filters.length > 0 || onSortChange) && (
-        <div
-          className={`flex flex-wrap items-center justify-between gap-2 ${
-            layout === 'inline' ? 'shrink-0' : ''
-          }`}
-        >
-          {filters.length > 0 && (
-            <Popover open={filtersOpen} onOpenChange={setFiltersOpen}>
-              <PopoverTrigger
-                render={
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-10 gap-1.5 normal-case tracking-normal font-medium"
-                  />
-                }
+          <InputGroupAddon align="inline-start">
+            <Search className="size-4 text-on-surface-variant" />
+          </InputGroupAddon>
+          <InputGroupInput
+            ref={searchInputRef}
+            type="text"
+            value={searchValue}
+            onChange={(e) => onSearchChange && onSearchChange(e.target.value)}
+            placeholder={searchPlaceholder}
+            aria-label="Search inquiries"
+            className="text-sm text-on-surface"
+          />
+          <InputGroupAddon align="inline-end">
+            {searchValue ? (
+              <InputGroupButton
+                type="button"
+                size="icon-xs"
+                onClick={() => onSearchChange && onSearchChange('')}
+                aria-label="Clear search"
               >
-                <SlidersHorizontal className="size-3.5" />
-                <span>Filters</span>
-                {activeCount > 0 && (
-                  <Badge variant="primary" className="px-1.5 py-0 text-[10px] tabular-nums">
-                    {activeCount}
-                  </Badge>
-                )}
-              </PopoverTrigger>
-              <PopoverContent align="start" className="w-72 rounded-xl border border-outline bg-surface p-4 shadow-lg">
-                <div className="flex flex-col gap-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold uppercase tracking-wider text-on-surface">
-                      Filter Inquiries
-                    </span>
-                    {activeCount > 0 && onResetFilters && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          onResetFilters();
-                          setFiltersOpen(false);
-                        }}
-                        className="h-7 px-2 text-xs normal-case tracking-normal"
-                      >
-                        Reset
-                      </Button>
-                    )}
-                  </div>
+                <X className="size-3.5" />
+              </InputGroupButton>
+            ) : (
+              <Kbd>/</Kbd>
+            )}
+          </InputGroupAddon>
+        </InputGroup>
 
-                  {filters.map((filter, idx) => (
-                    <div key={idx} className="flex flex-col gap-1.5">
-                      <Label className="text-[11px] font-semibold text-on-surface-variant">
-                        {filter.label || filter.placeholder || `Filter ${idx + 1}`}
-                      </Label>
-                      <Select value={filter.value} onValueChange={filter.onChange}>
-                        <SelectTrigger className="w-full h-10 rounded-lg border border-outline bg-surface px-3 text-xs">
-                          <SelectValue placeholder={filter.placeholder || 'All'} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectGroup>
-                            {filter.options.map((opt) => (
-                              <SelectItem key={opt.value} value={opt.value}>
-                                {opt.label}
-                              </SelectItem>
-                            ))}
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
+        {/* Filters Popover + Sort Controls */}
+        {(filters.length > 0 || onSortChange) && (
+          <div
+            className={`flex flex-wrap items-center justify-between gap-2 ${layout === 'inline' ? 'shrink-0' : ''
+              }`}
+          >
+            {filters.length > 0 && (
+              <Popover open={filtersOpen} onOpenChange={setFiltersOpen}>
+                <PopoverTrigger
+                  render={
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-10 gap-1.5 normal-case tracking-normal font-medium"
+                    />
+                  }
+                >
+                  <SlidersHorizontal className="size-3.5" />
+                  <span>Filters</span>
+                  {activeCount > 0 && (
+                    <Badge variant="primary" className="px-1.5 py-0 text-[10px] tabular-nums">
+                      {activeCount}
+                    </Badge>
+                  )}
+                </PopoverTrigger>
+                <PopoverContent align="start" className="w-72 rounded-xl border border-outline bg-surface p-4 shadow-lg">
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-on-surface">
+                        Filter Inquiries
+                      </span>
+                      {activeCount > 0 && onResetFilters && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            onResetFilters();
+                            setFiltersOpen(false);
+                          }}
+                          className="h-7 px-2 text-xs normal-case tracking-normal"
+                        >
+                          Reset
+                        </Button>
+                      )}
                     </div>
-                  ))}
-                </div>
-              </PopoverContent>
-            </Popover>
-          )}
 
-          {onSortChange && (
-            <Select value={sortBy} onValueChange={onSortChange}>
-              <SelectTrigger
-                aria-label="Sort inquiries"
-                className="h-10 min-w-[140px] rounded-lg border border-outline bg-surface px-3 text-xs font-medium"
-              >
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  {SORT_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          )}
-        </div>
-      )}
+                    {filters.map((filter, idx) => (
+                      <div key={idx} className="flex flex-col gap-1.5">
+                        <Label className="text-[11px] font-semibold text-on-surface-variant">
+                          {filter.label || filter.placeholder || `Filter ${idx + 1}`}
+                        </Label>
+                        <Select value={filter.value} onValueChange={filter.onChange}>
+                          <SelectTrigger className="w-full h-10 rounded-lg border border-outline bg-surface px-3 text-xs">
+                            <SelectValue placeholder={filter.placeholder || 'All'} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectGroup>
+                              {filter.options.map((opt) => (
+                                <SelectItem key={opt.value} value={opt.value}>
+                                  {opt.label}
+                                </SelectItem>
+                              ))}
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            )}
+
+            {onSortChange && (
+              <Select value={sortBy} onValueChange={onSortChange}>
+                <SelectTrigger
+                  aria-label="Sort inquiries"
+                  className="h-10 min-w-[140px] rounded-lg border border-outline bg-surface px-3 text-xs font-medium"
+                >
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {SORT_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Active Filter Chips + Reset */}

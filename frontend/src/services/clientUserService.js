@@ -5,30 +5,19 @@ import { mockProperties } from '../mockData/mockProperties';
 import { mockInquiries } from '../mockData/mockInquiries';
 
 const CLIENT_STORAGE_KEYS = {
-  PROFILE: 'cp_client_profile_mock',
   SAVED_PROPERTIES: 'cp_client_saved_properties_mock',
   INQUIRIES: 'cp_client_inquiries_mock',
 };
 
-const DEFAULT_CLIENT_PROFILE = {
-  id: 'client-001',
-  firstName: 'Sophia Isabella',
-  lastName: 'Laurel',
-  name: 'Sophia Isabella Laurel',
-  email: 'client@pt.com',
-  phone: '+63 917 555 8899',
-  role: 'Registered Client',
-  rawRole: 'client',
-  avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
-  bio: 'Private investor exploring high-yield prime estates and modern architectural condominiums in Bonifacio Global City and Ayala Alabang.',
-  preferredLocation: 'Bonifacio Global City, Taguig',
-  preferredCurrency: 'PHP',
-  investmentBudget: '₱50,000,000 - ₱120,000,000',
-  memberSince: 'March 2026',
-  emailNotifications: true,
-  smsNotifications: true,
-  priceDropAlerts: true,
-};
+function mapClientNotifications(serverProfile) {
+  const prefs = serverProfile?.notificationPreferences || serverProfile?.notification_preferences || {};
+  return {
+    ...serverProfile,
+    emailNotifications: prefs.email ?? true,
+    smsNotifications: prefs.sms ?? true,
+    priceDropAlerts: prefs.priceDrops ?? true,
+  };
+}
 
 function safeGetStorage(key, fallback) {
   try {
@@ -50,65 +39,41 @@ function safeSetStorage(key, value) {
 
 export const clientUserService = {
   /**
-   * Get current client profile
+   * Get current client profile directly from backend
    */
   async getClientProfile() {
-    const cached = safeGetStorage(CLIENT_STORAGE_KEYS.PROFILE, null);
-    if (cached) {
-      return cached;
-    }
-
-    try {
-      const serverProfile = await profileService.getProfile({ role: 'client' });
-      if (serverProfile && serverProfile.role !== 'Senior Real Estate Consultant') {
-        const merged = { ...DEFAULT_CLIENT_PROFILE, ...serverProfile, role: 'Registered Client' };
-        safeSetStorage(CLIENT_STORAGE_KEYS.PROFILE, merged);
-        return merged;
-      }
-    } catch {
-      // offline fallback
-    }
-
-    return safeGetStorage(CLIENT_STORAGE_KEYS.PROFILE, DEFAULT_CLIENT_PROFILE);
+    const serverProfile = await profileService.getProfile({ role: 'client' });
+    return mapClientNotifications(serverProfile);
   },
 
   /**
-   * Update client profile
+   * Update client profile directly on backend
    */
   async updateClientProfile(updates) {
-    const current = await this.getClientProfile();
-    const firstName = updates.firstName !== undefined ? updates.firstName : current.firstName;
-    const lastName = updates.lastName !== undefined ? updates.lastName : current.lastName;
-    const name = [firstName, lastName].filter(Boolean).join(' ') || current.name;
-
-    const merged = {
-      ...current,
-      ...updates,
-      firstName,
-      lastName,
-      name,
-    };
-
-    safeSetStorage(CLIENT_STORAGE_KEYS.PROFILE, merged);
-
-    try {
-      await profileService.updateProfile({
-        name,
-        phone: merged.phone,
-        bio: merged.bio,
-        preferred_location: merged.preferredLocation,
-        investment_budget: merged.investmentBudget,
-        notification_preferences: {
-          email: merged.emailNotifications,
-          sms: merged.smsNotifications,
-          priceDrops: merged.priceDropAlerts,
-        },
-      }, { role: 'client' });
-    } catch {
-      // Offline fallback
+    const payload = {};
+    if (updates.name !== undefined) {
+      payload.name = updates.name;
+      payload.fullName = updates.name;
+    }
+    if (updates.avatar !== undefined) payload.avatar = updates.avatar;
+    if (updates.phone !== undefined) payload.phone = updates.phone;
+    if (updates.bio !== undefined) payload.bio = updates.bio;
+    if (updates.preferredLocation !== undefined) payload.preferred_location = updates.preferredLocation;
+    if (updates.investmentBudget !== undefined) payload.investment_budget = updates.investmentBudget;
+    if (
+      updates.emailNotifications !== undefined ||
+      updates.smsNotifications !== undefined ||
+      updates.priceDropAlerts !== undefined
+    ) {
+      payload.notification_preferences = {
+        email: Boolean(updates.emailNotifications),
+        sms: Boolean(updates.smsNotifications),
+        priceDrops: Boolean(updates.priceDropAlerts),
+      };
     }
 
-    return merged;
+    const updated = await profileService.updateProfile(payload, { role: 'client' });
+    return mapClientNotifications(updated);
   },
 
   /**

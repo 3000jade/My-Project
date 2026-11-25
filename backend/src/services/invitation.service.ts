@@ -705,7 +705,7 @@ export class InvitationService {
   /**
    * Private check for active invitation
    */
-  private static async findActiveByEmail(email: string): Promise<AgentInvitation | null> {
+  public static async findActiveByEmail(email: string): Promise<AgentInvitation | null> {
     const now = Date.now();
     const activeLocal = localInvitationsState.find(
       (i) => i.email === email && i.status === 'pending' && new Date(i.expires_at).getTime() > now

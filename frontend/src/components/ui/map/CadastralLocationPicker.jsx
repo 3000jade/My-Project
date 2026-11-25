@@ -192,7 +192,7 @@ export default function CadastralLocationPicker({
           <div style="
             width: 10px;
             height: 10px;
-            background: #FF6B6B;
+            background: #FF8559;
             border-radius: 50%;
             transform: rotate(45deg);
             border: 1.5px solid #ffffff;

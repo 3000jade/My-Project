@@ -127,72 +127,72 @@ export const createCmsContentSchema = baseCmsContentSchema
     sort_order: z.coerce.number().int().min(0).max(9999).optional().default(0),
   })
   .superRefine((data, ctx) => {
-  const payload = data.payload ?? {};
+    const payload = data.payload ?? {};
 
-  if (SLUG_REQUIRED_TYPES.has(data.content_type) && !hasNonEmptyString(data.slug)) {
-    ctx.addIssue({
-      code: 'custom',
-      path: ['slug'],
-      message: 'Slug is required for page and article content.',
-    });
-  }
-
-  if (data.content_type === 'staff') {
-    if (!hasNonEmptyString(payload.department)) {
+    if (SLUG_REQUIRED_TYPES.has(data.content_type) && !hasNonEmptyString(data.slug)) {
       ctx.addIssue({
         code: 'custom',
-        path: ['payload', 'department'],
-        message: 'Department is required for staff profiles.',
+        path: ['slug'],
+        message: 'Slug is required for page and article content.',
       });
     }
-    if (!hasNonEmptyString(payload.role)) {
+
+    if (data.content_type === 'staff') {
+      if (!hasNonEmptyString(payload.department)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['payload', 'department'],
+          message: 'Department is required for staff profiles.',
+        });
+      }
+      if (!hasNonEmptyString(payload.role)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['payload', 'role'],
+          message: 'Role is required for staff profiles.',
+        });
+      }
+    }
+
+    if (data.content_type === 'office' && !hasNonEmptyString(payload.address)) {
       ctx.addIssue({
         code: 'custom',
-        path: ['payload', 'role'],
-        message: 'Role is required for staff profiles.',
+        path: ['payload', 'address'],
+        message: 'Address is required for office branches.',
       });
     }
-  }
 
-  if (data.content_type === 'office' && !hasNonEmptyString(payload.address)) {
-    ctx.addIssue({
-      code: 'custom',
-      path: ['payload', 'address'],
-      message: 'Address is required for office branches.',
-    });
-  }
-
-  if (
-    data.content_type === 'partner' &&
-    payload.partner_type !== 'developer' &&
-    payload.partner_type !== 'bank'
-  ) {
-    ctx.addIssue({
-      code: 'custom',
-      path: ['payload', 'partner_type'],
-      message: "Partner type is required and must be 'developer' or 'bank'.",
-    });
-  }
-
-  if (data.content_type === 'award') {
-    if (!hasNonEmptyYear(payload.year)) {
+    if (
+      data.content_type === 'partner' &&
+      payload.partner_type !== 'developer' &&
+      payload.partner_type !== 'bank'
+    ) {
       ctx.addIssue({
         code: 'custom',
-        path: ['payload', 'year'],
-        message: 'Year is required for awards.',
+        path: ['payload', 'partner_type'],
+        message: "Partner type is required and must be 'developer' or 'bank'.",
       });
     }
-    if (!hasNonEmptyString(payload.organization)) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['payload', 'organization'],
-        message: 'Organization is required for awards.',
-      });
-    }
-  }
 
-  validatePayloadEnums(payload, ctx);
-});
+    if (data.content_type === 'award') {
+      if (!hasNonEmptyYear(payload.year)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['payload', 'year'],
+          message: 'Year is required for awards.',
+        });
+      }
+      if (!hasNonEmptyString(payload.organization)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['payload', 'organization'],
+          message: 'Organization is required for awards.',
+        });
+      }
+    }
+
+    validatePayloadEnums(payload, ctx);
+  });
 
 export const updateCmsContentSchema = baseCmsContentSchema
   .partial()

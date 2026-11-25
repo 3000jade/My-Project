@@ -9,7 +9,7 @@ import { Editable, EditablePreview, EditableInput } from '@/components/ui/editab
 const LiveEditContext = createContext({
   isAdmin: false,
   isEditing: false,
-  setIsEditing: () => {},
+  setIsEditing: () => { },
 });
 
 export function useLiveEdit() {
@@ -108,9 +108,8 @@ export function LiveEditableText({
             setDraft(value || '');
             setIsOpen(true);
           }}
-          className={`block w-full text-left border border-dashed border-[#0F766E]/60 bg-[#CCFBF1]/20 hover:bg-[#CCFBF1]/40 rounded-lg px-2 py-1 transition-colors cursor-pointer ${
-            !value ? 'italic text-[#64748B]' : ''
-          } ${className}`}
+          className={`block w-full text-left border border-dashed border-[#0F766E]/60 bg-[#CCFBF1]/20 hover:bg-[#CCFBF1]/40 rounded-lg px-2 py-1 transition-colors cursor-pointer ${!value ? 'italic text-[#64748B]' : ''
+            } ${className}`}
         >
           {value || placeholder}
         </button>

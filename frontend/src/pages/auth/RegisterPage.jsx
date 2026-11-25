@@ -1,153 +1,185 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect, useMemo } from 'react';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { motion, AnimatePresence, MotionConfig } from 'framer-motion';
 import {
-  IconEye,
-  IconEyeOff,
-  IconAlertCircle,
-  IconCheck,
-  IconRefresh,
-  IconMailCheck,
-  IconArrowLeft,
-  IconEdit,
-} from '@tabler/icons-react';
-import { GoogleLogin, useGoogleOAuth } from '@react-oauth/google';
-import { useAuth } from '../../context/AuthContext';
-import { OtpInput } from '../../components/auth';
-import { authService } from '../../services/authService';
+  AlertCircle,
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  Sparkles,
+} from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { authService } from '@/services/authService';
+import sessionCoordinator from '@/services/sessionCoordinator';
+import OtpInput from '@/components/auth/OtpInput';
+import AuthStepProgress from '@/components/auth/smart-auth/AuthStepProgress';
+import GoogleAuthButton from '@/components/auth/smart-auth/GoogleAuthButton';
+import RegisterPhoneStep from '@/components/auth/smart-auth/RegisterPhoneStep';
+import RegisterFullNameStep from '@/components/auth/smart-auth/RegisterFullNameStep';
+import RegisterProfileStep from '@/components/auth/smart-auth/RegisterProfileStep';
+import RegisterSuccessCard from '@/components/auth/smart-auth/RegisterSuccessCard';
+import {
+  evaluatePasswordStrength,
+  saveRememberedEmail,
+  suggestEmailCorrection,
+} from '@/components/auth/smart-auth/smartAuthHelpers';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Separator } from '@/components/ui/separator';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
+import { Spinner } from '@/components/ui/spinner';
 
-function GoogleOAuthSafe({ onSuccess, onError, fallback }) {
-  let hasProvider = false;
-  try {
-    const context = useGoogleOAuth();
-    hasProvider = Boolean(context?.clientId);
-  } catch {
-    hasProvider = false;
-  }
+const STEP_ANIMATION = {
+  initial: { opacity: 0, y: 8 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.2, ease: 'easeOut' },
+};
 
-  if (!hasProvider) return fallback;
+const PRIMARY_BUTTON_CLASS =
+  'w-full h-14 rounded-lg bg-primary hover:bg-primary-hover text-white font-semibold text-base normal-case tracking-normal gap-2';
 
-  return (
-    <div className="w-full flex justify-center overflow-hidden rounded-xl border border-[#e1e5df] hover:border-[#c2c9bf] transition-colors">
-      <GoogleLogin
-        onSuccess={onSuccess}
-        onError={onError}
-        useOneTap={false}
-        theme="outline"
-        size="large"
-        shape="rectangular"
-        width="100%"
-        text="signup_with"
-      />
-    </div>
-  );
-}
+const INPUT_CLASS =
+  'h-14 px-4 rounded-lg border-outline bg-surface text-base text-on-surface placeholder:text-on-surface-variant focus-visible:outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
-  const { register, googleLogin, verifyRegistrationOtp } = useAuth();
+  const location = useLocation();
+  const { googleLogin, completeRegistration } = useAuth();
 
-  // Workflow Step State: 'credentials' | 'otp'
-  const [step, setStep] = useState('credentials');
+  // Steps: 'email' | 'otp' | 'phone' | 'name' | 'password' | 'success'
+  const [step, setStep] = useState('email');
 
-  // Credentials State
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [agreeTerms, setAgreeTerms] = useState(true);
-
-  // OTP Verification State
+  const [emailInput, setEmailInput] = useState('');
+  const [resolvedEmail, setResolvedEmail] = useState('');
   const [otp, setOtp] = useState('');
   const [cooldown, setCooldown] = useState(0);
+  const [verificationToken, setVerificationToken] = useState('');
+
+  const [phone, setPhone] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [capsLockOn, setCapsLockOn] = useState(false);
+  const [createdAccount, setCreatedAccount] = useState(null);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [authError, setAuthError] = useState('');
+  const [existingAccountEmail, setExistingAccountEmail] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
-  // 60-Second Cooldown Countdown Timer
   useEffect(() => {
-    let timer = null;
-    if (cooldown > 0) {
-      timer = setTimeout(() => {
-        setCooldown((c) => c - 1);
-      }, 1000);
-    }
+    if (cooldown <= 0) return undefined;
+    const timer = setTimeout(() => setCooldown((prev) => Math.max(0, prev - 1)), 1000);
     return () => clearTimeout(timer);
   }, [cooldown]);
 
-  // Password Rules & Validation
-  const passwordRules = [
-    { id: 'length', label: '8+ Characters', met: password.length >= 8 },
-    { id: 'mixedCase', label: 'Upper & Lowercase', met: /[A-Z]/.test(password) && /[a-z]/.test(password) },
-    { id: 'number', label: 'At least 1 Number', met: /\d/.test(password) },
-    { id: 'symbol', label: 'Special Symbol', met: /[!@#$%^&*(),.?":{}|<>]/.test(password) }
-  ];
+  const emailSuggestion = useMemo(() => suggestEmailCorrection(emailInput), [emailInput]);
+  const passwordStrength = useMemo(() => evaluatePasswordStrength(password), [password]);
+  const activeEmail = resolvedEmail || emailInput;
 
-  const metRulesCount = passwordRules.filter(r => r.met).length;
-  const strengthLabels = ['Empty', 'Weak', 'Fair', 'Good', 'Strong'];
-  const strengthColors = ['bg-[#e1e5df]', 'bg-red-500', 'bg-[#c4683c]', 'bg-yellow-500', 'bg-[#2d6a4f]'];
+  const handleCapsLockCheck = (e) => {
+    if (typeof e.getModifierState === 'function') {
+      setCapsLockOn(e.getModifierState('CapsLock'));
+    }
+  };
 
-  const passwordsMatch = confirmPassword.length === 0 || password === confirmPassword;
-
-  // Step 1: Validate credentials and initiate 6-digit email OTP
-  const handleInitiateOtp = async (e) => {
-    if (e) e.preventDefault();
+  const resetToEmailStep = () => {
+    setStep('email');
+    setOtp('');
+    setVerificationToken('');
+    setPassword('');
+    setShowPassword(false);
+    setCapsLockOn(false);
     setAuthError('');
+    setExistingAccountEmail('');
     setSuccessMsg('');
+  };
 
-    if (!agreeTerms) {
-      setAuthError('You must agree to the Terms of Service and Privacy Policy to create an account.');
+  const completeAuthRedirect = (role) => {
+    const rawSearch =
+      location.search || (typeof window !== 'undefined' ? window.location.search : '');
+    const searchParams = new URLSearchParams(rawSearch);
+    const returnUrlParam = searchParams.get('returnUrl') || location.state?.from?.pathname;
+    const validReturn = returnUrlParam
+      ? sessionCoordinator.validateReturnTo(decodeURIComponent(returnUrlParam))
+      : null;
+
+    if (validReturn && (role === 'admin' || validReturn.startsWith(`/${role || 'client'}`))) {
+      navigate(validReturn);
       return;
     }
 
-    if (password !== confirmPassword) {
-      setAuthError('Passphrases do not match. Please verify your credentials.');
+    if (role === 'admin') navigate('/admin/cms');
+    else if (role === 'agent') navigate('/agent/dashboard');
+    else if (role === 'broker') navigate('/broker/dashboard');
+    else navigate('/client/dashboard');
+  };
+
+  // Step 1: Check email and send 6-digit verification code
+  const handleStartRegistration = async (e) => {
+    if (e) e.preventDefault();
+    const cleaned = String(emailInput || '').trim();
+    if (!cleaned) {
+      setAuthError('Please enter your email.');
       return;
     }
 
-    if (metRulesCount < 2) {
-      setAuthError('Please ensure your passphrase satisfies core security guidelines.');
-      return;
-    }
-
+    setAuthError('');
+    setExistingAccountEmail('');
+    setSuccessMsg('');
     setIsSubmitting(true);
 
     try {
-      const payload = {
-        fullName: fullName.trim(),
-        email: email.trim().toLowerCase(),
-        password,
+      const result = await authService.identifyEmail(cleaned);
+      const nextEmail = result?.email || cleaned.toLowerCase();
+
+      if (result?.status === 'existing') {
+        setExistingAccountEmail(nextEmail);
+        setAuthError('An account with this email already exists.');
+        return;
+      }
+
+      if (result?.status === 'invited_agent') {
+        setAuthError(
+          'This email has a broker invitation. Please open the invite link sent to your email.'
+        );
+        return;
+      }
+
+      setResolvedEmail(nextEmail);
+      setEmailInput(nextEmail);
+
+      const otpRes = await authService.initiateRegistrationOtp({
+        email: nextEmail,
+        channel: 'email',
         role: 'client',
-      };
-      if (phone.trim()) payload.phone = phone.trim();
-
-      const res = await authService.initiateRegistrationOtp(payload);
-      setCooldown(res?.data?.cooldownSeconds || 60);
-      setStep('otp');
+      });
+      setCooldown(otpRes?.cooldownSeconds || 60);
       setOtp('');
+      setVerificationToken('');
+      setStep('otp');
 
-      if (res?.data?.devOtp) {
-        setSuccessMsg(`A 6-digit verification code has been dispatched to ${email.trim().toLowerCase()}. (Dev Test Code: ${res.data.devOtp})`);
-      } else {
-        setSuccessMsg(`A 6-digit verification code has been dispatched to ${email.trim().toLowerCase()}.`);
+      if (otpRes?.devOtp) {
+        setSuccessMsg(`Test code: ${otpRes.devOtp}`);
       }
     } catch (err) {
-      setAuthError(err.message || 'Unable to initiate verification code. Please try again.');
+      setAuthError(
+        err?.message || 'Please enter a valid email (like name@example.com).'
+      );
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Step 2: Verify 6-digit OTP and establish session
-  const handleVerifyOtp = async (codeOverride) => {
+  // Step 2: Verify 6-digit Email OTP
+  const handleVerifyEmailOtp = async (codeOverride) => {
     const code = codeOverride || otp;
     if (!code || code.length !== 6) {
-      setAuthError('Please enter the complete 6-digit verification code.');
+      setAuthError('Please enter all 6 digits.');
       return;
     }
 
@@ -155,56 +187,131 @@ export default function RegisterPage() {
     setIsVerifying(true);
 
     try {
-      const payload = {
-        email: email.trim().toLowerCase(),
-        otp: code,
-        password,
-        fullName: fullName.trim(),
-        role: 'client',
-      };
-      if (phone.trim()) payload.phone = phone.trim();
-
-      const authData = verifyRegistrationOtp
-        ? await verifyRegistrationOtp(payload)
-        : await authService.verifyRegistrationOtp(payload);
-
-      setSuccessMsg('Email verified successfully! Redirecting to client portal...');
-      setTimeout(() => {
-        const targetRole = authData?.user?.role || 'client';
-        navigate(`/${targetRole}/dashboard`);
-      }, 600);
+      const targetEmail = activeEmail.trim().toLowerCase();
+      const res = await authService.verifyRegistrationEmail(targetEmail, code);
+      setVerificationToken(res?.verificationToken || '');
+      setSuccessMsg('');
+      setStep('phone');
     } catch (err) {
-      setAuthError(err.message || 'Verification failed. Please check your 6-digit code.');
+      setAuthError(err?.message || 'That code did not match. Please try again.');
     } finally {
       setIsVerifying(false);
     }
   };
 
-  // Resend 6-Digit OTP
   const handleResendOtp = async () => {
     if (cooldown > 0 || isResending) return;
     setAuthError('');
     setIsResending(true);
 
     try {
-      const res = await authService.resendRegistrationOtp(email.trim().toLowerCase());
-      setCooldown(res?.data?.cooldownSeconds || 60);
+      const targetEmail = activeEmail.trim().toLowerCase();
+      const res = await authService.resendRegistrationOtp(targetEmail, 'email');
+      setCooldown(res?.cooldownSeconds || 60);
       setOtp('');
-      if (res?.data?.devOtp) {
-        setSuccessMsg(`A fresh verification code has been sent. (Dev Test Code: ${res.data.devOtp})`);
+      if (res?.devOtp) {
+        setSuccessMsg(`New test code: ${res.devOtp}`);
       } else {
-        setSuccessMsg('A fresh verification code has been dispatched to your email.');
+        setSuccessMsg('We sent a new code to your email.');
       }
     } catch (err) {
-      setAuthError(err.message || 'Failed to resend verification code. Please wait.');
+      setAuthError(err?.message || 'Could not resend the code right now. Please try again.');
     } finally {
       setIsResending(false);
     }
   };
 
+  // Step 3: Phone Number
+  const handlePhoneContinue = (e) => {
+    if (e) e.preventDefault();
+    const digits = phone.replace(/\D/g, '');
+    if (digits.length < 7) {
+      setAuthError('Please enter a valid phone number.');
+      return;
+    }
+    setAuthError('');
+    setSuccessMsg('');
+    setStep('name');
+  };
+
+  // Step 4: Full Name
+  const handleNameContinue = (e) => {
+    if (e) e.preventDefault();
+    if (fullName.trim().length < 2) {
+      setAuthError('Please enter your full name.');
+      return;
+    }
+    setAuthError('');
+    setSuccessMsg('');
+    setStep('password');
+  };
+
+  // Step 5: Password & Complete Registration
+  const handleCompleteRegistration = async (e) => {
+    if (e) e.preventDefault();
+    setAuthError('');
+    setSuccessMsg('');
+
+    if (!passwordStrength.allMet) {
+      setAuthError('Please make sure your password meets all 4 rules below.');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const targetEmail = activeEmail.trim().toLowerCase();
+      const payload = {
+        email: targetEmail,
+        verificationToken,
+        phone: phone.trim(),
+        fullName: fullName.trim(),
+        password,
+      };
+
+      const authData = completeRegistration
+        ? await completeRegistration(payload)
+        : await authService.completeRegistration(payload);
+
+      saveRememberedEmail(targetEmail);
+      setCreatedAccount({
+        role: authData?.user?.role || 'client',
+        fullName: fullName.trim(),
+        email: targetEmail,
+      });
+      setStep('success');
+    } catch (err) {
+      const errorMessage = err?.message || 'We could not create your account. Please try again.';
+      const isExpired =
+        err?.response?.data?.data?.code === 'VERIFICATION_EXPIRED' ||
+        errorMessage.toLowerCase().includes('expired');
+
+      if (isExpired) {
+        try {
+          const targetEmail = activeEmail.trim().toLowerCase();
+          const otpRes = await authService.resendRegistrationOtp(targetEmail, 'email');
+          setCooldown(otpRes?.cooldownSeconds || 60);
+          setOtp('');
+          setVerificationToken('');
+          setStep('otp');
+          setAuthError('Your code expired. We sent a fresh 6-digit code to continue.');
+          if (otpRes?.devOtp) {
+            setSuccessMsg(`New test code: ${otpRes.devOtp}`);
+          }
+        } catch {
+          setAuthError(errorMessage);
+        }
+      } else {
+        setAuthError(errorMessage);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleGoogleSuccess = async (credentialResponse) => {
     if (!credentialResponse?.credential) {
-      setAuthError('Google registration did not provide valid credentials.');
+      setAuthError('Google did not return sign-up details. Please try again.');
       return;
     }
 
@@ -212,515 +319,355 @@ export default function RegisterPage() {
     setIsSubmitting(true);
     try {
       const authData = await googleLogin(credentialResponse.credential, 'client');
-      const targetRole = authData?.user?.role || 'client';
-      navigate(`/${targetRole}/dashboard`);
+      if (authData?.user?.email) saveRememberedEmail(authData.user.email);
+      completeAuthRedirect(authData?.user?.role || 'client');
     } catch (err) {
-      setAuthError(err.message || 'Google authentication failed. Please try again.');
+      setAuthError(err?.message || 'Google sign-up did not go through. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleGoogleError = () => {
-    setAuthError('Google authentication was cancelled or failed.');
+    setAuthError('Google sign-up was cancelled. You can try again or use your email.');
   };
 
+  const headingByStep = {
+    email: 'Create an account',
+    otp: 'Verify your email',
+    phone: 'Your phone number',
+    name: 'Your full name',
+    password: 'Create a password',
+  };
+
+  const handleTopBackClick = () => {
+    setAuthError('');
+    setExistingAccountEmail('');
+    setSuccessMsg('');
+    if (step === 'password') setStep('name');
+    else if (step === 'name') setStep('phone');
+    else if (step !== 'email') resetToEmailStep();
+    else navigate('/');
+  };
+
+  const topBackLabel =
+    step === 'password'
+      ? 'Back'
+      : step === 'name'
+      ? 'Back'
+      : step !== 'email'
+      ? 'Change email'
+      : 'Home';
+
   return (
-    <>
-      <main className="w-full min-h-screen lg:h-screen flex flex-col lg:flex-row m-0 p-0 overflow-x-hidden font-sans selection:bg-[#c4683c] selection:text-white bg-[#ffffff]">
-
-        {/* =========================================================================
-            LEFT: ARCHITECTURAL SHOWCASE (100% full bleed on wide screens, 50% width)
-            ========================================================================= */}
-        <section className="w-full lg:w-1/2 h-[340px] sm:h-[420px] lg:h-full relative shrink-0 bg-[#183d3b] text-white border-0 overflow-hidden group">
-          {/* Full bleed photo extending to the far left monitor edge */}
-          <img
-            src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1800&q=88"
-            alt="Scandinavian Modernist Architecture"
-            className="absolute inset-0 w-full h-full object-cover object-center filter brightness-[0.76] contrast-[1.06] group-hover:scale-105 transition-transform duration-1000 ease-out"
-          />
-
-          {/* Ambient Nordic Pine Gradient Mask */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#183d3b]/95 via-[#183d3b]/35 to-black/25 pointer-events-none" />
-
-          {/* Direct positioning in left lower corner without limiting container */}
-          <div className="relative z-10 w-full h-full p-6 sm:p-10 lg:p-14 xl:p-16 flex flex-col justify-end border-0">
-
-            {/* Bottom: Editorial Slogan & 3-Pill Carousel Indicator in Lower Left Corner */}
-            <div className="max-w-[480px] space-y-4">
-              <span className="font-mono text-xs tracking-widest text-[#a8b8b0] uppercase">
-                {step === 'otp' ? 'Step 02 / Verification' : 'Step 01 / Identity Onboarding'}
-              </span>
-
-              <h1 className="font-serif text-3xl sm:text-4xl lg:text-[42px] font-medium tracking-tight text-white leading-[1.15]">
-                {step === 'otp' ? 'Verification with Precision' : 'Quiet Precision, Cadastral Clarity'}
-              </h1>
-
-              <p className="font-sans text-xs sm:text-sm text-[#e1e5df] font-light leading-relaxed">
-                {step === 'otp'
-                  ? 'Secure single-use One-Time Password validation ensures verified registry access for accredited high-value acquisitions.'
-                  : 'Experience modern luxury real estate infrastructure engineered for accredited investors, corporate buyers, and discerning clientele.'}
-              </p>
-
-              {/* 3-Pill Carousel Indicators in Lower Left Corner */}
-              <div className="flex items-center gap-2 pt-2">
-                <span className={`h-1.5 rounded-full transition-all duration-300 ${step === 'credentials' ? 'w-8 bg-[#c4683c]' : 'w-4 bg-white/40'}`} />
-                <span className={`h-1.5 rounded-full transition-all duration-300 ${step === 'otp' ? 'w-8 bg-[#c4683c]' : 'w-4 bg-white/40'}`} />
-                <span className="h-1.5 w-4 rounded-full bg-white/40" />
-              </div>
-            </div>
-
-          </div>
-        </section>
-
-        {/* =========================================================================
-            RIGHT: ELEVATED DAYLIGHT AUTH CONSOLE (100% full bleed to right monitor edge)
-            ========================================================================= */}
-        <section className="w-full lg:w-1/2 min-h-full lg:h-full bg-[#ffffff] relative flex flex-col justify-center items-center px-6 py-12 sm:px-12 lg:px-16 xl:px-24 overflow-y-auto border-0">
-
-          {/* Back to Home / Back to Details Button */}
-          <div className="absolute top-6 left-6 sm:top-8 sm:left-8 z-20">
-            <button
-              type="button"
-              onClick={() => {
-                if (step === 'otp') {
-                  setStep('credentials');
-                  setAuthError('');
-                  setSuccessMsg('');
-                } else {
-                  navigate('/');
-                }
-              }}
-              className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[#f4f5f2] hover:bg-[#e1e5df] border border-[#e1e5df] hover:border-[#c2c9bf] rounded-full text-xs font-medium text-[#183d3b] transition-all hover:-translate-x-0.5 shadow-sm cursor-pointer"
-            >
-              <span>←</span>
-              <span>{step === 'otp' ? 'Back to details' : 'Back to home'}</span>
-            </button>
-          </div>
-
-          {/* Inner Form Column (Max-width 440px centered on page) */}
-          <div className="w-full max-w-[440px] space-y-5 sm:space-y-6 my-auto py-2 border-0 mx-auto">
-
-            {/* Header */}
-            <div className="space-y-1">
-              <h2 className="font-serif text-2xl sm:text-3xl lg:text-[34px] font-medium tracking-tight text-[#1c2224] leading-tight">
-                {step === 'otp' ? 'Verify your email' : 'Create an account'}
-              </h2>
-              <p className="font-sans text-xs sm:text-sm text-[#5f6b6f]">
-                {step === 'otp' ? (
-                  <span>
-                    Enter the 6-digit verification code dispatched to your inbox.
-                  </span>
-                ) : (
-                  <>
-                    Already have an account?{' '}
-                    <button
-                      type="button"
-                      onClick={() => navigate('/login')}
-                      className="text-[#183d3b] hover:text-[#c4683c] font-semibold underline underline-offset-4 ml-1 cursor-pointer transition-colors"
-                    >
-                      Log in
-                    </button>
-                  </>
-                )}
-              </p>
-            </div>
-
-            {/* Agent / Broker Invitation Info Callout (Step 1 Only) */}
-            {step === 'credentials' && (
-              <div className="p-3 bg-[#F0FDFA] border border-[#0F766E]/20 rounded-xl text-left">
-                <p className="font-sans text-xs text-[#0F766E] leading-relaxed">
-                  <strong>Licensed Real Estate Professional?</strong> Real estate agent onboarding requires a broker invitation token under RESA RA 9646.{' '}
-                  <button
-                    type="button"
-                    onClick={() => navigate('/register/agent')}
-                    className="font-semibold underline hover:text-[#115E59] cursor-pointer"
-                  >
-                    Enter broker invite code
-                  </button>
-                </p>
-              </div>
-            )}
-
-            {/* Success Feedback Banner */}
-            <AnimatePresence>
-              {successMsg && (
-                <motion.div
-                  initial={{ opacity: 0, y: -6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -6 }}
-                  className="p-3 bg-[#F0FDF4] border border-[#22C55E]/30 text-[#15803D] text-xs rounded-xl font-sans flex items-start gap-2.5 shadow-sm text-left"
-                >
-                  <IconCheck className="w-4 h-4 shrink-0 text-[#22C55E] mt-0.5" />
-                  <span>{successMsg}</span>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Inline Error Banner */}
-            <AnimatePresence>
-              {authError && (
-                <motion.div
-                  initial={{ opacity: 0, y: -6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -6 }}
-                  className="p-3 bg-[#fcf1eb] border border-[#c4683c]/30 text-[#b0572d] text-xs rounded-xl font-sans flex items-start gap-2.5 shadow-sm text-left"
-                >
-                  <IconAlertCircle className="w-4 h-4 shrink-0 text-[#c4683c] mt-0.5" />
-                  <span>{authError}</span>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* STEP 1: CREDENTIALS INTAKE FORM */}
-            {step === 'credentials' && (
-              <form onSubmit={handleInitiateOtp} className="space-y-3.5 sm:space-y-4">
-
-                {/* Full Name with Header Label */}
-                <div className="space-y-1.5 text-left">
-                  <label htmlFor="reg-fullname" className="block font-sans text-xs font-semibold text-[#1c2224] tracking-wide">
-                    Full Name
-                  </label>
-                  <div className="relative bg-[#f4f5f2] border border-[#e1e5df] focus-within:border-[#183d3b] focus-within:ring-2 focus-within:ring-[#183d3b]/10 focus-within:bg-white rounded-xl transition-all overflow-hidden">
-                    <input
-                      id="reg-fullname"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      className="w-full h-[54px] px-4 bg-transparent text-xs sm:text-sm text-[#1c2224] placeholder-[#7a868a] outline-none font-sans"
-                      placeholder="Enter your full name"
-                      type="text"
-                      autoComplete="name"
-                      required
-                    />
-                  </div>
-                </div>
-
-                {/* Email with Header Label */}
-                <div className="space-y-1.5 text-left">
-                  <label htmlFor="reg-email" className="block font-sans text-xs font-semibold text-[#1c2224] tracking-wide">
-                    Email
-                  </label>
-                  <div className="relative bg-[#f4f5f2] border border-[#e1e5df] focus-within:border-[#183d3b] focus-within:ring-2 focus-within:ring-[#183d3b]/10 focus-within:bg-white rounded-xl transition-all overflow-hidden">
-                    <input
-                      id="reg-email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="w-full h-[54px] px-4 bg-transparent text-xs sm:text-sm text-[#1c2224] placeholder-[#7a868a] outline-none font-sans"
-                      placeholder="name@domain.com"
-                      type="email"
-                      autoComplete="email"
-                      required
-                    />
-                  </div>
-                </div>
-
-                {/* Contact Number with Header Label */}
-                <div className="space-y-1.5 text-left">
-                  <label htmlFor="reg-phone" className="block font-sans text-xs font-semibold text-[#1c2224] tracking-wide">
-                    Contact Number
-                  </label>
-                  <div className="relative bg-[#f4f5f2] border border-[#e1e5df] focus-within:border-[#183d3b] focus-within:ring-2 focus-within:ring-[#183d3b]/10 focus-within:bg-white rounded-xl transition-all overflow-hidden">
-                    <input
-                      id="reg-phone"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      className="w-full h-[54px] px-4 bg-transparent text-xs sm:text-sm text-[#1c2224] placeholder-[#7a868a] outline-none font-sans"
-                      placeholder="+63 917 000 0000"
-                      type="tel"
-                      autoComplete="tel"
-                    />
-                  </div>
-                </div>
-
-                {/* Create Password */}
-                <div className="space-y-1.5 text-left">
-                  <label htmlFor="reg-password" className="block font-sans text-xs font-semibold text-[#1c2224] tracking-wide">
-                    Password
-                  </label>
-                  <div className="relative bg-[#f4f5f2] border border-[#e1e5df] focus-within:border-[#183d3b] focus-within:ring-2 focus-within:ring-[#183d3b]/10 focus-within:bg-white rounded-xl transition-all flex items-center pr-2 overflow-hidden">
-                    <input
-                      id="reg-password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="w-full h-[54px] px-4 bg-transparent text-xs sm:text-sm text-[#1c2224] placeholder-[#7a868a] outline-none font-sans"
-                      placeholder="Create secure passphrase"
-                      type={showPassword ? "text" : "password"}
-                      autoComplete="new-password"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="text-[#7a868a] hover:text-[#183d3b] p-2 transition-colors cursor-pointer"
-                      aria-label={showPassword ? "Hide password" : "Show password"}
-                    >
-                      {showPassword ? <IconEyeOff className="w-4 h-4" /> : <IconEye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Confirm Password */}
-                <div className="space-y-1.5 text-left">
-                  <label htmlFor="reg-confirm-password" className="block font-sans text-xs font-semibold text-[#1c2224] tracking-wide">
-                    Confirm Password
-                  </label>
-                  <div className={`relative bg-[#f4f5f2] border ${!passwordsMatch ? 'border-red-400 focus-within:border-red-500' : 'border-[#e1e5df] focus-within:border-[#183d3b]'} focus-within:ring-2 focus-within:ring-[#183d3b]/10 focus-within:bg-white rounded-xl transition-all flex items-center pr-2 overflow-hidden`}>
-                    <input
-                      id="reg-confirm-password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="w-full h-[54px] px-4 bg-transparent text-xs sm:text-sm text-[#1c2224] placeholder-[#7a868a] outline-none font-sans"
-                      placeholder="Re-enter passphrase"
-                      type={showConfirmPassword ? "text" : "password"}
-                      autoComplete="new-password"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="text-[#7a868a] hover:text-[#183d3b] p-2 transition-colors cursor-pointer"
-                      aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
-                    >
-                      {showConfirmPassword ? <IconEyeOff className="w-4 h-4" /> : <IconEye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Password Mismatch Feedback */}
-                {!passwordsMatch && (
-                  <div className="flex items-center gap-1.5 text-xs text-red-500 font-sans">
-                    <IconAlertCircle className="w-3.5 h-3.5 shrink-0" />
-                    <span>Passphrases do not match. Please verify your credentials.</span>
-                  </div>
-                )}
-
-                {/* Password Strength Checklist */}
-                {password.length > 0 && (
-                  <div className="p-3 bg-[#f4f5f2] border border-[#e1e5df] rounded-xl space-y-2.5">
-                    <div className="flex items-center gap-1.5">
-                      {[1, 2, 3, 4].map((step) => (
-                        <div
-                          key={step}
-                          className={`h-1 flex-1 rounded-full transition-colors duration-300 ${metRulesCount >= step ? strengthColors[metRulesCount] : 'bg-[#e1e5df]'
-                            }`}
-                        />
-                      ))}
-                      <span className="font-mono text-[9px] text-[#7a868a] uppercase ml-1">
-                        {strengthLabels[metRulesCount]}
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-1.5 text-[11px] font-sans">
-                      {passwordRules.map((rule) => (
-                        <div
-                          key={rule.id}
-                          className={`flex items-center gap-1.5 transition-colors ${rule.met ? 'text-[#2d6a4f] font-medium' : 'text-[#7a868a]'
-                            }`}
-                        >
-                          {rule.met ? (
-                            <IconCheck className="w-3.5 h-3.5 text-[#2d6a4f] shrink-0" />
-                          ) : (
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#bec8c8] shrink-0" />
-                          )}
-                          <span>{rule.label}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Agreement Checkbox */}
-                <div className="pt-0.5">
-                  <label className="flex items-start gap-2.5 cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      aria-label="I agree to the Terms of Service and Privacy Policy"
-                      checked={agreeTerms}
-                      onChange={(e) => setAgreeTerms(e.target.checked)}
-                      className="w-4 h-4 mt-0.5 rounded text-[#183d3b] accent-[#183d3b] cursor-pointer shrink-0"
-                    />
-                    <span className="font-sans text-xs sm:text-[13px] text-[#5f6b6f] leading-snug">
-                      I agree to the <span className="text-[#183d3b] font-semibold hover:underline">Terms of Service</span> and <span className="text-[#183d3b] font-semibold hover:underline">Privacy Policy</span>.
-                    </span>
-                  </label>
-                </div>
-
-                {/* Submit Button */}
-                <div className="pt-1.5">
-                  <motion.button
-                    whileTap={{ scale: 0.99 }}
-                    type="submit"
-                    disabled={isSubmitting || !passwordsMatch}
-                    className="w-full h-[54px] bg-[#183d3b] hover:bg-[#122e2c] text-white font-sans text-xs sm:text-sm font-semibold tracking-wider uppercase rounded-xl transition-all duration-300 flex items-center justify-center gap-2.5 shadow-[0_10px_25px_-5px_rgba(24,61,59,0.35)] hover:shadow-[0_14px_28px_-5px_rgba(24,61,59,0.45)] cursor-pointer disabled:opacity-50"
-                  >
-                    {isSubmitting ? (
-                      <span className="inline-flex items-center gap-2">
-                        <IconRefresh className="w-4 h-4 animate-spin" />
-                        <span>Sending Verification Code...</span>
-                      </span>
-                    ) : (
-                      <span>Continue to Verification</span>
-                    )}
-                  </motion.button>
-                </div>
-
-              </form>
-            )}
-
-            {/* STEP 2: IN-PLACE 6-DIGIT EMAIL OTP VERIFICATION */}
-            {step === 'otp' && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                className="space-y-5 text-left"
+    <MotionConfig reducedMotion="user">
+      <main className="min-h-screen w-full bg-background text-on-surface font-sans flex items-center justify-center p-4 sm:p-6 lg:p-8">
+        <div className="w-full max-w-xl mx-auto flex flex-col gap-4">
+          {/* Back / Home button directly at the top of the card */}
+          {step !== 'success' && (
+            <div className="flex items-center justify-start">
+              <Button
+                type="button"
+                variant="ghost"
+                size="default"
+                onClick={handleTopBackClick}
+                className="h-11 px-2 text-on-surface-variant hover:text-on-surface normal-case tracking-normal font-medium text-base gap-2"
               >
-                {/* Email Chip with Quick Edit Action */}
-                <div className="p-3.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2.5 overflow-hidden">
-                    <div className="w-8 h-8 rounded-lg bg-[#0F766E]/10 text-[#0F766E] flex items-center justify-center shrink-0">
-                      <IconMailCheck className="w-4 h-4" />
-                    </div>
-                    <div className="truncate">
-                      <p className="text-[11px] font-mono uppercase tracking-wider text-[#64748B]">Target Recipient</p>
-                      <p className="text-xs font-semibold text-[#1E293B] truncate">{email}</p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setStep('credentials');
-                      setAuthError('');
-                      setSuccessMsg('');
-                    }}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-[#0F766E] hover:bg-[#0F766E]/10 rounded-lg transition-colors cursor-pointer shrink-0"
-                    title="Change email"
-                  >
-                    <IconEdit className="w-3.5 h-3.5" />
-                    <span>Edit</span>
-                  </button>
-                </div>
+                <ArrowLeft className="size-5" />
+                <span>{topBackLabel}</span>
+              </Button>
+            </div>
+          )}
 
-                {/* 6-Digit Otp Input Box */}
-                <div className="space-y-2 py-2">
-                  <label className="block text-center font-sans text-xs font-semibold text-[#1E293B] tracking-wide">
-                    6-Digit Security Code
-                  </label>
+          {/* Single Centered XL Registration Card */}
+          <Card
+            data-testid="register-card"
+            className="bg-surface border border-outline rounded-xl shadow-xs"
+          >
+            <CardHeader className="p-6 sm:p-8 pb-4 flex flex-col gap-6">
+              <Link
+                to="/"
+                aria-label="Human Shelter Realty Home"
+                className="inline-flex items-center self-center"
+              >
+                <img
+                  src="/images/human-shelter-logo.webp"
+                  alt="Human Shelter Realty"
+                  className="h-20 sm:h-24 w-auto max-w-full object-contain"
+                />
+              </Link>
+
+              <AuthStepProgress step={step} />
+
+              {step !== 'success' && (
+                <div className="flex flex-col gap-2">
+                  <CardTitle className="text-3xl sm:text-4xl font-bold tracking-tight text-on-surface">
+                    {headingByStep[step]}
+                  </CardTitle>
+                  {step === 'otp' && (
+                    <CardDescription className="text-base text-on-surface-variant">
+                      Enter the 6-digit code sent to{' '}
+                      <span className="font-medium text-on-surface">{activeEmail}</span>.
+                    </CardDescription>
+                  )}
+                </div>
+              )}
+            </CardHeader>
+
+            <CardContent className="p-6 sm:p-8 pt-2 flex flex-col gap-6">
+              <AnimatePresence mode="wait">
+                {successMsg && (
+                  <motion.div key="success-alert" {...STEP_ANIMATION}>
+                    <Alert className="bg-emerald-50 border-emerald-200 text-emerald-700 rounded-lg">
+                      <Check className="size-4 text-emerald-700" />
+                      <AlertDescription className="text-xs leading-relaxed text-emerald-700">
+                        {successMsg}
+                      </AlertDescription>
+                    </Alert>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <AnimatePresence mode="wait">
+                {authError && (
+                  <motion.div key="error-alert" {...STEP_ANIMATION}>
+                    <Alert
+                      variant="destructive"
+                      className="bg-red-50 border-red-200 text-red-600 rounded-lg"
+                    >
+                      <AlertCircle className="size-4 text-red-600" />
+                      <AlertDescription className="text-xs leading-relaxed text-red-600">
+                        {authError}{' '}
+                        {existingAccountEmail && (
+                          <Link
+                            to="/login"
+                            className="font-semibold underline underline-offset-2 text-red-700 hover:text-red-800"
+                          >
+                            Sign in instead
+                          </Link>
+                        )}
+                      </AlertDescription>
+                    </Alert>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Step 1: Email */}
+              {step === 'email' && (
+                <motion.div key="step-email" {...STEP_ANIMATION} className="flex flex-col gap-6">
+                  <form onSubmit={handleStartRegistration} className="flex flex-col gap-6">
+                    <FieldGroup className="gap-4">
+                      <Field className="gap-2">
+                        <FieldLabel
+                          htmlFor="register-email"
+                          className="text-base font-medium text-on-surface"
+                        >
+                          Email
+                        </FieldLabel>
+                        <Input
+                          id="register-email"
+                          type="email"
+                          autoComplete="email"
+                          autoFocus
+                          value={emailInput}
+                          onChange={(e) => {
+                            setEmailInput(e.target.value);
+                            if (authError) setAuthError('');
+                            if (existingAccountEmail) setExistingAccountEmail('');
+                          }}
+                          placeholder="name@example.com"
+                          className={INPUT_CLASS}
+                          required
+                        />
+                      </Field>
+                    </FieldGroup>
+
+                    {emailSuggestion && (
+                      <div className="flex items-center justify-between gap-2 p-2 px-4 rounded-lg bg-tertiary-container/60 border border-primary/20 text-sm text-on-surface">
+                        <span className="inline-flex items-center gap-2 min-w-0 truncate">
+                          <Sparkles className="size-4 text-primary shrink-0" />
+                          <span className="truncate">
+                            Did you mean <strong className="font-semibold">{emailSuggestion}</strong>?
+                          </span>
+                        </span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setEmailInput(emailSuggestion)}
+                          className="h-9 px-2 text-sm font-semibold text-primary hover:text-primary-hover normal-case tracking-normal shrink-0"
+                        >
+                          Use this
+                        </Button>
+                      </div>
+                    )}
+
+                    <Button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className={PRIMARY_BUTTON_CLASS}
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <Spinner size="sm" className="text-white" />
+                          <span>Sending code...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>Continue</span>
+                          <ArrowRight className="size-5" />
+                        </>
+                      )}
+                    </Button>
+                  </form>
+
+                  <div className="flex items-center gap-4">
+                    <Separator className="flex-1" />
+                    <span className="text-sm text-on-surface-variant whitespace-nowrap">or</span>
+                    <Separator className="flex-1" />
+                  </div>
+
+                  <GoogleAuthButton
+                    onSuccess={handleGoogleSuccess}
+                    onError={handleGoogleError}
+                    disabled={isSubmitting}
+                    text="signup_with"
+                    onFallbackClick={() =>
+                      handleGoogleSuccess({ credential: 'mock-google-token-client' })
+                    }
+                  />
+
+                  <p className="text-center text-sm text-on-surface-variant pt-4 border-t border-outline">
+                    Already have an account?{' '}
+                    <Link
+                      to="/login"
+                      className="font-semibold text-primary hover:text-primary-hover hover:underline"
+                    >
+                      Sign in
+                    </Link>
+                  </p>
+                </motion.div>
+              )}
+
+              {/* Step 2: 6-Digit Email Verification */}
+              {step === 'otp' && (
+                <motion.div key="step-otp" {...STEP_ANIMATION} className="flex flex-col gap-6">
                   <OtpInput
+                    size="lg"
                     value={otp}
                     onChange={(val) => {
                       setOtp(val);
                       if (authError) setAuthError('');
                     }}
-                    onComplete={(completeCode) => handleVerifyOtp(completeCode)}
+                    onComplete={(code) => handleVerifyEmailOtp(code)}
                     disabled={isVerifying}
                     error={Boolean(authError)}
-                    autoFocus
                   />
-                  <p className="text-center font-sans text-[11px] text-[#64748B]">
-                    Code expires in 10 minutes.
-                  </p>
-                </div>
 
-                {/* Cooldown Timer & Resend Link */}
-                <div className="flex items-center justify-center text-xs font-sans text-[#64748B] pt-1">
-                  {cooldown > 0 ? (
-                    <span className="flex items-center gap-1.5">
-                      <span>Resend code in</span>
-                      <strong className="font-mono text-[#0F766E] font-bold">
-                        0:{cooldown < 10 ? '0' : ''}{cooldown}
-                      </strong>
-                    </span>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={handleResendOtp}
-                      disabled={isResending}
-                      className="font-semibold text-[#0F766E] hover:underline cursor-pointer flex items-center gap-1.5 transition-colors disabled:opacity-50"
-                    >
-                      {isResending && <IconRefresh className="w-3.5 h-3.5 animate-spin" />}
-                      <span>Resend verification code</span>
-                    </button>
-                  )}
-                </div>
-
-                {/* Submit Verification Button */}
-                <div className="pt-2">
-                  <motion.button
-                    whileTap={{ scale: 0.99 }}
-                    type="button"
-                    onClick={() => handleVerifyOtp(otp)}
-                    disabled={isVerifying || otp.length !== 6}
-                    className="w-full h-[54px] bg-[#0F766E] hover:bg-[#115E59] text-white font-sans text-xs sm:text-sm font-semibold tracking-wider uppercase rounded-xl transition-all duration-300 flex items-center justify-center gap-2.5 shadow-[0_10px_25px_-5px_rgba(15,118,110,0.35)] hover:shadow-[0_14px_28px_-5px_rgba(15,118,110,0.45)] cursor-pointer disabled:opacity-50"
-                  >
-                    {isVerifying ? (
-                      <span className="inline-flex items-center gap-2">
-                        <IconRefresh className="w-4 h-4 animate-spin" />
-                        <span>Verifying Security Code...</span>
+                  <div className="flex items-center justify-between text-sm text-on-surface-variant">
+                    <span>Didn&apos;t get a code?</span>
+                    {cooldown > 0 ? (
+                      <span className="font-semibold text-on-surface tabular-nums">
+                        Resend in {cooldown}s
                       </span>
                     ) : (
-                      <span>Verify & Complete Registration</span>
-                    )}
-                  </motion.button>
-                </div>
-
-                {/* Back to Step 1 */}
-                <div className="pt-1 text-center">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setStep('credentials');
-                      setAuthError('');
-                      setSuccessMsg('');
-                    }}
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#64748B] hover:text-[#1E293B] transition-colors cursor-pointer"
-                  >
-                    <IconArrowLeft className="w-3.5 h-3.5" />
-                    <span>Back to credentials</span>
-                  </button>
-                </div>
-              </motion.div>
-            )}
-
-            {/* Social SSO Button (Google OAuth - Step 1 Only) */}
-            {step === 'credentials' && (
-              <>
-                <div className="w-full flex items-center justify-center pt-2">
-                  <div className="h-[1px] bg-[#e1e5df] flex-1" />
-                  <span className="px-4 font-sans text-xs text-[#7a868a] select-none text-center whitespace-nowrap">
-                    Or register with
-                  </span>
-                  <div className="h-[1px] bg-[#e1e5df] flex-1" />
-                </div>
-
-                <div className="w-full pt-0.5">
-                  <GoogleOAuthSafe
-                    onSuccess={handleGoogleSuccess}
-                    onError={handleGoogleError}
-                    fallback={
-                      <button
+                      <Button
                         type="button"
-                        onClick={() => setAuthError('Google authentication requires an active Google Client ID.')}
-                        className="w-full h-[54px] px-4 rounded-xl border border-[#e1e5df] bg-[#ffffff] hover:bg-[#f4f5f2] font-sans text-xs sm:text-sm font-semibold text-[#1c2224] flex items-center justify-center gap-2.5 transition-all cursor-pointer shadow-sm hover:border-[#c2c9bf]"
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleResendOtp}
+                        disabled={isResending}
+                        className="h-11 text-sm font-semibold text-primary hover:text-primary-hover normal-case tracking-normal gap-2"
                       >
-                        <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
-                          <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.65v3.03h3.88c2.27-2.09 3.665-5.17 3.665-9.12z" />
-                          <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.03c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.24v3.13C3.26 21.43 7.31 24 12 24z" />
-                          <path fill="#FBBC05" d="M5.28 14.29c-.25-.72-.38-1.49-.38-2.29s.13-1.57.38-2.29V6.58H1.24C.45 8.15 0 9.99 0 12s.45 3.85 1.24 5.42l4.04-3.13z" />
-                          <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.57 1.24 6.58l4.04 3.13c.95-2.83 3.6-4.96 6.72-4.96z" />
-                        </svg>
-                        <span>Google</span>
-                      </button>
-                    }
+                        {isResending && <Spinner size="sm" />}
+                        <span>Resend code</span>
+                      </Button>
+                    )}
+                  </div>
+
+                  <Button
+                    type="button"
+                    onClick={() => handleVerifyEmailOtp(otp)}
+                    disabled={isVerifying || otp.length !== 6}
+                    className={PRIMARY_BUTTON_CLASS}
+                  >
+                    {isVerifying ? (
+                      <>
+                        <Spinner size="sm" className="text-white" />
+                        <span>Verifying...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Verify</span>
+                        <ArrowRight className="size-5" />
+                      </>
+                    )}
+                  </Button>
+                </motion.div>
+              )}
+
+              {/* Step 3: Phone Number */}
+              {step === 'phone' && (
+                <motion.div key="step-phone" {...STEP_ANIMATION}>
+                  <RegisterPhoneStep
+                    phone={phone}
+                    onChangePhone={(val) => {
+                      setPhone(val);
+                      if (authError) setAuthError('');
+                    }}
+                    onSubmit={handlePhoneContinue}
                   />
-                </div>
-              </>
-            )}
+                </motion.div>
+              )}
 
-          </div>
-        </section>
+              {/* Step 4: Full Name */}
+              {step === 'name' && (
+                <motion.div key="step-name" {...STEP_ANIMATION}>
+                  <RegisterFullNameStep
+                    fullName={fullName}
+                    onChangeFullName={(val) => {
+                      setFullName(val);
+                      if (authError) setAuthError('');
+                    }}
+                    onSubmit={handleNameContinue}
+                  />
+                </motion.div>
+              )}
 
+              {/* Step 5: Password */}
+              {step === 'password' && (
+                <motion.div key="step-password" {...STEP_ANIMATION}>
+                  <RegisterProfileStep
+                    password={password}
+                    onChangePassword={(val) => {
+                      setPassword(val);
+                      if (authError) setAuthError('');
+                    }}
+                    showPassword={showPassword}
+                    onToggleShowPassword={() => setShowPassword((prev) => !prev)}
+                    passwordStrength={passwordStrength}
+                    capsLockOn={capsLockOn}
+                    onCapsLockCheck={handleCapsLockCheck}
+                    isSubmitting={isSubmitting}
+                    onSubmit={handleCompleteRegistration}
+                  />
+                </motion.div>
+              )}
+
+              {/* Done: Account Created */}
+              {step === 'success' && (
+                <motion.div key="step-success" {...STEP_ANIMATION}>
+                  <RegisterSuccessCard
+                    fullName={createdAccount?.fullName || fullName}
+                    email={createdAccount?.email || activeEmail}
+                    onContinue={() => completeAuthRedirect(createdAccount?.role || 'client')}
+                  />
+                </motion.div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </main>
-    </>
+    </MotionConfig>
   );
 }

@@ -39,13 +39,13 @@ export default function PropertyHeroDetailsCard({
       {/* Coral Dash Eyebrow + Bold Title with Coral Dot + Tagline + Address */}
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#64748B]">
-          <span className="w-4 h-0.5 bg-[#FF6B6B] rounded-full shrink-0" aria-hidden="true" />
+          <span className="w-4 h-0.5 bg-[#FF8559] rounded-full shrink-0" aria-hidden="true" />
           <span className="truncate">{eyebrowText}</span>
         </div>
 
         <h1 className="text-2xl sm:text-3xl font-bold text-[#1E293B] tracking-tight leading-tight">
           <span>{title}</span>
-          <span className="text-[#FF6B6B]">.</span>
+          <span className="text-[#FF8559]">.</span>
         </h1>
 
         {tagline && (

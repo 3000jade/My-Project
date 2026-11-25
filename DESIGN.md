@@ -10,7 +10,7 @@
 - **Archetype:** Soft Minimalist SaaS & Architectural Real Estate Ledger — minimalist, ergonomic, function-first.
 - **Clarity Over Decoration:** Visual hierarchy is built through generous whitespace, crisp `1px` hairline borders (`#E2E8F0`), and typographic contrast rather than heavy gradients, drop shadows, or ornamental chrome.
 - **Ergonomic Scannability:** High-contrast primary ink (`#1E293B`) on a cool alabaster ground (`#F8FAFC`) reduces eye strain across dense broker/agent property ledgers, cadastral map studios, and public discovery views.
-- **Restrained Brand Signal:** Primary Teal (`#0F766E`) anchors active navigation, primary actions, and focus states. High-impact Coral (`#FF6B6B`) is reserved strictly for high-priority conversion callouts (always paired with `#1E293B` text for WCAG AA compliance).
+- **Restrained Brand Signal:** Primary Teal (`#0F766E`) anchors active navigation, primary actions, and focus states. High-impact Coral (`#FF8559`) is reserved strictly for high-priority conversion callouts (paired with `#FFFFFF` white text).
 
 ---
 
@@ -32,9 +32,9 @@ All tokens map directly to `@theme` variables in [`frontend/src/index.css`](./fr
 | **Primary Brand** | `--color-primary` | `#0F766E` | `#14B8A6` | `bg-primary` / `text-primary` / `bg-teal-700` | Primary CTAs, active nav indicators, focus rings |
 | **Primary Hover** | `--color-primary-hover` | `#115E59` | `#0D9488` | `hover:bg-primary-hover` / `hover:bg-teal-800` | Hover state for primary buttons & links |
 | **Primary Tint** | `--color-tertiary-container` | `#CCFBF1` | `#134E4A` | `bg-tertiary-container` / `bg-teal-100` | Selected sidebar rows, active filter chips |
-| **Conversion Accent** | `--color-accent` | `#FF6B6B` | `#FF6B6B` | `bg-accent` / `text-accent` | High-priority conversion badges & callouts |
-| **Accent Hover** | `--color-accent-hover` | `#EE5A5A` | `#F87171` | `hover:bg-accent-hover` | Hover state for conversion accents |
-| **On-Accent Text** | `--color-on-accent` | `#1E293B` | `#0F172A` | `text-on-accent` / `text-slate-800` | Mandatory dark text over `#FF6B6B` coral fills |
+| **Conversion Accent** | `--color-accent` | `#FF8559` | `#FF8559` | `bg-accent` / `text-accent` | High-priority conversion badges & callouts |
+| **Accent Hover** | `--color-accent-hover` | `#F07144` | `#F87171` | `hover:bg-accent-hover` | Hover state for conversion accents |
+| **On-Accent Text** | `--color-on-accent` | `#FFFFFF` | `#FFFFFF` | `text-on-accent` / `text-white` | White text over `#FF8559` coral fills |
 
 ### 2.2 Semantic Status Tokens
 
@@ -155,7 +155,7 @@ All map canvases (Google Maps, Leaflet, subdivision vector editors) must remain 
 
 1. **No Arbitrary Pixel Values:** Never write arbitrary spacing, font sizes, or radii such as `p-[13px]`, `gap-[19px]`, `text-[15px]`, or `rounded-[7px]`. Use the 8-point spacing scale and defined typography/radius tokens.
 2. **No Off-Token Colors:** Never introduce raw hex values outside Section 2 (e.g., no generic `#0000FF`, `#333333`, or unapproved Tailwind purples/indigos). Always use semantic tokens (`bg-primary`, `text-on-surface`, `border-outline`) or their mapped Slate/Teal/Emerald/Amber/Red equivalents.
-3. **No White Text on Coral Fills:** Never pair `#FFFFFF` text with `#FF6B6B` backgrounds (fails WCAG AA contrast). Coral backgrounds must use `#1E293B` (`text-on-accent`) text.
+3. **White Text on Coral Fills:** Always pair `#FFFFFF` (`text-white` / `text-on-accent`) text with `#FF8559` coral button and callout fills.
 4. **No Outline Removal Without Replacement:** Never apply `outline-none` or `focus:outline-none` without immediately pairing `focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary`.
 5. **Mandatory Reduced-Motion Fallbacks:** Every continuous or layout animation (GSAP, Framer Motion, CSS keyframes, smooth scroll) must respect `prefers-reduced-motion: reduce` (using `motion-safe:` / `motion-reduce:transition-none` or checking `window.matchMedia('(prefers-reduced-motion: reduce)')`).
 6. **No Competing Primary CTAs:** Each view or modal footer may display at most **one** solid Primary (`bg-primary`) action button; secondary actions must use outline/ghost variants (`border-outline bg-surface text-on-surface hover:bg-surface-variant`).
@@ -189,7 +189,7 @@ All portal KPI strips use [`KpiCard`](frontend/src/components/ui/cards/KpiCard.j
   - `primary` / `default` (`bg-teal-50 text-[#0F766E]`): Headline / neutral metric
   - `success` (`bg-emerald-50 text-emerald-700`): Healthy / target met
   - `warning` (`bg-amber-50 text-amber-700`): Pending review / verification
-  - `coral` (`bg-[#FF6B6B]/15 text-[#DC2626]`) / `destructive` (`bg-red-50 text-red-600`): Urgent or new inbound items needing attention
+  - `coral` (`bg-[#FF8559]/15 text-[#DC2626]`) / `destructive` (`bg-red-50 text-red-600`): Urgent or new inbound items needing attention
 - **Compact Spacing & Teal Progress:** Use compact card padding (`px-4 pt-4` header, `px-4 pb-4` content, `px-4 py-2` footer) and `shadcn/ui` `Progress` bars (`h-2` track, `bg-[#0F766E]` fill). For responsive strips, `size="md"` renders with equal inner padding (`px-4 py-3`) and morphs cleanly on mobile (`< 640px`).
 
 ---
@@ -197,7 +197,7 @@ All portal KPI strips use [`KpiCard`](frontend/src/components/ui/cards/KpiCard.j
 ## 8. High-UX Standards for All Components & Pages
 
 Every component and page across Public, Client, Agent, Broker, and Admin views must deliver high usability and polish:
-1. **Clear Visual Hierarchy:** Every page starts with one clear `36px` title (`PageHeader` or matching heading), a short plain-English subtitle, and one primary action button (`#0F766E` or `#FF6B6B` coral) so the next step is obvious at a glance.
+1. **Clear Visual Hierarchy:** Every page starts with one clear `36px` title (`PageHeader` or matching heading), a short plain-English subtitle, and one primary action button (`#0F766E` or `#FF8559` coral) so the next step is obvious at a glance.
 2. **Complete State Coverage (No Dead Ends) & Shimmer Skeleton Cards:** Always design and render all four UI states — **Loading** (**Shimmer Skeleton Cards**: crisp white `#FFFFFF` `Card` containers with animated left-to-right shimmer `Skeleton` bars mirroring the exact final layout, respecting `prefers-reduced-motion`), **Empty** (`EmptyState` with a helpful next action), **Error** (`<Alert variant="destructive">` with a `Retry` button), and **Success** (toast or inline confirmation).
 3. **Zero Layout Shift & Responsive Safety:** Use fixed-height skeletons, `min-w-0` on flex/grid containers, and `overflow-x-auto` inside table wrappers so content never jumps or overflows horizontally on mobile (`375px`) or desktop (`1440px+`).
 4. **Effortless Interaction & Framer Motion Feedback:** All interactive controls meet the `44px` (`h-11` / `min-h-[44px]`) touch target, show clear hover/focus-visible rings (`#0F766E`), disable with a spinner during async submissions to prevent double clicks, preserve user input on validation errors, and use smooth `framer-motion` spring transitions (`AnimatePresence`, `layoutId`, `layout`, wrapped in `<MotionConfig reducedMotion="user">`) for step changes, accordions, and active pills.
@@ -211,7 +211,7 @@ Every component and page across Public, Client, Agent, Broker, and Admin views m
 
 ### 8.1 Section-by-Section High-UX Micro-Interactions (`shadcn/ui` + Framer Motion)
 - **Dropdowns (`Select` / `FormSelect`):** Every dropdown uses `shadcn/ui` `Select` (`SelectGroup` + `SelectItem`) with `h-11` (`44px`) trigger height, leading `lucide-react` scan icons, single-line `truncate` labels, smooth open/close popovers, and keyboard navigation (`ArrowDown`, `Enter`, `Escape`).
-- **Text Limiters & Live Counters:** Constrained inputs and textareas use `InputGroup` + `InputGroupAddon` to show a calm live character count (`current / max`) that turns Coral (`#FF6B6B`) when `>= 90%` of the database limit.
+- **Text Limiters & Live Counters:** Constrained inputs and textareas use `InputGroup` + `InputGroupAddon` to show a calm live character count (`current / max`) that turns Coral (`#FF8559`) when `>= 90%` of the database limit.
 - **Step 1 (Details & Price):** `ToggleGroup` / animated `layoutId` spring pills for Transaction Type (`For Sale`, `For Rent`, `Foreclosure`); live `Price per sqm` badge update as the user types; smooth `AnimatePresence` accordion for optional Payment Breakdown; and Partnered Bank cards with a clean logo placeholder + inline upload when no logo is uploaded yet.
 - **Step 2 (Location):** Cascading `Region` -> `Province` -> `City` -> `Barangay` `shadcn` dropdowns with gentle mismatch notices when a parent changes, `isolation: isolate; z-index: 0` interactive map pin feedback, and a 2-option `Map Pin Privacy` toggle (`Exact Location` vs `Approximate Area (250m)`).
 - **Step 3 (Specs & Features):** Quick-tap `ToggleGroup` / chips for Bedrooms, Bathrooms, Parking, and Furnishing, paired with `AnimatePresence` collapse of indoor room cards when a Vacant Lot is chosen, and leading `lucide-react` icons on Nearby Places inputs.

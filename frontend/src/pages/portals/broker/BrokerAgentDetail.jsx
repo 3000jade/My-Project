@@ -1288,7 +1288,7 @@ export default function BrokerAgentDetail() {
                 <h3 className="text-sm font-bold text-[#1E293B]">Inquiries and Deals</h3>
                 <div className="flex items-center gap-4 text-xs">
                   <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded bg-[#0F766E]"></span> Inquiries</span>
-                  <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded bg-[#FF6B6B]"></span> Closed Deals</span>
+                  <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded bg-[#FF8559]"></span> Closed Deals</span>
                 </div>
               </div>
 
@@ -1311,7 +1311,7 @@ export default function BrokerAgentDetail() {
                       ></div>
                       <div
                         style={{ height: `${item.deal}%` }}
-                        className="w-3 sm:w-4 bg-[#FF6B6B] rounded-t transition-all hover:opacity-80"
+                        className="w-3 sm:w-4 bg-[#FF8559] rounded-t transition-all hover:opacity-80"
                         title={`Deals: ${item.deal}`}
                       ></div>
                     </div>
@@ -1331,7 +1331,7 @@ export default function BrokerAgentDetail() {
                     <circle cx="50" cy="50" r="40" fill="transparent" stroke="#E2E8F0" strokeWidth="12" />
                     <circle cx="50" cy="50" r="40" fill="transparent" stroke="#0F766E" strokeWidth="12" strokeDasharray="125 251.3" strokeDashoffset="0" />
                     <circle cx="50" cy="50" r="40" fill="transparent" stroke="#14B8A6" strokeWidth="12" strokeDasharray="63 251.3" strokeDashoffset="-125" />
-                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="#FF6B6B" strokeWidth="12" strokeDasharray="38 251.3" strokeDashoffset="-188" />
+                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="#FF8559" strokeWidth="12" strokeDasharray="38 251.3" strokeDashoffset="-188" />
                     <circle cx="50" cy="50" r="40" fill="transparent" stroke="#F59E0B" strokeWidth="12" strokeDasharray="25 251.3" strokeDashoffset="-226" />
                   </svg>
                   <div className="absolute text-center">
@@ -1352,7 +1352,7 @@ export default function BrokerAgentDetail() {
                     <strong className="text-[#1E293B]">25%</strong>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#FF6B6B]"></span>
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#FF8559]"></span>
                     <span className="text-[#64748B]">Lot:</span>
                     <strong className="text-[#1E293B]">15%</strong>
                   </div>

@@ -25,7 +25,7 @@ import {
 } from '@/components/ui';
 import { Input } from '@/components/ui/input';
 import { FieldGroup, Field, FieldLabel } from '@/components/ui/field';
-import { profileService, mockDefaultProfiles } from '@/services/profileService';
+import { profileService } from '@/services/profileService';
 import { useAuth } from '@/context/AuthContext';
 import { useDashboardDensity } from '@/context/DashboardThemeContext';
 import { cn } from '@/utils/cn';
@@ -33,7 +33,6 @@ import { cn } from '@/utils/cn';
 const TRACKED_KEYS = [
   'name',
   'avatar',
-  'email',
   'phone',
   'bio',
   'firm_name',
@@ -57,8 +56,8 @@ export default function BrokerProfile() {
   const { density = 'standard', setDensity = () => {}, isSyncing = false, options = [] } =
     useDashboardDensity();
 
-  const [profile, setProfile] = useState(mockDefaultProfiles.broker);
-  const [draft, setDraft] = useState(mockDefaultProfiles.broker);
+  const [profile, setProfile] = useState({});
+  const [draft, setDraft] = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
@@ -101,16 +100,15 @@ export default function BrokerProfile() {
         {
           name: nextDraft.name,
           fullName: nextDraft.name,
-          avatar: nextDraft.avatar,
-          email: nextDraft.email,
-          phone: nextDraft.phone,
-          bio: nextDraft.bio,
-          firm_name: nextDraft.firm_name,
+          avatar: nextDraft.avatar ?? '',
+          phone: nextDraft.phone ?? '',
+          bio: nextDraft.bio ?? '',
+          firm_name: nextDraft.firm_name ?? '',
           experience_years: Number(nextDraft.experience_years || 0),
-          prc_license_no: nextDraft.prc_license_no,
-          prc_validity: nextDraft.prc_validity,
-          dhsud_accreditation_no: nextDraft.dhsud_accreditation_no,
-          dhsud_validity: nextDraft.dhsud_validity,
+          prc_license_no: nextDraft.prc_license_no ?? '',
+          prc_validity: nextDraft.prc_validity ?? '',
+          dhsud_accreditation_no: nextDraft.dhsud_accreditation_no ?? '',
+          dhsud_validity: nextDraft.dhsud_validity ?? '',
         },
         { role: 'broker' }
       );
@@ -121,6 +119,7 @@ export default function BrokerProfile() {
       };
       setProfile(nextState);
       setDraft(nextState);
+      auth?.validateSession?.().catch(() => {});
       toast({
         title: 'Profile Saved',
         description: 'Broker credentials and public card updated successfully.',

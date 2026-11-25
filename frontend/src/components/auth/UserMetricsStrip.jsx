@@ -60,7 +60,7 @@ export default function UserMetricsStrip({
       value: stats?.suspendedAccounts ?? stats?.suspendedUsers ?? 0,
       subtitle: 'Restricted for compliance',
       icon: IconAlertTriangle,
-      color: '#FF6B6B',
+      color: '#FF8559',
       bg: 'bg-red-50',
       border: 'border-red-200',
       filterRole: 'all',

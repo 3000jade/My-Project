@@ -1,8 +1,10 @@
 import React, { useRef, useEffect } from 'react';
+import { cn } from '@/utils/cn';
 
 /**
  * Modern SaaS 6-Digit OtpInput
  * Supports auto-focus advance, backspace navigation, paste handling, and keyboard controls.
+ * Strictly aligned with DESIGN.md semantic tokens and 8px spacing grid.
  */
 export default function OtpInput({
   value = '',
@@ -11,6 +13,7 @@ export default function OtpInput({
   disabled = false,
   autoFocus = true,
   error = false,
+  size = 'default',
 }) {
   const inputRefs = useRef([]);
 
@@ -80,9 +83,14 @@ export default function OtpInput({
     }
   };
 
+  const isLg = size === 'lg';
+
   return (
     <div
-      className="flex items-center justify-between gap-2 sm:gap-3 w-full max-w-sm mx-auto"
+      className={cn(
+        'flex items-center justify-between gap-2 w-full mx-auto',
+        isLg ? 'max-w-lg' : 'max-w-sm'
+      )}
       onPaste={handlePaste}
       role="group"
       aria-label="One-Time Password 6-Digit Code"
@@ -90,7 +98,9 @@ export default function OtpInput({
       {digits.map((digit, index) => (
         <input
           key={index}
-          ref={(el) => (inputRefs.current[index] = el)}
+          ref={(el) => {
+            inputRefs.current[index] = el;
+          }}
           type="text"
           inputMode="numeric"
           pattern="[0-9]*"
@@ -98,19 +108,24 @@ export default function OtpInput({
           autoComplete={index === 0 ? 'one-time-code' : 'off'}
           value={digit}
           disabled={disabled}
+          aria-invalid={error ? 'true' : undefined}
           onChange={(e) => handleChange(index, e)}
           onKeyDown={(e) => handleKeyDown(index, e)}
           aria-label={`Digit ${index + 1} of 6`}
           data-testid={`otp-input-${index}`}
-          className={`w-11 h-13 sm:w-12 sm:h-14 text-center font-mono text-xl sm:text-2xl font-bold rounded-xl border transition-all duration-150 outline-none select-all ${
+          className={cn(
+            'text-center font-sans tabular-nums font-bold rounded-xl border transition-colors select-all focus-visible:outline-none',
+            isLg
+              ? 'size-12 sm:size-16 text-2xl sm:text-3xl'
+              : 'size-11 sm:size-12 text-xl sm:text-2xl',
             disabled
-              ? 'bg-[#F1F5F9] text-[#94A3B8] border-[#E2E8F0] cursor-not-allowed'
+              ? 'bg-surface-variant text-on-surface-variant border-outline cursor-not-allowed opacity-50'
               : error
-              ? 'border-red-400 bg-red-50/30 text-red-700 focus:ring-2 focus:ring-red-200 focus:border-red-500'
+              ? 'border-red-600 bg-red-50 text-red-600 focus-visible:border-red-600 focus-visible:ring-2 focus-visible:ring-red-600/20'
               : digit
-              ? 'border-[#0F766E] bg-white text-[#1E293B] shadow-sm ring-1 ring-[#0F766E]/10'
-              : 'border-[#CBD5E1] bg-white text-[#1E293B] hover:border-[#94A3B8] focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/20'
-          }`}
+              ? 'border-primary bg-surface text-on-surface shadow-xs focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20'
+              : 'border-outline-variant bg-surface text-on-surface hover:border-primary/60 focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20'
+          )}
         />
       ))}
     </div>

@@ -99,23 +99,23 @@ export default function BuyerProtectionPromiseSection() {
   return (
     <section 
       id="buyer-protection" 
-      className="w-full bg-[#FBFBF9] py-16 md:py-24 border-b border-[#D8DFDF] relative z-20 font-sans"
+      className="w-full bg-white py-16 md:py-24 border-b border-[#E2E8F0] relative z-20 font-sans text-[#1E293B]"
     >
       <div className="relative z-10 w-full max-w-7xl mx-auto px-5 md:px-10 lg:px-16">
         
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
           <div className="flex items-center justify-center gap-3 mb-4">
-            <span className="w-6 h-[2px] bg-[#0D4446]" />
-            <span className="text-xs font-bold tracking-[0.25em] text-[#0D4446] uppercase">
+            <span className="w-6 h-[2px] bg-[#0F766E]" />
+            <span className="text-xs font-bold tracking-[0.25em] text-[#0F766E] uppercase">
               Buy With Human Shelter
             </span>
-            <span className="w-6 h-[2px] bg-[#0D4446]" />
+            <span className="w-6 h-[2px] bg-[#0F766E]" />
           </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#141717] tracking-tight leading-tight font-display mb-6">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#1E293B] tracking-tight leading-tight font-display mb-6">
             The 6-Step Homebuyer's Guide
           </h2>
-          <p className="text-base sm:text-lg text-[#5C6768] font-normal leading-relaxed">
+          <p className="text-base sm:text-lg text-[#64748B] font-normal leading-relaxed">
             Acquiring your dream property shouldn't be daunting. Our comprehensive guide walks you through the entire journey—from maximizing search filters and evaluating red flags, to crafting winning offers and avoiding real estate fraud.
           </p>
         </div>
@@ -125,7 +125,7 @@ export default function BuyerProtectionPromiseSection() {
           
           {/* Left Column: Timeline Steps Navigation */}
           <div className="lg:col-span-5 relative">
-            <div className="absolute left-[23px] top-4 bottom-4 w-0.5 bg-[#D8DFDF] hidden sm:block" />
+            <div className="absolute left-[23px] top-4 bottom-4 w-0.5 bg-[#CBD5E1] hidden sm:block" />
             
             <div className="space-y-4">
               {BUYERS_GUIDE_STEPS.map((step) => {
@@ -136,22 +136,22 @@ export default function BuyerProtectionPromiseSection() {
                     key={step.id}
                     onClick={() => setActiveStep(step.id)}
                     className={`relative flex items-start gap-4 sm:gap-6 p-4 rounded-xl cursor-pointer transition-all duration-300 ${
-                      isActive ? 'bg-white shadow-[0_8px_30px_rgba(0,0,0,0.06)] border border-[#0D4446]/20' : 'hover:bg-black/5 border border-transparent'
+                      isActive ? 'bg-white shadow-md border border-[#E2E8F0]' : 'hover:bg-[#1E293B]/5 border border-transparent'
                     }`}
                   >
                     <div className={`relative z-10 shrink-0 w-12 h-12 rounded-full border-[3px] flex items-center justify-center font-mono font-bold transition-colors duration-300 ${
-                      isActive ? 'bg-[#0D4446] border-[#0D4446] text-white' : 'bg-[#FBFBF9] border-[#D8DFDF] text-[#5C6768]'
+                      isActive ? 'bg-[#0F766E] border-[#0F766E] text-white' : 'bg-white border-[#CBD5E1] text-[#64748B]'
                     }`}>
                       {step.number}
                     </div>
                     <div className="pt-2">
-                      <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#0D4446] mb-1">
+                      <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#0F766E] mb-1">
                         {step.badge}
                       </div>
-                      <h3 className={`text-lg font-bold mb-1 transition-colors ${isActive ? 'text-[#141717]' : 'text-[#5C6768]'}`}>
+                      <h3 className={`text-lg font-bold mb-1 transition-colors ${isActive ? 'text-[#1E293B]' : 'text-[#64748B]'}`}>
                         {step.title}
                       </h3>
-                      <p className={`text-sm leading-relaxed transition-all duration-300 ${isActive ? 'text-[#5C6768] h-auto opacity-100' : 'h-0 opacity-0 overflow-hidden'}`}>
+                      <p className={`text-sm leading-relaxed transition-all duration-300 ${isActive ? 'text-[#64748B] h-auto opacity-100' : 'h-0 opacity-0 overflow-hidden'}`}>
                         {step.shortDesc}
                       </p>
                     </div>
@@ -211,18 +211,18 @@ export default function BuyerProtectionPromiseSection() {
         </div>
 
         {/* Action Banner */}
-        <div className="mt-20 rounded-[16px] p-6 sm:p-10 bg-[#0D4446] text-white shadow-[0_20px_50px_rgba(13,68,70,0.25)] flex flex-col lg:flex-row items-center justify-between gap-8 relative overflow-hidden">
+        <div className="mt-20 rounded-[16px] p-6 sm:p-10 bg-[#0F766E] text-white shadow-lg flex flex-col lg:flex-row items-center justify-between gap-8 relative overflow-hidden">
           <div className="absolute -right-20 -top-20 opacity-5 pointer-events-none">
             <IconSearch size={300} />
           </div>
           <div className="space-y-2 text-center lg:text-left relative z-10">
-            <div className="text-xs font-mono uppercase tracking-[0.2em] text-[#E76F51] font-bold">
+            <div className="text-xs font-mono uppercase tracking-[0.2em] text-[#CCFBF1] font-bold">
               Secure Your Dream Property
             </div>
             <h4 className="text-2xl sm:text-3xl font-bold font-display mb-2">
               Ready to Start Your Home Search?
             </h4>
-            <p className="text-sm sm:text-base text-white/80 max-w-2xl">
+            <p className="text-sm sm:text-base text-white/85 max-w-2xl">
               Talk directly with a licensed Human Shelter broker today to get pre-qualified and start viewing exclusive listings that match your criteria.
             </p>
           </div>
@@ -231,7 +231,7 @@ export default function BuyerProtectionPromiseSection() {
             <button
               type="button"
               onClick={() => navigate('/contact')}
-              className="h-14 px-8 rounded-full bg-[#E76F51] hover:bg-[#d65c3e] text-white font-bold text-sm uppercase tracking-wider flex items-center gap-3 shadow-[0_8px_24px_rgba(231,111,81,0.4)] transition-all cursor-pointer active:scale-95"
+              className="h-14 px-8 rounded-full bg-[#FF8559] hover:bg-[#F07144] text-white font-bold text-sm uppercase tracking-wider flex items-center gap-3 shadow-md transition-all cursor-pointer active:scale-95"
             >
               <IconPhoneCall size={20} stroke={2.5} />
               <span>Talk to a Buyer's Agent</span>

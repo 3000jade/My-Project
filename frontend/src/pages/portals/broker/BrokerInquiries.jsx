@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MessageSquare, Building2, Clock } from 'lucide-react';
 import StatusBadge from '../../../components/dashboard/StatusBadge';
@@ -183,7 +183,7 @@ export default function BrokerInquiries() {
       header: 'Latest Message',
       render: (row) => (
         <p className="text-xs text-on-surface-variant line-clamp-2 max-w-xs">
-          {row.last_message ? `â€œ${row.last_message}â€` : 'No messages yet'}
+          {row.last_message ? `“${row.last_message}”` : 'No messages yet'}
         </p>
       ),
     },

@@ -8,6 +8,7 @@ import {
   RotateCcw,
   User,
   Shield,
+  Lock,
   Sparkles,
   Building2,
   ShieldCheck,
@@ -23,6 +24,7 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { FieldGroup, Field, FieldLabel, FieldDescription } from '@/components/ui/field';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { useToast } from '@/components/ui';
 import {
   InputGroup,
   InputGroupTextarea,
@@ -45,6 +47,8 @@ import {
 } from '@/components/ui/sheet';
 import SessionManagementPanel from '@/components/auth/SessionManagementPanel';
 import { evaluateLicenseStatus } from '@/services/agentService';
+import { clientUserService } from '@/services/clientUserService';
+import ChangePasswordDialog from './ChangePasswordDialog';
 import LivePublicCardPreview from './LivePublicCardPreview';
 import { cn } from '@/utils/cn';
 
@@ -224,10 +228,21 @@ export default function ProfileCardStudio({
   onFocusSection,
   testId = 'profile-card-studio',
 }) {
+  const { toast } = useToast();
   const [internalTab, setInternalTab] = useState('identity');
   const [internalFocusedSection, setInternalFocusedSection] = useState(null);
   const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false);
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
+
+  const handlePasswordChange = async (currentPassword, newPassword) => {
+    await clientUserService.changePassword(currentPassword, newPassword);
+    toast({
+      title: 'Password Updated',
+      description: 'Your account password was updated successfully.',
+      variant: 'success',
+    });
+  };
 
   const activeTab = controlledTab ?? internalTab;
   const setActiveTab = onTabChange ?? setInternalTab;
@@ -319,13 +334,14 @@ export default function ProfileCardStudio({
                     id="studio-email"
                     type="email"
                     value={draft.email || ''}
-                    onChange={(e) => handleFieldChange('email', e.target.value)}
-                    onFocus={() => setFocusedSection('contact')}
-                    onBlur={() => setFocusedSection(null)}
+                    readOnly
+                    aria-readonly="true"
                     placeholder="name@company.com"
-                    required
-                    className="h-11 bg-surface border-outline text-on-surface rounded-lg"
+                    className="h-11 bg-surface-variant border-outline text-on-surface-variant rounded-lg cursor-not-allowed"
                   />
+                  <FieldDescription className="text-xs text-on-surface-variant">
+                    Account email is managed by authentication
+                  </FieldDescription>
                 </Field>
 
                 <Field>
@@ -404,6 +420,35 @@ export default function ProfileCardStudio({
         className={cn(isMasterDetail ? 'mt-0' : 'mt-4', 'data-[state=inactive]:hidden')}
       >
         <div className="flex flex-col gap-6">
+          <Card className="bg-surface border border-outline rounded-xl shadow-xs">
+            <CardHeader className="pb-4 border-b border-outline">
+              <CardTitle className="text-xl font-semibold text-on-surface flex items-center gap-2">
+                <Shield className="size-5 text-primary" />
+                Password &amp; Sign-In
+              </CardTitle>
+              <CardDescription className="text-sm text-on-surface-variant">
+                Update your account password without leaving your portal.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-5 flex items-center justify-between gap-4 flex-wrap">
+              <div className="flex flex-col gap-1">
+                <span className="text-sm font-semibold text-on-surface">Account Password</span>
+                <p className="text-xs text-on-surface-variant">
+                  Use at least 8 characters to keep your account protected.
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setPasswordModalOpen(true)}
+                className="h-11 px-4 border-outline bg-surface text-on-surface normal-case"
+              >
+                <Lock data-icon="inline-start" className="text-primary" />
+                Update Password
+              </Button>
+            </CardContent>
+          </Card>
+
           {securityExtraContent}
           <SessionManagementPanel />
         </div>
@@ -695,6 +740,11 @@ export default function ProfileCardStudio({
             </SheetContent>
           </Sheet>
         )}
+        <ChangePasswordDialog
+          open={passwordModalOpen}
+          onOpenChange={setPasswordModalOpen}
+          onSave={handlePasswordChange}
+        />
       </div>
     </MotionConfig>
   );

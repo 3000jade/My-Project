@@ -1,6 +1,8 @@
 import nodemailer from 'nodemailer';
 import { google } from 'googleapis';
 import crypto from 'crypto';
+import fs from 'fs';
+import path from 'path';
 import { config } from '../config';
 import logger from '../utils/logger';
 import {
@@ -81,40 +83,99 @@ export class GmailService {
     return null;
   }
 
+  private static getBrandLogoAttachment(): {
+    cid: string;
+    filename: string;
+    contentType: string;
+    content: Buffer;
+  } | null {
+    // shortcut: reads logo from frontend/public; move to backend/assets if backend is ever deployed standalone
+    const logoPath = path.resolve(__dirname, '../../../frontend/public/images/human-shelter-logo.webp');
+    try {
+      if (!fs.existsSync(logoPath)) return null;
+      return {
+        cid: 'human-shelter-logo',
+        filename: 'human-shelter-logo.webp',
+        contentType: 'image/webp',
+        content: fs.readFileSync(logoPath),
+      };
+    } catch {
+      return null;
+    }
+  }
+
   /**
    * Helper to format an RFC 2822 compliant email and encode it as URL-safe base64
    */
-  private static createMimeMessage(to: string, from: string, subject: string, html: string): string {
-    const boundary = `__hsr_boundary_${Date.now()}__`;
+  private static createMimeMessage(
+    to: string,
+    from: string,
+    subject: string,
+    html: string,
+    inlineAttachment?: { cid: string; filename: string; contentType: string; content: Buffer } | null
+  ): string {
+    const altBoundary = `__hsr_alt_${Date.now()}__`;
     const encodedSubject = `=?UTF-8?B?${Buffer.from(subject, 'utf-8').toString('base64')}?=`;
     const base64Html = Buffer.from(html, 'utf-8').toString('base64');
     const base64Text = Buffer.from('Please view this invitation in an HTML-compatible email client.', 'utf-8').toString('base64');
 
     const messageId = `<${Date.now()}.${crypto.randomBytes(8).toString('hex')}@cpkerby.luxury>`;
 
-    const messageParts = [
+    const altBody = [
+      `--${altBoundary}`,
+      'Content-Type: text/plain; charset="UTF-8"',
+      'Content-Transfer-Encoding: base64',
+      '',
+      base64Text,
+      '',
+      `--${altBoundary}`,
+      'Content-Type: text/html; charset="UTF-8"',
+      'Content-Transfer-Encoding: base64',
+      '',
+      base64Html,
+      '',
+      `--${altBoundary}--`,
+    ];
+
+    const headers = [
       `From: ${from}`,
       `To: ${to}`,
       `Subject: ${encodedSubject}`,
       `Date: ${new Date().toUTCString()}`,
       `Message-ID: ${messageId}`,
       'MIME-Version: 1.0',
-      `Content-Type: multipart/alternative; boundary="${boundary}"`,
-      '',
-      `--${boundary}`,
-      'Content-Type: text/plain; charset="UTF-8"',
-      'Content-Transfer-Encoding: base64',
-      '',
-      base64Text,
-      '',
-      `--${boundary}`,
-      'Content-Type: text/html; charset="UTF-8"',
-      'Content-Transfer-Encoding: base64',
-      '',
-      base64Html,
-      '',
-      `--${boundary}--`,
     ];
+
+    let messageParts: string[];
+    if (inlineAttachment) {
+      const relBoundary = `__hsr_rel_${Date.now()}__`;
+      messageParts = [
+        ...headers,
+        `Content-Type: multipart/related; boundary="${relBoundary}"`,
+        '',
+        `--${relBoundary}`,
+        `Content-Type: multipart/alternative; boundary="${altBoundary}"`,
+        '',
+        ...altBody,
+        '',
+        `--${relBoundary}`,
+        `Content-Type: ${inlineAttachment.contentType}; name="${inlineAttachment.filename}"`,
+        'Content-Transfer-Encoding: base64',
+        `Content-ID: <${inlineAttachment.cid}>`,
+        `Content-Disposition: inline; filename="${inlineAttachment.filename}"`,
+        '',
+        inlineAttachment.content.toString('base64'),
+        '',
+        `--${relBoundary}--`,
+      ];
+    } else {
+      messageParts = [
+        ...headers,
+        `Content-Type: multipart/alternative; boundary="${altBoundary}"`,
+        '',
+        ...altBody,
+      ];
+    }
 
     const message = messageParts.join('\r\n');
     return Buffer.from(message, 'utf-8')
@@ -132,7 +193,8 @@ export class GmailService {
     fromEmail: string,
     fromName: string,
     subject: string,
-    html: string
+    html: string,
+    inlineAttachment?: { cid: string; filename: string; contentType: string; content: Buffer } | null
   ): Promise<{ success: boolean; messageId?: string }> {
     const fromHeader = fromName ? `"${fromName}" <${fromEmail}>` : fromEmail;
 
@@ -140,7 +202,7 @@ export class GmailService {
     const gmail = this.getGmailClient();
     if (gmail && !config.integrations.isMockMode) {
       try {
-        const raw = this.createMimeMessage(to, fromHeader, subject, html);
+        const raw = this.createMimeMessage(to, fromHeader, subject, html, inlineAttachment);
         const res = await gmail.users.messages.send({
           userId: 'me',
           requestBody: { raw },
@@ -161,6 +223,16 @@ export class GmailService {
           to,
           subject,
           html,
+          attachments: inlineAttachment
+            ? [
+                {
+                  filename: inlineAttachment.filename,
+                  content: inlineAttachment.content,
+                  contentType: inlineAttachment.contentType,
+                  cid: inlineAttachment.cid,
+                },
+              ]
+            : undefined,
         });
         logger.info(`[GmailService] Email delivered to ${to} via Gmail SMTP (ID: ${info.messageId})`);
         return { success: true, messageId: info.messageId };
@@ -233,23 +305,25 @@ export class GmailService {
     invitedByName?: string;
     isResend?: boolean;
   }): Promise<{ success: boolean; messageId?: string }> {
-    const agency = data.brokerAgency || 'CP_kerby';
+    const agency = data.brokerAgency?.trim() || 'Human Shelter Realty';
     const subject = data.isResend
-      ? `Updated Invitation to Join ${agency} as Licensed Property Consultant`
-      : `Invitation to Join ${agency} as Licensed Property Consultant`;
+      ? `Reminder: You're Invited to Join ${agency}`
+      : `You're Invited to Join ${agency}`;
+    const logoAttachment = this.getBrandLogoAttachment();
     const html = buildAgentInvitationEmailHtml({
       agentEmail: data.to,
       inviteUrl: data.inviteUrl,
       expiresInHours: data.expiresInHours,
       candidateName: data.candidateName,
-      brokerAgency: data.brokerAgency,
+      brokerAgency: agency,
       customMessage: data.customMessage,
       invitedByName: data.invitedByName,
+      logoUrl: logoAttachment ? `cid:${logoAttachment.cid}` : undefined,
     });
-    const fromName = data.brokerAgency ? `${data.brokerAgency} Compliance` : 'Human Shelter Realty Compliance';
+    const fromName = agency;
     const fromEmail = config.integrations.gmailUserEmail || 'compliance@cpkerby.luxury';
 
-    const dispatchResult = await this.dispatchEmail(data.to, fromEmail, fromName, subject, html);
+    const dispatchResult = await this.dispatchEmail(data.to, fromEmail, fromName, subject, html, logoAttachment);
     if (dispatchResult.success) {
       return dispatchResult;
     }

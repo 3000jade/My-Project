@@ -6,6 +6,7 @@ import { validateBody, validateQuery } from '../middleware/validate.middleware';
 import { shareEmailRateLimiter } from '../middleware/rateLimiter.middleware';
 import {
   createPropertySchema,
+  updatePropertySchema,
   queryPropertySchema,
   proposePropertyEditSchema,
   approveEditRequestSchema,
@@ -23,9 +24,27 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
+const ALLOWED_MEDIA_MIMES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+  'video/mp4',
+  'video/webm',
+  'video/quicktime',
+  'application/pdf',
+]);
+
 const upload = multer({
   dest: uploadDir,
-  limits: { fileSize: 15 * 1024 * 1024 } // 15MB per file to avoid disk exhaustion
+  limits: { fileSize: 15 * 1024 * 1024 }, // 15MB per file to avoid disk exhaustion
+  fileFilter: (_req, file, cb) => {
+    if (ALLOWED_MEDIA_MIMES.has(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error(`Unsupported file type: ${file.mimetype}`));
+    }
+  },
 });
 
 const router = Router();
@@ -115,7 +134,7 @@ router.put(
   '/:id',
   requireAuth,
   requireRole(['broker', 'admin']),
-  validateBody(createPropertySchema.partial()),
+  validateBody(updatePropertySchema),
   PropertyController.updateProperty
 );
 

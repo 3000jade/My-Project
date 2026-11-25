@@ -16,13 +16,13 @@ import { Button } from '@/components/ui/button';
 const GENERAL_PROMPTS = [
   {
     label: 'Homes under ₱20M',
-    prompt: 'Help me find published homes under ₱20M',
+    prompt: 'Help me find available homes under ₱20M',
     Icon: Home,
     type: 'prompt',
   },
   {
     label: 'Featured homes',
-    prompt: 'Show me your featured published homes',
+    prompt: 'Show me your featured homes',
     Icon: Sparkles,
     type: 'prompt',
   },
@@ -49,12 +49,12 @@ const LISTING_PROMPTS = [
   },
   {
     label: 'Compare similar homes',
-    prompt: 'Compare this home with similar published listings',
+    prompt: 'Compare this home with similar listings',
     Icon: GitCompareArrows,
     type: 'prompt',
   },
   {
-    label: 'Key specs & monthly dues',
+    label: 'Details & monthly fees',
     prompt: 'Tell me the key features, sizes, and monthly association dues of this listing',
     Icon: ClipboardList,
     type: 'prompt',
@@ -87,9 +87,9 @@ export default function ChatWelcomeView({ activeListing = null, onSelectPrompt, 
   };
 
   return (
-    <Card className="w-full min-w-0 bg-white border-[#E2E8F0] shadow-xs rounded-xl">
-      <CardHeader className="flex flex-col gap-2 space-y-0 p-4 pb-2">
-        <div className="flex items-center justify-between gap-2 min-w-0">
+    <Card className="w-full min-w-0 bg-white border-[#E2E8F0] border-t-2 border-t-[#0F766E] shadow-xs rounded-xl">
+      <CardHeader className="flex flex-col items-center text-center gap-2 space-y-0 p-4 sm:p-4 pb-2 sm:pb-2">
+        <div className="flex flex-col items-center gap-2 max-w-full min-w-0">
           <div className="size-10 shrink-0 rounded-xl bg-[#CCFBF1] text-[#0F766E] flex items-center justify-center">
             <Bot className="size-5" aria-hidden="true" />
           </div>
@@ -100,28 +100,36 @@ export default function ChatWelcomeView({ activeListing = null, onSelectPrompt, 
           )}
         </div>
 
-        <CardTitle className="text-base font-semibold text-[#1E293B] leading-snug">
+        <CardTitle className="text-base sm:text-base font-semibold text-[#1E293B] leading-snug">
           How can I help you find your next home?
         </CardTitle>
 
-        <CardDescription className="text-xs text-[#64748B] leading-relaxed">
-          Automated AI Property Concierge — not a PRC-licensed broker (RA 9646).
+        <CardDescription className="text-xs sm:text-xs text-[#64748B] leading-relaxed">
+          Automated AI assistant — not a licensed real estate broker.
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="flex flex-col gap-2 p-4 pt-2">
+      <CardContent className="flex flex-col gap-2 p-4 sm:p-4 pt-2 sm:pt-2">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {tiles.map((tile) => {
             const TileIcon = tile.Icon;
+            const isAgentTile = tile.type === 'agent';
             return (
               <Button
                 key={tile.label}
                 type="button"
-                variant="outline"
-                className="h-auto min-h-11 w-full justify-start gap-2 whitespace-normal px-4 py-2 text-left text-xs font-medium normal-case tracking-normal text-[#1E293B] border-[#E2E8F0] hover:border-[#0F766E] hover:bg-[#F8FAFC]"
+                variant={isAgentTile ? 'ghost' : 'outline'}
+                className={
+                  isAgentTile
+                    ? 'h-full min-h-11 w-full justify-start gap-2 whitespace-normal px-4 py-2 text-left text-xs font-semibold normal-case tracking-normal bg-[#FF8559] text-white hover:bg-[#F07144] hover:text-white shadow-xs'
+                    : 'h-full min-h-11 w-full justify-start gap-2 whitespace-normal px-4 py-2 text-left text-xs font-medium normal-case tracking-normal text-[#1E293B] border-[#E2E8F0] hover:border-[#0F766E] hover:bg-[#CCFBF1]/30'
+                }
                 onClick={() => handleTileClick(tile)}
               >
-                <TileIcon data-icon="inline-start" />
+                <TileIcon
+                  data-icon="inline-start"
+                  className={isAgentTile ? 'shrink-0 text-white' : 'shrink-0 text-[#0F766E]'}
+                />
                 <span>{tile.label}</span>
               </Button>
             );

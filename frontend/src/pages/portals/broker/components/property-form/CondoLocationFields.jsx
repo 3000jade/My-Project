@@ -13,7 +13,7 @@ export default function CondoLocationFields({ formData = {}, setFormData, setIsD
     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3" data-testid="condo-location-fields">
       <div className="flex flex-col gap-2">
         <Label htmlFor="building-name-input" className="text-sm leading-5 font-semibold text-[#1E293B]">
-          Building / Condo Name <span className="text-[#FF6B6B]">*</span>
+          Building / Condo Name <span className="text-[#FF8559]">*</span>
         </Label>
         <Input
           id="building-name-input"

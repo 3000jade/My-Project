@@ -9,7 +9,7 @@ export const badgeVariants = cva(
       variant: {
         default: "bg-teal-50 text-[#0F766E] border border-teal-200",
         primary: "bg-[#0F766E] text-white",
-        coral: "bg-rose-50 text-[#FF6B6B] border border-rose-200 font-bold",
+        coral: "bg-rose-50 text-[#FF8559] border border-rose-200 font-bold",
         secondary: "bg-slate-100 text-[#1E293B] border border-[#E2E8F0]",
         outline: "text-[#1E293B] border border-[#E2E8F0] bg-white",
         success: "bg-emerald-50 text-emerald-700 border border-emerald-200",

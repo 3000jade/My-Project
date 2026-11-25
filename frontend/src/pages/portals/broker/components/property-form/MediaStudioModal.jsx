@@ -220,7 +220,7 @@ export default function MediaStudioModal({
 
           {item.error && (
             <div className="absolute inset-0 bg-red-950/75 p-3 flex flex-col items-center justify-center gap-2 text-center text-white">
-              <AlertCircle className="size-5 text-[#FF6B6B]" />
+              <AlertCircle className="size-5 text-[#FF8559]" />
               <span className="text-xs line-clamp-2">{item.error}</span>
               {item.file && (
                 <button
@@ -258,7 +258,7 @@ export default function MediaStudioModal({
             aria-label="Remove photo"
             className="absolute top-2.5 right-2.5 size-11 md:size-9 [@media(pointer:coarse)]:size-11 rounded-lg bg-white/95 hover:bg-white text-[#1E293B] shadow-xs flex items-center justify-center cursor-pointer"
           >
-            <Trash2 className="size-4 text-[#FF6B6B]" />
+            <Trash2 className="size-4 text-[#FF8559]" />
           </button>
         </div>
 
@@ -286,7 +286,7 @@ export default function MediaStudioModal({
                 <InputGroupText
                   className={cn(
                     'text-[11px] tabular-nums',
-                    nearLimit ? 'text-[#FF6B6B] font-semibold' : 'text-[#64748B]'
+                    nearLimit ? 'text-[#FF8559] font-semibold' : 'text-[#64748B]'
                   )}
                 >
                   {descVal.length}/{PHOTO_DESC_MAX}
@@ -423,7 +423,7 @@ export default function MediaStudioModal({
                       <Check />
                     </Button>
                   </div>
-                  {addError && <span className="text-xs text-[#FF6B6B]">{addError}</span>}
+                  {addError && <span className="text-xs text-[#FF8559]">{addError}</span>}
                 </motion.div>
               )}
             </AnimatePresence>
@@ -483,7 +483,7 @@ export default function MediaStudioModal({
                           if (activeCategory === cat.key) setActiveCategory('ALL');
                           onRemoveCustomCategory?.(cat.key);
                         }}
-                        className="ml-1 size-11 md:size-8 [@media(pointer:coarse)]:size-11 rounded-md text-[#94A3B8] hover:text-[#FF6B6B] flex items-center justify-center shrink-0 cursor-pointer"
+                        className="ml-1 size-11 md:size-8 [@media(pointer:coarse)]:size-11 rounded-md text-[#94A3B8] hover:text-[#FF8559] flex items-center justify-center shrink-0 cursor-pointer"
                       >
                         <X className="size-3.5" />
                       </button>
@@ -687,9 +687,9 @@ export default function MediaStudioModal({
                   })()}
 
                   {photoSizeErrors[activeCategory] && (
-                    <Alert className="bg-white border-[#FF6B6B]">
-                      <AlertCircle className="size-4 text-[#FF6B6B]" />
-                      <AlertDescription className="text-xs text-[#FF6B6B]">
+                    <Alert className="bg-white border-[#FF8559]">
+                      <AlertCircle className="size-4 text-[#FF8559]" />
+                      <AlertDescription className="text-xs text-[#FF8559]">
                         {photoSizeErrors[activeCategory]}
                       </AlertDescription>
                     </Alert>
@@ -743,7 +743,7 @@ export default function MediaStudioModal({
                           <button
                             type="button"
                             onClick={() => onRemoveCategoryVideo?.(activeCategory)}
-                            className="text-xs font-semibold text-[#FF6B6B] hover:underline cursor-pointer"
+                            className="text-xs font-semibold text-[#FF8559] hover:underline cursor-pointer"
                           >
                             Remove video
                           </button>
@@ -751,9 +751,9 @@ export default function MediaStudioModal({
                       </div>
 
                       {videoSizeErrors[activeCategory] && (
-                        <Alert className="bg-white border-[#FF6B6B] py-2 px-3">
-                          <AlertCircle className="size-4 text-[#FF6B6B]" />
-                          <AlertDescription className="text-xs text-[#FF6B6B]">
+                        <Alert className="bg-white border-[#FF8559] py-2 px-3">
+                          <AlertCircle className="size-4 text-[#FF8559]" />
+                          <AlertDescription className="text-xs text-[#FF8559]">
                             {videoSizeErrors[activeCategory]}
                           </AlertDescription>
                         </Alert>
@@ -817,7 +817,7 @@ export default function MediaStudioModal({
                                 : categoryVideos[activeCategory].fileName || 'Area Video Uploaded'}
                             </span>
                             {categoryVideos[activeCategory].error && (
-                              <span className="text-xs text-[#FF6B6B]">
+                              <span className="text-xs text-[#FF8559]">
                                 {categoryVideos[activeCategory].error}
                               </span>
                             )}

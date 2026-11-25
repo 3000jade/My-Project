@@ -2,13 +2,19 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { appointmentService } from '../../../services/appointmentService';
 
+function getDefaultViewingDate() {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  return d.toISOString().split('T')[0];
+}
+
 export default function InspectionScheduleModal({
   isOpen,
   onClose,
   property,
   onScheduleSuccess
 }) {
-  const [selectedDate, setSelectedDate] = useState('2026-09-20');
+  const [selectedDate, setSelectedDate] = useState(getDefaultViewingDate);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState('10:00 AM - 12:00 PM');
   const [targetMoveIn, setTargetMoveIn] = useState('Within 30 Days');
   const [fullName, setFullName] = useState('');
@@ -17,8 +23,15 @@ export default function InspectionScheduleModal({
   const [notes, setNotes] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   if (!isOpen || !property) return null;
+
+  const assignedAgentId = property.list_agent_key || property.listAgentKey || property.agent_id || property.agent?.id || undefined;
+  const assignedAgentName = property.agent?.name || property.agentName || property.agent_name || 'Listing Specialist';
+  const listingRefCode = property.listing_id || property.listingId || property.ref_code || property.id || '';
+  const propertySubLabel = property.development || property.subdivision_name || property.subdivisionName || property.city || '';
+  const minDate = new Date().toISOString().split('T')[0];
 
   const timeSlots = [
     '09:00 AM - 11:00 AM',
@@ -37,6 +50,7 @@ export default function InspectionScheduleModal({
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setSubmitError('');
     try {
       const created = await appointmentService.createAppointment({
         client_name: fullName,
@@ -44,8 +58,8 @@ export default function InspectionScheduleModal({
         client_phone: phone,
         property_id: String(property.id),
         property_title: property.title,
-        agent_id: property.agent?.id || undefined,
-        agent_name: property.agent?.name || 'Jayson Canonico',
+        agent_id: assignedAgentId,
+        agent_name: assignedAgentName,
         appointment_date: selectedDate,
         appointment_time: selectedTimeSlot,
         appointment_type: 'Site Visit',
@@ -56,10 +70,10 @@ export default function InspectionScheduleModal({
         event: 'DISPATCH_INSPECTION_ROUTING',
         appointment: created,
         listing_id: property.id,
-        reference_code: property.ref_code || 'MLSPH91M99LRH7',
+        reference_code: listingRefCode,
         property_title: property.title,
-        assigned_agent: property.agent?.name || 'Jayson Canonico',
-        agent_name: property.agent?.name || 'Jayson Canonico',
+        assigned_agent: assignedAgentName,
+        agent_name: assignedAgentName,
         scheduled_date: selectedDate,
         time_slot: selectedTimeSlot,
         target_move_in: targetMoveIn,
@@ -70,7 +84,6 @@ export default function InspectionScheduleModal({
         timestamp: new Date().toISOString()
       };
 
-      console.log('[Automated Broker Routing] Inspection lead dispatched:', payload);
       setIsSubmitted(true);
 
       if (onScheduleSuccess) {
@@ -78,7 +91,7 @@ export default function InspectionScheduleModal({
       }
     } catch (err) {
       console.error('Failed to submit inspection schedule:', err);
-      setIsSubmitted(true);
+      setSubmitError(err?.data?.error || err?.message || 'Unable to schedule viewing right now. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -86,6 +99,7 @@ export default function InspectionScheduleModal({
 
   const handleResetAndClose = () => {
     setIsSubmitted(false);
+    setSubmitError('');
     onClose();
   };
 
@@ -114,14 +128,14 @@ export default function InspectionScheduleModal({
                 </span>
                 <span className="text-[#c2c9bf]">|</span>
                 <span className="text-xs text-[#7a868a] font-mono font-bold">
-                  {property.ref_code || 'MLSPH91M99LRH7'}
+                  {listingRefCode}
                 </span>
               </div>
               <h2 className="font-display text-xl sm:text-2xl font-normal text-[#183d3b] dark:text-[#f4f5f2] mt-1.5">
                 Schedule Free Site Viewing
               </h2>
               <p className="text-xs text-[#5f6b6f] dark:text-[#88989c] truncate max-w-md mt-0.5 font-sans">
-                {property.title} • {property.development || 'Urban Deca Homes Ortigas'}
+                {property.title}{propertySubLabel ? ` • ${propertySubLabel}` : ''}
               </p>
             </div>
 
@@ -145,7 +159,7 @@ export default function InspectionScheduleModal({
                 <div>
                   <h3 className="font-display text-2xl font-normal text-[#183d3b] dark:text-white">Site Viewing Request Confirmed!</h3>
                   <p className="text-xs text-[#5f6b6f] dark:text-[#90a2a6] mt-1 max-w-md mx-auto font-sans">
-                    Your appointment coordinates have been routed to assigned agent <strong>{property.agent?.name || 'Jayson Canonico'}</strong>. You will receive an SMS and WhatsApp confirmation shortly.
+                    Your appointment coordinates have been routed to assigned agent <strong>{assignedAgentName}</strong>. You will receive an SMS and WhatsApp confirmation shortly.
                   </p>
                 </div>
 
@@ -153,7 +167,7 @@ export default function InspectionScheduleModal({
                   <p><strong className="text-[#183d3b] dark:text-white">Target Date:</strong> {selectedDate} ({selectedTimeSlot})</p>
                   <p><strong className="text-[#183d3b] dark:text-white">Move-in Window:</strong> {targetMoveIn}</p>
                   <p><strong className="text-[#183d3b] dark:text-white">Attendee:</strong> {fullName} ({phone})</p>
-                  <p><strong className="text-[#183d3b] dark:text-white">Listing Ref:</strong> <span className="font-mono">{property.ref_code || 'MLSPH91M99LRH7'}</span></p>
+                  <p><strong className="text-[#183d3b] dark:text-white">Listing Ref:</strong> <span className="font-mono">{listingRefCode}</span></p>
                 </div>
 
                 <button
@@ -166,16 +180,21 @@ export default function InspectionScheduleModal({
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-6">
+                {submitError && (
+                  <div role="alert" className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium">
+                    {submitError}
+                  </div>
+                )}
                 {/* Assigned Brokerage Information */}
                 <div className="flex items-center gap-3.5 bg-[#fafafa] dark:bg-[#1b2524] border border-[#e1e5df] dark:border-[#2c3d3b] rounded-2xl p-4">
                   <img
                     src={property.agent?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'}
-                    alt={property.agent?.name || 'Jayson Canonico'}
+                    alt={assignedAgentName}
                     className="w-12 h-12 rounded-xl object-cover border border-[#e1e5df]"
                   />
                   <div className="text-xs font-sans">
                     <p className="font-bold text-[#183d3b] dark:text-[#f4f5f2]">
-                      Assigned Agent: {property.agent?.name || 'Jayson Canonico'}
+                      Assigned Agent: {assignedAgentName}
                     </p>
                     <p className="text-[#5f6b6f] dark:text-[#88989c] font-medium">
                       {property.agent?.title || 'Real Estate Agent'} • Verified Partner
@@ -218,6 +237,7 @@ export default function InspectionScheduleModal({
                     <input
                       id="schedule-date"
                       type="date"
+                      min={minDate}
                       value={selectedDate}
                       onChange={(e) => setSelectedDate(e.target.value)}
                       className="w-full h-[54px] px-4 rounded-xl border border-[#e1e5df] dark:border-[#2a3a38] bg-[#ecefe9]/40 dark:bg-[#1b2524] text-[#1c2224] dark:text-white text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#c4683c]"

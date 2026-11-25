@@ -201,15 +201,15 @@ export function getAssetFamily(typeId) {
   const cfg = getPropertyTypeConfig(typeId);
   if (cfg) return cfg.family;
 
-  // Fallback string matching for backward compatibility
+  // Fallback string matching for backward compatibility (check warehouse before house)
   const normalized = String(typeId || '').toLowerCase();
+  if (normalized.includes('warehouse') || normalized.includes('factory') || normalized.includes('industrial')) {
+    return ASSET_FAMILIES.INDUSTRIAL;
+  }
   if (normalized.includes('house') || normalized.includes('townhouse') || normalized.includes('duplex') || normalized.includes('bungalow') || normalized.includes('villa')) return ASSET_FAMILIES.DWELLING;
   if (normalized.includes('condo') || normalized.includes('strata') || normalized.includes('apartment') || normalized.includes('studio') || normalized.includes('penthouse')) return ASSET_FAMILIES.STRATA;
   if (normalized.includes('office') || normalized.includes('retail') || normalized.includes('commercial') || normalized.includes('shophouse') || normalized.includes('building')) {
     return ASSET_FAMILIES.COMMERCIAL;
-  }
-  if (normalized.includes('warehouse') || normalized.includes('factory') || normalized.includes('industrial')) {
-    return ASSET_FAMILIES.INDUSTRIAL;
   }
   if (normalized.includes('lot') || normalized.includes('land')) return ASSET_FAMILIES.LAND;
   return ASSET_FAMILIES.DWELLING;

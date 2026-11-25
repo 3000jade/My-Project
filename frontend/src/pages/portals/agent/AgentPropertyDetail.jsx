@@ -103,6 +103,11 @@ export default function AgentPropertyDetail() {
         public_remarks: formDescription,
       };
 
+      if (pendingProposal?.id) {
+        await propertyService.cancelEditRequest(pendingProposal.id);
+        setPendingProposal(null);
+      }
+
       const result = await propertyService.proposeEdit(property.id, proposedChanges, agentNotes);
       setPendingProposal(result);
       setShowProposalDrawer(false);
@@ -286,7 +291,7 @@ export default function AgentPropertyDetail() {
               className={`h-10 px-4 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all text-white shadow-xs ${
                 pendingProposal 
                   ? 'bg-amber-600 hover:bg-amber-700' 
-                  : 'bg-[#FF6B6B] hover:bg-[#fa5252]'
+                  : 'bg-[#FF8559] hover:bg-[#fa5252]'
               }`}
             >
               <Edit3 className="w-4 h-4" />
@@ -461,7 +466,7 @@ export default function AgentPropertyDetail() {
             </h3>
             <div className="space-y-2">
               <Link
-                to="/agent/appointments"
+                to="/agent/inquiries"
                 className="w-full py-2.5 px-3.5 bg-[#F8FAFC] hover:bg-[#0F766E] hover:text-white rounded-lg text-xs font-semibold flex items-center justify-between transition-colors text-slate-700 border border-[#E2E8F0]"
               >
                 <span>Schedule Showing</span>
@@ -498,7 +503,7 @@ export default function AgentPropertyDetail() {
           <div className="space-y-4">
             <div>
               <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B] block mb-1">
-                Developer Name <span className="text-[#FF6B6B]">*</span>
+                Developer Name <span className="text-[#FF8559]">*</span>
               </label>
               <input
                 required
@@ -512,7 +517,7 @@ export default function AgentPropertyDetail() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label htmlFor="form-price" className="text-xs font-semibold uppercase tracking-wider text-[#1E293B] block mb-1">
-                  Proposed Price (PHP) <span className="text-[#FF6B6B]">*</span>
+                  Proposed Price (PHP) <span className="text-[#FF8559]">*</span>
                 </label>
                 <div className="relative">
                   <span className="absolute left-3 top-3 text-sm font-bold text-[#0F766E]">₱</span>
@@ -600,7 +605,7 @@ export default function AgentPropertyDetail() {
 
             <div className="pt-2 border-t border-[#E2E8F0]">
               <label className="text-xs font-semibold uppercase tracking-wider text-[#1E293B] block mb-1">
-                Justification for Broker Review <span className="text-[#FF6B6B]">*</span>
+                Justification for Broker Review <span className="text-[#FF8559]">*</span>
               </label>
               <textarea
                 required
@@ -627,7 +632,7 @@ export default function AgentPropertyDetail() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="h-10 px-5 bg-[#FF6B6B] hover:bg-[#fa5252] disabled:opacity-50 text-white rounded-lg text-xs font-semibold shadow-xs flex items-center gap-1.5 transition-colors"
+              className="h-10 px-5 bg-[#FF8559] hover:bg-[#fa5252] disabled:opacity-50 text-white rounded-lg text-xs font-semibold shadow-xs flex items-center gap-1.5 transition-colors"
             >
               <Send className="w-3.5 h-3.5" />
               <span>{isSubmitting ? 'Submitting...' : 'Submit Proposal for Review'}</span>

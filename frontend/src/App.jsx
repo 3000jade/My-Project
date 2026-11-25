@@ -1,13 +1,14 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import Header from './components/layout/Header';
-import ChatWidget from './modules/Chat/ChatWidget';
 import Footer from './components/layout/Footer';
-import Home from './pages/public/Home';
 import { PageLoader } from './components/ui';
 import { ReactLenis, useLenis } from 'lenis/react';
 import { AuthProvider } from './context/AuthContext';
 import { GoogleOAuthProvider } from '@react-oauth/google';
+
+const Home = lazy(() => import('./pages/public/Home'));
+const ChatWidget = lazy(() => import('./modules/Chat/ChatWidget'));
 
 const DevAgentation = import.meta.env.DEV
   ? lazy(() => import('agentation').then((m) => ({ default: m.Agentation })))
@@ -45,8 +46,6 @@ const AgentPropertyDetail = lazy(() => import('./pages/portals/agent/AgentProper
 const AgentInquiries = lazy(() => import('./pages/portals/agent/AgentInquiries'));
 const AgentInquiryDetail = lazy(() => import('./pages/portals/agent/AgentInquiryDetail'));
 const InquiryMessagesPage = lazy(() => import('./pages/portals/InquiryMessagesPage'));
-const AgentAppointments = lazy(() => import('./pages/portals/agent/AgentAppointments'));
-const AgentSales = lazy(() => import('./pages/portals/agent/AgentSales'));
 const AgentProfile = lazy(() => import('./pages/portals/agent/AgentProfile'));
 
 // Broker Portal Pages (Code-split)
@@ -55,12 +54,10 @@ const BrokerProperties = lazy(() => import('./pages/portals/broker/BrokerPropert
 const BrokerCreateListings = lazy(() => import('./pages/portals/broker/BrokerCreateListings'));
 const BrokerInquiries = lazy(() => import('./pages/portals/broker/BrokerInquiries'));
 const BrokerInquiryDetail = lazy(() => import('./pages/portals/broker/BrokerInquiryDetail'));
-const BrokerAppointments = lazy(() => import('./pages/portals/broker/BrokerAppointments'));
 const BrokerAgents = lazy(() => import('./pages/portals/broker/BrokerAgents'));
 const BrokerAgentDetail = lazy(() => import('./pages/portals/broker/BrokerAgentDetail'));
 const BrokerAgentEdit = lazy(() => import('./pages/portals/broker/BrokerAgentEdit'));
 const BrokerSales = lazy(() => import('./pages/portals/broker/BrokerSales'));
-const BrokerReports = lazy(() => import('./pages/portals/broker/BrokerReports'));
 const BrokerAudit = lazy(() => import('./pages/portals/broker/BrokerAudit'));
 const BrokerNotifications = lazy(() => import('./pages/portals/broker/BrokerNotifications'));
 const BrokerProfile = lazy(() => import('./pages/portals/broker/BrokerProfile'));
@@ -117,7 +114,7 @@ function ScrollToTop() {
   return null;
 }
 
-function AppRoutes({ isAppLoading }) {
+function AppRoutes({ isAppLoading, onLoaderComplete }) {
   const location = useLocation();
   const isDashboardRoute =
     location.pathname.startsWith('/agent') ||
@@ -147,8 +144,6 @@ function AppRoutes({ isAppLoading }) {
             <Route path="inquiries/messages" element={<InquiryMessagesPage role="agent" />} />
             <Route path="inquiries/messages/:id" element={<InquiryMessagesPage role="agent" />} />
             <Route path="inquiries/:id" element={<AgentInquiryDetail />} />
-            <Route path="appointments" element={<AgentAppointments />} />
-            <Route path="sales" element={<AgentSales />} />
             <Route path="profile" element={<AgentProfile />} />
           </Route>
 
@@ -174,14 +169,12 @@ function AppRoutes({ isAppLoading }) {
             <Route path="inquiries/messages" element={<InquiryMessagesPage role="broker" />} />
             <Route path="inquiries/messages/:id" element={<InquiryMessagesPage role="broker" />} />
             <Route path="inquiries/:id" element={<BrokerInquiryDetail />} />
-            <Route path="appointments" element={<BrokerAppointments />} />
             <Route path="clients" element={<Navigate to="/broker/inquiries" replace />} />
             <Route path="agents" element={<BrokerAgents />} />
             <Route path="agents/invite" element={<Navigate to="/broker/agents" replace />} />
             <Route path="agents/:id" element={<BrokerAgentDetail />} />
             <Route path="agents/:id/edit" element={<BrokerAgentEdit />} />
             <Route path="sales" element={<BrokerSales />} />
-            <Route path="reports" element={<BrokerReports />} />
             <Route path="audit" element={<BrokerAudit />} />
             <Route path="notifications" element={<BrokerNotifications />} />
             <Route path="profile" element={<BrokerProfile />} />
@@ -293,15 +286,34 @@ function AppRoutes({ isAppLoading }) {
           </Routes>
         </Suspense>
       </main>
-      {!isAuthRoute && <ChatWidget />}
+      {!isAuthRoute && (
+        <Suspense fallback={null}>
+          <ChatWidget />
+        </Suspense>
+      )}
       {!hideFooter && <Footer />}
-      <PageLoader isLoading={isAppLoading} />
+      {location.pathname === '/' && (
+        <PageLoader isLoading={isAppLoading} onComplete={onLoaderComplete} />
+      )}
     </div>
   );
 }
 
 export default function App() {
-  const [isAppLoading, setIsAppLoading] = useState(true);
+  const [isAppLoading, setIsAppLoading] = useState(() => {
+    try {
+      return window.location.pathname === '/' && !sessionStorage.getItem('hsr_loader_seen');
+    } catch {
+      return false;
+    }
+  });
+
+  const handleLoaderComplete = () => {
+    setIsAppLoading(false);
+    try {
+      sessionStorage.setItem('hsr_loader_seen', '1');
+    } catch { }
+  };
 
   // Permanently enforce light theme across documentElement and remove dark class
   useEffect(() => {
@@ -314,14 +326,14 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    // Reveal site once brand animation completes (~1.1s)
-    // without waiting indefinitely for heavy offscreen network assets / iframes
+    if (!isAppLoading) return;
+    // Safety fallback so the site never stays stuck if video autoplay or loading stalls
     const timer = setTimeout(() => {
-      setIsAppLoading(false);
-    }, 1150);
+      handleLoaderComplete();
+    }, 4800);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [isAppLoading]);
 
   return (
     <ReactLenis root options={{ lerp: 0.08, smoothWheel: true }}>
@@ -330,7 +342,7 @@ export default function App() {
           <ScrollToTop />
           <AuthProvider>
             <SessionWatcher />
-            <AppRoutes isAppLoading={isAppLoading} />
+            <AppRoutes isAppLoading={isAppLoading} onLoaderComplete={handleLoaderComplete} />
           </AuthProvider>
           {import.meta.env.DEV && (
             <Suspense fallback={null}>

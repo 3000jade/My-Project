@@ -269,8 +269,8 @@ export function normalizeProperty(rawItem = {}) {
     : Number(String(rawItem.price || '0').replace(/[^0-9.-]+/g, '')) || 0;
 
   const displayPrice = rawItem.formattedPrice ||
-    (typeof rawItem.price === 'string' && rawItem.price.startsWith('â‚±') ? rawItem.price : null) ||
-    (rawNumericPrice > 0 ? `â‚±${rawNumericPrice.toLocaleString()}` : null);
+    (typeof rawItem.price === 'string' && rawItem.price.startsWith('₱') ? rawItem.price : null) ||
+    (rawNumericPrice > 0 ? `₱${rawNumericPrice.toLocaleString()}` : null);
 
   const lifecycle = resolvePropertyLifecycleState({
     status: rawItem.status,
@@ -308,8 +308,14 @@ export function normalizeProperty(rawItem = {}) {
     ...rawItem,
     id: String(rawItem.id || `prop-${Date.now()}`),
     title: rawItem.title || rawItem.developer_name || rawItem.developerName || rawItem.name || 'Untitled Property',
-    developer_name: rawItem.developer_name || rawItem.developerName || rawItem.title || rawItem.name || '',
-    developerName: rawItem.developerName || rawItem.developer_name || rawItem.title || rawItem.name || '',
+    developer_name: rawItem.developer_name || rawItem.developerName || rawItem.custom_reso_attributes?.credentials?.developer || rawItem.customResoAttributes?.credentials?.developer || '',
+    developerName: rawItem.developerName || rawItem.developer_name || rawItem.custom_reso_attributes?.credentials?.developer || rawItem.customResoAttributes?.credentials?.developer || '',
+    property_category: rawItem.property_category || rawItem.propertyCategory || rawItem.custom_reso_attributes?.propertyCategory || rawItem.customResoAttributes?.propertyCategory || 'Residential',
+    propertyCategory: rawItem.propertyCategory || rawItem.property_category || rawItem.custom_reso_attributes?.propertyCategory || rawItem.customResoAttributes?.propertyCategory || 'Residential',
+    map_pin_privacy: rawItem.map_pin_privacy || rawItem.mapPinPrivacy || rawItem.custom_reso_attributes?.mapPinPrivacy || rawItem.customResoAttributes?.mapPinPrivacy || 'Exact Location',
+    mapPinPrivacy: rawItem.mapPinPrivacy || rawItem.map_pin_privacy || rawItem.custom_reso_attributes?.mapPinPrivacy || rawItem.customResoAttributes?.mapPinPrivacy || 'Exact Location',
+    unit_number: rawItem.unit_number || rawItem.unitNumber || rawItem.custom_reso_attributes?.unitNumber || rawItem.customResoAttributes?.unitNumber || rawItem.custom_reso_attributes?.canonicalPayload?.propertyDetails?.building?.unitNumber || rawItem.customResoAttributes?.canonicalPayload?.propertyDetails?.building?.unitNumber || '',
+    unitNumber: rawItem.unitNumber || rawItem.unit_number || rawItem.custom_reso_attributes?.unitNumber || rawItem.customResoAttributes?.unitNumber || rawItem.custom_reso_attributes?.canonicalPayload?.propertyDetails?.building?.unitNumber || rawItem.customResoAttributes?.canonicalPayload?.propertyDetails?.building?.unitNumber || '',
     tagline: rawItem.tagline || '',
     mainImage,
     image: mainImage || (images.length > 0 ? images[0] : null),
@@ -409,8 +415,8 @@ export function normalizeProperty(rawItem = {}) {
     transaction_type: rawItem.transaction_type || rawItem.specs?.transactionType || rawItem.transactionType || rawItem.customAttributes?.canonicalPayload?.transactionType || (rawItem.pricing?.rentFrequency ? 'For Rent' : 'For Sale'),
     transactionType: rawItem.transactionType || rawItem.transaction_type || rawItem.specs?.transactionType || rawItem.customAttributes?.canonicalPayload?.transactionType || (rawItem.pricing?.rentFrequency ? 'For Rent' : 'For Sale'),
     district: rawItem.district || rawItem.location?.district || rawItem.location?.subdivisionName || rawItem.subdivisionName || rawItem.location?.city || rawItem.city || '',
-    association_fee: rawItem.pricing?.associationFee ?? rawItem.pricing?.association_fee ?? rawItem.association_fee ?? rawItem.associationFee ?? 0,
-    associationFee: rawItem.pricing?.associationFee ?? rawItem.pricing?.association_fee ?? rawItem.association_fee ?? rawItem.associationFee ?? 0,
+    association_fee: rawItem.association_fee ?? rawItem.associationFee ?? rawItem.pricing?.associationFee ?? rawItem.pricing?.association_fee ?? 0,
+    associationFee: rawItem.associationFee ?? rawItem.association_fee ?? rawItem.pricing?.associationFee ?? rawItem.pricing?.association_fee ?? 0,
     association_fee_frequency: rawItem.pricing?.associationFeeFrequency ?? rawItem.pricing?.association_fee_frequency ?? rawItem.association_fee_frequency ?? rawItem.associationFeeFrequency ?? 'Monthly',
     associationFeeFrequency: rawItem.pricing?.associationFeeFrequency ?? rawItem.pricing?.association_fee_frequency ?? rawItem.association_fee_frequency ?? rawItem.associationFeeFrequency ?? 'Monthly',
     currency: rawItem.pricing?.currency || rawItem.currency || rawItem.listPriceCurrency || rawItem.list_price_currency || 'PHP',
@@ -821,6 +827,10 @@ export function toApiPayload(item = {}) {
     listPriceCurrency: item.listPriceCurrency || item.list_price_currency || 'PHP',
     originalListPrice: numericOriginalPrice,
     associationFee: numericAssocFee,
+    propertyCategory: item.propertyCategory || item.property_category || 'Residential',
+    furnishing: item.furnishing || undefined,
+    mapPinPrivacy: item.mapPinPrivacy || item.map_pin_privacy || 'Exact Location',
+    developerName: item.developerName || item.developer_name || item.credentials?.developer || undefined,
     taxAnnualAmount: numericTax,
     isFeatured: item.is_featured !== undefined ? Boolean(item.is_featured) : (item.isFeatured !== undefined ? Boolean(item.isFeatured) : false),
     is_featured: item.is_featured !== undefined ? Boolean(item.is_featured) : (item.isFeatured !== undefined ? Boolean(item.isFeatured) : false),
@@ -910,6 +920,7 @@ export function toApiPayload(item = {}) {
       lotFrontage: item.lot_frontage || item.lotFrontage || undefined,
       floorLevel: item.floor_level || item.floorLevel || undefined,
       towerName: item.tower_name || item.towerName || undefined,
+      unitNumber: item.unit_number || item.unitNumber || undefined,
       propertyCategory: item.propertyCategory || item.property_category || undefined,
       propertyStatus: item.propertyStatus || item.property_status || undefined,
       pricePerSqm: item.pricePerSqm || item.price_per_sqm || undefined,

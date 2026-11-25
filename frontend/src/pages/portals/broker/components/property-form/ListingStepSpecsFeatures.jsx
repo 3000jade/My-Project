@@ -91,7 +91,7 @@ const TOGGLE_CHIP_CLASS = cn(
   'data-[state=on]:bg-[#0F766E] data-[state=on]:border-[#0F766E] data-[state=on]:text-white'
 );
 
-const Req = () => <span className="text-[#FF6B6B]" aria-hidden="true">*</span>;
+const Req = () => <span className="text-[#FF8559]" aria-hidden="true">*</span>;
 
 /**
  * Step 3: Property Specs & Features

@@ -111,8 +111,10 @@ export class GoogleDriveService {
     const drive = this.getDriveClient();
     const isMock = !this.isLiveMode() || !drive;
 
-    if (isMock) {
-      logger.warn(`[GoogleDriveService] Mock mode active: uploading ${file.originalname} (private=${isPrivate})`);
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(propertyId || ''));
+
+    const buildLocalFallbackUpload = async (reason: string): Promise<DriveUploadResult> => {
+      logger.warn(`[GoogleDriveService] Local media fallback active (${reason}): uploading ${file.originalname} (private=${isPrivate})`);
       const mockId = `mock-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
       const mockResult: DriveUploadResult = {
@@ -140,8 +142,7 @@ export class GoogleDriveService {
         mockFileDatabase.set(propertyId, existing);
       }
 
-      // Also persist to property_media if Supabase is active and file is not private
-      if (isSupabaseConfigured && !isPrivate) {
+      if (isSupabaseConfigured && !isPrivate && isUuid) {
         try {
           const mediaCategory = category === 'CAD' ? 'FloorPlan' : (category === 'Photos' ? 'Photo' : 'Document');
           const primaryUrl = (category === 'Photos' || file.mimetype?.startsWith('image/'))
@@ -153,20 +154,24 @@ export class GoogleDriveService {
             media_key: mockResult.fileId,
             media_url: primaryUrl,
             media_category: mediaCategory,
+            gallery_category: category === 'Photos' ? 'Gallery' : (category === 'CAD' ? 'FloorPlan' : null),
             short_description: file.originalname,
             mime_type: file.mimetype,
           });
 
-          // Sync directly to properties.images array
           if (mediaCategory === 'Photo') {
             await this.syncPropertyImages(propertyId, primaryUrl);
           }
         } catch (err: any) {
-          logger.warn('[GoogleDriveService] Could not sync to property_media in mock mode:', err.message);
+          logger.warn('[GoogleDriveService] Could not sync to property_media in local fallback mode:', err.message);
         }
       }
 
       return mockResult;
+    };
+
+    if (isMock) {
+      return buildLocalFallbackUpload('mock mode');
     }
 
     // Real Google Drive integration via Service Account
@@ -196,7 +201,15 @@ export class GoogleDriveService {
         fields: 'id, name, webViewLink, webContentLink, mimeType, size',
       });
     } catch (uploadErr: any) {
-      if (uploadErr.message?.includes('storage quota') || uploadErr.message?.includes('storageQuotaExceeded')) {
+      const errMsg = String(uploadErr?.message || '');
+      if (errMsg.includes('invalid_grant') || errMsg.includes('invalid_client') || errMsg.includes('unauthorized_client')) {
+        logger.warn(
+          '[GoogleDriveService] Google Drive OAuth token expired/revoked (invalid_grant). ' +
+          'Run `cd backend && npm run drive:auth` to refresh GOOGLE_DRIVE_REFRESH_TOKEN. Falling back to local media buffer.'
+        );
+        return buildLocalFallbackUpload('expired OAuth token');
+      }
+      if (errMsg.includes('storage quota') || errMsg.includes('storageQuotaExceeded')) {
         logger.error(
           '[GoogleDriveService] Google Drive upload rejected due to Service Account quota limits: ' +
           'Google Cloud Service Accounts have 0 bytes storage on personal Google Drive folders. ' +
@@ -245,16 +258,21 @@ export class GoogleDriveService {
           ? urls.directImageUrl
           : webViewLink;
 
-        await supabaseAdmin.from('property_media').insert({
+        const { error: mediaInsertError } = await supabaseAdmin.from('property_media').insert({
           property_id: propertyId,
           media_key: fileId,
           media_url: primaryUrl,
           media_category: mediaCategory,
+          gallery_category: category === 'Photos' ? 'Gallery' : (category === 'CAD' ? 'FloorPlan' : null),
           short_description: file.originalname,
           mime_type: file.mimetype,
         });
 
-        // Sync directly to properties.images and main_image
+        if (mediaInsertError) {
+          logger.error('[GoogleDriveService] Failed inserting into property_media:', mediaInsertError.message);
+        }
+
+        // Sync directly to public.property_images
         if (mediaCategory === 'Photo' && primaryUrl) {
           await this.syncPropertyImages(propertyId, primaryUrl);
         }
@@ -267,29 +285,44 @@ export class GoogleDriveService {
   }
 
   /**
-   * Helper to sync image URLs directly into property master record
+   * Helper to sync uploaded photo URL into public.property_images
    */
   private static async syncPropertyImages(propertyId: string, imageUrl: string): Promise<void> {
     try {
-      const { data: prop } = await supabaseAdmin
-        .from('properties')
-        .select('images, main_image')
-        .eq('id', propertyId)
-        .single();
+      const { data: existingRows, error: fetchError } = await supabaseAdmin
+        .from('property_images')
+        .select('image_url, display_order')
+        .eq('property_id', propertyId)
+        .order('display_order', { ascending: true });
 
-      if (prop) {
-        const existingImages: string[] = Array.isArray(prop.images) ? prop.images : [];
-        if (!existingImages.includes(imageUrl)) {
-          const updatedImages = [...existingImages, imageUrl];
-          const updatePayload: Record<string, any> = { images: updatedImages };
-          if (!prop.main_image) {
-            updatePayload.main_image = imageUrl;
-          }
-          await supabaseAdmin.from('properties').update(updatePayload).eq('id', propertyId);
-        }
+      if (fetchError) {
+        logger.warn('[GoogleDriveService] Could not read property_images:', fetchError.message);
+        return;
+      }
+
+      const rows = Array.isArray(existingRows) ? existingRows : [];
+      if (rows.some((r: any) => r.image_url === imageUrl)) {
+        return;
+      }
+
+      const maxOrder = rows.reduce((max: number, r: any) => {
+        const order = Number(r.display_order) || 0;
+        return order > max ? order : max;
+      }, 0);
+
+      const { error: insertError } = await supabaseAdmin
+        .from('property_images')
+        .insert({
+          property_id: propertyId,
+          image_url: imageUrl,
+          display_order: maxOrder + 1,
+        });
+
+      if (insertError) {
+        logger.warn('[GoogleDriveService] Could not insert into property_images:', insertError.message);
       }
     } catch (err: any) {
-      logger.warn('[GoogleDriveService] Could not update properties.images:', err.message);
+      logger.warn('[GoogleDriveService] Could not sync property_images:', err.message);
     }
   }
 

@@ -26,7 +26,7 @@ export const updateAgentProfileSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(100).optional(),
   phone: z.string().min(7, 'Valid contact number is required').max(25).optional(),
   bio: z.string().max(1500).optional(),
-  avatar: z.string().url('Invalid avatar URL format').optional(),
+  avatar: z.union([z.string().url('Invalid avatar URL format'), z.literal('')]).optional(),
   prc_license_no: z.string().min(5, 'PRC License Number is required').optional(),
   prc_validity: z.string().optional(),
   dhsud_accreditation_no: z.string().min(5, 'DHSUD Accreditation is required').optional(),

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   X,
   ShieldCheck,
@@ -27,6 +27,15 @@ export default function PublicAgentProfileModal({
   onScheduleViewing,
   onSendInquiry,
 }) {
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose?.();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen || !agent) return null;
 
   const isAvailable = (agent.routing_availability || 'available') === 'available';
@@ -223,7 +232,7 @@ export default function PublicAgentProfileModal({
                 onClose();
                 onSendInquiry();
               }}
-              className="w-full sm:w-auto h-10 px-5 bg-[#FF6B6B] hover:bg-[#fa5252] text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-colors shadow-2xs cursor-pointer"
+              className="w-full sm:w-auto h-10 px-5 bg-[#FF8559] hover:bg-[#fa5252] text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-colors shadow-2xs cursor-pointer"
             >
               <MessageSquare className="w-4 h-4" />
               <span>Send Inquiry</span>

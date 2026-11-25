@@ -242,9 +242,9 @@ export default function ListingStepCredentialsReview({
                   variant="outline"
                   aria-label="Remove developer description"
                   onClick={() => updateCredentials({ developerDescription: '' })}
-                  className="min-h-11 px-3 border-outline bg-surface text-on-surface-variant hover:text-[#FF6B6B] font-semibold rounded-lg cursor-pointer"
+                  className="min-h-11 px-3 border-outline bg-surface text-on-surface-variant hover:text-[#FF8559] font-semibold rounded-lg cursor-pointer"
                 >
-                  <Trash2 data-icon="inline-start" className="text-[#FF6B6B]" />
+                  <Trash2 data-icon="inline-start" className="text-[#FF8559]" />
                   Remove
                 </Button>
               )}
@@ -524,7 +524,7 @@ export default function ListingStepCredentialsReview({
                 {item.done ? (
                   <CheckCircle2 className="size-4 text-[#0F766E] shrink-0" />
                 ) : (
-                  <AlertCircle className="size-4 text-[#FF6B6B] shrink-0" />
+                  <AlertCircle className="size-4 text-[#FF8559] shrink-0" />
                 )}
                 {item.label}
               </span>

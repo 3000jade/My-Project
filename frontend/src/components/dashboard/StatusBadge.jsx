@@ -41,7 +41,7 @@ export default function StatusBadge({ status, className = '' }) {
     INACTIVE: 'bg-slate-50 text-slate-600 border-slate-200',
     UNPUBLISHED: 'bg-slate-100 text-slate-600 border-slate-200',
 
-    // Alert / Cancelled / Rejected (Coral / Alert #FF6B6B tokens)
+    // Alert / Cancelled / Rejected (Coral / Alert #FF8559 tokens)
     REJECTED: 'bg-rose-50 text-rose-700 border-rose-200',
     CANCELLED: 'bg-rose-50 text-rose-700 border-rose-200',
     CANCELED: 'bg-rose-50 text-rose-700 border-rose-200',

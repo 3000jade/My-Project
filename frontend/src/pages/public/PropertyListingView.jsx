@@ -1,5 +1,6 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
+import { useLenis } from 'lenis/react';
 import {
   ArrowLeft,
   Bookmark,
@@ -75,7 +76,7 @@ function formatPhpCurrency(val) {
   if (val === undefined || val === null || val === '') return null;
   const num = typeof val === 'number' ? val : Number(String(val).replace(/[^0-9.-]+/g, ''));
   if (!Number.isFinite(num) || num <= 0) return String(val);
-  return `â‚±${num.toLocaleString('en-PH')}`;
+  return `₱${num.toLocaleString('en-PH')}`;
 }
 
 function SectionHeading({ eyebrow, title, rightSlot }) {
@@ -83,12 +84,12 @@ function SectionHeading({ eyebrow, title, rightSlot }) {
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="flex flex-col gap-1">
         <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#64748B]">
-          <span className="w-4 h-0.5 bg-[#FF6B6B] rounded-full shrink-0" aria-hidden="true" />
+          <span className="w-4 h-0.5 bg-[#FF8559] rounded-full shrink-0" aria-hidden="true" />
           <span>{eyebrow}</span>
         </div>
         <CardTitle className="text-xl font-bold text-[#1E293B] tracking-tight">
           <span>{title}</span>
-          <span className="text-[#FF6B6B]">.</span>
+          <span className="text-[#FF8559]">.</span>
         </CardTitle>
       </div>
       {rightSlot}
@@ -119,6 +120,9 @@ export default function PropertyListingView() {
   const [loadError, setLoadError] = useState(null);
   const [isEnlargedMapOpen, setIsEnlargedMapOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('sec-details');
+  const lenis = useLenis();
+  const isManualScrollingRef = useRef(false);
+  const manualScrollTimeoutRef = useRef(null);
 
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
@@ -212,9 +216,9 @@ export default function PropertyListingView() {
     '';
   const isRent = Boolean(
     property?.rent_frequency ||
-      property?.priceSuffix ||
-      (transactionType && transactionType.toLowerCase().includes('rent')) ||
-      (property?.status && property?.status.toLowerCase().includes('rent'))
+    property?.priceSuffix ||
+    (transactionType && transactionType.toLowerCase().includes('rent')) ||
+    (property?.status && property?.status.toLowerCase().includes('rent'))
   );
   const transactionLabel = transactionType || (isRent ? 'For Rent' : 'For Sale');
   const isFeatured = Boolean(property?.is_featured || property?.isFeatured);
@@ -260,7 +264,7 @@ export default function PropertyListingView() {
     property?.pricing?.rentFrequency ||
     (property?.priceSuffix ? property.priceSuffix.replace(/^\s*\/?\s*/, '') : 'mo');
   const currency = property?.currency || property?.pricing?.currency || 'PHP';
-  const currencySymbol = currency === 'PHP' ? 'â‚±' : currency;
+  const currencySymbol = currency === 'PHP' ? '₱' : currency;
 
   const formattedPriceDisplay = useMemo(() => {
     if (property?.formattedPrice) return property.formattedPrice;
@@ -310,7 +314,7 @@ export default function PropertyListingView() {
     const areaVal =
       typeof basisArea === 'number' ? basisArea : parseFloat(String(basisArea || '0'));
     if (rawPrice > 0 && areaVal > 0) {
-      return `â‚±${Math.round(rawPrice / areaVal).toLocaleString('en-PH')} / sqm`;
+      return `₱${Math.round(rawPrice / areaVal).toLocaleString('en-PH')} / sqm`;
     }
     return null;
   }, [custom.pricePerSqm, isVacantLot, lotArea, livingArea, rawPrice]);
@@ -362,9 +366,9 @@ export default function PropertyListingView() {
     if (typeof property.location === 'string' && property.location.trim()) return property.location;
     const rawParts = [
       property.building_name ||
-        property.buildingName ||
-        property.location?.buildingName ||
-        property.location?.building_name,
+      property.buildingName ||
+      property.location?.buildingName ||
+      property.location?.building_name,
       property.address || property.location?.address,
       property.subdivision_name || property.subdivisionName || property.location?.subdivisionName,
       property.barangay || property.location?.barangay
@@ -372,10 +376,10 @@ export default function PropertyListingView() {
         : null,
       property.city || property.City || property.location?.city,
       property.state_or_province ||
-        property.StateOrProvince ||
-        property.province ||
-        property.location?.stateOrProvince ||
-        property.location?.state,
+      property.StateOrProvince ||
+      property.province ||
+      property.location?.stateOrProvince ||
+      property.location?.state,
       postalCode,
       'Philippines',
     ].filter(Boolean);
@@ -445,7 +449,7 @@ export default function PropertyListingView() {
             }
           }
         })
-        .catch(() => {});
+        .catch(() => { });
     }
     return () => {
       isMounted = false;
@@ -520,19 +524,19 @@ export default function PropertyListingView() {
     const amenities = Array.isArray(property?.features)
       ? property.features
       : Array.isArray(property?.amenities)
-      ? property.amenities
-      : [];
+        ? property.amenities
+        : [];
     const utilities = Array.isArray(custom.utilities) ? custom.utilities : [];
     const indoor = Array.isArray(property?.interior_features)
       ? property.interior_features
       : Array.isArray(property?.interiorFeatures)
-      ? property.interiorFeatures
-      : [];
+        ? property.interiorFeatures
+        : [];
     const outdoor = Array.isArray(property?.exterior_features)
       ? property.exterior_features
       : Array.isArray(property?.exteriorFeatures)
-      ? property.exteriorFeatures
-      : [];
+        ? property.exteriorFeatures
+        : [];
 
     if (extraSpaces.length > 0) groups.push({ label: 'Extra Spaces', items: extraSpaces });
     if (security.length > 0) groups.push({ label: 'Security', items: security });
@@ -568,8 +572,8 @@ export default function PropertyListingView() {
     const rawMedia = Array.isArray(property.media)
       ? property.media
       : Array.isArray(property.property_media)
-      ? property.property_media
-      : [];
+        ? property.property_media
+        : [];
 
     const categoryDescriptions = custom.categoryDescriptions || {};
     const categoryVideos = custom.categoryVideos || {};
@@ -754,15 +758,15 @@ export default function PropertyListingView() {
 
   const hasPaymentContent = Boolean(
     paymentBreakdown?.reservationFee ||
-      paymentBreakdown?.downpayment ||
-      paymentBreakdown?.loanableAmount ||
-      paymentBreakdown?.monthlyAmortization ||
-      paymentBreakdown?.moveInFees ||
-      custom.pricePerSqm ||
-      partneredBanks.length > 0 ||
-      assocFee != null ||
-      isRent ||
-      rawPrice > 0
+    paymentBreakdown?.downpayment ||
+    paymentBreakdown?.loanableAmount ||
+    paymentBreakdown?.monthlyAmortization ||
+    paymentBreakdown?.moveInFees ||
+    custom.pricePerSqm ||
+    partneredBanks.length > 0 ||
+    assocFee != null ||
+    isRent ||
+    rawPrice > 0
   );
 
   const navItems = useMemo(() => {
@@ -784,6 +788,7 @@ export default function PropertyListingView() {
     featureSections.length,
     hasPaymentContent,
     credentialRows.length,
+    cleanDeveloperDescription,
   ]);
 
   // Handlers
@@ -812,10 +817,65 @@ export default function PropertyListingView() {
     setActivePhotoIndex((prev) => (prev === photos.length - 1 ? 0 : prev + 1));
   };
 
+  // Scroll-spy: keep active tab synced as the user scrolls manually
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof IntersectionObserver === 'undefined') return undefined;
+
+    const sectionIds = navItems.map((item) => item.id);
+    const elements = sectionIds
+      .map((sectionId) => document.getElementById(sectionId))
+      .filter(Boolean);
+
+    if (elements.length === 0) return undefined;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (isManualScrollingRef.current) return;
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+
+        if (visible.length > 0 && visible[0].target?.id) {
+          setActiveSection(visible[0].target.id);
+        }
+      },
+      {
+        rootMargin: '-176px 0px -55% 0px',
+        threshold: 0,
+      }
+    );
+
+    elements.forEach((el) => observer.observe(el));
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [navItems, property]);
+
+  useEffect(() => {
+    return () => {
+      if (manualScrollTimeoutRef.current) {
+        clearTimeout(manualScrollTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const scrollToSection = (sectionId) => {
     setActiveSection(sectionId);
     const elem = document.getElementById(sectionId);
-    if (elem) {
+    if (!elem) return;
+
+    isManualScrollingRef.current = true;
+    if (manualScrollTimeoutRef.current) {
+      clearTimeout(manualScrollTimeoutRef.current);
+    }
+    manualScrollTimeoutRef.current = setTimeout(() => {
+      isManualScrollingRef.current = false;
+    }, 650);
+
+    if (lenis && typeof lenis.scrollTo === 'function') {
+      lenis.scrollTo(elem, { offset: -176 });
+    } else if (typeof elem.scrollIntoView === 'function') {
       elem.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
@@ -831,7 +891,7 @@ export default function PropertyListingView() {
         property_id: String(propertyId),
         property_title: propertyTitle,
         message: inquiryMessage || `Inquiry regarding ${propertyTitle}`,
-        agent_id: property?.agent_id || property?.agent?.id,
+        agent_id: property?.list_agent_key || property?.listAgentKey || property?.agent_id || property?.agent?.id,
         clientId: user?.id,
       });
       setIsContactModalOpen(false);
@@ -844,13 +904,12 @@ export default function PropertyListingView() {
       setInquiryEmail('');
       setInquiryPhone('');
       setInquiryMessage('');
-    } catch {
+    } catch (err) {
       toast({
-        title: 'Inquiry Saved',
-        description: 'Inquiry saved. The listing contact will reach out.',
-        variant: 'success',
+        title: 'Could Not Send Inquiry',
+        description: err?.data?.error || err?.message || 'Please check your connection and try again.',
+        variant: 'destructive',
       });
-      setIsContactModalOpen(false);
     } finally {
       setIsInquirySubmitting(false);
     }
@@ -906,9 +965,9 @@ export default function PropertyListingView() {
     [phase, block, lot].filter(Boolean).join(', '),
   ]
     .filter(Boolean)
-    .join(' â€” ');
+    .join(' — ');
 
-  const buildingSummary = [buildingName, towerName].filter(Boolean).join(' Â· ');
+  const buildingSummary = [buildingName, towerName].filter(Boolean).join(' · ');
 
   const specRows = [
     { label: 'Property Type', value: propertyType },
@@ -927,8 +986,8 @@ export default function PropertyListingView() {
     ...(!isVacantLot && turnoverDate
       ? [{ label: 'Turnover Date', value: turnoverDate, testId: 'reso-year-built' }]
       : !isVacantLot && yearBuilt
-      ? [{ label: 'Year Built', value: String(yearBuilt), testId: 'reso-year-built' }]
-      : []),
+        ? [{ label: 'Year Built', value: String(yearBuilt), testId: 'reso-year-built' }]
+        : []),
     ...(!isVacantLot && turnoverCondition ? [{ label: 'Turnover Condition', value: turnoverCondition }] : []),
     ...(!isVacantLot && flooringType ? [{ label: 'Flooring', value: flooringType }] : []),
     ...(!isVacantLot && kitchenType ? [{ label: 'Kitchen', value: kitchenType }] : []),
@@ -983,7 +1042,7 @@ export default function PropertyListingView() {
         <div className="w-full max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8 flex flex-col gap-6">
           <nav
             aria-label="Brochure Sections"
-            className="sticky top-16 z-30 bg-white/95 backdrop-blur-md border border-[#E2E8F0] rounded-xl shadow-xs px-4 py-2 flex flex-wrap items-center justify-between gap-2"
+            className="sticky top-24 z-30 bg-white/95 backdrop-blur-md border border-[#E2E8F0] rounded-xl shadow-xs px-4 py-2 flex flex-wrap items-center justify-between gap-2"
           >
             <div className="flex items-center gap-1 overflow-x-auto">
               {navItems.map((item) => {
@@ -992,12 +1051,12 @@ export default function PropertyListingView() {
                   <button
                     key={item.id}
                     type="button"
+                    aria-current={isActive ? 'location' : undefined}
                     onClick={() => scrollToSection(item.id)}
-                    className={`min-h-11 px-3 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0F766E] ${
-                      isActive
+                    className={`min-h-11 px-3 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0F766E] ${isActive
                         ? 'bg-[#CCFBF1] text-[#0F766E]'
                         : 'text-[#64748B] hover:text-[#1E293B] hover:bg-[#F8FAFC]'
-                    }`}
+                      }`}
                   >
                     {item.label}
                   </button>
@@ -1040,7 +1099,7 @@ export default function PropertyListingView() {
             {/* Left Main Column (8 Cols) */}
             <div className="lg:col-span-8 flex flex-col gap-6 min-w-0">
               {/* Property Details Section (Title, Tagline, Location & Specs) */}
-              <section id="sec-details" className="scroll-mt-36">
+              <section id="sec-details" className="scroll-mt-44">
                 <PropertyHeroDetailsCard
                   propertyType={propertyType}
                   propertyCategory={propertyCategory}
@@ -1057,16 +1116,13 @@ export default function PropertyListingView() {
               </section>
 
               {/* Property Specifications Card */}
-              <section id="sec-specs" className="scroll-mt-36">
+              <section id="sec-specs" className="scroll-mt-44">
                 <Card className="bg-white border-[#E2E8F0] rounded-xl shadow-xs">
                   <CardHeader className="p-6 pb-4">
                     <SectionHeading
                       eyebrow="Specifications"
                       title="Property Specifications"
                     />
-                    <CardDescription>
-                      Dimensions, layout, and construction details from the listing record.
-                    </CardDescription>
                   </CardHeader>
                   <CardContent className="p-6 pt-0 flex flex-col gap-4">
                     {cleanPublicRemarks && (
@@ -1107,16 +1163,13 @@ export default function PropertyListingView() {
 
               {/* Features & Utilities Card */}
               {featureSections.length > 0 && (
-                <section id="sec-features" className="scroll-mt-36">
+                <section id="sec-features" className="scroll-mt-44">
                   <Card className="bg-white border-[#E2E8F0] rounded-xl shadow-xs">
                     <CardHeader className="p-6 pb-4">
                       <SectionHeading
                         eyebrow="Amenities"
                         title="Features & Utilities"
                       />
-                      <CardDescription>
-                        Spaces, security, community amenities, and utilities included.
-                      </CardDescription>
                     </CardHeader>
                     <CardContent className="p-6 pt-4 border-t border-[#E2E8F0] flex flex-col gap-4">
                       {featureSections.map((group) => (
@@ -1143,7 +1196,7 @@ export default function PropertyListingView() {
               )}
 
               {/* Location, Nearby Places & Map */}
-              <section id="sec-location" className="scroll-mt-36">
+              <section id="sec-location" className="scroll-mt-44">
                 <Card className="bg-white border-[#E2E8F0] rounded-xl shadow-xs">
                   <CardHeader className="p-6 pb-4">
                     <SectionHeading
@@ -1165,7 +1218,10 @@ export default function PropertyListingView() {
                             type="button"
                             variant="outline"
                             size="lg"
-                            onClick={() => setIsStreetViewOpen(true)}
+                            onClick={() => {
+                              const url = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${encodeURIComponent(propertyCoords.lat)},${encodeURIComponent(propertyCoords.lng)}`;
+                              window.open(url, '_blank', 'noopener,noreferrer');
+                            }}
                             className="min-h-11 px-4 rounded-lg text-xs normal-case tracking-normal"
                           >
                             <Compass data-icon="inline-start" className="text-[#0F766E]" />
@@ -1180,7 +1236,7 @@ export default function PropertyListingView() {
                         {isGeneralAreaOnly
                           ? 'Map Pin: General Area Only'
                           : 'Map Pin: Exact Location'}
-                        {region ? ` Â· ${region}` : ''}
+                        {region ? ` · ${region}` : ''}
                       </span>
                     </CardDescription>
                   </CardHeader>
@@ -1254,8 +1310,8 @@ export default function PropertyListingView() {
             </div>
 
             {/* Right Rail (4 Cols): Separate Agent Card, Payment Breakdown & Legal Details */}
-            <aside className="lg:col-span-4 flex flex-col gap-6 min-w-0 lg:sticky lg:top-36">
-              <section id="sec-agent" className="scroll-mt-36">
+            <aside className="lg:col-span-4 flex flex-col gap-6 min-w-0 lg:sticky lg:top-44">
+              <section id="sec-agent" className="scroll-mt-44">
                 <PropertyAgentCard
                   agent={agent}
                   onScheduleViewing={() => setIsScheduleModalOpen(true)}
@@ -1265,14 +1321,13 @@ export default function PropertyListingView() {
               </section>
 
               {hasPaymentContent && (
-                <section id="sec-payment" className="scroll-mt-36">
+                <section id="sec-payment" className="scroll-mt-44">
                   <Card className="bg-white border-[#E2E8F0] rounded-xl shadow-xs">
                     <CardHeader className="p-6 pb-4">
                       <SectionHeading
                         eyebrow="Financing"
                         title="Pricing & Partnered Banks"
                       />
-                      <CardDescription>Pricing terms, dues, and partnered banks.</CardDescription>
                     </CardHeader>
                     <CardContent className="p-6 pt-4 border-t border-[#E2E8F0] flex flex-col gap-4 text-sm">
                       <div className="flex flex-col gap-2">
@@ -1292,7 +1347,7 @@ export default function PropertyListingView() {
                             </span>
                           </div>
                         )}
-                        {paymentBreakdown?.reservationFee && (
+                        {Number(String(paymentBreakdown?.reservationFee ?? '').replace(/[^0-9.-]/g, '')) > 0 && (
                           <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
                             <span className="text-[#64748B]">Reservation Fee</span>
                             <span className="font-semibold text-[#1E293B]">
@@ -1309,7 +1364,7 @@ export default function PropertyListingView() {
                             </span>
                           </div>
                         )}
-                        {paymentBreakdown?.loanableAmount && (
+                        {Number(String(paymentBreakdown?.loanableAmount ?? '').replace(/[^0-9.-]/g, '')) > 0 && (
                           <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
                             <span className="text-[#64748B]">Loanable Amount</span>
                             <span className="font-mono font-semibold text-[#1E293B]">
@@ -1323,7 +1378,7 @@ export default function PropertyListingView() {
                             <span className="font-semibold text-[#1E293B]">{paymentBreakdown.loanTerm}</span>
                           </div>
                         )}
-                        {paymentBreakdown?.monthlyAmortization && (
+                        {Number(String(paymentBreakdown?.monthlyAmortization ?? '').replace(/[^0-9.-]/g, '')) > 0 && (
                           <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
                             <span className="text-[#64748B]">Est. Monthly</span>
                             <span className="font-semibold text-[#1E293B]">
@@ -1331,7 +1386,7 @@ export default function PropertyListingView() {
                             </span>
                           </div>
                         )}
-                        {paymentBreakdown?.moveInFees && (
+                        {Number(String(paymentBreakdown?.moveInFees ?? '').replace(/[^0-9.-]/g, '')) > 0 && (
                           <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
                             <span className="text-[#64748B]">Move-in Fees</span>
                             <span className="font-semibold text-[#1E293B]">
@@ -1345,7 +1400,7 @@ export default function PropertyListingView() {
                               <span className="text-[#64748B]">Minimum Lease Term</span>
                               <span className="font-semibold text-[#1E293B]">{leaseTerm || '12 Months'}</span>
                             </div>
-                            {securityDeposit && (
+                            {Number(String(securityDeposit ?? '').replace(/[^0-9.-]/g, '')) > 0 && (
                               <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
                                 <span className="text-[#64748B]">Security Deposit</span>
                                 <span className="font-semibold text-[#1E293B]">
@@ -1353,7 +1408,7 @@ export default function PropertyListingView() {
                                 </span>
                               </div>
                             )}
-                            {advanceRent && (
+                            {Number(String(advanceRent ?? '').replace(/[^0-9.-]/g, '')) > 0 && (
                               <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
                                 <span className="text-[#64748B]">Advance Rent</span>
                                 <span className="font-semibold text-[#1E293B]">
@@ -1363,17 +1418,17 @@ export default function PropertyListingView() {
                             )}
                           </>
                         )}
-                        <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
-                          <span className="text-[#64748B]">HOA Fee</span>
-                          <span
-                            data-testid="reso-hoa-fee"
-                            className="font-semibold text-[#1E293B]"
-                          >
-                            {assocFee != null && !isNaN(assocFee)
-                              ? `â‚±${Number(assocFee).toLocaleString('en-PH')}`
-                              : 'Included in dues'}
-                          </span>
-                        </div>
+                        {Number(assocFee) > 0 && (
+                          <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
+                            <span className="text-[#64748B]">HOA Fee</span>
+                            <span
+                              data-testid="reso-hoa-fee"
+                              className="font-semibold text-[#1E293B]"
+                            >
+                              {`₱${Number(assocFee).toLocaleString('en-PH')}`}
+                            </span>
+                          </div>
+                        )}
                       </div>
 
                       {partneredBanks.length > 0 && (
@@ -1407,14 +1462,13 @@ export default function PropertyListingView() {
               )}
 
               {(credentialRows.length > 0 || cleanDeveloperDescription) && (
-                <section id="sec-credentials" className="scroll-mt-36">
+                <section id="sec-credentials" className="scroll-mt-44">
                   <Card className="bg-white border-[#E2E8F0] rounded-xl shadow-xs">
                     <CardHeader className="p-6 pb-4">
                       <SectionHeading
                         eyebrow="Credentials"
                         title="Legal & Project Details"
                       />
-                      <CardDescription>Registration, developer, and title status.</CardDescription>
                     </CardHeader>
                     <CardContent className="p-6 pt-4 border-t border-[#E2E8F0] flex flex-col gap-3 text-sm">
                       {credentialRows.map((row) => (
@@ -1515,9 +1569,8 @@ export default function PropertyListingView() {
                 key={idx}
                 type="button"
                 onClick={() => setActivePhotoIndex(idx)}
-                className={`relative shrink-0 w-16 h-12 rounded-lg overflow-hidden border-2 transition-all cursor-pointer ${
-                  activePhotoIndex === idx ? 'border-[#0F766E] scale-105' : 'border-transparent opacity-60 hover:opacity-100'
-                }`}
+                className={`relative shrink-0 w-16 h-12 rounded-lg overflow-hidden border-2 transition-all cursor-pointer ${activePhotoIndex === idx ? 'border-[#0F766E] scale-105' : 'border-transparent opacity-60 hover:opacity-100'
+                  }`}
               >
                 <img
                   src={src}
@@ -1545,7 +1598,7 @@ export default function PropertyListingView() {
                   Contact Listing Agent
                 </CardTitle>
                 <CardDescription className="text-xs">
-                  {agent.name} Â· {agent.brokerage}
+                  {agent.name} · {agent.brokerage}
                 </CardDescription>
               </div>
               <Button
@@ -1688,13 +1741,13 @@ export default function PropertyListingView() {
         listing={
           property
             ? {
-                ...property,
-                id,
-                title: propertyTitle,
-                formattedPrice: formattedPriceDisplay,
-                address: displayAddress,
-                coverImage: photos?.[0],
-              }
+              ...property,
+              id,
+              title: propertyTitle,
+              formattedPrice: formattedPriceDisplay,
+              address: displayAddress,
+              coverImage: photos?.[0],
+            }
             : null
         }
       />

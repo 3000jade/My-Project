@@ -1,5 +1,7 @@
 import dotenv from 'dotenv';
-dotenv.config();
+if (!process.env.VITEST) {
+  dotenv.config();
+}
 
 export const config = {
   port: parseInt(process.env.PORT || '5000', 10),
@@ -31,7 +33,7 @@ export const config = {
     googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY || '',
     nominatimBaseUrl: process.env.NOMINATIM_BASE_URL || 'https://nominatim.openstreetmap.org',
     nominatimUserAgent: process.env.NOMINATIM_USER_AGENT || 'CP_kerby_Platform/1.0 (concierge@cpkerby.luxury)',
-    nominatimMockMode: process.env.NOMINATIM_MOCK_MODE === 'true',
+    nominatimMockMode: process.env.NOMINATIM_MOCK_MODE === 'true' || Boolean(process.env.VITEST),
     googleDriveRefreshToken: process.env.GOOGLE_DRIVE_REFRESH_TOKEN || '',
     isGoogleDriveConfigured: Boolean(
       (process.env.GOOGLE_DRIVE_SERVICE_ACCOUNT_EMAIL && process.env.GOOGLE_DRIVE_PRIVATE_KEY) ||

@@ -132,10 +132,18 @@ export default function Header() {
         >
           <div className="flex items-center gap-2">
             <Link to="/" className="flex items-center transition-transform hover:scale-105">
-              <img src="/images/human-shelter-logo.webp" alt="Human Shelter Realty Logo" className="h-12 sm:h-14 w-auto object-contain drop-shadow-xs" />
+              <img
+                src="/images/human-shelter-logo.webp"
+                alt="Human Shelter Realty Logo"
+                className="h-12 sm:h-14 w-auto object-contain transition-[filter] duration-300"
+                style={!isSolidTheme ? { filter: 'drop-shadow(0 0 6px rgba(255,255,255,1)) drop-shadow(0 0 14px rgba(255,255,255,0.95)) drop-shadow(0 0 26px rgba(255,255,255,0.8))' } : undefined}
+              />
             </Link>
           </div>
-          <div className="hidden lg:flex gap-7 xl:gap-9 items-center absolute left-1/2 top-1/2 -translate-y-1/2 -translate-x-1/2 w-max">
+          <div
+            className="hidden lg:flex gap-7 xl:gap-9 items-center absolute left-1/2 top-1/2 -translate-y-1/2 -translate-x-1/2 w-max"
+            style={!isSolidTheme ? { textShadow: '0 0 10px rgba(255,255,255,0.9), 0 0 20px rgba(255,255,255,0.65)' } : undefined}
+          >
             <Link className={`text-[11px] uppercase tracking-widest font-sans nav-link transition-all duration-500 ${getLinkColor('/')}`} to="/">
               Home
             </Link>

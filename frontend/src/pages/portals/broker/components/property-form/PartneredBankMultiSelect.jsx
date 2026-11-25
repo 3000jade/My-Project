@@ -128,7 +128,7 @@ export default function PartneredBankMultiSelect({
               <button
                 type="button"
                 onClick={() => onClearAll?.()}
-                className="text-[#64748B] hover:text-[#FF6B6B] font-semibold cursor-pointer"
+                className="text-[#64748B] hover:text-[#FF8559] font-semibold cursor-pointer"
               >
                 Clear all
               </button>

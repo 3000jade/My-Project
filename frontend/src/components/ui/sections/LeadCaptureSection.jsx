@@ -35,39 +35,39 @@ export default function LeadCaptureSection() {
   };
 
   return (
-    <section className="w-full bg-[#FFFFFF] py-20 border-b border-[#D8DFDF]">
+    <section className="w-full bg-white py-20 border-b border-[#E2E8F0] text-[#1E293B]">
       <div className="w-full max-w-[1560px] mx-auto px-5 md:px-10 lg:px-16">
 
-        <div className="bg-[#FBFBF9] rounded-[8px] border border-[#D8DFDF] p-8 md:p-14 shadow-sm">
+        <div className="bg-white rounded-xl border border-[#E2E8F0] p-8 md:p-14 shadow-xs">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
 
             {/* Left Narrative */}
             <div className="lg:col-span-5 space-y-6">
-              <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#0D4446] font-sans">
+              <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#0F766E] font-sans">
                 PRIVATE RESERVATION
               </span>
-              <h2 className="text-3xl md:text-4xl font-semibold text-[#141717] tracking-tight font-sans">
+              <h2 className="text-3xl md:text-4xl font-semibold text-[#1E293B] tracking-tight font-sans">
                 Schedule a Private Walkthrough
               </h2>
-              <p className="text-[#5C6768] text-sm font-sans leading-relaxed">
+              <p className="text-[#64748B] text-sm font-sans leading-relaxed">
                 Experience this extraordinary sanctuary firsthand. Select your preferred date and format for a confidential private tour with senior listing advisory.
               </p>
 
               <div className="space-y-4 pt-2 font-sans text-xs">
-                <div className="flex items-center gap-3 text-[#141717]">
-                  <div className="w-8 h-8 rounded-full bg-[#0D4446]/10 text-[#0D4446] flex items-center justify-center flex-shrink-0">
+                <div className="flex items-center gap-3 text-[#1E293B]">
+                  <div className="w-8 h-8 rounded-full bg-[#0F766E]/10 text-[#0F766E] flex items-center justify-center flex-shrink-0">
                     <span className="material-symbols-outlined text-[18px]">verified_user</span>
                   </div>
                   <span className="font-semibold">100% Confidential Discovery Call</span>
                 </div>
-                <div className="flex items-center gap-3 text-[#141717]">
-                  <div className="w-8 h-8 rounded-full bg-[#0D4446]/10 text-[#0D4446] flex items-center justify-center flex-shrink-0">
+                <div className="flex items-center gap-3 text-[#1E293B]">
+                  <div className="w-8 h-8 rounded-full bg-[#0F766E]/10 text-[#0F766E] flex items-center justify-center flex-shrink-0">
                     <span className="material-symbols-outlined text-[18px]">key</span>
                   </div>
                   <span className="font-semibold">Access to Off-Market Portfolio Dossiers</span>
                 </div>
-                <div className="flex items-center gap-3 text-[#141717]">
-                  <div className="w-8 h-8 rounded-full bg-[#0D4446]/10 text-[#0D4446] flex items-center justify-center flex-shrink-0">
+                <div className="flex items-center gap-3 text-[#1E293B]">
+                  <div className="w-8 h-8 rounded-full bg-[#0F766E]/10 text-[#0F766E] flex items-center justify-center flex-shrink-0">
                     <span className="material-symbols-outlined text-[18px]">support_agent</span>
                   </div>
                   <span className="font-semibold">Dedicated 24/7 Elite Advisory Concierge</span>
@@ -76,7 +76,7 @@ export default function LeadCaptureSection() {
             </div>
 
             {/* Right Form */}
-            <div className="lg:col-span-7 bg-[#FFFFFF] rounded-[8px] border border-[#D8DFDF] p-6 md:p-8 shadow-sm">
+            <div className="lg:col-span-7 bg-[#FFFFFF] text-[#1E293B] rounded-xl border border-[#E2E8F0] p-6 md:p-8 shadow-xs">
               {isSubmitted ? (
                 <div className="py-12 text-center space-y-4">
                   <div className="w-16 h-16 rounded-full bg-[#0D4446]/10 text-[#0D4446] flex items-center justify-center mx-auto">
@@ -193,7 +193,7 @@ export default function LeadCaptureSection() {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full h-[54px] bg-[#E76F51] hover:bg-[#D65C3E] text-white font-sans font-semibold text-xs tracking-wider uppercase rounded-[6px] transition-colors shadow-lg flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer"
+                    className="w-full h-[54px] bg-[#FF8559] hover:bg-[#F07144] text-white font-sans font-bold text-xs tracking-wider uppercase rounded-lg transition-colors shadow-sm flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer"
                   >
                     <span className={`material-symbols-outlined text-[18px] ${isSubmitting ? 'animate-spin' : ''}`}>
                       {isSubmitting ? 'sync' : 'send'}

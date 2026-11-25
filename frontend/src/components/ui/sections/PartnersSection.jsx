@@ -35,7 +35,7 @@ function PartnerMarqueeRow({ title, cmsItems, fallbackMocks, fallbackAlt, animat
 
   return (
     <div className={wrapperClassName}>
-      <h3 className="text-lg font-bold text-[#0D4446] mb-6 uppercase tracking-widest pl-2">
+      <h3 className="text-lg font-bold text-[#0F766E] mb-6 uppercase tracking-widest pl-2">
         {title}
       </h3>
       <div className="w-full inline-flex flex-nowrap overflow-hidden [mask-image:_linear-gradient(to_right,transparent_0,_black_128px,_black_calc(100%-128px),transparent_100%)]">
@@ -128,36 +128,30 @@ export default function PartnersSection() {
   return (
     <section
       id="partners-section"
-      className="w-full bg-[#FFFFFF] py-16 md:py-24 border-b border-[#e5e5df] relative z-20 font-sans text-[#0f1722] overflow-hidden"
+      className="w-full bg-[#F8FAFC] py-16 md:py-24 border-b border-[#E2E8F0] relative z-20 font-sans text-[#1E293B] overflow-hidden"
     >
-      {/* Architectural Ambient Grid Texture */}
-      <div
-        aria-hidden="true"
-        className="absolute inset-0 bg-[radial-gradient(#1b4d4b_1px,transparent_1px)] [background-size:28px_28px] opacity-[0.03] pointer-events-none"
-      />
-
       <div className="relative z-10 w-full max-w-[1560px] mx-auto px-5 md:px-10 lg:px-16">
         
         {/* Header Block */}
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 mb-16">
           <div className="space-y-3 max-w-2xl">
             <div className="flex items-center gap-3">
-              <span className="w-6 h-[2px] bg-[#0D4446]" />
-              <span className="text-xs font-bold tracking-[0.25em] text-[#0D4446] uppercase">
+              <span className="w-6 h-[2px] bg-[#0F766E]" />
+              <span className="text-xs font-bold tracking-[0.25em] text-[#0F766E] uppercase">
                 Collaboration &amp; Network
               </span>
             </div>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#0f1722] tracking-tight leading-tight">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#1E293B] tracking-tight leading-tight">
               Our Trusted Industry Partners
             </h2>
-            <p className="text-sm sm:text-base text-[#4a525d] font-normal leading-relaxed">
+            <p className="text-sm sm:text-base text-[#64748B] font-normal leading-relaxed">
               We collaborate exclusively with the Philippines' most respected real estate developers and premier wealth management banks to guarantee authentic, title-verified transactions.
             </p>
           </div>
           
           <Link
             to="/contact"
-            className="self-start lg:self-auto h-[48px] px-6 rounded-full border border-[#0D4446]/30 text-[#0D4446] hover:bg-[#0D4446]/5 text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer group shrink-0"
+            className="self-start lg:self-auto h-[48px] px-6 rounded-full border border-[#0F766E]/30 text-[#0F766E] hover:bg-[#0F766E]/5 text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer group shrink-0"
           >
             <span>Learn About Partnerships</span>
             <span className="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform">

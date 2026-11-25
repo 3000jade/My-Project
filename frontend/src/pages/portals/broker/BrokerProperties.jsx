@@ -20,7 +20,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator
 } from '../../../components/ui/dropdown-menu';
-import propertyService, { normalizeProperty, formatPropertyDeveloperName } from '../../../services/propertyService';
+import propertyService, { normalizeProperty, formatPropertyDeveloperName, toApiPayload } from '../../../services/propertyService';
 import agentService from '../../../services/agentService';
 import auditService from '../../../services/auditService';
 import { useAuth } from '../../../context/AuthContext';
@@ -337,13 +337,13 @@ export default function BrokerProperties() {
     try {
       const targetId = targetArchiveProperty.id || targetArchiveProperty.listingKey;
       await propertyService.updateProperty(targetId, {
-        status: 'inactive',
-        standard_status: 'Closed',
+        status: 'sold',
         standardStatus: 'Closed',
+        isPublished: false,
       });
       setProperties(prev => prev.map(p => {
         if (p.id === targetId || p.listingKey === targetId) {
-          return { ...p, status: 'inactive', standard_status: 'Closed', standardStatus: 'Closed' };
+          return { ...p, status: 'SOLD', standard_status: 'Closed', standardStatus: 'Closed', is_published: false, isPublished: false };
         }
         return p;
       }));
@@ -388,7 +388,7 @@ export default function BrokerProperties() {
       const heldForConfirmation = syncUpdatedPropertyRow(row, res, 'Active');
       showToast(
         heldForConfirmation
-          ? `Listing "${row.title}" updated â€” waiting for agent confirmation.`
+          ? `Listing "${row.title}" updated — waiting for agent confirmation.`
           : `Listing "${row.title}" reactivated and restored to Active status.`
       );
     } catch (err) {
@@ -437,20 +437,29 @@ export default function BrokerProperties() {
     setArchiveError(null);
     try {
       const keys = Array.from(selectedKeys);
-      await Promise.allSettled(
+      const results = await Promise.allSettled(
         keys.map(id => propertyService.updateProperty(id, {
-          status: 'inactive',
-          standard_status: 'Closed',
+          status: 'sold',
           standardStatus: 'Closed',
+          isPublished: false,
         }))
       );
-      setProperties(prev => prev.map(p => {
-        if (selectedKeys.has(p.id) || selectedKeys.has(p.listingKey)) {
-          return { ...p, status: 'inactive', standard_status: 'Closed', standardStatus: 'Closed' };
-        }
-        return p;
-      }));
-      showToast(`${keys.length} listings archived successfully.`);
+      const succeededIds = new Set(keys.filter((_, idx) => results[idx].status === 'fulfilled'));
+      const failedCount = keys.length - succeededIds.size;
+      if (succeededIds.size > 0) {
+        setProperties(prev => prev.map(p => {
+          if (succeededIds.has(p.id) || succeededIds.has(p.listingKey)) {
+            return { ...p, status: 'SOLD', standard_status: 'Closed', standardStatus: 'Closed', is_published: false, isPublished: false };
+          }
+          return p;
+        }));
+      }
+      if (failedCount > 0) {
+        setArchiveError(`Failed to archive ${failedCount} of ${keys.length} selected listings.`);
+        showToast(`Partial failure: ${failedCount} listing(s) failed to archive.`, 'destructive');
+        return;
+      }
+      showToast(`${succeededIds.size} listings archived successfully.`);
       setSelectedKeys(new Set());
       setIsArchiveModalOpen(false);
       setBatchArchiveMode(false);
@@ -472,11 +481,20 @@ export default function BrokerProperties() {
     setDeleteError(null);
     try {
       const keys = Array.from(selectedKeys);
-      await Promise.allSettled(
+      const results = await Promise.allSettled(
         keys.map(id => propertyService.deleteProperty(id))
       );
-      setProperties(prev => prev.filter(p => !selectedKeys.has(p.id) && !selectedKeys.has(p.listingKey)));
-      showToast(`${keys.length} listings permanently deleted.`);
+      const succeededIds = new Set(keys.filter((_, idx) => results[idx].status === 'fulfilled'));
+      const failedCount = keys.length - succeededIds.size;
+      if (succeededIds.size > 0) {
+        setProperties(prev => prev.filter(p => !succeededIds.has(p.id) && !succeededIds.has(p.listingKey)));
+      }
+      if (failedCount > 0) {
+        setDeleteError(`Failed to delete ${failedCount} of ${keys.length} selected listings.`);
+        showToast(`Partial failure: ${failedCount} listing(s) failed to delete.`, 'destructive');
+        return;
+      }
+      showToast(`${succeededIds.size} listings permanently deleted.`);
       setSelectedKeys(new Set());
       setIsDeleteModalOpen(false);
       setBatchDeleteMode(false);
@@ -816,12 +834,12 @@ export default function BrokerProperties() {
     try {
       const res = await propertyService.updateProperty(targetId, {
         standardStatus: 'Active',
-        status: 'AVAILABLE'
+        status: 'available'
       });
       const heldForConfirmation = syncUpdatedPropertyRow(row, res);
       showToast(
         heldForConfirmation
-          ? `Approved "${row.title}" â€” waiting for agent confirmation.`
+          ? `Approved "${row.title}" — waiting for agent confirmation.`
           : `Approved & published "${row.title}"`
       );
     } catch (err) {
@@ -835,21 +853,30 @@ export default function BrokerProperties() {
   const handleDuplicate = async (e, row) => {
     e.stopPropagation();
     try {
-      const clonePayload = {
+      const clonePayload = toApiPayload({
+        ...row,
+        id: undefined,
+        listing_id: undefined,
+        listingId: undefined,
+        listing_key: undefined,
+        listingKey: undefined,
         title: `${row.title || 'Untitled Property'} (Copy)`,
-        price: Number(row.price_raw || row.price) || 0,
+        price: Number(row.price_raw || row.price) || 1,
         property_type: row.property_type || row.propertyType || 'Residential',
+        standardStatus: 'Draft',
         standard_status: 'Draft',
-        status: 'PENDING',
+        status: 'pending',
+        isPublished: false,
+        is_published: false,
         city: row.city || row.location || 'Metro Manila',
-        address: row.address || '',
+        address: row.address || row.city || 'Address pending',
         beds: Number(row.bedrooms ?? row.beds) || 0,
         baths: Number(row.bathrooms ?? row.baths) || 0,
         living_area: Number(row.living_area || row.livingArea || row.sqm) || 0,
-        description: row.description || '',
+        description: row.description || row.publicRemarks || '',
         features: Array.isArray(row.features) ? row.features : [],
         images: Array.isArray(row.images) && row.images.length > 0 ? row.images : (row.mainImage ? [row.mainImage] : []),
-      };
+      });
       const created = await propertyService.createProperty(clonePayload);
       if (created) {
         setProperties(prev => [created, ...prev]);
@@ -1013,19 +1040,19 @@ export default function BrokerProperties() {
       render: (row) => {
         const rawArea = row.livingArea ?? row.living_area ?? row.sqft ?? row.specs?.livingArea;
         const hasArea = rawArea !== null && rawArea !== undefined && rawArea !== '';
-        let unitLabel = 'mÂ²';
+        let unitLabel = 'm²';
         const units = (row.living_area_units || row.livingAreaUnits || '').toLowerCase();
         if (units.includes('foot') || units.includes('feet') || units === 'sqft') {
           unitLabel = 'sq ft';
         } else if (units.includes('meter') || units === 'sqm') {
-          unitLabel = 'mÂ²';
+          unitLabel = 'm²';
         }
         const areaDisplay = hasArea ? `${rawArea} ${unitLabel}` : 'Not provided';
 
         const beds = row.bedrooms_total ?? row.bedroomsTotal ?? row.beds ?? row.specs?.bedroomsTotal ?? row.specs?.beds;
         const baths = row.bathrooms_total_integer ?? row.bathroomsTotalInteger ?? row.baths ?? row.specs?.bathroomsTotalInteger ?? row.specs?.baths;
-        const bedsDisplay = beds !== null && beds !== undefined && beds !== '' ? beds : 'â€”';
-        const bathsDisplay = baths !== null && baths !== undefined && baths !== '' ? baths : 'â€”';
+        const bedsDisplay = beds !== null && beds !== undefined && beds !== '' ? beds : '—';
+        const bathsDisplay = baths !== null && baths !== undefined && baths !== '' ? baths : '—';
 
         return (
           <div>
@@ -1056,8 +1083,8 @@ export default function BrokerProperties() {
         const rawPrice = row.price_raw ?? (typeof row.price === 'number' ? row.price : null);
         const hasValidPrice = rawPrice !== null && rawPrice !== undefined && Number(rawPrice) > 0;
         const formatted = hasValidPrice
-          ? `â‚±${Number(rawPrice).toLocaleString()}`
-          : (typeof row.price === 'string' && row.price.startsWith('â‚±') ? row.price : 'Price not provided');
+          ? `₱${Number(rawPrice).toLocaleString()}`
+          : (typeof row.price === 'string' && row.price.startsWith('₱') ? row.price : 'Price not provided');
 
         const assocFee = row.association_fee ?? row.associationFee;
         const hasAssocFee = assocFee !== null && assocFee !== undefined && Number(assocFee) > 0;
@@ -1068,8 +1095,8 @@ export default function BrokerProperties() {
               {formatted}
             </span>
             {hasAssocFee ? (
-              <span className="text-[10px] text-[#64748B] block truncate" title={`+â‚±${Number(assocFee).toLocaleString()}/mo HOA`}>
-                +â‚±{Number(assocFee).toLocaleString()}/mo HOA
+              <span className="text-[10px] text-[#64748B] block truncate" title={`+₱${Number(assocFee).toLocaleString()}/mo HOA`}>
+                +₱{Number(assocFee).toLocaleString()}/mo HOA
               </span>
             ) : null}
           </div>
@@ -1368,7 +1395,7 @@ export default function BrokerProperties() {
         return (
           <div className="flex flex-wrap gap-1">
             {keys.map((k) => (
-              <span key={k} className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-[#FF6B6B]/10 text-[#FF6B6B] border border-[#FF6B6B]/20">
+              <span key={k} className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-[#FF8559]/10 text-[#FF8559] border border-[#FF8559]/20">
                 {k}
               </span>
             ))}
@@ -1421,67 +1448,67 @@ export default function BrokerProperties() {
 
       {/* Action Button Cluster */}
       <div className="flex flex-wrap lg:flex-nowrap items-center justify-end gap-2 sm:gap-2.5 w-full">
-          {/* Segmented View Mode Controls */}
-          <div className="inline-flex items-center p-1 bg-slate-100 rounded-lg border border-[#E2E8F0]" role="group" aria-label="View switcher">
-            <button
-              type="button"
-              onClick={() => setViewMode('table')}
-              aria-label="Table View"
-              className={cn(
-                "h-8 px-2.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer",
-                viewMode === 'table' ? "bg-white text-[#0F766E] shadow-2xs font-bold" : "text-[#64748B] hover:text-[#1E293B]"
-              )}
-            >
-              <List className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Table</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode('grid')}
-              aria-label="Grid View"
-              className={cn(
-                "h-8 px-2.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer",
-                viewMode === 'grid' ? "bg-white text-[#0F766E] shadow-2xs font-bold" : "text-[#64748B] hover:text-[#1E293B]"
-              )}
-            >
-              <LayoutGrid className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Grid</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode('map')}
-              aria-label="Map View"
-              className={cn(
-                "h-8 px-2.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer",
-                viewMode === 'map' ? "bg-white text-[#0F766E] shadow-2xs font-bold" : "text-[#64748B] hover:text-[#1E293B]"
-              )}
-            >
-              <MapIcon className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Map</span>
-            </button>
-          </div>
-
+        {/* Segmented View Mode Controls */}
+        <div className="inline-flex items-center p-1 bg-slate-100 rounded-lg border border-[#E2E8F0]" role="group" aria-label="View switcher">
           <button
-            onClick={() => fetchProperties(true)}
-            disabled={isRefreshing}
-            className="h-9 sm:h-10 px-3 sm:px-4 rounded-lg border border-[#E2E8F0] bg-white hover:bg-slate-50 text-xs font-semibold text-[#1E293B] transition-colors cursor-pointer shadow-2xs flex items-center gap-2"
-          >
-            <RotateCw className={cn("w-3.5 h-3.5 text-slate-500", isRefreshing && "animate-spin")} />
-            <span>Refresh</span>
-          </button>
-
-          <Link
-            to="/broker/properties/create"
+            type="button"
+            onClick={() => setViewMode('table')}
+            aria-label="Table View"
             className={cn(
-              buttonVariants({ variant: "default" }),
-              "h-9 sm:h-10 px-3 sm:px-4 flex-1 sm:flex-none justify-center flex items-center gap-1.5 cursor-pointer shadow-xs whitespace-nowrap normal-case"
+              "h-8 px-2.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer",
+              viewMode === 'table' ? "bg-white text-[#0F766E] shadow-2xs font-bold" : "text-[#64748B] hover:text-[#1E293B]"
             )}
-            aria-label="New Listing / Add New Property"
           >
-            <Plus className="w-4 h-4 stroke-[2.5]" />
-            <span className="font-medium">Add New Property</span>
-          </Link>
+            <List className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Table</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode('grid')}
+            aria-label="Grid View"
+            className={cn(
+              "h-8 px-2.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer",
+              viewMode === 'grid' ? "bg-white text-[#0F766E] shadow-2xs font-bold" : "text-[#64748B] hover:text-[#1E293B]"
+            )}
+          >
+            <LayoutGrid className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Grid</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode('map')}
+            aria-label="Map View"
+            className={cn(
+              "h-8 px-2.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer",
+              viewMode === 'map' ? "bg-white text-[#0F766E] shadow-2xs font-bold" : "text-[#64748B] hover:text-[#1E293B]"
+            )}
+          >
+            <MapIcon className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Map</span>
+          </button>
         </div>
+
+        <button
+          onClick={() => fetchProperties(true)}
+          disabled={isRefreshing}
+          className="h-9 sm:h-10 px-3 sm:px-4 rounded-lg border border-[#E2E8F0] bg-white hover:bg-slate-50 text-xs font-semibold text-[#1E293B] transition-colors cursor-pointer shadow-2xs flex items-center gap-2"
+        >
+          <RotateCw className={cn("w-3.5 h-3.5 text-slate-500", isRefreshing && "animate-spin")} />
+          <span>Refresh</span>
+        </button>
+
+        <Link
+          to="/broker/properties/create"
+          className={cn(
+            buttonVariants({ variant: "default" }),
+            "h-9 sm:h-10 px-3 sm:px-4 flex-1 sm:flex-none justify-center flex items-center gap-1.5 cursor-pointer shadow-xs whitespace-nowrap normal-case"
+          )}
+          aria-label="New Listing / Add New Property"
+        >
+          <Plus className="w-4 h-4 stroke-[2.5]" />
+          <span className="font-medium">Add New Property</span>
+        </Link>
+      </div>
 
       {/* Property Filter & Search Toolbar */}
       <PropertyFilterToolbar
@@ -1644,7 +1671,7 @@ export default function BrokerProperties() {
                 const isSelected = selectedMapPropertyId === prop.id;
                 const isHovered = hoveredMapPropertyId === prop.id;
                 const priceDisplay = typeof prop.price === 'number'
-                  ? `â‚±${prop.price.toLocaleString()}`
+                  ? `₱${prop.price.toLocaleString()}`
                   : (prop.price || 'Price upon request');
 
                 return (
@@ -1743,7 +1770,7 @@ export default function BrokerProperties() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" data-testid="grid-view">
             {filteredProperties.map((prop) => {
               const priceDisplay = typeof prop.price === 'number'
-                ? `â‚±${prop.price.toLocaleString()}`
+                ? `₱${prop.price.toLocaleString()}`
                 : (prop.price || 'Price upon request');
               return (
                 <Card
@@ -2057,7 +2084,7 @@ export default function BrokerProperties() {
             const statusMeta = BROKER_STATUS_STYLES[previewStatus] || BROKER_STATUS_STYLES.PUBLISHED;
             const rawPrice = auditTarget.price_raw ?? auditTarget.price;
             const previewPrice = rawPrice != null && !isNaN(Number(rawPrice)) && Number(rawPrice) > 0
-              ? `â‚±${Number(rawPrice).toLocaleString()}`
+              ? `₱${Number(rawPrice).toLocaleString()}`
               : 'Price not provided';
             const previewLoc = [auditTarget.address, auditTarget.city].filter(Boolean).join(', ') || 'Location not set';
             return (

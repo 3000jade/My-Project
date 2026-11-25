@@ -4,11 +4,84 @@ import { GoogleAuthService } from '../services/googleAuth.service';
 import { AgentRegistrationService } from '../services/agentRegistration.service';
 import { SessionService } from '../services/session.service';
 import { OtpService } from '../services/otp.service';
+import { InvitationService } from '../services/invitation.service';
 import { supabaseAdmin, isSupabaseConfigured } from '../config/supabase';
 import { AuthenticatedRequest, invalidateAuthCache } from '../middleware/auth.middleware';
 import type { ApiResponse } from '../types/api';
 
 export class AuthController {
+  /**
+   * POST /api/auth/identify
+   * Smart email-first lookup: determines whether an email belongs to an existing account,
+   * a pending broker agent invitation, or a brand-new user.
+   */
+  public static async identifyEmail(req: Request, res: Response<ApiResponse>): Promise<void> {
+    try {
+      const normalizedEmail = String(req.body.email || '').trim().toLowerCase();
+
+      if (!normalizedEmail) {
+        res.status(400).json({
+          success: false,
+          error: 'Please enter an email address.',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // 1. Check existing account in Supabase profiles (or known dev demo accounts)
+      if (isSupabaseConfigured) {
+        const { data: existingProfile } = await supabaseAdmin
+          .from('profiles')
+          .select('id')
+          .ilike('email', normalizedEmail)
+          .maybeSingle();
+
+        if (existingProfile) {
+          res.status(200).json({
+            success: true,
+            data: { status: 'existing', email: normalizedEmail },
+            timestamp: new Date().toISOString(),
+          });
+          return;
+        }
+      } else {
+        const devExistingEmails = ['agent@pt.com', 'broker@pt.com', 'admin@pt.com', 'client@pt.com'];
+        if (devExistingEmails.includes(normalizedEmail)) {
+          res.status(200).json({
+            success: true,
+            data: { status: 'existing', email: normalizedEmail },
+            timestamp: new Date().toISOString(),
+          });
+          return;
+        }
+      }
+
+      // 2. Check for an active pending broker invitation for this email (never expose raw token)
+      const activeInvite = await InvitationService.findActiveByEmail(normalizedEmail);
+      if (activeInvite) {
+        res.status(200).json({
+          success: true,
+          data: { status: 'invited_agent', email: normalizedEmail },
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // 3. Brand-new client email
+      res.status(200).json({
+        success: true,
+        data: { status: 'new', email: normalizedEmail },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (err: any) {
+      res.status(500).json({
+        success: false,
+        error: err.message || 'Unable to check email right now. Please try again.',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
   /**
    * Handle Google OAuth authentication
    */
@@ -151,12 +224,12 @@ export class AuthController {
    */
   public static async initiateRegistrationOtp(req: Request, res: Response<ApiResponse>): Promise<void> {
     try {
-      const { email, password, fullName, phone, role } = req.body;
+      const { email, password, fullName, phone, channel = 'email', role } = req.body;
 
-      if (!email || !password) {
+      if (!email) {
         res.status(400).json({
           success: false,
-          error: 'Email and password are required.',
+          error: 'Email address is required.',
           timestamp: new Date().toISOString(),
         });
         return;
@@ -184,17 +257,22 @@ export class AuthController {
         fullName,
         password,
         phone,
+        channel,
         role: role || 'client',
       });
+
+      const targetLabel = otpResult.channel === 'phone' ? 'phone number via SMS' : 'email address';
 
       res.status(200).json({
         success: true,
         data: {
           email: email.trim().toLowerCase(),
+          phone: phone ? String(phone).trim() : undefined,
+          channel: otpResult.channel,
           cooldownSeconds: otpResult.cooldownSeconds,
           devOtp: otpResult.devOtp,
         },
-        message: 'A 6-digit verification code has been dispatched to your email address.',
+        message: `We sent a 6-digit verification code to your ${targetLabel}.`,
         timestamp: new Date().toISOString(),
       });
     } catch (err: any) {
@@ -240,34 +318,45 @@ export class AuthController {
       // Complete user registration with verified email flag
       let authData: any = null;
       if (isSupabaseConfigured) {
-        let userId: string | null = null;
+        let userId: string | null = verifyResult.supabaseUserId || null;
         try {
-          const { data: createData, error: createErr } = await supabaseAdmin.auth.admin.createUser({
-            email,
-            password: finalPassword,
-            email_confirm: true,
-            user_metadata: {
-              full_name: finalFullName,
-              role: 'client',
-            },
-          });
-          if (createData?.user) {
-            userId = createData.user.id;
-          } else if (createErr) {
-            // If already exists in auth, look up id via indexed profiles table
-            const { data: foundProfile } = await supabaseAdmin
-              .from('profiles')
-              .select('id')
-              .ilike('email', email)
-              .maybeSingle();
-            if (foundProfile?.id) {
-              userId = foundProfile.id;
-              await supabaseAdmin.auth.admin.updateUserById(foundProfile.id, {
-                password: finalPassword,
-                email_confirm: true,
-              });
-            } else {
-              throw createErr;
+          if (userId) {
+            await supabaseAdmin.auth.admin.updateUserById(userId, {
+              password: finalPassword,
+              email_confirm: true,
+              user_metadata: {
+                full_name: finalFullName,
+                role: 'client',
+              },
+            });
+          } else {
+            const { data: createData, error: createErr } = await supabaseAdmin.auth.admin.createUser({
+              email,
+              password: finalPassword,
+              email_confirm: true,
+              user_metadata: {
+                full_name: finalFullName,
+                role: 'client',
+              },
+            });
+            if (createData?.user) {
+              userId = createData.user.id;
+            } else if (createErr) {
+              // If already exists in auth, look up id via indexed profiles table
+              const { data: foundProfile } = await supabaseAdmin
+                .from('profiles')
+                .select('id')
+                .ilike('email', email)
+                .maybeSingle();
+              if (foundProfile?.id) {
+                userId = foundProfile.id;
+                await supabaseAdmin.auth.admin.updateUserById(foundProfile.id, {
+                  password: finalPassword,
+                  email_confirm: true,
+                });
+              } else {
+                throw createErr;
+              }
             }
           }
         } catch {
@@ -334,12 +423,185 @@ export class AuthController {
   }
 
   /**
+   * POST /api/auth/register-otp/verify-email
+   * Verifies the 6-digit email OTP first and returns a short-lived verification token.
+   */
+  public static async verifyRegistrationEmail(req: Request, res: Response<ApiResponse>): Promise<void> {
+    try {
+      const { email, otp } = req.body;
+      const result = await OtpService.verifyEmailAndIssueTicket(email, otp);
+
+      if (!result.valid || !result.verificationToken) {
+        res.status(400).json({
+          success: false,
+          error: result.reason || 'Invalid verification code.',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      res.status(200).json({
+        success: true,
+        data: {
+          email: String(email).trim().toLowerCase(),
+          verificationToken: result.verificationToken,
+          expiresInSeconds: result.expiresInSeconds || 900,
+        },
+        message: 'Email verified successfully.',
+        timestamp: new Date().toISOString(),
+      });
+    } catch (err: any) {
+      res.status(400).json({
+        success: false,
+        error: err.message || 'Email verification failed.',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
+  /**
+   * POST /api/auth/register-otp/complete
+   * Consumes the verified-email ticket, creates the client account, and returns live tokens.
+   */
+  public static async completeRegistration(req: Request, res: Response<ApiResponse>): Promise<void> {
+    try {
+      const { email, verificationToken, phone, fullName, password, avatarDataUrl } = req.body;
+      const normalizedEmail = String(email || '').trim().toLowerCase();
+
+      const ticketCheck = OtpService.consumeVerificationTicket(normalizedEmail, verificationToken);
+      if (!ticketCheck.valid) {
+        res.status(ticketCheck.expired ? 401 : 400).json({
+          success: false,
+          error: ticketCheck.reason || 'Email verification expired. Please request a new code.',
+          data: ticketCheck.expired ? { code: 'VERIFICATION_EXPIRED' } : undefined,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const finalFullName = String(fullName || '').trim();
+      const finalPhone = String(phone || '').trim();
+
+      let authData: any = null;
+      if (isSupabaseConfigured) {
+        let userId: string | null = ticketCheck.supabaseUserId || null;
+        try {
+          if (userId) {
+            await supabaseAdmin.auth.admin.updateUserById(userId, {
+              password,
+              email_confirm: true,
+              user_metadata: {
+                full_name: finalFullName,
+                role: 'client',
+                ...(avatarDataUrl ? { avatar_url: avatarDataUrl } : {}),
+              },
+            });
+          } else {
+            const { data: createData, error: createErr } = await supabaseAdmin.auth.admin.createUser({
+              email: normalizedEmail,
+              password,
+              email_confirm: true,
+              user_metadata: {
+                full_name: finalFullName,
+                role: 'client',
+                ...(avatarDataUrl ? { avatar_url: avatarDataUrl } : {}),
+              },
+            });
+            if (createData?.user) {
+              userId = createData.user.id;
+            } else if (createErr) {
+              const { data: foundProfile } = await supabaseAdmin
+                .from('profiles')
+                .select('id')
+                .ilike('email', normalizedEmail)
+                .maybeSingle();
+              if (foundProfile?.id) {
+                userId = foundProfile.id;
+                await supabaseAdmin.auth.admin.updateUserById(foundProfile.id, {
+                  password,
+                  email_confirm: true,
+                });
+              } else {
+                throw createErr;
+              }
+            }
+          }
+        } catch {
+          authData = await AuthService.signUp(normalizedEmail, password, {
+            fullName: finalFullName,
+            role: 'client',
+          });
+          userId = authData?.user?.id;
+        }
+
+        if (userId) {
+          const profilePayload: Record<string, any> = {
+            id: userId,
+            email: normalizedEmail,
+            full_name: finalFullName,
+            role: 'client',
+            verification_status: 'VERIFIED',
+            updated_at: new Date().toISOString(),
+          };
+          if (finalPhone) profilePayload.phone = finalPhone;
+          if (avatarDataUrl) profilePayload.avatar_url = avatarDataUrl;
+
+          await supabaseAdmin.from('profiles').upsert(profilePayload);
+
+          authData = await AuthService.signIn(normalizedEmail, password, {
+            userAgent: (req.headers['user-agent'] as string) || 'Unknown Device',
+            ipAddress: req.ip || (req.headers['x-forwarded-for'] as string) || 'Unavailable',
+          });
+        }
+      } else {
+        authData = await AuthService.signUp(normalizedEmail, password, {
+          fullName: finalFullName,
+          role: 'client',
+        });
+      }
+
+      if (authData?.user) {
+        authData.user = {
+          ...authData.user,
+          fullName: authData.user.fullName || finalFullName,
+          phone: authData.user.phone || finalPhone,
+          ...(avatarDataUrl ? { avatarUrl: avatarDataUrl } : {}),
+        };
+      }
+
+      if (authData?.token && authData?.user?.id) {
+        SessionService.createSession({
+          sessionId: authData.token,
+          token: authData.token,
+          userId: authData.user.id,
+          role: authData.user.role || 'client',
+          userAgent: (req.headers['user-agent'] as string) || 'Unknown Device',
+          ipAddress: req.ip || (req.headers['x-forwarded-for'] as string) || 'Unavailable',
+        });
+      }
+
+      res.status(201).json({
+        success: true,
+        data: authData,
+        message: 'Account created successfully.',
+        timestamp: new Date().toISOString(),
+      });
+    } catch (err: any) {
+      res.status(400).json({
+        success: false,
+        error: err.message || 'Unable to create your account right now. Please try again.',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
+  /**
    * POST /api/auth/register-otp/resend
    * Resends a fresh 6-digit OTP code to the provided email address.
    */
   public static async resendRegistrationOtp(req: Request, res: Response<ApiResponse>): Promise<void> {
     try {
-      const { email } = req.body;
+      const { email, channel } = req.body;
       if (!email) {
         res.status(400).json({
           success: false,
@@ -349,16 +611,17 @@ export class AuthController {
         return;
       }
 
-      const resendResult = await OtpService.resendRegistrationOtp(email);
+      const resendResult = await OtpService.resendRegistrationOtp(email, channel);
 
       res.status(200).json({
         success: true,
         data: {
           email: email.trim().toLowerCase(),
+          channel: resendResult.channel,
           cooldownSeconds: resendResult.cooldownSeconds,
           devOtp: resendResult.devOtp,
         },
-        message: 'A fresh verification code has been dispatched.',
+        message: `We sent a fresh 6-digit code to your ${resendResult.channel === 'phone' ? 'phone' : 'email'}.`,
         timestamp: new Date().toISOString(),
       });
     } catch (err: any) {

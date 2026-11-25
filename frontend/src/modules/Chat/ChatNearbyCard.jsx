@@ -17,7 +17,7 @@ const LANDMARK_META = {
   school: { label: 'School', Icon: School },
   mall: { label: 'Mall', Icon: ShoppingBag },
   hospital: { label: 'Hospital', Icon: Hospital },
-  transit: { label: 'Transit', Icon: Train },
+  transit: { label: 'Transport', Icon: Train },
   highway: { label: 'Highway', Icon: Car },
 };
 
@@ -49,7 +49,7 @@ export default function ChatNearbyCard({ nearby }) {
           <Alert variant="warning">
             <AlertCircle />
             <AlertDescription>
-              Live distance details are temporarily unavailable right now. Connect with a licensed agent for exact travel times.
+              Distance details are temporarily unavailable right now. Talk to an agent for exact travel times.
             </AlertDescription>
           </Alert>
         ) : (

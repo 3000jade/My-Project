@@ -1,12 +1,16 @@
 import { z } from 'zod';
 
+const optionalUrlOrEmpty = z.union([
+  z.string().url('Avatar must be a valid URL.'),
+  z.literal(''),
+]).optional();
+
 export const updateProfileSchema = z.object({
   fullName: z.string().min(2, 'Full name must be at least 2 characters.').optional(),
   name: z.string().min(2, 'Name must be at least 2 characters.').optional(),
-  email: z.string().email('Invalid email address format.').optional(),
-  phone: z.string().min(7, 'Phone must be at least 7 characters.').optional(),
-  avatar: z.string().url('Avatar must be a valid URL.').optional(),
-  avatar_url: z.string().url('Avatar URL must be a valid URL.').optional(),
+  phone: z.union([z.string().min(7, 'Phone must be at least 7 characters.'), z.literal('')]).optional(),
+  avatar: optionalUrlOrEmpty,
+  avatar_url: optionalUrlOrEmpty,
   bio: z.string().max(1000, 'Bio cannot exceed 1000 characters.').optional(),
   prc_license_no: z.string().optional(),
   prc_validity: z.string().optional(),
@@ -31,10 +35,4 @@ export const updateProfileSchema = z.object({
   role: z.enum(['admin', 'broker', 'agent', 'client']).optional(),
 });
 
-export const queryProfileSchema = z.object({
-  role: z.enum(['admin', 'broker', 'agent', 'client']).optional(),
-  userId: z.string().optional(),
-});
-
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
-export type QueryProfileInput = z.infer<typeof queryProfileSchema>;

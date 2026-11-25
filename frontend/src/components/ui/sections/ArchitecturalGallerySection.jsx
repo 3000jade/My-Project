@@ -14,6 +14,8 @@ import {
   IconCar,
   IconMapPin
 } from '@tabler/icons-react';
+import NoImagePlaceholder from '../NoImagePlaceholder';
+import { Avatar, AvatarFallback } from '../avatar';
 
 const GALLERY_ITEMS = [
   // ROW 1: 3-Col (Narrow) | 5-Col (Wide) | 4-Col (Medium)
@@ -34,7 +36,7 @@ const GALLERY_ITEMS = [
     area: '850 sqm',
     rooms: '5 Bed • 6 Bath',
     parking: '4 Cars',
-    image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1600&auto=format&fit=crop',
+    image: null,
     tagline: 'Meticulously designed estate balancing raw modernist concrete with private Japanese Zen courtyards.',
     publicRemarks: 'Floor-to-ceiling thermal apertures frame tranquil reflecting pools. Features a bespoke subterranean wine cellar, cinema pavilion, and landscaped grounds.',
     features: ['Private Cinema', 'Wine Cellar', 'Reflecting Basin', 'Smart Home System']
@@ -56,7 +58,7 @@ const GALLERY_ITEMS = [
     area: '280 sqm',
     rooms: '3 Bed • 3.5 Bath',
     parking: '2 Cars',
-    image: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=1600&auto=format&fit=crop',
+    image: null,
     tagline: 'Commanding top-tier sky residence featuring wraparound glass walls overlooking the metropolitan skyline.',
     publicRemarks: 'Private high-speed biometric elevator access opens into expansive double-height living galleries with imported Italian marble and a sunset viewing loggia.',
     features: ['Private Elevator', 'Skyline Loggia', 'Wine Vault', 'Concierge Service']
@@ -78,7 +80,7 @@ const GALLERY_ITEMS = [
     area: '240 sqm',
     rooms: '3 Bed • 3.5 Bath',
     parking: '2 Cars',
-    image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1600&auto=format&fit=crop',
+    image: null,
     tagline: 'Uninterrupted panorama across the Manila Golf Course with floor-to-ceiling double-glazed envelopes.',
     publicRemarks: 'Crafted with bespoke Italian fixtures, motorized solar screens, and bespoke marble vanities in the heart of Bonifacio Global City.',
     features: ['Golf Course Vista', 'Motorized Louvers', 'Lap Pool', 'Private Valet']
@@ -102,7 +104,7 @@ const GALLERY_ITEMS = [
     area: '1,200 sqm',
     rooms: '6 Bed • 7 Bath',
     parking: '6 Cars',
-    image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=1600&auto=format&fit=crop',
+    image: null,
     tagline: 'Board-formed exposed concrete complemented by custom patinated bronze joinery and private bamboo groves.',
     publicRemarks: 'Museum-grade directional wall illumination, 14-foot ceiling heights, and a private 25-meter lap pool surrounded by old-growth tropical foliage.',
     features: ['25m Lap Pool', 'Subterranean Vault', 'Guard Outpost', 'Bespoke Joinery']
@@ -124,7 +126,7 @@ const GALLERY_ITEMS = [
     area: '680 sqm',
     rooms: '4 Bed • 4.5 Bath',
     parking: '4 Cars',
-    image: 'https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?q=80&w=1600&auto=format&fit=crop',
+    image: null,
     tagline: 'Cantilevered steel roof planes and expansive pocket glass walls merging living zones with reflection ponds.',
     publicRemarks: 'Engineered with geothermal climate controls, smart shading pergolas, and an artisanal chef demonstration kitchen.',
     features: ['Reflection Ponds', 'Demonstration Kitchen', 'Smart Pergolas', 'Wine Room']
@@ -146,7 +148,7 @@ const GALLERY_ITEMS = [
     area: '190 sqm',
     rooms: '2 Bed • 2.5 Bath',
     parking: '2 Cars',
-    image: 'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?q=80&w=1600&auto=format&fit=crop',
+    image: null,
     tagline: 'Seamless duplex layouts framing direct vistas of the pedestrian High Street promenade and skyline.',
     publicRemarks: 'Complete with integrated designer appliances, automated Lutron blinds, and direct biometric private lobby access.',
     features: ['Biometric Access', 'Lutron Automation', 'Fitness Suite', 'Private Parking']
@@ -168,7 +170,7 @@ const GALLERY_ITEMS = [
     area: '520 sqm',
     rooms: '4 Bed • 5 Bath',
     parking: '4 Cars',
-    image: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?q=80&w=1600&auto=format&fit=crop',
+    image: null,
     tagline: 'Perched along ridge-lines offering panoramic vistas of Taal Lake and natural pine groves.',
     publicRemarks: 'Custom glass cantilevers with geothermal floor warming, wrap-around sunset terraces, and private wellness spa pavilion.',
     features: ['Taal Lake Panorama', 'Spa Pavilion', 'Wrap-around Terrace', 'Smart Geothermal']
@@ -190,7 +192,7 @@ const GALLERY_ITEMS = [
     area: '780 sqm',
     rooms: '5 Bed • 6 Bath',
     parking: '5 Cars',
-    image: 'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?q=80&w=1600&auto=format&fit=crop',
+    image: null,
     tagline: 'Seamless modernist courtyard layout framed by ancient acacia canopy and volcanic stone walls.',
     publicRemarks: 'Equipped with bespoke Bulthaup kitchen, acoustic private library, 20m overflow infinity pool, and dedicated security outpost.',
     features: ['Bulthaup Kitchen', '20m Infinity Pool', 'Acoustic Library', 'Guard House']
@@ -212,7 +214,7 @@ const GALLERY_ITEMS = [
     area: '720 sqm',
     rooms: '4 Bed • 5.5 Bath',
     parking: '4 Cars',
-    image: 'https://images.unsplash.com/photo-1613977257363-707ba9348227?q=80&w=1600&auto=format&fit=crop',
+    image: null,
     tagline: 'Double-volume architectural sanctuary with seamless indoor-outdoor water pavilions and cantilevered sun decks.',
     publicRemarks: 'Custom glass louvers, imported travertine flooring, heated saltwater plunge pool, and integrated solar energy grid.',
     features: ['Saltwater Plunge Pool', 'Solar Energy Grid', 'Travertine Terraces', 'Smart Automation']
@@ -254,6 +256,7 @@ export default function ArchitecturalGallerySection() {
   const [scrollSnaps, setScrollSnaps] = useState([]);
   const [visibleRange, setVisibleRange] = useState({ first: 1, last: 3 });
   const [isPaused, setIsPaused] = useState(false);
+  const [failedImages, setFailedImages] = useState({});
 
   // True continuous sliding carousel track with loop and responsive 3x1 columns
   const [emblaRef, emblaApi] = useEmblaCarousel({
@@ -324,7 +327,7 @@ export default function ArchitecturalGallerySection() {
   return (
     <section 
       id="gallery-exhibition" 
-      className="w-full bg-surface pt-8 md:pt-12 pb-16 md:pb-24 border-b border-outline relative z-20 text-on-surface transition-colors duration-500"
+      className="w-full bg-white pt-8 md:pt-12 pb-16 md:pb-24 border-b border-outline relative z-20 text-on-surface transition-colors duration-500"
     >
       <div className="w-full max-w-[1560px] mx-auto px-5 md:px-10 lg:px-16 font-sans">
         
@@ -400,12 +403,20 @@ export default function ArchitecturalGallerySection() {
                       {/* Upper Image Section with Badges, Reference Code, Title, and Location */}
                       <div>
                         <div className="relative h-64 sm:h-72 overflow-hidden bg-slate-900">
-                          <img
-                            src={item.image}
-                            alt={item.title}
-                            loading="lazy"
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
-                          />
+                          {!item.image || failedImages[item.id] ? (
+                            <NoImagePlaceholder
+                              variant="dark"
+                              className="w-full h-full pb-12"
+                            />
+                          ) : (
+                            <img
+                              src={item.image}
+                              alt={item.title}
+                              loading="lazy"
+                              onError={() => setFailedImages((prev) => ({ ...prev, [item.id]: true }))}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                            />
+                          )}
                           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent pointer-events-none" />
 
                           {/* Top Badges: Single Status Pill */}
@@ -488,11 +499,11 @@ export default function ArchitecturalGallerySection() {
                       <div className="px-4 sm:px-5 pb-4 sm:pb-5 pt-3.5 flex items-center justify-between border-t border-outline mt-1">
                         <div className="flex items-center gap-3 group/agent cursor-pointer">
                           <div className="relative">
-                            <img 
-                              src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=100&h=100" 
-                              alt="Listing Agent" 
-                              className="w-10 h-10 rounded-full object-cover border-2 border-surface shadow-xs ring-1 ring-outline transition-transform duration-200 group-hover/agent:scale-105" 
-                            />
+                            <Avatar className="size-10 border border-outline bg-surface shadow-xs">
+                              <AvatarFallback className="bg-tertiary-container text-primary text-xs font-semibold">
+                                ES
+                              </AvatarFallback>
+                            </Avatar>
                             {/* Online Status Indicator */}
                             <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-surface shadow-xs" />
                           </div>

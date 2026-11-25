@@ -1,103 +1,77 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Full-Stack Account Profile Management & Persistence', () => {
-  test('Client profile edit and reload persistence', async ({ page }) => {
-    // Authenticate as client
-    await page.goto('http://localhost:5173/login');
-    const identifierInput = page.locator('#login-identifier');
-    if (await identifierInput.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await identifierInput.fill('client@pt.com');
-      await page.locator('#login-password').fill('clientPassword123!');
-      await page.locator('button[type="submit"]').click();
-      await page.waitForURL(url => !url.pathname.includes('/login'), { timeout: 10000 }).catch(() => {});
-      await page.waitForLoadState('networkidle').catch(() => {});
-    }
+async function loginAs(page: any, email: string, password: string) {
+  await page.goto('http://localhost:5173/login');
+  const identifierInput = page.locator('#login-identifier');
+  if (await identifierInput.isVisible({ timeout: 5000 }).catch(() => false)) {
+    await identifierInput.fill(email);
+    await page.locator('#login-password').fill(password);
+    await page.locator('button[type="submit"]').click();
+    await page.waitForURL((url: URL) => !url.pathname.includes('/login'), { timeout: 10000 }).catch(() => {});
+    await page.waitForLoadState('networkidle').catch(() => {});
+  }
+}
 
+test.describe('Full-Stack Account Profile Management & Persistence', () => {
+  test('Client profile inline edit and reload persistence', async ({ page }) => {
+    await loginAs(page, 'client@pt.com', 'clientPassword123!');
     await page.goto('http://localhost:5173/client/profile');
 
-    // Verify header
-    await expect(page.getByRole('heading', { name: /My Profile & Settings/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId('client-profile-studio')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('#studio-email')).toHaveAttribute('readonly', '');
 
-    // Open Edit Profile dialog
-    const editBtn = page.getByRole('button', { name: /Edit Profile/i });
-    await expect(editBtn).toBeVisible();
-    await editBtn.click();
+    await page.locator('#studio-phone').fill('+63 917 777 8888');
+    await page.locator('#client-location').fill('Bonifacio Global City - High Street');
 
-    // Verify dialog opens
-    const dialog = page.getByRole('dialog');
-    await expect(dialog).toBeVisible();
-    await expect(dialog.getByText(/Edit Client Profile/i)).toBeVisible();
+    const saveBar = page.getByTestId('studio-save-bar');
+    await expect(saveBar).toBeVisible();
+    await saveBar.getByRole('button', { name: /Save Changes/i }).click();
+    await expect(saveBar).not.toBeVisible({ timeout: 10000 });
 
-    // Modify contact and preference fields
-    const nameInput = dialog.locator('input[name="name"]');
-    await nameInput.fill('Sophia Isabella Laurel');
-
-    const phoneInput = dialog.locator('input[name="phone"]');
-    await phoneInput.fill('+63 917 777 8888');
-
-    const locationInput = dialog.locator('input[name="preferredLocation"]');
-    await locationInput.fill('Bonifacio Global City - High Street');
-
-    // Submit using Coral Save Changes CTA
-    const saveBtn = dialog.getByRole('button', { name: /Save Changes/i });
-    await expect(saveBtn).toBeVisible();
-    await saveBtn.click();
-
-    // Dialog closes
-    await expect(dialog).not.toBeVisible();
-
-    // Verify updated values in the page
-    await expect(page.getByText('+63 917 777 8888')).toBeVisible();
-    await expect(page.getByText('Bonifacio Global City - High Street')).toBeVisible();
-
-    // Reload page and verify persistence
     await page.reload();
-    await expect(page.getByText('+63 917 777 8888')).toBeVisible();
-    await expect(page.getByText('Bonifacio Global City - High Street')).toBeVisible();
+    await expect(page.locator('#studio-phone')).toHaveValue('+63 917 777 8888');
+    await expect(page.locator('#client-location')).toHaveValue('Bonifacio Global City - High Street');
   });
 
-  test('Broker executive profile edit and persistence', async ({ page }) => {
-    // Authenticate as broker
-    await page.goto('http://localhost:5173/login');
-    const identifierInput = page.locator('#login-identifier');
-    if (await identifierInput.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await identifierInput.fill('broker@pt.com');
-      await page.locator('#login-password').fill('brokerPassword123!');
-      await page.locator('button[type="submit"]').click();
-      await page.waitForURL(url => !url.pathname.includes('/login'), { timeout: 10000 }).catch(() => {});
-      await page.waitForLoadState('networkidle').catch(() => {});
-    }
-
+  test('Broker executive profile inline edit, Change Password, and persistence', async ({ page }) => {
+    await loginAs(page, 'broker@pt.com', 'brokerPassword123!');
     await page.goto('http://localhost:5173/broker/profile');
 
-    // Verify broker executive header
-    await expect(page.getByRole('heading', { name: /Broker Executive Profile/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId('broker-profile-studio')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('#studio-email')).toHaveAttribute('readonly', '');
 
-    // Open Edit Profile dialog
-    const editBtn = page.getByRole('button', { name: /Edit Profile/i });
-    await expect(editBtn).toBeVisible();
-    await editBtn.click();
+    await page.locator('#broker-firm-name').fill('Sterling & Partners Luxury Real Estate Ltd.');
 
-    // Verify dialog opens
-    const dialog = page.getByRole('dialog');
-    await expect(dialog).toBeVisible();
-    await expect(dialog.getByText(/Edit Broker Profile/i)).toBeVisible();
+    const saveBar = page.getByTestId('studio-save-bar');
+    await expect(saveBar).toBeVisible();
+    await saveBar.getByRole('button', { name: /Save Changes/i }).click();
+    await expect(saveBar).not.toBeVisible({ timeout: 10000 });
 
-    // Modify firm name
-    const firmInput = dialog.locator('input[name="firm_name"]');
-    await firmInput.fill('Sterling & Partners Luxury Real Estate Ltd.');
-
-    // Save
-    const saveBtn = dialog.getByRole('button', { name: /Save Profile/i });
-    await expect(saveBtn).toBeVisible();
-    await saveBtn.click();
-
-    // Verify persistence
-    await expect(dialog).not.toBeVisible();
-    await expect(page.getByText('Sterling & Partners Luxury Real Estate Ltd.')).toBeVisible();
-
-    // Reload page
     await page.reload();
-    await expect(page.getByText('Sterling & Partners Luxury Real Estate Ltd.')).toBeVisible();
+    await expect(page.locator('#broker-firm-name')).toHaveValue('Sterling & Partners Luxury Real Estate Ltd.');
+
+    // Verify Broker can access Update Password in Security tab
+    await page.getByRole('tab', { name: /Security/i }).click();
+    await expect(page.getByRole('button', { name: /Update Password/i })).toBeVisible();
+  });
+
+  test('Agent profile inline edit with HR biodata persistence', async ({ page }) => {
+    await loginAs(page, 'agent@pt.com', 'agentPassword123!');
+    await page.goto('http://localhost:5173/agent/profile');
+
+    await expect(page.getByTestId('agent-profile-studio')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('#studio-email')).toHaveAttribute('readonly', '');
+
+    await page.locator('#agent-emergency-name').fill('Maria Rossi');
+    await page.locator('#agent-emergency-phone').fill('+63 917 555 1234');
+
+    const saveBar = page.getByTestId('studio-save-bar');
+    await expect(saveBar).toBeVisible();
+    await saveBar.getByRole('button', { name: /Save Changes/i }).click();
+    await expect(saveBar).not.toBeVisible({ timeout: 10000 });
+
+    await page.reload();
+    await expect(page.locator('#agent-emergency-name')).toHaveValue('Maria Rossi');
+    await expect(page.locator('#agent-emergency-phone')).toHaveValue('+63 917 555 1234');
   });
 });

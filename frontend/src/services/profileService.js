@@ -68,83 +68,76 @@ export const mockDefaultProfiles = {
  * Normalizes backend profile payload into consistent UI representation
  */
 export function normalizeProfile(raw = {}) {
-  const effectiveRole = raw.rawRole || (['broker', 'agent', 'client'].includes(raw.role) ? raw.role : null) || 'agent';
-  const defaults = mockDefaultProfiles[effectiveRole] || mockDefaultProfiles.agent;
+  const effectiveRole = raw.rawRole || (['broker', 'agent', 'client', 'admin'].includes(raw.role) ? raw.role : null) || 'agent';
 
-  const name = raw.name || raw.full_name || defaults.name;
-  const nameParts = name.trim().split(' ');
-  const firstName = raw.firstName || nameParts[0] || '';
-  const lastName = raw.lastName || nameParts.slice(1).join(' ') || '';
+  const name = raw.name ?? raw.full_name ?? '';
+  const nameParts = String(name).trim().split(/\s+/).filter(Boolean);
+  const firstName = raw.firstName ?? nameParts[0] ?? '';
+  const lastName = raw.lastName ?? nameParts.slice(1).join(' ') ?? '';
 
-  const avatar = raw.avatar || raw.avatar_url || defaults.avatar;
+  const avatar = raw.avatar ?? raw.avatar_url ?? '';
 
   const displayRole = (effectiveRole === 'broker' || raw.role === 'broker')
     ? 'Principal Broker & Managing Director'
     : (effectiveRole === 'client' || raw.role === 'client')
     ? 'Registered Client'
-    : (raw.role_title || defaults.role);
+    : (raw.role_title || 'Senior Real Estate Consultant');
 
   return {
-    id: raw.id || defaults.id,
+    id: raw.id ?? '',
     name,
     firstName,
     lastName,
-    email: raw.email || defaults.email,
-    phone: raw.phone || defaults.phone,
+    email: raw.email ?? '',
+    phone: raw.phone ?? '',
     role: displayRole,
-    rawRole: raw.role || roleKey,
+    rawRole: raw.role || effectiveRole,
     avatar,
-    bio: raw.bio || defaults.bio,
-    preferredLocation: raw.preferredLocation || raw.preferred_location || defaults.preferredLocation || '',
-    investmentBudget: raw.investmentBudget || raw.investment_budget || defaults.investmentBudget || '',
-    notificationPreferences: raw.notificationPreferences || raw.notification_preferences || { email: true, sms: true, priceDrops: true },
-    ui_preferences: raw.ui_preferences || raw.uiPreferences || defaults.ui_preferences || { font_size: 'standard' },
-    prc_license_no: raw.prc_license_no || defaults.prc_license_no || '',
-    prc_validity: raw.prc_validity || defaults.prc_validity || '',
-    dhsud_accreditation_no: raw.dhsud_accreditation_no || defaults.dhsud_accreditation_no || '',
-    dhsud_validity: raw.dhsud_validity || defaults.dhsud_validity || '',
-    firm_name: raw.firm_name || defaults.firm_name || '',
-    experience_years: raw.experience_years ?? defaults.experience_years ?? 0,
-    verification_status: raw.verification_status || 'VERIFIED',
+    bio: raw.bio ?? '',
+    date_of_birth: raw.date_of_birth ?? '',
+    gender: raw.gender ?? '',
+    emergency_contact_name: raw.emergency_contact_name ?? '',
+    emergency_contact_phone: raw.emergency_contact_phone ?? '',
+    preferredLocation: raw.preferredLocation ?? raw.preferred_location ?? '',
+    investmentBudget: raw.investmentBudget ?? raw.investment_budget ?? '',
+    notificationPreferences: raw.notificationPreferences ?? raw.notification_preferences ?? { email: true, sms: true, priceDrops: true },
+    ui_preferences: raw.ui_preferences ?? raw.uiPreferences ?? { font_size: 'standard' },
+    prc_license_no: raw.prc_license_no ?? '',
+    prc_validity: raw.prc_validity ?? '',
+    dhsud_accreditation_no: raw.dhsud_accreditation_no ?? '',
+    dhsud_validity: raw.dhsud_validity ?? '',
+    firm_name: raw.firm_name ?? '',
+    experience_years: raw.experience_years ?? 0,
+    verification_status: raw.verification_status || 'PENDING',
     updated_at: raw.updated_at || new Date().toISOString(),
   };
 }
 
 export const profileService = {
   /**
-   * Fetch current user profile with role fallback
+   * Fetch current user profile
    */
   async getProfile({ role = 'agent', userId } = {}) {
-    try {
-      const response = await apiClient.get('/profile', {
-        params: { role, userId },
-      });
-      if (response && response.data) {
-        return normalizeProfile(response.data);
-      }
-      return normalizeProfile(mockDefaultProfiles[role]);
-    } catch (err) {
-      console.warn(`[profileService] getProfile fallback for ${role}:`, err.message);
-      return normalizeProfile(mockDefaultProfiles[role]);
+    const response = await apiClient.get('/profile', {
+      params: { role, userId },
+    });
+    if (response && response.data) {
+      return normalizeProfile(response.data);
     }
+    throw new Error('Failed to load profile from server.');
   },
 
   /**
    * Update current user profile
    */
   async updateProfile(updates, { role = 'agent' } = {}) {
-    try {
-      const response = await apiClient.put('/profile', updates, {
-        params: { role },
-      });
-      if (response && response.data) {
-        return normalizeProfile(response.data);
-      }
-      return normalizeProfile({ ...mockDefaultProfiles[role], ...updates });
-    } catch (err) {
-      console.warn(`[profileService] updateProfile fallback for ${role}:`, err.message);
-      return normalizeProfile({ ...mockDefaultProfiles[role], ...updates });
+    const response = await apiClient.put('/profile', updates, {
+      params: { role },
+    });
+    if (response && response.data) {
+      return normalizeProfile(response.data);
     }
+    throw new Error('Failed to save profile changes.');
   },
 };
 

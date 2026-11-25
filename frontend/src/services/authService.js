@@ -6,7 +6,7 @@ import apiClient from './apiClient';
 export const hasRole = (user, roleOrRoles) => {
   if (!user || !user.role) return false;
   if (user.role === 'admin') return true; // Superuser bypass
-  
+
   if (Array.isArray(roleOrRoles)) {
     return roleOrRoles.includes(user.role);
   }
@@ -19,13 +19,21 @@ export const hasRole = (user, roleOrRoles) => {
 export const can = (user, permission) => {
   if (!user || !user.role) return false;
   if (user.role === 'admin') return true; // Admin bypass
-  
+
   return Boolean(user.permissions && user.permissions.includes(permission));
 };
 
 export const hasPermission = can;
 
 export const authService = {
+  /**
+   * Smart email-first lookup: returns { status: 'existing' | 'invited_agent' | 'new', email }
+   */
+  async identifyEmail(email) {
+    const response = await apiClient.post('/auth/identify', { email });
+    return response.data;
+  },
+
   /**
    * Log in user via Express Backend
    */
@@ -97,6 +105,32 @@ export const authService = {
   },
 
   /**
+   * Verify 6-digit email OTP first and receive a short-lived verification token
+   */
+  async verifyRegistrationEmail(email, otp) {
+    const response = await apiClient.post('/auth/register-otp/verify-email', { email, otp });
+    return response.data;
+  },
+
+  /**
+   * Complete step-by-step client registration with verification token, phone, full name, password & optional photo
+   */
+  async completeRegistration(payload) {
+    const response = await apiClient.post('/auth/register-otp/complete', payload);
+    if (response?.data?.token) {
+      apiClient.setToken(response.data.token);
+    }
+    if (response?.data?.refreshToken && typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('cp_refresh_token', response.data.refreshToken);
+      } catch (err) {
+        console.warn('[authService] Failed storing refresh token:', err);
+      }
+    }
+    return response.data;
+  },
+
+  /**
    * Verify registration 6-digit Email OTP and establish session
    */
   async verifyRegistrationOtp(payload) {
@@ -115,10 +149,11 @@ export const authService = {
   },
 
   /**
-   * Resend 6-digit registration verification OTP
+   * Resend 6-digit registration verification OTP (supports email or phone channel)
    */
-  async resendRegistrationOtp(email) {
-    const response = await apiClient.post('/auth/register-otp/resend', { email });
+  async resendRegistrationOtp(email, channel) {
+    const payload = channel ? { email, channel } : { email };
+    const response = await apiClient.post('/auth/register-otp/resend', payload);
     return response.data;
   },
 

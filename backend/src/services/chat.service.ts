@@ -31,7 +31,7 @@ const DEFAULT_FALLBACK_MESSAGE =
 const STREAM_STATUS = {
   activeListing: { step: 'active_listing', label: "Checking the home you're viewing..." },
   currentProperty: { step: 'current_property', label: 'Checking property details...' },
-  searchProperties: { step: 'search_properties', label: 'Searching published homes...' },
+  searchProperties: { step: 'search_properties', label: 'Searching available homes...' },
   compareProperties: { step: 'compare_properties', label: 'Comparing properties side by side...' },
   nearbyLookup: { step: 'nearby_lookup', label: 'Looking up nearby schools, malls & drive times...' },
   writingReply: { step: 'writing_reply', label: 'Writing your reply...' },

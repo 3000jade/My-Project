@@ -155,7 +155,7 @@ export function getNotificationTargetPath(notification = {}, role = 'broker') {
   const r = role === 'admin' ? 'broker' : role;
   const type = String(notification.type || '').toLowerCase();
   if (type === 'inquiry') return `/${r}/inquiries`;
-  if (type === 'appointment') return r === 'broker' ? '/broker/appointments' : r === 'agent' ? '/agent/availability' : '/client/inquiries';
+  if (type === 'appointment') return `/${r}/inquiries`;
   if (type === 'verification') return r === 'broker' ? '/broker/agents' : `/${r}/profile`;
   if (type === 'sale') return r === 'client' ? '/client/dashboard' : `/${r}/sales`;
   return `/${r}/dashboard`;

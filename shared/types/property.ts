@@ -28,6 +28,7 @@ export interface MediaItem {
   mediaUrl: string;
   orderIndex: number;
   mediaCategory: 'Photo' | 'FloorPlan' | 'Video' | 'VirtualTour' | 'Document';
+  galleryCategory?: string | null;
   shortDescription?: string;
   mimeType?: string;
 }
@@ -74,6 +75,9 @@ export interface Property {
   associationFee?: number;
   associationFeeFrequency?: 'Monthly' | 'Annually' | 'Quarterly' | string;
   taxAnnualAmount?: number;
+  propertyCategory?: string;
+  mapPinPrivacy?: string;
+  developerName?: string;
   location: {
     address: string;
     unparsedAddress?: string | null;

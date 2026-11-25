@@ -126,7 +126,7 @@ export const toastVariants = cva(
       variant: {
         default: "border-[#E2E8F0] bg-white text-[#1E293B]",
         primary: "border-[#0F766E]/20 bg-teal-50 text-[#0F766E]",
-        coral: "border-[#FF6B6B]/20 bg-rose-50 text-[#1E293B]",
+        coral: "border-[#FF8559]/20 bg-rose-50 text-[#1E293B]",
         success: "border-emerald-200 bg-emerald-50 text-emerald-700",
         destructive: "border-red-200 bg-red-50 text-red-600",
       },

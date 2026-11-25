@@ -7,7 +7,7 @@ import {
   IconHome,
   IconCoin
 } from '@tabler/icons-react';
-import houseHeroSvg from '../../../assets/House_Herosection.svg';
+import houseHeroImg from '../../../assets/House_Herosection.webp';
 
 export default function ListingHeroGallery({
   onBookTour,
@@ -54,7 +54,7 @@ export default function ListingHeroGallery({
   const opacitySkyGlow = useTransform(smoothProgress, [0, 0.85], [1, 0.45]);
 
   return (
-    <section ref={heroRef} className="relative w-full bg-white flex flex-col justify-start items-center overflow-hidden pt-[82px] sm:pt-[86px] md:pt-[90px] pb-0 min-h-[90vh] sm:min-h-screen transition-colors duration-500">
+    <section ref={heroRef} className="relative w-full bg-white flex flex-col justify-start items-center overflow-hidden pt-20 sm:pt-22 md:pt-24 pb-0 min-h-0 sm:min-h-[85svh] lg:min-h-screen transition-colors duration-500">
 
       {/* ─── PURE MORNING SKY WITH TEXTURED NATURAL CLOUDS IN THE MIDDLE ─── */}
       <motion.div
@@ -77,8 +77,8 @@ export default function ListingHeroGallery({
           </filter>
         </svg>
 
-        {/* Crisp Gradient Sky: Clear Cerulean down to White / Deep Night Sky in Dark Mode */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#b3dbff] via-[#d6ecff]/70 to-white transition-colors duration-500" />
+        {/* Light Ocean Blue Sky Gradient */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#5BC0DE] via-[#9ADFF0]/80 to-[#F0FAFC] transition-colors duration-500" />
 
         {/* ─── CONTINUOUS STREAM OF CLOUDS (True Endless Flow Across Sky) ─── */}
         {/* Lane 1: Upper Sky Stream (High Altitude Cumulus) */}
@@ -184,11 +184,11 @@ export default function ListingHeroGallery({
           </div>
         </div>
 
-        {/* Subtle Morning Sun Lighting (Soft Top-Left Glow) */}
+        {/* Soft White Morning Radiance from the Left */}
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
-            background: 'radial-gradient(circle at 10% 15%, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.1) 35%, transparent 65%)'
+            background: 'radial-gradient(ellipse 65% 75% at 0% 25%, rgba(255, 255, 255, 0.78) 0%, rgba(255, 255, 255, 0.35) 30%, rgba(255, 255, 255, 0.08) 55%, transparent 75%)'
           }}
         />
       </motion.div>
@@ -199,20 +199,20 @@ export default function ListingHeroGallery({
         animate={{ opacity: 1, y: 0 }}
         style={{ y: yHeadlineText }}
         transition={{ duration: 0.8, ease: [0.32, 0.72, 0, 1] }}
-        className="relative z-20 w-full max-w-[1560px] mx-auto px-4 sm:px-6 md:px-10 lg:px-16 flex flex-col items-center justify-center pt-16 sm:pt-24 md:pt-32 will-change-transform"
+        className="relative z-20 w-full max-w-[1440px] mx-auto px-4 sm:px-6 md:px-10 lg:px-16 flex flex-col items-center justify-center pt-4 sm:pt-10 md:pt-14 lg:pt-16 will-change-transform"
       >
-        {/* ─── INTEGRATED QUICK SEARCH BAR (Sheer Transparent Glass Chassis) ─── */}
+        {/* ─── INTEGRATED QUICK SEARCH BAR (Symmetrical 2x2 Glass Chassis) ─── */}
         <form
           onSubmit={handleSearchSubmit}
-          className="w-full max-w-xl lg:max-w-2xl p-2.5 sm:p-3 rounded-[18px] bg-white/25 backdrop-blur-md border border-white/40 shadow-[inset_0_1px_2px_rgba(255,255,255,0.7),0_10px_28px_rgba(13,68,70,0.05)] grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center z-30"
+          className="w-full max-w-xl lg:max-w-2xl p-3 rounded-xl bg-white/30 backdrop-blur-md border border-white/45 shadow-[inset_0_1px_2px_rgba(255,255,255,0.7),0_10px_28px_rgba(13,68,70,0.06)] grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center z-30"
         >
           {/* Location Select */}
-          <div className="sm:col-span-6 relative flex items-center">
+          <div className="sm:col-span-6 min-w-0 relative flex items-center">
             <IconMapPin size={18} className="absolute left-3.5 text-[#187A7E] pointer-events-none" />
             <select
               value={searchLocation}
               onChange={(e) => setSearchLocation(e.target.value)}
-              className="w-full h-[50px] pl-10 pr-8 rounded-[10px] bg-white/40 hover:bg-white/55 focus:bg-white/80 border border-white/50 text-xs sm:text-sm font-medium text-[#141717] focus:outline-none focus:border-[#187A7E] transition-colors cursor-pointer appearance-none shadow-2xs"
+              className="w-full h-12 pl-10 pr-8 rounded-lg bg-white/45 hover:bg-white/60 focus:bg-white/85 border border-white/55 text-base sm:text-sm font-medium text-[#141717] focus:outline-none focus-visible:border-[#0F766E] focus-visible:ring-2 focus-visible:ring-[#0F766E]/20 transition-colors cursor-pointer appearance-none shadow-2xs truncate"
             >
               <option value="">All Locations (PH)</option>
               <option value="Cavite">Cavite (Bacoor, Imus, Dasma)</option>
@@ -224,12 +224,12 @@ export default function ListingHeroGallery({
           </div>
 
           {/* Property Type Select */}
-          <div className="sm:col-span-6 relative flex items-center">
+          <div className="sm:col-span-6 min-w-0 relative flex items-center">
             <IconHome size={18} className="absolute left-3.5 text-[#187A7E] pointer-events-none" />
             <select
               value={searchType}
               onChange={(e) => setSearchType(e.target.value)}
-              className="w-full h-[50px] pl-10 pr-8 rounded-[10px] bg-white/40 hover:bg-white/55 focus:bg-white/80 border border-white/50 text-xs sm:text-sm font-medium text-[#141717] focus:outline-none focus:border-[#187A7E] transition-colors cursor-pointer appearance-none shadow-2xs"
+              className="w-full h-12 pl-10 pr-8 rounded-lg bg-white/45 hover:bg-white/60 focus:bg-white/85 border border-white/55 text-base sm:text-sm font-medium text-[#141717] focus:outline-none focus-visible:border-[#0F766E] focus-visible:ring-2 focus-visible:ring-[#0F766E]/20 transition-colors cursor-pointer appearance-none shadow-2xs truncate"
             >
               <option value="">All Property Types</option>
               <option value="House and Lot">House & Lot</option>
@@ -240,12 +240,12 @@ export default function ListingHeroGallery({
           </div>
 
           {/* Budget Select */}
-          <div className="sm:col-span-7 relative flex items-center">
+          <div className="sm:col-span-6 min-w-0 relative flex items-center">
             <IconCoin size={18} className="absolute left-3.5 text-[#187A7E] pointer-events-none" />
             <select
               value={searchBudget}
               onChange={(e) => setSearchBudget(e.target.value)}
-              className="w-full h-[50px] pl-10 pr-8 rounded-[10px] bg-white/40 hover:bg-white/55 focus:bg-white/80 border border-white/50 text-xs sm:text-sm font-medium text-[#141717] focus:outline-none focus:border-[#187A7E] transition-colors cursor-pointer appearance-none shadow-2xs"
+              className="w-full h-12 pl-10 pr-8 rounded-lg bg-white/45 hover:bg-white/60 focus:bg-white/85 border border-white/55 text-base sm:text-sm font-medium text-[#141717] focus:outline-none focus-visible:border-[#0F766E] focus-visible:ring-2 focus-visible:ring-[#0F766E]/20 transition-colors cursor-pointer appearance-none shadow-2xs truncate"
             >
               <option value="">Any Budget</option>
               <option value="under-3m">Under ₱3M (Pag-IBIG / Starter)</option>
@@ -255,10 +255,10 @@ export default function ListingHeroGallery({
           </div>
 
           {/* Submit Lighter Coral CTA Button */}
-          <div className="sm:col-span-5">
+          <div className="sm:col-span-6 min-w-0">
             <button
               type="submit"
-              className="w-full h-[50px] px-4 rounded-[10px] bg-[#F07A5F] hover:bg-[#e76f51] active:scale-[0.98] text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-[0_4px_16px_rgba(240,122,95,0.32)] transition-all cursor-pointer"
+              className="w-full h-12 px-4 rounded-lg bg-[#FF8559] hover:bg-[#F07144] active:scale-[0.98] text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-[0_4px_16px_rgba(240,122,95,0.32)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0F766E]/30 transition-all cursor-pointer"
             >
               <IconSearch size={16} stroke={2.5} />
               <span>Find Homes</span>
@@ -273,21 +273,23 @@ export default function ListingHeroGallery({
         animate={{ opacity: 1, y: 0 }}
         style={{ y: yHeroHouse, scale: scaleHeroHouse }}
         transition={{ duration: 1, delay: 0.15, ease: [0.32, 0.72, 0, 1] }}
-        className="relative z-10 w-full flex justify-center items-center mx-auto leading-none -mt-8 sm:-mt-16 md:-mt-24 lg:-mt-32 pointer-events-none origin-center will-change-transform"
+        className="relative z-10 w-full flex justify-center items-center mx-auto leading-none mt-4 sm:-mt-8 md:-mt-20 lg:-mt-32 xl:-mt-36 pointer-events-none origin-center will-change-transform"
       >
         <div className="relative w-full flex justify-center items-center">
           <img
-            src={houseHeroSvg}
+            src={houseHeroImg}
             alt="Human Shelter - Selling Homes, Building Dreams"
-            className="w-full min-w-full max-w-none h-auto object-cover object-center block drop-shadow-[0_20px_40px_rgba(0,0,0,0.05)]"
+            className="w-full min-w-full max-w-none min-h-[220px] sm:min-h-0 h-auto object-cover object-bottom sm:object-center block drop-shadow-[0_20px_40px_rgba(0,0,0,0.05)]"
             loading="eager"
+            fetchPriority="high"
+            decoding="async"
           />
 
-          {/* Dynamic Pure White Morning Light Wash */}
+          {/* Dynamic Soft White Morning Radiance Wash from Left */}
           <motion.div
-            animate={{ opacity: [0.15, 0.28, 0.15] }}
+            animate={{ opacity: [0.18, 0.32, 0.18] }}
             transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute inset-0 bg-gradient-to-r from-white/40 via-white/10 to-transparent pointer-events-none mix-blend-soft-light"
+            className="absolute inset-0 bg-gradient-to-r from-white/45 via-white/15 to-transparent pointer-events-none mix-blend-soft-light"
           />
         </div>
       </motion.div>

@@ -8,7 +8,7 @@ import { cn } from '@/utils/cn';
  * 
  * Signature Modern SaaS Contrast Capsule Action Button:
  * - Architectural Teal (#0F766E) pill container
- * - Modern SaaS Coral (#FF6B6B) circular badge with white diagonal up-right arrow (↗)
+ * - Modern SaaS Coral (#FF8559) circular badge with white diagonal up-right arrow (↗)
  * - Micro-interaction hover motion (badge translates diagonally)
  * - Flexible rendering as <button>, <Link>, or <a>
  */
@@ -57,7 +57,7 @@ export default function ViewPropertyButton({
       <span className="tracking-tight">{label}</span>
       <div
         className={cn(
-          'rounded-full bg-[#FF6B6B] text-white flex items-center justify-center shrink-0 shadow-2xs',
+          'rounded-full bg-[#FF8559] text-white flex items-center justify-center shrink-0 shadow-2xs',
           'transition-transform duration-200 ease-out group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5',
           sizeClasses.badge
         )}

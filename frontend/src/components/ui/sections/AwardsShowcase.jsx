@@ -1,40 +1,41 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import cmsService from '@/services/cmsService';
+import NoImagePlaceholder from '../NoImagePlaceholder';
 
 const AWARDS = [
   { 
     id: 1, 
     type: 'image', 
-    src: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?q=80&w=1200', 
+    src: null, 
     title: 'Best Luxury Brokerage 2025',
     description: 'Awarded for exceptional service in high-end real estate.'
   },
   { 
     id: 2, 
     type: 'video', 
-    src: 'https://www.w3schools.com/html/mov_bbb.mp4', 
+    src: null, 
     title: 'Innovation in PropTech',
     description: 'Recognized for our advanced digital platform.'
   },
   { 
     id: 3, 
     type: 'image', 
-    src: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1200', 
+    src: null, 
     title: 'Top Sales Performance',
     description: 'Highest volume of completed transactions in Q4.'
   },
   { 
     id: 4, 
     type: 'image', 
-    src: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1200', 
+    src: null, 
     title: 'Excellence in Design',
     description: 'Award for the most intuitive UI/UX in real estate.'
   },
   { 
     id: 5, 
     type: 'video', 
-    src: 'https://www.w3schools.com/html/mov_bbb.mp4', 
+    src: null, 
     title: 'Community Impact Award',
     description: 'For outstanding contributions to local housing development.'
   },
@@ -52,6 +53,7 @@ const AWARDS_LIST = [
 export default function AwardsShowcase() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [cmsAwards, setCmsAwards] = useState([]);
+  const [failedSlides, setFailedSlides] = useState({});
 
   useEffect(() => {
     let mounted = true;
@@ -115,12 +117,12 @@ export default function AwardsShowcase() {
   };
 
   return (
-    <section className="py-20 bg-[#FBFBF9] border-t border-[#D8DFDF] overflow-hidden">
+    <section className="py-20 bg-white border-t border-[#E2E8F0] overflow-hidden text-[#1E293B]">
       <div className="max-w-[1560px] mx-auto px-5 md:px-10 lg:px-16 text-center mb-12">
-        <h2 className="text-3xl md:text-4xl font-display font-extrabold text-[#141717] mb-4 uppercase tracking-tight">
+        <h2 className="text-3xl md:text-4xl font-display font-extrabold text-[#1E293B] mb-4 uppercase tracking-tight">
           Awards & Achievements
         </h2>
-        <p className="text-[#5C6768] max-w-2xl mx-auto text-sm md:text-base">
+        <p className="text-[#64748B] max-w-2xl mx-auto text-sm md:text-base">
           Highlighting our industry recognitions, milestones, and the exceptional moments that define our commitment to excellence.
         </p>
       </div>
@@ -171,19 +173,27 @@ export default function AwardsShowcase() {
                   transformOrigin: 'center center'
                 }}
               >
-                {award.type === 'video' ? (
+                {!award.src || failedSlides[award.id] ? (
+                  <NoImagePlaceholder
+                    variant="dark"
+                    label={award.type === 'video' ? 'No video available' : 'No image available'}
+                    className="w-full h-full pb-20"
+                  />
+                ) : award.type === 'video' ? (
                   <video
                     src={award.src}
                     autoPlay
                     loop
                     muted
                     playsInline
+                    onError={() => setFailedSlides((prev) => ({ ...prev, [award.id]: true }))}
                     className="w-full h-full object-cover"
                   />
                 ) : (
                   <img
                     src={award.src}
                     alt={award.title}
+                    onError={() => setFailedSlides((prev) => ({ ...prev, [award.id]: true }))}
                     className="w-full h-full object-cover"
                   />
                 )}
@@ -230,8 +240,8 @@ export default function AwardsShowcase() {
       {/* Historical Awards List */}
       <div className="max-w-[1560px] mx-auto px-5 md:px-10 lg:px-16 mt-24">
         <div className="flex items-center gap-3 mb-10">
-          <span className="w-6 h-[2px] bg-[#0D4446]" />
-          <h3 className="text-sm font-bold tracking-[0.25em] text-[#0D4446] uppercase">
+          <span className="w-6 h-[2px] bg-[#0F766E]" />
+          <h3 className="text-sm font-bold tracking-[0.25em] text-[#0F766E] uppercase">
             Historical Honors
           </h3>
         </div>

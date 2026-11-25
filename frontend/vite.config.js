@@ -32,8 +32,7 @@ export default defineConfig({
         manualChunks(id) {
           if (!id.includes('node_modules')) return;
           if ((id.includes('leaflet') && !id.includes('geoman')) || id.includes('@googlemaps')) return 'vendor-maps';
-          if (id.includes('@mantine')) return 'vendor-mantine';
-          if (id.includes('framer-motion') || id.includes('gsap')) return 'vendor-motion';
+          if (id.includes('framer-motion')) return 'vendor-motion';
           if (id.includes('quill')) return 'vendor-editor';
         },
       },
@@ -50,10 +49,8 @@ export default defineConfig({
       'react/jsx-runtime',
       'react-router-dom',
       'framer-motion',
-      'gsap',
       'lenis',
       'lenis/react',
-      '@mantine/core',
       '@tabler/icons-react',
       '@tanstack/react-virtual',
       '@base-ui/react/popover',
@@ -63,11 +60,11 @@ export default defineConfig({
   test: {
     root: __dirname,
     environment: 'jsdom',
+    pool: 'vmThreads',
     globals: true,
-    setupFiles: './src/test-setup.js',
+    setupFiles: './tests/setup.js',
     include: [
-      'src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
-      '../test files/frontend/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
+      'tests/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
     ],
   },
 })

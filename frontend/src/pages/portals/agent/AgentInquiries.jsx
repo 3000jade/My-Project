@@ -146,7 +146,7 @@ export default function AgentInquiries() {
       header: 'Last Message',
       render: (row) => (
         <p className="text-xs text-on-surface-variant line-clamp-2 max-w-xs">
-          {row.last_message ? `â€œ${row.last_message}â€` : 'No messages yet'}
+          {row.last_message ? `“${row.last_message}”` : 'No messages yet'}
         </p>
       ),
     },

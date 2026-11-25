@@ -24,7 +24,7 @@ const SEGMENT_COLOR_CLASS = {
   emerald: 'bg-emerald-500',
   amber: 'bg-amber-500',
   slate: 'bg-slate-400',
-  coral: 'bg-[#FF6B6B]',
+  coral: 'bg-[#FF8559]',
 };
 
 /**

@@ -14,7 +14,6 @@ import {
   Info,
   Globe,
   BarChart3,
-  BadgeDollarSign,
   PanelLeftClose,
   PanelLeftOpen,
   Calendar,
@@ -79,7 +78,7 @@ export default function DashboardSidebar({ role = 'broker', onClose }) {
     {
       title: 'Administration',
       items: [
-        { to: '/admin/users', label: 'Users & Roles', icon: Shield },
+        { to: '/admin/users', label: 'Users', icon: Shield },
         { to: '/admin/cms', label: 'Website CMS', icon: Globe },
         { to: '/admin/data-management', label: 'Data Management', icon: Database },
       ],
@@ -87,7 +86,7 @@ export default function DashboardSidebar({ role = 'broker', onClose }) {
     {
       title: 'Operations',
       items: [
-        { to: '/broker/dashboard', label: 'Broker Dashboard', icon: LayoutDashboard },
+        { to: '/broker/dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { to: '/broker/properties', label: 'Properties', icon: Building2 },
       ],
     },
@@ -106,27 +105,18 @@ export default function DashboardSidebar({ role = 'broker', onClose }) {
         { to: '/broker/agents', label: 'Agents', icon: Users },
       ],
     },
-    {
-      title: 'Analytics & System',
-      items: [
-        { to: '/broker/reports', label: 'Reports', icon: BarChart3 },
-        { to: '/broker/audit', label: 'Audit Trail', icon: ShieldCheck },
-      ],
-    },
   ];
 
   const agentLinks = [
     { to: '/agent/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/agent/properties', label: 'Properties', icon: Building2 },
     { to: '/agent/inquiries', label: 'Inquiries', icon: MessageSquare, hasUnreadBadge: true },
-    { to: '/agent/availability', label: 'Schedule & Availability', icon: Calendar },
-    { to: '/agent/sales', label: 'Sales', icon: BadgeDollarSign },
   ];
 
   const clientLinks = [
     { to: '/client/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/client/saved-properties', label: 'Saved Properties', icon: Bookmark },
-    { to: '/client/inquiries', label: 'My Inquiries', icon: MessageSquare, hasUnreadBadge: true },
+    { to: '/client/inquiries', label: 'Inquiries', icon: MessageSquare, hasUnreadBadge: true },
     { to: '/properties', label: 'Explore Listings', icon: Compass },
   ];
 
@@ -163,52 +153,60 @@ export default function DashboardSidebar({ role = 'broker', onClose }) {
     <Sidebar
       collapsible="icon"
       aria-label="Dashboard Sidebar"
-      data-sidebar-theme="deep-teal"
-      className="border-r border-[#0A3D3C] [&_[data-slot=sidebar-inner]]:bg-[#032626] [&_[data-slot=sidebar-inner]]:text-white"
+      data-sidebar-theme="teal"
+      className="border-r border-[#0F766E]/40 [&_[data-slot=sidebar-inner]]:!bg-[#134E4A] [&_[data-slot=sidebar-inner]]:text-white"
     >
       {/* Brand Header */}
       <SidebarHeader
         className={cn(
-          'h-16 border-b border-teal-900/60 flex-row items-center gap-2',
-          isCollapsed ? 'px-2 justify-center' : 'px-3 justify-between'
+          'h-16 border-b border-white/15 flex-row items-center gap-2',
+          isCollapsed ? 'px-2 justify-center' : 'px-4 justify-between'
         )}
       >
         <Link
           to={role === 'broker' ? '/broker/dashboard' : '/'}
-          className={cn('flex items-center gap-2.5 min-w-0 group', isCollapsed && 'hidden')}
+          className={cn('flex items-center gap-2 min-w-0 group', isCollapsed && 'hidden')}
         >
-          <div className="size-8 rounded-md bg-[#0F766E] flex items-center justify-center text-white shadow-xs shrink-0 ring-1 ring-teal-400/30 group-hover:ring-teal-400/60 transition-all">
-            <Building2 className="size-4 text-white" />
+          <div className="size-10 rounded-lg bg-surface flex items-center justify-center p-1 shadow-xs shrink-0">
+            <img
+              src="/images/human-shelter-logo.webp"
+              alt="Human Shelter Realty"
+              className="size-full object-contain"
+            />
           </div>
           <div className="truncate min-w-0 text-left">
-            <span className="font-bold text-[11px] tracking-normal text-white block uppercase whitespace-nowrap group-hover:text-teal-200 transition-colors">
+            <span className="font-bold text-sm tracking-tight text-white block uppercase whitespace-nowrap group-hover:text-tertiary-container transition-colors">
               HUMAN SHELTER REALTY
             </span>
-            <span className="text-[9px] text-teal-300/80 block uppercase tracking-widest truncate font-medium">
-              {roleLabel}
+            <span className="inline-flex items-center gap-1 text-xs text-tertiary-container uppercase tracking-wider truncate font-semibold">
+              <span className="size-2 rounded-full bg-[#FF6B6B] shrink-0" aria-hidden="true" />
+              <span className="truncate">{roleLabel}</span>
             </span>
           </div>
         </Link>
 
         <SidebarTrigger
           className={cn(
-            'hidden md:inline-flex size-8 rounded-lg bg-white/5 text-teal-200 hover:text-white hover:bg-white/15 shrink-0',
+            'hidden md:inline-flex size-9 rounded-lg bg-white/10 text-white hover:bg-white/20 shrink-0',
             isCollapsed && 'mx-auto'
           )}
           aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
-          {isCollapsed ? <PanelLeftOpen className="size-4" /> : <PanelLeftClose className="size-4" />}
+          {isCollapsed ? <PanelLeftOpen className="size-5" /> : <PanelLeftClose className="size-5" />}
         </SidebarTrigger>
       </SidebarHeader>
 
       {/* Navigation Groups */}
-      <SidebarContent className="px-2 py-3 gap-2 custom-scrollbar" data-lenis-prevent="true">
+      <SidebarContent
+        className="px-4 py-4 gap-6 group-data-[collapsible=icon]:px-2 custom-scrollbar"
+        data-lenis-prevent="true"
+      >
         {sections.map((section) => (
           <SidebarGroup key={section.title} className="p-0">
-            <SidebarGroupLabel className="text-[10px] font-semibold text-teal-300/60 uppercase tracking-wider px-2">
+            <SidebarGroupLabel className="text-xs font-semibold text-tertiary-container/80 uppercase tracking-wider px-2">
               {section.title}
             </SidebarGroupLabel>
-            <SidebarMenu className="gap-1">
+            <SidebarMenu className="gap-2">
               {section.items.map((link) => {
                 const Icon = link.icon;
                 const isProperties = link.label === 'Properties';
@@ -216,8 +214,7 @@ export default function DashboardSidebar({ role = 'broker', onClose }) {
                 const isActive = isProperties
                   ? location.pathname.includes('/properties')
                   : isAgents
-                  ? location.pathname.startsWith('/broker/agents') ||
-                    location.pathname.startsWith('/broker/appointments')
+                  ? location.pathname.startsWith('/broker/agents')
                   : location.pathname === link.to;
 
                 return (
@@ -228,24 +225,24 @@ export default function DashboardSidebar({ role = 'broker', onClose }) {
                       onClick={handleNavClick}
                       render={<NavLink to={link.to} />}
                       className={cn(
-                        'rounded-lg text-xs font-medium transition-colors h-11 px-3 gap-3 group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0!',
+                        'rounded-lg text-sm font-medium transition-colors h-12 px-4 gap-4 [&_svg]:size-5 group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:size-11! group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0!',
                         isActive
-                          ? 'bg-[#0F766E] text-white font-semibold shadow-xs ring-1 ring-teal-400/25 hover:bg-[#0F766E] hover:text-white data-active:bg-[#0F766E] data-active:text-white'
-                          : 'text-teal-100/80 hover:text-white hover:bg-white/10 active:bg-white/15'
+                          ? 'bg-surface text-primary font-semibold shadow-xs hover:bg-background hover:text-primary data-active:bg-surface data-active:text-primary'
+                          : 'text-white/85 hover:text-white hover:bg-white/10 active:bg-white/15'
                       )}
                     >
                       <Icon
                         strokeWidth={isActive ? 2.2 : 1.75}
                         className={cn(
-                          'size-4 shrink-0 transition-transform duration-150 group-hover/menu-button:scale-105 motion-reduce:transition-none',
-                          isActive ? 'text-white' : 'text-teal-200/80 group-hover/menu-button:text-white'
+                          'size-5 shrink-0 transition-transform duration-150 group-hover/menu-button:scale-105 motion-reduce:transition-none',
+                          isActive ? 'text-primary' : 'text-tertiary-container group-hover/menu-button:text-white'
                         )}
                       />
                       <span className="truncate group-data-[collapsible=icon]:hidden">{link.label}</span>
                     </SidebarMenuButton>
 
                     {link.hasUnreadBadge && unreadInquiries > 0 && (
-                      <SidebarMenuBadge className="bg-[#FF6B6B] text-white font-semibold rounded-full px-1.5 text-[10px] tabular-nums group-data-[collapsible=icon]:hidden">
+                      <SidebarMenuBadge className="bg-[#FF6B6B] text-white font-bold rounded-full px-2 text-xs tabular-nums group-data-[collapsible=icon]:hidden">
                         {unreadInquiries}
                       </SidebarMenuBadge>
                     )}
@@ -258,7 +255,7 @@ export default function DashboardSidebar({ role = 'broker', onClose }) {
       </SidebarContent>
 
       {/* Bottom Pinned Settings */}
-      <SidebarFooter className="p-2 border-t border-teal-900/60">
+      <SidebarFooter className="p-4 group-data-[collapsible=icon]:p-2 border-t border-white/15">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
@@ -268,17 +265,17 @@ export default function DashboardSidebar({ role = 'broker', onClose }) {
               aria-label="Settings"
               render={<NavLink to={settingsPath} />}
               className={cn(
-                'rounded-lg text-xs font-medium transition-colors h-11 px-3 gap-3 group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0!',
+                'rounded-lg text-sm font-medium transition-colors h-12 px-4 gap-4 [&_svg]:size-5 group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:size-11! group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0!',
                 isSettingsActive
-                  ? 'bg-[#0F766E] text-white font-semibold shadow-xs ring-1 ring-teal-400/25 hover:bg-[#0F766E] hover:text-white data-active:bg-[#0F766E] data-active:text-white'
-                  : 'text-teal-100/80 hover:text-white hover:bg-white/10 active:bg-white/15'
+                  ? 'bg-surface text-primary font-semibold shadow-xs hover:bg-background hover:text-primary data-active:bg-surface data-active:text-primary'
+                  : 'text-white/85 hover:text-white hover:bg-white/10 active:bg-white/15'
               )}
             >
               <Settings
                 strokeWidth={isSettingsActive ? 2.2 : 1.75}
                 className={cn(
-                  'size-4 shrink-0 transition-transform duration-150 group-hover/menu-button:scale-105 motion-reduce:transition-none',
-                  isSettingsActive ? 'text-white' : 'text-teal-200/80 group-hover/menu-button:text-white'
+                  'size-5 shrink-0 transition-transform duration-150 group-hover/menu-button:scale-105 motion-reduce:transition-none',
+                  isSettingsActive ? 'text-primary' : 'text-tertiary-container group-hover/menu-button:text-white'
                 )}
               />
               <span className="truncate group-data-[collapsible=icon]:hidden">Settings</span>

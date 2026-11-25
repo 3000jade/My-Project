@@ -114,6 +114,14 @@ export const createPropertySchema = z.object({
   isPublished: z.boolean().optional(),
 });
 
+// Partial update schema without .default() on omitted fields so partial PUTs never overwrite existing values
+export const updatePropertySchema = createPropertySchema.partial().extend({
+  propertyTypeId: z.number().int().positive().optional(),
+  listPriceCurrency: z.enum(['PHP', 'USD', 'EUR', 'GBP', 'SGD', 'JPY']).optional(),
+  status: z.enum(['available', 'pending', 'sold']).optional(),
+  isFeatured: z.boolean().optional(),
+});
+
 export const queryPropertySchema = z.object({
   city: z.string().trim().optional(),
   district: z.string().trim().optional(),

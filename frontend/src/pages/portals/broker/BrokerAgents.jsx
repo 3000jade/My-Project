@@ -559,7 +559,7 @@ export default function BrokerAgents() {
               <button
                 type="button"
                 onClick={() => navigate(`/broker/agents/${row.id}`)}
-                className="px-3 py-1 bg-[#FF6B6B] hover:bg-[#EE5A5A] text-[#1E293B] text-xs font-semibold rounded-lg transition-colors cursor-pointer shadow-2xs"
+                className="px-3 py-1 bg-[#FF8559] hover:bg-[#F07144] text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer shadow-2xs"
               >
                 Review
               </button>
@@ -936,7 +936,7 @@ export default function BrokerAgents() {
                             <button
                               type="button"
                               onClick={() => navigate(`/broker/agents/${ag.id}`)}
-                              className="px-3 py-1 bg-[#FF6B6B] hover:bg-[#EE5A5A] text-[#1E293B] text-xs font-semibold rounded-lg shadow-2xs"
+                              className="px-3 py-1 bg-[#FF8559] hover:bg-[#F07144] text-white text-xs font-semibold rounded-lg shadow-2xs"
                             >
                               Review
                             </button>

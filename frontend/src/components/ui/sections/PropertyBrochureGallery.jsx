@@ -21,7 +21,7 @@ function getTransactionIcon(transactionLabel = '') {
 /**
  * Hero Gallery View with Status badges and Price overlay.
  * Strictly adheres to DESIGN.md tokens (rounded-xl outer card, rounded-lg photo frames,
- * #FFFFFF / #E2E8F0 / #1E293B / #0F766E / #FF6B6B with #1E293B text, 8pt spacing, 44px touch targets).
+ * #FFFFFF / #E2E8F0 / #1E293B / #0F766E / #FF8559 with #1E293B text, 8pt spacing, 44px touch targets).
  */
 export default function PropertyBrochureGallery({
   photos = [],
@@ -72,7 +72,7 @@ export default function PropertyBrochureGallery({
       )}
 
       {isFeatured && (
-        <Badge className="bg-[#FF6B6B] text-[#1E293B] border-transparent font-bold shadow-xs">
+        <Badge className="bg-[#FF8559] text-white border-transparent font-bold shadow-xs">
           Featured
         </Badge>
       )}

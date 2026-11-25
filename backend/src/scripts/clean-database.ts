@@ -95,10 +95,10 @@ export async function cleanDatabase() {
       console.log(`   Found ${nonSeedProps.length} non-seed properties to prune.`);
       const nonSeedIds = nonSeedProps.map((p) => p.id);
       
-      // Clean dependent rooms/media first
+      // Clean dependent rooms/media/images first
       await supabaseAdmin.from('property_rooms').delete().in('property_id', nonSeedIds);
+      await supabaseAdmin.from('property_images').delete().in('property_id', nonSeedIds);
       await supabaseAdmin.from('property_media').delete().in('property_id', nonSeedIds);
-      await supabaseAdmin.from('property_pricing').delete().in('property_id', nonSeedIds);
       
       const { error: delPropErr } = await supabaseAdmin.from('properties').delete().in('id', nonSeedIds);
       if (delPropErr) {

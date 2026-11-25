@@ -150,6 +150,7 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
   const messagesEndRef = useRef(null);
   const abortControllerRef = useRef(null);
   const activeStreamMsgIdRef = useRef(null);
+  const skipNextLiveFetchRef = useRef(false);
 
   const activePropertyId = extractPropertyId(pathname);
   const currentActiveListing =
@@ -220,7 +221,9 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
     let cancelled = false;
     setLiveConnectionState('connected');
 
-    if (typeof chatService.getLiveMessages === 'function') {
+    if (skipNextLiveFetchRef.current) {
+      skipNextLiveFetchRef.current = false;
+    } else if (typeof chatService.getLiveMessages === 'function') {
       Promise.resolve(
         chatService.getLiveMessages(liveSession.inquiryId, liveSession.liveChatToken)
       )
@@ -963,7 +966,7 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
                 >
                   <div className={cn('flex items-center justify-between gap-2', expandedInnerClass)}>
                     <span className="truncate font-medium">
-                      Connected with {liveSession.agent?.name || 'Licensed Agent'} · Typically replies in under 2 minutes
+                      Typically replies in under 2 minutes
                     </span>
                   </div>
                 </div>
@@ -1063,6 +1066,7 @@ function ChatWidgetContent({ pathname, onNavigateProperty }) {
                           agent: sessionData.agent,
                           liveChatToken: sessionData.liveChatToken,
                         };
+                        skipNextLiveFetchRef.current = true;
                         setLiveSession(nextSession);
                         try {
                           window.sessionStorage?.setItem(

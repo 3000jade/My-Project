@@ -89,7 +89,7 @@ export default function Home() {
 
   return (
     <LiveEditProvider>
-    <div ref={containerRef} className="w-full bg-[#FBFBF9] text-[#141717] font-sans relative selection:bg-[#E76F51] selection:text-white transition-colors duration-500">
+    <div ref={containerRef} className="w-full bg-[#F8FAFC] text-[#1E293B] font-sans relative selection:bg-[#FF8559] selection:text-[#1E293B] transition-colors duration-500">
       <CmsPublicBanner />
 
       {/* 1. HERO SECTION: BRAND SHOWCASE WITH FULL-WIDTH HOUSE & HYPER-DEPTH 2.5x PARALLAX */}

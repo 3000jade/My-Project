@@ -124,7 +124,7 @@ export default function ChatPropertyCard({
           type="button"
           variant="ghost"
           size="sm"
-          className="min-h-11 sm:min-h-0 bg-[#FF6B6B] text-[#1E293B] hover:bg-[#EE5A5A] font-semibold"
+          className="min-h-11 sm:min-h-0 bg-[#FF8559] text-white hover:bg-[#F07144] hover:text-white font-semibold"
           onClick={() => onAskAgent?.(property)}
         >
           <MessageSquare data-icon="inline-start" />

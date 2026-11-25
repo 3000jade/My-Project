@@ -19,6 +19,12 @@ import {
   ShieldCheck,
   Banknote,
   Building2,
+  MessageSquare,
+  Users,
+  Bookmark,
+  Globe,
+  Shield,
+  Database,
 } from 'lucide-react';
 import {
   notificationService,
@@ -45,42 +51,43 @@ import {
   EmptyDescription,
 } from '@/components/ui/empty';
 
-const ROUTE_TITLES = [
-  ['/broker/dashboard', 'Dashboard'],
-  ['/broker/properties/new', 'Create Property Listing'],
-  ['/broker/properties/create', 'Create Property Listing'],
-  ['/broker/properties', 'Property Listings'],
-  ['/broker/inquiries', 'Inquiries'],
-  ['/broker/agents/invite', 'Invite Agent'],
-  ['/broker/agents', 'Agents'],
-  ['/broker/reports', 'Reports'],
-  ['/broker/audit', 'Audit Trail'],
-  ['/broker/sales', 'Sales'],
-  ['/broker/notifications', 'Notifications'],
-  ['/broker/profile', 'Profile'],
-  ['/agent/dashboard', 'Dashboard'],
-  ['/agent/properties', 'Properties'],
-  ['/agent/inquiries', 'Inquiries'],
-  ['/agent/availability', 'Schedule & Availability'],
-  ['/agent/sales', 'Sales'],
-  ['/agent/profile', 'Profile'],
-  ['/client/dashboard', 'Dashboard'],
-  ['/client/saved-properties', 'Saved Properties'],
-  ['/client/inquiries', 'My Inquiries'],
-  ['/client/profile', 'Profile'],
-  ['/admin/cms', 'Content Management'],
-  ['/admin/users', 'Users & Access'],
-  ['/admin/data-management', 'Data Management'],
+const ROUTE_META = [
+  ['/broker/dashboard', 'Dashboard', LayoutDashboard],
+  ['/broker/properties/new', 'New Property', Building2],
+  ['/broker/properties/create', 'New Property', Building2],
+  ['/broker/properties', 'Properties', Building2],
+  ['/broker/subdivisions', 'Properties', Building2],
+  ['/broker/inquiries/messages', 'Messages', MessageSquare],
+  ['/broker/inquiries', 'Inquiries', MessageSquare],
+  ['/broker/agents/invite', 'Invite Agent', Users],
+  ['/broker/agents', 'Agents', Users],
+  ['/broker/audit', 'Audit Log', ShieldCheck],
+  ['/broker/sales', 'Sales', Banknote],
+  ['/broker/notifications', 'Notifications', Bell],
+  ['/broker/profile', 'Profile', User],
+  ['/agent/dashboard', 'Dashboard', LayoutDashboard],
+  ['/agent/properties', 'Properties', Building2],
+  ['/agent/inquiries/messages', 'Messages', MessageSquare],
+  ['/agent/inquiries', 'Inquiries', MessageSquare],
+  ['/agent/profile', 'Profile', User],
+  ['/client/dashboard', 'Dashboard', LayoutDashboard],
+  ['/client/saved-properties', 'Saved Properties', Bookmark],
+  ['/client/inquiries', 'Inquiries', MessageSquare],
+  ['/client/profile', 'Profile', User],
+  ['/admin/cms', 'Website CMS', Globe],
+  ['/admin/users', 'Users', Shield],
+  ['/admin/data-management', 'Data Management', Database],
 ];
 
-function getRouteTitle(pathname) {
+function getRouteMeta(pathname) {
   if (pathname.startsWith('/broker/properties/') && pathname.endsWith('/edit')) {
-    return 'Edit Property Listing';
+    return { label: 'Edit Property', icon: Building2 };
   }
   if (pathname.startsWith('/broker/agents/') && pathname.endsWith('/edit')) {
-    return 'Edit Agent Profile';
+    return { label: 'Edit Agent', icon: Users };
   }
-  return ROUTE_TITLES.find(([prefix]) => pathname.startsWith(prefix))?.[1];
+  const match = ROUTE_META.find(([prefix]) => pathname.startsWith(prefix));
+  return match ? { label: match[1], icon: match[2] } : null;
 }
 
 export default function DashboardHeader({
@@ -92,7 +99,10 @@ export default function DashboardHeader({
   const location = useLocation();
   const { pageTitle } = useContext(DashboardTitleContext);
   const { user, logout } = useAuth();
-  const resolvedTitle = pageTitle || getRouteTitle(location.pathname) || title;
+  // Prefer common route labels over verbose per-page titles
+  const routeMeta = getRouteMeta(location.pathname);
+  const resolvedTitle = routeMeta?.label || pageTitle || title;
+  const PageIcon = routeMeta?.icon || LayoutDashboard;
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifFilter, setNotifFilter] = useState('ALL'); // 'ALL' | 'UNREAD'
   const [notifications, setNotifications] = useState([]);
@@ -210,33 +220,36 @@ export default function DashboardHeader({
     <header className="h-16 bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 select-none gap-4">
 
       {/* Left: Mobile Toggle, Inline Page Title & Global Search */}
-      <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+      <div className="flex items-center gap-4 flex-1 min-w-0">
         <button
           onClick={onMenuClick}
-          className="md:hidden p-2 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors shrink-0"
+          className="md:hidden size-10 inline-flex items-center justify-center rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors shrink-0"
           aria-label="Open navigation menu"
         >
-          <Menu className="w-5 h-5" />
+          <Menu className="size-5" />
         </button>
 
         {resolvedTitle && (
-          <h1 className="text-lg sm:text-xl font-bold text-[#1E293B] tracking-tight truncate shrink-0">
-            {resolvedTitle}
-          </h1>
+          <div className="flex items-center gap-2 min-w-0 shrink-0">
+            <PageIcon className="size-5 text-primary shrink-0" aria-hidden="true" />
+            <h1 className="text-lg sm:text-xl font-bold text-[#1E293B] tracking-tight truncate">
+              {resolvedTitle}
+            </h1>
+          </div>
         )}
 
-        <span className="hidden sm:block h-5 w-px bg-[#E2E8F0] shrink-0" aria-hidden="true" />
+        <span className="hidden sm:block h-6 w-px bg-[#E2E8F0] shrink-0" aria-hidden="true" />
 
         {/* Global Search Console with Clear Button and Keyboard Shortcut */}
         <div className="relative w-full max-w-md min-w-0">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-slate-400 pointer-events-none" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search properties, clients, or inquiries..."
             aria-label="Search properties, clients, or inquiries"
-            className="w-full h-10 pl-9 pr-14 sm:pr-20 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] text-xs text-[#1E293B] placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#0F766E] focus:border-[#0F766E] transition-colors"
+            className="w-full h-10 pl-10 pr-14 sm:pr-20 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] text-sm text-[#1E293B] placeholder-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0F766E]/20 focus-visible:border-[#0F766E] transition-colors"
           />
           <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
             {searchQuery && (
@@ -246,10 +259,10 @@ export default function DashboardHeader({
                 className="p-1 text-slate-400 hover:text-slate-600 rounded-md transition-colors"
                 aria-label="Clear search"
               >
-                <X className="w-3.5 h-3.5" />
+                <X className="size-4" />
               </button>
             )}
-            <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono text-slate-400 bg-white border border-[#E2E8F0] rounded shadow-2xs">
+            <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs font-mono text-slate-400 bg-white border border-[#E2E8F0] rounded shadow-2xs">
               ⌘K
             </kbd>
           </div>
@@ -257,23 +270,23 @@ export default function DashboardHeader({
       </div>
 
       {/* Right: Notifications & User Avatar Profile Dropdown */}
-      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+      <div className="flex items-center gap-2 sm:gap-4 shrink-0">
         {/* Smart Notification Bell Popover (All / Unread + 9+ Badge) */}
         <Popover open={showNotifications} onOpenChange={setShowNotifications}>
           <PopoverTrigger
             render={
               <button
                 type="button"
-                className="size-10 rounded-lg text-slate-500 hover:text-[#1E293B] hover:bg-slate-100 flex items-center justify-center transition-colors relative cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#0F766E]"
+                className="size-10 rounded-lg text-slate-500 hover:text-[#1E293B] hover:bg-slate-100 flex items-center justify-center transition-colors relative cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0F766E]"
                 aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
               />
             }
           >
-            <Bell className="size-4" />
+            <Bell className="size-5" />
             {unreadCount > 0 && (
               <span
                 data-testid="notification-unread-badge"
-                className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#FF6B6B] text-white text-[10px] font-bold leading-none inline-flex items-center justify-center ring-2 ring-white tabular-nums"
+                className="absolute -top-0.5 -right-0.5 min-w-5 h-5 px-1 rounded-full bg-[#FF8559] text-white text-xs font-bold leading-none inline-flex items-center justify-center ring-2 ring-white tabular-nums"
               >
                 {badgeLabel}
               </span>
@@ -367,7 +380,7 @@ export default function DashboardHeader({
                         </p>
                         {!n.is_read && (
                           <span
-                            className="size-2 rounded-full bg-[#FF6B6B] shrink-0 mt-1"
+                            className="size-2 rounded-full bg-[#FF8559] shrink-0 mt-1"
                             aria-label="Unread"
                           />
                         )}
@@ -397,7 +410,7 @@ export default function DashboardHeader({
             </div>
 
             {role === 'broker' && (
-              <div className="px-3 py-2 border-t border-[#E2E8F0] bg-[#F8FAFC] text-center">
+              <div className="px-3 py-2 border-t border-[#E2E8F0] bg-[#F8FAFC] flex items-center justify-between gap-2">
                 <Link
                   to="/broker/notifications"
                   onClick={() => setShowNotifications(false)}
@@ -405,6 +418,13 @@ export default function DashboardHeader({
                 >
                   <span>View all notifications</span>
                   <ExternalLink className="size-3.5" />
+                </Link>
+                <Link
+                  to="/broker/notifications?tab=audit"
+                  onClick={() => setShowNotifications(false)}
+                  className="text-xs font-semibold text-[#64748B] hover:text-[#0F766E] inline-flex items-center gap-1"
+                >
+                  <span>Audit Trail</span>
                 </Link>
               </div>
             )}
@@ -416,29 +436,29 @@ export default function DashboardHeader({
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="flex items-center gap-2.5 pl-2 sm:pl-3 border-l border-[#E2E8F0] cursor-pointer hover:opacity-90 transition-opacity text-left select-none outline-none focus-visible:ring-2 focus-visible:ring-[#0F766E] rounded-md py-1"
+              className="flex items-center gap-2 pl-2 sm:pl-4 border-l border-[#E2E8F0] cursor-pointer hover:opacity-90 transition-opacity text-left select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0F766E] rounded-lg py-1"
               aria-label="User navigation menu"
             >
-              <div className="w-8 h-8 rounded-full bg-[#0F766E] text-white font-bold flex items-center justify-center text-xs tracking-tight shadow-xs shrink-0 ring-1 ring-teal-600/30">
+              <div className="size-9 rounded-full bg-[#0F766E] text-white font-bold flex items-center justify-center text-sm tracking-tight shadow-xs shrink-0 ring-1 ring-teal-600/30">
                 {roleInitials}
               </div>
               <div className="hidden sm:block text-left leading-tight">
-                <span className="block text-xs font-semibold text-[#1E293B]">{effectiveUserName}</span>
-                <span className="block text-[10px] text-[#64748B]">{roleLabel}</span>
+                <span className="block text-sm font-semibold text-[#1E293B]">{effectiveUserName}</span>
+                <span className="block text-xs text-[#64748B]">{roleLabel}</span>
               </div>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400 ml-0.5 transition-transform duration-200" />
+              <ChevronDown className="size-5 text-slate-400 shrink-0 transition-transform duration-200" />
             </button>
           </DropdownMenuTrigger>
 
-          <DropdownMenuContent align="end" className="w-64 p-1.5 rounded-xl border border-[#E2E8F0] bg-white shadow-xl z-50">
+          <DropdownMenuContent align="end" className="w-64 p-2 rounded-xl border border-[#E2E8F0] bg-white shadow-xl z-50">
             {/* Profile Info Header */}
             <div className="px-3 py-2 border-b border-[#E2E8F0] mb-1">
-              <p className="text-xs font-semibold text-[#1E293B] truncate">{effectiveUserName}</p>
-              <p className="text-[11px] text-[#64748B] truncate mt-0.5">
+              <p className="text-sm font-semibold text-[#1E293B] truncate">{effectiveUserName}</p>
+              <p className="text-xs text-[#64748B] truncate mt-0.5">
                 {user?.email || (role === 'broker' ? 'broker@pt.com' : role === 'agent' ? 'agent@pt.com' : 'client@pt.com')}
               </p>
               <div className="mt-2 flex items-center gap-1.5">
-                <span className="px-2 py-0.5 bg-teal-50 text-[#0F766E] border border-teal-200 font-semibold text-[10px] rounded-full uppercase tracking-wider">
+                <span className="px-2 py-0.5 bg-teal-50 text-[#0F766E] border border-teal-200 font-semibold text-xs rounded-full uppercase tracking-wider">
                   {roleLabel}
                 </span>
               </div>
@@ -448,19 +468,19 @@ export default function DashboardHeader({
             <DropdownMenuItem asChild>
               <Link
                 to={profilePath}
-                className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-[#1E293B] rounded-lg hover:bg-[#F8FAFC] hover:text-[#0F766E] cursor-pointer transition-colors"
+                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-[#1E293B] rounded-lg hover:bg-[#F8FAFC] hover:text-[#0F766E] cursor-pointer transition-colors"
               >
-                <User className="w-4 h-4 text-slate-400" />
-                <span>Broker Profile</span>
+                <User className="size-5 text-slate-400 shrink-0" />
+                <span>Profile</span>
               </Link>
             </DropdownMenuItem>
 
             <DropdownMenuItem asChild>
               <Link
                 to={dashboardPath}
-                className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-[#1E293B] rounded-lg hover:bg-[#F8FAFC] hover:text-[#0F766E] cursor-pointer transition-colors"
+                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-[#1E293B] rounded-lg hover:bg-[#F8FAFC] hover:text-[#0F766E] cursor-pointer transition-colors"
               >
-                <LayoutDashboard className="w-4 h-4 text-slate-400" />
+                <LayoutDashboard className="size-5 text-slate-400 shrink-0" />
                 <span>Dashboard</span>
               </Link>
             </DropdownMenuItem>
@@ -468,10 +488,10 @@ export default function DashboardHeader({
             <DropdownMenuItem asChild>
               <Link
                 to="/"
-                className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-[#1E293B] rounded-lg hover:bg-[#F8FAFC] hover:text-[#0F766E] cursor-pointer transition-colors"
+                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-[#1E293B] rounded-lg hover:bg-[#F8FAFC] hover:text-[#0F766E] cursor-pointer transition-colors"
               >
-                <Home className="w-4 h-4 text-slate-400" />
-                <span>Public Home Page</span>
+                <Home className="size-5 text-slate-400 shrink-0" />
+                <span>Home</span>
               </Link>
             </DropdownMenuItem>
 
@@ -480,9 +500,9 @@ export default function DashboardHeader({
             {/* Sign Out Action */}
             <DropdownMenuItem
               onClick={handleLogout}
-              className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-rose-600 rounded-lg hover:bg-rose-50 hover:text-rose-700 cursor-pointer transition-colors focus:bg-rose-50 focus:text-rose-700"
+              className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-rose-600 rounded-lg hover:bg-rose-50 hover:text-rose-700 cursor-pointer transition-colors focus:bg-rose-50 focus:text-rose-700"
             >
-              <LogOut className="w-4 h-4 text-rose-500" />
+              <LogOut className="size-5 text-rose-500 shrink-0" />
               <span>Sign Out</span>
             </DropdownMenuItem>
           </DropdownMenuContent>

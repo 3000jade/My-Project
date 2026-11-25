@@ -36,7 +36,7 @@ Unlike generic listing classifieds, the platform pairs **RESO-aligned Philippine
 ## Brand Commitments
 
 - **Brand Identity:** Human Shelter Realty — Soft Minimalist SaaS & Architectural Real Estate Ledger.
-- **Core Palette:** Primary Spruce Teal (`#0F766E`, hover `#115E59`), Conversion Coral (`#FF6B6B` always paired with dark `#1E293B` text), Slate Alabaster Canvas (`#F8FAFC`), Pure White Surface (`#FFFFFF`), and Slate Hairline Borders (`#E2E8F0`).
+- **Core Palette:** Primary Spruce Teal (`#0F766E`, hover `#115E59`), Conversion Coral (`#FF8559` always paired with dark `#1E293B` text), Slate Alabaster Canvas (`#F8FAFC`), Pure White Surface (`#FFFFFF`), and Slate Hairline Borders (`#E2E8F0`).
 - **Typography:** `Inter` / `Figtree Variable` for UI and display hierarchy, paired with `JetBrains Mono` for PHP currency figures, lot areas (`sqm`), and cadastral coordinates.
 
 ## Evidence on Hand
@@ -55,5 +55,5 @@ Unlike generic listing classifieds, the platform pairs **RESO-aligned Philippine
 
 ## Accessibility & Inclusion
 
-- WCAG 2.2 AA contrast compliance across all surfaces (specifically dark `#1E293B` ink on `#FF6B6B` Coral accents and `>= 4.5:1` for secondary metadata).
+- WCAG 2.2 AA contrast compliance across all surfaces (specifically dark `#1E293B` ink on `#FF8559` Coral accents and `>= 4.5:1` for secondary metadata).
 - Minimum `44px × 44px` touch targets on mobile/coarse viewports, full keyboard focus-visible rings (`#0F766E`), and mandatory `prefers-reduced-motion` fallbacks.

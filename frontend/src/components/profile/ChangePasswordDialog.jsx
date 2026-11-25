@@ -160,7 +160,7 @@ export default function ChangePasswordDialog({
               type="submit"
               variant="coral"
               disabled={saving}
-              className="bg-[#FF6B6B] text-[#1E293B] hover:bg-[#EE5A5A] font-bold"
+              className="font-bold"
             >
               {saving ? (
                 <>

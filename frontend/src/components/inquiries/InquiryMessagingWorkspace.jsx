@@ -175,7 +175,7 @@ export default function InquiryMessagingWorkspace({
                       {isUnread && (
                         <span
                           aria-label="Unread message"
-                          className="w-2 h-2 rounded-full bg-[#FF6B6B] shrink-0"
+                          className="w-2 h-2 rounded-full bg-[#FF8559] shrink-0"
                         />
                       )}
                       <span className="truncate">{inq.client_name}</span>
@@ -308,7 +308,7 @@ export default function InquiryMessagingWorkspace({
                           isStaff
                             ? 'bg-[#0F766E] text-white rounded-br-xs'
                             : 'bg-white text-[#1E293B] border border-[#E2E8F0] rounded-bl-xs'
-                        } ${isHighlighted ? 'ring-2 ring-[#FF6B6B] ring-offset-2' : ''}`}
+                        } ${isHighlighted ? 'ring-2 ring-[#FF8559] ring-offset-2' : ''}`}
                       >
                         {msg.content}
                       </div>

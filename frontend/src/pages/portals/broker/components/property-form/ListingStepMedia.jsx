@@ -43,7 +43,7 @@ function getDefaultAreaKeysForProperty(propertyCategory, propertyType) {
   return ['Living', 'Kitchen', 'Bedrooms', 'Bathrooms'];
 }
 
-const Req = () => <span className="text-[#FF6B6B]" aria-hidden="true">*</span>;
+const Req = () => <span className="text-[#FF8559]" aria-hidden="true">*</span>;
 
 /**
  * Step 4: Cover Photo, Gallery Launcher & Dedicated Floor Plan Section
@@ -181,9 +181,9 @@ export default function ListingStepMedia({
 
         <CardContent className="pt-5 flex flex-col gap-4">
           {coverSizeError && (
-            <Alert className="bg-white border-[#FF6B6B]">
-              <AlertCircle className="size-4 text-[#FF6B6B]" />
-              <AlertDescription className="text-xs text-[#FF6B6B]">
+            <Alert className="bg-white border-[#FF8559]">
+              <AlertCircle className="size-4 text-[#FF8559]" />
+              <AlertDescription className="text-xs text-[#FF8559]">
                 {coverSizeError}
               </AlertDescription>
             </Alert>
@@ -227,7 +227,7 @@ export default function ListingStepMedia({
               )}
               {coverPhoto.error && (
                 <div className="absolute inset-0 bg-red-950/75 p-3 flex flex-col items-center justify-center gap-2 text-center text-white">
-                  <AlertCircle className="size-5 text-[#FF6B6B]" />
+                  <AlertCircle className="size-5 text-[#FF8559]" />
                   <span className="text-xs line-clamp-2">{coverPhoto.error}</span>
                   {coverPhoto.file && (
                     <button
@@ -246,7 +246,7 @@ export default function ListingStepMedia({
                 aria-label="Remove cover photo"
                 className="absolute top-3 right-3 size-11 md:size-9 [@media(pointer:coarse)]:size-11 rounded-lg bg-white/95 hover:bg-white text-[#1E293B] shadow-xs flex items-center justify-center cursor-pointer"
               >
-                <Trash2 className="size-4 text-[#FF6B6B]" />
+                <Trash2 className="size-4 text-[#FF8559]" />
               </button>
             </div>
           )}
@@ -379,9 +379,9 @@ export default function ListingStepMedia({
 
         <CardContent className="pt-5 flex flex-col gap-4">
           {floorPlanSizeError && (
-            <Alert className="bg-white border-[#FF6B6B]">
-              <AlertCircle className="size-4 text-[#FF6B6B]" />
-              <AlertDescription className="text-xs text-[#FF6B6B]">
+            <Alert className="bg-white border-[#FF8559]">
+              <AlertCircle className="size-4 text-[#FF8559]" />
+              <AlertDescription className="text-xs text-[#FF8559]">
                 {floorPlanSizeError}
               </AlertDescription>
             </Alert>
@@ -406,7 +406,7 @@ export default function ListingStepMedia({
                 )}
                 {item.error && (
                   <div className="absolute inset-0 bg-red-950/75 p-3 flex flex-col items-center justify-center gap-2 text-center text-white">
-                    <AlertCircle className="size-5 text-[#FF6B6B]" />
+                    <AlertCircle className="size-5 text-[#FF8559]" />
                     <span className="text-xs line-clamp-2">{item.error}</span>
                     {item.file && (
                       <button
@@ -425,7 +425,7 @@ export default function ListingStepMedia({
                   aria-label="Remove floor plan"
                   className="absolute top-2.5 right-2.5 size-11 md:size-9 [@media(pointer:coarse)]:size-11 rounded-lg bg-white/95 hover:bg-white text-[#1E293B] shadow-xs flex items-center justify-center cursor-pointer"
                 >
-                  <Trash2 className="size-4 text-[#FF6B6B]" />
+                  <Trash2 className="size-4 text-[#FF8559]" />
                 </button>
               </div>
             ))}

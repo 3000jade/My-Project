@@ -76,7 +76,7 @@ export default function UserActionConfirmationModal({
             <div
               className={`p-2 rounded-lg ${
                 isSuspend
-                  ? 'bg-red-50 text-[#FF6B6B]'
+                  ? 'bg-red-50 text-[#FF8559]'
                   : isRoleChange && newRole === 'admin'
                   ? 'bg-amber-50 text-amber-600'
                   : 'bg-teal-50 text-[#0F766E]'
@@ -155,7 +155,7 @@ export default function UserActionConfirmationModal({
                 htmlFor="suspension-reason"
                 className="block text-xs font-semibold text-[#1E293B] mb-1.5"
               >
-                Documented Justification <span className="text-[#FF6B6B]">*</span>
+                Documented Justification <span className="text-[#FF8559]">*</span>
               </label>
               <textarea
                 id="suspension-reason"
@@ -164,7 +164,7 @@ export default function UserActionConfirmationModal({
                 onChange={(e) => setReason(e.target.value)}
                 placeholder="Enter justification for compliance audit (min 5 chars)..."
                 required
-                className="w-full text-xs p-2.5 bg-white border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#FF6B6B] focus:ring-1 focus:ring-[#FF6B6B] transition-colors"
+                className="w-full text-xs p-2.5 bg-white border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#FF8559] focus:ring-1 focus:ring-[#FF8559] transition-colors"
               />
               <p className="text-[10px] text-[#64748B] mt-1">
                 This rationale will be recorded permanently in the platform audit trail.
@@ -187,7 +187,7 @@ export default function UserActionConfirmationModal({
               disabled={!canSubmit || isSubmitting}
               className={`px-4 py-2 text-xs font-semibold text-white rounded-lg transition-all shadow-sm ${
                 isSuspend
-                  ? 'bg-[#FF6B6B] hover:bg-[#EE5A5A] disabled:opacity-50'
+                  ? 'bg-[#FF8559] hover:bg-[#F07144] disabled:opacity-50'
                   : 'bg-[#0F766E] hover:bg-[#0D635C] disabled:opacity-50'
               }`}
             >

@@ -84,7 +84,7 @@ export function CmsPublicCollectionsAndFaqs() {
   if (faqs.length === 0) return null;
 
   return (
-    <section className="w-full bg-[#F8FAFC] py-12 px-4 md:px-6 lg:px-8 border-t border-[#E2E8F0]">
+    <section className="w-full home-band-white py-12 px-4 md:px-6 lg:px-8 border-t border-[#E2E8F0]">
       <div className="max-w-3xl mx-auto space-y-6">
         <div className="text-center">
           <h2 className="text-2xl sm:text-[28px] font-bold tracking-tight text-[#1E293B]">

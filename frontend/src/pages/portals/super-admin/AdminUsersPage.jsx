@@ -17,11 +17,10 @@ export default function AdminUsersPage() {
           <button
             type="button"
             onClick={() => setActiveTab('users')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium transition-all ${
-              activeTab === 'users'
-                ? 'bg-white text-[#0F766E] shadow-sm font-semibold'
-                : 'text-[#64748B] hover:text-[#1E293B]'
-            }`}
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium transition-all ${activeTab === 'users'
+              ? 'bg-white text-[#0F766E] shadow-sm font-semibold'
+              : 'text-[#64748B] hover:text-[#1E293B]'
+              }`}
           >
             <IconUsers className="w-4 h-4" />
             <span>Users & Roles</span>
@@ -30,11 +29,10 @@ export default function AdminUsersPage() {
           <button
             type="button"
             onClick={() => setActiveTab('sessions')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium transition-all ${
-              activeTab === 'sessions'
-                ? 'bg-white text-[#0F766E] shadow-sm font-semibold'
-                : 'text-[#64748B] hover:text-[#1E293B]'
-            }`}
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium transition-all ${activeTab === 'sessions'
+              ? 'bg-white text-[#0F766E] shadow-sm font-semibold'
+              : 'text-[#64748B] hover:text-[#1E293B]'
+              }`}
           >
             <IconDevices className="w-4 h-4" />
             <span>Active Sessions</span>

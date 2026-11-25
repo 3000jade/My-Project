@@ -1,7 +1,29 @@
 import { supabaseAdmin, isSupabaseConfigured } from '../config/supabase';
 import logger from '../utils/logger';
 
-export const SEED_PROPERTIES = [
+interface SeedPropertyInput {
+  id: string;
+  title: string;
+  tagline: string;
+  price: number;
+  formatted_price: string;
+  address: string;
+  city: string;
+  state: string;
+  latitude: number;
+  longitude: number;
+  beds: number;
+  baths: number;
+  sqft: number;
+  property_type: string;
+  year_built: number;
+  architectural_style: string;
+  features: string[];
+  images: string[];
+  status: string;
+}
+
+export const SEED_PROPERTIES: SeedPropertyInput[] = [
   {
     id: 'b1a2c3d4-0001-4000-8000-000000000001',
     title: 'Ayala Alabang Estate',
@@ -154,10 +176,25 @@ async function seedDatabase() {
   }
 
   try {
+    const propertyRows = SEED_PROPERTIES.map(({ features, images, ...rest }) => ({
+      ...rest,
+      standard_status: 'Active',
+      transaction_type: 'For Sale',
+      property_category: 'Residential',
+      bedrooms_total: rest.beds,
+      bathrooms_total_integer: rest.baths,
+      living_area: rest.sqft,
+      state_or_province: rest.state,
+      custom_reso_attributes: {
+        features,
+        is_published: true,
+      },
+    }));
+
     const { data, error } = await supabaseAdmin
       .from('properties')
-      .upsert(SEED_PROPERTIES, { onConflict: 'id' })
-      .select();
+      .upsert(propertyRows, { onConflict: 'id' })
+      .select('id, title');
 
     if (error) {
       logger.error('Failed to seed properties table:', error.message);
@@ -165,7 +202,60 @@ async function seedDatabase() {
       process.exit(1);
     }
 
-    logger.info(`Successfully seeded ${data?.length || SEED_PROPERTIES.length} properties into Supabase!`);
+    // Seed property_images and property_media idempotently for each seeded property
+    const seedIds = SEED_PROPERTIES.map((p) => p.id);
+    const { error: delImgErr } = await supabaseAdmin
+      .from('property_images')
+      .delete()
+      .in('property_id', seedIds);
+    if (delImgErr) {
+      logger.warn('Could not reset seeded property_images:', delImgErr.message);
+    }
+
+    const imageRows = SEED_PROPERTIES.flatMap((prop) =>
+      prop.images.map((imageUrl, idx) => ({
+        property_id: prop.id,
+        image_url: imageUrl,
+        display_order: idx + 1,
+      }))
+    );
+
+    if (imageRows.length > 0) {
+      const { error: imgErr } = await supabaseAdmin
+        .from('property_images')
+        .insert(imageRows);
+      if (imgErr) {
+        logger.error('Failed to seed property_images:', imgErr.message);
+        process.exit(1);
+      }
+    }
+
+    const mediaRows = SEED_PROPERTIES.flatMap((prop) =>
+      prop.images.map((imageUrl, idx) => ({
+        property_id: prop.id,
+        media_key: `seed-${prop.id}-photo-${idx + 1}`,
+        media_url: imageUrl,
+        media_category: 'Photo',
+        gallery_category: idx === 0 ? 'Cover' : 'Gallery',
+        order_index: idx + 1,
+        short_description: idx === 0 ? `${prop.title} Cover Photo` : `${prop.title} Gallery Photo ${idx}`,
+        mime_type: 'image/jpeg',
+      }))
+    );
+
+    if (mediaRows.length > 0) {
+      const { error: mediaErr } = await supabaseAdmin
+        .from('property_media')
+        .upsert(mediaRows, { onConflict: 'media_key' });
+      if (mediaErr) {
+        logger.error('Failed to seed property_media:', mediaErr.message);
+        process.exit(1);
+      }
+    }
+
+    logger.info(
+      `Successfully seeded ${data?.length || propertyRows.length} properties, ${imageRows.length} property_images, and ${mediaRows.length} property_media rows into Supabase!`
+    );
     console.log('Seeded properties:', data?.map((p: any) => p.title));
   } catch (err: any) {
     logger.error('Unexpected error seeding database:', err.message);

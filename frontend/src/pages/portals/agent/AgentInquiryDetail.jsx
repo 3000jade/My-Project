@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { CalendarPlus, CheckCircle2, History } from 'lucide-react';
 import StatusBadge from '../../../components/dashboard/StatusBadge';
@@ -319,7 +319,7 @@ export default function AgentInquiryDetail() {
         ]}
         title={inquiry ? `Inquiry from ${inquiry.client_name}` : 'Inquiry Detail'}
         subtitle={
-          inquiry ? `Reference: ${inquiry.reference_code || inquiry.id} â€¢ Registered ${inquiry.created_at}` : ''
+          inquiry ? `Reference: ${inquiry.reference_code || inquiry.id} • Registered ${inquiry.created_at}` : ''
         }
         badge={
           inquiry && (

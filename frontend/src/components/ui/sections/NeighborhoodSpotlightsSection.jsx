@@ -8,6 +8,7 @@ import {
   IconBuildingStore,
   IconShieldCheck
 } from '@tabler/icons-react';
+import NoImagePlaceholder from '../NoImagePlaceholder';
 
 const PROPERTY_CATEGORIES = [
   { id: 'all', title: 'All Properties', icon: null },
@@ -25,7 +26,7 @@ const NEIGHBORHOOD_STORIES = [
     location: 'Bacoor, Imus, Dasma, Gen. Trias',
     tagline: 'Spacious Family Living Near Expressways',
     description: 'The prime residential choice for suburban Filipino families. Enjoy spacious house-and-lot properties, top Cavite schools, and rapid connectivity via CAVITEX, CALAX, and MCX.',
-    image: 'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?q=80&w=1600&auto=format&fit=crop',
+    image: null,
     stats: '₱1.8M – ₱12M Homes',
     supportedTypes: ['house-and-lot', 'townhouse', 'duplex']
   },
@@ -36,7 +37,7 @@ const NEIGHBORHOOD_STORIES = [
     location: 'Santa Rosa, Biñan, Nuvali, Calamba',
     tagline: 'Master-Planned Nature & Modern Subdivisions',
     description: 'The booming Lion City of the South. Featuring sprawling green subdivisions, top universities, commercial lifestyle parks, and peaceful family environments.',
-    image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=1600&auto=format&fit=crop',
+    image: null,
     stats: '₱2.8M – ₱28M Homes',
     supportedTypes: ['house-and-lot', 'townhouse', 'duplex']
   },
@@ -47,7 +48,7 @@ const NEIGHBORHOOD_STORIES = [
     location: 'Antipolo City, Taytay, Cainta',
     tagline: 'Fresh Mountain Air & Relaxed Townhouse Enclaves',
     description: 'Elevated green hills with cooler temperatures, scenic sunrise vistas, and multi-level modern townhouses just minutes away from Ortigas East and LRT-2.',
-    image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1600&auto=format&fit=crop',
+    image: null,
     stats: '₱2.2M – ₱15M Homes',
     supportedTypes: ['house-and-lot', 'townhouse']
   },
@@ -58,7 +59,7 @@ const NEIGHBORHOOD_STORIES = [
     location: 'Bonifacio Global City, ARCA South',
     tagline: 'Walk-to-Work Urban High-Rise Living',
     description: 'A master-planned world-class urban core offering secure condominiums, multinational headquarters, walkable pedestrian parks, and premier international hospitals.',
-    image: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?q=80&w=1600&auto=format&fit=crop',
+    image: null,
     stats: '₱4.5M – ₱85M Condos',
     supportedTypes: ['condominium']
   },
@@ -69,7 +70,7 @@ const NEIGHBORHOOD_STORIES = [
     location: 'Katipunan, New Manila, Fairview',
     tagline: 'Premier Academic Institutions & Quiet Villages',
     description: 'The educational heart of Metro Manila, home to the country’s top universities (UP, Ateneo), leading medical complexes, and quiet gated family residential communities.',
-    image: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=1600&auto=format&fit=crop',
+    image: null,
     stats: '₱3.5M – ₱35M Estates',
     supportedTypes: ['condominium']
   }
@@ -78,6 +79,7 @@ const NEIGHBORHOOD_STORIES = [
 export default function NeighborhoodSpotlightsSection() {
   const [activeId, setActiveId] = useState('cavite');
   const [activeFilter, setActiveFilter] = useState('all');
+  const [failedImages, setFailedImages] = useState({});
   const navigate = useNavigate();
 
   const filteredNeighborhoods = NEIGHBORHOOD_STORIES.filter(hood => 
@@ -94,26 +96,22 @@ export default function NeighborhoodSpotlightsSection() {
   return (
     <section
       id="neighborhood-spotlights-inner"
-      className="w-full min-h-screen flex items-center justify-center bg-[#FBFBF9] py-12 md:py-16 border-b border-[#D1D5DB] relative z-20 transition-colors duration-500 overflow-hidden font-sans text-[#141717]"
-      style={{
-        backgroundImage: "url('/images/neighborhood-pattern.png')",
-        backgroundRepeat: 'repeat',
-      }}
+      className="w-full min-h-screen flex items-center justify-center bg-[#F8FAFC] py-12 md:py-16 border-b border-[#E2E8F0] relative z-20 transition-colors duration-500 overflow-hidden font-sans text-[#1E293B]"
     >
       <div className="relative z-10 w-full max-w-[1560px] mx-auto px-5 md:px-10 lg:px-16">
 
         {/* Section Header */}
         <div className="mb-8 md:mb-10 max-w-3xl space-y-3">
           <div className="flex items-center gap-3">
-            <span className="w-6 h-[2px] bg-[#0D4446]" />
-            <span className="text-xs font-bold tracking-[0.25em] text-[#0D4446] uppercase">
+            <span className="w-6 h-[2px] bg-[#0F766E]" />
+            <span className="text-xs font-bold tracking-[0.25em] text-[#0F766E] uppercase">
               Where We Operate
             </span>
           </div>
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#141717] tracking-tight leading-tight">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#1E293B] tracking-tight leading-tight">
             Explore Properties & Neighborhoods
           </h2>
-          <p className="text-sm sm:text-base text-[#5C6768] font-normal leading-relaxed pt-1">
+          <p className="text-sm sm:text-base text-[#64748B] font-normal leading-relaxed pt-1">
             Explore the most prestigious residential enclaves across Metro Manila. Select a property type to discover curated communities that offer unparalleled lifestyles for your family.
           </p>
         </div>
@@ -130,8 +128,8 @@ export default function NeighborhoodSpotlightsSection() {
                 onClick={() => setActiveFilter(category.id)}
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-full border transition-all duration-300 text-sm font-bold whitespace-nowrap ${
                   isActive
-                    ? 'bg-[#0D4446] border-[#0D4446] text-white shadow-md'
-                    : 'bg-white border-[#D8DFDF] text-[#5C6768] hover:border-[#0D4446] hover:text-[#0D4446]'
+                    ? 'bg-[#0F766E] border-[#0F766E] text-white shadow-md'
+                    : 'bg-white border-[#E2E8F0] text-[#64748B] hover:border-[#0F766E] hover:text-[#0F766E]'
                 }`}
               >
                 {Icon && <Icon size={18} stroke={isActive ? 2.5 : 2} />}
@@ -169,13 +167,22 @@ export default function NeighborhoodSpotlightsSection() {
                         : 'flex-[1] shadow-[0_8px_30px_rgba(0,0,0,0.06)] hover:shadow-[0_16px_32px_rgba(0,0,0,0.12)] hover:border-[#141717]'
                       }`}
                   >
-                    {/* Architecture Photography — crisp, no blur */}
-                    <img
-                      src={hood.image}
-                      alt={hood.name}
-                      className={`absolute inset-0 w-full h-full object-cover transition-transform duration-1000 ease-out ${isActive ? 'scale-105' : 'scale-100 brightness-95 group-hover:brightness-100'
-                        }`}
-                    />
+                    {/* Architecture Photography or House Placeholder */}
+                    {!hood.image || failedImages[hood.id] ? (
+                      <NoImagePlaceholder
+                        variant="dark"
+                        compact={!isActive}
+                        className="absolute inset-0 w-full h-full pb-16"
+                      />
+                    ) : (
+                      <img
+                        src={hood.image}
+                        alt={hood.name}
+                        onError={() => setFailedImages((prev) => ({ ...prev, [hood.id]: true }))}
+                        className={`absolute inset-0 w-full h-full object-cover transition-transform duration-1000 ease-out ${isActive ? 'scale-105' : 'scale-100 brightness-95 group-hover:brightness-100'
+                          }`}
+                      />
+                    )}
 
                     {/* Dark Vignette for crisp white text contrast */}
                     <div

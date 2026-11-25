@@ -136,6 +136,7 @@ export class DriveController {
       }
 
       res.setHeader('Content-Type', fileData.mimeType || 'application/octet-stream');
+      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
       if (fileData.contentLength) {
         res.setHeader('Content-Length', fileData.contentLength);
       }

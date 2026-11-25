@@ -4,16 +4,15 @@ import {
   Phone,
   Mail,
   ArrowUpRight,
-  FileText,
   MessageCircle,
   Globe,
 } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
 /**
  * Dedicated Agent & Conversion Actions Card for PropertyListingView.
- * Groups listing advisor info with Schedule Viewing and Inquire Now buttons,
+ * Groups listing advisor info with inline Schedule Viewing and Inquire Now buttons,
  * strictly adhering to DESIGN.md tokens.
  */
 export default function PropertyAgentCard({
@@ -24,34 +23,33 @@ export default function PropertyAgentCard({
 }) {
   return (
     <Card className="bg-white border-[#E2E8F0] rounded-xl shadow-xs">
-      <CardHeader className="p-6 pb-4">
-        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#64748B]">
-          <span className="w-4 h-0.5 bg-[#FF6B6B] rounded-full shrink-0" aria-hidden="true" />
-          <span>Listing Advisor</span>
-        </div>
-        <CardTitle className="text-xl font-bold text-[#1E293B] tracking-tight">
-          Property Contact<span className="text-[#FF6B6B]">.</span>
-        </CardTitle>
-      </CardHeader>
+      <CardContent className="p-6 flex flex-col gap-4">
+        <div className="flex flex-col items-center text-center gap-2 min-w-0">
+          <button
+            type="button"
+            onClick={onOpenAgentModal}
+            aria-label={`View verified advisor profile for ${agent.name || 'Listing Advisor'}`}
+            className="group flex flex-col items-center text-center gap-3 rounded-xl p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0F766E] cursor-pointer"
+          >
+            {agent.avatar ? (
+              <img
+                src={agent.avatar}
+                alt={agent.name}
+                referrerPolicy="no-referrer"
+                className="size-24 rounded-full object-cover border border-[#E2E8F0] group-hover:ring-2 group-hover:ring-[#0F766E]/40 transition-all shrink-0"
+              />
+            ) : (
+              <div className="size-24 rounded-full bg-[#CCFBF1] border border-[#E2E8F0] group-hover:ring-2 group-hover:ring-[#0F766E]/40 transition-all flex items-center justify-center text-[#0F766E] shrink-0">
+                <User className="size-10" />
+              </div>
+            )}
+            <span className="text-base font-bold text-[#1E293B] group-hover:text-[#0F766E] transition-colors">
+              {agent.name}
+            </span>
+          </button>
 
-      <CardContent className="p-6 pt-4 border-t border-[#E2E8F0] flex flex-col gap-4">
-        <div className="flex items-center gap-4 min-w-0">
-          {agent.avatar ? (
-            <img
-              src={agent.avatar}
-              alt={agent.name}
-              referrerPolicy="no-referrer"
-              className="size-12 rounded-full object-cover border border-[#E2E8F0] shrink-0"
-            />
-          ) : (
-            <div className="size-12 rounded-full bg-[#CCFBF1] border border-[#E2E8F0] flex items-center justify-center text-[#0F766E] shrink-0">
-              <User className="size-5" />
-            </div>
-          )}
-
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-bold text-[#1E293B] truncate">{agent.name}</p>
-            <p className="text-xs text-[#64748B] truncate">
+          <div className="min-w-0 w-full space-y-0.5">
+            <p className="text-xs text-[#64748B]">
               Assigned by{' '}
               <button
                 type="button"
@@ -63,7 +61,7 @@ export default function PropertyAgentCard({
               </button>
             </p>
             {agent.license && (
-              <p className="text-xs text-[#0F766E] truncate">{agent.license}</p>
+              <p className="text-xs text-[#0F766E]">{agent.license}</p>
             )}
           </div>
         </div>
@@ -95,7 +93,7 @@ export default function PropertyAgentCard({
               </div>
             )}
             {(agent.messengerUrl || agent.facebookUrl || agent.whatsapp) && (
-              <div className="flex flex-wrap items-center gap-1.5 pt-1">
+              <div className="flex flex-wrap items-center justify-center gap-1.5 pt-1">
                 {agent.messengerUrl && (
                   <a
                     href={agent.messengerUrl}
@@ -138,41 +136,30 @@ export default function PropertyAgentCard({
           </div>
         )}
 
-        <div className="flex flex-col gap-2">
+        <div className="grid grid-cols-2 gap-2">
           <Button
             type="button"
             variant="default"
             size="lg"
             onClick={onScheduleViewing}
             aria-label="Schedule Viewing"
-            className="w-full min-h-11 rounded-full pl-4 pr-2 justify-between bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-semibold normal-case tracking-normal"
+            className="w-full min-h-11 rounded-full px-3 justify-between bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-semibold normal-case tracking-normal"
           >
-            <span>Schedule Viewing</span>
-            <span className="size-7 rounded-full bg-[#FF6B6B] text-[#1E293B] flex items-center justify-center shrink-0">
-              <ArrowUpRight className="size-4" />
+            <span className="truncate">Schedule Viewing</span>
+            <span className="size-6 rounded-full bg-[#FF8559] text-white flex items-center justify-center shrink-0">
+              <ArrowUpRight className="size-3.5" />
             </span>
           </Button>
 
           <Button
             type="button"
-            variant="coral"
+            variant="outline"
             size="lg"
             onClick={onContactAgent}
-            className="w-full min-h-11 rounded-full bg-[#FF6B6B] hover:bg-[#EE5A5A] text-[#1E293B] text-xs font-bold normal-case tracking-normal"
+            className="w-full min-h-11 rounded-full px-3 bg-white hover:bg-[#F8FAFC] border border-[#E2E8F0] text-[#1E293B] text-xs font-semibold normal-case tracking-normal"
           >
-            <Mail data-icon="inline-start" />
-            Inquire Now
-          </Button>
-
-          <Button
-            type="button"
-            variant="ghost"
-            size="lg"
-            onClick={onOpenAgentModal}
-            className="w-full min-h-11 rounded-lg text-xs text-[#0F766E] normal-case tracking-normal"
-          >
-            <FileText data-icon="inline-start" />
-            View Verified Advisor Profile
+            <Mail data-icon="inline-start" className="text-[#FF8559]" />
+            <span className="truncate">Inquire Now</span>
           </Button>
         </div>
       </CardContent>
