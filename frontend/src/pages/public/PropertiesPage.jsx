@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useVirtualizer } from '@tanstack/react-virtual';
@@ -17,17 +17,16 @@ import {
   Tag,
 } from 'lucide-react';
 
-import {
-  UnifiedSearchBar,
-  AllFiltersDrawer,
-  PropertyCard,
-  GooglePropertyMap,
-  FilterEmptyState,
-  Button
-} from '../../components/ui';
+import UnifiedSearchBar from '../../components/ui/search/UnifiedSearchBar';
+import PropertyCard from '../../components/ui/cards/PropertyCard';
+import GooglePropertyMap from '../../components/ui/map/GooglePropertyMap';
+import FilterEmptyState from '../../components/ui/core/FilterEmptyState';
+import Button from '../../components/ui/core/Button';
 import { usePropertyFilterEngine, formatCompactPhp } from '../../hooks/usePropertyFilterEngine';
 import { propertyService } from '../../services/propertyService';
 import { getPropertyCoordinates } from '../../utils/propertyCoordinates';
+
+const AllFiltersDrawer = lazy(() => import('../../components/ui/modals/AllFiltersDrawer'));
 
 function extractAvailableLocations(list = []) {
   const byKey = new Map();
@@ -755,18 +754,22 @@ export default function PropertiesPage() {
         )}
       </div>
 
-      {/* Deep Specification Drawer */}
-      <AllFiltersDrawer
-        isOpen={isDrawerOpen}
-        onClose={() => setIsDrawerOpen(false)}
-        filters={filters}
-        setFilter={setFilter}
-        facets={facets}
-        totalCount={filteredProperties.length}
-        onClearAll={clearFilters}
-        sortBy={sortBy}
-        setSortBy={setSortBy}
-      />
+      {/* Deep Specification Drawer (lazy-loaded on open) */}
+      {isDrawerOpen && (
+        <Suspense fallback={null}>
+          <AllFiltersDrawer
+            isOpen={isDrawerOpen}
+            onClose={() => setIsDrawerOpen(false)}
+            filters={filters}
+            setFilter={setFilter}
+            facets={facets}
+            totalCount={filteredProperties.length}
+            onClearAll={clearFilters}
+            sortBy={sortBy}
+            setSortBy={setSortBy}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }

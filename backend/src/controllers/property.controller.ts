@@ -95,6 +95,10 @@ export class PropertyController {
         authenticatedUserId
       );
 
+      if (isPublicView) {
+        res.set('Cache-Control', 'public, max-age=30, stale-while-revalidate=120');
+      }
+
       res.status(200).json({
         success: true,
         data: result.properties,

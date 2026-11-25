@@ -33,6 +33,8 @@ export default defineConfig({
           if (!id.includes('node_modules')) return;
           if ((id.includes('leaflet') && !id.includes('geoman')) || id.includes('@googlemaps')) return 'vendor-maps';
           if (id.includes('framer-motion')) return 'vendor-motion';
+          if (id.includes('lucide-react') || id.includes('@tabler/icons-react')) return 'vendor-icons';
+          if (id.includes('@base-ui/react') || id.includes('@floating-ui')) return 'vendor-ui-primitives';
         },
       },
     },
