@@ -1,11 +1,81 @@
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { Component, useState, useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import Home from './pages/public/Home';
+import { Button } from './components/ui/button';
 import { ReactLenis, useLenis } from 'lenis/react';
 import { AuthProvider } from './context/AuthContext';
 import { GoogleOAuthProvider } from '@react-oauth/google';
+
+const CHUNK_RELOAD_KEY = 'hs_chunk_reload_at';
+
+function isChunkLoadError(error) {
+  const msg = String(error?.message || error || '').toLowerCase();
+  return (
+    msg.includes('failed to fetch dynamically imported module') ||
+    msg.includes('importing a module script failed') ||
+    msg.includes('loading chunk') ||
+    error?.name === 'ChunkLoadError'
+  );
+}
+
+function reloadOnceForStaleChunk() {
+  if (typeof window === 'undefined') return false;
+  try {
+    const last = Number(window.sessionStorage.getItem(CHUNK_RELOAD_KEY) || 0);
+    if (Date.now() - last < 15000) return false;
+    window.sessionStorage.setItem(CHUNK_RELOAD_KEY, String(Date.now()));
+    window.location.reload();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+class RouteErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, isChunkError: false };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, isChunkError: isChunkLoadError(error) };
+  }
+
+  componentDidCatch(error) {
+    if (isChunkLoadError(error)) {
+      reloadOnceForStaleChunk();
+    }
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-[#F8FAFC] text-[#1E293B] flex items-center justify-center p-6">
+          <div className="max-w-md w-full bg-white border border-[#E2E8F0] rounded-xl p-6 text-center shadow-xs space-y-4">
+            <h1 className="text-xl font-bold">
+              {this.state.isChunkError ? 'App updated' : 'Something went wrong'}
+            </h1>
+            <p className="text-sm text-[#64748B]">
+              {this.state.isChunkError
+                ? 'A newer version of Human Shelter is available. Reload the page to load it.'
+                : 'This page ran into an unexpected error. Please reload to try again.'}
+            </p>
+            <Button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="h-11 px-6 bg-[#0F766E] hover:bg-[#115E59] text-white"
+            >
+              Reload Page
+            </Button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 const ChatWidget = lazy(() => import('./modules/Chat/ChatWidget'));
 
@@ -306,6 +376,7 @@ function AppRoutes() {
             <Route path="cms" element={<AdminCmsPage />} />
             <Route path="data-management" element={<AdminDataManagementPage />} />
           </Route>
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
     );
@@ -389,13 +460,23 @@ export default function App() {
     } catch { }
   }, []);
 
+  useEffect(() => {
+    const onPreloadError = () => {
+      reloadOnceForStaleChunk();
+    };
+    window.addEventListener('vite:preloadError', onPreloadError);
+    return () => window.removeEventListener('vite:preloadError', onPreloadError);
+  }, []);
+
   return (
     <ReactLenis root options={{ lerp: 0.08, smoothWheel: true }}>
       <Router>
         <ScrollToTop />
         <AuthProvider>
           <SessionWatcher />
-          <AppRoutes />
+          <RouteErrorBoundary>
+            <AppRoutes />
+          </RouteErrorBoundary>
         </AuthProvider>
         {import.meta.env.DEV && (
           <Suspense fallback={null}>
