@@ -975,7 +975,7 @@ export class AgentService {
         if (err.message?.includes('invalid input syntax') || err.message?.includes('22P02')) {
           logger.warn(`[AgentService] Skipping transitionStatus for non-UUID agent ID: ${id}`);
         } else {
-          logger.warn(`[AgentService] Transition status warning for ${id}:`, err.message);
+          throw err;
         }
       }
     }

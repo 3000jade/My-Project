@@ -50,6 +50,38 @@ const localAuditEventsStore: Array<{
   created_at: string;
 }> = [];
 
+function extractCredentials(profile: any) {
+  const v2Meta = Array.isArray(profile?.supporting_documents)
+    ? profile.supporting_documents.find((d: any) => d && d._meta_type === 'agent_v2_metadata')
+    : undefined;
+
+  return {
+    v2Meta,
+    prcNumber:
+      profile?.prc_license_no ||
+      profile?.prc_license_number ||
+      profile?.prc_number ||
+      profile?.prcLicenseNumber ||
+      v2Meta?.prc_license_no,
+    dhsudNumber:
+      profile?.dhsud_accreditation_no ||
+      profile?.dhsud_number ||
+      profile?.dhsud_registration_number ||
+      profile?.dhsudNumber ||
+      v2Meta?.dhsud_accreditation_no,
+    prcExpiry:
+      profile?.prc_validity ||
+      profile?.prc_expiry_date ||
+      profile?.prcExpiryDate ||
+      v2Meta?.prc_validity,
+    dhsudExpiry:
+      profile?.dhsud_validity ||
+      profile?.dhsud_expiry_date ||
+      profile?.dhsudExpiryDate ||
+      v2Meta?.dhsud_validity,
+  };
+}
+
 export class AgentEligibilityService {
   public static getLocalAuditEvents(): typeof localAuditEventsStore {
     return [...localAuditEventsStore];
@@ -173,10 +205,7 @@ export class AgentEligibilityService {
       }
     }
 
-    // Extract v2 metadata envelope if stored inside supporting_documents JSONB
-    const v2Meta = Array.isArray(agentProfile.supporting_documents)
-      ? agentProfile.supporting_documents.find((d: any) => d && d._meta_type === 'agent_v2_metadata')
-      : undefined;
+    const { v2Meta, prcNumber, dhsudNumber, prcExpiry, dhsudExpiry } = extractCredentials(agentProfile);
 
     const membershipStatus = agentProfile.membership_status || v2Meta?.membership_status;
     if (membershipStatus === 'departed') {
@@ -197,41 +226,18 @@ export class AgentEligibilityService {
       return { allowed: false, reason: 'UNVERIFIED' };
     }
 
-    // Check credential completeness
-    const prcNumber =
-      agentProfile.prc_license_no ||
-      agentProfile.prc_license_number ||
-      agentProfile.prc_number ||
-      agentProfile.prcLicenseNumber;
-
-    const dhsudNumber =
-      agentProfile.dhsud_accreditation_no ||
-      agentProfile.dhsud_number ||
-      agentProfile.dhsud_registration_number ||
-      agentProfile.dhsudNumber;
-
     if (!prcNumber || !dhsudNumber) {
       return { allowed: false, reason: 'INCOMPLETE_CREDENTIAL' };
     }
 
     // Check credential expiry in Asia/Manila timezone
     const nowMs = now.getTime();
-    const prcExpiry =
-      agentProfile.prc_validity ||
-      agentProfile.prc_expiry_date ||
-      agentProfile.prcExpiryDate;
-
     if (prcExpiry) {
       const prcEndOfDayMs = this.getAsiaManilaEndOfDay(prcExpiry);
       if (nowMs > prcEndOfDayMs) {
         return { allowed: false, reason: 'EXPIRED_CREDENTIAL' };
       }
     }
-
-    const dhsudExpiry =
-      agentProfile.dhsud_validity ||
-      agentProfile.dhsud_expiry_date ||
-      agentProfile.dhsudExpiryDate;
 
     if (dhsudExpiry) {
       const dhsudEndOfDayMs = this.getAsiaManilaEndOfDay(dhsudExpiry);
@@ -363,36 +369,16 @@ export class AgentEligibilityService {
     }
 
     if (targetStatus === 'VERIFIED') {
-      const prcNumber =
-        currentProfile.prc_license_no ||
-        currentProfile.prc_license_number ||
-        currentProfile.prc_number ||
-        currentProfile.prcLicenseNumber;
-
-      const dhsudNumber =
-        currentProfile.dhsud_accreditation_no ||
-        currentProfile.dhsud_number ||
-        currentProfile.dhsud_registration_number ||
-        currentProfile.dhsudNumber;
+      const { prcNumber, dhsudNumber, prcExpiry, dhsudExpiry } = extractCredentials(currentProfile);
 
       if (!prcNumber || !dhsudNumber) {
         throw new Error('Cannot approve agent with incomplete PRC or DHSUD credentials.');
       }
 
       const nowMs = Date.now();
-      const prcExpiry =
-        currentProfile.prc_validity ||
-        currentProfile.prc_expiry_date ||
-        currentProfile.prcExpiryDate;
-
       if (prcExpiry && nowMs > this.getAsiaManilaEndOfDay(prcExpiry)) {
         throw new Error('Cannot approve agent with expired PRC license.');
       }
-
-      const dhsudExpiry =
-        currentProfile.dhsud_validity ||
-        currentProfile.dhsud_expiry_date ||
-        currentProfile.dhsudExpiryDate;
 
       if (dhsudExpiry && nowMs > this.getAsiaManilaEndOfDay(dhsudExpiry)) {
         throw new Error('Cannot approve agent with expired DHSUD registration.');
@@ -415,6 +401,8 @@ export class AgentEligibilityService {
     } else if (targetStatus === 'VERIFIED') {
       updatePayload.rejection_remarks = null;
       updatePayload.suspension_reason = null;
+      updatePayload.onboarding_status = 'complete';
+      updatePayload.membership_status = 'active';
       updatePayload.verified_at = new Date().toISOString();
       updatePayload.verified_by = isActorUuid ? actorId : null;
     }
