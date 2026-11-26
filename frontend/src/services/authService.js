@@ -1,5 +1,19 @@
 import apiClient from './apiClient';
 
+function persistAuthTokens(data) {
+  if (data?.token) {
+    apiClient.setToken(data.token);
+  }
+  if (data?.refreshToken && typeof window !== 'undefined') {
+    try {
+      localStorage.setItem('cp_refresh_token', data.refreshToken);
+    } catch (err) {
+      console.warn('[authService] Failed storing refresh token:', err);
+    }
+  }
+  return data;
+}
+
 /**
  * Evaluates role hierarchy and admin superuser bypass.
  */
@@ -44,17 +58,7 @@ export const authService = {
     const payload = { email, password };
     if (rememberMe) payload.rememberMe = rememberMe;
     const response = await apiClient.post('/auth/login', payload);
-    if (response?.data?.token) {
-      apiClient.setToken(response.data.token);
-    }
-    if (response?.data?.refreshToken && typeof window !== 'undefined') {
-      try {
-        localStorage.setItem('cp_refresh_token', response.data.refreshToken);
-      } catch (err) {
-        console.warn('[authService] Failed storing refresh token:', err);
-      }
-    }
-    return response.data; // returns { user, token, refreshToken, ... }
+    return persistAuthTokens(response.data);
   },
 
   // Backward compatible alias
@@ -67,17 +71,7 @@ export const authService = {
    */
   async googleLogin(idToken, role = 'client') {
     const response = await apiClient.post('/auth/google', { idToken, role });
-    if (response?.data?.token) {
-      apiClient.setToken(response.data.token);
-    }
-    if (response?.data?.refreshToken && typeof window !== 'undefined') {
-      try {
-        localStorage.setItem('cp_refresh_token', response.data.refreshToken);
-      } catch (err) {
-        console.warn('[authService] Failed storing refresh token:', err);
-      }
-    }
-    return response.data;
+    return persistAuthTokens(response.data);
   },
 
   /**
@@ -85,17 +79,7 @@ export const authService = {
    */
   async registerUser(payload) {
     const response = await apiClient.post('/auth/register', payload);
-    if (response?.data?.token) {
-      apiClient.setToken(response.data.token);
-    }
-    if (response?.data?.refreshToken && typeof window !== 'undefined') {
-      try {
-        localStorage.setItem('cp_refresh_token', response.data.refreshToken);
-      } catch (err) {
-        console.warn('[authService] Failed storing refresh token:', err);
-      }
-    }
-    return response.data;
+    return persistAuthTokens(response.data);
   },
 
   /**

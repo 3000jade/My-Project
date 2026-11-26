@@ -141,10 +141,13 @@ export function classifyLoginError(err) {
       rawMessage.includes('timeout') ||
       rawMessage.includes('failed to fetch'))
   ) {
+    const isOffline = typeof navigator !== 'undefined' && navigator.onLine === false;
     return {
       kind: 'network',
       title: "Can't reach the server",
-      message: 'Check your internet connection and try again.',
+      message: isOffline
+        ? 'You appear to be offline. Check your internet connection and try again.'
+        : "Our server isn't responding right now. Please try again in a moment.",
       countsTowardLockout: false,
     };
   }

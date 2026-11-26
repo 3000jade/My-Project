@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion, AnimatePresence, MotionConfig } from 'framer-motion';
 import {
@@ -66,38 +66,6 @@ const INPUT_GROUP_CLASS =
 const INPUT_GROUP_ERROR_CLASS =
   'h-12 rounded-lg border border-red-600 bg-surface shadow-none has-[[data-slot=input-group-control]:focus-visible]:border-red-600 has-[[data-slot=input-group-control]:focus-visible]:ring-2 has-[[data-slot=input-group-control]:focus-visible]:ring-red-600/20';
 
-const LOCKOUT_STORAGE_KEY = 'hs_login_lockout_until';
-
-function getRemainingLockoutSeconds() {
-  if (typeof window === 'undefined') return 0;
-  try {
-    const raw = window.sessionStorage.getItem(LOCKOUT_STORAGE_KEY);
-    const until = Number(raw);
-    if (!until) return 0;
-    const remaining = Math.ceil((until - Date.now()) / 1000);
-    if (remaining <= 0) {
-      window.sessionStorage.removeItem(LOCKOUT_STORAGE_KEY);
-      return 0;
-    }
-    return remaining;
-  } catch {
-    return 0;
-  }
-}
-
-function persistLockoutSeconds(seconds) {
-  if (typeof window === 'undefined') return;
-  try {
-    if (seconds > 0) {
-      window.sessionStorage.setItem(LOCKOUT_STORAGE_KEY, String(Date.now() + seconds * 1000));
-    } else {
-      window.sessionStorage.removeItem(LOCKOUT_STORAGE_KEY);
-    }
-  } catch {
-    // Ignore storage errors
-  }
-}
-
 export default function SmartAuthFlow() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -108,71 +76,44 @@ export default function SmartAuthFlow() {
   const [showPassword, setShowPassword] = useState(false);
   const [capsLockOn, setCapsLockOn] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
-  const [failedAttempts, setFailedAttempts] = useState(0);
-  const [lockoutTimer, setLockoutTimer] = useState(() => getRemainingLockoutSeconds());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({ email: '', password: '' });
-  const [authFeedback, setAuthFeedback] = useState(() =>
-    getRemainingLockoutSeconds() > 0
-      ? {
-          kind: 'locked',
-          variant: 'destructive',
-          title: 'Sign-in paused',
-          message: 'Please wait before trying again, or reset your password.',
-          showResetLink: true,
-        }
-      : null
-  );
+  const [authFeedback, setAuthFeedback] = useState(null);
 
-  useEffect(() => {
-    if (lockoutTimer <= 0) return undefined;
-    const timer = setInterval(() => {
-      setLockoutTimer((prev) => Math.max(0, prev - 1));
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [lockoutTimer]);
-
-  useEffect(() => {
-    if (lockoutTimer === 0 && authFeedback?.kind === 'locked') {
-      persistLockoutSeconds(0);
-      setFailedAttempts(0);
-      setAuthFeedback(null);
-    }
-  }, [lockoutTimer, authFeedback]);
-
-  const contextNotice = useMemo(() => {
+  const { authReason, validReturn } = useMemo(() => {
     const rawSearch =
       location.search || (typeof window !== 'undefined' ? window.location.search : '');
     const searchParams = new URLSearchParams(rawSearch);
     const reason = searchParams.get('reason') || location.state?.reason;
     const returnUrlParam = searchParams.get('returnUrl') || location.state?.from?.pathname;
+    const validated = returnUrlParam
+      ? sessionCoordinator.validateReturnTo(decodeURIComponent(returnUrlParam))
+      : null;
 
-    if (reason === 'session_expired') {
+    const safeReturn =
+      validated && validated !== '/' && validated !== '/login' && validated !== '/register'
+        ? validated
+        : null;
+
+    return { authReason: reason, validReturn: safeReturn };
+  }, [location.search, location.state]);
+
+  const contextNotice = useMemo(() => {
+    if (authReason === 'session_expired') {
       return {
         title: 'Session ended',
         message: 'Your session ended. Sign in again to continue.',
       };
     }
-
-    const validReturn = returnUrlParam
-      ? sessionCoordinator.validateReturnTo(decodeURIComponent(returnUrlParam))
-      : null;
-
-    if (
-      validReturn &&
-      validReturn !== '/' &&
-      validReturn !== '/login' &&
-      validReturn !== '/register'
-    ) {
+    if (validReturn) {
       return {
         title: 'Sign in required',
         message: 'Sign in to open that page.',
       };
     }
-
     return null;
-  }, [location.search, location.state]);
+  }, [authReason, validReturn]);
 
   const emailSuggestion = useMemo(() => suggestEmailCorrection(emailInput), [emailInput]);
 
@@ -182,29 +123,10 @@ export default function SmartAuthFlow() {
     }
   };
 
-  const completeAuthRedirect = (role, targetEmail) => {
-    const rawSearch =
-      location.search || (typeof window !== 'undefined' ? window.location.search : '');
-    const searchParams = new URLSearchParams(rawSearch);
-    const returnUrlParam = searchParams.get('returnUrl') || location.state?.from?.pathname;
-    const validReturn = returnUrlParam
-      ? sessionCoordinator.validateReturnTo(decodeURIComponent(returnUrlParam))
-      : null;
+  const completeAuthRedirect = (role) => {
+    const userRole = role || 'client';
 
-    const userRole =
-      role ||
-      (targetEmail?.toLowerCase().includes('agent')
-        ? 'agent'
-        : targetEmail?.toLowerCase().includes('broker')
-        ? 'broker'
-        : 'client');
-
-    if (
-      validReturn &&
-      validReturn !== '/' &&
-      validReturn !== '/login' &&
-      validReturn !== '/register'
-    ) {
+    if (validReturn) {
       const isRoleAllowed =
         userRole === 'admin' ||
         (userRole === 'agent' && validReturn.startsWith('/agent')) ||
@@ -230,17 +152,6 @@ export default function SmartAuthFlow() {
 
   const handleLogin = async (e) => {
     if (e) e.preventDefault();
-
-    if (lockoutTimer > 0) {
-      setAuthFeedback({
-        kind: 'locked',
-        variant: 'destructive',
-        title: 'Sign-in paused',
-        message: `Please wait ${lockoutTimer}s before trying again, or reset your password.`,
-        showResetLink: true,
-      });
-      return;
-    }
 
     const targetEmail = String(emailInput || '').trim();
     const nextFieldErrors = { email: '', password: '' };
@@ -272,8 +183,6 @@ export default function SmartAuthFlow() {
 
     try {
       const authData = await login(targetEmail, password, rememberMe);
-      persistLockoutSeconds(0);
-      setFailedAttempts(0);
       setLoginSuccess(true);
       setAuthFeedback({
         kind: 'success',
@@ -288,43 +197,16 @@ export default function SmartAuthFlow() {
         clearRememberedEmail();
       }
 
-      completeAuthRedirect(authData?.user?.role, targetEmail);
+      completeAuthRedirect(authData?.user?.role);
     } catch (err) {
       const classified = classifyLoginError(err);
-
-      if (classified.countsTowardLockout) {
-        const nextFailed = failedAttempts + 1;
-        setFailedAttempts(nextFailed);
-
-        if (nextFailed >= 3) {
-          persistLockoutSeconds(30);
-          setLockoutTimer(30);
-          setAuthFeedback({
-            kind: 'locked',
-            variant: 'destructive',
-            title: 'Sign-in paused',
-            message: 'Please wait 30 seconds or reset your password.',
-            showResetLink: true,
-          });
-        } else {
-          const remaining = 3 - nextFailed;
-          setAuthFeedback({
-            kind: 'error',
-            variant: 'destructive',
-            title: classified.title,
-            message: `${classified.message} (${remaining} ${remaining === 1 ? 'try' : 'tries'} left before a 30-second pause.)`,
-            showResetLink: true,
-          });
-        }
-      } else {
-        setAuthFeedback({
-          kind: 'error',
-          variant: 'destructive',
-          title: classified.title,
-          message: classified.message,
-          showResetLink: false,
-        });
-      }
+      setAuthFeedback({
+        kind: 'error',
+        variant: 'destructive',
+        title: classified.title,
+        message: classified.message,
+        showResetLink: classified.countsTowardLockout,
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -346,7 +228,6 @@ export default function SmartAuthFlow() {
     setIsSubmitting(true);
     try {
       const authData = await googleLogin(credentialResponse.credential, 'client');
-      setFailedAttempts(0);
       setLoginSuccess(true);
       setAuthFeedback({
         kind: 'success',
@@ -357,7 +238,7 @@ export default function SmartAuthFlow() {
       if (authData?.user?.email) {
         saveRememberedEmail(authData.user.email);
       }
-      completeAuthRedirect(authData?.user?.role || 'client', authData?.user?.email);
+      completeAuthRedirect(authData?.user?.role);
     } catch (err) {
       setAuthFeedback({
         kind: 'error',
@@ -450,9 +331,7 @@ export default function SmartAuthFlow() {
                                 {authFeedback.title}
                               </AlertTitle>
                               <AlertDescription className="text-xs leading-snug">
-                                {authFeedback.kind === 'locked' && lockoutTimer > 0
-                                  ? `Too many wrong passwords. Try again in ${lockoutTimer}s, or reset your password.`
-                                  : authFeedback.message}
+                                {authFeedback.message}
                                 {authFeedback.showResetLink && (
                                   <>
                                     {' '}
@@ -648,7 +527,7 @@ export default function SmartAuthFlow() {
 
                     <Button
                       type="submit"
-                      disabled={isSubmitting || lockoutTimer > 0 || loginSuccess}
+                      disabled={isSubmitting || loginSuccess}
                       className={PRIMARY_BUTTON_CLASS}
                     >
                       {isSubmitting ? (
@@ -661,8 +540,6 @@ export default function SmartAuthFlow() {
                           <CheckCircle2 className="size-5" />
                           <span>Signed in</span>
                         </>
-                      ) : lockoutTimer > 0 ? (
-                        <span>Try again in {lockoutTimer}s</span>
                       ) : (
                         <>
                           <span>Sign In</span>
