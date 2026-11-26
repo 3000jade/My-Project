@@ -22,7 +22,17 @@
 </head>
 
 <body class="bg-[#F8FAFC] text-[#1E293B]">
-  <div id="root"></div>
+  <div id="root">
+    <!-- Static fallback so non-JS crawlers (e.g. Google OAuth verification) see app info and legal links -->
+    <main style="max-width:720px;margin:48px auto;padding:0 20px;font-family:Inter,sans-serif;">
+      <h1>Human Shelter Realty</h1>
+      <p>Licensed real estate brokerage and property portal for exploring house-and-lot listings, scheduling viewings, and managing client inquiries.</p>
+      <p>
+        <a href="/privacy">Privacy Policy</a> ·
+        <a href="/terms">Terms of Service</a>
+      </p>
+    </main>
+  </div>
   <script type="module" src="/src/main.jsx"></script>
 </body>
 

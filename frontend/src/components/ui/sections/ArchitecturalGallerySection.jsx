@@ -1,21 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import useEmblaCarousel from 'embla-carousel-react';
-import { 
-  IconEye, 
-  IconX, 
-  IconArrowRight, 
-  IconChevronLeft, 
-  IconChevronRight, 
-  IconDimensions, 
-  IconBed,
-  IconBath,
-  IconCar,
-  IconMapPin
-} from '@tabler/icons-react';
-import NoImagePlaceholder from '../NoImagePlaceholder';
-import { Avatar, AvatarFallback } from '../avatar';
+import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
+import PropertyCard from '../cards/PropertyCard';
 
 const GALLERY_ITEMS = [
   // ROW 1: 3-Col (Narrow) | 5-Col (Wide) | 4-Col (Medium)
@@ -221,42 +208,25 @@ const GALLERY_ITEMS = [
   }
 ];
 
-function getFinancingInfo(item) {
-  if (item.status === 'For Rent' || item.priceSuffix) {
-    return {
-      monthly: `₱${item.price}/mo`,
-      label: 'Monthly Lease',
-      badge: 'Immediate Move-In',
-      tcp: `₱${item.price} / month`
-    };
-  }
-  const numericVal = parseInt(item.price.replace(/,/g, ''), 10) || 0;
-  // Estimate monthly amortization on 20-year term (0.745% of 80% loan balance)
-  const loanAmount = numericVal * 0.8;
-  const monthlyAmort = Math.round(loanAmount * 0.00745);
-  let formattedMonthly = '';
-  if (monthlyAmort >= 1000000) {
-    formattedMonthly = `₱${(monthlyAmort / 1000000).toFixed(1)}M/mo`;
-  } else {
-    formattedMonthly = `₱${monthlyAmort.toLocaleString()}/mo`;
-  }
-  
-  const isPagIbigEligible = numericVal <= 6000000;
+function toPropertyCardProps(item) {
   return {
-    monthly: formattedMonthly,
-    label: 'Starts at',
-    badge: isPagIbigEligible ? 'Pag-IBIG Ready' : 'Bank Financing',
-    tcp: `₱${item.price} Total Price`
+    ...item,
+    ref_code: item.refCode,
+    transactionType: item.status,
+    propertyType: item.propertySubType,
+    beds: item.specs?.match(/(\d+(?:\.\d+)?)\s*Bed/i)?.[1] ?? null,
+    baths: item.specs?.match(/(\d+(?:\.\d+)?)\s*Bath/i)?.[1] ?? null,
+    parking: item.parking?.replace(/\s*Cars?/i, '') ?? null,
+    agentName: 'Elena Silva',
+    isFeatured: true,
   };
 }
 
 export default function ArchitecturalGallerySection() {
-  const navigate = useNavigate();
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [scrollSnaps, setScrollSnaps] = useState([]);
   const [visibleRange, setVisibleRange] = useState({ first: 1, last: 3 });
   const [isPaused, setIsPaused] = useState(false);
-  const [failedImages, setFailedImages] = useState({});
 
   // True continuous sliding carousel track with loop and responsive 3x1 columns
   const [emblaRef, emblaApi] = useEmblaCarousel({
@@ -384,150 +354,14 @@ export default function ArchitecturalGallerySection() {
           {/* True Sliding Carousel Viewport */}
           <div className="overflow-hidden py-3 px-1 cursor-grab active:cursor-grabbing" ref={emblaRef}>
             <div className="flex -ml-6 sm:-ml-7 lg:-ml-8 touch-pan-y">
-              {GALLERY_ITEMS.map((item) => {
-                const finance = getFinancingInfo(item);
-
-                return (
-                  <div
-                    key={item.id}
-                    className="pl-4 sm:pl-6 lg:pl-8 min-w-0 flex-[0_0_90%] md:flex-[0_0_50%] lg:flex-[0_0_33.333333%] shrink-0"
-                  >
-                    <div
-                      onClick={() => navigate(`/properties/${item.id}`)}
-                      className="relative bg-surface rounded-lg border border-outline shadow-xs hover:shadow-md hover:border-outline-variant hover:-translate-y-1 transition-all duration-300 group cursor-pointer overflow-hidden flex flex-col justify-between h-full z-10"
-                      tabIndex={0}
-                      role="button"
-                      aria-label={`View details for ${item.title}`}
-                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate(`/properties/${item.id}`); }}
-                    >
-                      {/* Upper Image Section with Badges, Reference Code, Title, and Location */}
-                      <div>
-                        <div className="relative h-64 sm:h-72 overflow-hidden bg-slate-900">
-                          {!item.image || failedImages[item.id] ? (
-                            <NoImagePlaceholder
-                              variant="dark"
-                              className="w-full h-full pb-12"
-                            />
-                          ) : (
-                            <img
-                              src={item.image}
-                              alt={item.title}
-                              loading="lazy"
-                              onError={() => setFailedImages((prev) => ({ ...prev, [item.id]: true }))}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
-                            />
-                          )}
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent pointer-events-none" />
-
-                          {/* Top Badges: Single Status Pill */}
-                          <div className="absolute top-3 left-3 z-10">
-                            <span className="backdrop-blur-md bg-surface/95 text-primary text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full shadow-xs border border-outline">
-                              {item.status || (item.priceSuffix ? 'For Rent' : 'For Sale')}
-                            </span>
-                          </div>
-
-                          {/* Title and Location overlaid on image bottom */}
-                          <div className="absolute bottom-3 left-3.5 right-3.5 z-10">
-                            <h3 className="text-lg sm:text-xl font-bold font-display text-white line-clamp-1 leading-snug drop-shadow-sm group-hover:text-white transition-colors">
-                              {item.title}
-                            </h3>
-                            <p className="flex items-center gap-1 text-xs text-slate-300 font-sans mt-0.5">
-                              <IconMapPin size={14} stroke={2} className="shrink-0 text-slate-400" />
-                              <span className="truncate">{item.location}</span>
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Body Content: Price + Metrics */}
-                        <div className="p-4 sm:p-5 flex flex-col gap-4">
-                          {/* Price Heading */}
-                          <div>
-                            <span className="text-xs uppercase text-accent font-mono font-bold block leading-none mb-1">
-                              {finance.label}
-                            </span>
-                            <div className="text-2xl sm:text-3xl font-extrabold text-on-surface font-sans tracking-tight leading-tight">
-                              {finance.monthly}
-                            </div>
-                            <div className="text-xs font-mono text-on-surface-variant mt-1 tracking-wide">
-                              {finance.tcp}
-                            </div>
-                          </div>
-
-                          {/* 4 Metric Cards with Icons */}
-                          <div className="grid grid-cols-4 gap-2 sm:gap-2.5 pb-2 border-b border-transparent text-center">
-                            <div className="py-2 px-1.5 bg-surface-variant rounded-md border border-outline flex flex-col items-center justify-center">
-                              <span className="text-[10px] uppercase font-mono text-on-surface-variant flex items-center justify-center gap-0.5">
-                                <IconDimensions size={14} stroke={2} className="text-primary" />
-                                Area
-                              </span>
-                              <p className="text-xs sm:text-sm font-bold text-on-surface font-mono mt-1 text-center leading-tight">
-                                {item.area}
-                              </p>
-                            </div>
-                            <div className="py-2 px-1.5 bg-surface-variant rounded-md border border-outline flex flex-col items-center justify-center">
-                              <span className="text-[10px] uppercase font-mono text-on-surface-variant flex items-center justify-center gap-0.5">
-                                <IconBed size={14} stroke={2} className="text-primary" />
-                                Beds
-                              </span>
-                              <p className="text-xs sm:text-sm font-bold text-on-surface font-mono mt-1 text-center leading-tight">
-                                {item.specs.split(' • ')[0].replace(' Beds', '').replace(' Bed', '')}
-                              </p>
-                            </div>
-                            <div className="py-2 px-1.5 bg-surface-variant rounded-md border border-outline flex flex-col items-center justify-center">
-                              <span className="text-[10px] uppercase font-mono text-on-surface-variant flex items-center justify-center gap-0.5">
-                                <IconBath size={14} stroke={2} className="text-primary" />
-                                Baths
-                              </span>
-                              <p className="text-xs sm:text-sm font-bold text-on-surface font-mono mt-1 text-center leading-tight">
-                                {item.specs.split(' • ')[1].replace(' Baths', '').replace(' Bath', '')}
-                              </p>
-                            </div>
-                            <div className="py-2 px-1.5 bg-surface-variant rounded-md border border-outline flex flex-col items-center justify-center">
-                              <span className="text-[10px] uppercase font-mono text-on-surface-variant flex items-center justify-center gap-0.5">
-                                <IconCar size={14} stroke={2} className="text-primary" />
-                                Parking
-                              </span>
-                              <p className="text-xs sm:text-sm font-bold text-on-surface font-mono mt-1 text-center leading-tight">
-                                {item.parking.replace(' Cars', '')}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Lower Stage: Agent Info + Action */}
-                      <div className="px-4 sm:px-5 pb-4 sm:pb-5 pt-3.5 flex items-center justify-between border-t border-outline mt-1">
-                        <div className="flex items-center gap-3 group/agent cursor-pointer">
-                          <div className="relative">
-                            <Avatar className="size-10 border border-outline bg-surface shadow-xs">
-                              <AvatarFallback className="bg-tertiary-container text-primary text-xs font-semibold">
-                                ES
-                              </AvatarFallback>
-                            </Avatar>
-                            {/* Online Status Indicator */}
-                            <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-surface shadow-xs" />
-                          </div>
-                          <div className="flex flex-col justify-center">
-                            <span className="text-xs sm:text-sm font-bold text-on-surface leading-none group-hover/agent:text-primary transition-colors duration-200">Elena Silva</span>
-                          </div>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/properties/${item.id}`);
-                          }}
-                          className="px-3 py-1.5 bg-primary hover:bg-primary-hover text-white rounded-md text-xs font-semibold uppercase tracking-wider transition-all duration-200 cursor-pointer flex items-center justify-center gap-1 shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
-                        >
-                          <span>View Details</span>
-                          <IconArrowRight size={13} stroke={2.5} className="shrink-0 group-hover:translate-x-0.5 transition-transform duration-200" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+              {GALLERY_ITEMS.map((item) => (
+                <div
+                  key={item.id}
+                  className="pl-4 sm:pl-6 lg:pl-8 min-w-0 flex-[0_0_90%] md:flex-[0_0_50%] lg:flex-[0_0_33.333333%] shrink-0"
+                >
+                  <PropertyCard property={toPropertyCardProps(item)} />
+                </div>
+              ))}
             </div>
           </div>
         </div>
