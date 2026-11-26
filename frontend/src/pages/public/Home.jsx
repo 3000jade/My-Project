@@ -5,7 +5,6 @@ import { useLenis } from 'lenis/react';
 
 // Specialized Section Components (direct imports to avoid dragging maps/editor from the UI barrel)
 import ListingHeroGallery from '../../components/ui/sections/ListingHeroGallery';
-import LeadCaptureSection from '../../components/ui/sections/LeadCaptureSection';
 import ArchitecturalGallerySection from '../../components/ui/sections/ArchitecturalGallerySection';
 import NeighborhoodSpotlightsSection from '../../components/ui/sections/NeighborhoodSpotlightsSection';
 import PartnersSection from '../../components/ui/sections/PartnersSection';
@@ -19,7 +18,6 @@ export default function Home() {
   const containerRef = useRef(null);
   const sentinelRef = useRef(null);
   const galleryRef = useRef(null);
-  const leadCaptureRef = useRef(null);
 
   const navigate = useNavigate();
   const lenis = useLenis();
@@ -41,13 +39,7 @@ export default function Home() {
   }, [lenis]);
 
   const handleBookTour = () => {
-    if (leadCaptureRef.current) {
-      if (lenis) {
-        lenis.scrollTo(leadCaptureRef.current, { offset: -60, duration: 1.2 });
-      } else {
-        leadCaptureRef.current.scrollIntoView({ behavior: 'smooth' });
-      }
-    }
+    navigate('/contact');
   };
 
   const handleViewGallery = () => {
@@ -69,13 +61,7 @@ export default function Home() {
   };
 
   const handleInquireNow = () => {
-    if (leadCaptureRef.current) {
-      if (lenis) {
-        lenis.scrollTo(leadCaptureRef.current, { offset: -60, duration: 1.2 });
-      } else {
-        leadCaptureRef.current.scrollIntoView({ behavior: 'smooth' });
-      }
-    }
+    navigate('/contact');
   };
 
   const sectionRevealProps = {
@@ -148,13 +134,6 @@ export default function Home() {
 
       {/* 10. CMS FEATURED COLLECTIONS & FAQS (Shown only when published) */}
       <CmsPublicCollectionsAndFaqs />
-
-      {/* 11. PRIVATE AUDIT: LEAD CAPTURE & CONVERSION */}
-      <div id="private-audit" ref={leadCaptureRef} className="w-full">
-        <motion.div {...sectionRevealProps}>
-          <LeadCaptureSection />
-        </motion.div>
-      </div>
 
       <LiveEditFloatingBar />
     </div>
