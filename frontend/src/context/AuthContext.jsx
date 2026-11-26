@@ -117,7 +117,7 @@ export function AuthProvider({ children }) {
     setIdleWarning(false);
     return authData;
   };
-  const googleLogin = async (idToken, role = 'agent') => {
+  const googleLogin = async (idToken, role = 'client') => {
     setError(null);
     try {
       const authData = await authService.googleLogin(idToken, role);

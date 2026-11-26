@@ -72,7 +72,7 @@ export class GoogleAuthService {
     const { data: existingProfile } = await supabaseAdmin
       .from('profiles')
       .select('*')
-      .eq('email', email)
+      .ilike('email', email)
       .maybeSingle();
 
     let userId: string;
